@@ -91,7 +91,10 @@ Ext.define('NetProfile.view.ModelGrid', {
 				this.columns.push({
 					xtype: 'actioncolumn',
 					width: i.length * 20,
-					items: i
+					items: i,
+					sortable: false,
+					resizable: false,
+					menuDisabled: true
 				});
 			}
 		}

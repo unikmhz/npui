@@ -12,6 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.db.connection import DBSession
 from .models import (
+	Privilege,
 	User,
 	UserState
 )
@@ -27,13 +28,22 @@ def get_user(request):
 			return None
 
 def get_acls(request):
-	ret = [(Allow, Authenticated, 'USAGE')]
-	user = request.user
-	if user is None:
-		return ret
 	# FIXME: implement ACL cache invalidation
 	if 'auth.acls' in request.session:
 		return request.session['auth.acls']
+	ret = [(Allow, Authenticated, 'USAGE')]
+	user = request.user
+	if user is None:
+		sess = DBSession()
+		q = sess.query(Privilege).all()
+		for priv in q:
+			if priv.guest_value:
+				right = Allow
+			else:
+				right = Deny
+			ret.append((right, Everyone, priv.code))
+		request.session['auth.acls'] = ret
+		return ret
 	for perm, val in user.flat_privileges.items():
 		if val:
 			right = Allow

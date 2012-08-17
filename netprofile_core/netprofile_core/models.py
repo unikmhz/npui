@@ -266,7 +266,8 @@ class User(Base):
 				'menu_order'   : 20,
 				'default_sort' : [],
 				'grid_view'    : ['login', 'name_family', 'name_given', 'group', 'enabled', 'state', 'email'],
-				'easy_search'  : ['login', 'name_family']
+				'easy_search'  : ['login', 'name_family'],
+				'detail_pane'  : 'netprofile_core'
 			}
 		}
 	)

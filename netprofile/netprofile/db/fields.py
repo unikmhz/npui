@@ -246,7 +246,8 @@ class Int8(types.TypeDecorator):
 	8-bit signed integer field.
 	"""
 	impl = types.SmallInteger
-	INTMAX8 = 0x7F
+	MIN_VALUE = -128
+	MAX_VALUE = 127
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
@@ -258,7 +259,8 @@ class Int16(types.TypeDecorator):
 	16-bit signed integer field.
 	"""
 	impl = types.SmallInteger
-	INTMAX16 = 0x7FFF
+	MIN_VALUE = -32768
+	MAX_VALUE = 32767
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
@@ -270,11 +272,25 @@ class Int32(types.TypeDecorator):
 	32-bit signed integer field.
 	"""
 	impl = types.Integer
-	INTMAX32 = 0x7FFFFFFF
+	MIN_VALUE = -2147483648
+	MAX_VALUE = 2147483647
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
 			return mysql.INTEGER()
+		return self.impl
+
+class Int64(types.TypeDecorator):
+	"""
+	64-bit signed integer field.
+	"""
+	impl = types.BigInteger
+	MIN_VALUE = -9223372036854775808
+	MAX_VALUE = 9223372036854775807
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.BIGINT()
 		return self.impl
 
 class UInt8(types.TypeDecorator):
@@ -282,7 +298,8 @@ class UInt8(types.TypeDecorator):
 	8-bit unsigned integer field.
 	"""
 	impl = types.SmallInteger
-	UINTMAX8 = 0xFF
+	MIN_VALUE = 0
+	MAX_VALUE = 255
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
@@ -294,7 +311,8 @@ class UInt16(types.TypeDecorator):
 	16-bit unsigned integer field.
 	"""
 	impl = types.SmallInteger
-	UINTMAX16 = 0xFFFF
+	MIN_VALUE = 0
+	MAX_VALUE = 65535
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
@@ -306,11 +324,25 @@ class UInt32(types.TypeDecorator):
 	32-bit unsigned integer field.
 	"""
 	impl = types.Integer
-	UINTMAX32 = 0xFFFFFFFF
+	MIN_VALUE = 0
+	MAX_VALUE = 4294967295
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
 			return mysql.INTEGER(unsigned=True)
+		return self.impl
+
+class UInt64(types.TypeDecorator):
+	"""
+	64-bit unsigned integer field.
+	"""
+	impl = types.Integer
+	MIN_VALUE = 0
+	MAX_VALUE = 18446744073709551615
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.BIGINT(unsigned=True)
 		return self.impl
 
 class EnumSymbol(expression.ClauseElement):

@@ -12,15 +12,62 @@ Ext.Loader.setPath({
 });
 
 Ext.require([
+	'Ext.data.*',
 	'Ext.direct.*',
 	'Ext.tip.*',
 	'Ext.state.*',
-	'Ext.util.Cookies', 
+	'Ext.util.Cookies',
+	'Ext.util.History',
 	'Ext.Ajax'
 ], function()
 {
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
 	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {'X-CSRFToken': '${req.session.get_csrf_token().decode('utf-8')}'});
+	Ext.History.init();
+
+	Ext.data.Types.IPV4 = {
+		type: 'ipv4',
+		convert: function(value, record) {
+			if(value === null)
+				return null;
+			return value;
+		},
+		sortType: function(t)
+		{
+		}
+	};
+	Ext.data.Types.IPV6 = {
+		type: 'ipv6',
+		convert: function(value, record) {
+			if(value === null)
+				return null;
+			return value;
+		},
+		sortType: function(t)
+		{
+		}
+	};
+
+	Ext.apply(Ext.data.validations, {
+		rangeMessage: 'is out of range',
+		range: function(config, value) {
+			if(value === undefined || value === null)
+				return false;
+
+			if(typeof(value) !== 'number')
+				return false;
+
+			var min = config.min,
+				max = config.max;
+
+			if((typeof(min) === 'number') && value < min)
+				return false;
+			if((typeof(max) === 'number') && value > max)
+				return false;
+
+			return true;
+		}
+	});
 
 	Ext.define('NetProfile.model.Menu', {
 		extend: 'Ext.data.Model',
@@ -67,6 +114,7 @@ Ext.require([
 		extend: 'Ext.data.Model',
 		fields: ${mod.get_reader_cfg() | n,jsone},
 		associations: ${mod.get_related_cfg() | n,jsone},
+		validations: ${mod.get_validations() | n,jsone},
 		idProperty: '${mod.pk}',
 		clientIdProperty: '_clid',
 		proxy: {

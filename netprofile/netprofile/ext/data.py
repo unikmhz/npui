@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 from sqlalchemy import (
+	BigInteger,
 	Boolean,
 	Date,
 	DateTime,
@@ -9,6 +10,7 @@ from sqlalchemy import (
 	LargeBinary,
 	Numeric,
 	PickleType,
+	SmallInteger,
 	String,
 	Text,
 	Time,
@@ -21,15 +23,19 @@ from sqlalchemy import (
 
 from netprofile.db.fields import (
 	ASCIIString,
+	ASCIIFixedString,
 	DeclEnumType,
+	ExactUnicode,
 	Int8,
 	Int16,
 	Int32,
+	Int64,
 	IPv4Address,
 	NPBoolean,
 	UInt8,
 	UInt16,
-	UInt32
+	UInt32,
+	UInt64
 )
 
 from netprofile.db.connection import (
@@ -44,59 +50,64 @@ from pyramid.security import (
 	Authenticated
 )
 
-_INTEGER_SET = frozenset([
+_INTEGER_SET = (
 	Int8,
 	Int16,
 	Int32,
+	Int64,
 	Integer,
+	UInt8,
 	UInt16,
 	UInt32,
-	UInt8
-])
+	UInt64
+)
 
-_FLOAT_SET = frozenset([
-	Float,
+_FLOAT_SET = (
 	Numeric
-])
+)
 
-_STRING_SET = frozenset([
+_STRING_SET = (
 	ASCIIString,
+	ASCIIFixedString,
 	DeclEnumType,
-	String,
-	Text,
-	Unicode,
-	UnicodeText
-])
+	ExactUnicode,
+	String
+)
 
-_BOOLEAN_SET = frozenset([
+_BOOLEAN_SET = (
 	Boolean,
 	NPBoolean
-])
+)
 
-_DATE_SET = frozenset([
+_DATE_SET = (
 	Date,
 	DateTime,
 	Time,
 	TIMESTAMP
-])
+)
 
 _COLUMN_XTYPE_MAP = {
+	BigInteger   : 'numbercolumn',
 	Boolean      : 'checkcolumn',
 	DeclEnumType : 'enumcolumn',
 	Float        : 'numbercolumn',
 	Int8         : 'numbercolumn',
 	Int16        : 'numbercolumn',
 	Int32        : 'numbercolumn',
+	Int64        : 'numbercolumn',
 	Integer      : 'numbercolumn',
 	NPBoolean    : 'checkcolumn',
 	Numeric      : 'numbercolumn',
+	SmallInteger : 'numbercolumn',
 	TIMESTAMP    : 'datecolumn',
+	UInt8        : 'numbercolumn',
 	UInt16       : 'numbercolumn',
 	UInt32       : 'numbercolumn',
-	UInt8        : 'numbercolumn',
+	UInt64       : 'numbercolumn'
 }
 
 _EDITOR_XTYPE_MAP = {
+	BigInteger   : 'numberfield',
 	Boolean      : 'checkbox',
 	Date         : 'datefield',
 	DateTime     : 'datefield',
@@ -105,16 +116,20 @@ _EDITOR_XTYPE_MAP = {
 	Int8         : 'numberfield',
 	Int16        : 'numberfield',
 	Int32        : 'numberfield',
+	Int64        : 'numberfield',
 	Integer      : 'numberfield',
 	NPBoolean    : 'checkbox',
 	Numeric      : 'numberfield',
+	SmallInteger : 'numberfield',
 	TIMESTAMP    : 'datefield',
+	UInt8        : 'numberfield',
 	UInt16       : 'numberfield',
 	UInt32       : 'numberfield',
-	UInt8        : 'numberfield',
+	UInt64       : 'numberfield'
 }
 
 _JS_TYPE_MAP = {
+	BigInteger   : 'int',
 	Boolean      : 'boolean',
 	Date         : 'date',
 	DateTime     : 'date',
@@ -124,11 +139,14 @@ _JS_TYPE_MAP = {
 	Int8         : 'int',
 	Int16        : 'int',
 	Int32        : 'int',
+	Int64        : 'int',
 	Integer      : 'int',
+	SmallInteger : 'int',
 	TIMESTAMP    : 'date',
+	UInt8        : 'int',
 	UInt16       : 'int',
 	UInt32       : 'int',
-	UInt8        : 'int',
+	UInt64       : 'int'
 }
 
 _DATE_FMT_MAP = {
@@ -234,13 +252,55 @@ class ExtColumn(object):
 		typecls = self.column.type.__class__
 		if param is None:
 			return None
-		if typecls in _BOOLEAN_SET:
+		if issubclass(typecls, _BOOLEAN_SET):
 			return bool(param)
-		if typecls in _FLOAT_SET:
+		if issubclass(typecls, _FLOAT_SET):
 			return float(param)
 		if typecls is DeclEnumType:
 			return self.column.type.enum.from_string(param.strip())
 		return param
+
+	def get_validations(self):
+		typecls = self.column.type.__class__
+		ret = {}
+		if not self.nullable:
+			ret['presence'] = True
+		if issubclass(typecls, _INTEGER_SET):
+			rng = {}
+			vmin = getattr(typecls, 'MIN_VALUE')
+			vmax = getattr(typecls, 'MAX_VALUE')
+			if vmax is None:
+				if issubclass(typecls, SmallInteger):
+					if getattr(self.column.type, 'unsigned', False):
+						vmin = UInt16.MIN_VALUE
+						vmax = UInt16.MAX_VALUE
+					else:
+						vmin = Int16.MIN_VALUE
+						vmax = Int16.MAX_VALUE
+				elif issubclass(typecls, Integer):
+					if getattr(self.column.type, 'unsigned', False):
+						vmin = UInt32.MIN_VALUE
+						vmax = UInt32.MAX_VALUE
+					else:
+						vmin = Int32.MIN_VALUE
+						vmax = Int32.MAX_VALUE
+			if vmin is not None:
+				rng['min'] = vmin
+			if vmax is not None:
+				rng['max'] = vmax
+			if len(rng) > 0:
+				ret['range'] = rng
+		if issubclass(typecls, _STRING_SET):
+			ll = { 'min' : 0 }
+			val = self.length
+			if val is not None:
+				ll['max'] = val
+			if not self.nullable:
+				ll['min'] = 1
+			ret['length'] = ll
+		if typecls is DeclEnumType:
+			ret['inclusion'] = { 'list' : self.column.type.enum.values() }
+		return ret
 
 	def get_editor_cfg(self, initval=None, in_form=False):
 		if self.column.primary_key: # add check for read-only non-pk fields
@@ -264,7 +324,7 @@ class ExtColumn(object):
 		val = self.help_text
 		if val is not None:
 			conf['emptyText'] = val
-		if typecls in _BOOLEAN_SET:
+		if issubclass(typecls, _BOOLEAN_SET):
 			conf.update({
 				'cls'  : 'x-grid-checkheader-editor'
 			})
@@ -273,7 +333,7 @@ class ExtColumn(object):
 				conf['checked'] = True
 			elif initval is True:
 				conf['checked'] = True
-		elif typecls in _FLOAT_SET:
+		elif issubclass(typecls, _FLOAT_SET):
 			conf.update({
 				'style' : 'text-align:right',
 				'width' : 50
@@ -348,16 +408,16 @@ class ExtColumn(object):
 		if xt is not None:
 			conf['xtype'] = xt
 		# add col width?
-		if typecls in _FLOAT_SET:
+		if issubclass(typecls, _FLOAT_SET):
 			conf.update({
 				'align'  : 'right',
 				'format' : '0.00'
 			})
-		if typecls in _INTEGER_SET:
+		if issubclass(typecls, _INTEGER_SET):
 			conf.update({
 				'format' : '0'
 			})
-		if typecls in _DATE_SET:
+		if issubclass(typecls, _DATE_SET):
 			conf.update({
 				'format' : _DATE_FMT_MAP[typecls]
 			})
@@ -421,7 +481,8 @@ class ExtRelationshipColumn(ExtColumn):
 			'name'       : self.prop.key,
 			'allowBlank' : self.nullable,
 			'useNull'    : self.nullable,
-			'type'       : 'string'
+			'type'       : 'string',
+			'persist'    : False
 		}
 
 class ExtModel(object):
@@ -539,6 +600,23 @@ class ExtModel(object):
 				ret.extend(colrel)
 		return ret
 
+	def get_validations(self):
+		ret = []
+		for cname, col in self.get_read_columns().items():
+			if isinstance(col, ExtRelationshipColumn):
+				continue
+			v = col.get_validations()
+			# <- INSERT CUSTOM VALIDATORS HERE
+			for vkey, vdata in v.items():
+				vitem = {
+					'field' : cname,
+					'type'  : vkey
+				}
+				if isinstance(vdata, dict):
+					vitem.update(vdata)
+				ret.append(vitem)
+		return ret
+
 	def _apply_pagination(self, query, trans, params):
 		if '__start' in params:
 			val = int(params['__start'])
@@ -575,7 +653,7 @@ class ExtModel(object):
 			prop = trans[f]
 			coldef = self.model.__table__.c[f]
 			col = getattr(self.model, prop.key)
-			if coldef.type.__class__ in _STRING_SET:
+			if issubclass(coldef.type.__class__, _STRING_SET):
 				cond.append(col.contains(sstr))
 		if len(cond) > 0:
 			query = query.filter(or_(*cond))
@@ -603,7 +681,7 @@ class ExtModel(object):
 						if fkey == 'notin':
 							query = query.filter(not col.in_(fval))
 							continue
-					if (coldef.type.__class__ in _INTEGER_SET) or (coldef.type.__class__ in _FLOAT_SET):
+					if issubclass(coldef.type.__class__, _INTEGER_SET) or issubclass(coldef.type.__class__, _FLOAT_SET):
 						if fkey == 'gt':
 							query = query.filter(col > fval)
 							continue
@@ -616,7 +694,7 @@ class ExtModel(object):
 						if fkey == 'le':
 							query = query.filter(col <= fval)
 							continue
-					if coldef.type.__class__ in _STRING_SET:
+					if issubclass(coldef.type.__class__, _STRING_SET):
 						if fkey == 'contains':
 							query = query.filter(col.contains(fval))
 							continue

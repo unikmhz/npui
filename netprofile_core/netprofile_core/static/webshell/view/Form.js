@@ -1,7 +1,6 @@
 Ext.define('NetProfile.view.Form', {
 	extend: 'Ext.Panel',
 	border: false,
-	padding: 10,
 	formCls: '',
 	formConfig: {
 		fields: []

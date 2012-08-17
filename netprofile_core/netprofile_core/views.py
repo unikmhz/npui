@@ -45,16 +45,20 @@ def do_login(request):
 	if 'submit' in request.POST:
 		login = request.POST.get('user', '')
 		passwd = request.POST.get('pass', '')
+		csrf = request.POST.get('csrf', '').encode()
 
-		sess = DBSession()
-		reg = request.registry
-		hash_con = reg.settings['netprofile.auth.hash'] or 'sha1'
-		salt_len = int(reg.settings['netprofile.auth.salt_length']) or 4
-		q = sess.query(User).filter(User.state == UserState.active).filter(User.enabled == True).filter(User.login == login)
-		for user in q:
-			if user.check_password(passwd, hash_con, salt_len):
-				headers = remember(request, login)
-				return HTTPFound(location=next, headers=headers)
+		if csrf == request.session.get_csrf_token():
+			sess = DBSession()
+			reg = request.registry
+			hash_con = reg.settings['netprofile.auth.hash'] or 'sha1'
+			salt_len = int(reg.settings['netprofile.auth.salt_length']) or 4
+			q = sess.query(User).filter(User.state == UserState.active).filter(User.enabled == True).filter(User.login == login)
+			for user in q:
+				if user.check_password(passwd, hash_con, salt_len):
+					headers = remember(request, login)
+					if 'auth.acls' in request.session:
+						del request.session['auth.acls']
+					return HTTPFound(location=next, headers=headers)
 		did_fail = True
 
 	return {
@@ -65,6 +69,8 @@ def do_login(request):
 
 @view_config(route_name='core.logout')
 def do_logout(request):
+	if 'auth.acls' in request.session:
+		del request.session['auth.acls']
 	headers = forget(request)
 	loc = request.route_url('core.login')
 	return HTTPFound(location=loc, headers=headers)

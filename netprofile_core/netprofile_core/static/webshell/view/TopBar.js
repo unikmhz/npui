@@ -12,12 +12,6 @@ Ext.define('NetProfile.view.TopBar', {
 	style: {
 	},
 	items: [{
-		text: 'Test Slider',
-		handler: function() {
-			var pb = Ext.getCmp('npws_propbar');
-			pb.show();
-		}
-	}, {
 		text: 'Test Form',
 		handler: function() {
 			var form = Ext.create('NetProfile.view.Form', {

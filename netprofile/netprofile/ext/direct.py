@@ -34,6 +34,9 @@ FORM_DATA_KEYS = frozenset([
 # is not a DOM node)
 FORM_SUBMIT_RESPONSE_TPL = '<html><body><textarea>%s</textarea></body></html>'
 
+def get_ext_csrf(request):
+	return request.headers.get('X-CSRFToken', '').encode()
+
 def _mk_cb_key(action_name, method_name):
 	return action_name + '#' + method_name
 
@@ -271,6 +274,9 @@ class ExtDirectRouter(object):
 		return ret
 
 	def route(self, request):
+		token = request.session.get_csrf_token()
+		if token != request.ext_csrf:
+			raise ValueError('CSRF token didn\'t match')
 		is_form_data = is_form_submit(request)
 		if is_form_data:
 			params = parse_extdirect_form_submit(request)
@@ -427,6 +433,7 @@ def includeme(config):
 	"""
 	Let ExtDirect be included by config.include().
 	"""
+	config.set_request_property(get_ext_csrf, 'ext_csrf', reify=True)
 	settings = config.registry.settings
 	extdirect_config = dict()
 	names = (
