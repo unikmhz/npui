@@ -260,7 +260,7 @@ class ExtColumn(object):
 			return self.column.type.enum.from_string(param.strip())
 		return param
 
-	def get_validations(self):
+	def get_model_validations(self):
 		typecls = self.column.type.__class__
 		ret = {}
 		if not self.nullable:
@@ -291,13 +291,14 @@ class ExtColumn(object):
 			if len(rng) > 0:
 				ret['range'] = rng
 		if issubclass(typecls, _STRING_SET):
-			ll = { 'min' : 0 }
+			ll = {}
 			val = self.length
 			if val is not None:
 				ll['max'] = val
 			if not self.nullable:
 				ll['min'] = 1
-			ret['length'] = ll
+			if len(ll) > 0:
+				ret['length'] = ll
 		if typecls is DeclEnumType:
 			ret['inclusion'] = { 'list' : self.column.type.enum.values() }
 		return ret
@@ -600,12 +601,12 @@ class ExtModel(object):
 				ret.extend(colrel)
 		return ret
 
-	def get_validations(self):
+	def get_model_validations(self):
 		ret = []
 		for cname, col in self.get_read_columns().items():
 			if isinstance(col, ExtRelationshipColumn):
 				continue
-			v = col.get_validations()
+			v = col.get_model_validations()
 			# <- INSERT CUSTOM VALIDATORS HERE
 			for vkey, vdata in v.items():
 				vitem = {

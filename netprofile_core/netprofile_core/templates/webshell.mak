@@ -60,9 +60,9 @@ Ext.require([
 			var min = config.min,
 				max = config.max;
 
-			if((typeof(min) === 'number') && value < min)
+			if((typeof(min) === 'number') && (value < min))
 				return false;
-			if((typeof(max) === 'number') && value > max)
+			if((typeof(max) === 'number') && (value > max))
 				return false;
 
 			return true;
@@ -114,7 +114,6 @@ Ext.require([
 		extend: 'Ext.data.Model',
 		fields: ${mod.get_reader_cfg() | n,jsone},
 		associations: ${mod.get_related_cfg() | n,jsone},
-		validations: ${mod.get_validations() | n,jsone},
 		idProperty: '${mod.pk}',
 		clientIdProperty: '_clid',
 		proxy: {
