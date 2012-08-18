@@ -82,6 +82,20 @@ def js_webshell(request):
 	tpldef['modules'] = mmgr.get_module_browser()
 	return tpldef
 
+def dpane_user(model):
+	cont = {
+		'layout' : {
+			'type'  : 'hbox',
+			'align' : 'top'
+		},
+		'items' : [{
+			'text' : 'test 1'
+		}, {
+			'text' : 'test 2'
+		}]
+	}
+	return cont
+
 conn_err_msg = """\
 Pyramid is having a problem using your SQL database.  The problem
 might be caused by one of the following things:

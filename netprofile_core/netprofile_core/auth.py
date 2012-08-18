@@ -66,6 +66,9 @@ def find_princs(userid, request):
 	return []
 
 def includeme(config):
+	"""
+	For inclusion by Pyramid.
+	"""
 	config.set_request_property(get_user, 'user', reify=True)
 	config.set_request_property(get_acls, 'acls', reify=True)
 

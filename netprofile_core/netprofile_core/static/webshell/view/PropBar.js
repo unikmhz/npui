@@ -1,6 +1,8 @@
 Ext.define('NetProfile.view.PropBar', {
 	extend: 'Ext.panel.Panel',
 	alias: 'widget.propbar',
+	requires: [
+	],
 	id: 'npws_propbar',
 	stateId: 'npws_propbar',
 	stateful: true,
@@ -12,6 +14,7 @@ Ext.define('NetProfile.view.PropBar', {
 	split: true,
 	height: '40%',
 	minHeight: 300,
+	record: null,
 	items: [
 	],
 	tools: [],
@@ -35,4 +38,12 @@ Ext.define('NetProfile.view.PropBar', {
 		}];
 		this.callParent(arguments);
 	},
+	getRecord: function()
+	{
+		return this.record;
+	},
+	setRecord: function(rec)
+	{
+		this.record = rec;
+	}
 });

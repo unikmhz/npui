@@ -22,6 +22,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 //	parentGrid: null,
 	apiModule: null,
 	apiClass: null,
+	detailPane: null,
 	border: 0,
 //	features: [{
 //	}],
@@ -85,8 +86,16 @@ Ext.define('NetProfile.view.ModelGrid', {
 					handler: function(grid, rowidx, colidx, item, e, record)
 					{
 						var pb = Ext.getCmp('npws_propbar');
+						if(!pb)
+							return false;
+						Ext.destroy(pb.removeAll());
+						pb.setRecord(record);
+						if(this.detailPane)
+							pb.add(this.detailPane);
 						pb.show();
-					}
+						return true;
+					},
+					scope: this
 				}];
 				this.columns.push({
 					xtype: 'actioncolumn',

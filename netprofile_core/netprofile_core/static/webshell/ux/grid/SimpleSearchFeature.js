@@ -147,7 +147,7 @@ Ext.define('Ext.ux.grid.SimpleSearchFeature', {
 		var sstr;
 		if(this.field && !this.field.isDisabled())
 		{
-			sstr = this.field.getValue();
+			state.sstr = this.field.getValue();
 			return true;
 		}
 		return false;

@@ -67,7 +67,8 @@ Ext.define('NetProfile.view.SideBar', {
 				region: 'center',
 				xtype: xview,
 				stateId: 'np' + xview,
-				stateful: true
+				stateful: true,
+				id: 'main_content'
 			});
 		}
 

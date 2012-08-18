@@ -1,10 +1,12 @@
 Ext.define('NetProfile.view.TopBar', {
 	extend: 'Ext.toolbar.Toolbar',
 	alias: 'widget.topbar',
+	requires: [
+		'NetProfile.view.Form'
+	],
 	id: 'npws_topbar',
 	stateId: 'npws_topbar',
 	stateful: true,
-	requires: 'NetProfile.view.Form',
 	collapsible: false,
 //	layout: 'fit',
 //	split: false,

@@ -1,6 +1,8 @@
 Ext.define('NetProfile.view.ModelSelect', {
 	extend: 'Ext.form.field.Trigger',
 	alias: 'widget.modelselect',
+	requires: [
+	],
 	apiModule: null,
 	apiClass: null,
 	onTriggerClick: function(ev) {

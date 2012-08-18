@@ -1,14 +1,14 @@
 Ext.define('NetProfile.view.Form', {
 	extend: 'Ext.Panel',
+	alias: 'widget.npform',
+	requires: [
+	],
 	border: false,
 	formCls: '',
 	formConfig: {
 		fields: []
 	},
 	initComponent: function() {
-		this.items = [
-			{ html: '<div style="text-align:center">loading...</div>' }
-		];
 		var config = {};
 		Ext.apply(this, Ext.apply(this.initialConfig, config));
 		NetProfile.view.Form.superclass.initComponent.apply(this, arguments);

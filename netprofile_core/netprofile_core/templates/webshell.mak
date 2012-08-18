@@ -170,7 +170,8 @@ Ext.require([
 		apiClass: '${model}',
 		stateId: 'npgrid_${module}_${model}',
 		stateful: true,
-		simpleSearch: ${'true' if mod.easy_search else 'false'}
+		simpleSearch: ${'true' if mod.easy_search else 'false'},
+		detailPane: ${mod.get_detail_pane() | n,jsone}
 	});
 % endfor
 % endfor

@@ -133,9 +133,9 @@ class NPModule(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : 'Modules',
 				'menu_order'   : 40,
-				'default_sort' : [],
-				'grid_view'    : ['name', 'curversion', 'enabled'],
-				'easy_search'  : ['name']
+				'default_sort' : (),
+				'grid_view'    : ('name', 'curversion', 'enabled'),
+				'easy_search'  : ('name',)
 			}
 		}
 	)
@@ -264,10 +264,10 @@ class User(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : 'Users',
 				'menu_order'   : 20,
-				'default_sort' : [],
-				'grid_view'    : ['login', 'name_family', 'name_given', 'group', 'enabled', 'state', 'email'],
-				'easy_search'  : ['login', 'name_family'],
-				'detail_pane'  : 'netprofile_core'
+				'default_sort' : (),
+				'grid_view'    : ('login', 'name_family', 'name_given', 'group', 'enabled', 'state', 'email'),
+				'easy_search'  : ('login', 'name_family'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_user')
 			}
 		}
 	)
@@ -581,9 +581,9 @@ class Group(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : 'Groups',
 				'menu_order'   : 30,
-				'default_sort' : [],
-				'grid_view'    : ['name', 'parent', 'security_policy'],
-				'easy_search'  : ['name']
+				'default_sort' : (),
+				'grid_view'    : ('name', 'parent', 'security_policy'),
+				'easy_search'  : ('name',)
 			}
 		}
 	)
@@ -749,9 +749,9 @@ class Privilege(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : 'Privileges',
 				'menu_order'   : 40,
-				'default_sort' : [],
-				'grid_view'    : ['code', 'name', 'guestvalue', 'hasacls'],
-				'easy_search'  : ['code', 'name']
+				'default_sort' : (),
+				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls'),
+				'easy_search'  : ('code', 'name')
 			}
 		}
 	)
@@ -942,8 +942,8 @@ class GroupCapability(Capability,Base):
 #				'show_in_menu' : 'admin',
 				'menu_name'    : 'Group Capabilities',
 #				'menu_order'   : 40,
-				'default_sort' : [],
-#				'grid_view'    : ['code', 'name', 'guestvalue', 'hasacls']
+				'default_sort' : (),
+#				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
 			}
 		}
 	)
@@ -979,8 +979,8 @@ class UserCapability(Capability,Base):
 #				'show_in_menu' : 'admin',
 				'menu_name'    : 'Group Capabilities',
 #				'menu_order'   : 40,
-				'default_sort' : [],
-#				'grid_view'    : ['code', 'name', 'guestvalue', 'hasacls']
+				'default_sort' : (),
+#				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
 			}
 		}
 	)
@@ -1191,9 +1191,9 @@ class SecurityPolicy(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : 'Security Policies',
 				'menu_order'   : 50,
-				'default_sort' : [],
-				'grid_view'    : ['name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size'],
-				'easy_search'  : ['name']
+				'default_sort' : (),
+				'grid_view'    : ('name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size'),
+				'easy_search'  : ('name',)
 			}
 		}
 	)
@@ -1755,9 +1755,9 @@ class Tag(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : 'Tags',
 				'menu_order'   : 60,
-				'default_sort' : [],
-				'grid_view'    : ['name', 'descr'],
-				'easy_search'  : ['name', 'descr']
+				'default_sort' : (),
+				'grid_view'    : ('name', 'descr'),
+				'easy_search'  : ('name', 'descr')
 			}
 		}
 	)
@@ -1817,9 +1817,9 @@ class LogType(Base):
 				'menu_section' : 'Logging',
 				'menu_name'    : 'Log Types',
 				'menu_order'   : 81,
-				'default_sort' : [],
-				'grid_view'    : ['name'],
-				'easy_search'  : ['name']
+				'default_sort' : (),
+				'grid_view'    : ('name',),
+				'easy_search'  : ('name',)
 			}
 		}
 	)
@@ -1868,9 +1868,9 @@ class LogAction(Base):
 				'menu_section' : 'Logging',
 				'menu_name'    : 'Log Actions',
 				'menu_order'   : 82,
-				'default_sort' : [],
-				'grid_view'    : ['name'],
-				'easy_search'  : ['name']
+				'default_sort' : (),
+				'grid_view'    : ('name',),
+				'easy_search'  : ('name',)
 			}
 		}
 	)
@@ -1918,9 +1918,9 @@ class LogData(Base):
 				'menu_section' : 'Logging',
 				'menu_name'    : 'Log Data',
 				'menu_order'   : 80,
-				'default_sort' : [],
-				'grid_view'    : ['ts', 'login', 'xtype', 'xaction', 'data'],
-				'easy_search'  : ['login', 'data']
+				'default_sort' : (),
+				'grid_view'    : ('ts', 'login', 'xtype', 'xaction', 'data'),
+				'easy_search'  : ('login', 'data')
 			}
 		}
 	)
@@ -2025,8 +2025,8 @@ class NPSession(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : 'UI Sessions',
 				'menu_order'   : 90,
-				'default_sort' : [],
-				'grid_view'    : ['sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr']
+				'default_sort' : (),
+				'grid_view'    : ('sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr')
 			}
 		}
 	)
@@ -2198,9 +2198,9 @@ class GlobalSettingSection(Base):
 				'menu_section' : 'Settings',
 				'menu_name'    : 'Global Setting Sections',
 				'menu_order'   : 70,
-				'default_sort' : [],
-				'grid_view'    : ['module', 'name', 'descr'],
-				'easy_search'  : ['name', 'descr']
+				'default_sort' : (),
+				'grid_view'    : ('module', 'name', 'descr'),
+				'easy_search'  : ('name', 'descr')
 			}
 		}
 	)
@@ -2277,9 +2277,9 @@ class UserSettingSection(Base):
 				'menu_section' : 'Settings',
 				'menu_name'    : 'User Setting Sections',
 				'menu_order'   : 71,
-				'default_sort' : [],
-				'grid_view'    : ['module', 'name', 'descr'],
-				'easy_search'  : ['name', 'descr']
+				'default_sort' : (),
+				'grid_view'    : ('module', 'name', 'descr'),
+				'easy_search'  : ('name', 'descr')
 			}
 		}
 	)
@@ -2358,9 +2358,9 @@ class GlobalSetting(Base):
 				'menu_section' : 'Settings',
 				'menu_name'    : 'Global Settings',
 				'menu_order'   : 72,
-				'default_sort' : [],
-				'grid_view'    : ['module', 'section', 'name', 'title', 'type', 'value', 'default'],
-				'easy_search'  : ['name', 'title']
+				'default_sort' : (),
+				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'value', 'default'),
+				'easy_search'  : ('name', 'title')
 			}
 		}
 	)
@@ -2515,9 +2515,9 @@ class UserSettingType(Base):
 				'menu_section' : 'Settings',
 				'menu_name'    : 'User Setting Types',
 				'menu_order'   : 73,
-				'default_sort' : [],
-				'grid_view'    : ['module', 'section', 'name', 'title', 'type', 'default'],
-				'easy_search'  : ['name', 'title']
+				'default_sort' : (),
+				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'default'),
+				'easy_search'  : ('name', 'title')
 			}
 		}
 	)
@@ -2670,8 +2670,8 @@ class UserSetting(Base):
 				'menu_section' : 'Settings',
 				'menu_name'    : 'User Settings',
 				'menu_order'   : 74,
-				'default_sort' : [],
-				'grid_view'    : ['user', 'type', 'value']
+				'default_sort' : (),
+				'grid_view'    : ('user', 'type', 'value')
 			}
 		}
 	)
