@@ -1,3 +1,6 @@
+import importlib
+import logging
+
 from collections import OrderedDict
 
 from sqlalchemy import (
@@ -37,6 +40,11 @@ from netprofile.db.fields import (
 	UInt32,
 	UInt64
 )
+
+# USE ME!
+#from sqlalchemy.orm import (
+#	class_mapper
+#)
 
 from netprofile.db.connection import (
 	Base,
@@ -155,6 +163,8 @@ _DATE_FMT_MAP = {
 	Time      : 'H:i:s',
 	TIMESTAMP : 'c'
 }
+
+logger = logging.getLogger(__name__)
 
 def _table_to_class(tname):
 	for cname, cls in Base._decl_class_registry.items():
@@ -509,7 +519,7 @@ class ExtModel(object):
 
 	@property
 	def easy_search(self):
-		return self.model.__table__.info.get('easy_search', [])
+		return self.model.__table__.info.get('easy_search', ())
 
 	@property
 	def show_in_menu(self):
@@ -542,6 +552,10 @@ class ExtModel(object):
 	@property
 	def cap_delete(self):
 		return self.model.__table__.info.get('cap_delete')
+
+	@property
+	def detail_pane(self):
+		return self.model.__table__.info.get('detail_pane')
 
 	def get_column(self, colname):
 		cols = self.model.__table__.columns
@@ -646,7 +660,7 @@ class ExtModel(object):
 
 	def _apply_sstr(self, query, trans, params):
 		fields = self.easy_search
-		if not isinstance(fields, list):
+		if len(fields) == 0:
 			return query
 		sstr = params['__sstr']
 		cond = []
@@ -717,8 +731,8 @@ class ExtModel(object):
 		return query
 
 	def read(self, params, request):
-		print('DO READ ON %s' % self.name)
-		print(repr(params))
+		logger.info('Running ExtDirect action:%s method:%s', self.name, 'read')
+		logger.debug('Params: %r', params)
 		res = {
 			'records' : [],
 			'success' : True,
@@ -766,12 +780,12 @@ class ExtModel(object):
 		return res
 
 	def read_one(self, params, request):
-		print('DO READ ONE ON %s' % self.name)
-		print(repr(params))
+		logger.info('Running ExtDirect action:%s method:%s', self.name, 'read_one')
+		logger.debug('Params: %r', params)
 
 	def create(self, params, request):
-		print('DO CREATE ON %s' % self.name)
-		print(repr(params))
+		logger.info('Running ExtDirect action:%s method:%s', self.name, 'create')
+		logger.debug('Params: %r', params)
 		res = {
 			'records' : [],
 			'success' : True,
@@ -816,8 +830,8 @@ class ExtModel(object):
 		return res
 
 	def update(self, params, request):
-		print('DO UPDATE ON %s' % self.name)
-		print(repr(params))
+		logger.info('Running ExtDirect action:%s method:%s', self.name, 'update')
+		logger.debug('Params: %r', params)
 		res = {
 			'records' : [],
 			'success' : True,
@@ -857,8 +871,8 @@ class ExtModel(object):
 		return res
 
 	def delete(self, params, request):
-		print('DO DELETE ON %s' % self.name)
-		print(repr(params))
+		logger.info('Running ExtDirect action:%s method:%s', self.name, 'delete')
+		logger.debug('Params: %r', params)
 		res = {
 			'success' : True,
 			'total'   : 0
@@ -873,7 +887,8 @@ class ExtModel(object):
 		return res
 
 	def get_fields(self, request):
-		print('DO GET FIELDS ON %s' % self.name)
+		logger.info('Running ExtDirect action:%s method:%s', self.name, 'get_fields')
+		#logger.debug('Params: %r', params)
 		fields = []
 		for cname, col in self.get_columns().items():
 			fdef = col.get_editor_cfg(in_form=True)
@@ -892,6 +907,19 @@ class ExtModel(object):
 				'iconCls' : 'ico-mod-%s' % xname,
 				'xview'   : 'grid_%s_%s' % (self.__parent__.moddef, self.name)
 			}
+
+	def get_detail_pane(self):
+		dpview = self.detail_pane
+		if dpview is None:
+			return None
+		if len(dpview) != 2:
+			raise ValueError('Wrong detail pane specification')
+		mod = getattr(self, '_dpane', None)
+		if mod is None:
+			mod = self._dpane = importlib.import_module(dpview[0])
+		dpview = getattr(mod, dpview[1])
+		if callable(dpview):
+			return dpview(self)
 
 class ExtModuleBrowser(object):
 	def __init__(self, mmgr, moddef):

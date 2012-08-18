@@ -9,6 +9,13 @@ from netprofile.db.connection import DBSession
 from netprofile.ext.data import ExtBrowser
 
 class ModuleBase(object):
+	"""
+	Base class for NetProfile modules.
+	"""
+
+	@classmethod
+	def version(cls):
+		return (1, 0, 0)
 
 	@classmethod
 	def get_deps(cls):
@@ -58,9 +65,17 @@ class IModuleManager(Interface):
 
 @implementer(IModuleManager)
 class ModuleManager(object):
+	"""
+	NetProfile module manager. Handles discovery, (un)loading
+	and (un)installing modules.
+	"""
 
 	@classmethod
 	def prepare(cls):
+		"""
+		Perform module discovery without loading all the discovered
+		modules. Might be handy for various utility tasks.
+		"""
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
 			ep.load()
 
@@ -74,6 +89,10 @@ class ModuleManager(object):
 		self.res_css = []
 
 	def scan(self):
+		"""
+		Perform module discovery. Individual modules can't be loaded
+		without this call.
+		"""
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
 			if ep.name in self.modules:
 				continue
@@ -83,6 +102,9 @@ class ModuleManager(object):
 			self.modules[ep.name] = mod
 
 	def load(self, moddef):
+		"""
+		Load previously discovered module.
+		"""
 		if moddef in self.loaded:
 			return True
 		for depmod in self.modules[moddef].get_deps():
@@ -107,21 +129,40 @@ class ModuleManager(object):
 		return True
 
 	def unload(self, moddef):
+		"""
+		Unload currently active module.
+		"""
 		pass
 
 	def enable(self, moddef):
+		"""
+		Add a module to the list of enabled modules.
+		"""
 		pass
 
 	def disable(self, moddef):
+		"""
+		Remove a module from the list of enabled modules.
+		"""
 		pass
 
 	def load_enabled(self):
+		"""
+		Load all modules from enabled list. Must perform
+		discovery first.
+		"""
 		pass
 
 	def install(self, moddef):
+		"""
+		Run module's installation hooks and register the module in DB.
+		"""
 		pass
 
 	def uninstall(self, moddef):
+		"""
+		Unregister the module from DB and run module's uninstallation hooks.
+		"""
 		pass
 
 	def _import_model(self, moddef, model):
@@ -129,9 +170,15 @@ class ModuleManager(object):
 		self.models[moddef][model.__name__] = model
 
 	def get_module_browser(self):
+		"""
+		Get module traversal helper.
+		"""
 		return ExtBrowser(self)
 
 def includeme(config):
+	"""
+	For inclusion by Pyramid.
+	"""
 	mmgr = ModuleManager(config)
 	mmgr.scan()
 	mmgr.load('core')
