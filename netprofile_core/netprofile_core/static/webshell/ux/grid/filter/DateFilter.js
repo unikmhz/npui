@@ -224,7 +224,7 @@ Ext.define('Ext.ux.grid.filter.DateFilter', {
      * of the other fields.  Defaults to false, unchecking the
      * other fields
      */
-    setValue : function (value, preserve) {
+    setValue : function (value, preserve, susp) {
         var key;
         for (key in this.fields) {
             if(value[key]){
@@ -234,7 +234,8 @@ Ext.define('Ext.ux.grid.filter.DateFilter', {
                 this.fields[key].setChecked(false);
             }
         }
-        this.fireEvent('update', this);
+		if((susp === undefined) || !susp)
+	        this.fireEvent('update', this);
     },
 
     /**

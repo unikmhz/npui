@@ -131,9 +131,10 @@ filter : [{"type":"list","value":"small,medium","field":"size"}]
      * Template method that is to set the value of the filter.
      * @param {Object} value The value to set the filter
      */
-    setValue : function (value) {
+    setValue : function (value, susp) {
         this.menu.setSelected(value);
-        this.fireEvent('update', this);
+		if((susp === undefined) || !susp)
+	        this.fireEvent('update', this);
     },
 
     /**

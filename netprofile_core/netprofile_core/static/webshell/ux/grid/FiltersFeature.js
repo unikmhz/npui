@@ -372,7 +372,7 @@ Ext.define('Ext.ux.grid.FiltersFeature', {
                 if (state.filters.hasOwnProperty(key)) {
                     filter = me.filters.get(key);
                     if (filter) {
-                        filter.setValue(state.filters[key]);
+                        filter.setValue(state.filters[key], true);
                         filter.setActive(true);
                     }
                 }

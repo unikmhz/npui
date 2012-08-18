@@ -210,10 +210,14 @@ menuItemCfgs : {
      * Set the value of this menu and fires the 'update' event.
      * @param {Object} data The data to assign to this menu
      */	
-    setValue : function (data) {
+    setValue : function (data, susp) {
         var key;
         for (key in this.fields) {
+			if(susp)
+				this.fields[key].suspendEvents();
             this.fields[key].setValue(key in data ? data[key] : '');
+			if(susp)
+				this.fields[key].resumeEvents();
         }
         this.fireEvent('update', this);
     },

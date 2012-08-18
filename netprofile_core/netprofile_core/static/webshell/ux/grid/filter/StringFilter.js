@@ -23,6 +23,7 @@ var filters = Ext.create('Ext.ux.grid.GridFilters', {
 Ext.define('Ext.ux.grid.filter.StringFilter', {
     extend: 'Ext.ux.grid.filter.Filter',
     alias: 'gridfilter.string',
+    uses: ['Ext.form.field.Text'],
 
     /**
      * @cfg {String} iconCls
@@ -34,31 +35,6 @@ Ext.define('Ext.ux.grid.filter.StringFilter', {
     emptyText: 'Enter Filter Text...',
     selectOnFocus: true,
     width: 125,
-
-    /**
-     * @private
-     * Template method that is to initialize the filter and install required menu items.
-     */
-//~    init : function (config) {
-//~        Ext.applyIf(config, {
-//~            enableKeyEvents: true,
-//~            iconCls: this.iconCls,
-//~            hideLabel: true,
-//~            listeners: {
-//~                scope: this,
-//~                keyup: this.onInputKeyUp,
-//~                el: {
-//~                    click: function(e) {
-//~                        e.stopPropagation();
-//~                    }
-//~                }
-//~            }
-//~        });
-//~
-//~        this.inputItem = Ext.create('Ext.form.field.Text', config);
-//~        this.menu.add(this.inputItem);
-//~        this.updateTask = Ext.create('Ext.util.DelayedTask', this.fireUpdate, this);
-//~    },
 
     /**
      * @private @override
@@ -79,9 +55,6 @@ Ext.define('Ext.ux.grid.filter.StringFilter', {
      * Template method that is to get and return the value of the filter.
      * @return {String} The value of this filter
      */
-//~    getValue : function () {
-//~        return this.inputItem.getValue();
-//~    },
     getValue : function () {
         return this.menu.getValue();
     },
@@ -91,12 +64,8 @@ Ext.define('Ext.ux.grid.filter.StringFilter', {
      * Template method that is to set the value of the filter.
      * @param {Object} value The value to set the filter
      */
-//~    setValue : function (value) {
-//~        this.inputItem.setValue(value);
-//~        this.fireEvent('update', this);
-//~    },
-    setValue : function (value) {
-        this.menu.setValue(value);
+    setValue : function (value, susp) {
+        this.menu.setValue(value, susp);
     },
 
     /**
@@ -105,9 +74,6 @@ Ext.define('Ext.ux.grid.filter.StringFilter', {
      * has enough configuration information to be activated.
      * @return {Boolean}
      */
-//~    isActivatable : function () {
-//~        return this.inputItem.getValue().length > 0;
-//~    },
     isActivatable : function () {
         var values = this.getValue(),
             key;
@@ -126,9 +92,6 @@ Ext.define('Ext.ux.grid.filter.StringFilter', {
      * @return {Object/Array} An object or collection of objects containing
      * key value pairs representing the current configuration of the filter.
      */
-//~    getSerialArgs : function () {
-//~        return {type: 'string', contains: this.getValue()};
-//~    },
     getSerialArgs : function () {
         var key,
             args,
@@ -154,20 +117,5 @@ Ext.define('Ext.ux.grid.filter.StringFilter', {
         }
 
         return val.toLowerCase().indexOf(this.getValue().toLowerCase()) > -1;
-    },
-
-    /**
-     * @private
-     * Handler method called when there is a keyup event on this.inputItem
-     */
-    onInputKeyUp : function (field, e) {
-        var k = e.getKey();
-        if (k == e.RETURN && field.isValid()) {
-            e.stopEvent();
-            this.menu.hide();
-            return;
-        }
-        // restart the timer
-        this.updateTask.delay(this.updateBuffer);
     }
 });

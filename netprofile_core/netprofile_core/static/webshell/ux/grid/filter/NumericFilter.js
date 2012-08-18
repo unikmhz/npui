@@ -48,8 +48,8 @@ Ext.define('Ext.ux.grid.filter.NumericFilter', {
      * Template method that is to set the value of the filter.
      * @param {Object} value The value to set the filter
      */
-    setValue : function (value) {
-        this.menu.setValue(value);
+    setValue : function (value, susp) {
+        this.menu.setValue(value, susp);
     },
 
     /**
