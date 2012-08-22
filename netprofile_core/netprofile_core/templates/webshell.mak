@@ -21,6 +21,7 @@ Ext.require([
 	'Ext.Ajax'
 ], function()
 {
+//	NetProfile.api.Descriptor.enableBuffer = 100;
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
 	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {'X-CSRFToken': '${req.session.get_csrf_token().decode('utf-8')}'});
 	Ext.History.init();

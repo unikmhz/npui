@@ -12,6 +12,7 @@ Ext.define('NetProfile.view.Viewport', {
 		type: 'border',
 		padding: 4
 	},
+	border: 0,
 	defaults: {
 		split: true
 	},

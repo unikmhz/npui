@@ -82,16 +82,49 @@ def js_webshell(request):
 	tpldef['modules'] = mmgr.get_module_browser()
 	return tpldef
 
-def dpane_user(model):
+def dpane_simple(model):
 	cont = {
+		'border' : 0,
 		'layout' : {
 			'type'  : 'hbox',
-			'align' : 'top'
+			'align' : 'stretch'
 		},
 		'items' : [{
-			'text' : 'test 1'
+			'xtype' : 'npform',
+			'width' : '40%'
+#			'flex'  : 2
+		}]
+	}
+	return cont
+
+def dpane_user(model):
+	cont = {
+		'border' : 0,
+		'layout' : {
+			'type'  : 'hbox',
+			'align' : 'stretch'
+		},
+		'items' : [{
+			'xtype' : 'npform',
+			'flex'  : 2
 		}, {
-			'text' : 'test 2'
+			'xtype' : 'tabpanel',
+			'activeTab' : 0,
+			'flex' : 3,
+			'border' : 0,
+			'defaults' : {
+				'bodyPadding' : 4,
+				'layout' : 'anchor'
+			},
+			'items' : [{
+				'title' : 'Tab 1',
+				'border' : 0,
+				'html' : 'tab 1 cont'
+			}, {
+				'title' : 'Tab 2',
+				'border' : 0,
+				'html' : 'tab 2 cont'
+			}]
 		}]
 	}
 	return cont

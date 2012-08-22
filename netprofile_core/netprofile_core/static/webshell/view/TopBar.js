@@ -13,20 +13,7 @@ Ext.define('NetProfile.view.TopBar', {
 	height: 32,
 	style: {
 	},
-	items: [{
-		text: 'Test Form',
-		handler: function() {
-			var form = Ext.create('NetProfile.view.Form', {
-				formCls: 'User'
-			});
-			var win = Ext.create('Ext.window.Window', {
-				layout: 'fit',
-				items: [form]
-			}).show();
-			//win.add(form);
-			//win.show();
-		}
-	}, '->', {
+	items: ['->', {
 		text: 'Log out',
 		iconCls: 'ico-logout',
 		tooltip: { text: 'Log out of the application and return to login screen.', title: 'Log out' },

@@ -164,8 +164,8 @@ class NPModule(Base):
 		ASCIIString(32),
 		Comment('NetProfile module current version'),
 		nullable=False,
-		default='1.0.0',
-		server_default='1.0.0',
+		default='0.0.1',
+		server_default='0.0.1',
 		info={
 			'header_string' : 'Version'
 		}
@@ -583,7 +583,8 @@ class Group(Base):
 				'menu_order'   : 30,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'parent', 'security_policy'),
-				'easy_search'  : ('name',)
+				'easy_search'  : ('name',),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -751,7 +752,8 @@ class Privilege(Base):
 				'menu_order'   : 40,
 				'default_sort' : (),
 				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls'),
-				'easy_search'  : ('code', 'name')
+				'easy_search'  : ('code', 'name'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -999,17 +1001,20 @@ class ACL(object):
 	"""
 	Abstract prototype for resource-specific privilege assignment object.
 	"""
-	id = Column(
-		'aclid',
-		UInt32(),
-		Sequence('aclid_seq'),
-		Comment('ACL ID'),
-		primary_key=True,
-		nullable=False,
-		info={
-			'header_string' : 'ID'
-		}
-	)
+	@declared_attr
+	def id(cls):
+		return Column(
+			'aclid',
+			UInt32(),
+			Sequence('aclid_seq'),
+			Comment('ACL ID'),
+			primary_key=True,
+			nullable=False,
+			info={
+				'header_string' : 'ID'
+			}
+		)
+
 	@declared_attr
 	def privilege_id(cls):
 		return Column(
@@ -1022,24 +1027,30 @@ class ACL(object):
 				'header_string' : 'Privilege'
 			}
 		)
-	resource = Column(
-		UInt32(),
-		Comment('Resource ID'),
-		nullable=False,
-		info={
-			'header_string' : 'Resource'
-		}
-	)
-	value = Column(
-		NPBoolean(),
-		Comment('Access value'),
-		nullable=False,
-		default=True,
-		server_default=npbool(True),
-		info={
-			'header_string' : 'Value'
-		}
-	)
+
+	@declared_attr
+	def resource(cls):
+		return Column(
+			UInt32(),
+			Comment('Resource ID'),
+			nullable=False,
+			info={
+				'header_string' : 'Resource'
+			}
+		)
+
+	@declared_attr
+	def value(cls):
+		return Column(
+			NPBoolean(),
+			Comment('Access value'),
+			nullable=False,
+			default=True,
+			server_default=npbool(True),
+			info={
+				'header_string' : 'Value'
+			}
+		)
 
 	def __str__(self):
 		return '<%s(%s,%u) = %s>' % (
@@ -1193,7 +1204,8 @@ class SecurityPolicy(Base):
 				'menu_order'   : 50,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size'),
-				'easy_search'  : ('name',)
+				'easy_search'  : ('name',),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -1757,7 +1769,8 @@ class Tag(Base):
 				'menu_order'   : 60,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'descr'),
-				'easy_search'  : ('name', 'descr')
+				'easy_search'  : ('name', 'descr'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -1819,7 +1832,8 @@ class LogType(Base):
 				'menu_order'   : 81,
 				'default_sort' : (),
 				'grid_view'    : ('name',),
-				'easy_search'  : ('name',)
+				'easy_search'  : ('name',),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -1870,7 +1884,8 @@ class LogAction(Base):
 				'menu_order'   : 82,
 				'default_sort' : (),
 				'grid_view'    : ('name',),
-				'easy_search'  : ('name',)
+				'easy_search'  : ('name',),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -1920,7 +1935,8 @@ class LogData(Base):
 				'menu_order'   : 80,
 				'default_sort' : (),
 				'grid_view'    : ('ts', 'login', 'xtype', 'xaction', 'data'),
-				'easy_search'  : ('login', 'data')
+				'easy_search'  : ('login', 'data'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -2026,7 +2042,8 @@ class NPSession(Base):
 				'menu_name'    : 'UI Sessions',
 				'menu_order'   : 90,
 				'default_sort' : (),
-				'grid_view'    : ('sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr')
+				'grid_view'    : ('sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -2279,7 +2296,8 @@ class UserSettingSection(Base):
 				'menu_order'   : 71,
 				'default_sort' : (),
 				'grid_view'    : ('module', 'name', 'descr'),
-				'easy_search'  : ('name', 'descr')
+				'easy_search'  : ('name', 'descr'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -2360,7 +2378,8 @@ class GlobalSetting(Base):
 				'menu_order'   : 72,
 				'default_sort' : (),
 				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'value', 'default'),
-				'easy_search'  : ('name', 'title')
+				'easy_search'  : ('name', 'title'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -2517,7 +2536,8 @@ class UserSettingType(Base):
 				'menu_order'   : 73,
 				'default_sort' : (),
 				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'default'),
-				'easy_search'  : ('name', 'title')
+				'easy_search'  : ('name', 'title'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -2671,7 +2691,8 @@ class UserSetting(Base):
 				'menu_name'    : 'User Settings',
 				'menu_order'   : 74,
 				'default_sort' : (),
-				'grid_view'    : ('user', 'type', 'value')
+				'grid_view'    : ('user', 'type', 'value'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)

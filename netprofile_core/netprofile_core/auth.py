@@ -57,7 +57,7 @@ def find_princs(userid, request):
 	sess = DBSession()
 
 	user = request.user
-	if user.login == userid:
+	if user and (user.login == userid):
 		return []
 	try:
 		user = sess.query(User).filter(User.state == UserState.active).filter(User.enabled == True).filter(User.login == userid).one()

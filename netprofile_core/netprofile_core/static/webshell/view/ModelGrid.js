@@ -89,7 +89,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 						if(!pb)
 							return false;
 						Ext.destroy(pb.removeAll());
-						pb.setRecord(record);
+						pb.setContext(record, this.apiModule, this.apiClass);
 						if(this.detailPane)
 							pb.add(this.detailPane);
 						pb.show();

@@ -1,83 +1,104 @@
 Ext.define('NetProfile.view.Form', {
-	extend: 'Ext.Panel',
+	extend: 'Ext.form.Panel',
 	alias: 'widget.npform',
 	requires: [
+		'Ext.form.*'
 	],
-	border: false,
-	formCls: '',
-	formConfig: {
-		fields: []
+	border: 0,
+	autoScroll: true,
+	bodyPadding: 5,
+	layout: 'anchor',
+	defaults: {
+		anchor: '100%'
 	},
+	api: null,
+	formCls: null,
+	record: null,
+	fieldDefaults: {
+		labelWidth: 120,
+		labelAlign: 'right',
+		msgTarget: 'side'
+	},
+	buttons: [{
+		text: 'Reset',
+		handler: function() {
+			this.up('form').getForm().reset();
+		},
+		tooltip: { text: 'Reset form fields to original values.', title: 'Reset Form' }
+	}, {
+		text: 'Submit',
+		formBind: true,
+		disabled: true,
+		handler: function() {
+			var form = this.up('form').getForm();
+
+			if(form.isValid())
+				form.updateRecord();
+//				form.submit({
+//					success: function(form, action) {
+//						Ext.Msg.alert('Success', action.result.msg);
+//						this.fireEvent('submitsuccess', form, action);
+//					},
+//					failure: function(form, action) {
+//						Ext.Msg.alert('Failed', action.result.msg);
+//						this.fireEvent('submitfailure', form, action);
+//					},
+//					scope: this
+//				});
+		},
+		tooltip: { text: 'Validate and submit this form.', title: 'Submit Form' }
+	}],
 	initComponent: function() {
-		var config = {};
-		Ext.apply(this, Ext.apply(this.initialConfig, config));
-		NetProfile.view.Form.superclass.initComponent.apply(this, arguments);
+		this.api = this.getDirectAction();
 
-		//this.callParent();
+		this.callParent();
 
-		this.on('render', function() {
-			this.loadForm();
-		}, this);
+		this.on('beforerender', this.loadForm, this);
 
-		this.addEvents['formLoaded'];
+		this.addEvents(
+			'formloaded',
+			'formloadfailed',
+			'submitsuccess',
+			'submitfailure'
+		);
 
 	},
 	getDirectAction: function() {
-		return NetProfile.api[this.formCls];
-	},
-	loadCallback: function(data, result) {
-		//console.log('loadCallback', this, arguments);
-		//console.log(this);
-		this.removeAll();
-
-		Ext.each(this.formConfig.fields, function(item) {
-			Ext.each(data.fields, function(item2) {
-				if(item.name == item2.name) {
-					Ext.apply(item2, item);
-					return false;
-				}
-			}, this);
-			// if in data.fields, override config.items
-		}, this);
-
-		var conf = {
-			xtype: 'form',
-			api: this.getDirectAction(),
-			border: false,
-			labelWidth: 200,
-			items: data.fields,
-			buttons: [{
-				text: 'Submit',
-				scope: this,
-				handler: function() {
-					//console.log('submit form', this, arguments);
-					this.get(0).getForm().submit({
-						params: {},
-						failure: function(form, action) {
-							if(action.failureType == Ext.form.Action.SERVER_INVALID)
-								alert('form submit failure' + action.result.errors);
-							this.fireEvent('submitFailure', form, action);
-						},
-						success: function(form, action) {
-							this.fireEvent('submitSuccess', form, action);
-						},
-						scope:this
-					});
-				}
-			}]
+		var api;
+		if(!this.formCls)
+		{
+			api = Ext.getCmp('npws_propbar');
+			this.formCls = api.getApiClass();
+			this.record = api.getRecord();
 		}
-		Ext.apply(conf, this.formConfig);
-
-		// custom layout
-		//Ext.Object.merge(this,conf);
-		this.add(conf);
-		this.doLayout();
-		console.log(this);
-		console.log(conf);
-		this.fireEvent('formLoaded');
+		api = NetProfile.api[this.formCls];
+		return {
+			load:       api.read,
+			submit:     api.update,
+			get_fields: api.get_fields
+		};
 	},
 	loadForm: function() {
-		this.getDirectAction().get_fields(this.loadCallback.bind(this));
+		this.api.get_fields(this.loadCallback.bind(this));
+	},
+	loadCallback: function(data, result) {
+		Ext.destroy(this.removeAll());
+		if(!data || !data.fields)
+		{
+			this.fireEvent('formloadfailed', data, result);
+			return false;
+		}
+//		data.fields.forEach(function(item)
+//		{
+//			this.add(item);
+//		}, this);
+//		this.checkChange();
+		this.add(data.fields);
+
+		this.fireEvent('formloaded');
+
+		if(this.record)
+			this.getForm().loadRecord(this.record);
 	}
 
 });
