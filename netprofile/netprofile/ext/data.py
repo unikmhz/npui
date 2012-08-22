@@ -34,6 +34,7 @@ from netprofile.db.fields import (
 	Int32,
 	Int64,
 	IPv4Address,
+	IPv6Address,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -212,7 +213,7 @@ class ExtColumn(object):
 	@property
 	def pixels(self):
 		pix = getattr(self.column.type, 'length', 0)
-		if pix > 0:
+		if isinstance(pix, int) and (pix > 0):
 			pix *= 5
 			pix = max(pix, self.MIN_PIXELS)
 			pix = min(pix, self.MAX_PIXELS)

@@ -15,7 +15,7 @@ class ModuleBase(object):
 
 	@classmethod
 	def version(cls):
-		return (1, 0, 0)
+		return (0, 0, 1)
 
 	@classmethod
 	def get_deps(cls):

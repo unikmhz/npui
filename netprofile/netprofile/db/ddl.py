@@ -28,14 +28,13 @@ class Comment(SchemaItem):
 		self.parent = parent
 		parent.comment = self.text
 		if isinstance(parent, Table):
-			SetTableComment(parent, self.text).execute_at('after-create', parent)
-		if isinstance(parent, Column):
+			SetTableComment(parent, self.text).execute_at('after_create', parent)
+		elif isinstance(parent, Column):
 			text = self.text
 			if not parent.doc:
 				parent.doc = text
-
 			def _set_col_comment(column, meta):
-				SetColumnComment(column, text).execute_at('after-create', column.table)
+				SetColumnComment(column, text).execute_at('after_create', column.table)
 
 			event.listen(
 				parent,
