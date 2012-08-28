@@ -1,30 +1,53 @@
-body {
+body
+{
 	padding:20px;
 	padding-top:32px;
 }
 
-.x-body {
+.x-body
+{
 	font-family:helvetica,tahoma,verdana,sans-serif;
 	font-size:13px;
 }
 
-p {
+p
+{
 	margin-bottom:15px;
 }
 
-h1 {
+h1
+{
 	font-size:18px;
 	margin-bottom:20px;
 }
 
-h2 {
+h2
+{
 	font-size:14px;
 	color:#333;
 	font-weight:bold;
 	margin:10px 0;
 }
 
-.x-grid-checkheader {
+.x-action-col-icon
+{
+	display: inline-block;
+	border: 0;
+	margin-left: 1px;
+	width: 16px;
+	height: 16px;
+}
+
+.np-object-frame
+{
+	margin-top: 1em;
+	padding: 0.4em;
+	border: 1px solid #BEC9D7;
+	background-color: #DEE9F7;
+}
+
+.x-grid-checkheader
+{
 	height: 14px;
 	background-image: url('../img/unchecked.gif');
 	background-position: 50% -2px;
@@ -32,36 +55,44 @@ h2 {
 	background-color: transparent;
 }
 
-.x-grid-checkheader-checked {
+.x-grid-checkheader-checked
+{
 	background-image: url('../img/checked.gif');
 }
 
-.x-grid-checkheader-editor .x-form-cb-wrap {
+.x-grid-checkheader-editor .x-form-cb-wrap
+{
 	text-align: center;
 }
 
-.ux-filtered-column {
+.ux-filtered-column
+{
 	font-style: italic;
 	font-weight: bold;
 }
 
-.ux-gridfilter-text-icon {
+.ux-gridfilter-text-icon
+{
 	background-image: url(../img/find.png) !important;
 }
 
-.ux-rangemenu-icon {
+.ux-rangemenu-icon
+{
 	margin-top: 0;
 }
 
-.ux-rangemenu-gt {
+.ux-rangemenu-gt
+{
 	background-image: url(../img/greater_than.png) !important;
 }
 
-.ux-rangemenu-lt {
+.ux-rangemenu-lt
+{
 	background-image: url(../img/less_than.png) !important;
 }
 
-.ux-rangemenu-eq {
+.ux-rangemenu-eq
+{
 	background-image: url(../img/equals.png) !important;
 }
 

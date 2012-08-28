@@ -751,7 +751,7 @@ class Privilege(Base):
 				'menu_name'    : 'Privileges',
 				'menu_order'   : 40,
 				'default_sort' : (),
-				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls'),
+				'grid_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls'),
 				'easy_search'  : ('code', 'name'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -2015,8 +2015,8 @@ class LogData(Base):
 	def __str__(self):
 		return '%s: [%s.%s] %s' % (
 			str(self.timestamp),
-			str(self.type),
-			str(self.action),
+			str(self.xtype),
+			str(self.xaction),
 			str(self.data)
 		)
 
@@ -2135,6 +2135,9 @@ class NPSession(Base):
 		}
 	)
 
+	def __str__(self):
+		return '%s' % str(self.session_name)
+
 class PasswordHistory(Base):
 	"""
 	Users' password history entry.
@@ -2217,7 +2220,8 @@ class GlobalSettingSection(Base):
 				'menu_order'   : 70,
 				'default_sort' : (),
 				'grid_view'    : ('module', 'name', 'descr'),
-				'easy_search'  : ('name', 'descr')
+				'easy_search'  : ('name', 'descr'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -2735,4 +2739,10 @@ class UserSetting(Base):
 			'header_string' : 'Value'
 		}
 	)
+
+	def __str__(self):
+		return '%s.%s' % (
+			str(self.user),
+			str(self.type)
+		)
 

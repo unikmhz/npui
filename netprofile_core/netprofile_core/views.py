@@ -86,13 +86,18 @@ def dpane_simple(model):
 	cont = {
 		'border' : 0,
 		'layout' : {
-			'type'  : 'hbox',
-			'align' : 'stretch'
+			'type'    : 'hbox',
+			'align'   : 'stretch',
+			'padding' : 4
 		},
 		'items' : [{
 			'xtype' : 'npform',
-			'width' : '40%'
-#			'flex'  : 2
+			'flex'  : 2
+		}, {
+			'xtype' : 'splitter'
+		}, {
+			'xtype'  : 'tabpanel',
+			'flex'   : 3
 		}]
 	}
 	return cont
@@ -101,17 +106,19 @@ def dpane_user(model):
 	cont = {
 		'border' : 0,
 		'layout' : {
-			'type'  : 'hbox',
-			'align' : 'stretch'
+			'type'    : 'hbox',
+			'align'   : 'stretch',
+			'padding' : 4
 		},
 		'items' : [{
 			'xtype' : 'npform',
 			'flex'  : 2
 		}, {
+			'xtype' : 'splitter'
+		}, {
 			'xtype' : 'tabpanel',
 			'activeTab' : 0,
 			'flex' : 3,
-			'border' : 0,
 			'defaults' : {
 				'bodyPadding' : 4,
 				'layout' : 'anchor'

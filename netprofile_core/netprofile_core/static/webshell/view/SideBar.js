@@ -4,6 +4,7 @@ Ext.define('NetProfile.view.SideBar', {
 	requires: [
 		'NetProfile.store.Menu',
 		'Ext.tree.Panel',
+		'Ext.util.History',
 		'NetProfile.view.TopBar'
 	],
 	id: 'npws_sidebar',
@@ -25,6 +26,7 @@ Ext.define('NetProfile.view.SideBar', {
 
 	initComponent: function() {
 		this.lastLoaded = null;
+		this.menus = {};
 		this.items = [];
 		this.store = Ext.create('NetProfile.store.Menu');
 		this.store.each(function(menu) {
@@ -37,11 +39,14 @@ Ext.define('NetProfile.view.SideBar', {
 				rootVisible: false,
 				listeners: {
 					select: this.onMenuSelect,
-					scope: this
+					scope: this,
+					options: { menuId: mname }
 				},
 				useArrows: true,
 				border: false
 			});
+
+			this.menus[mname] = tree;
 
 			this.items.push({
 				id: 'npmenu_' + mname,
@@ -53,25 +58,73 @@ Ext.define('NetProfile.view.SideBar', {
 			});
 		}, this);
 		this.callParent(arguments);
+
+		Ext.History.init();
+
+		this.on({
+			afterrender: this.onAfterRender,
+			scope: this
+		});
 	},
 	onMenuSelect: function(row, record, idx, opts)
 	{
-		var xview = record.get('xview'),
-			mainbar = Ext.getCmp('npws_mainbar');
+		var tok_old, tok_new;
 
-		if(xview)
+		if(record.get('xview'))
 		{
-			if(this.lastLoaded)
-				Ext.destroy(mainbar.remove(this.lastLoaded));
-			this.lastLoaded = mainbar.add({
-				region: 'center',
-				xtype: xview,
-				stateId: 'np' + xview,
-				stateful: true,
-				id: 'main_content'
-			});
+			tok_new = opts.options.menuId + ':' + record.getId();
+			tok_old = Ext.History.getToken();
+			if(tok_old === null || (tok_old !== tok_new))
+				Ext.History.add(tok_new);
 		}
 
+		return true;
+	},
+	onAfterRender: function()
+	{
+		this.onHistoryChange(Ext.History.getToken());
+		Ext.History.on({
+			change: this.onHistoryChange,
+			scope: this
+		});
+	},
+	doSelectMenuItem: function(xview)
+	{
+		var mainbar = Ext.getCmp('npws_mainbar');
+
+		if(!xview)
+			return false;
+		if(this.lastLoaded)
+		{
+			Ext.destroy(mainbar.remove(this.lastLoaded));
+			this.lastLoaded = null;
+		}
+		this.lastLoaded = mainbar.add({
+			region: 'center',
+			xtype: xview,
+			stateId: 'np' + xview,
+			stateful: true,
+			id: 'main_content'
+		});
+		return true;
+	},
+	onHistoryChange: function(token) {
+		var pts, store, node;
+
+		if(token)
+		{
+			pts = token.split(':');
+			if(pts.length != 2)
+				return true;
+			store = Ext.getStore('npstore_menu_' + pts[0]);
+			if(!store)
+				return true;
+			node = store.getNodeById(pts[1]);
+			if(!node)
+				return true;
+			this.doSelectMenuItem(node.get('xview'));
+			this.menus[pts[0]].getSelectionModel().select(node);
+		}
 		return true;
 	}
 });

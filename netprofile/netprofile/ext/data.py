@@ -6,6 +6,7 @@ from collections import OrderedDict
 from sqlalchemy import (
 	BigInteger,
 	Boolean,
+	CHAR,
 	Date,
 	DateTime,
 	Float,
@@ -78,6 +79,7 @@ _FLOAT_SET = (
 _STRING_SET = (
 	ASCIIString,
 	ASCIIFixedString,
+	CHAR,
 	DeclEnumType,
 	ExactUnicode,
 	String
@@ -105,6 +107,8 @@ _COLUMN_XTYPE_MAP = {
 	Int32        : 'numbercolumn',
 	Int64        : 'numbercolumn',
 	Integer      : 'numbercolumn',
+	IPv4Address  : 'ipaddrcolumn',
+	IPv6Address  : 'ipaddrcolumn',
 	NPBoolean    : 'checkcolumn',
 	Numeric      : 'numbercolumn',
 	SmallInteger : 'numbercolumn',
@@ -150,6 +154,8 @@ _JS_TYPE_MAP = {
 	Int32        : 'int',
 	Int64        : 'int',
 	Integer      : 'int',
+	IPv4Address  : 'ipv4',
+	IPv6Address  : 'ipv6',
 	SmallInteger : 'int',
 	TIMESTAMP    : 'date',
 	UInt8        : 'int',
@@ -205,21 +211,67 @@ class ExtColumn(object):
 
 	@property
 	def length(self):
+		typecls = self.column.type.__class__
 		try:
+			if typecls is DeclEnumType:
+				xlen = 0
+				for sym in self.column.type.enum:
+					if len(sym.description) > 0:
+						xlen = len(sym.description)
+				return xlen
 			return self.column.type.length
 		except AttributeError:
+			if issubclass(typecls, Int8):
+				return 4
+			if issubclass(typecls, UInt8):
+				return 3
+			if issubclass(typecls, Int16):
+				return 6
+			if issubclass(typecls, UInt16):
+				return 5
+			if issubclass(typecls, Int32):
+				return 11
+			if issubclass(typecls, UInt32):
+				return 10
+			if issubclass(typecls, SmallInteger):
+				if getattr(self.column.type, 'unsigned', False):
+					return 6
+				return 5
+			if issubclass(typecls, Integer):
+				if getattr(self.column.type, 'unsigned', False):
+					return 11
+				return 10
 			return None
 
 	@property
 	def pixels(self):
-		pix = getattr(self.column.type, 'length', 0)
+		pix = self.length
 		if isinstance(pix, int) and (pix > 0):
-			pix *= 5
+			pix *= 6
 			pix = max(pix, self.MIN_PIXELS)
 			pix = min(pix, self.MAX_PIXELS)
 		else:
 			pix = self.DEFAULT_PIXELS
 		return pix
+
+	@property
+	def bit_length(self):
+		typecls = self.column.type.__class__
+		if issubclass(typecls, (Int8, UInt8)):
+			return 8
+		if issubclass(typecls, (Int16, UInt16, SmallInteger)):
+			return 16
+		if issubclass(typecls, (Int64, UInt64)):
+			return 64
+		if issubclass(typecls, (Int32, UInt32, Integer)):
+			return 32
+
+	@property
+	def unsigned(self):
+		typecls = self.column.type.__class__
+		if issubclass(typecls, (UInt8, UInt16, UInt32, UInt64)):
+			return True
+		return getattr(self.column.type, 'unsigned', False)
 
 	@property
 	def default(self):
@@ -248,6 +300,34 @@ class ExtColumn(object):
 		if cls in _JS_TYPE_MAP:
 			return _JS_TYPE_MAP[cls]
 		return 'string'
+
+	def _set_min_max(self, conf):
+		typecls = self.column.type.__class__
+		vmin = getattr(typecls, 'MIN_VALUE')
+		vmax = getattr(typecls, 'MAX_VALUE')
+		if vmax is None:
+			if issubclass(typecls, SmallInteger):
+				if getattr(self.column.type, 'unsigned', False):
+					vmin = UInt16.MIN_VALUE
+					vmax = UInt16.MAX_VALUE
+				else:
+					vmin = Int16.MIN_VALUE
+					vmax = Int16.MAX_VALUE
+			elif issubclass(typecls, Integer):
+				if getattr(self.column.type, 'unsigned', False):
+					vmin = UInt32.MIN_VALUE
+					vmax = UInt32.MAX_VALUE
+				else:
+					vmin = Int32.MIN_VALUE
+					vmax = Int32.MAX_VALUE
+		if vmin is not None:
+			conf['minValue'] = vmin
+			if vmin < 0:
+				conf['allowNegative'] = True
+			else:
+				conf['allowNegative'] = False
+		if vmax is not None:
+			conf['maxValue'] = vmax
 
 	@property
 	def secret_value(self):
@@ -315,12 +395,13 @@ class ExtColumn(object):
 		return ret
 
 	def get_editor_cfg(self, initval=None, in_form=False):
-		if self.column.primary_key: # add check for read-only non-pk fields
+		if (self.column.primary_key) or \
+				(len(self.column.foreign_keys) > 0): # add check for read-only non-pk fields
 			return {
-				'xtype'    : 'hidden',
-				'disabled' : True,
-				'editable' : False,
-				'name'     : self.name
+				'xtype'      : 'hidden',
+				'editable'   : False,
+				'allowBlank' : self.nullable,
+				'name'       : self.name
 			}
 		conf = {
 			'xtype'      : self.editor_xtype,
@@ -328,6 +409,9 @@ class ExtColumn(object):
 			'name'       : self.name
 		}
 		typecls = self.column.type.__class__
+		val = self.length
+		if val is not None:
+			conf['maxLength'] = val
 		val = self.default
 		if initval is not None:
 			conf['value'] = initval
@@ -338,18 +422,27 @@ class ExtColumn(object):
 			conf['emptyText'] = val
 		if issubclass(typecls, _BOOLEAN_SET):
 			conf.update({
-				'cls'  : 'x-grid-checkheader-editor'
+				'cls'    : 'x-grid-checkheader-editor',
+				'anchor' : '0%'
 			})
 			val = self.default
 			if isinstance(val, bool) and val:
 				conf['checked'] = True
 			elif initval is True:
 				conf['checked'] = True
+		elif issubclass(typecls, _INTEGER_SET):
+			conf.update({
+				'allowDecimals' : False
+			})
+			self._set_min_max(conf)
 		elif issubclass(typecls, _FLOAT_SET):
 			conf.update({
-				'style' : 'text-align:right',
-				'width' : 50
+				'allowDecimals' : True
 			})
+			if self.unsigned:
+				conf['allowNegative'] = False
+			else:
+				conf['allowNegative'] = True
 		elif typecls is DeclEnumType:
 			chx = []
 			for sym in self.column.type.enum:
@@ -372,19 +465,13 @@ class ExtColumn(object):
 					'data'   : chx
 				}
 			})
-		if len(self.column.foreign_keys) > 0:
-			fk = self.column.foreign_keys.copy().pop()
-			cls = _table_to_class(fk.column.table.name)
-			conf.update({
-				'xtype'     : 'modelselect',
-				'apiModule' : cls.__moddef__,
-				'apiClass'  : cls.__name__
-			})
 		if in_form:
 			conf['fieldLabel'] = self.header_string
 			val = self.pixels
 			if val is not None:
-				conf['width'] = val
+				conf['width'] = val + 125
+				if ('xtype' in conf) and (conf['xtype'] in ('numberfield', 'combobox')):
+					conf['width'] += 25
 		return conf
 
 	def get_reader_cfg(self):
@@ -427,6 +514,7 @@ class ExtColumn(object):
 			})
 		if issubclass(typecls, _INTEGER_SET):
 			conf.update({
+				'align'  : 'right',
 				'format' : '0'
 			})
 		if issubclass(typecls, _DATE_SET):
@@ -466,7 +554,10 @@ class ExtColumn(object):
 		return conf
 
 	def append_data(self, obj):
-		return None
+		pass
+
+	def append_field(self):
+		pass
 
 class ExtRelationshipColumn(ExtColumn):
 	def __init__(self, sqla_prop):
@@ -479,13 +570,38 @@ class ExtRelationshipColumn(ExtColumn):
 
 	def append_data(self, obj):
 		k = self.prop.key
+		data = getattr(obj, k)
+		if data is not None:
+			data = str(data)
 		return {
-			k : str(getattr(obj, k))
+			k : data
 		}
 
 	def get_column_cfg(self):
 		conf = super(ExtRelationshipColumn, self).get_column_cfg()
 		conf['dataIndex'] = self.prop.key
+		if 'align' in conf:
+			del conf['align']
+		return conf
+
+	def get_editor_cfg(self, initval=None, in_form=False):
+		conf = super(ExtRelationshipColumn, self).get_editor_cfg(initval=initval, in_form=in_form)
+		conf['name'] = self.prop.key
+		if len(self.column.foreign_keys) > 0:
+			fk = self.column.foreign_keys.copy().pop()
+			cls = _table_to_class(fk.column.table.name)
+			conf.update({
+				'xtype'       : 'modelselect',
+				'apiModule'   : cls.__moddef__,
+				'apiClass'    : cls.__name__,
+				'disabled'    : False,
+				'editable'    : False,
+				'hiddenField' : self.name
+			})
+			if in_form:
+				conf['fieldLabel'] = self.header_string
+				val = self.pixels
+				conf['width'] = self.MAX_PIXELS + 125
 		return conf
 
 	def get_reader_cfg(self):
@@ -606,6 +722,13 @@ class ExtModel(object):
 		ret = []
 		for cname, col in self.get_read_columns().items():
 			ret.append(col.get_reader_cfg())
+		ret.append({
+			'name'       : '__str__',
+			'allowBlank' : True,
+			'useNull'    : True,
+			'type'       : 'string',
+			'persist'    : False
+		})
 		return ret
 
 	def get_related_cfg(self):
@@ -675,8 +798,8 @@ class ExtModel(object):
 			query = query.filter(or_(*cond))
 		return query
 
-	def _apply_filters(self, query, trans, params):
-		flist = params['__filter']
+	def _apply_filters(self, query, trans, params, pname='__filter'):
+		flist = params[pname]
 		for fcol in flist:
 			if fcol in trans:
 				prop = trans[fcol]
@@ -749,12 +872,16 @@ class ExtModel(object):
 		sess = DBSession()
 		# Cache total?
 		q = sess.query(func.count('*')).select_from(self.model)
+		if '__ffilter' in params:
+			q = self._apply_filters(q, trans, params, pname='__ffilter')
 		if '__filter' in params:
 			q = self._apply_filters(q, trans, params)
 		if '__sstr' in params:
 			q = self._apply_sstr(q, trans, params)
 		tot = q.scalar()
 		q = sess.query(self.model)
+		if '__ffilter' in params:
+			q = self._apply_filters(q, trans, params, pname='__ffilter')
 		if '__filter' in params:
 			q = self._apply_filters(q, trans, params)
 		if '__sstr' in params:
@@ -775,6 +902,7 @@ class ExtModel(object):
 						row.update(extra)
 				else:
 					row[cname] = getattr(obj, trans[cname].key)
+			row['__str__'] = str(obj)
 			records.append(row)
 		res['records'] = records
 		res['total'] = tot
@@ -826,6 +954,7 @@ class ExtModel(object):
 						pt.update(extra)
 				else:
 					pt[cname] = getattr(obj, trans[cname].key)
+			pt['__str__'] = str(obj)
 			res['records'].append(pt)
 			res['total'] += 1
 		return res
@@ -867,6 +996,7 @@ class ExtModel(object):
 						pt.update(extra)
 				else:
 					pt[cname] = getattr(obj, trans[cname].key)
+			pt['__str__'] = str(obj)
 			res['records'].append(pt)
 			res['total'] += 1
 		return res
@@ -891,7 +1021,7 @@ class ExtModel(object):
 		logger.info('Running ExtDirect action:%s method:%s', self.name, 'get_fields')
 		#logger.debug('Params: %r', params)
 		fields = []
-		for cname, col in self.get_columns().items():
+		for cname, col in self.get_read_columns().items():
 			fdef = col.get_editor_cfg(in_form=True)
 			if fdef is not None:
 				fields.append(fdef)

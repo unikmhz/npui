@@ -9,11 +9,6 @@
   <link rel="shortcut icon" href="${req.static_url('netprofile_core:static/favicon.ico')}" />
   <link rel="stylesheet" href="${req.static_url('netprofile_core:static/extjs/resources/css/ext-all.css')}" type="text/css" />
   <link rel="stylesheet" href="${req.static_url('netprofile_core:static/css/main.css')}" type="text/css" media="screen, projection" />
-  <script type="text/javascript" src="${req.static_url('netprofile_core:static/extjs/ext-all-dev.js')}" charset="UTF-8"></script>
-  <script type="text/javascript" src="${req.static_url('netprofile_core:static/extjs/locale/ext-lang-ru.js')}" charset="UTF-8"></script>
-  <script type="text/javascript">//<![CDATA[
-	Ext.BLANK_IMAGE_URL = '${req.static_url('netprofile_core:static/extjs/resources/themes/images/default/tree/s.gif')}';
-  //]]></script>
 <%block name="head"/>
 </head>
 <body>${self.body()}</body>

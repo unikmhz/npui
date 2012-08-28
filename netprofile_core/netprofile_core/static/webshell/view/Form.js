@@ -4,7 +4,10 @@ Ext.define('NetProfile.view.Form', {
 	requires: [
 		'Ext.form.*'
 	],
-	border: 0,
+	statics: {
+		formdef: {}
+	},
+//	border: 0,
 	autoScroll: true,
 	bodyPadding: 5,
 	layout: 'anchor',
@@ -49,8 +52,6 @@ Ext.define('NetProfile.view.Form', {
 		tooltip: { text: 'Validate and submit this form.', title: 'Submit Form' }
 	}],
 	initComponent: function() {
-		this.api = this.getDirectAction();
-
 		this.callParent();
 
 		this.on('beforerender', this.loadForm, this);
@@ -61,7 +62,6 @@ Ext.define('NetProfile.view.Form', {
 			'submitsuccess',
 			'submitfailure'
 		);
-
 	},
 	getDirectAction: function() {
 		var api;
@@ -69,7 +69,7 @@ Ext.define('NetProfile.view.Form', {
 		{
 			api = Ext.getCmp('npws_propbar');
 			this.formCls = api.getApiClass();
-			this.record = api.getRecord();
+			this.record = this.up('panel').record;
 		}
 		api = NetProfile.api[this.formCls];
 		return {
@@ -79,20 +79,24 @@ Ext.define('NetProfile.view.Form', {
 		};
 	},
 	loadForm: function() {
-		this.api.get_fields(this.loadCallback.bind(this));
+		var st = this.statics();
+
+		this.api = this.getDirectAction();
+		if(st.formdef.hasOwnProperty(this.formCls))
+			this.loadCallback(st.formdef[this.formCls], null);
+		else
+			this.api.get_fields(this.loadCallback.bind(this));
 	},
 	loadCallback: function(data, result) {
-		Ext.destroy(this.removeAll());
+		var st = this.statics();
+
 		if(!data || !data.fields)
 		{
 			this.fireEvent('formloadfailed', data, result);
 			return false;
 		}
-//		data.fields.forEach(function(item)
-//		{
-//			this.add(item);
-//		}, this);
-//		this.checkChange();
+		Ext.destroy(this.removeAll());
+		st.formdef[this.formCls] = data;
 		this.add(data.fields);
 
 		this.fireEvent('formloaded');

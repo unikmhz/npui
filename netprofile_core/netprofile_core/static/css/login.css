@@ -1,0 +1,43 @@
+body, td
+{
+	vertical-align: top;
+	margin: 0;
+	padding: 0;
+	font-family: Helvetica, Tahoma, Verdana, sans-serif;
+	font-size: 10pt;
+}
+
+body
+{
+	text-align: center;
+	padding-top: 4em;
+}
+
+div#login_outer
+{
+	display: inline-block;
+	width: 20em;
+	margin: 0;
+	padding: 0.5em;
+	border: 1px solid #99BCE8;
+	background-color: #DFE9F6;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+}
+
+div.elem
+{
+	display: block;
+	text-align: left;
+}
+
+div.errmsg
+{
+}
+
+div.footer
+{
+	padding-top: 1em;
+	text-align: right;
+}
+

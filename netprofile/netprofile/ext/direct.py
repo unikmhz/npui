@@ -17,6 +17,7 @@ import venusian
 from netprofile.ext.data import ExtModel
 from netprofile.common.modules import IModuleManager
 from netprofile.common.factory import RootFactory
+from netprofile.common import ipaddr
 
 # form parameters sent by ExtDirect when using a form-submit
 # see http://www.sencha.com/products/js/direct.php
@@ -54,6 +55,8 @@ class JsonReprEncoder(json.JSONEncoder):
 			return '{0.year:04d}-{0.month:02d}-{0.day:02d}'.format(obj)
 		if isinstance(obj, dt.time):
 			return '{0.hour:02d}:{0.minute:02d}:{0.second:02d}'.format(obj)
+		if isinstance(obj, ipaddr.IPv4Address):
+			return int(obj)
 		return super(JsonReprEncoder, self).default(obj)
 
 class IExtDirectRouter(Interface):

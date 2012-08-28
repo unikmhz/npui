@@ -17,24 +17,96 @@ Ext.require([
 	'Ext.tip.*',
 	'Ext.state.*',
 	'Ext.util.Cookies',
-	'Ext.util.History',
 	'Ext.Ajax'
 ], function()
 {
 //	NetProfile.api.Descriptor.enableBuffer = 100;
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
 	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {'X-CSRFToken': '${req.session.get_csrf_token().decode('utf-8')}'});
-	Ext.History.init();
+
+	Ext.define('NetProfile.data.IPAddress', {
+		MAX_IPV4: 0xffffffff,
+		value: null,
+		getValue: function()
+		{
+			return this.value;
+		}
+	});
+
+	Ext.define('NetProfile.data.IPv4Address', {
+		extend: 'NetProfile.data.IPAddress',
+		constructor: function(val)
+		{
+			this.setValue(val);
+		},
+		setValue: function(val)
+		{
+			if(Ext.isNumeric(val))
+			{
+			}
+			else
+			{
+				val = this.parseTextual(val);
+			}
+			this.value = val;
+			return this;
+		},
+		parseTextual: function(val)
+		{
+			var oct, ip, i;
+
+			if(!val.match(/^[0-9.]*$/))
+				throw 'Invalid IPv4 address: ' + val;
+			oct = val.split('.');
+			if(oct.length !== 4)
+				throw 'Invalid IPv4 address: ' + val;
+			ip = 0;
+			for(i = 0; i < oct.length; i++)
+			{
+				var ioct = parseInt(oct[i]);
+				if(isNaN(ioct) || (ioct < 0) || (ioct > 255) ||
+						((oct[i].length > 1) && (oct[i].slice(0, 1) == '0')))
+					throw 'Invalid octet ' + (i + 1) + ' in IPv4 address: ' + val;
+				ip = (ip | ioct) >>> 0;
+				if(i < 3)
+					ip = (ip << 8) >>> 0;
+			}
+			return ip;
+		},
+		toOctets: function()
+		{
+			var oct, v, i;
+
+			oct = [0, 0, 0, 0];
+			v = this.value;
+
+			for(i = 3; i >= 0; i--)
+			{
+				oct[i] = String((v & 0xff));
+				v = v >>> 8;
+			}
+			return oct;
+		},
+		toString: function()
+		{
+			return this.toOctets().join('.');
+		}
+	});
+
+	Ext.define('NetProfile.data.IPv6Address', {
+		extend: 'NetProfile.data.IPAddress',
+	});
 
 	Ext.data.Types.IPV4 = {
 		type: 'ipv4',
 		convert: function(value, record) {
 			if(value === null)
 				return null;
-			return value;
+			return new NetProfile.data.IPv4Address(value);
 		},
 		sortType: function(t)
 		{
+			return t.value;
 		}
 	};
 	Ext.data.Types.IPV6 = {
@@ -42,7 +114,7 @@ Ext.require([
 		convert: function(value, record) {
 			if(value === null)
 				return null;
-			return value;
+			return new NetProfile.data.IPv6Address(value);
 		},
 		sortType: function(t)
 		{
@@ -111,6 +183,38 @@ Ext.require([
 % for module in modules:
 % for model in modules[module]:
 <% mod = modules[module][model] %>
+	Ext.define('NetProfile.proxy.${module}.${model}', {
+		extend: 'Ext.data.proxy.Direct',
+		alias: 'proxy.${module}_${model}',
+		api: {
+			create:  NetProfile.api.${model}.create,
+			read:    NetProfile.api.${model}.read,
+			update:  NetProfile.api.${model}.update,
+			destroy: NetProfile.api.${model}.delete
+		},
+		simpleSortMode: false,
+		filterParam: '__filter',
+		sortParam: '__sort',
+		startParam: '__start',
+		limitParam: '__limit',
+		pageParam: '__page',
+		groupParam: '__group',
+		reader: {
+			type: 'json',
+			idProperty: '${mod.pk}',
+			messageProperty: 'message',
+			root: 'records',
+			successProperty: 'success',
+			totalProperty: 'total'
+		},
+		writer: {
+			type: 'json',
+			root: 'records',
+			writeAllFields: false,
+			allowSingle: false
+		}
+	});
+
 	Ext.define('NetProfile.model.${module}.${model}', {
 		extend: 'Ext.data.Model',
 		fields: ${mod.get_reader_cfg() | n,jsone},
@@ -118,34 +222,7 @@ Ext.require([
 		idProperty: '${mod.pk}',
 		clientIdProperty: '_clid',
 		proxy: {
-			type: 'direct',
-			api: {
-				create:  NetProfile.api.${model}.create,
-				read:    NetProfile.api.${model}.read,
-				update:  NetProfile.api.${model}.update,
-				destroy: NetProfile.api.${model}.delete
-			},
-			simpleSortMode: false,
-			filterParam: '__filter',
-			sortParam: '__sort',
-			startParam: '__start',
-			limitParam: '__limit',
-			pageParam: '__page',
-			groupParam: '__group',
-			reader: {
-				type: 'json',
-				idProperty: '${mod.pk}',
-				messageProperty: 'message',
-				root: 'records',
-				successProperty: 'success',
-				totalProperty: 'total'
-			},
-			writer: {
-				type: 'json',
-				root: 'records',
-				writeAllFields: false,
-				allowSingle: false
-			}
+			type: '${module}_${model}'
 		}
 	});
 
