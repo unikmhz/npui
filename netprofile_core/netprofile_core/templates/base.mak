@@ -1,4 +1,4 @@
-<%namespace name="np" file="netprofile_core:templates/np.mak"/><!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ru">
 <head>
   <meta charset="UTF-8">

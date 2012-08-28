@@ -27,6 +27,9 @@ Ext.define('NetProfile.view.ModelGrid', {
 	apiModule: null,
 	apiClass: null,
 	detailPane: null,
+	canCreate: false,
+	canEdit: false,
+	canDelete: false,
 	border: 0,
 	emptyText: 'Sorry, but no items were found.',
 	dockedItems: [],
@@ -36,6 +39,14 @@ Ext.define('NetProfile.view.ModelGrid', {
 		plugins: []
 	},
 	initComponent: function() {
+		if(this.selectRow)
+		{
+			this.canCreate = false;
+			this.canEdit = false;
+			this.canDelete = false;
+		}
+		if(!this.canEdit)
+			this.rowEditing = false;
 		this.features = [{
 			ftype: 'filters',
 			multi: true,
@@ -49,35 +60,33 @@ Ext.define('NetProfile.view.ModelGrid', {
 				encode: false,
 				local: false
 			});
-		this.dockedItems = [{
-			xtype: 'toolbar',
-			dock: 'top',
-			itemId: 'toolTop',
-			items: [{
-				text: 'Search',
-				tooltip: { text: 'Additional search filters.', title: 'Search' },
-				iconCls: 'ico-find',
-				handler: function() {
-					return true;
-				},
-				scope: this
-			}, {
-				text: 'Clear',
-				tooltip: { text: 'Clear filtering and sorting.', title: 'Clear' },
-				iconCls: 'ico-clear',
-				handler: function() {
-					store = this.getStore();
-					if(this.filters)
-						this.filters.clearFilters(true);
-					if(this.ssearch)
-						this.ssearch.clearValue(true);
-					store.sorters.clear();
-					this.saveState();
-					store.loadPage(1);
-					return true;
-				},
-				scope: this
-			}, {
+		var tbitems = [{
+			text: 'Search',
+			tooltip: { text: 'Additional search filters.', title: 'Search' },
+			iconCls: 'ico-find',
+			handler: function() {
+				return true;
+			},
+			scope: this
+		}, {
+			text: 'Clear',
+			tooltip: { text: 'Clear filtering and sorting.', title: 'Clear' },
+			iconCls: 'ico-clear',
+			handler: function() {
+				store = this.getStore();
+				if(this.filters)
+					this.filters.clearFilters(true);
+				if(this.ssearch)
+					this.ssearch.clearValue(true);
+				store.sorters.clear();
+				this.saveState();
+				store.loadPage(1);
+				return true;
+			},
+			scope: this
+		}];
+		if(this.canCreate)
+			tbitems.push({
 				text: 'Add',
 				tooltip: { text: 'Add new object.', title: 'Add' },
 				iconCls: 'ico-add',
@@ -85,7 +94,12 @@ Ext.define('NetProfile.view.ModelGrid', {
 					return true;
 				},
 				scope: this
-			}]
+			});
+		this.dockedItems = [{
+			xtype: 'toolbar',
+			dock: 'top',
+			itemId: 'toolTop',
+			items: tbitems
 		}];
 		if(this.actionCol)
 		{
@@ -104,26 +118,28 @@ Ext.define('NetProfile.view.ModelGrid', {
 						return this.selectRecord(record);
 					},
 					scope: this
-				}, {
-					iconCls: 'ico-delete',
-					tooltip: 'Delete object',
-					handler: function(grid, rowidx, colidx, item, e, record)
-					{
-						if(this.store)
-							Ext.MessageBox.confirm(
-								'Delete object',
-								'Are you sure you want to delete this object?<div class="np-object-frame">' + record.get('__str__') + '</div>',
-								function(btn)
-								{
-									if(btn === 'yes')
-										this.store.remove(record);
-									return true;
-								}.bind(this)
-							);
-						return true;
-					},
-					scope: this
 				}];
+				if(this.canDelete)
+					i.push({
+						iconCls: 'ico-delete',
+						tooltip: 'Delete object',
+						handler: function(grid, rowidx, colidx, item, e, record)
+						{
+							if(this.store)
+								Ext.MessageBox.confirm(
+									'Delete object',
+									'Are you sure you want to delete this object?<div class="np-object-frame">' + record.get('__str__') + '</div>',
+									function(btn)
+									{
+										if(btn === 'yes')
+											this.store.remove(record);
+										return true;
+									}.bind(this)
+								);
+							return true;
+						},
+						scope: this
+					});
 				if(i.length > 0)
 					this.columns.push({
 						xtype: 'actioncolumn',

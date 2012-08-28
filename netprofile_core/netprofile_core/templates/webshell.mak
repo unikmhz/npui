@@ -2,8 +2,8 @@
 
 from netprofile.tpl.filters import jsone
 
-%>
-
+%>\
+<%namespace name="np" file="netprofile_core:templates/np.mak" />\
 Ext.Loader.setConfig({enabled: true});
 
 Ext.Loader.setPath({
@@ -249,7 +249,10 @@ Ext.require([
 		stateId: 'npgrid_${module}_${model}',
 		stateful: true,
 		simpleSearch: ${'true' if mod.easy_search else 'false'},
-		detailPane: ${mod.get_detail_pane() | n,jsone}
+		detailPane: ${mod.get_detail_pane() | n,jsone},
+		canCreate: <%np:jscap code="${mod.cap_create}" />,
+		canEdit: <%np:jscap code="${mod.cap_edit}" />,
+		canDelete: <%np:jscap code="${mod.cap_delete}" />
 	});
 % endfor
 % endfor
