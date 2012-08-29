@@ -41,10 +41,10 @@ class ModuleBase(object):
 	def get_menus(self):
 		return []
 
-	def get_js(self):
+	def get_js(self, request):
 		return []
 
-	def get_css(self):
+	def get_css(self, request):
 		return []
 
 	def load(self):
@@ -85,8 +85,6 @@ class ModuleManager(object):
 		self.loaded = {}
 		self.models = {}
 		self.menus = {}
-		self.res_js = []
-		self.res_css = []
 
 	def scan(self):
 		"""
@@ -124,8 +122,6 @@ class ModuleManager(object):
 			self._import_model(moddef, model)
 		for menu in mod.get_menus():
 			self.menus[menu.name] = menu
-		self.res_js.extend(mod.get_js())
-		self.res_css.extend(mod.get_css())
 		return True
 
 	def unload(self, moddef):
@@ -174,6 +170,24 @@ class ModuleManager(object):
 		Get module traversal helper.
 		"""
 		return ExtBrowser(self)
+
+	def get_js(self, request):
+		"""
+		Get a list of required JS file resources.
+		"""
+		l = []
+		for moddef, mod in self.loaded.items():
+			l.extend(mod.get_js(request))
+		return l
+
+	def get_css(self, request):
+		"""
+		Get a list of required CSS file resources.
+		"""
+		l = []
+		for moddef, mod in self.loaded.items():
+			l.extend(mod.get_css(request))
+		return l
 
 def includeme(config):
 	"""

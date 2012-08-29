@@ -1025,7 +1025,10 @@ class ExtModel(object):
 			fdef = col.get_editor_cfg(in_form=True)
 			if fdef is not None:
 				fields.append(fdef)
-		return { 'fields' : fields }
+		return {
+			'success' : True,
+			'fields'  : fields
+		}
 
 	def get_menu_tree(self, name):
 		if self.show_in_menu == name:
@@ -1098,7 +1101,7 @@ class ExtBrowser(object):
 		return modbr
 
 	def __iter__(self):
-		return iter(self.mmgr.modules)
+		return iter(self.mmgr.loaded)
 
 	def get_menu_data(self):
 		return sorted(self.mmgr.menus.values(), key=lambda m: m.order)
