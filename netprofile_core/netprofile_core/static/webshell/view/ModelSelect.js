@@ -9,8 +9,9 @@ Ext.define('NetProfile.view.ModelSelect', {
 	hiddenField: null,
 	trigger1Cls: 'x-form-clear-trigger',
 	trigger2Cls: ' ',
-//	hideTrigger1: true,
-//	hideTrigger2: false,
+
+	chooseText: 'Choose an object',
+
 	initComponent: function() {
 		if(!this.allowBlank)
 		{
@@ -36,7 +37,7 @@ Ext.define('NetProfile.view.ModelSelect', {
 			layout: 'fit',
 			minWidth: 500,
 			maxHeight: 650,
-			title: 'Choose an object'
+			title: this.chooseText
 		});
 
 		var sel_grid_class = 'NetProfile.view.grid.'

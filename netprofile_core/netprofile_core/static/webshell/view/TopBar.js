@@ -13,15 +13,19 @@ Ext.define('NetProfile.view.TopBar', {
 	height: 32,
 	style: {
 	},
-	items: ['->', {
-		text: 'Log out',
-		iconCls: 'ico-logout',
-		tooltip: { text: 'Log out of the application and return to login screen.', title: 'Log out' },
-		handler: function() {
-			location.href = '/logout';
-		}
-	}],
+
+	logoutText: 'Log out',
+	logoutTipText: 'Log out of the application and return to login screen.',
+
 	initComponent: function() {
+		this.items = ['->', {
+			text: this.logoutText,
+			iconCls: 'ico-logout',
+			tooltip: { text: this.logoutTipText, title: this.logoutText },
+			handler: function() {
+				location.href = '/logout';
+			}
+		}];
 		this.callParent(arguments);
 	},
 });

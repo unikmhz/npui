@@ -2,6 +2,7 @@
 <%block name="head">
   <script type="text/javascript" src="${req.static_url('netprofile_core:static/extjs/ext-all-dev.js')}" charset="UTF-8"></script>
   <script type="text/javascript" src="${req.static_url('netprofile_core:static/extjs/locale/ext-lang-ru.js')}" charset="UTF-8"></script>
+  <script type="text/javascript" src="${req.static_url('netprofile_core:static/webshell/locale/webshell-lang-ru.js')}" charset="UTF-8"></script>
   <script type="text/javascript">//<![CDATA[
 	Ext.BLANK_IMAGE_URL = '${req.static_url('netprofile_core:static/extjs/resources/themes/images/default/tree/s.gif')}';
   //]]></script>

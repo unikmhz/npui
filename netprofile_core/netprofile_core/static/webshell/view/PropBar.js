@@ -22,6 +22,8 @@ Ext.define('NetProfile.view.PropBar', {
 	],
 	tools: [],
 
+	recordText: 'Record',
+
 	initComponent: function() {
 		this.tabCache = {};
 		this.tools = [{
@@ -103,7 +105,7 @@ Ext.define('NetProfile.view.PropBar', {
 		{
 			rec_name = record.get('__str__');
 			if(!rec_name)
-				rec_name = 'Record ' + rec_id;
+				rec_name = this.recordText + ' ' + rec_id;
 			Ext.apply(cfg, {
 				title: rec_name,
 				record: record,

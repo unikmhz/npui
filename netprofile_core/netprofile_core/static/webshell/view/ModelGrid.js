@@ -31,7 +31,19 @@ Ext.define('NetProfile.view.ModelGrid', {
 	canEdit: false,
 	canDelete: false,
 	border: 0,
+
 	emptyText: 'Sorry, but no items were found.',
+	searchText: 'Search',
+	searchTipText: 'Additional search filters.',
+	clearText: 'Clear',
+	clearTipText: 'Clear filtering and sorting.',
+	addText: 'Add',
+	addTipText: 'Add new object.',
+	propTipText: 'Display object properties',
+	deleteTipText: 'Delete object',
+	deleteMsgText: 'Are you sure you want to delete this object?',
+	actionTipText: 'Object actions',
+
 	dockedItems: [],
 	plugins: [],
 	viewConfig: {
@@ -61,16 +73,16 @@ Ext.define('NetProfile.view.ModelGrid', {
 				local: false
 			});
 		var tbitems = [{
-			text: 'Search',
-			tooltip: { text: 'Additional search filters.', title: 'Search' },
+			text: this.searchText,
+			tooltip: { text: this.searchTipText, title: this.searchText },
 			iconCls: 'ico-find',
 			handler: function() {
 				return true;
 			},
 			scope: this
 		}, {
-			text: 'Clear',
-			tooltip: { text: 'Clear filtering and sorting.', title: 'Clear' },
+			text: this.clearText,
+			tooltip: { text: this.clearTipText, title: this.clearText },
 			iconCls: 'ico-clear',
 			handler: function() {
 				store = this.getStore();
@@ -87,8 +99,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 		}];
 		if(this.canCreate)
 			tbitems.push({
-				text: 'Add',
-				tooltip: { text: 'Add new object.', title: 'Add' },
+				text: this.addText,
+				tooltip: { text: this.addTipText, title: this.addText },
 				iconCls: 'ico-add',
 				handler: function() {
 					return true;
@@ -112,7 +124,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 			{
 				var i = [{
 					iconCls: 'ico-props',
-					tooltip: 'Display object properties',
+					tooltip: this.propTipText,
 					handler: function(grid, rowidx, colidx, item, e, record)
 					{
 						return this.selectRecord(record);
@@ -122,13 +134,13 @@ Ext.define('NetProfile.view.ModelGrid', {
 				if(this.canDelete)
 					i.push({
 						iconCls: 'ico-delete',
-						tooltip: 'Delete object',
+						tooltip: this.deleteTipText,
 						handler: function(grid, rowidx, colidx, item, e, record)
 						{
 							if(this.store)
 								Ext.MessageBox.confirm(
-									'Delete object',
-									'Are you sure you want to delete this object?<div class="np-object-frame">' + record.get('__str__') + '</div>',
+									this.deleteTipText,
+									this.deleteMsgText + '<div class="np-object-frame">' + record.get('__str__') + '</div>',
 									function(btn)
 									{
 										if(btn === 'yes')
@@ -148,7 +160,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 						sortable: false,
 						resizable: false,
 						menuDisabled: true,
-						tooltip: 'Object actions'
+						tooltip: this.actionTipText
 					});
 			}
 		}
