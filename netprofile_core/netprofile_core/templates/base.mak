@@ -7,8 +7,12 @@
   <meta name="description" content="NetProfile administrative UI" />
   <title>NetProfile :: <%block name="title">Home</%block></title>
   <link rel="shortcut icon" href="${req.static_url('netprofile_core:static/favicon.ico')}" />
-  <link rel="stylesheet" href="${req.static_url('netprofile_core:static/extjs/resources/css/ext-all.css')}" type="text/css" />
-  <link rel="stylesheet" href="${req.static_url('netprofile_core:static/css/main.css')}" type="text/css" media="screen, projection" />
+% for i_css in res_css:
+  <link rel="stylesheet" href="${req.static_url(i_css)}" type="text/css" media="screen, projection" />
+% endfor
+% for i_js in res_js:
+  <script type="text/javascript" src="${req.static_url(i_js)}" charset="UTF-8"></script>
+% endfor
 <%block name="head"/>
 </head>
 <body>${self.body()}</body>

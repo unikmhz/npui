@@ -165,10 +165,11 @@ Ext.require([
 		extend: 'Ext.data.Store',
 		requires: 'NetProfile.model.Menu',
 		model: 'NetProfile.model.Menu',
-		data: ${modules.get_menu_data() | n,jsone},
+		data: ${modules.get_menu_data(req) | n,jsone},
 		storeId: 'npstore_menu'
 	});
-% for menu in modules.get_menu_data():
+% for menu in modules.get_menu_data(req):
+<%np:limit cap="${menu.perm}">
 	Ext.define('NetProfile.store.menu.${menu.name}', {
 		extend: 'Ext.data.TreeStore',
 		requires: 'NetProfile.model.MenuItem',
@@ -179,6 +180,7 @@ Ext.require([
 		},
 		storeId: 'npstore_menu_${menu.name}'
 	});
+</%np:limit>
 % endfor
 % for module in modules:
 % for model in modules[module]:

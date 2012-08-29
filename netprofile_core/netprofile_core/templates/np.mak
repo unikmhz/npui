@@ -14,3 +14,9 @@ false\
 % endif
 </%def>
 
+<%def name="limit(cap=None,xcap=None)">\
+% if ((cap is None) or ((cap is not None) and has_permission(cap, req.context, req))) and ((xcap is None) or ((xcap is not None) and (not has_permission(xcap, req.context, req)))):
+${caller.body()}
+% endif
+</%def>
+

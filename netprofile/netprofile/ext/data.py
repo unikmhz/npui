@@ -53,12 +53,7 @@ from netprofile.db.connection import (
 	DBSession
 )
 
-from pyramid.security import (
-	Allow,
-	Deny,
-	Everyone,
-	Authenticated
-)
+from pyramid.security import has_permission
 
 _INTEGER_SET = (
 	Int8,
@@ -1103,8 +1098,13 @@ class ExtBrowser(object):
 	def __iter__(self):
 		return iter(self.mmgr.loaded)
 
-	def get_menu_data(self):
-		return sorted(self.mmgr.menus.values(), key=lambda m: m.order)
+	def get_menu_data(self, request):
+		ret = []
+		for mname, menu in self.mmgr.menus.items():
+			if menu.perm and (not has_permission(menu.perm, request.context, request)):
+				continue
+			ret.append(menu)
+		return sorted(ret, key=lambda m: m.order)
 
 	def get_menu_tree(self, name):
 		if name not in self.mmgr.menus:

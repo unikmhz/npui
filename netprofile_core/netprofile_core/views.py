@@ -26,7 +26,12 @@ from .models import (
 
 @view_config(route_name='core.home', renderer='netprofile_core:templates/home.mak', permission='USAGE')
 def home_screen(request):
-	return {}
+	mmgr = request.registry.getUtility(IModuleManager)
+	tpldef = {
+		'res_css' : mmgr.get_css(request),
+		'res_js'  : mmgr.get_js(request)
+	}
+	return tpldef
 
 @forbidden_view_config()
 def do_forbidden(request):

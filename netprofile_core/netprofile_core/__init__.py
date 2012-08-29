@@ -47,10 +47,17 @@ class Module(ModuleBase):
 			Menu('admin', title='Administration', order=30, permission='BASE_ADMIN')
 		]
 
-	def get_css(self):
+	def get_js(self, request):
 		return [
-			'netprofile.modules.core:static/extjs/resources/css/ext-all.css',
-			'netprofile.modules.core:static/css/main.css'
+			'netprofile_core:static/extjs/ext-all-dev.js',
+			'netprofile_core:static/extjs/locale/ext-lang-ru.js',
+			'netprofile_core:static/webshell/locale/webshell-lang-ru.js'
+		]
+
+	def get_css(self, request):
+		return [
+			'netprofile_core:static/extjs/resources/css/ext-all.css',
+			'netprofile_core:static/css/main.css'
 		]
 
 	@property
