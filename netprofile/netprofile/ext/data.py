@@ -1,5 +1,6 @@
 import importlib
 import logging
+import colander
 
 from collections import OrderedDict
 
@@ -9,11 +10,13 @@ from sqlalchemy import (
 	CHAR,
 	Date,
 	DateTime,
+	Enum,
 	Float,
 	Integer,
 	LargeBinary,
 	Numeric,
 	PickleType,
+	Sequence,
 	SmallInteger,
 	String,
 	Text,
@@ -24,6 +27,8 @@ from sqlalchemy import (
 	func,
 	or_
 )
+
+from sqlalchemy.types import TypeEngine
 
 from netprofile.db.fields import (
 	ASCIIString,
@@ -96,6 +101,7 @@ _COLUMN_XTYPE_MAP = {
 	BigInteger   : 'numbercolumn',
 	Boolean      : 'checkcolumn',
 	DeclEnumType : 'enumcolumn',
+	Enum         : 'enumcolumn',
 	Float        : 'numbercolumn',
 	Int8         : 'numbercolumn',
 	Int16        : 'numbercolumn',
@@ -120,6 +126,7 @@ _EDITOR_XTYPE_MAP = {
 	Date         : 'datefield',
 	DateTime     : 'datefield',
 	DeclEnumType : 'combobox',
+	Enum         : 'combobox',
 	Float        : 'numberfield',
 	Int8         : 'numberfield',
 	Int16        : 'numberfield',
@@ -164,6 +171,12 @@ _DATE_FMT_MAP = {
 	DateTime  : 'c',
 	Time      : 'H:i:s',
 	TIMESTAMP : 'c'
+}
+
+_COLANDER_TYPE_MAP = {
+	NPBoolean   : colander.Boolean,
+	IPv4Address : colander.Integer,
+	IPv6Address : colander.String # ?
 }
 
 logger = logging.getLogger(__name__)
@@ -271,7 +284,9 @@ class ExtColumn(object):
 	@property
 	def default(self):
 		dv = getattr(self.column, 'default', None)
-		if dv is not None:
+		if (dv is not None) and (not isinstance(dv, Sequence)):
+			if dv.is_callable:
+				return dv.arg(None)
 			return dv.arg
 		return None
 
@@ -295,6 +310,32 @@ class ExtColumn(object):
 		if cls in _JS_TYPE_MAP:
 			return _JS_TYPE_MAP[cls]
 		return 'string'
+
+	@property
+	def colander_type(self):
+		cls = self.column.type.__class__
+		ccls = colander.String
+		if hasattr(self.column.type, 'impl'):
+			cls = self.column.type.impl
+			if isinstance(cls, TypeEngine):
+				cls = cls.__class__
+		if cls in _COLANDER_TYPE_MAP:
+			ccls = _COLANDER_TYPE_MAP[cls]
+		elif issubclass(cls, Boolean):
+			ccls = colander.Boolean
+		elif issubclass(cls, Date):
+			ccls = colander.Date
+		elif issubclass(cls, DateTime):
+			ccls = colander.DateTime
+		elif issubclass(cls, Float):
+			ccls = colander.Float
+		elif issubclass(cls, Integer):
+			ccls = colander.Integer
+		elif issubclass(cls, Numeric):
+			ccls = colander.Decimal
+		elif issubclass(cls, Time):
+			ccls = colander.Time
+		return ccls()
 
 	def _set_min_max(self, conf):
 		typecls = self.column.type.__class__
@@ -345,6 +386,77 @@ class ExtColumn(object):
 		if typecls is DeclEnumType:
 			return self.column.type.enum.from_string(param.strip())
 		return param
+
+	def get_colander_schema(self, nullable=None):
+		ctype = self.colander_type
+		params = {}
+		children = []
+
+		default = self.default
+		if nullable is None:
+			nullable = self.nullable
+		elif nullable:
+			default = None
+
+		if default is None:
+			params['default'] = colander.null
+		else:
+			params['default'] = default
+
+		if not nullable:
+			params['missing'] = colander.required
+		elif 'default' in params:
+			params['missing'] = params['default']
+		elif self.default is None:
+			params['missing'] = None
+
+		# ADD CHILDREN HERE
+
+		valid = self.get_colander_validations()
+		if len(valid) > 1:
+			valid = colander.All(*valid)
+		elif valid:
+			valid = valid[0]
+		else:
+			valid = None
+		params['validator'] = valid
+
+		params['name'] = self.name
+
+		return colander.SchemaNode(ctype, *children, **params)
+
+	def get_colander_validations(self):
+		typecls = self.column.type.__class__
+		ret = []
+		if issubclass(typecls, _INTEGER_SET):
+			vmin = getattr(typecls, 'MIN_VALUE')
+			vmax = getattr(typecls, 'MAX_VALUE')
+			if vmax is None:
+				if issubclass(typecls, SmallInteger):
+					if getattr(self.column.type, 'unsigned', False):
+						vmin = UInt16.MIN_VALUE
+						vmax = UInt16.MAX_VALUE
+					else:
+						vmin = Int16.MIN_VALUE
+						vmax = Int16.MAX_VALUE
+				elif issubclass(typecls, Integer):
+					if getattr(self.column.type, 'unsigned', False):
+						vmin = UInt32.MIN_VALUE
+						vmax = UInt32.MAX_VALUE
+					else:
+						vmin = Int32.MIN_VALUE
+						vmax = Int32.MAX_VALUE
+			if (vmin is not None) or (vmax is not None):
+				ret.append(colander.Range(min=vmin, max=vmax))
+		if issubclass(typecls, _STRING_SET):
+			vmin = None
+			vmax = self.length
+			if not self.nullable:
+				vmin = 1
+			ret.append(colander.Length(min=vmin, max=vmax))
+		if typecls is DeclEnumType:
+			ret.append(colander.OneOf(self.column.type.enum.values()))
+		return ret
 
 	def get_model_validations(self):
 		typecls = self.column.type.__class__
@@ -1049,6 +1161,21 @@ class ExtModel(object):
 		dpview = getattr(mod, dpview[1])
 		if callable(dpview):
 			return dpview(self)
+
+	def get_colander_schema(self, excludes=(), includes=(), nullables={}, unknown='raise'):
+		params = {
+			'name' : self.name,
+			'description' : getattr(self.model.__table__, 'comment', '')
+		}
+		schema = colander.SchemaNode(colander.Mapping(unknown), **params)
+		for cname, col in self.get_read_columns().items():
+			if cname in excludes:
+				continue
+			if includes and (cname not in includes):
+				continue
+			node = col.get_colander_schema(nullable=nullables.get(cname))
+			schema.add(node)
+		return schema
 
 class ExtModuleBrowser(object):
 	def __init__(self, mmgr, moddef):
