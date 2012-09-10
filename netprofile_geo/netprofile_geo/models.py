@@ -4,47 +4,27 @@ __all__ = [
 	'Street',
 	'House',
 	'Place',
-	'HGroup'
+	'HouseGroup',
+	'HouseGroupMapping'
 ]
 
 from sqlalchemy import (
-	Boolean,
-	CHAR,
 	Column,
-	DefaultClause,
-	FetchedValue,
 	ForeignKey,
 	Index,
-	Integer,
-	LargeBinary,
-	PickleType,
 	Sequence,
-	TIMESTAMP,
 	Unicode,
 	UnicodeText,
-	func,
 	text
 )
 
 from sqlalchemy.orm import (
 	backref,
-	deferred,
 	relationship
-)
-
-from sqlalchemy.ext.declarative import (
-	declarative_base,
-	declared_attr
 )
 
 from sqlalchemy.ext.associationproxy import (
 	association_proxy
-)
-from sqlalchemy.ext.hybrid import (
-	hybrid_property
-)
-from sqlalchemy.orm.collections import (
-	attribute_mapped_collection
 )
 
 #from colanderalchemy import (
@@ -52,25 +32,13 @@ from sqlalchemy.orm.collections import (
 #	relationship
 #)
 
-from netprofile.common.phpserialize import HybridPickler
-from netprofile.db.connection import DBSession, Base
+from netprofile.db.connection import Base
 from netprofile.db.fields import (
-	ASCIIFixedString,
-	ASCIIString,
-	DeclEnum,
-	ExactUnicode,
-	IPv4Address,
-	IPv6Address,
-	NPBoolean,
 	UInt8,
 	UInt16,
-	Int16,
-	UInt32,
-	npbool
+	UInt32
 )
 from netprofile.db.ddl import Comment
-
-import hashlib
 
 class City(Base):
 	"""
@@ -79,7 +47,7 @@ class City(Base):
 	__tablename__ = 'addr_cities'
 	__table_args__ = (
 		Comment('Cities'),
-		Index('u_name', 'name', unique=True),
+		Index('addr_cities_u_name', 'name', unique=True),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -122,7 +90,7 @@ class City(Base):
 	)
 	prefix = Column(
 		Unicode(32),
-		Comment('Contract Prefix'),
+		Comment('Contract prefix'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -130,9 +98,12 @@ class City(Base):
 			'header_string' : 'Prefix'
 		}
 	)
+
 	districts = relationship(
 		'District',
-		backref=backref('city', innerjoin=True)
+		backref=backref('city', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
 
 	def __str__(self):
@@ -145,8 +116,8 @@ class District(Base):
 	__tablename__ = 'addr_districts'
 	__table_args__ = (
 		Comment('Districts'),
-		Index('district_u_name', 'name', unique=True),
-		Index('i_cityid', 'cityid', unique=False),
+		Index('addr_districts_u_name', 'name', unique=True),
+		Index('addr_districts_i_cityid', 'cityid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -161,7 +132,7 @@ class District(Base):
 				'menu_name'    : 'Districts',
 				'menu_order'   : 50,
 				'default_sort' : (),
-				'grid_view'    : ('name', 'city', 'prefix'),
+				'grid_view'    : ('city', 'name', 'prefix'),
 				'easy_search'  : ('name'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -179,6 +150,16 @@ class District(Base):
 			'header_string' : 'ID'
 		}
 	)
+	city_id = Column(
+		'cityid',
+		UInt32(),
+		ForeignKey('addr_cities.cityid', name='addr_districts_fk_cityid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('City ID'),
+		nullable=False,
+		info={
+			'header_string' : 'City'
+		}
+	)
 	name = Column(
 		Unicode(255),
 		Comment('District name'),
@@ -187,19 +168,9 @@ class District(Base):
 			'header_string' : 'Name'
 		}
 	)
-	cityid = Column(
-		'cityid',
-		UInt32(),
-		ForeignKey('addr_cities.cityid', name='addr_districts_fk_cityid', onupdate='CASCADE'),
-		Comment('City ID'),
-		nullable=False,
-		info={
-			'header_string' : 'City'
-		}
-	)
 	prefix = Column(
 		Unicode(32),
-		Comment('Contract Prefix'),
+		Comment('Contract prefix'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -207,9 +178,12 @@ class District(Base):
 			'header_string' : 'Prefix'
 		}
 	)
+
 	streets = relationship(
 		'Street',
-		backref=backref('district', innerjoin=True)
+		backref=backref('district', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
 
 	def __str__(self):
@@ -222,9 +196,9 @@ class Street(Base):
 	__tablename__ = 'addr_streets'
 	__table_args__ = (
 		Comment('Streets'),
-		Index('u_street', 'prefix', 'suffix', 'name', unique=True),
-		Index('i_districtid', 'districtid', unique=False),
-		Index('u_name', 'name', unique=True),
+		Index('addr_streets_u_street', 'prefix', 'suffix', 'name', unique=True),
+		Index('addr_streets_u_name', 'name', unique=True),
+		Index('addr_streets_i_districtid', 'districtid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -239,7 +213,7 @@ class Street(Base):
 				'menu_name'    : 'Streets',
 				'menu_order'   : 60,
 				'default_sort' : (),
-				'grid_view'    : ('name', 'district', 'prefix','suffix'),
+				'grid_view'    : ('district', 'name', 'prefix', 'suffix'),
 				'easy_search'  : ('name'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -257,6 +231,16 @@ class Street(Base):
 			'header_string' : 'ID'
 		}
 	)
+	district_id = Column(
+		'districtid',
+		UInt32(),
+		ForeignKey('addr_districts.districtid', name='addr_streets_fk_districtid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('District ID'),
+		nullable=False,
+		info={
+			'header_string' : 'District'
+		}
+	)
 	name = Column(
 		Unicode(255),
 		Comment('Street name'),
@@ -265,19 +249,9 @@ class Street(Base):
 			'header_string' : 'Name'
 		}
 	)
-	districtid = Column(
-		'districtid',
-		UInt32(),
-		ForeignKey('addr_districts.districtid', name='addr_streets_fk_districtid', onupdate='CASCADE'),
-		Comment('District ID'),
-		nullable=False,
-		info={
-			'header_string' : 'District'
-		}
-	)
 	prefix = Column(
 		Unicode(8),
-		Comment('Street Name Prefix'),
+		Comment('Street name prefix'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -285,10 +259,9 @@ class Street(Base):
 			'header_string' : 'Prefix'
 		}
 	)
-
 	suffix = Column(
 		Unicode(8),
-		Comment('Street Name Suffix'),
+		Comment('Street name suffix'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -296,16 +269,19 @@ class Street(Base):
 			'header_string' : 'Suffix'
 		}
 	)
+
 	houses = relationship(
 		'House',
-		backref=backref('street', innerjoin=True)
+		backref=backref('street', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
 
 	def __str__(self):
 		sn = self.name
-		if (self.prefix):
+		if self.prefix:
 			sn = self.prefix + ' ' + sn
-		if (self.suffix):
+		if self.suffix:
 			sn = sn + ' ' + self.suffix
 		return sn
 
@@ -316,7 +292,7 @@ class House(Base):
 	__tablename__ = 'addr_houses'
 	__table_args__ = (
 		Comment('Houses'),
-		Index('u_house', 'streetid', 'number', 'building', unique=True),
+		Index('addr_houses_u_house', 'streetid', 'number', 'num_slash', 'num_suffix', 'building', unique=True),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -331,7 +307,7 @@ class House(Base):
 				'menu_name'    : 'Houses',
 				'menu_order'   : 70,
 				'default_sort' : (),
-				'grid_view'    : ('street', 'number', 'building', 'num_slash', 'num_suffix', 'entrnum', 'postindex'),
+				'grid_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
 				'easy_search'  : ('number'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -349,10 +325,10 @@ class House(Base):
 			'header_string' : 'ID'
 		}
 	)
-	streetid = Column(
+	street_id = Column(
 		'streetid',
 		UInt32(),
-		ForeignKey('addr_streets.streetid', name='addr_houses_fk_streetid', onupdate='CASCADE'),
+		ForeignKey('addr_streets.streetid', name='addr_houses_fk_streetid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('Street ID'),
 		nullable=False,
 		info={
@@ -361,7 +337,7 @@ class House(Base):
 	)
 	number = Column(
 		UInt16(),
-		Comment('House Number'),
+		Comment('House number'),
 		nullable=False,
 		default=0,
 		server_default=text('0'),
@@ -371,7 +347,7 @@ class House(Base):
 	)
 	building = Column(
 		UInt16(),
-		Comment('House Building'),
+		Comment('House building'),
 		nullable=False,
 		default=0,
 		server_default=text('0'),
@@ -379,63 +355,71 @@ class House(Base):
 			'header_string' : 'Building'
 		}
 	)
-	num_slash = Column(
+	second_number = Column(
+		'num_slash',
 		UInt16(),
-		Comment(''),
+		Comment('Second house number'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Number Slash'
+			'header_string' : 'Second Num.'
 		}
 	)
-	num_suffix = Column(
+	number_suffix = Column(
+		'num_suffix',
 		Unicode(32),
-		Comment(''),
+		Comment('House number suffix'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Number Suffix'
+			'header_string' : 'Num. Suffix'
 		}
 	)
-	entrnum = Column(
+	entrances = Column(
+		'entrnum',
 		UInt8(),
-		Comment('Entrance Quantity'),
+		Comment('Number of entrances'),
 		nullable=False,
 		default=1,
 		server_default=text('1'),
 		info={
-			'header_string' : 'Enterance Q'
+			'header_string' : 'Entr. #'
 		}
 	)
-	postindex = Column(
+	postal_code = Column(
+		'postindex',
 		Unicode(8),
-		Comment('Postal Index'),
+		Comment('Postal code'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Index'
+			'header_string' : 'Postal Code'
 		}
 	)
+
 	places = relationship(
 		'Place',
-		backref=backref('house', innerjoin=True)
+		backref=backref('house', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
-	hgroups = relationship(
-		'HGroupM',
-		backref=backref('house', innerjoin=True)
+	house_groups = relationship(
+		'HouseGroupMapping',
+		backref=backref('house', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
 
 	def __str__(self):
-		hn = '1';
 		hn = str(self.street) + ' ' + str(self.number)
-		if(self.num_suffix):
-			hn = hn + self.num_suffix
-		if(self.num_slash):
-			hn = hn + '/' + str(self.num_slash)
-		if(self.building):
+		if self.number_suffix:
+			hn = hn + self.number_suffix
+		if self.second_number:
+			hn = hn + '/' + str(self.second_number)
+		if self.building:
 			hn = hn + ' ' + str(self.building)
 		return hn;
 
@@ -446,8 +430,8 @@ class Place(Base):
 	__tablename__ = 'addr_places'
 	__table_args__ = (
 		Comment('Places'),
-		Index('u_number', 'number', unique=True),
-		Index('i_houseid', 'houseid'),
+		Index('addr_places_u_number', 'number', unique=True),
+		Index('addr_places_i_houseid', 'houseid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -480,19 +464,19 @@ class Place(Base):
 			'header_string' : 'ID'
 		}
 	)
-	houseid = Column(
+	house_id = Column(
 		'houseid',
 		UInt32(),
-		ForeignKey('addr_houses.houseid', name='addr_place_fk_houseid', onupdate='CASCADE'),
+		ForeignKey('addr_houses.houseid', name='addr_places_fk_houseid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('House ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Street'
+			'header_string' : 'House'
 		}
 	)
 	number = Column(
 		UInt16(),
-		Comment('Place Number'),
+		Comment('Place number'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -502,32 +486,32 @@ class Place(Base):
 	)
 	name = Column(
 		Unicode(255),
-		Comment('Place Name'),
+		Comment('Place name'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Place Name'
+			'header_string' : 'Name'
 		}
 	)
 	entrance = Column(
 		UInt8(),
-		Comment('Entrance Number'),
+		Comment('Entrance number'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Enterance Number'
+			'header_string' : 'Entr. #'
 		}
 	)
 	floor = Column(
 		UInt8(),
-		Comment('Floor Number'),
+		Comment('Floor number'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Floor Number'
+			'header_string' : 'Floor #'
 		}
 	)
 	description = Column(
@@ -545,14 +529,14 @@ class Place(Base):
 	def __str__(self):
 		return '%s' % str(self.number)
 
-class HGroup(Base):
+class HouseGroup(Base):
 	"""
 	TBW
 	"""
 	__tablename__ = 'addr_hgroups_def'
 	__table_args__ = (
-		Comment('House Groups'),
-		Index('u_name', 'name', unique=True),
+		Comment('House groups'),
+		Index('addr_hgroups_def_u_name', 'name', unique=True),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -578,7 +562,7 @@ class HGroup(Base):
 		'ahgid',
 		UInt32(),
 		Sequence('ahgid_seq'),
-		Comment('House Group ID'),
+		Comment('House group ID'),
 		primary_key=True,
 		nullable=False,
 		info={
@@ -587,10 +571,10 @@ class HGroup(Base):
 	)
 	name = Column(
 		Unicode(255),
-		Comment('Place Name'),
+		Comment('Place name'),
 		nullable=False,
 		info={
-			'header_string' : 'Group Name'
+			'header_string' : 'Name'
 		}
 	)
 	description = Column(
@@ -604,27 +588,30 @@ class HGroup(Base):
 			'header_string' : 'Description'
 		}
 	)
-	hgroups = relationship(
-		'HGroupM',
-		backref=backref('hgroup', innerjoin=True)
+	mappings = relationship(
+		'HouseGroupMapping',
+		backref=backref('group', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
-	privileges = association_proxy(
-		'hgroups',
+
+	houses = association_proxy(
+		'mappings',
 		'house'
 	)
 
 	def __str__(self):
 		return '%s' % str(self.name)
 
-class HGroupM(Base):
+class HouseGroupMapping(Base):
 	"""
 	TBW
 	"""
 	__tablename__ = 'addr_hgroups_houses'
 	__table_args__ = (
-		Comment('House Group Memberships'),
-		Index('u_member', 'houseid', 'ahgid', unique=True),
-		Index('i_houseid', 'houseid'),
+		Comment('House group memberships'),
+		Index('addr_hgroups_houses_u_member', 'ahgid', 'houseid', unique=True),
+		Index('addr_hgroups_houses_i_houseid', 'houseid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -635,12 +622,8 @@ class HGroupM(Base):
 				'cap_edit'     : 'GEO_EDIT',
 				'cap_delete'   : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : 'House Group Membership',
-				'menu_order'   : 91,
 				'default_sort' : (),
-				'grid_view'    : ('hgroup', 'house'),
-#				'easy_search'  : ('name'),
+				'grid_view'    : ('group', 'house'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
@@ -650,31 +633,31 @@ class HGroupM(Base):
 		'ahghid',
 		UInt32(),
 		Sequence('ahghid_seq'),
-		Comment('House Group ID'),
+		Comment('House group membership ID'),
 		primary_key=True,
 		nullable=False,
 		info={
 			'header_string' : 'ID'
 		}
 	)
-	ahgid = Column(
+	group_id = Column(
 		'ahgid',
 		UInt32(),
 		ForeignKey('addr_hgroups_def.ahgid', name='addr_hgroups_houses_fk_ahgid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('House Group ID'),
+		Comment('House group ID'),
 		nullable=False,
 		info={
-			'header_string' : 'House Group'
+			'header_string' : 'Group'
 		}
 	)
-	houseid = Column(
+	house_id = Column(
 		'houseid',
 		UInt32(),
 		ForeignKey('addr_houses.houseid', name='addr_hgroups_houses_fk_houseid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('House ID'),
 		nullable=False,
 		info={
-			'header_string' : 'House ID'
+			'header_string' : 'House'
 		}
 	)
 

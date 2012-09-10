@@ -1,21 +1,9 @@
 from netprofile.common.modules import ModuleBase
-from netprofile.common.menus import Menu
 from .models import *
 
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
-
-	def add_routes(self, config):
-		config.scan()
-
-	def get_css(self, request):
-		return [
-		]
-
-	def get_js(self, request):
-		return [
-		]
 
 	def get_models(self):
 		return [
@@ -24,10 +12,11 @@ class Module(ModuleBase):
 			Street,
 			House,
 			Place,
-			HGroup
+			HouseGroup,
+			HouseGroupMapping
 		]
 
 	@property
 	def name(self):
-		return 'Geo'
+		return 'Geography'
 
