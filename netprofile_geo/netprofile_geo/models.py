@@ -278,12 +278,13 @@ class Street(Base):
 	)
 
 	def __str__(self):
-		sn = self.name
+		l = []
 		if self.prefix:
-			sn = self.prefix + ' ' + sn
+			l.append(self.prefix)
+		l.append(self.name)
 		if self.suffix:
-			sn = sn + ' ' + self.suffix
-		return sn
+			l.append(self.suffix)
+		return ' '.join(l)
 
 class House(Base):
 	"""
@@ -414,14 +415,14 @@ class House(Base):
 	)
 
 	def __str__(self):
-		hn = str(self.street) + ' ' + str(self.number)
+		l = [str(self.street), str(self.number)]
 		if self.number_suffix:
-			hn = hn + self.number_suffix
+			l.append(self.number_suffix)
 		if self.second_number:
-			hn = hn + '/' + str(self.second_number)
+			l.append('/' + str(self.second_number))
 		if self.building:
-			hn = hn + ' ' + str(self.building)
-		return hn;
+			l.append(str(self.building))
+		return ' '.join(l)
 
 class Place(Base):
 	"""
