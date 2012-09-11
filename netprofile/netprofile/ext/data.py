@@ -1173,8 +1173,14 @@ class ExtModel(object):
 				continue
 			if includes and (cname not in includes):
 				continue
-			node = col.get_colander_schema(nullable=nullables.get(cname))
-			schema.add(node)
+			is_null = False
+			if isinstance(nullables, bool):
+				is_null = nullables
+			else:
+				is_null = nullables.get(cname, False)
+			node = col.get_colander_schema(nullable=is_null)
+			if node is not None:
+				schema.add(node)
 		return schema
 
 class ExtModuleBrowser(object):
