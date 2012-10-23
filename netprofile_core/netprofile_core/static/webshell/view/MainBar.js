@@ -14,7 +14,8 @@ Ext.define('NetProfile.view.MainBar', {
 	},
 	items: [{
 		region: 'south',
-		xtype: 'propbar'
+		xtype: 'propbar',
+		split: true
 	}]
 });
 

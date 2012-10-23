@@ -1,4 +1,5 @@
 import pkg_resources
+import logging
 
 from zope.interface import (
 	implementer,
@@ -7,6 +8,8 @@ from zope.interface import (
 
 from netprofile.db.connection import DBSession
 from netprofile.ext.data import ExtBrowser
+
+logger = logging.getLogger(__name__)
 
 class ModuleBase(object):
 	"""
@@ -99,14 +102,20 @@ class ModuleManager(object):
 				continue
 			self.modules[ep.name] = mod
 
-	def load(self, moddef):
+	def _load(self, moddef, mstack):
 		"""
-		Load previously discovered module.
+		Private method which actually loads a module.
 		"""
-		if moddef in self.loaded:
+		if (moddef in self.loaded) or (moddef in mstack):
 			return True
+		if moddef not in self.modules:
+			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
+			return False
+		mstack.append(moddef)
 		for depmod in self.modules[moddef].get_deps():
-			self.load(depmod)
+			if not self.load(depmod):
+				logger.error('Can\'t load module \'%s\', which is needed for module \'%s\'.', depmod, moddef)
+				return False
 		mod = self.loaded[moddef] = self.modules[moddef](self)
 		self.cfg.include(
 			lambda conf: mod.add_routes(conf),
@@ -123,6 +132,13 @@ class ModuleManager(object):
 		for menu in mod.get_menus():
 			self.menus[menu.name] = menu
 		return True
+
+	def load(self, moddef):
+		"""
+		Load previously discovered module.
+		"""
+		mstack = []
+		return self._load(moddef, mstack)
 
 	def unload(self, moddef):
 		"""
@@ -147,7 +163,11 @@ class ModuleManager(object):
 		Load all modules from enabled list. Must perform
 		discovery first.
 		"""
-		pass
+		from netprofile_core.models import NPModule
+
+		sess = DBSession()
+		for mod in sess.query(NPModule).filter(NPModule.enabled == True):
+			self.load(mod.name)
 
 	def install(self, moddef):
 		"""

@@ -66,10 +66,14 @@ def do_login(request):
 					return HTTPFound(location=next, headers=headers)
 		did_fail = True
 
+	mmgr = request.registry.getUtility(IModuleManager)
+
 	return {
-		'login'  : login,
-		'next'   : next,
-		'failed' : did_fail
+		'login'   : login,
+		'next'    : next,
+		'failed'  : did_fail,
+		'res_css' : mmgr.get_css(request),
+		'res_js'  : mmgr.get_js(request)
 	}
 
 @view_config(route_name='core.logout')
