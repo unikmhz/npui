@@ -66,6 +66,7 @@ Ext.onReady(function() {
 		clearTipText: 'Сбросить фильтры и порядок сортировки.',
 		addText: 'Добавить',
 		addTipText: 'Добавить новый объект.',
+		addWindowText: 'Добавить новый объект',
 		propTipText: 'Просмотр свойств объекта',
 		deleteTipText: 'Удалить объект',
 		deleteMsgText: 'Вы уверены в том, что хотите удалить данный объект?',
@@ -86,6 +87,24 @@ Ext.onReady(function() {
 		override: 'NetProfile.view.TopBar',
 		logoutText: 'Выход',
 		logoutTipText: 'Выйти из системы.'
+	});
+
+	Ext.define('Ext.locale.ru.NetProfile.view.Form', {
+		override: 'NetProfile.view.Form',
+		resetText: 'Сбросить',
+		resetTipTitleText: 'Сбросить данные',
+		resetTipText: 'Вернуть значения полей в этой форме к исходным.',
+		submitText: 'Сохранить',
+		submitTipTitleText: 'Сохранить данные',
+		submitTipText: 'Проверить и сохранить данные в этой форме.'
+	});
+
+	Ext.define('Ext.locale.ru.NetProfile.view.Wizard', {
+		override: 'NetProfile.view.Wizard',
+		btnPrevText: 'Назад',
+		btnNextText: 'Далее',
+		btnCancelText: 'Отмена',
+		btnSubmitText: 'Готово'
 	});
 
 });

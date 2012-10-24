@@ -22,36 +22,47 @@ Ext.define('NetProfile.view.Form', {
 		labelAlign: 'right',
 		msgTarget: 'side'
 	},
-	buttons: [{
-		text: 'Reset',
-		handler: function() {
-			this.up('form').getForm().reset();
-		},
-		tooltip: { text: 'Reset form fields to original values.', title: 'Reset Form' }
-	}, {
-		text: 'Submit',
-		formBind: true,
-		disabled: true,
-		handler: function() {
-			var form = this.up('form').getForm();
 
-			if(form.isValid())
-				form.updateRecord();
-//				form.submit({
-//					success: function(form, action) {
-//						Ext.Msg.alert('Success', action.result.msg);
-//						this.fireEvent('submitsuccess', form, action);
-//					},
-//					failure: function(form, action) {
-//						Ext.Msg.alert('Failed', action.result.msg);
-//						this.fireEvent('submitfailure', form, action);
-//					},
-//					scope: this
-//				});
-		},
-		tooltip: { text: 'Validate and submit this form.', title: 'Submit Form' }
-	}],
+	resetText: 'Reset',
+	resetTipTitleText: 'Reset Form',
+	resetTipText: 'Reset form fields to original values.',
+	submitText: 'Submit',
+	submitTipTitleText: 'Submit Form',
+	submitTipText: 'Validate and submit this form.',
+
 	initComponent: function() {
+		this.buttons = [{
+			text: this.resetText,
+			iconCls: 'ico-undo',
+			handler: function() {
+				this.up('form').getForm().reset();
+			},
+			tooltip: { text: this.resetTipText, title: this.resetTipTitleText }
+		}, {
+			text: this.submitText,
+			iconCls: 'ico-accept',
+			formBind: true,
+			disabled: true,
+			handler: function() {
+				var form = this.up('form').getForm();
+
+				if(form.isValid())
+					form.updateRecord();
+//					form.submit({
+//						success: function(form, action) {
+//							Ext.Msg.alert('Success', action.result.msg);
+//							this.fireEvent('submitsuccess', form, action);
+//						},
+//						failure: function(form, action) {
+//							Ext.Msg.alert('Failed', action.result.msg);
+//							this.fireEvent('submitfailure', form, action);
+//						},
+//						scope: this
+//					});
+			},
+			tooltip: { text: this.submitTipText, title: this.submitTipTitleText }
+		}];
+
 		this.callParent();
 
 		this.on('beforerender', this.loadForm, this);

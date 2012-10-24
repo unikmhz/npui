@@ -525,4 +525,13 @@ def includeme(config):
 				request_as_last_param=True,
 				accepts_files=False
 			)
+			if em.create_wizard:
+				extd.add_action(
+					model,
+					method_name='get_create_wizard',
+					callback=em.get_create_wizard,
+					numargs=0,
+					request_as_last_param=True,
+					accepts_files=False
+				)
 

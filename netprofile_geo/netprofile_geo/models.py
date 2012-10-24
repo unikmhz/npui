@@ -63,7 +63,7 @@ class City(Base):
 				'menu_order'   : 40,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'prefix'),
-				'easy_search'  : ('name'),
+				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
@@ -133,7 +133,7 @@ class District(Base):
 				'menu_order'   : 50,
 				'default_sort' : (),
 				'grid_view'    : ('city', 'name', 'prefix'),
-				'easy_search'  : ('name'),
+				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
@@ -214,7 +214,7 @@ class Street(Base):
 				'menu_order'   : 60,
 				'default_sort' : (),
 				'grid_view'    : ('district', 'name', 'prefix', 'suffix'),
-				'easy_search'  : ('name'),
+				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
@@ -309,7 +309,7 @@ class House(Base):
 				'menu_order'   : 70,
 				'default_sort' : (),
 				'grid_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
-				'easy_search'  : ('number'),
+				'easy_search'  : ('number',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
@@ -448,7 +448,7 @@ class Place(Base):
 				'menu_order'   : 80,
 				'default_sort' : (),
 				'grid_view'    : ('house', 'number', 'name', 'entrance', 'floor', 'descr'),
-				'easy_search'  : ('number'),
+				'easy_search'  : ('number',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
@@ -553,7 +553,7 @@ class HouseGroup(Base):
 				'menu_order'   : 90,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'descr'),
-				'easy_search'  : ('name'),
+				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}

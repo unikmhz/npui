@@ -252,7 +252,11 @@ Ext.require([
 		stateful: true,
 		simpleSearch: ${'true' if mod.easy_search else 'false'},
 		detailPane: ${mod.get_detail_pane() | n,jsone},
+% if mod.create_wizard:
 		canCreate: <%np:jscap code="${mod.cap_create}" />,
+% else:
+		canCreate: false,
+% endif
 		canEdit: <%np:jscap code="${mod.cap_edit}" />,
 		canDelete: <%np:jscap code="${mod.cap_delete}" />
 	});

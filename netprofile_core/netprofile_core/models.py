@@ -89,6 +89,10 @@ from netprofile.db.fields import (
 	UInt32,
 	npbool
 )
+from netprofile.ext.wizards import (
+	Step,
+	Wizard
+)
 from netprofile.db.ddl import Comment
 
 import hashlib
@@ -582,9 +586,16 @@ class Group(Base):
 				'menu_name'    : 'Groups',
 				'menu_order'   : 30,
 				'default_sort' : (),
-				'grid_view'    : ('name', 'parent', 'security_policy'),
+				'grid_view'    : ('name', 'parent', 'security_policy', 'root_folder'),
 				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' :
+					Wizard(
+						Step('name', 'parent', 'security_policy', title='New group data'),
+						Step('visible', 'assignable', 'root_folder', title='New group details'),
+						title='Add new group'
+					)
 			}
 		}
 	)
@@ -1554,6 +1565,11 @@ class FileFolder(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	root_groups = relationship(
+		'Group',
+		backref='root_folder',
+		primaryjoin='FileFolder.id == Group.root_folder_id'
+	)
 
 	def __str__(self):
 		return '%s' % str(self.name)
@@ -1758,19 +1774,25 @@ class Tag(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ADMIN',
+				'cap_menu'      : 'BASE_ADMIN',
 				# no read cap
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
+				'cap_create'    : 'BASE_ADMIN',
+				'cap_edit'      : 'BASE_ADMIN',
+				'cap_delete'    : 'BASE_ADMIN',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : 'Tags',
-				'menu_order'   : 60,
-				'default_sort' : (),
-				'grid_view'    : ('name', 'descr'),
-				'easy_search'  : ('name', 'descr'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'show_in_menu'  : 'admin',
+				'menu_name'     : 'Tags',
+				'menu_order'    : 60,
+				'default_sort'  : (),
+				'grid_view'     : ('name', 'descr'),
+				'easy_search'   : ('name', 'descr'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' :
+					Wizard(
+						Step('name', 'descr', title='Tag info'),
+						title='Add new tag'
+					)
 			}
 		}
 	)

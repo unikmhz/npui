@@ -379,7 +379,13 @@ class ExtColumn(object):
 		typecls = self.column.type.__class__
 		if param is None:
 			return None
+		if self.column.nullable and (param == ''):
+			return None
 		if issubclass(typecls, _BOOLEAN_SET):
+			if type(param) is str:
+				if param.lower() in {'true', '1', 'on'}:
+					return True
+				return False
 			return bool(param)
 		if issubclass(typecls, _FLOAT_SET):
 			return float(param)
@@ -529,8 +535,10 @@ class ExtColumn(object):
 			conf['emptyText'] = val
 		if issubclass(typecls, _BOOLEAN_SET):
 			conf.update({
-				'cls'    : 'x-grid-checkheader-editor',
-				'anchor' : '0%'
+				'cls'            : 'x-grid-checkheader-editor',
+				'anchor'         : '0%',
+				'inputValue'     : 'true',
+				'uncheckedValue' : 'false'
 			})
 			val = self.default
 			if isinstance(val, bool) and val:
@@ -742,6 +750,15 @@ class ExtModel(object):
 		return None
 
 	@property
+	def object_pk(self):
+		pkcol = getattr(self.model.__mapper__, 'primary_key', None)
+		if (pkcol is None) or (len(pkcol) == 0):
+			return None
+		pkprop = self.model.__mapper__.get_property_by_column(pkcol[0])
+		if pkprop:
+			return pkprop.key
+
+	@property
 	def easy_search(self):
 		return self.model.__table__.info.get('easy_search', ())
 
@@ -780,6 +797,10 @@ class ExtModel(object):
 	@property
 	def detail_pane(self):
 		return self.model.__table__.info.get('detail_pane')
+
+	@property
+	def create_wizard(self):
+		return self.model.__table__.info.get('create_wizard')
 
 	def get_column(self, colname):
 		cols = self.model.__table__.columns
@@ -1046,6 +1067,7 @@ class ExtModel(object):
 					continue
 				setattr(obj, trans[p].key, cols[p].parse_param(pt[p]))
 			sess.add(obj)
+			sess.flush()
 			p = {}
 			if '_clid' in pt:
 				p['_clid'] = pt['_clid']
@@ -1061,6 +1083,7 @@ class ExtModel(object):
 						pt.update(extra)
 				else:
 					pt[cname] = getattr(obj, trans[cname].key)
+			pt[self.pk] = getattr(obj, self.object_pk)
 			pt['__str__'] = str(obj)
 			res['records'].append(pt)
 			res['total'] += 1
@@ -1135,6 +1158,19 @@ class ExtModel(object):
 		return {
 			'success' : True,
 			'fields'  : fields
+		}
+
+	def get_create_wizard(self, request):
+		logger.info('Running ExtDirect action:%s method:%s', self.name, 'get_create_wizard')
+		wiz = self.create_wizard
+		if wiz:
+			return {
+				'success' : True,
+				'fields'  : wiz.get_cfg(self, use_defaults=True)
+			}
+		return {
+			'success' : False,
+			'fields'  : []
 		}
 
 	def get_menu_tree(self, name):

@@ -39,6 +39,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	clearTipText: 'Clear filtering and sorting.',
 	addText: 'Add',
 	addTipText: 'Add new object.',
+	addWindowText: 'Add new object',
 	propTipText: 'Display object properties',
 	deleteTipText: 'Delete object',
 	deleteMsgText: 'Are you sure you want to delete this object?',
@@ -103,6 +104,21 @@ Ext.define('NetProfile.view.ModelGrid', {
 				tooltip: { text: this.addTipText, title: this.addText },
 				iconCls: 'ico-add',
 				handler: function() {
+					var wiz_win = Ext.create('Ext.window.Window', {
+						layout: 'fit',
+						minWidth: 500,
+						maxHeight: 650,
+						title: this.addWindowText,
+						modal: true
+					});
+					var wiz = Ext.create('NetProfile.view.Wizard', {
+						stateful: false,
+						wizardCls: this.apiClass,
+						createInto: this.store
+					});
+					wiz_win.add(wiz);
+					wiz_win.show();
+
 					return true;
 				},
 				scope: this
@@ -221,7 +237,16 @@ Ext.define('NetProfile.view.ModelGrid', {
 					if(this.selectIdField)
 					{
 						if(Ext.isString(this.selectIdField))
-							this.selectField.up('form').getRecord().set(this.selectIdField, record.getId());
+						{
+							var form = this.selectField.up('form'),
+								rec = form.getRecord();
+							if(rec)
+								rec.set(this.selectIdField, record.getId());
+							else if(this.selectField.hiddenField)
+								form.getForm().findField(this.selectField.hiddenField).setValue(record.getId());
+							else
+								form.getForm().findField(this.selectIdField).setValue(record.getId());
+						}
 						else
 							this.selectIdField.setValue(record.getId());
 					}
