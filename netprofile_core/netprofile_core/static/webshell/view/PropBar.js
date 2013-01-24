@@ -110,6 +110,7 @@ Ext.define('NetProfile.view.PropBar', {
 				title: rec_name,
 				record: record,
 				closable: true,
+				cls: 'record-tab',
 				listeners: {
 					removed: function(comp, ct, opts)
 					{

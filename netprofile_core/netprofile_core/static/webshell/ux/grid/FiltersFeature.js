@@ -667,7 +667,7 @@ Ext.define('Ext.ux.grid.FiltersFeature', {
                 var d = [].concat(f.serialize());
                 for (i = 0, len = d.length; i < len; i++) {
                     filters.push({
-                        field: f.dataIndex,
+                        field: (f.queryIndex ? f.queryIndex : f.dataIndex),
                         data: d[i]
                     });
                 }

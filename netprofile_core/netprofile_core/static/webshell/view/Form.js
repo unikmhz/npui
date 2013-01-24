@@ -1,8 +1,14 @@
+/**
+ * @class NetProfile.view.Form
+ * @extends Ext.form.Panel
+ */
 Ext.define('NetProfile.view.Form', {
 	extend: 'Ext.form.Panel',
 	alias: 'widget.npform',
 	requires: [
-		'Ext.form.*'
+		'Ext.form.*',
+		'Ext.ux.form.field.IPv4',
+		'Ext.ux.form.field.Password'
 	],
 	statics: {
 		formdef: {}
@@ -22,6 +28,7 @@ Ext.define('NetProfile.view.Form', {
 		labelAlign: 'right',
 		msgTarget: 'side'
 	},
+	trackResetOnLoad: true,
 
 	resetText: 'Reset',
 	resetTipTitleText: 'Reset Form',
@@ -108,7 +115,9 @@ Ext.define('NetProfile.view.Form', {
 		}
 		Ext.destroy(this.removeAll());
 		st.formdef[this.formCls] = data;
+		this.suspendLayouts();
 		this.add(data.fields);
+		this.resumeLayouts(true);
 
 		this.fireEvent('formloaded');
 

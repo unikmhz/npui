@@ -1,8 +1,14 @@
+/**
+ * @class NetProfile.view.Wizard
+ * @extends Ext.panel.Panel
+ */
 Ext.define('NetProfile.view.Wizard', {
 	extend: 'Ext.panel.Panel',
 	alias: 'widget.npwizard',
 	requires: [
 		'Ext.form.*',
+		'Ext.ux.form.field.IPv4',
+		'Ext.ux.form.field.Password',
 		'NetProfile.view.WizardPane'
 	],
 	layout: 'card',

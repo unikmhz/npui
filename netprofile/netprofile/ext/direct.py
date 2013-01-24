@@ -6,9 +6,11 @@ from html.entities import entitydefs
 import json
 import traceback
 import datetime as dt
+from dateutil.tz import tzlocal
 
 from pyramid.security import has_permission
 from pyramid.view import render_view_to_response
+from pyramid.threadlocal import get_current_request
 from webob import Response
 from zope.interface import implementer
 from zope.interface import Interface
@@ -16,6 +18,7 @@ import venusian
 
 from netprofile.ext.data import ExtModel
 from netprofile.common.modules import IModuleManager
+from netprofile.common.hooks import register_hook
 from netprofile.common.factory import RootFactory
 from netprofile.common import ipaddr
 
@@ -50,11 +53,13 @@ class JsonReprEncoder(json.JSONEncoder):
 		if jr is not None:
 			return jr()
 		if isinstance(obj, dt.datetime):
-			return '{0.year:04d}-{0.month:02d}-{0.day:02d}T{0.hour:02d}:{0.minute:02d}:{0.second:02d}Z'.format(obj)
+			if obj.tzinfo is None:
+				obj = obj.replace(tzinfo=tzlocal())
+			return obj.isoformat()
 		if isinstance(obj, dt.date):
-			return '{0.year:04d}-{0.month:02d}-{0.day:02d}'.format(obj)
+			return obj.isoformat()
 		if isinstance(obj, dt.time):
-			return '{0.hour:02d}:{0.minute:02d}:{0.second:02d}'.format(obj)
+			return obj.isoformat()
 		if isinstance(obj, ipaddr.IPv4Address):
 			return int(obj)
 		return super(JsonReprEncoder, self).default(obj)
@@ -132,7 +137,7 @@ class ExtDirectRouter(object):
 		``method_name``: Method name
 		``callback``: The callback to execute upon client request
 		``numargs``: Number of arguments passed to the wrapped callable
-		``accept_files``: If true, this action will be declared as formHandler in API
+		``accepts_files``: If true, this action will be declared as formHandler in API
 		``permission``: The permission needed to execute the wrapped callable
 		``request_as_last_param``: If true, the wrapped callable will receive a request object
 			as last argument
@@ -140,6 +145,70 @@ class ExtDirectRouter(object):
 		"""
 		callback_key = _mk_cb_key(action_name, settings['method_name'])
 		self.actions[action_name][callback_key] = settings
+
+	def add_model(self, name, model):
+		self.add_action(
+			name,
+			method_name='read',
+			callback=model.read,
+			numargs=1,
+			accepts_files=False,
+			request_as_last_param=True,
+			permission=model.cap_read
+		)
+		self.add_action(
+			name,
+			method_name='read_one',
+			callback=model.read_one,
+			numargs=1,
+			accepts_files=False,
+			request_as_last_param=True,
+			permission=model.cap_read
+		)
+		self.add_action(
+			name,
+			method_name='create',
+			callback=model.create,
+			numargs=1,
+			accepts_files=False,
+			request_as_last_param=True,
+			permission=model.cap_create
+		)
+		self.add_action(
+			name,
+			method_name='update',
+			callback=model.update,
+			numargs=1,
+			accepts_files=False,
+			request_as_last_param=True,
+			permission=model.cap_edit
+		)
+		self.add_action(
+			name,
+			method_name='delete',
+			callback=model.delete,
+			numargs=1,
+			accepts_files=False,
+			request_as_last_param=True,
+			permission=model.cap_delete
+		)
+		self.add_action(
+			name,
+			method_name='get_fields',
+			callback=model.get_fields,
+			numargs=0,
+			request_as_last_param=True,
+			accepts_files=False
+		)
+		if model.create_wizard:
+			self.add_action(
+				name,
+				method_name='get_create_wizard',
+				callback=model.get_create_wizard,
+				numargs=0,
+				request_as_last_param=True,
+				accepts_files=False
+			)
 
 	def get_actions(self):
 		"""
@@ -294,7 +363,8 @@ class ExtDirectRouter(object):
 			return (json.dumps(ret, cls=JsonReprEncoder), False)
 		ret = ret[0] # form data cannot be batched
 		s = json.dumps(ret, cls=JsonReprEncoder).replace('&quot;', r'\&quot;');
-		return (FORM_SUBMIT_RESPONSE_TPL % (s,), True)
+		return (s, True)
+		#return (FORM_SUBMIT_RESPONSE_TPL % (s,), True)
 
 class extdirect_method(object):
 	"""
@@ -431,12 +501,16 @@ def router_view(request):
 	ctype = 'text/html' if is_form_data else 'application/json'
 	return Response(body, content_type=ctype, charset='UTF-8')
 
+@register_hook('np.model.load')
+def _proc_model(mmgr, model):
+	extd = mmgr.cfg.registry.getUtility(IExtDirectRouter)
+	extd.add_model(model.__name__, model)
 
 def includeme(config):
 	"""
 	Let ExtDirect be included by config.include().
 	"""
-	config.set_request_property(get_ext_csrf, 'ext_csrf', reify=True)
+	config.add_request_method(get_ext_csrf, 'ext_csrf', reify=True)
 	settings = config.registry.settings
 	extdirect_config = dict()
 	names = (
@@ -467,71 +541,8 @@ def includeme(config):
 	config.add_route('extrouter', extd.router_path)
 	config.add_view(router_view, route_name='extrouter', permission=router_view_perm)
 
-	mmgr = config.registry.getUtility(IModuleManager)
-	mods = mmgr.get_module_browser()
-	for module in mods:
-		for model in mods[module]:
-			em = mods[module][model]
-			extd.add_action(
-				model,
-				method_name='read',
-				callback=em.read,
-				numargs=1,
-				accepts_files=False,
-				request_as_last_param=True,
-				permission=em.cap_read
-			)
-			extd.add_action(
-				model,
-				method_name='read_one',
-				callback=em.read_one,
-				numargs=1,
-				accepts_files=False,
-				request_as_last_param=True,
-				permission=em.cap_read
-			)
-			extd.add_action(
-				model,
-				method_name='create',
-				callback=em.create,
-				numargs=1,
-				accepts_files=False,
-				request_as_last_param=True,
-				permission=em.cap_create
-			)
-			extd.add_action(
-				model,
-				method_name='update',
-				callback=em.update,
-				numargs=1,
-				accepts_files=False,
-				request_as_last_param=True,
-				permission=em.cap_edit
-			)
-			extd.add_action(
-				model,
-				method_name='delete',
-				callback=em.delete,
-				numargs=1,
-				accepts_files=False,
-				request_as_last_param=True,
-				permission=em.cap_delete
-			)
-			extd.add_action(
-				model,
-				method_name='get_fields',
-				callback=em.get_fields,
-				numargs=0,
-				request_as_last_param=True,
-				accepts_files=False
-			)
-			if em.create_wizard:
-				extd.add_action(
-					model,
-					method_name='get_create_wizard',
-					callback=em.get_create_wizard,
-					numargs=0,
-					request_as_last_param=True,
-					accepts_files=False
-				)
+	config.scan()
+
+#	for module in mods:
+#		for model in mods[module]:
 

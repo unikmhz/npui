@@ -1,4 +1,7 @@
 class RootFactory(object):
+	"""
+	Generic Pyramid root factory.
+	"""
 	__parent__ = None
 	__name__ = None
 

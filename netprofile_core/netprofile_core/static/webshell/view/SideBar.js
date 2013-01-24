@@ -25,7 +25,6 @@ Ext.define('NetProfile.view.SideBar', {
 	}],
 
 	initComponent: function() {
-		this.lastLoaded = null;
 		this.menus = {};
 		this.items = [];
 		this.store = Ext.create('NetProfile.store.Menu');
@@ -43,7 +42,9 @@ Ext.define('NetProfile.view.SideBar', {
 					options: { menuId: mname }
 				},
 				useArrows: true,
-				border: false
+				header: false,
+				border: false,
+				bodyCls: 'x-docked-noborder-top'
 			});
 
 			this.menus[mname] = tree;
@@ -70,7 +71,12 @@ Ext.define('NetProfile.view.SideBar', {
 	{
 		var tok_old, tok_new;
 
-		if(record.get('xview'))
+		if(record.get('xhandler'))
+		{
+			// FIXME
+			this.doSelectMenuHandler(record.get('xhandler'), record.getId());
+		}
+		else if(record.get('xview'))
 		{
 			tok_new = opts.options.menuId + ':' + record.getId();
 			tok_old = Ext.History.getToken();
@@ -88,24 +94,42 @@ Ext.define('NetProfile.view.SideBar', {
 			scope: this
 		});
 	},
-	doSelectMenuItem: function(xview)
+	doSelectMenuView: function(xview)
 	{
 		var mainbar = Ext.getCmp('npws_mainbar');
 
 		if(!xview)
 			return false;
-		if(this.lastLoaded)
-		{
-			Ext.destroy(mainbar.remove(this.lastLoaded));
-			this.lastLoaded = null;
-		}
-		this.lastLoaded = mainbar.add({
+		mainbar.replaceWith({
 			region: 'center',
 			xtype: xview,
 			stateId: 'np' + xview,
 			stateful: true,
 			id: 'main_content'
 		});
+		return true;
+	},
+	doSelectMenuHandler: function(xhandler, xid)
+	{
+		if(!xhandler)
+			return false;
+		Ext.require(
+			xhandler,
+			function()
+			{
+				var mainbar, obj;
+
+				obj = Ext.create(xhandler);
+				if(obj.process)
+					obj.process(xid);
+				if(obj.getView)
+				{
+					mainbar = Ext.getCmp('npws_mainbar');
+					mainbar.replaceWith(obj.getView(xid));
+				}
+			},
+			this
+		);
 		return true;
 	},
 	onHistoryChange: function(token) {
@@ -122,7 +146,7 @@ Ext.define('NetProfile.view.SideBar', {
 			node = store.getNodeById(pts[1]);
 			if(!node)
 				return true;
-			this.doSelectMenuItem(node.get('xview'));
+			this.doSelectMenuView(node.get('xview'));
 			this.menus[pts[0]].getSelectionModel().select(node);
 		}
 		return true;

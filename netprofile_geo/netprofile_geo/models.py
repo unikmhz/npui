@@ -38,7 +38,19 @@ from netprofile.db.fields import (
 	UInt16,
 	UInt32
 )
+from netprofile.ext.filters import (
+	CheckboxGroupFilter
+)
+from netprofile.ext.wizards import (
+	SimpleWizard,
+	Step,
+	Wizard
+)
 from netprofile.db.ddl import Comment
+
+from pyramid.i18n import TranslationStringFactory
+
+_ = TranslationStringFactory('netprofile_geo')
 
 class City(Base):
 	"""
@@ -52,19 +64,21 @@ class City(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_GEO',
-				'cap_read'     : 'GEO_LIST',
-				'cap_create'   : 'GEO_CREATE',
-				'cap_edit'     : 'GEO_EDIT',
-				'cap_delete'   : 'GEO_DELETE',
+				'cap_menu'      : 'BASE_GEO',
+				'cap_read'      : 'GEO_LIST',
+				'cap_create'    : 'GEO_CREATE',
+				'cap_edit'      : 'GEO_EDIT',
+				'cap_delete'    : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : 'Cities',
-				'menu_order'   : 40,
-				'default_sort' : (),
-				'grid_view'    : ('name', 'prefix'),
-				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Cities'),
+				'menu_order'    : 40,
+				'default_sort'  : (),
+				'grid_view'     : ('name', 'prefix'),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new city'))
 			}
 		}
 	)
@@ -77,7 +91,7 @@ class City(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	name = Column(
@@ -85,7 +99,7 @@ class City(Base):
 		Comment('City name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	prefix = Column(
@@ -95,7 +109,7 @@ class City(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Prefix'
+			'header_string' : _('Prefix')
 		}
 	)
 
@@ -122,19 +136,21 @@ class District(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_GEO',
-				'cap_read'     : 'GEO_LIST',
-				'cap_create'   : 'GEO_CREATE',
-				'cap_edit'     : 'GEO_EDIT',
-				'cap_delete'   : 'GEO_DELETE',
+				'cap_menu'      : 'BASE_GEO',
+				'cap_read'      : 'GEO_LIST',
+				'cap_create'    : 'GEO_CREATE',
+				'cap_edit'      : 'GEO_EDIT',
+				'cap_delete'    : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : 'Districts',
-				'menu_order'   : 50,
-				'default_sort' : (),
-				'grid_view'    : ('city', 'name', 'prefix'),
-				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Districts'),
+				'menu_order'    : 50,
+				'default_sort'  : (),
+				'grid_view'     : ('city', 'name', 'prefix'),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new district'))
 			}
 		}
 	)
@@ -147,7 +163,7 @@ class District(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	city_id = Column(
@@ -157,7 +173,8 @@ class District(Base):
 		Comment('City ID'),
 		nullable=False,
 		info={
-			'header_string' : 'City'
+			'header_string' : _('City'),
+			'filter_type'   : 'list'
 		}
 	)
 	name = Column(
@@ -165,7 +182,7 @@ class District(Base):
 		Comment('District name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	prefix = Column(
@@ -175,7 +192,7 @@ class District(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Prefix'
+			'header_string' : _('Prefix')
 		}
 	)
 
@@ -203,19 +220,21 @@ class Street(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_GEO',
-				'cap_read'     : 'GEO_LIST',
-				'cap_create'   : 'GEO_CREATE',
-				'cap_edit'     : 'GEO_EDIT',
-				'cap_delete'   : 'GEO_DELETE',
+				'cap_menu'      : 'BASE_GEO',
+				'cap_read'      : 'GEO_LIST',
+				'cap_create'    : 'GEO_CREATE',
+				'cap_edit'      : 'GEO_EDIT',
+				'cap_delete'    : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : 'Streets',
-				'menu_order'   : 60,
-				'default_sort' : (),
-				'grid_view'    : ('district', 'name', 'prefix', 'suffix'),
-				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Streets'),
+				'menu_order'    : 60,
+				'default_sort'  : (),
+				'grid_view'     : ('district', 'name', 'prefix', 'suffix'),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new street'))
 			}
 		}
 	)
@@ -228,7 +247,7 @@ class Street(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	district_id = Column(
@@ -238,7 +257,8 @@ class Street(Base):
 		Comment('District ID'),
 		nullable=False,
 		info={
-			'header_string' : 'District'
+			'header_string' : _('District'),
+			'filter_type'   : 'list'
 		}
 	)
 	name = Column(
@@ -246,7 +266,7 @@ class Street(Base):
 		Comment('Street name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	prefix = Column(
@@ -256,7 +276,7 @@ class Street(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Prefix'
+			'header_string' : _('Prefix')
 		}
 	)
 	suffix = Column(
@@ -266,7 +286,7 @@ class Street(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Suffix'
+			'header_string' : _('Suffix')
 		}
 	)
 
@@ -290,6 +310,13 @@ class House(Base):
 	"""
 	TBW
 	"""
+
+	@classmethod
+	def _filter_hgroup(cls, query, value):
+		if not isinstance(value, list):
+			value = [value];
+		return query.join(HouseGroupMapping).filter(HouseGroupMapping.group_id.in_(value))
+
 	__tablename__ = 'addr_houses'
 	__table_args__ = (
 		Comment('Houses'),
@@ -305,12 +332,20 @@ class House(Base):
 				'cap_delete'   : 'GEO_DELETE',
 
 				'show_in_menu' : 'admin',
-				'menu_name'    : 'Houses',
+				'menu_name'    : _('Houses'),
 				'menu_order'   : 70,
 				'default_sort' : (),
 				'grid_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
 				'easy_search'  : ('number',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'extra_search' : (
+					CheckboxGroupFilter('hg', _filter_hgroup,
+						title=_('House Group'),
+						data='NetProfile.store.geo.HouseGroup',
+						value_field='ahgid',
+						display_field='name'
+					),
+				)
 			}
 		}
 	)
@@ -323,7 +358,7 @@ class House(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	street_id = Column(
@@ -333,7 +368,8 @@ class House(Base):
 		Comment('Street ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Street'
+			'header_string' : _('Street'),
+			'filter_type'   : 'list'
 		}
 	)
 	number = Column(
@@ -343,7 +379,7 @@ class House(Base):
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : 'Number'
+			'header_string' : _('Number')
 		}
 	)
 	building = Column(
@@ -353,7 +389,7 @@ class House(Base):
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : 'Building'
+			'header_string' : _('Building')
 		}
 	)
 	second_number = Column(
@@ -364,7 +400,7 @@ class House(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Second Num.'
+			'header_string' : _('Second Num.')
 		}
 	)
 	number_suffix = Column(
@@ -375,7 +411,7 @@ class House(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Num. Suffix'
+			'header_string' : _('Num. Suffix')
 		}
 	)
 	entrances = Column(
@@ -386,7 +422,7 @@ class House(Base):
 		default=1,
 		server_default=text('1'),
 		info={
-			'header_string' : 'Entr. #'
+			'header_string' : _('Entr. #')
 		}
 	)
 	postal_code = Column(
@@ -397,7 +433,7 @@ class House(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Postal Code'
+			'header_string' : _('Postal Code')
 		}
 	)
 
@@ -444,7 +480,7 @@ class Place(Base):
 				'cap_delete'   : 'GEO_DELETE',
 
 				'show_in_menu' : 'admin',
-				'menu_name'    : 'Places',
+				'menu_name'    : _('Places'),
 				'menu_order'   : 80,
 				'default_sort' : (),
 				'grid_view'    : ('house', 'number', 'name', 'entrance', 'floor', 'descr'),
@@ -462,7 +498,7 @@ class Place(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	house_id = Column(
@@ -472,7 +508,8 @@ class Place(Base):
 		Comment('House ID'),
 		nullable=False,
 		info={
-			'header_string' : 'House'
+			'header_string' : _('House'),
+			'filter_type'   : 'none'
 		}
 	)
 	number = Column(
@@ -482,7 +519,7 @@ class Place(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Number'
+			'header_string' : _('Number')
 		}
 	)
 	name = Column(
@@ -492,7 +529,7 @@ class Place(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	entrance = Column(
@@ -502,7 +539,7 @@ class Place(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Entr. #'
+			'header_string' : _('Entr. #')
 		}
 	)
 	floor = Column(
@@ -512,7 +549,7 @@ class Place(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Floor #'
+			'header_string' : _('Floor #')
 		}
 	)
 	description = Column(
@@ -523,7 +560,7 @@ class Place(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 
@@ -549,7 +586,7 @@ class HouseGroup(Base):
 				'cap_delete'   : 'GEO_DELETE',
 
 				'show_in_menu' : 'admin',
-				'menu_name'    : 'House Groups',
+				'menu_name'    : _('House Groups'),
 				'menu_order'   : 90,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'descr'),
@@ -567,7 +604,7 @@ class HouseGroup(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	name = Column(
@@ -575,7 +612,7 @@ class HouseGroup(Base):
 		Comment('Place name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	description = Column(
@@ -586,7 +623,7 @@ class HouseGroup(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 	mappings = relationship(
@@ -638,7 +675,7 @@ class HouseGroupMapping(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	group_id = Column(
@@ -648,7 +685,7 @@ class HouseGroupMapping(Base):
 		Comment('House group ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Group'
+			'header_string' : _('Group')
 		}
 	)
 	house_id = Column(
@@ -658,7 +695,7 @@ class HouseGroupMapping(Base):
 		Comment('House ID'),
 		nullable=False,
 		info={
-			'header_string' : 'House'
+			'header_string' : _('House')
 		}
 	)
 

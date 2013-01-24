@@ -6,8 +6,11 @@ from zope.interface import (
 	Interface
 )
 
+from sqlalchemy.orm.exc import NoResultFound
+
 from netprofile.db.connection import DBSession
 from netprofile.ext.data import ExtBrowser
+from netprofile.common.hooks import IHookManager
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +28,11 @@ class ModuleBase(object):
 		return []
 
 	@classmethod
-	def install(self):
+	def install(cls):
 		pass
 
 	@classmethod
-	def uninstall(self):
+	def uninstall(cls):
 		pass
 
 	def __init__(self, mmgr):
@@ -45,6 +48,9 @@ class ModuleBase(object):
 		return []
 
 	def get_js(self, request):
+		return []
+
+	def get_local_js(self, request, lang):
 		return []
 
 	def get_css(self, request):
@@ -127,8 +133,10 @@ class ModuleManager(object):
 			cache_max_age=3600
 		)
 		self.models[moddef] = {}
+		mb = self.get_module_browser()
+		hm = self.cfg.registry.getUtility(IHookManager)
 		for model in mod.get_models():
-			self._import_model(moddef, model)
+			self._import_model(moddef, model, mb, hm)
 		for menu in mod.get_menus():
 			self.menus[menu.name] = menu
 		return True
@@ -150,13 +158,41 @@ class ModuleManager(object):
 		"""
 		Add a module to the list of enabled modules.
 		"""
-		pass
+		if moddef not in self.modules:
+			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
+			return False
+		sess = DBSession()
+		try:
+			mod = sess.query(NPModule).filter(NPModule.name == moddef).one()
+		except NoResultFound:
+			return False
+		if mod.enabled == True:
+			return True
+		mod.enabled = True
+		sess.flush()
+		return self.load(moddef)
 
 	def disable(self, moddef):
 		"""
 		Remove a module from the list of enabled modules.
 		"""
-		pass
+		if moddef not in self.modules:
+			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
+			return False
+		if moddef in self.loaded:
+			if not self.upload(moddef):
+				logger.error('Can\'t unload module \'%s\'.', moddef)
+				return False
+		sess = DBSession()
+		try:
+			mod = sess.query(NPModule).filter(NPModule.name == moddef).one()
+		except NoResultFound:
+			return False
+		if mod.enabled == False:
+			return True
+		mod.enabled = False
+		sess.flush()
+		return True
 
 	def load_enabled(self):
 		"""
@@ -167,7 +203,8 @@ class ModuleManager(object):
 
 		sess = DBSession()
 		for mod in sess.query(NPModule).filter(NPModule.enabled == True):
-			self.load(mod.name)
+			if mod.name != 'core':
+				self.load(mod.name)
 
 	def install(self, moddef):
 		"""
@@ -181,9 +218,11 @@ class ModuleManager(object):
 		"""
 		pass
 
-	def _import_model(self, moddef, model):
+	def _import_model(self, moddef, model, mb, hm):
+		mname = model.__name__
 		model.__moddef__ = moddef
-		self.models[moddef][model.__name__] = model
+		self.models[moddef][mname] = model
+		hm.run_hook('np.model.load', self, mb[moddef][mname])
 
 	def get_module_browser(self):
 		"""
@@ -200,6 +239,15 @@ class ModuleManager(object):
 			l.extend(mod.get_js(request))
 		return l
 
+	def get_local_js(self, request, lang):
+		"""
+		Get a list of required localization JS file resources.
+		"""
+		l = []
+		for moddef, mod in self.loaded.items():
+			l.extend(mod.get_local_js(request, lang))
+		return l
+
 	def get_css(self, request):
 		"""
 		Get a list of required CSS file resources.
@@ -213,10 +261,11 @@ def includeme(config):
 	"""
 	For inclusion by Pyramid.
 	"""
+
+	config.add_translation_dirs('netprofile:locale/')
+
 	mmgr = ModuleManager(config)
 	mmgr.scan()
-	mmgr.load('core')
-	mmgr.load_enabled()
 
 	config.registry.registerUtility(mmgr, IModuleManager)
 

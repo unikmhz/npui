@@ -2,16 +2,22 @@ from netprofile.common.modules import ModuleBase
 from netprofile.common.menus import Menu
 from .models import *
 
+from pyramid.i18n import TranslationStringFactory
+
+_ = TranslationStringFactory('netprofile_core')
+
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
+		mmgr.cfg.add_translation_dirs('netprofile_core:locale/')
 		mmgr.cfg.add_route('core.home', '/')
 		mmgr.cfg.add_route('core.login', '/login')
 		mmgr.cfg.add_route('core.logout', '/logout')
+		mmgr.cfg.scan()
 
 	def add_routes(self, config):
+		config.add_route('core.noop', '/noop')
 		config.add_route('core.js.webshell', '/js/webshell')
-		config.scan()
 
 	def get_models(self):
 		return [
@@ -42,16 +48,20 @@ class Module(ModuleBase):
 
 	def get_menus(self):
 		return [
-			Menu('modules', title='Modules', order=10),
-			Menu('settings', title='Settings', order=20),
-			Menu('admin', title='Administration', order=30, permission='BASE_ADMIN')
+			Menu('modules', title=_('Modules'), order=10),
+			Menu('settings', title=_('Settings'), order=20, direct='settings'),
+			Menu('admin', title=_('Administration'), order=30, permission='BASE_ADMIN')
 		]
 
 	def get_js(self, request):
 		return [
-			'netprofile_core:static/extjs/ext-all-dev.js',
-			'netprofile_core:static/extjs/locale/ext-lang-ru.js',
-			'netprofile_core:static/webshell/locale/webshell-lang-ru.js'
+			'netprofile_core:static/extjs/ext-all-dev.js'
+		]
+
+	def get_local_js(self, request, lang):
+		return [
+			'netprofile_core:static/extjs/locale/ext-lang-' + lang + '.js',
+			'netprofile_core:static/webshell/locale/webshell-lang-' + lang + '.js'
 		]
 
 	def get_css(self, request):
@@ -62,5 +72,5 @@ class Module(ModuleBase):
 
 	@property
 	def name(self):
-		return 'Core'
+		return _('Core')
 

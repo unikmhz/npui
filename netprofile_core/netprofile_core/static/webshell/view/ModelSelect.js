@@ -12,7 +12,8 @@ Ext.define('NetProfile.view.ModelSelect', {
 
 	chooseText: 'Choose an object',
 
-	initComponent: function() {
+	initComponent: function()
+	{
 		if(!this.allowBlank)
 		{
 			this.trigger1Cls = this.trigger2Cls;
@@ -22,7 +23,8 @@ Ext.define('NetProfile.view.ModelSelect', {
 		}
 		this.callParent(arguments);
 	},
-	onTrigger1Click: function(ev) {
+	onTrigger1Click: function(ev)
+	{
 		var form = this.up('form'),
 			hf = form.down('field[name=' + this.hiddenField + ']');
 		if(hf)
@@ -32,7 +34,8 @@ Ext.define('NetProfile.view.ModelSelect', {
 
 		this.setValue('');
 	},
-	onTrigger2Click: function(ev) {
+	onTrigger2Click: function(ev)
+	{
 		var sel_win = Ext.create('Ext.window.Window', {
 			layout: 'fit',
 			minWidth: 500,

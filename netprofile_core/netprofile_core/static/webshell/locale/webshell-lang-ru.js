@@ -1,5 +1,24 @@
 Ext.onReady(function() {
 
+	Ext.define('Ext.locale.ru.ux.DateTimePicker', {
+		override: 'Ext.ux.DateTimePicker',
+		todayText: 'Сейчас',
+		timeLabel: 'Время'
+	});
+
+	Ext.define('Ext.locale.ru.grid.RowEditor', {
+		override: 'Ext.grid.RowEditor',
+		saveBtnText: 'Применить',
+		cancelBtnText: 'Отмена',
+		errorsText: 'Ошибки',
+		dirtyText: 'Вам необходимо применить либо отменить изменения'
+	});
+
+	Ext.define('Ext.locale.ru.view.Table', {
+		override: 'Ext.view.Table',
+		loadingText: 'Загрузка...'
+	});
+
 	Ext.define('Ext.locale.ru.grid.column.Action', {
 		override: 'Ext.grid.column.Action',
 		menuText: '<i>Действия</i>'
@@ -57,11 +76,17 @@ Ext.onReady(function() {
 		fieldEmptyText: 'Поиск...'
 	});
 
+	Ext.define('Ext.locale.ru.ux.grid.ExtraSearchFeature', {
+		override: 'Ext.ux.grid.ExtraSearchFeature',
+		searchText: 'Поиск',
+		searchTipText: 'Дополнительные условия поиска.',
+		advSearchText: 'Расширенный поиск',
+		clearText: 'Сбросить'
+	});
+
 	Ext.define('Ext.locale.ru.NetProfile.view.ModelGrid', {
 		override: 'NetProfile.view.ModelGrid',
 		emptyText: 'По вашему запросу ничего не найдено.',
-		searchText: 'Поиск',
-		searchTipText: 'Дополнительные условия поиска.',
 		clearText: 'Сбросить',
 		clearTipText: 'Сбросить фильтры и порядок сортировки.',
 		addText: 'Добавить',
@@ -85,8 +110,12 @@ Ext.onReady(function() {
 
 	Ext.define('Ext.locale.ru.NetProfile.view.TopBar', {
 		override: 'NetProfile.view.TopBar',
+		toolsText: 'Инструменты',
+		toolsTipText: 'Различные второстепенные окна и настройки.',
 		logoutText: 'Выход',
-		logoutTipText: 'Выйти из системы.'
+		logoutTipText: 'Выйти из системы.',
+		chLangText: 'Переключение языка',
+		aboutText: 'О программе…'
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.view.Form', {
@@ -105,6 +134,16 @@ Ext.onReady(function() {
 		btnNextText: 'Далее',
 		btnCancelText: 'Отмена',
 		btnSubmitText: 'Готово'
+	});
+
+	Ext.define('Ext.locale.ru.NetProfile.controller.UserSettingsForm', {
+		override: 'NetProfile.controller.UserSettingsForm',
+		btnResetText: 'Сбросить',
+		btnResetTipTitleText: 'Сбросить настройки',
+		btnResetTipText: 'Вернуть значения полей в этой форме к исходным.',
+		btnSaveText: 'Сохранить',
+		btnSaveTipTitleText: 'Сохранить настройки',
+		btnSaveTipText: 'Проверить и сохранить ваши настройки'
 	});
 
 });

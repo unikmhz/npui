@@ -11,10 +11,3 @@ DBSession = scoped_session(sessionmaker(
 ))
 Base = declarative_base()
 
-def _db_set_cred(sess, tr, conn):
-	sess.execute('SET @accessuid = 0')
-	sess.execute('SET @accessgid = 0')
-	sess.execute('SET @accesslogin = \'[GUEST]\'')
-
-event.listen(DBSession, 'after_begin', _db_set_cred)
-

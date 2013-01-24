@@ -25,6 +25,12 @@ div#login_outer
 	-moz-border-radius: 4px;
 }
 
+div#login_outer img
+{
+	display: inline-block;
+	padding-left: 4px;
+}
+
 div.elem
 {
 	display: block;
@@ -33,6 +39,15 @@ div.elem
 
 div.errmsg
 {
+	color: #d73600;
+	background-color: #f6f5ac;
+	font-weight: bold;
+	margin: 1.2em 0;
+	padding: 0.4em;
+	border: 2px solid #d73600;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
 }
 
 div.footer

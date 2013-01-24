@@ -65,6 +65,17 @@ h2
 	text-align: center;
 }
 
+.ux-timefield label, .ux-timefield input
+{
+	font-size: 11px;
+	line-height: 11px;
+}
+
+.ux-timefield label
+{
+	padding: 6px;
+}
+
 .ux-filtered-column
 {
 	font-style: italic;
@@ -100,13 +111,16 @@ h2
 .ico-add          { background-image: url(../img/add.png) !important; }
 .ico-cancel       { background-image: url(../img/cancel.png) !important; }
 .ico-clear        { background-image: url(../img/clear.png) !important; }
+.ico-cog          { background-image: url(../img/cog.png) !important; }
 .ico-copy         { background-image: url(../img/copy.png) !important; }
 .ico-cut          { background-image: url(../img/cut.png) !important; }
 .ico-delete       { background-image: url(../img/delete.png) !important; }
 .ico-exit         { background-image: url(../img/exit.png) !important; }
 .ico-find         { background-image: url(../img/find.png) !important; }
 .ico-first        { background-image: url(../img/first.png) !important; }
+.ico-flag         { background-image: url(../img/flag.png) !important; }
 .ico-home         { background-image: url(../img/home.png) !important; }
+.ico-info         { background-image: url(../img/info.png) !important; }
 .ico-key          { background-image: url(../img/key.png) !important; }
 .ico-last         { background-image: url(../img/last.png) !important; }
 .ico-lock         { background-image: url(../img/lock.png) !important; }
@@ -134,6 +148,7 @@ h2
 .ico-text-center  { background-image: url(../img/text_center.png) !important; }
 .ico-text-left    { background-image: url(../img/text_left.png) !important; }
 .ico-text-right   { background-image: url(../img/text_right.png) !important; }
+.ico-tool         { background-image: url(../img/tool.png) !important; }
 .ico-undo         { background-image: url(../img/undo.png) !important; }
 
 .ico-mod-group          { background-image: url(../img/group.png) !important; }

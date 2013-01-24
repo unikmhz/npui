@@ -29,6 +29,10 @@ __all__ = [
 	'UserSetting'
 ]
 
+import string
+import random
+import hashlib
+
 from sqlalchemy import (
 	Boolean,
 	CHAR,
@@ -51,13 +55,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
 	backref,
 	deferred,
+	joinedload,
 	relationship
 )
 
-from sqlalchemy.ext.declarative import (
-	declarative_base,
-	declared_attr
-)
+from sqlalchemy.ext.declarative import declared_attr
 
 from sqlalchemy.ext.associationproxy import (
 	association_proxy
@@ -90,18 +92,27 @@ from netprofile.db.fields import (
 	npbool
 )
 from netprofile.ext.wizards import (
+	SimpleWizard,
 	Step,
 	Wizard
 )
+from netprofile.ext.filters import (
+	SelectFilter
+)
 from netprofile.db.ddl import Comment
 
-import hashlib
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
+
+_ = TranslationStringFactory('netprofile_core')
 
 def _gen_xcap(cls, k, v):
 	"""
 	Creator for privilege-related attribute-mapped collections.
 	"""
-	priv = DBSession.query(Privilege).filter(Privilege.code == k).first()
+	priv = DBSession.query(Privilege).filter(Privilege.code == k).one()
 	if priv is None:
 		raise KeyError('Unknown privilege %s' % k)
 	return cls(privilege=priv, value=v)
@@ -110,10 +121,17 @@ def _gen_xacl(cls, k, v):
 	"""
 	Creator for ACL-related attribute-mapped collections.
 	"""
-	priv = DBSession.query(Privilege).filter(Privilege.code == k[0]).first()
+	priv = DBSession.query(Privilege).filter(Privilege.code == k[0]).one()
 	if priv is None:
 		raise KeyError('Unknown privilege %s' % k[0])
 	return cls(privilege=priv, resource=k[1], value=v)
+
+def _gen_user_setting(k, v):
+	"""
+	Creator for user-setting-related attribute-mapped collections.
+	"""
+	ust = DBSession.query(UserSettingType).filter(UserSettingType.name == k).one()
+	return UserSetting(type=ust, value=ust.param_to_db(v))
 
 class NPModule(Base):
 	"""
@@ -135,7 +153,7 @@ class NPModule(Base):
 				'cap_delete'   : 'BASE_ADMIN',
 
 				'show_in_menu' : 'admin',
-				'menu_name'    : 'Modules',
+				'menu_name'    : _('Modules'),
 				'menu_order'   : 40,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'curversion', 'enabled'),
@@ -151,7 +169,7 @@ class NPModule(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	name = Column(
@@ -160,7 +178,7 @@ class NPModule(Base):
 		nullable=False,
 		default=None,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	current_version = Column(
@@ -171,7 +189,7 @@ class NPModule(Base):
 		default='0.0.1',
 		server_default='0.0.1',
 		info={
-			'header_string' : 'Version'
+			'header_string' : _('Version')
 		}
 	)
 	enabled = Column(
@@ -181,7 +199,7 @@ class NPModule(Base):
 		default=False,
 		server_default=npbool(False),
 		info={
-			'header_string' : 'Enabled'
+			'header_string' : _('Enabled')
 		}
 	)
 
@@ -233,13 +251,23 @@ class NPModule(Base):
 	def __str__(self):
 		return '%s' % str(self.name)
 
+	def get_tree_node(self, req, mod):
+		loc = get_localizer(req)
+		return {
+			'id'       : self.name,
+			'text'     : loc.translate(mod.name),
+			'leaf'     : False,
+			'expanded' : True,
+			'iconCls'  : 'ico-module'
+		}
+
 class UserState(DeclEnum):
 	"""
 	Current user state ENUM.
 	"""
-	pending = 'P', 'Pending', 10
-	active  = 'A', 'Active',  20
-	deleted = 'D', 'Deleted', 30
+	pending = 'P', _('Pending'), 10
+	active  = 'A', _('Active'),  20
+	deleted = 'D', _('Deleted'), 30
 
 class User(Base):
 	"""
@@ -266,12 +294,12 @@ class User(Base):
 				'cap_delete'   : 'USERS_DELETE',
 
 				'show_in_menu' : 'admin',
-				'menu_name'    : 'Users',
+				'menu_name'    : _('Users'),
 				'menu_order'   : 20,
 				'default_sort' : (),
 				'grid_view'    : ('login', 'name_family', 'name_given', 'group', 'enabled', 'state', 'email'),
 				'easy_search'  : ('login', 'name_family'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_user')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -283,7 +311,7 @@ class User(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	group_id = Column(
@@ -293,7 +321,8 @@ class User(Base):
 		Comment('Group ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Group'
+			'header_string' : _('Group'),
+			'filter_type'   : 'list'
 		}
 	)
 	security_policy_id = Column(
@@ -305,7 +334,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Security Policy'
+			'header_string' : _('Security Policy')
 		}
 	)
 	state = Column(
@@ -315,7 +344,7 @@ class User(Base):
 		default=UserState.pending,
 		server_default=UserState.pending,
 		info={
-			'header_string' : 'State'
+			'header_string' : _('State')
 		}
 	)
 	login = Column(
@@ -323,7 +352,9 @@ class User(Base):
 		Comment('Login string'),
 		nullable=False,
 		info={
-			'header_string' : 'Username'
+			'header_string' : _('Username'),
+			'writer'        : 'change_login',
+			'pass_request'  : True
 		}
 	)
 	password = Column(
@@ -332,8 +363,11 @@ class User(Base):
 		Comment('Some form of password'),
 		nullable=False,
 		info={
-			'header_string' : 'Password',
-			'secret_value'  : True
+			'header_string' : _('Password'),
+			'secret_value'  : True,
+			'editor_xtype'  : 'passwordfield',
+			'writer'        : 'change_password',
+			'pass_request'  : True
 		}
 	)
 	a1_hash = Column(
@@ -344,8 +378,9 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'A1 Hash',
-			'secret_value'  : True
+			'header_string' : _('A1 Hash'),
+			'secret_value'  : True,
+			'editor_xtype'  : None
 		}
 	)
 	enabled = Column(
@@ -355,7 +390,7 @@ class User(Base):
 		default=False,
 		server_default=npbool(False),
 		info={
-			'header_string' : 'Enabled'
+			'header_string' : _('Enabled')
 		}
 	)
 	name_family = Column(
@@ -365,7 +400,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Family Name'
+			'header_string' : _('Family Name')
 		}
 	)
 	name_given = Column(
@@ -375,7 +410,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Given Name'
+			'header_string' : _('Given Name')
 		}
 	)
 	name_middle = Column(
@@ -385,7 +420,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Middle Name'
+			'header_string' : _('Middle Name')
 		}
 	)
 	title = Column(
@@ -395,7 +430,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Title'
+			'header_string' : _('Title')
 		}
 	)
 	manager_id = Column(
@@ -407,7 +442,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Manager'
+			'header_string' : _('Manager')
 		}
 	)
 	email = Column(
@@ -417,7 +452,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'E-mail'
+			'header_string' : _('E-mail')
 		}
 	)
 	ip_address = Column(
@@ -428,7 +463,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'IP Address'
+			'header_string' : _('IP Address')
 		}
 	)
 	random_key = Column(
@@ -439,7 +474,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Random Key'
+			'header_string' : _('Random Key')
 		}
 	)
 	photo_id = Column(
@@ -451,7 +486,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Photo'
+			'header_string' : _('Photo')
 		}
 	)
 
@@ -497,6 +532,7 @@ class User(Base):
 	)
 	setting_map = relationship(
 		'UserSetting',
+		collection_class=attribute_mapped_collection('name'),
 		backref=backref('user', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
@@ -521,6 +557,15 @@ class User(Base):
 		'value',
 		creator=lambda k,v: _gen_xacl(UserACL, k, v)
 	)
+	settings = association_proxy(
+		'setting_map',
+		'python_value',
+		creator=_gen_user_setting
+	)
+
+	def __init__(self, **kwargs):
+		super(User, self).__init__(**kwargs)
+		self.mod_pw = False
 
 	def __str__(self):
 		return '%s' % str(self.login)
@@ -528,6 +573,18 @@ class User(Base):
 	@hybrid_property
 	def name_full(self):
 		return self.name_family + ' ' + self.name_given
+
+	def generate_salt(self, salt_len=4, system_rng=True, chars=(string.ascii_lowercase + string.ascii_uppercase + string.digits)):
+		if system_rng:
+			rng = random.SystemRandom()
+		else:
+			rng = random
+		return ''.join(rng.choice(chars) for i in range(salt_len))
+
+	def generate_a1hash(self, realm):
+		ctx = hashlib.md5()
+		ctx.update('%s:%s:%s' % (self.login, realm, self.mod_pw))
+		return ctx.hexdigest()
 
 	def check_password(self, pwd, hash_con='sha1', salt_len=4):
 		if isinstance(pwd, str):
@@ -538,6 +595,27 @@ class User(Base):
 		ctx.update(salt)
 		ctx.update(pwd)
 		return ctx.hexdigest() == orig
+
+	def change_login(self, newlogin, opts, request):
+		self.login = newlogin
+		if self.mod_pw:
+			realm = reg.settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
+			self.a1_hash = self.generate_a1hash(realm)
+
+	def change_password(self, newpwd, opts, request):
+		self.mod_pw = newpwd
+		reg = request.registry
+		hash_con = reg.settings.get('netprofile.auth.hash', 'sha1')
+		salt_len = int(reg.settings.get('netprofile.auth.salt_length', 4))
+		salt = self.generate_salt(salt_len)
+		ctx = hashlib.new(hash_con)
+		ctx.update(salt.encode())
+		ctx.update(newpwd.encode())
+		newhash = ctx.hexdigest()
+		self.password = salt + newhash
+		if self.login:
+			realm = reg.settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
+			self.a1_hash = self.generate_a1hash(realm)
 
 	@property
 	def flat_privileges(self):
@@ -561,6 +639,18 @@ class User(Base):
 			names.append(sg.name)
 		return names
 
+	def client_settings(self, req):
+		sess = DBSession()
+		ret = {}
+		for ust in sess.query(UserSettingType):
+			if not ust.client_ok:
+				continue
+			if ust.name in self.settings:
+				ret[ust.name] = self.settings[ust.name]
+			else:
+				ret[ust.name] = ust.parse_param(ust.default)
+		return ret
+
 class Group(Base):
 	"""
 	Defines a group of NetProfile users.
@@ -583,7 +673,7 @@ class Group(Base):
 				'cap_delete'   : 'GROUPS_DELETE',
 
 				'show_in_menu' : 'admin',
-				'menu_name'    : 'Groups',
+				'menu_name'    : _('Groups'),
 				'menu_order'   : 30,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'parent', 'security_policy', 'root_folder'),
@@ -592,9 +682,9 @@ class Group(Base):
 
 				'create_wizard' :
 					Wizard(
-						Step('name', 'parent', 'security_policy', title='New group data'),
-						Step('visible', 'assignable', 'root_folder', title='New group details'),
-						title='Add new group'
+						Step('name', 'parent', 'security_policy', title=_('New group data')),
+						Step('visible', 'assignable', 'root_folder', title=_('New group details')),
+						title=_('Add new group')
 					)
 			}
 		}
@@ -607,7 +697,7 @@ class Group(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	parent_id = Column(
@@ -619,7 +709,8 @@ class Group(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Parent'
+			'header_string' : _('Parent'),
+			'filter_type'   : 'list'
 		}
 	)
 	security_policy_id = Column(
@@ -631,13 +722,17 @@ class Group(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Security Policy'
+			'header_string' : _('Security Policy'),
+			'filter_type'   : 'list'
 		}
 	)
 	name = Column(
 		Unicode(255),
 		Comment('Group Name'),
-		nullable=False
+		nullable=False,
+		info={
+			'header_string' : _('Name')
+		}
 	)
 	visible = Column(
 		NPBoolean(),
@@ -646,7 +741,7 @@ class Group(Base):
 		default=True,
 		server_default=npbool(True),
 		info={
-			'header_string' : 'Visible'
+			'header_string' : _('Visible')
 		}
 	)
 	assignable = Column(
@@ -656,7 +751,7 @@ class Group(Base):
 		default=True,
 		server_default=npbool(True),
 		info={
-			'header_string' : 'Assignable'
+			'header_string' : _('Assignable')
 		}
 	)
 	root_folder_id = Column(
@@ -668,7 +763,8 @@ class Group(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Root Folder'
+			'header_string' : _('Root Folder'),
+			'filter_type'   : 'none'
 		}
 	)
 	secondary_usermap = relationship(
@@ -759,12 +855,15 @@ class Privilege(Base):
 				'cap_delete'   : 'PRIVILEGES_DELETE',
 
 				'show_in_menu' : 'admin',
-				'menu_name'    : 'Privileges',
+				'menu_name'    : _('Privileges'),
 				'menu_order'   : 40,
 				'default_sort' : (),
 				'grid_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls'),
 				'easy_search'  : ('code', 'name'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+
+				# FIXME: temporary wizard
+				'create_wizard' : SimpleWizard(title=_('Add new privilege'))
 			}
 		}
 	)
@@ -776,7 +875,7 @@ class Privilege(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	module_id = Column(
@@ -788,7 +887,8 @@ class Privilege(Base):
 		default=1,
 		server_default=text('1'),
 		info={
-			'header_string' : 'Module'
+			'header_string' : _('Module'),
+			'filter_type'   : 'list'
 		}
 	)
 	can_be_set = Column(
@@ -799,7 +899,7 @@ class Privilege(Base):
 		default=True,
 		server_default=npbool(True),
 		info={
-			'header_string' : 'Can be Set'
+			'header_string' : _('Can be Set')
 		}
 	)
 	code = Column(
@@ -807,7 +907,7 @@ class Privilege(Base):
 		Comment('Privilege code'),
 		nullable=False,
 		info={
-			'header_string' : 'Code'
+			'header_string' : _('Code')
 		}
 	)
 	name = Column(
@@ -815,7 +915,7 @@ class Privilege(Base):
 		Comment('Privilege name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	guest_value = Column(
@@ -826,7 +926,7 @@ class Privilege(Base):
 		default=False,
 		server_default=npbool(False),
 		info={
-			'header_string' : 'Guest Value'
+			'header_string' : _('Guest Value')
 		}
 	)
 	has_acls = Column(
@@ -837,7 +937,7 @@ class Privilege(Base):
 		default=False,
 		server_default=npbool(False),
 		info={
-			'header_string' : 'Has ACLs'
+			'header_string' : _('Has ACLs')
 		}
 	)
 	resource_class = Column(
@@ -848,7 +948,7 @@ class Privilege(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Resource Class'
+			'header_string' : _('Resource Class')
 		}
 	)
 	group_caps = relationship(
@@ -893,7 +993,7 @@ class Capability(object):
 			primary_key=True,
 			nullable=False,
 			info={
-				'header_string' : 'ID'
+				'header_string' : _('ID')
 			}
 		)
 
@@ -906,7 +1006,7 @@ class Capability(object):
 			Comment('Privilege ID'),
 			nullable=False,
 			info={
-				'header_string' : 'Privilege'
+				'header_string' : _('Privilege')
 			}
 		)
 
@@ -919,7 +1019,7 @@ class Capability(object):
 			default=True,
 			server_default=npbool(True),
 			info={
-				'header_string' : 'Value'
+				'header_string' : _('Value')
 			}
 		)
 
@@ -953,7 +1053,7 @@ class GroupCapability(Capability,Base):
 				'cap_delete'   : 'GROUPS_SETCAP',
 
 #				'show_in_menu' : 'admin',
-				'menu_name'    : 'Group Capabilities',
+				'menu_name'    : _('Group Capabilities'),
 #				'menu_order'   : 40,
 				'default_sort' : (),
 #				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
@@ -967,7 +1067,7 @@ class GroupCapability(Capability,Base):
 		Comment('Group ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Group'
+			'header_string' : _('Group')
 		}
 	)
 
@@ -990,7 +1090,7 @@ class UserCapability(Capability,Base):
 				'cap_delete'   : 'USERS_SETCAP',
 
 #				'show_in_menu' : 'admin',
-				'menu_name'    : 'Group Capabilities',
+				'menu_name'    : _('User Capabilities'),
 #				'menu_order'   : 40,
 				'default_sort' : (),
 #				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
@@ -1004,7 +1104,7 @@ class UserCapability(Capability,Base):
 		Comment('User ID'),
 		nullable=False,
 		info={
-			'header_string' : 'User'
+			'header_string' : _('User')
 		}
 	)
 
@@ -1022,7 +1122,7 @@ class ACL(object):
 			primary_key=True,
 			nullable=False,
 			info={
-				'header_string' : 'ID'
+				'header_string' : _('ID')
 			}
 		)
 
@@ -1035,7 +1135,7 @@ class ACL(object):
 			Comment('Privilege ID'),
 			nullable=False,
 			info={
-				'header_string' : 'Privilege'
+				'header_string' : _('Privilege')
 			}
 		)
 
@@ -1046,7 +1146,7 @@ class ACL(object):
 			Comment('Resource ID'),
 			nullable=False,
 			info={
-				'header_string' : 'Resource'
+				'header_string' : _('Resource')
 			}
 		)
 
@@ -1059,7 +1159,7 @@ class ACL(object):
 			default=True,
 			server_default=npbool(True),
 			info={
-				'header_string' : 'Value'
+				'header_string' : _('Value')
 			}
 		)
 
@@ -1102,7 +1202,7 @@ class GroupACL(ACL,Base):
 		Comment('Group ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Group'
+			'header_string' : _('Group')
 		}
 	)
 
@@ -1129,7 +1229,7 @@ class UserACL(ACL,Base):
 		Comment('User ID'),
 		nullable=False,
 		info={
-			'header_string' : 'User'
+			'header_string' : _('User')
 		}
 	)
 
@@ -1157,7 +1257,7 @@ class UserGroup(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	user_id = Column(
@@ -1167,7 +1267,7 @@ class UserGroup(Base):
 		Comment('User ID'),
 		nullable=False,
 		info={
-			'header_string' : 'User'
+			'header_string' : _('User')
 		}
 	)
 	group_id = Column(
@@ -1177,7 +1277,7 @@ class UserGroup(Base):
 		Comment('Group ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Group'
+			'header_string' : _('Group')
 		}
 	)
 
@@ -1188,9 +1288,9 @@ class SecurityPolicyOnExpire(DeclEnum):
 	"""
 	On-password-expire security policy action.
 	"""
-	none  = 'none',  'No action',          10
-	force = 'force', 'Force new password', 20
-	drop  = 'drop',  'Drop connection',    30
+	none  = 'none',  _('No action'),          10
+	force = 'force', _('Force new password'), 20
+	drop  = 'drop',  _('Drop connection'),    30
 
 class SecurityPolicy(Base):
 	"""
@@ -1211,7 +1311,7 @@ class SecurityPolicy(Base):
 				'cap_delete'   : 'SECPOL_DELETE',
 
 				'show_in_menu' : 'admin',
-				'menu_name'    : 'Security Policies',
+				'menu_name'    : _('Security Policies'),
 				'menu_order'   : 50,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size'),
@@ -1228,7 +1328,7 @@ class SecurityPolicy(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	name = Column(
@@ -1236,7 +1336,7 @@ class SecurityPolicy(Base):
 		Comment('Security policy name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	pw_length_min = Column(
@@ -1246,7 +1346,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Min. Password Len.'
+			'header_string' : _('Min. Password Len.')
 		}
 	)
 	pw_length_max = Column(
@@ -1256,7 +1356,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Max. Password Len.'
+			'header_string' : _('Max. Password Len.')
 		}
 	)
 	pw_ctype_min = Column(
@@ -1266,7 +1366,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Min. Char Types'
+			'header_string' : _('Min. Char Types')
 		}
 	)
 	pw_ctype_max = Column(
@@ -1276,7 +1376,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Max. Char Types'
+			'header_string' : _('Max. Char Types')
 		}
 	)
 	pw_dict_check = Column(
@@ -1286,7 +1386,7 @@ class SecurityPolicy(Base):
 		default=False,
 		server_default=npbool(False),
 		info={
-			'header_string' : 'Dictionary Check'
+			'header_string' : _('Dictionary Check')
 		}
 	)
 	pw_dict_name = Column(
@@ -1296,7 +1396,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Custom Dictionary'
+			'header_string' : _('Custom Dictionary')
 		}
 	)
 	pw_hist_check = Column(
@@ -1306,7 +1406,7 @@ class SecurityPolicy(Base):
 		default=False,
 		server_default=npbool(False),
 		info={
-			'header_string' : 'Keep History'
+			'header_string' : _('Keep History')
 		}
 	)
 	pw_hist_size = Column(
@@ -1316,7 +1416,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'History Size'
+			'header_string' : _('History Size')
 		}
 	)
 	pw_age_min = Column(
@@ -1326,7 +1426,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Min. Password Age'
+			'header_string' : _('Min. Password Age')
 		}
 	)
 	pw_age_max = Column(
@@ -1336,7 +1436,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Max. Password Age'
+			'header_string' : _('Max. Password Age')
 		}
 	)
 	pw_age_warndays = Column(
@@ -1346,7 +1446,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Notify Days'
+			'header_string' : _('Notify Days')
 		}
 	)
 	pw_age_warnmail = Column(
@@ -1356,7 +1456,7 @@ class SecurityPolicy(Base):
 		default=False,
 		server_default=npbool(False),
 		info={
-			'header_string' : 'Warn by E-mail'
+			'header_string' : _('Warn by E-mail')
 		}
 	)
 	pw_age_action = Column(
@@ -1366,7 +1466,7 @@ class SecurityPolicy(Base):
 		default=SecurityPolicyOnExpire.none,
 		server_default=SecurityPolicyOnExpire.none,
 		info={
-			'header_string' : 'On Expire'
+			'header_string' : _('On Expire')
 		}
 	)
 	net_whitelist = Column(
@@ -1376,7 +1476,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Address Whitelist'
+			'header_string' : _('Address Whitelist')
 		}
 	)
 	sess_timeout = Column(
@@ -1386,7 +1486,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Session Timeout'
+			'header_string' : _('Session Timeout')
 		}
 	)
 	description = Column(
@@ -1397,7 +1497,7 @@ class SecurityPolicy(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 	users = relationship(
@@ -1413,9 +1513,9 @@ class SecurityPolicy(Base):
 		return '%s' % str(self.name)
 
 class FileFolderAccessRule(DeclEnum):
-	private = 'private', 'Owner-only access', 10
-	group   = 'group',   'Group-only access', 20
-	public  = 'public',  'Public access',     30
+	private = 'private', _('Owner-only access'), 10
+	group   = 'group',   _('Group-only access'), 20
+	public  = 'public',  _('Public access'),     30
 
 class FileFolder(Base):
 	"""
@@ -1442,7 +1542,7 @@ class FileFolder(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	parent_id = Column(
@@ -1454,7 +1554,7 @@ class FileFolder(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Parent'
+			'header_string' : _('Parent')
 		}
 	)
 	user_id = Column(
@@ -1466,7 +1566,7 @@ class FileFolder(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'User'
+			'header_string' : _('User')
 		}
 	)
 	group_id = Column(
@@ -1478,7 +1578,7 @@ class FileFolder(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Group'
+			'header_string' : _('Group')
 		}
 	)
 	rights = Column(
@@ -1488,7 +1588,7 @@ class FileFolder(Base):
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : 'Rights'
+			'header_string' : _('Rights')
 		}
 	)
 	access = Column(
@@ -1498,7 +1598,7 @@ class FileFolder(Base):
 		default=FileFolderAccessRule.public,
 		server_default=FileFolderAccessRule.public,
 		info={
-			'header_string' : 'Access Rule'
+			'header_string' : _('Access Rule')
 		}
 	)
 	creation_time = Column(
@@ -1509,7 +1609,7 @@ class FileFolder(Base):
 		default=None,
 		server_default=FetchedValue(),
 		info={
-			'header_string' : 'Created'
+			'header_string' : _('Created')
 		}
 	)
 	modification_time = Column(
@@ -1521,7 +1621,7 @@ class FileFolder(Base):
 		server_default=func.current_timestamp(),
 		server_onupdate=func.current_timestamp(),
 		info={
-			'header_string' : 'Modified'
+			'header_string' : _('Modified')
 		}
 	)
 	name = Column(
@@ -1529,7 +1629,7 @@ class FileFolder(Base):
 		Comment('Folder name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	description = Column(
@@ -1540,7 +1640,7 @@ class FileFolder(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 	meta = Column(
@@ -1550,7 +1650,7 @@ class FileFolder(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Metadata'
+			'header_string' : _('Metadata')
 		}
 	)
 	files = relationship(
@@ -1600,7 +1700,7 @@ class File(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	folder_id = Column(
@@ -1612,7 +1712,7 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Folder'
+			'header_string' : _('Folder')
 		}
 	)
 	filename = Column(
@@ -1621,7 +1721,7 @@ class File(Base):
 		Comment('File name'),
 		nullable=False,
 		info={
-			'header_string' : 'Filename'
+			'header_string' : _('Filename')
 		}
 	)
 	name = Column(
@@ -1629,7 +1729,7 @@ class File(Base):
 		Comment('Human-readable file name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	user_id = Column(
@@ -1641,7 +1741,7 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'User'
+			'header_string' : _('User')
 		}
 	)
 	group_id = Column(
@@ -1653,7 +1753,7 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Group'
+			'header_string' : _('Group')
 		}
 	)
 	rights = Column(
@@ -1663,7 +1763,7 @@ class File(Base):
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : 'Rights'
+			'header_string' : _('Rights')
 		}
 	)
 	mime_type = Column(
@@ -1674,7 +1774,7 @@ class File(Base):
 		default='application/octet-stream',
 		server_default='application/octet-stream',
 		info={
-			'header_string' : 'Type'
+			'header_string' : _('Type')
 		}
 	)
 	size = Column(
@@ -1682,7 +1782,7 @@ class File(Base):
 		Comment('File size (in bytes)'),
 		nullable=False,
 		info={
-			'header_string' : 'Size'
+			'header_string' : _('Size')
 		}
 	)
 	creation_time = Column(
@@ -1693,7 +1793,7 @@ class File(Base):
 		default=None,
 		server_default=FetchedValue(),
 		info={
-			'header_string' : 'Created'
+			'header_string' : _('Created')
 		}
 	)
 	modification_time = Column(
@@ -1705,7 +1805,7 @@ class File(Base):
 		server_default=func.current_timestamp(),
 		server_onupdate=func.current_timestamp(),
 		info={
-			'header_string' : 'Modified'
+			'header_string' : _('Modified')
 		}
 	)
 	etag = Column(
@@ -1715,7 +1815,7 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'E-Tag'
+			'header_string' : _('E-Tag')
 		}
 	)
 	read_count = Column(
@@ -1726,7 +1826,7 @@ class File(Base):
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : 'Read Count'
+			'header_string' : _('Read Count')
 		}
 	)
 	description = Column(
@@ -1737,7 +1837,7 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 	meta = Column(
@@ -1747,7 +1847,7 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Metadata'
+			'header_string' : _('Metadata')
 		}
 	)
 	data = deferred(Column(
@@ -1755,7 +1855,7 @@ class File(Base):
 		Comment('Actual file data'),
 		nullable=False,
 		info={
-			'header_string' : 'Data'
+			'header_string' : _('Data')
 		}
 	))
 
@@ -1781,7 +1881,7 @@ class Tag(Base):
 				'cap_delete'    : 'BASE_ADMIN',
 
 				'show_in_menu'  : 'admin',
-				'menu_name'     : 'Tags',
+				'menu_name'     : _('Tags'),
 				'menu_order'    : 60,
 				'default_sort'  : (),
 				'grid_view'     : ('name', 'descr'),
@@ -1790,8 +1890,8 @@ class Tag(Base):
 
 				'create_wizard' :
 					Wizard(
-						Step('name', 'descr', title='Tag info'),
-						title='Add new tag'
+						Step('name', 'descr', title=_('Tag info')),
+						title=_('Add new tag')
 					)
 			}
 		}
@@ -1804,7 +1904,7 @@ class Tag(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	name = Column(
@@ -1812,7 +1912,7 @@ class Tag(Base):
 		Comment('Tag name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	description = Column(
@@ -1823,7 +1923,7 @@ class Tag(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 
@@ -1842,20 +1942,20 @@ class LogType(Base):
 			'mysql_engine'  : 'InnoDB', # or leave MyISAM?
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : '__NOPRIV__',
+				'cap_menu'      : 'BASE_ADMIN',
+				'cap_read'      : 'BASE_ADMIN',
+				'cap_create'    : 'BASE_ADMIN',
+				'cap_edit'      : 'BASE_ADMIN',
+				'cap_delete'    : '__NOPRIV__',
 
-				'show_in_menu' : 'admin',
-				'menu_section' : 'Logging',
-				'menu_name'    : 'Log Types',
-				'menu_order'   : 81,
-				'default_sort' : (),
-				'grid_view'    : ('name',),
-				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'show_in_menu'  : 'admin',
+				'menu_section'  : _('Logging'),
+				'menu_name'     : _('Log Types'),
+				'menu_order'    : 81,
+				'default_sort'  : (),
+				'grid_view'     : ('name',),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -1867,7 +1967,7 @@ class LogType(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	name = Column(
@@ -1875,7 +1975,7 @@ class LogType(Base):
 		Comment('Log entry type name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 
@@ -1901,8 +2001,8 @@ class LogAction(Base):
 				'cap_delete'   : '__NOPRIV__',
 
 				'show_in_menu' : 'admin',
-				'menu_section' : 'Logging',
-				'menu_name'    : 'Log Actions',
+				'menu_section' : _('Logging'),
+				'menu_name'    : _('Log Actions'),
 				'menu_order'   : 82,
 				'default_sort' : (),
 				'grid_view'    : ('name',),
@@ -1919,7 +2019,7 @@ class LogAction(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	name = Column(
@@ -1927,7 +2027,7 @@ class LogAction(Base):
 		Comment('Log action name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 
@@ -1952,8 +2052,8 @@ class LogData(Base):
 				'cap_delete'   : '__NOPRIV__',
 
 				'show_in_menu' : 'admin',
-				'menu_section' : 'Logging',
-				'menu_name'    : 'Log Data',
+				'menu_section' : _('Logging'),
+				'menu_name'    : _('Log Data'),
 				'menu_order'   : 80,
 				'default_sort' : (),
 				'grid_view'    : ('ts', 'login', 'xtype', 'xaction', 'data'),
@@ -1970,18 +2070,18 @@ class LogData(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	timestamp = Column(
 		'ts',
-		TIMESTAMP(),
+		TIMESTAMP(timezone=True),
 		Comment('Log entry timestamp'),
 		nullable=False,
 #		default=zzz,
 		server_default=func.current_timestamp(),
 		info={
-			'header_string' : 'Time'
+			'header_string' : _('Time')
 		}
 	)
 	login = Column(
@@ -1989,7 +2089,7 @@ class LogData(Base):
 		Comment('Owner\'s login string'),
 		nullable=False,
 		info={
-			'header_string' : 'Username'
+			'header_string' : _('Username')
 		}
 	)
 	type_id = Column(
@@ -1999,7 +2099,8 @@ class LogData(Base):
 		Comment('Log entry type'),
 		nullable=False,
 		info={
-			'header_string' : 'Type'
+			'header_string' : _('Type'),
+			'filter_type'   : 'list'
 		}
 	)
 	action_id = Column(
@@ -2009,7 +2110,8 @@ class LogData(Base):
 		Comment('Log entry action'),
 		nullable=False,
 		info={
-			'header_string' : 'Action'
+			'header_string' : _('Action'),
+			'filter_type'   : 'list'
 		}
 	)
 	data = Column(
@@ -2019,7 +2121,7 @@ class LogData(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Data'
+			'header_string' : _('Data')
 		}
 	)
 
@@ -2061,7 +2163,7 @@ class NPSession(Base):
 				'cap_delete'   : 'BASE_ADMIN',
 
 				'show_in_menu' : 'admin',
-				'menu_name'    : 'UI Sessions',
+				'menu_name'    : _('UI Sessions'),
 				'menu_order'   : 90,
 				'default_sort' : (),
 				'grid_view'    : ('sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr'),
@@ -2077,7 +2179,7 @@ class NPSession(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	session_name = Column(
@@ -2086,7 +2188,7 @@ class NPSession(Base):
 		Comment('NP session hash'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	user_id = Column(
@@ -2098,7 +2200,8 @@ class NPSession(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'User'
+			'header_string' : _('User'),
+			'filter_type'   : 'none'
 		}
 	)
 	login = Column(
@@ -2108,7 +2211,7 @@ class NPSession(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Username'
+			'header_string' : _('Username')
 		}
 	)
 	start_time = Column(
@@ -2118,7 +2221,7 @@ class NPSession(Base):
 		nullable=True,
 		default=None,
 		info={
-			'header_string' : 'Start'
+			'header_string' : _('Start')
 		}
 #		server_default=text('NULL')
 	)
@@ -2131,7 +2234,7 @@ class NPSession(Base):
 		server_default=func.current_timestamp(),
 		server_onupdate=func.current_timestamp(),
 		info={
-			'header_string' : 'Last Update'
+			'header_string' : _('Last Update')
 		}
 	)
 	ip_address = Column(
@@ -2142,7 +2245,7 @@ class NPSession(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'IPv4 Address'
+			'header_string' : _('IPv4 Address')
 		}
 	)
 	ipv6_address = Column(
@@ -2153,9 +2256,18 @@ class NPSession(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'IPv6 Address'
+			'header_string' : _('IPv6 Address')
 		}
 	)
+
+	@classmethod
+	def __augment_query__(cls, sess, query):
+		lim = query._limit
+		if lim and (lim < 50):
+			return query.options(
+				joinedload(NPSession.user)
+			)
+		return query
 
 	def __str__(self):
 		return '%s' % str(self.session_name)
@@ -2184,7 +2296,7 @@ class PasswordHistory(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	user_id = Column(
@@ -2194,7 +2306,7 @@ class PasswordHistory(Base):
 		Comment('User ID'),
 		nullable=False,
 		info={
-			'header_string' : 'User'
+			'header_string' : _('User')
 		}
 	)
 	timestamp = Column(
@@ -2205,7 +2317,7 @@ class PasswordHistory(Base):
 #		default=zzz,
 		server_default=func.current_timestamp(),
 		info={
-			'header_string' : 'Time'
+			'header_string' : _('Time')
 		}
 	)
 	password = Column(
@@ -2214,7 +2326,7 @@ class PasswordHistory(Base):
 		Comment('Old password'),
 		nullable=False,
 		info={
-			'header_string' : 'Password'
+			'header_string' : _('Password')
 		}
 	)
 
@@ -2230,20 +2342,22 @@ class GlobalSettingSection(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
+				'cap_menu'      : 'BASE_ADMIN',
+				'cap_read'      : 'BASE_ADMIN',
+				'cap_create'    : 'BASE_ADMIN',
+				'cap_edit'      : 'BASE_ADMIN',
+				'cap_delete'    : 'BASE_ADMIN',
 
-				'show_in_menu' : 'admin',
-				'menu_section' : 'Settings',
-				'menu_name'    : 'Global Setting Sections',
-				'menu_order'   : 70,
-				'default_sort' : (),
-				'grid_view'    : ('module', 'name', 'descr'),
-				'easy_search'  : ('name', 'descr'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'show_in_menu'  : 'admin',
+				'menu_section'  : _('Settings'),
+				'menu_name'     : _('Global Setting Sections'),
+				'menu_order'    : 70,
+				'default_sort'  : (),
+				'grid_view'     : ('module', 'name', 'descr'),
+				'easy_search'   : ('name', 'descr'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new section'))
 			}
 		}
 	)
@@ -2255,7 +2369,7 @@ class GlobalSettingSection(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	module_id = Column(
@@ -2265,7 +2379,8 @@ class GlobalSettingSection(Base):
 		Comment('NetProfile module ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Module'
+			'header_string' : _('Module'),
+			'filter_type'   : 'list'
 		}
 	)
 	name = Column(
@@ -2273,7 +2388,7 @@ class GlobalSettingSection(Base):
 		Comment('Global parameter section name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	description = Column(
@@ -2284,7 +2399,7 @@ class GlobalSettingSection(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 
@@ -2310,20 +2425,22 @@ class UserSettingSection(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
+				'cap_menu'      : 'BASE_ADMIN',
+				'cap_read'      : 'BASE_ADMIN',
+				'cap_create'    : 'BASE_ADMIN',
+				'cap_edit'      : 'BASE_ADMIN',
+				'cap_delete'    : 'BASE_ADMIN',
 
-				'show_in_menu' : 'admin',
-				'menu_section' : 'Settings',
-				'menu_name'    : 'User Setting Sections',
-				'menu_order'   : 71,
-				'default_sort' : (),
-				'grid_view'    : ('module', 'name', 'descr'),
-				'easy_search'  : ('name', 'descr'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'show_in_menu'  : 'admin',
+				'menu_section'  : _('Settings'),
+				'menu_name'     : _('User Setting Sections'),
+				'menu_order'    : 71,
+				'default_sort'  : (),
+				'grid_view'     : ('module', 'name', 'descr'),
+				'easy_search'   : ('name', 'descr'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new section'))
 			}
 		}
 	)
@@ -2335,7 +2452,7 @@ class UserSettingSection(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	module_id = Column(
@@ -2345,7 +2462,8 @@ class UserSettingSection(Base):
 		Comment('NetProfile module ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Module'
+			'header_string' : _('Module'),
+			'filter_type'   : 'list'
 		}
 	)
 	name = Column(
@@ -2353,7 +2471,7 @@ class UserSettingSection(Base):
 		Comment('User parameter section name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	description = Column(
@@ -2364,7 +2482,7 @@ class UserSettingSection(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 
@@ -2378,7 +2496,97 @@ class UserSettingSection(Base):
 	def __str__(self):
 		return '%s' % str(self.name)
 
-class GlobalSetting(Base):
+	def get_tree_node(self, req):
+		loc = get_localizer(req)
+		return {
+			'id'      : 'ss' + str(self.id),
+			'text'    : loc.translate(_(self.name)),
+			'leaf'    : True,
+			'iconCls' : 'ico-cog'
+		}
+
+class DynamicSetting(object):
+	def has_constraint(self, name):
+		if self.constraints and (name in self.constraints):
+			return True
+		return False
+
+	def get_constraint(self, name, default=None):
+		if self.constraints and (name in self.constraints):
+			return self.constraints[name]
+		return default
+
+	def has_option(self, name):
+		if self.options and (name in self.options):
+			return True
+		return False
+
+	def get_option(self, name, default=None):
+		if self.options and (name in self.options):
+			return self.options[name]
+		return default
+
+	def parse_param(self, param):
+		if self.type == 'checkbox':
+			if isinstance(param, bool):
+				return param
+			if param.lower() in {'true', '1', 'on'}:
+				return True
+			return False
+		cast = self.get_constraint('cast')
+		if cast == 'int':
+			return int(param)
+		if cast == 'float':
+			return float(param)
+		return param
+
+	def param_to_db(self, param):
+		param = self.parse_param(param)
+		if self.type == 'checkbox':
+			if param:
+				return 'true'
+			return 'false'
+		return str(param)
+
+	def get_field_cfg(self, req):
+		cfg = {
+			'xtype'       : 'textfield',
+			'allowBlank'  : self.get_constraint('nullok', False),
+			'name'        : self.name,
+			'fieldLabel'  : self.title,
+			'description' : self.description
+		}
+		if self.type == 'text':
+			if self.get_constraint('cast') == 'int':
+				cfg['xtype'] = 'numberfield'
+				cfg['allowDecimals'] = False
+				if self.has_constraint('minval'):
+					cfg['minValue'] = int(self.get_constraint('minval'))
+				if self.has_constraint('maxval'):
+					cfg['maxValue'] = int(self.get_constraint('maxval'))
+			else:
+				if self.has_constraint('minlen'):
+					cfg['minLength'] = int(self.get_constraint('minlen'))
+				if self.has_constraint('maxlen'):
+					cfg['maxLength'] = int(self.get_constraint('maxlen'))
+				if self.has_constraint('regex'):
+					cfg['regex'] = int(self.get_constraint('regex'))
+		if self.type == 'checkbox':
+			cfg.update({
+				'xtype'          : 'checkbox',
+				'inputValue'     : 'true',
+				'uncheckedValue' : 'false'
+			})
+			pass
+		if self.type == 'select':
+			pass
+		if self.type == 'password':
+			pass
+		if self.type == 'textarea':
+			pass
+		return cfg
+
+class GlobalSetting(Base, DynamicSetting):
 	"""
 	Global application settings.
 	"""
@@ -2399,8 +2607,8 @@ class GlobalSetting(Base):
 				'cap_delete'   : 'BASE_ADMIN',
 
 				'show_in_menu' : 'admin',
-				'menu_section' : 'Settings',
-				'menu_name'    : 'Global Settings',
+				'menu_section' : _('Settings'),
+				'menu_name'    : _('Global Settings'),
 				'menu_order'   : 72,
 				'default_sort' : (),
 				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'value', 'default'),
@@ -2417,7 +2625,7 @@ class GlobalSetting(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	section_id = Column(
@@ -2427,7 +2635,8 @@ class GlobalSetting(Base):
 		Comment('Global parameter section ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Section'
+			'header_string' : _('Section'),
+			'filter_type'   : 'list'
 		}
 	)
 	module_id = Column(
@@ -2437,7 +2646,8 @@ class GlobalSetting(Base):
 		Comment('NetProfile module ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Module'
+			'header_string' : _('Module'),
+			'filter_type'   : 'list'
 		}
 	)
 	name = Column(
@@ -2445,7 +2655,7 @@ class GlobalSetting(Base):
 		Comment('Global parameter name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	title = Column(
@@ -2453,7 +2663,7 @@ class GlobalSetting(Base):
 		Comment('Global parameter title'),
 		nullable=False,
 		info={
-			'header_string' : 'Title'
+			'header_string' : _('Title')
 		}
 	)
 	type = Column(
@@ -2463,7 +2673,7 @@ class GlobalSetting(Base):
 		default='text',
 		server_default='text',
 		info={
-			'header_string' : 'Type'
+			'header_string' : _('Type')
 		}
 	)
 	value = Column(
@@ -2471,7 +2681,7 @@ class GlobalSetting(Base):
 		Comment('Global parameter current value'),
 		nullable=False,
 		info={
-			'header_string' : 'Value'
+			'header_string' : _('Value')
 		}
 	)
 	default = Column(
@@ -2480,7 +2690,7 @@ class GlobalSetting(Base):
 		nullable=True,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Default'
+			'header_string' : _('Default')
 		}
 	)
 	options = Column(
@@ -2489,7 +2699,7 @@ class GlobalSetting(Base):
 		Comment('Serialized options array'),
 		nullable=True,
 		info={
-			'header_string' : 'Options'
+			'header_string' : _('Options')
 		}
 	)
 	dynamic_options = Column(
@@ -2498,7 +2708,7 @@ class GlobalSetting(Base):
 		Comment('Serialized dynamic options array'),
 		nullable=True,
 		info={
-			'header_string' : 'Dynamic Options'
+			'header_string' : _('Dynamic Options')
 		}
 	)
 	constraints = Column(
@@ -2507,7 +2717,7 @@ class GlobalSetting(Base):
 		Comment('Serialized constraints array'),
 		nullable=True,
 		info={
-			'header_string' : 'Constraints'
+			'header_string' : _('Constraints')
 		}
 	)
 	client_ok = Column(
@@ -2518,7 +2728,7 @@ class GlobalSetting(Base):
 		default=True,
 		server_default=npbool(True),
 		info={
-			'header_string' : 'Client-side'
+			'header_string' : _('Client-side')
 		}
 	)
 	description = Column(
@@ -2529,14 +2739,14 @@ class GlobalSetting(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 
 	def __str__(self):
 		return '%s' % str(self.name)
 
-class UserSettingType(Base):
+class UserSettingType(Base, DynamicSetting):
 	"""
 	Per-user application setting types.
 	"""
@@ -2557,8 +2767,8 @@ class UserSettingType(Base):
 				'cap_delete'   : 'BASE_ADMIN',
 
 				'show_in_menu' : 'admin',
-				'menu_section' : 'Settings',
-				'menu_name'    : 'User Setting Types',
+				'menu_section' : _('Settings'),
+				'menu_name'    : _('User Setting Types'),
 				'menu_order'   : 73,
 				'default_sort' : (),
 				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'default'),
@@ -2575,7 +2785,7 @@ class UserSettingType(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	section_id = Column(
@@ -2585,7 +2795,8 @@ class UserSettingType(Base):
 		Comment('User parameter section ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Section'
+			'header_string' : _('Section'),
+			'filter_type'   : 'list'
 		}
 	)
 	module_id = Column(
@@ -2595,7 +2806,8 @@ class UserSettingType(Base):
 		Comment('NetProfile module ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Module'
+			'header_string' : _('Module'),
+			'filter_type'   : 'list'
 		}
 	)
 	name = Column(
@@ -2603,7 +2815,7 @@ class UserSettingType(Base):
 		Comment('User parameter name'),
 		nullable=False,
 		info={
-			'header_string' : 'Name'
+			'header_string' : _('Name')
 		}
 	)
 	title = Column(
@@ -2611,7 +2823,7 @@ class UserSettingType(Base):
 		Comment('User parameter title'),
 		nullable=False,
 		info={
-			'header_string' : 'Title'
+			'header_string' : _('Title')
 		}
 	)
 	type = Column(
@@ -2621,7 +2833,7 @@ class UserSettingType(Base):
 		default='text',
 		server_default='text',
 		info={
-			'header_string' : 'Type'
+			'header_string' : _('Type')
 		}
 	)
 	default = Column(
@@ -2630,7 +2842,7 @@ class UserSettingType(Base):
 		nullable=True,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Default'
+			'header_string' : _('Default')
 		}
 	)
 	options = Column(
@@ -2639,7 +2851,7 @@ class UserSettingType(Base):
 		Comment('Serialized options array'),
 		nullable=True,
 		info={
-			'header_string' : 'Options'
+			'header_string' : _('Options')
 		}
 	)
 	dynamic_options = Column(
@@ -2648,7 +2860,7 @@ class UserSettingType(Base):
 		Comment('Serialized dynamic options array'),
 		nullable=True,
 		info={
-			'header_string' : 'Dynamic Options'
+			'header_string' : _('Dynamic Options')
 		}
 	)
 	constraints = Column(
@@ -2657,7 +2869,7 @@ class UserSettingType(Base):
 		Comment('Serialized constraints array'),
 		nullable=True,
 		info={
-			'header_string' : 'Constraints'
+			'header_string' : _('Constraints')
 		}
 	)
 	client_ok = Column(
@@ -2668,7 +2880,7 @@ class UserSettingType(Base):
 		default=True,
 		server_default=npbool(True),
 		info={
-			'header_string' : 'Client-side'
+			'header_string' : _('Client-side')
 		}
 	)
 	description = Column(
@@ -2679,7 +2891,7 @@ class UserSettingType(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Description'
+			'header_string' : _('Description')
 		}
 	)
 
@@ -2693,10 +2905,25 @@ class UserSettingType(Base):
 	def __str__(self):
 		return '%s' % str(self.name)
 
+	@classmethod
+	def __augment_query__(cls, sess, query):
+		lim = query._limit
+		if lim and (lim < 50):
+			return query.options(
+				joinedload(UserSettingType.module),
+				joinedload(UserSettingType.section)
+			)
+		return query
+
 class UserSetting(Base):
 	"""
 	Per-user application settings.
 	"""
+
+	@classmethod
+	def _filter_section(cls, query, value):
+		return query.join(UserSettingType, UserSettingSection).filter(UserSettingSection.id == value)
+
 	__tablename__ = 'np_usersettings_def'
 	__table_args__ = (
 		Comment('NetProfile UI user settings'),
@@ -2713,12 +2940,20 @@ class UserSetting(Base):
 				'cap_delete'   : 'BASE_ADMIN',
 
 				'show_in_menu' : 'admin',
-				'menu_section' : 'Settings',
-				'menu_name'    : 'User Settings',
+				'menu_section' : _('Settings'),
+				'menu_name'    : _('User Settings'),
 				'menu_order'   : 74,
 				'default_sort' : (),
 				'grid_view'    : ('user', 'type', 'value'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'extra_search' : (
+					SelectFilter('section', _filter_section,
+						title=_('Section'),
+						data='NetProfile.store.core.UserSettingSection',
+						value_field='npussid',
+						display_field='name'
+					),
+				)
 			}
 		}
 	)
@@ -2730,7 +2965,7 @@ class UserSetting(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : 'ID'
+			'header_string' : _('ID')
 		}
 	)
 	user_id = Column(
@@ -2740,7 +2975,8 @@ class UserSetting(Base):
 		Comment('User ID'),
 		nullable=False,
 		info={
-			'header_string' : 'User'
+			'header_string' : _('User'),
+			'filter_type'   : 'none'
 		}
 	)
 	type_id = Column(
@@ -2750,7 +2986,8 @@ class UserSetting(Base):
 		Comment('User parameter type ID'),
 		nullable=False,
 		info={
-			'header_string' : 'Type'
+			'header_string' : _('Type'),
+			'filter_type'   : 'list'
 		}
 	)
 	value = Column(
@@ -2758,9 +2995,21 @@ class UserSetting(Base):
 		Comment('User parameter current value'),
 		nullable=False,
 		info={
-			'header_string' : 'Value'
+			'header_string' : _('Value')
 		}
 	)
+
+	@property
+	def name(self):
+		return self.type.name
+
+	@hybrid_property
+	def python_value(self):
+		return self.type.parse_param(self.value)
+
+	@python_value.setter
+	def python_value_set(self, value):
+		self.value = self.type.param_to_db(value)
 
 	def __str__(self):
 		return '%s.%s' % (

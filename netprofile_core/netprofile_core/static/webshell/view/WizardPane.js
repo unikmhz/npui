@@ -1,3 +1,7 @@
+/**
+ * @class NetProfile.view.WizardPane
+ * @extends Ext.form.Panel
+ */
 Ext.define('NetProfile.view.WizardPane', {
 	extend: 'Ext.form.Panel',
 	alias: 'widget.npwizardpane',

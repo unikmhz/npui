@@ -7,34 +7,42 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.util.*',
 		'Ext.state.*',
 		'Ext.form.*',
+		'Ext.menu.*',
 		'Ext.toolbar.Paging',
 		'Ext.toolbar.TextItem',
 		'Ext.window.MessageBox',
 		'Ext.ux.grid.FiltersFeature',
 		'Ext.ux.grid.SimpleSearchFeature',
+		'Ext.ux.grid.ExtraSearchFeature',
 		'Ext.ux.CheckColumn',
 		'Ext.ux.EnumColumn',
 		'Ext.ux.IPAddressColumn',
+		'Ext.ux.form.field.DateTime',
+		'Ext.ux.form.field.IPv4',
+		'Ext.ux.form.field.Password',
+		'Ext.ux.form.DynamicCheckboxGroup',
 		'NetProfile.view.ModelSelect'
 	],
 	rowEditing: true,
 	simpleSearch: false,
+	extraSearch: null,
 	actionCol: true,
+	propBar: true,
 	selectRow: false,
 	selectField: null,
 	selectIdField: null,
 	extraParams: null,
+	extraParamProp: null,
 	apiModule: null,
 	apiClass: null,
 	detailPane: null,
+	hideColumns: null,
 	canCreate: false,
 	canEdit: false,
 	canDelete: false,
 	border: 0,
 
 	emptyText: 'Sorry, but no items were found.',
-	searchText: 'Search',
-	searchTipText: 'Additional search filters.',
 	clearText: 'Clear',
 	clearTipText: 'Clear filtering and sorting.',
 	addText: 'Add',
@@ -51,7 +59,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 		stripeRows: true,
 		plugins: []
 	},
-	initComponent: function() {
+	initComponent: function()
+	{
 		if(this.selectRow)
 		{
 			this.canCreate = false;
@@ -66,31 +75,29 @@ Ext.define('NetProfile.view.ModelGrid', {
 			encode: false,
 			local: false
 		}];
+		if(this.extraSearch)
+			this.features.push({
+				ftype: 'extrasearch',
+				local: false
+			});
 		if(this.simpleSearch)
 			this.features.push({
 				ftype: 'simplesearch',
-				multi: true,
-				encode: false,
 				local: false
 			});
 		var tbitems = [{
-			text: this.searchText,
-			tooltip: { text: this.searchTipText, title: this.searchText },
-			iconCls: 'ico-find',
-			handler: function() {
-				return true;
-			},
-			scope: this
-		}, {
 			text: this.clearText,
 			tooltip: { text: this.clearTipText, title: this.clearText },
 			iconCls: 'ico-clear',
-			handler: function() {
+			handler: function()
+			{
 				store = this.getStore();
 				if(this.filters)
 					this.filters.clearFilters(true);
 				if(this.ssearch)
 					this.ssearch.clearValue(true);
+				if(this.xsearch)
+					this.xsearch.clearValue(true);
 				store.sorters.clear();
 				this.saveState();
 				store.loadPage(1);
@@ -103,7 +110,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 				text: this.addText,
 				tooltip: { text: this.addTipText, title: this.addText },
 				iconCls: 'ico-add',
-				handler: function() {
+				handler: function()
+				{
 					var wiz_win = Ext.create('Ext.window.Window', {
 						layout: 'fit',
 						minWidth: 500,
@@ -132,10 +140,11 @@ Ext.define('NetProfile.view.ModelGrid', {
 		if(this.actionCol)
 		{
 			var has_action = false;
-			this.columns.forEach(function(col) {
+			this.columns.forEach(function(col)
+			{
 				if(col.xtype == 'actioncolumn')
 					has_action = true;
-			});
+			}, this);
 			if(!has_action)
 			{
 				var i = [{
@@ -191,21 +200,44 @@ Ext.define('NetProfile.view.ModelGrid', {
 
 		var store_cfg = {
 			autoDestroy: true,
-			listeners: {}
+			listeners: {},
+			proxy: {
+				type: this.apiModule + '_' + this.apiClass
+			}
 		};
-		var pb = Ext.getCmp('npws_propbar');
-		if(pb && !this.selectRow)
-			store_cfg['listeners']['load'] = {
-				fn: function() {
-					Ext.destroy(this.removeAll());
-				},
-				scope: pb
-			};
+		if(this.propBar)
+		{
+			var pb = Ext.getCmp('npws_propbar');
+			if(pb && !this.selectRow)
+				store_cfg['listeners']['load'] = {
+					fn: function()
+					{
+						Ext.destroy(this.removeAll());
+					},
+					scope: pb
+				};
+		}
+		if(!this.extraParams)
+		{
+			if(this.extraParamProp)
+			{
+				store_cfg['listeners']['beforeload'] = {
+					fn: function(store, op)
+					{
+						var rec = this.up('panel[cls~=record-tab]');
+						if(rec)
+						{
+							rec = rec.record;
+							store.proxy.extraParams = { __ffilter: {} };
+							store.proxy.extraParams.__ffilter[this.extraParamProp] = { eq: rec.get(this.extraParamProp) };
+						}
+					},
+					scope: this
+				};
+			}
+		}
 		if(this.extraParams)
-			store_cfg['proxy'] = {
-				type: this.apiModule + '_' + this.apiClass,
-				extraParams: this.extraParams
-			};
+			store_cfg['proxy']['extraParams'] = this.extraParams;
 
 		if(!this.store && this.apiModule && this.apiClass)
 			this.store = Ext.create(
@@ -219,11 +251,20 @@ Ext.define('NetProfile.view.ModelGrid', {
 			xtype: 'pagingtoolbar',
 			dock: 'bottom',
 			store: this.store,
-			displayInfo: true
+			displayInfo: NetProfile.userSettings.datagrid_showrange
 		});
 
 		this.on({
-			selectionchange: function(sel, recs, opts) {
+			beforerender: function(grid)
+			{
+				this.columns.forEach(function(col)
+				{
+					if(grid.hideColumns && Ext.Array.contains(grid.hideColumns, col.dataIndex))
+						col.hidden = true;
+				});
+			},
+			selectionchange: function(sel, recs, opts)
+			{
 				if(!sel.hasSelection() || (sel.getSelectionMode() != 'SINGLE'))
 					return true;
 				if(!recs || !recs.length)
@@ -261,7 +302,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	},
 	selectRecord: function(record)
 	{
-		if(this.detailPane && !this.selectRow)
+		if(this.propBar && this.detailPane && !this.selectRow)
 		{
 			var pb = Ext.getCmp('npws_propbar');
 			if(!pb)
