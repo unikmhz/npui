@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 import importlib
 import logging
 import colander
@@ -32,6 +39,12 @@ from sqlalchemy import (
 
 from sqlalchemy.types import TypeEngine
 from sqlalchemy.inspection import inspect
+from sqlalchemy.ext.associationproxy import AssociationProxy
+from sqlalchemy.orm.interfaces import (
+	ONETOMANY,
+	MANYTOONE,
+	MANYTOMANY
+)
 
 from netprofile.db.fields import (
 	ASCIIString,
@@ -320,6 +333,9 @@ class ExtColumn(object):
 
 	@property
 	def column_xtype(self):
+		cls = self.column.info.get('column_xtype')
+		if cls is not None:
+			return cls
 		cls = self.column.type.__class__
 		if cls in _COLUMN_XTYPE_MAP:
 			return _COLUMN_XTYPE_MAP[cls]
@@ -327,9 +343,9 @@ class ExtColumn(object):
 
 	@property
 	def editor_xtype(self):
-		ex = self.column.info.get('editor_xtype')
-		if 'editor_xtype' in self.column.info:
-			return self.column.info['editor_xtype']
+		cls = self.column.info.get('editor_xtype')
+		if cls is not None:
+			return cls
 		cls = self.column.type.__class__
 		if cls in _EDITOR_XTYPE_MAP:
 			return _EDITOR_XTYPE_MAP[cls]
@@ -756,6 +772,9 @@ class ExtRelationshipColumn(ExtColumn):
 			k : data
 		}
 
+	def append_field(self):
+		return self.column.name
+
 	def get_related_by_value(self, value):
 		relcol = self.prop.remote_side.copy().pop()
 		relcls = _table_to_class(self.prop.target.name)
@@ -851,6 +870,14 @@ class ExtModel(object):
 			return pkprop.key
 
 	@property
+	def is_tree(self):
+		return ('tree_property' in self.model.__table__.info)
+
+	@property
+	def is_polymorphic(self):
+		return (self.model.__mapper__.with_polymorphic is not None)
+
+	@property
 	def easy_search(self):
 		return self.model.__table__.info.get('easy_search', ())
 
@@ -902,6 +929,17 @@ class ExtModel(object):
 	def create_wizard(self):
 		return self.model.__table__.info.get('create_wizard')
 
+	@property
+	def grid_view(self):
+		return self.model.__table__.info.get('grid_view')
+
+	@property
+	def form_view(self):
+		return self.model.__table__.info.get(
+			'form_view',
+			self.model.__table__.info.get('grid_view')
+		)
+
 	def get_column(self, colname):
 		cols = self.model.__table__.columns
 		if colname in cols:
@@ -927,11 +965,33 @@ class ExtModel(object):
 				cols.append(col)
 		except KeyError:
 			pass
+		try:
+			fcols = self.model.__table__.info['form_view']
+			for col in fcols:
+				if col in cols:
+					continue
+				cols.append(col)
+		except KeyError:
+			pass
 		pk = self.pk
 		if pk not in cols:
 			ret[pk] = self.get_column(pk)
 		for col in cols:
 			ret[col] = self.get_column(col)
+		return ret
+
+	def get_form_columns(self):
+		ret = OrderedDict()
+		cols = self.model.__table__.columns.keys()
+		fcols = self.form_view
+		pk = self.pk
+		if pk not in fcols:
+			ret[pk] = self.get_column(pk)
+		for fcol in fcols:
+			ret[fcol] = self.get_column(fcol)
+			extra = ret[fcol].append_field()
+			if extra and (extra not in ret):
+				ret[extra] = self.get_column(extra)
 		return ret
 
 	def get_column_cfg(self, req):
@@ -1052,7 +1112,11 @@ class ExtModel(object):
 				coldef = self.model.__table__.c[fcol]
 				colcls = coldef.type.__class__
 				col = getattr(self.model, prop.key)
+				extcol = self.get_column(fcol)
 				for fkey, fval in flist[fcol].items():
+					if fkey == 'type':
+						continue
+					fval = extcol.parse_param(fval)
 					if fkey == 'eq':
 						query = query.filter(col == fval)
 						continue
@@ -1067,9 +1131,9 @@ class ExtModel(object):
 							query = query.filter(not col.in_(fval))
 							continue
 					if issubclass(colcls, _DATE_SET):
-						if fkey == 'type':
-							continue
 						fval = dparse(fval).astimezone(tzlocal())
+						if fval is None:
+							continue
 						if fkey == 'gt':
 							query = query.filter(col > fval)
 						if fkey == 'lt':
@@ -1079,7 +1143,9 @@ class ExtModel(object):
 						if fkey == 'le':
 							query = query.filter(col <= fval)
 						continue
-					if issubclass(colcls, _INTEGER_SET) or issubclass(colcls, _FLOAT_SET):
+					if issubclass(colcls, _INTEGER_SET) or issubclass(colcls, _FLOAT_SET) or issubclass(colcls, _IPADDR_SET):
+						if fval is None:
+							continue
 						if fkey == 'gt':
 							query = query.filter(col > fval)
 							continue
@@ -1318,9 +1384,8 @@ class ExtModel(object):
 
 	def get_fields(self, request):
 		logger.info('Running ExtDirect action:%s method:%s', self.name, 'get_fields')
-		#logger.debug('Params: %r', params)
 		fields = []
-		for cname, col in self.get_read_columns().items():
+		for cname, col in self.get_form_columns().items():
 			fdef = col.get_editor_cfg(request, in_form=True)
 			if fdef is not None:
 				fields.append(fdef)
