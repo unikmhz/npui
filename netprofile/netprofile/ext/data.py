@@ -221,9 +221,12 @@ class ExtColumn(object):
 	def __init__(self, sqla_column, sqla_model):
 		self.column = sqla_column
 		self.model = sqla_model
+		self.alias = None
 
 	@property
 	def name(self):
+		if self.alias:
+			return self.alias
 		return self.column.name
 
 	@property
@@ -753,12 +756,24 @@ class ExtColumn(object):
 	def append_field(self):
 		pass
 
+	def apply_data(self, obj, data):
+		pass
+
 class ExtRelationshipColumn(ExtColumn):
 	def __init__(self, sqla_prop, sqla_model):
 		self.prop = sqla_prop
 		self.column = sqla_prop.local_columns.copy().pop()
 		self.model = sqla_model
+		self.value_attr = None
 
+	def get_column_cfg(self, req):
+		conf = super(ExtRelationshipColumn, self).get_column_cfg(req)
+		conf['dataIndex'] = self.prop.key
+		if 'align' in conf:
+			del conf['align']
+		return conf
+
+class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 	@property
 	def column_xtype(self):
 		return None
@@ -766,6 +781,8 @@ class ExtRelationshipColumn(ExtColumn):
 	def append_data(self, obj):
 		k = self.prop.key
 		data = getattr(obj, k)
+		if self.value_attr:
+			data = getattr(data, self.value_attr, data)
 		if data is not None:
 			data = str(data)
 		return {
@@ -784,10 +801,7 @@ class ExtRelationshipColumn(ExtColumn):
 		return sess.query(relcls).filter(getattr(relcls, relprop.key) == value).one()
 
 	def get_column_cfg(self, req):
-		conf = super(ExtRelationshipColumn, self).get_column_cfg(req)
-		conf['dataIndex'] = self.prop.key
-		if 'align' in conf:
-			del conf['align']
+		conf = super(ExtManyToOneRelationshipColumn, self).get_column_cfg(req)
 
 		ftype = self.filter_type
 		if ftype == 'none':
@@ -808,7 +822,7 @@ class ExtRelationshipColumn(ExtColumn):
 		return conf
 
 	def get_editor_cfg(self, req, initval=None, in_form=False):
-		conf = super(ExtRelationshipColumn, self).get_editor_cfg(req, initval=initval, in_form=in_form)
+		conf = super(ExtManyToOneRelationshipColumn, self).get_editor_cfg(req, initval=initval, in_form=in_form)
 		if conf is None:
 			return None
 		conf['name'] = self.prop.key
@@ -838,6 +852,119 @@ class ExtRelationshipColumn(ExtColumn):
 			'type'       : 'string',
 			'persist'    : False
 		}
+
+class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
+	def append_field(self):
+		return None
+
+	def append_data(self, obj):
+		k = self.prop.key
+		data = getattr(obj, k)
+		newdata = []
+		for i in data:
+			if self.value_attr:
+				i = getattr(i, self.value_attr, None)
+			if i.__class__:
+				i = i.__class__.__mapper__.primary_key_from_instance(i)
+				if len(i) > 0:
+					newdata.append(i[0])
+		return {
+			self.name : newdata
+		}
+
+	def apply_data(self, obj, data):
+		print(repr(data))
+#		cont = getattr(obj, self.prop.key)
+		cont = getattr(obj, self.name)
+#		del cont[:]
+#		cont.clear()
+		for relobj in data:
+			if relobj not in cont:
+				cont.append(relobj)
+		for relobj in cont:
+			if relobj not in data:
+				cont.remove(relobj)
+
+	def get_editor_cfg(self, req, initval=None, in_form=False):
+		loc = get_localizer(req)
+		relcls = _table_to_class(self.prop.target.name)
+		if self.value_attr:
+			relcls = getattr(relcls, self.value_attr).property.mapper.class_
+		relname = relcls.__table__.info.get('menu_name', self.header_string)
+		relpk = relcls.__mapper__.primary_key
+		if len(relpk) > 0:
+			relpk = relpk[0]
+		conf = {
+			'xtype'          : 'dyncheckboxgroup',
+			'allowBlank'     : True,
+			'name'           : self.name,
+			'columns'        : 2,
+			'vertical'       : True,
+			'store'          : 'NetProfile.store.%s.%s' % (
+				relcls.__moddef__,
+				relcls.__name__
+			),
+			'valueField'     : relpk.name,
+			'formCheckboxes' : False
+		}
+		if in_form:
+			conf['fieldLabel'] = loc.translate(relname)
+		return conf
+
+	def get_reader_cfg(self):
+		return {
+			'name'       : self.name,
+			'allowBlank' : True,
+			'useNull'    : True,
+			'type'       : 'auto'
+		}
+
+	def get_related_by_value(self, value):
+		if not isinstance(value, list):
+			return None
+		relcls = _table_to_class(self.prop.target.name)
+		if self.value_attr:
+			relcls = getattr(relcls, self.value_attr).property.mapper.class_
+		relprop = relcls.__mapper__.primary_key
+		if len(relprop) > 0:
+			relprop = relprop[0]
+			relprop = relcls.__mapper__.get_property_by_column(relprop)
+
+		sess = DBSession()
+		return sess.query(relcls).filter(getattr(relcls, relprop.key).in_(value)).all()
+
+	def parse_param(self, param):
+		return self.get_related_by_value(param)
+		typecls = self.column.type.__class__
+		relcls = _table_to_class(self.prop.target.name)
+		if not isinstance(param, list):
+			return None
+		return
+		if self.column.nullable and (param == ''):
+			return None
+		if issubclass(typecls, _BOOLEAN_SET):
+			if type(param) is str:
+				if param.lower() in {'true', '1', 'on'}:
+					return True
+				return False
+			return bool(param)
+		if issubclass(typecls, _FLOAT_SET):
+			return float(param)
+		if typecls is DeclEnumType:
+			return self.column.type.enum.from_string(param.strip())
+		if issubclass(typecls, _DATE_SET):
+			return dparse(param).astimezone(tzlocal())
+		if issubclass(typecls, _IPADDR_SET):
+			if isinstance(param, dict):
+				if 'value' not in param:
+					return None
+				param = param['value']
+			if issubclass(typecls, IPv4Address):
+				return ipaddr.IPv4Address(param)
+			if issubclass(typecls, IPv6Address):
+				return ipaddr.IPv6Address(param)
+			return None
+		return param
 
 class ExtModel(object):
 	def __init__(self, sqla_model):
@@ -942,10 +1069,20 @@ class ExtModel(object):
 
 	def get_column(self, colname):
 		cols = self.model.__table__.columns
+		o_prop = getattr(self.model, colname, None)
+		if isinstance(o_prop, AssociationProxy):
+			ret = self.get_column(o_prop.local_attr.key)
+			ret.alias = colname
+			ret.value_attr = o_prop.value_attr
+			return ret
 		if colname in cols:
 			return ExtColumn(cols[colname], self.model)
 		prop = self.model.__mapper__.get_property(colname)
-		return ExtRelationshipColumn(prop, self.model)
+		if prop.direction == MANYTOONE:
+			return ExtManyToOneRelationshipColumn(prop, self.model)
+		if prop.direction == ONETOMANY:
+			return ExtOneToManyRelationshipColumn(prop, self.model)
+		raise ValueError('Unknown type of column %s' % colname)
 
 	def get_columns(self):
 		ret = OrderedDict()
@@ -1239,14 +1376,15 @@ class ExtModel(object):
 					reader = col.reader
 					if reader:
 						reader = getattr(obj, reader, None)
-					if callable(reader):
-						if col.pass_request:
-							row[cname] = reader(params, request)
+						if callable(reader):
+							if col.pass_request:
+								row[cname] = reader(params, request)
+							else:
+								row[cname] = reader(params)
 						else:
-							row[cname] = reader(params)
+							row[cname] = reader
 					else:
-						row[cname] = reader
-					row[cname] = getattr(obj, trans[cname].key)
+						row[cname] = getattr(obj, trans[cname].key)
 			row['__str__'] = str(obj)
 			records.append(row)
 		res['records'] = records
@@ -1281,15 +1419,20 @@ class ExtModel(object):
 			obj = self.model()
 			for p in pt:
 				if p not in cols:
-					continue
+					if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
+						cols[p] = rcols[p]
+					else:
+						continue
 				writer = cols[p].writer
 				if writer:
 					writer = getattr(obj, writer, None)
-				if callable(writer):
-					if cols[p].pass_request:
-						writer(cols[p].parse_param(pt[p]), pt, request)
-					else:
-						writer(cols[p].parse_param(pt[p]), pt)
+					if callable(writer):
+						if cols[p].pass_request:
+							writer(cols[p].parse_param(pt[p]), pt, request)
+						else:
+							writer(cols[p].parse_param(pt[p]), pt)
+				elif isinstance(cols[p], ExtOneToManyRelationshipColumn):
+					cols[p].apply_data(obj, cols[p].parse_param(pt[p]))
 				else:
 					setattr(obj, trans[p].key, cols[p].parse_param(pt[p]))
 			sess.add(obj)
@@ -1308,7 +1451,18 @@ class ExtModel(object):
 					if extra is not None:
 						pt.update(extra)
 				else:
-					pt[cname] = getattr(obj, trans[cname].key)
+					reader = col.reader
+					if reader:
+						reader = getattr(obj, reader, None)
+						if callable(reader):
+							if col.pass_request:
+								pt[cname] = reader(params, request)
+							else:
+								pt[cname] = reader(params)
+						else:
+							pt[cname] = reader
+					else:
+						pt[cname] = getattr(obj, trans[cname].key)
 			pt[self.pk] = getattr(obj, self.object_pk)
 			pt['__str__'] = str(obj)
 			res['records'].append(pt)
@@ -1338,15 +1492,20 @@ class ExtModel(object):
 			obj = sess.query(self.model).get(pt[self.pk])
 			for p in pt:
 				if (p not in cols) or (p == self.pk):
-					continue
+					if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
+						cols[p] = rcols[p]
+					else:
+						continue
 				writer = cols[p].writer
 				if writer:
 					writer = getattr(obj, writer, None)
-				if callable(writer):
-					if cols[p].pass_request:
-						writer(cols[p].parse_param(pt[p]), pt, request)
-					else:
-						writer(cols[p].parse_param(pt[p]), pt)
+					if callable(writer):
+						if cols[p].pass_request:
+							writer(cols[p].parse_param(pt[p]), pt, request)
+						else:
+							writer(cols[p].parse_param(pt[p]), pt)
+				elif isinstance(cols[p], ExtOneToManyRelationshipColumn):
+					cols[p].apply_data(obj, cols[p].parse_param(pt[p]))
 				else:
 					setattr(obj, trans[p].key, cols[p].parse_param(pt[p]))
 			pt = {}

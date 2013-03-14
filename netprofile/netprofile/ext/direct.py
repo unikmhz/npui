@@ -1,6 +1,13 @@
 # Largely based on Igor Stroh's pyramid_extdirect
 # See http://github.com/jenner/pyramid_extdirect
 
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 from collections import defaultdict
 from html.entities import entitydefs
 import json

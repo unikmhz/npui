@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 import pkg_resources
 import logging
 
@@ -25,7 +32,7 @@ class ModuleBase(object):
 
 	@classmethod
 	def get_deps(cls):
-		return []
+		return ()
 
 	@classmethod
 	def install(cls):
@@ -42,19 +49,22 @@ class ModuleBase(object):
 		pass
 
 	def get_models(self):
-		return []
+		return ()
 
 	def get_menus(self):
-		return []
+		return ()
 
 	def get_js(self, request):
-		return []
+		return ()
 
 	def get_local_js(self, request, lang):
-		return []
+		return ()
 
 	def get_css(self, request):
-		return []
+		return ()
+
+	def get_autoload_js(self, request):
+		return ()
 
 	def load(self):
 		pass
@@ -119,7 +129,7 @@ class ModuleManager(object):
 			return False
 		mstack.append(moddef)
 		for depmod in self.modules[moddef].get_deps():
-			if not self.load(depmod):
+			if not self._load(depmod, mstack):
 				logger.error('Can\'t load module \'%s\', which is needed for module \'%s\'.', depmod, moddef)
 				return False
 		mod = self.loaded[moddef] = self.modules[moddef](self)
@@ -255,6 +265,15 @@ class ModuleManager(object):
 		l = []
 		for moddef, mod in self.loaded.items():
 			l.extend(mod.get_css(request))
+		return l
+
+	def get_autoload_js(self, request):
+		"""
+		Get a list of JS classes to be autoloaded on client.
+		"""
+		l = []
+		for moddef, mod in self.loaded.items():
+			l.extend(mod.get_autoload_js(request))
 		return l
 
 def includeme(config):

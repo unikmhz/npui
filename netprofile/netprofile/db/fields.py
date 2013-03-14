@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 from sqlalchemy import (
 	and_,
 	schema,
@@ -94,7 +101,7 @@ class IPv6Address(types.TypeDecorator):
 	"""
 	Hybrid IPv6 address.
 	"""
-	impl = types.Numeric(precision=39, scale=0)
+	impl = types.Numeric(39, 0)
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):

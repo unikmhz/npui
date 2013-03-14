@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
 	TranslationString,

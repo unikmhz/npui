@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 import sys
 import cdecimal
 sys.modules['decimal'] = cdecimal

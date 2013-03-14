@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 class RootFactory(object):
 	"""
 	Generic Pyramid root factory.

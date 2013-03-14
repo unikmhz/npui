@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 from sqlalchemy.orm import (
 	scoped_session,
 	sessionmaker
