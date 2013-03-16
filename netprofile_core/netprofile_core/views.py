@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 from pyramid.response import Response
 from pyramid.i18n import get_locale_name
 from pyramid.view import (

@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 from pyramid.security import (
 	Allow,
 	Deny,
