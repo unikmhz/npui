@@ -15,7 +15,7 @@ def add_renderer_globals(event):
 	event['_'] = request.translate
 	event['localizer'] = request.localizer
 
-def add_localizer(event):
+def on_new_request(event):
 	request = event.request
 	mr = request.matched_route
 	if mr is None:
@@ -28,4 +28,9 @@ def add_localizer(event):
 		return localizer.translate(TranslationString(*args, **kwargs))
 	request.localizer = localizer
 	request.translate = auto_translate
+
+#	request.response.headerlist.append((
+#		'Content-Security-Policy',
+#		'default-src \'self\'; script-src \'self\' \'unsafe-eval\''
+#	))
 

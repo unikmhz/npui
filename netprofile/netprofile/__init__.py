@@ -67,7 +67,7 @@ def main(global_config, **settings):
 		'pyramid.events.BeforeRender'
 	)
 	config.add_subscriber(
-		'netprofile.common.subscribers.add_localizer',
+		'netprofile.common.subscribers.on_new_request',
 		'pyramid.events.NewRequest'
 	)
 

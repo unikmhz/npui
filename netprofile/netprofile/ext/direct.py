@@ -550,6 +550,3 @@ def includeme(config):
 
 	config.scan()
 
-#	for module in mods:
-#		for model in mods[module]:
-

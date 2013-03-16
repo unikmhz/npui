@@ -854,6 +854,10 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 		}
 
 class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
+	@property
+	def columns(self):
+		return self.prop.info.get('columns', 2)
+
 	def append_field(self):
 		return None
 
@@ -898,7 +902,7 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 			'xtype'          : 'dyncheckboxgroup',
 			'allowBlank'     : True,
 			'name'           : self.name,
-			'columns'        : 2,
+			'columns'        : self.columns,
 			'vertical'       : True,
 			'store'          : 'NetProfile.store.%s.%s' % (
 				relcls.__moddef__,
@@ -909,6 +913,7 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 		}
 		if in_form:
 			conf['fieldLabel'] = loc.translate(relname)
+			conf['width'] = 400
 		return conf
 
 	def get_reader_cfg(self):
@@ -1058,13 +1063,13 @@ class ExtModel(object):
 
 	@property
 	def grid_view(self):
-		return self.model.__table__.info.get('grid_view')
+		return self.model.__table__.info.get('grid_view', ())
 
 	@property
 	def form_view(self):
 		return self.model.__table__.info.get(
 			'form_view',
-			self.model.__table__.info.get('grid_view')
+			self.model.__table__.info.get('grid_view', ())
 		)
 
 	def get_column(self, colname):
@@ -1354,13 +1359,13 @@ class ExtModel(object):
 			q = self._apply_sstr(q, trans, params)
 		if '__sort' in params:
 			q = self._apply_sorting(q, trans, params)
-		q = self._apply_pagination(q, trans, params)
 		helper = getattr(self.model, '__augment_query__', None)
 		if callable(helper):
-			q = helper(sess, q)
+			q = helper(sess, q, params)
+		q = self._apply_pagination(q, trans, params)
 		helper = getattr(self.model, '__augment_result__', None)
 		if callable(helper):
-			q = helper(sess, q.all())
+			q = helper(sess, q.all(), params)
 		for obj in q:
 			row = {}
 			for cname, col in cols.items():
