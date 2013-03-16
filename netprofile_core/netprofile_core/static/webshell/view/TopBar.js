@@ -23,7 +23,8 @@ Ext.define('NetProfile.view.TopBar', {
 	chLangText: 'Change language',
 	aboutText: 'About…',
 
-	initComponent: function() {
+	initComponent: function()
+	{
 		this.items = [{
 			text: this.toolsText,
 			iconCls: 'ico-tool',
@@ -78,7 +79,8 @@ Ext.define('NetProfile.view.TopBar', {
 			text: this.logoutText,
 			iconCls: 'ico-logout',
 			tooltip: { text: this.logoutTipText, title: this.logoutText },
-			handler: function() {
+			handler: function()
+			{
 				window.location.href = '/logout';
 			}
 		}];

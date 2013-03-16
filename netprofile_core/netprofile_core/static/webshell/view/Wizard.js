@@ -24,12 +24,14 @@ Ext.define('NetProfile.view.Wizard', {
 	btnCancelText: 'Cancel',
 	btnSubmitText: 'Submit',
 
-	initComponent: function() {
+	initComponent: function()
+	{
 		this.bbar = [{
 			itemId: 'act_cancel',
 			text: this.btnCancelText,
 			iconCls: 'ico-cancel',
-			handler: function(btn) {
+			handler: function(btn)
+			{
 				this.up('window').close();
 				return true;
 			},
@@ -39,7 +41,8 @@ Ext.define('NetProfile.view.Wizard', {
 			text: this.btnPrevText,
 			iconCls: 'ico-prev',
 			disabled: true,
-			handler: function(btn) {
+			handler: function(btn)
+			{
 				return this.update('prev');
 			},
 			scope: this
@@ -48,7 +51,8 @@ Ext.define('NetProfile.view.Wizard', {
 			text: this.btnNextText,
 			iconCls: 'ico-next',
 			disabled: true,
-			handler: function(btn) {
+			handler: function(btn)
+			{
 				return this.update('next');
 			},
 			scope: this
@@ -57,7 +61,8 @@ Ext.define('NetProfile.view.Wizard', {
 			text: this.btnSubmitText,
 			iconCls: 'ico-accept',
 			disabled: true,
-			handler: function(btn) {
+			handler: function(btn)
+			{
 				if(!this.validate())
 					return false;
 				if(this.createInto)
@@ -87,13 +92,14 @@ Ext.define('NetProfile.view.Wizard', {
 			'submitfailure'
 		);
 	},
-	getDirectAction: function() {
+	getDirectAction: function()
+	{
 		var api;
-		if(!this.wizardCls)
-		{
-			api = Ext.getCmp('npws_propbar');
-			this.wizardCls = api.getApiClass();
-		}
+//		if(!this.wizardCls)
+//		{
+//			api = Ext.getCmp('npws_propbar');
+//			this.wizardCls = api.getApiClass();
+//		}
 		api = NetProfile.api[this.wizardCls];
 		return {
 //			load      : api.read,
@@ -101,12 +107,14 @@ Ext.define('NetProfile.view.Wizard', {
 			get_steps : api.get_create_wizard
 		};
 	},
-	loadWizard: function() {
+	loadWizard: function()
+	{
 		if(!this.api)
 			this.api = this.getDirectAction();
 		this.api.get_steps(this.loadCallback.bind(this));
 	},
-	loadCallback: function(data, result) {
+	loadCallback: function(data, result)
+	{
 		if(!data || !data.fields)
 		{
 			this.fireEvent('wizardloadfailed', data, result);
@@ -118,7 +126,8 @@ Ext.define('NetProfile.view.Wizard', {
 
 		this.fireEvent('wizardloaded');
 	},
-	update: function(dir) {
+	update: function(dir)
+	{
 		var me = this,
 			layout = me.getLayout(),
 			tbar = me.down('toolbar'),
@@ -143,33 +152,41 @@ Ext.define('NetProfile.view.Wizard', {
 
 		return true;
 	},
-	validate: function() {
+	validate: function()
+	{
 		var isvalid = true;
 
-		this.items.each(function(i) {
+		this.items.each(function(i)
+		{
 			if(i.doValidation && !i.getForm().isValid())
 				isvalid = false;
 		});
 		return isvalid;
 	},
-	nextStep: function() {
+	nextStep: function()
+	{
 	},
-	prevStep: function() {
+	prevStep: function()
+	{
 	},
-	gotoStep: function(idx) {
+	gotoStep: function(idx)
+	{
 	},
-	getValues: function() {
+	getValues: function()
+	{
 		var res = {},
 			j, iv;
 
-		this.items.each(function(i) {
+		this.items.each(function(i)
+		{
 			iv = i.getValues();
 			for(j in iv)
 				res[j] = iv[j];
 		});
 		return res;
 	},
-	submit: function() {
+	submit: function()
+	{
 	}
 });
 

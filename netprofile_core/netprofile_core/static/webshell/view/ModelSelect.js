@@ -7,8 +7,10 @@ Ext.define('NetProfile.view.ModelSelect', {
 	apiModule: null,
 	apiClass: null,
 	hiddenField: null,
+	showLink: true,
 	trigger1Cls: 'x-form-clear-trigger',
 	trigger2Cls: ' ',
+	trigger3Cls: 'x-form-search-trigger',
 
 	chooseText: 'Choose an object',
 
@@ -20,6 +22,18 @@ Ext.define('NetProfile.view.ModelSelect', {
 			this.onTrigger1Click = this.onTrigger2Click;
 			this.trigger2Cls = undefined;
 			this.onTrigger2Click = undefined;
+		}
+		if(!this.showLink)
+		{
+			this.trigger3Cls = undefined;
+			this.onTrigger3Click = undefined;
+		}
+		else if(!this.allowBlank)
+		{
+			this.trigger2Cls = this.trigger3Cls;
+			this.onTrigger2Click = this.onTrigger3Click;
+			this.trigger3Cls = undefined;
+			this.onTrigger3Click = undefined;
 		}
 		this.callParent(arguments);
 	},
@@ -62,6 +76,43 @@ Ext.define('NetProfile.view.ModelSelect', {
 
 		sel_win.add(sel_grid);
 		sel_win.show();
+	},
+	onTrigger3Click: function(ev)
+	{
+		var ff,
+			store = NetProfile.StoreManager.getStore(
+				this.apiModule,
+				this.apiClass,
+				null, true, true
+			),
+			hf = this.up('form').down('field[name=' + this.hiddenField + ']');
+
+		if(!store)
+			return false;
+		if(!hf)
+			hf = this.hiddenField;
+		if(!hf)
+			return false;
+		hf = hf.getValue();
+		if(!hf)
+			return false;
+		ff = { __ffilter: {} };
+		ff.__ffilter[store.model.prototype.idProperty] = { eq: parseInt(hf) };
+		store.load({
+			params: ff,
+			callback: function(recs, op, success)
+			{
+				var dp, pb;
+
+				pb = this.up('propbar');
+				dp = NetProfile.view.grid[this.apiModule][this.apiClass].prototype.detailPane;
+				if(success && pb && dp && (recs.length === 1))
+					pb.addRecordTab(this.apiModule, this.apiClass, dp, recs[0]);
+			},
+			scope: this,
+			synchronous: false
+		});
+		return true;
 	}
 });
 

@@ -28,7 +28,8 @@ Ext.define('Ext.ux.form.field.TimePicker', {
 	},
 
 	/** Override. */
-	initComponent: function() {
+	initComponent: function()
+	{
 		var me = this;
 
 		me.value = me.value || Ext.Date.format(new Date(), 'H:i:s');
@@ -68,7 +69,8 @@ Ext.define('Ext.ux.form.field.TimePicker', {
 	 * @private
 	 * Override.
 	 */
-	onRender: function() {
+	onRender: function()
+	{
 		var me = this,
 			spinnerWrapDom, spinnerWrap;
 
@@ -91,7 +93,8 @@ Ext.define('Ext.ux.form.field.TimePicker', {
 
 		this.setRawValue(this.value);
 	},
-	_valueSplit: function(v) {
+	_valueSplit: function(v)
+	{
 		if(Ext.isDate(v))
 			v = Ext.Date.format(v, 'H:i:s');
 		var split = v.split(':');
@@ -101,22 +104,28 @@ Ext.define('Ext.ux.form.field.TimePicker', {
 			s: split.length > 2 ? split[2] : 0
 		};
 	},
-	onSpinnerChange: function() {
+	onSpinnerChange: function()
+	{
 		if(!this.rendered)
 			return;
 		this.fireEvent('change', this, this.getValue(), this.getRawValue());
 	},
 	// 依次调用各输入框函数, call each spinner's function
-	callSpinnersFunction: function(funName, args) {
+	callSpinnersFunction: function(funName, args)
+	{
 		for(var i = 0; i < this.spinners.length; i++)
 			this.spinners[i][funName](args);
 	},
 	// @private get time as object,
-	getRawValue: function() {
-		if(!this.rendered) {
+	getRawValue: function()
+	{
+		if(!this.rendered)
+		{
 			var date = this.value || new Date();
 			return this._valueSplit(date);
-		} else {
+		}
+		else
+		{
 			return {
 				h: this.hoursSpinner.getValue(),
 				m: this.minutesSpinner.getValue(),
@@ -126,7 +135,8 @@ Ext.define('Ext.ux.form.field.TimePicker', {
 	},
 
 	// private
-	setRawValue: function(value) {
+	setRawValue: function(value)
+	{
 		value = this._valueSplit(value);
 		if(this.hoursSpinner) {
 			this.hoursSpinner.setValue(value.h);
@@ -135,13 +145,15 @@ Ext.define('Ext.ux.form.field.TimePicker', {
 		}
 	},
 	// overwrite
-	getValue: function() {
+	getValue: function()
+	{
 		var v = this.getRawValue();
 		return Ext.String.leftPad(v.h, 2, '0') + ':' + Ext.String.leftPad(v.m, 2, '0') + ':'
 		     + Ext.String.leftPad(v.s, 2, '0');
 	},
 	// overwrite
-	setValue: function(value) {
+	setValue: function(value)
+	{
 		this.value = Ext.isDate(value) ? Ext.Date.format(value, 'H:i:s') : value;
 		if(!this.rendered)
 			return;
@@ -149,17 +161,20 @@ Ext.define('Ext.ux.form.field.TimePicker', {
 		this.validate();
 	},
 	// overwrite
-	disable: function() {
+	disable: function()
+	{
 		this.callParent(arguments);
 		this.callSpinnersFunction('disable', arguments);
 	},
 	// overwrite
-	enable: function() {
+	enable: function()
+	{
 		this.callParent(arguments);
 		this.callSpinnersFunction('enable', arguments);
 	},
 	// overwrite
-	setReadOnly: function() {
+	setReadOnly: function()
+	{
 		this.callParent(arguments);
 		this.callSpinnersFunction('setReadOnly', arguments);
 	},
@@ -169,12 +184,14 @@ Ext.define('Ext.ux.form.field.TimePicker', {
 		this.callSpinnersFunction('clearInvalid', arguments);
 	},
 	// overwrite
-	isValid: function(preventMark) {
+	isValid: function(preventMark)
+	{
 		return this.hoursSpinner.isValid(preventMark) && this.minutesSpinner.isValid(preventMark)
 		    && this.secondsSpinner.isValid(preventMark);
 	},
 	// overwrite
-	validate: function() {
+	validate: function()
+	{
 		return this.hoursSpinner.validate() && this.minutesSpinner.validate() && this.secondsSpinner.validate();
 	}
 });

@@ -25,7 +25,8 @@ Ext.define('NetProfile.view.Viewport', {
 		xtype: 'mainbar'
 	}],
 
-	initComponent: function() {
+	initComponent: function()
+	{
 		this.callParent(arguments);
 	}
 });

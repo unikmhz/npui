@@ -1,5 +1,5 @@
 /**
- * @class Ext.ux.grid.filter.NumericFilter
+ * @class Ext.ux.grid.filter.IPv4Filter
  * @extends Ext.ux.grid.filter.Filter
  * Filters using an Ext.ux.grid.menu.RangeMenu.
  * <p><b><u>Example Usage:</u></b></p>
@@ -7,19 +7,19 @@
 var filters = Ext.create('Ext.ux.grid.GridFilters', {
 	...
 	filters: [{
-		type: 'numeric',
-		dataIndex: 'price'
+		type: 'ipv4',
+		dataIndex: 'ipaddr'
 	}]
 });
  * </code></pre>
  * <p>Any of the configuration options for {@link Ext.ux.grid.menu.RangeMenu} can also be specified as
- * configurations to NumericFilter, and will be copied over to the internal menu instance automatically.</p>
+ * configurations to IPv4Filter, and will be copied over to the internal menu instance automatically.</p>
  */
-Ext.define('Ext.ux.grid.filter.NumericFilter', {
+Ext.define('Ext.ux.grid.filter.IPv4Filter', {
 	extend: 'Ext.ux.grid.filter.Filter',
-	alias: 'gridfilter.numeric',
+	alias: 'gridfilter.ipv4',
 	uses: [
-		'Ext.form.field.Number'
+		'Ext.ux.form.field.IPv4'
 	],
 
 	/**
@@ -32,7 +32,16 @@ Ext.define('Ext.ux.grid.filter.NumericFilter', {
 	{
 		var me = this,
 			menu;
-		menu = Ext.create('Ext.ux.grid.menu.RangeMenu', config);
+		menu = Ext.create(
+			'Ext.ux.grid.menu.RangeMenu',
+			Ext.apply(config, {
+				fieldCls: 'Ext.ux.form.field.IPv4',
+				menuItemCfgs : {
+					selectOnFocus: false,
+					width: 200
+				}
+			})
+		);
 		menu.on('update', me.fireUpdate, me);
 		return menu;
     },
@@ -54,6 +63,14 @@ Ext.define('Ext.ux.grid.filter.NumericFilter', {
 	 */
 	setValue: function(value, susp)
 	{
+		var key;
+		for(key in value)
+		{
+			if(value[key])
+				value[key] = new NetProfile.data.IPv4Address(value[key]);
+			else
+				delete value[key];
+		}
 		this.menu.setValue(value, susp);
 	},
 
@@ -89,7 +106,7 @@ Ext.define('Ext.ux.grid.filter.NumericFilter', {
 			values = this.menu.getValue();
 
 		args = values;
-		args.type = 'numeric';
+		args.type = 'ipv4';
 		return args;
 	},
 

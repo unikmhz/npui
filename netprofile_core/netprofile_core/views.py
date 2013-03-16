@@ -116,13 +116,13 @@ def do_logout(request):
 
 @view_config(route_name='core.js.webshell', renderer='netprofile_core:templates/webshell.mak', permission='USAGE')
 def js_webshell(request):
-	tpldef = {
-		'langs'   : LANGUAGES,
-		'cur_loc' : get_locale_name(request)
-	}
 	mmgr = request.registry.getUtility(IModuleManager)
-	tpldef['modules'] = mmgr.get_module_browser()
-	return tpldef
+	return {
+		'langs'   : LANGUAGES,
+		'cur_loc' : get_locale_name(request),
+		'res_ajs' : mmgr.get_autoload_js(request),
+		'modules' : mmgr.get_module_browser()
+	}
 
 def dpane_simple(model, request):
 	tabs = []

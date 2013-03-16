@@ -1,5 +1,5 @@
-Ext.onReady(function() {
-
+Ext.onReady(function()
+{
 	Ext.define('Ext.locale.ru.ux.DateTimePicker', {
 		override: 'Ext.ux.DateTimePicker',
 		todayText: 'Сейчас',
@@ -145,6 +145,5 @@ Ext.onReady(function() {
 		btnSaveTipTitleText: 'Сохранить настройки',
 		btnSaveTipText: 'Проверить и сохранить ваши настройки'
 	});
-
 });
 

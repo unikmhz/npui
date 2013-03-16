@@ -22,6 +22,7 @@ Ext.define('NetProfile.view.Form', {
 	},
 	api: null,
 	formCls: null,
+	store: null,
 	record: null,
 	fieldDefaults: {
 		labelWidth: 120,
@@ -37,11 +38,13 @@ Ext.define('NetProfile.view.Form', {
 	submitTipTitleText: 'Submit Form',
 	submitTipText: 'Validate and submit this form.',
 
-	initComponent: function() {
+	initComponent: function()
+	{
 		this.buttons = [{
 			text: this.resetText,
 			iconCls: 'ico-undo',
-			handler: function() {
+			handler: function()
+			{
 				this.up('form').getForm().reset();
 			},
 			tooltip: { text: this.resetTipText, title: this.resetTipTitleText }
@@ -50,11 +53,25 @@ Ext.define('NetProfile.view.Form', {
 			iconCls: 'ico-accept',
 			formBind: true,
 			disabled: true,
-			handler: function() {
-				var form = this.up('form').getForm();
+			handler: function()
+			{
+				var fp = this.up('form'),
+					form = fp.getForm();
 
 				if(form.isValid())
-					form.updateRecord();
+				{
+					if(fp.record)
+					{
+						if(fp.record.store)
+							form.updateRecord(fp.record);
+						else
+						{
+							form.updateRecord(fp.record);
+							fp.record.save();
+						}
+						form.loadRecord(fp.record);
+					}
+				}
 //					form.submit({
 //						success: function(form, action) {
 //							Ext.Msg.alert('Success', action.result.msg);
@@ -81,13 +98,15 @@ Ext.define('NetProfile.view.Form', {
 			'submitfailure'
 		);
 	},
-	getDirectAction: function() {
+	getDirectAction: function()
+	{
 		var api;
 		if(!this.formCls)
 		{
-			api = Ext.getCmp('npws_propbar');
-			this.formCls = api.getApiClass();
-			this.record = this.up('panel').record;
+			var p = this.up('panel');
+
+			this.formCls = p.apiClass;
+			this.record = p.record;
 		}
 		api = NetProfile.api[this.formCls];
 		return {
@@ -96,7 +115,8 @@ Ext.define('NetProfile.view.Form', {
 			get_fields: api.get_fields
 		};
 	},
-	loadForm: function() {
+	loadForm: function()
+	{
 		var st = this.statics();
 
 		this.api = this.getDirectAction();
@@ -105,7 +125,8 @@ Ext.define('NetProfile.view.Form', {
 		else
 			this.api.get_fields(this.loadCallback.bind(this));
 	},
-	loadCallback: function(data, result) {
+	loadCallback: function(data, result)
+	{
 		var st = this.statics();
 
 		if(!data || !data.fields)
@@ -122,8 +143,51 @@ Ext.define('NetProfile.view.Form', {
 		this.fireEvent('formloaded');
 
 		if(this.record)
-			this.getForm().loadRecord(this.record);
-	}
+		{
+			if(this.record.store)
+			{
+				this.mon(this.record.store, {
+					load: function(store, recs, success, opts)
+					{
+						if(!success)
+							return;
 
+						var me = this,
+							rectab = this.up('panel[cls~=record-tab]');
+
+						Ext.Array.forEach(recs, function(rec)
+						{
+							var title;
+
+							if(rec.getId() === me.record.getId())
+							{
+								me.record = rec;
+								title = rec.get('__str__');
+								if(title)
+									rectab.setTitle(title);
+							}
+						});
+					},
+					update: function(store, rec, op, opts)
+					{
+						if(op !== Ext.data.Model.COMMIT)
+							return;
+
+						var rectab = this.up('panel[cls~=record-tab]');
+
+						if(rec.getId() === this.record.getId())
+						{
+							this.record = rec;
+							title = rec.get('__str__');
+							if(title)
+								rectab.setTitle(title);
+						}
+					},
+					scope: this
+				});
+			}
+			this.getForm().loadRecord(this.record);
+		}
+	}
 });
 

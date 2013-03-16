@@ -34,14 +34,10 @@ import random
 import hashlib
 
 from sqlalchemy import (
-	Boolean,
-	CHAR,
 	Column,
-	DefaultClause,
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Integer,
 	LargeBinary,
 	PickleType,
 	Sequence,
@@ -60,16 +56,9 @@ from sqlalchemy.orm import (
 )
 
 from sqlalchemy.ext.declarative import declared_attr
-
-from sqlalchemy.ext.associationproxy import (
-	association_proxy
-)
-from sqlalchemy.ext.hybrid import (
-	hybrid_property
-)
-from sqlalchemy.orm.collections import (
-	attribute_mapped_collection
-)
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm.collections import attribute_mapped_collection
 
 #from colanderalchemy import (
 #	Column,
@@ -77,7 +66,10 @@ from sqlalchemy.orm.collections import (
 #)
 
 from netprofile.common.phpserialize import HybridPickler
-from netprofile.db.connection import DBSession, Base
+from netprofile.db.connection import (
+	Base,
+	DBSession
+)
 from netprofile.db.fields import (
 	ASCIIFixedString,
 	ASCIIString,
@@ -298,6 +290,7 @@ class User(Base):
 				'menu_order'   : 20,
 				'default_sort' : (),
 				'grid_view'    : ('login', 'name_family', 'name_given', 'group', 'enabled', 'state', 'email'),
+				'form_view'    : ('login', 'name_family', 'name_given', 'name_middle', 'title', 'group', 'secondary_groups', 'enabled', 'pass', 'security_policy', 'state', 'email', 'manager'),
 				'easy_search'  : ('login', 'name_family'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -348,7 +341,7 @@ class User(Base):
 		}
 	)
 	login = Column(
-		Unicode(48),
+		ExactUnicode(48),
 		Comment('Login string'),
 		nullable=False,
 		info={
@@ -544,9 +537,9 @@ class User(Base):
 
 	secondary_groups = association_proxy(
 		'secondary_groupmap',
-		'group'
+		'group',
+		creator=lambda v: UserGroup(group=v)
 	)
-
 	privileges = association_proxy(
 		'caps',
 		'value',
@@ -598,7 +591,7 @@ class User(Base):
 
 	def change_login(self, newlogin, opts, request):
 		self.login = newlogin
-		if self.mod_pw:
+		if getattr(self, 'mod_pw', False):
 			realm = reg.settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
 			self.a1_hash = self.generate_a1hash(realm)
 
@@ -677,6 +670,7 @@ class Group(Base):
 				'menu_order'   : 30,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'parent', 'security_policy', 'root_folder'),
+				'form_view'    : ('name', 'parent', 'security_policy', 'visible', 'assignable', 'root_folder'),
 				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 
@@ -859,6 +853,7 @@ class Privilege(Base):
 				'menu_order'   : 40,
 				'default_sort' : (),
 				'grid_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls'),
+				'form_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls', 'resclass'),
 				'easy_search'  : ('code', 'name'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 
@@ -1315,6 +1310,15 @@ class SecurityPolicy(Base):
 				'menu_order'   : 50,
 				'default_sort' : (),
 				'grid_view'    : ('name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size'),
+				'form_view'    : (
+					'name', 'descr',
+					'pw_length_min', 'pw_length_max',
+					'pw_ctype_min', 'pw_ctype_max',
+					'pw_dict_check', 'pw_dict_name',
+					'pw_hist_check', 'pw_hist_size',
+					'pw_age_min', 'pw_age_max', 'pw_age_warndays', 'pw_age_warnmail', 'pw_age_action',
+					'net_whitelist', 'sess_timeout'
+				),
 				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -2261,7 +2265,7 @@ class NPSession(Base):
 	)
 
 	@classmethod
-	def __augment_query__(cls, sess, query):
+	def __augment_query__(cls, sess, query, params):
 		lim = query._limit
 		if lim and (lim < 50):
 			return query.options(
@@ -2906,7 +2910,7 @@ class UserSettingType(Base, DynamicSetting):
 		return '%s' % str(self.name)
 
 	@classmethod
-	def __augment_query__(cls, sess, query):
+	def __augment_query__(cls, sess, query, params):
 		lim = query._limit
 		if lim and (lim < 50):
 			return query.options(

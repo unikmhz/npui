@@ -24,11 +24,13 @@ Ext.define('NetProfile.view.SideBar', {
 		dock: 'top'
 	}],
 
-	initComponent: function() {
+	initComponent: function()
+	{
 		this.menus = {};
 		this.items = [];
 		this.store = Ext.create('NetProfile.store.Menu');
-		this.store.each(function(menu) {
+		this.store.each(function(menu)
+		{
 			mname = menu.get('name');
 			var tree = Ext.create('Ext.tree.Panel', {
 				id: 'npmenu_tree_' + mname,
@@ -132,7 +134,8 @@ Ext.define('NetProfile.view.SideBar', {
 		);
 		return true;
 	},
-	onHistoryChange: function(token) {
+	onHistoryChange: function(token)
+	{
 		var pts, store, node;
 
 		if(token)

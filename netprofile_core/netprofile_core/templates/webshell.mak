@@ -7,8 +7,11 @@ from netprofile.tpl.filters import jsone
 Ext.Loader.setConfig({enabled: true});
 
 Ext.Loader.setPath({
-	'Ext.ux'               : 'static/core/webshell/ux',
-	'NetProfile'           : 'static/core/webshell'
+	'NetProfile'           : 'static/core/webshell',
+% for module in modules:
+	'NetProfile.${module}' : 'static/${module}/webshell',
+% endfor
+	'Ext.ux'               : 'static/core/webshell/ux'
 });
 
 Ext.require([
@@ -18,6 +21,9 @@ Ext.require([
 	'Ext.state.*',
 	'Ext.util.Cookies',
 	'Ext.Ajax',
+% for i_ajs in res_ajs:
+	'${i_ajs}',
+% endfor
 	'NetProfile.model.Basic'
 ], function()
 {
@@ -333,13 +339,13 @@ Ext.application({
 
 	models: [],
 	stores: [],
-	controllers: [],
+	controllers: ['DataStores'],
 
 	launch: function()
 	{
 		var state_prov = null;
 
-		if(Ext.supports.LocalStorage)
+		if('localStorage' in window && window['localStorage'] !== null)
 		{
 			state_prov = new Ext.state.LocalStorageProvider({
 				prefix: 'nps_'

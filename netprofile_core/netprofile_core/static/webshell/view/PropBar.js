@@ -8,15 +8,17 @@ Ext.define('NetProfile.view.PropBar', {
 	stateId: 'npws_propbar',
 	stateful: true,
 	collapsible: false,
-	header: false,
+	title: 'Properties',
+	header: {
+		iconCls: 'ico-props'
+	},
+	headerPosition: 'right',
 	hidden: true,
 	layout: 'fit',
 	split: false,
 	height: '40%',
 	minHeight: 300,
 	border: 0,
-	apiModule: null,
-	apiClass: null,
 	tabCache: {},
 	items: [
 	],
@@ -24,20 +26,31 @@ Ext.define('NetProfile.view.PropBar', {
 
 	recordText: 'Record',
 
-	initComponent: function() {
+	initComponent: function()
+	{
 		this.tabCache = {};
 		this.tools = [{
+			itemId: 'minimize',
+			type: 'minimize',
+			handler: function()
+			{
+				this.hide();
+			},
+			scope: this
+		}, {
 			itemId: 'close',
 			type: 'close',
-			handler: function() {
-				this.hide();
+			handler: function()
+			{
+				this.clearAll();
 			},
 			scope: this
 		}];
 		this.callParent(arguments);
 
 		this.on({
-			beforeremove: function(cont, cmp, opts) {
+			beforeremove: function(cont, cmp, opts)
+			{
 				if(cmp.ownerCt != this)
 					return true;
 				if(this.items.length <= 1)
@@ -46,87 +59,83 @@ Ext.define('NetProfile.view.PropBar', {
 			},
 			scope: this
 		});
+
+		this.kmap = new Ext.util.KeyMap({
+			target: Ext.getBody(),
+			binding: [{
+				key: 'w',
+				fn: function(kc, ev)
+				{
+					var at = this.getActiveTab();
+
+					if(at && ev.altKey)
+					{
+						ev.stopEvent();
+						if(ev.shiftKey)
+							this.clearAll();
+						else
+							this.clear(at);
+					}
+				},
+				scope: this
+			}]
+		});
 	},
 	clearState: function()
 	{
 		this.tabCache = {};
 		Ext.destroy(this.removeAll());
 	},
-	getApiModule: function()
-	{
-		return this.apiModule;
-	},
-	setApiModule: function(am)
-	{
-		if(this.apiModule != am)
-			this.clearState();
-		this.apiModule = am;
-	},
-	getApiClass: function()
-	{
-		return this.apiClass;
-	},
-	setApiClass: function(ac)
-	{
-		if(this.apiClass != ac)
-			this.clearState();
-		this.apiClass = ac;
-	},
-	setContext: function(am, ac)
-	{
-		if((this.apiModule != am) || (this.apiClass != ac))
-			this.clearState();
-		this.apiModule = am;
-		this.apiClass = ac;
-	},
-	clearContext: function()
-	{
-		if((this.apiModule !== null) || (this.apiClass !== null))
-			this.clearState();
-		this.apiModule = null;
-		this.apiClass = null;
-	},
 	clearAll: function()
 	{
 		this.hide();
 		this.clearState();
-		this.clearContext();
 	},
-	addRecordTab: function(cfg, record)
+	clear: function(at)
 	{
-		var tab, rec_name, rec_id;
-
-		rec_id = record.getId();
-		if(this.tabCache.hasOwnProperty(rec_id))
+		Ext.Object.each(this.tabCache, function(tci, tc)
 		{
-			tab = this.tabCache[rec_id];
+			if(at === tc)
+			{
+				delete this.tabCache[tci];
+				this.remove(tc, true);
+			}
+		}, this);
+	},
+	addRecordTab: function(module, model, cfg, record)
+	{
+		var tab, rec_name;
+
+		if(this.tabCache.hasOwnProperty(record.id))
+		{
+			tab = this.tabCache[record.id];
 		}
 		else
 		{
 			rec_name = record.get('__str__');
 			if(!rec_name)
-				rec_name = this.recordText + ' ' + rec_id;
+				rec_name = this.recordText + ' ' + record.id;
 			Ext.apply(cfg, {
 				title: rec_name,
 				record: record,
 				closable: true,
 				cls: 'record-tab',
+				iconCls: 'ico-mod-' + model.toLowerCase(),
 				listeners: {
 					removed: function(comp, ct, opts)
 					{
-						var rec_id;
-
 						if(!comp.record)
 							return true;
-						rec_id = comp.record.getId();
-						if(ct.tabCache.hasOwnProperty(rec_id))
-							delete ct.tabCache[rec_id];
+						if(ct.tabCache.hasOwnProperty(record.id))
+							delete ct.tabCache[record.id];
 						return true;
 					},
 					scope: this
 				}
 			});
-			this.tabCache[rec_id] = tab = this.add(cfg);
+			this.tabCache[record.id] = tab = this.add(cfg);
+			tab.apiModule = module;
+			tab.apiClass = model;
 		}
 		this.setActiveTab(tab);
 		return tab;

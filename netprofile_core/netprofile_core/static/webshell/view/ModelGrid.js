@@ -198,52 +198,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 				clicksToMoveEditor: 1
 			});
 
-		var store_cfg = {
-			autoDestroy: true,
-			listeners: {},
-			proxy: {
-				type: this.apiModule + '_' + this.apiClass
-			}
-		};
-		if(this.propBar)
-		{
-			var pb = Ext.getCmp('npws_propbar');
-			if(pb && !this.selectRow)
-				store_cfg['listeners']['load'] = {
-					fn: function()
-					{
-						Ext.destroy(this.removeAll());
-					},
-					scope: pb
-				};
-		}
-		if(!this.extraParams)
-		{
-			if(this.extraParamProp)
-			{
-				store_cfg['listeners']['beforeload'] = {
-					fn: function(store, op)
-					{
-						var rec = this.up('panel[cls~=record-tab]');
-						if(rec)
-						{
-							rec = rec.record;
-							store.proxy.extraParams = { __ffilter: {} };
-							store.proxy.extraParams.__ffilter[this.extraParamProp] = { eq: rec.get(this.extraParamProp) };
-						}
-					},
-					scope: this
-				};
-			}
-		}
-		if(this.extraParams)
-			store_cfg['proxy']['extraParams'] = this.extraParams;
-
 		if(!this.store && this.apiModule && this.apiClass)
-			this.store = Ext.create(
-				'NetProfile.store.' + this.apiModule + '.' + this.apiClass,
-				store_cfg
-			);
+			this.store = NetProfile.StoreManager.getStore(this.apiModule, this.apiClass, this, !this.stateful);
 
 		this.callParent();
 
@@ -307,10 +263,9 @@ Ext.define('NetProfile.view.ModelGrid', {
 			var pb = Ext.getCmp('npws_propbar');
 			if(!pb)
 				return true;
-			pb.setContext(this.apiModule, this.apiClass);
 			if(this.detailPane)
 			{
-				pb.addRecordTab(this.detailPane, record);
+				pb.addRecordTab(this.apiModule, this.apiClass, this.detailPane, record);
 				pb.show();
 
 				var view = this.getView(),
