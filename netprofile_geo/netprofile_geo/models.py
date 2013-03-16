@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 __all__ = [
 	'City',
 	'District',
@@ -20,7 +27,9 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import (
 	backref,
-	relationship
+	contains_eager,
+	relationship,
+	joinedload
 )
 
 from sqlalchemy.ext.associationproxy import (
@@ -32,7 +41,10 @@ from sqlalchemy.ext.associationproxy import (
 #	relationship
 #)
 
-from netprofile.db.connection import Base
+from netprofile.db.connection import (
+	Base,
+	DBSession
+)
 from netprofile.db.fields import (
 	UInt8,
 	UInt16,
@@ -47,6 +59,8 @@ from netprofile.ext.wizards import (
 	Wizard
 )
 from netprofile.db.ddl import Comment
+
+from netprofile_geo.filters import AddressFilter
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -297,6 +311,19 @@ class Street(Base):
 		passive_deletes=True
 	)
 
+	@classmethod
+	def __augment_query__(cls, sess, query, params):
+		flt = {}
+		if '__filter' in params:
+			flt.update(params['__filter'])
+		if '__ffilter' in params:
+			flt.update(params['__ffilter'])
+		if ('cityid' in flt) and ('eq' in flt['cityid']):
+			val = int(flt['cityid']['eq'])
+			if val > 0:
+				query = query.join(Street.district).options(contains_eager(Street.district)).filter(District.city_id == val)
+		return query
+
 	def __str__(self):
 		l = []
 		if self.prefix:
@@ -317,6 +344,23 @@ class House(Base):
 			value = [value];
 		return query.join(HouseGroupMapping).filter(HouseGroupMapping.group_id.in_(value))
 
+	@classmethod
+	def _filter_address(cls, query, value):
+		if not isinstance(value, dict):
+			return query
+		if 'districtid' in value:
+			val = int(value['districtid'])
+			if val > 0:
+				query = query.filter(Street.district_id == val)
+		elif 'cityid' in value:
+			val = int(value['cityid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(District).filter(District.city_id == val)
+				val = [d.id for d in sq]
+				query = query.filter(Street.district_id.in_(val))
+		return query
+
 	__tablename__ = 'addr_houses'
 	__table_args__ = (
 		Comment('Houses'),
@@ -336,6 +380,7 @@ class House(Base):
 				'menu_order'   : 70,
 				'default_sort' : (),
 				'grid_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
+				'form_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'house_groups', 'entrnum', 'postindex'),
 				'easy_search'  : ('number',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 				'extra_search' : (
@@ -345,6 +390,15 @@ class House(Base):
 						value_field='ahgid',
 						display_field='name'
 					),
+					AddressFilter('address', _filter_address,
+						title=_('Address')
+					)
+				),
+
+				'create_wizard' : Wizard(
+					Step('street', 'number', 'num_slash', 'num_suffix', 'building', title=_('Basic house data')),
+					Step('house_groups', 'entrnum', 'postindex', title=_('Additional house data')),
+					title=_('Add new house')
 				)
 			}
 		}
@@ -443,12 +497,38 @@ class House(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
-	house_groups = relationship(
+	house_groupmap = relationship(
 		'HouseGroupMapping',
 		backref=backref('house', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+
+	house_groups = association_proxy(
+		'house_groupmap',
+		'group',
+		creator=lambda v: HouseGroupMapping(group=v)
+	)
+
+	@classmethod
+	def __augment_query__(cls, sess, query, params):
+		query = query.options(joinedload(House.house_groupmap))
+		query = query.join(House.street).options(contains_eager(House.street))
+		flt = {}
+		if '__filter' in params:
+			flt.update(params['__filter'])
+		if '__ffilter' in params:
+			flt.update(params['__ffilter'])
+		if ('districtid' in flt) and ('eq' in flt['districtid']):
+			val = int(flt['districtid']['eq'])
+			if val > 0:
+				query = query.filter(Street.district_id == val)
+		elif ('cityid' in flt) and ('eq' in flt['cityid']):
+			val = int(flt['cityid']['eq'])
+			sq = sess.query(District).filter(District.city_id == val)
+			val = [d.id for d in sq]
+			query = query.filter(Street.district_id.in_(val))
+		return query
 
 	def __str__(self):
 		l = [str(self.street), str(self.number)]
@@ -485,7 +565,9 @@ class Place(Base):
 				'default_sort' : (),
 				'grid_view'    : ('house', 'number', 'name', 'entrance', 'floor', 'descr'),
 				'easy_search'  : ('number',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new place'))
 			}
 		}
 	)
@@ -591,7 +673,9 @@ class HouseGroup(Base):
 				'default_sort' : (),
 				'grid_view'    : ('name', 'descr'),
 				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new house group'))
 			}
 		}
 	)
@@ -654,6 +738,8 @@ class HouseGroupMapping(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
+				'menu_name'    : _('House Groups'),
+
 				'cap_menu'     : 'BASE_GEO',
 				'cap_read'     : 'GEO_LIST',
 				'cap_create'   : 'GEO_CREATE',

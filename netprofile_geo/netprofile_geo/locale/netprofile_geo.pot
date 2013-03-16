@@ -1,14 +1,14 @@
 # Translations template for netprofile_geo.
-# Copyright (C) 2012 ORGANIZATION
+# Copyright (C) 2013 ORGANIZATION
 # This file is distributed under the same license as the netprofile_geo project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_geo 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2012-12-13 18:01+0400\n"
+"POT-Creation-Date: 2013-03-16 11:11+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,109 +17,125 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: netprofile_geo/__init__.py:27
+#: netprofile_geo/__init__.py:44
 msgid "Geography"
 msgstr ""
 
-#: netprofile_geo/models.py:69
+#: netprofile_geo/models.py:88
 msgid "Cities"
 msgstr ""
 
-#: netprofile_geo/models.py:87 netprofile_geo/models.py:157
-#: netprofile_geo/models.py:239 netprofile_geo/models.py:350
-#: netprofile_geo/models.py:490 netprofile_geo/models.py:596
-#: netprofile_geo/models.py:667
+#: netprofile_geo/models.py:95
+msgid "Add new city"
+msgstr ""
+
+#: netprofile_geo/models.py:108 netprofile_geo/models.py:180
+#: netprofile_geo/models.py:264 netprofile_geo/models.py:409
+#: netprofile_geo/models.py:575 netprofile_geo/models.py:681
+#: netprofile_geo/models.py:754
 msgid "ID"
 msgstr ""
 
-#: netprofile_geo/models.py:95 netprofile_geo/models.py:176
-#: netprofile_geo/models.py:258 netprofile_geo/models.py:521
-#: netprofile_geo/models.py:604
+#: netprofile_geo/models.py:116 netprofile_geo/models.py:199
+#: netprofile_geo/models.py:283 netprofile_geo/models.py:606
+#: netprofile_geo/models.py:689
 msgid "Name"
 msgstr ""
 
-#: netprofile_geo/models.py:105 netprofile_geo/models.py:186
-#: netprofile_geo/models.py:268
+#: netprofile_geo/models.py:126 netprofile_geo/models.py:209
+#: netprofile_geo/models.py:293
 msgid "Prefix"
 msgstr ""
 
-#: netprofile_geo/models.py:139 netprofile_geo/views.py:13
+#: netprofile_geo/models.py:160 netprofile_geo/views.py:20
 msgid "Districts"
 msgstr ""
 
 #: netprofile_geo/models.py:167
+msgid "Add new district"
+msgstr ""
+
+#: netprofile_geo/models.py:190
 msgid "City"
 msgstr ""
 
-#: netprofile_geo/models.py:221 netprofile_geo/views.py:27
+#: netprofile_geo/models.py:244 netprofile_geo/views.py:32
 msgid "Streets"
 msgstr ""
 
-#: netprofile_geo/models.py:249
+#: netprofile_geo/models.py:251
+msgid "Add new street"
+msgstr ""
+
+#: netprofile_geo/models.py:274
 msgid "District"
 msgstr ""
 
-#: netprofile_geo/models.py:278
+#: netprofile_geo/models.py:303
 msgid "Suffix"
 msgstr ""
 
-#: netprofile_geo/models.py:324 netprofile_geo/views.py:41
+#: netprofile_geo/models.py:379 netprofile_geo/views.py:44
 msgid "Houses"
 msgstr ""
 
-#: netprofile_geo/models.py:332
+#: netprofile_geo/models.py:388
 msgid "House Group"
 msgstr ""
 
-#: netprofile_geo/models.py:360
+#: netprofile_geo/models.py:394
+msgid "Address"
+msgstr ""
+
+#: netprofile_geo/models.py:419
 msgid "Street"
 msgstr ""
 
-#: netprofile_geo/models.py:371 netprofile_geo/models.py:511
+#: netprofile_geo/models.py:430 netprofile_geo/models.py:596
 msgid "Number"
 msgstr ""
 
-#: netprofile_geo/models.py:381
+#: netprofile_geo/models.py:440
 msgid "Building"
 msgstr ""
 
-#: netprofile_geo/models.py:392
+#: netprofile_geo/models.py:451
 msgid "Second Num."
 msgstr ""
 
-#: netprofile_geo/models.py:403
+#: netprofile_geo/models.py:462
 msgid "Num. Suffix"
 msgstr ""
 
-#: netprofile_geo/models.py:414 netprofile_geo/models.py:531
+#: netprofile_geo/models.py:473 netprofile_geo/models.py:616
 msgid "Entr. #"
 msgstr ""
 
-#: netprofile_geo/models.py:425
+#: netprofile_geo/models.py:484
 msgid "Postal Code"
 msgstr ""
 
-#: netprofile_geo/models.py:472 netprofile_geo/views.py:55
+#: netprofile_geo/models.py:557 netprofile_geo/views.py:56
 msgid "Places"
 msgstr ""
 
-#: netprofile_geo/models.py:500 netprofile_geo/models.py:687
+#: netprofile_geo/models.py:585 netprofile_geo/models.py:774
 msgid "House"
 msgstr ""
 
-#: netprofile_geo/models.py:541
+#: netprofile_geo/models.py:626
 msgid "Floor #"
 msgstr ""
 
-#: netprofile_geo/models.py:552 netprofile_geo/models.py:615
+#: netprofile_geo/models.py:637 netprofile_geo/models.py:700
 msgid "Description"
 msgstr ""
 
-#: netprofile_geo/models.py:578
+#: netprofile_geo/models.py:663 netprofile_geo/models.py:731
 msgid "House Groups"
 msgstr ""
 
-#: netprofile_geo/models.py:677
+#: netprofile_geo/models.py:764
 msgid "Group"
 msgstr ""
 

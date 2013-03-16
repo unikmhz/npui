@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
@@ -14,8 +21,6 @@ def _dpane_city_districts(tabs, model, req):
 		'xtype'          : 'grid_geo_District',
 		'stateId'        : None,
 		'stateful'       : False,
-		'propBar'        : False,
-		'detailPane'     : None,
 		'hideColumns'    : ('city',),
 		'extraParamProp' : 'cityid'
 	})
@@ -28,8 +33,6 @@ def _dpane_district_streets(tabs, model, req):
 		'xtype'          : 'grid_geo_Street',
 		'stateId'        : None,
 		'stateful'       : False,
-		'propBar'        : False,
-		'detailPane'     : None,
 		'hideColumns'    : ('district',),
 		'extraParamProp' : 'districtid'
 	})
@@ -42,8 +45,6 @@ def _dpane_street_houses(tabs, model, req):
 		'xtype'          : 'grid_geo_House',
 		'stateId'        : None,
 		'stateful'       : False,
-		'propBar'        : False,
-		'detailPane'     : None,
 		'hideColumns'    : ('street',),
 		'extraParamProp' : 'streetid'
 	})
@@ -56,8 +57,6 @@ def _dpane_house_places(tabs, model, req):
 		'xtype'          : 'grid_geo_Place',
 		'stateId'        : None,
 		'stateful'       : False,
-		'propBar'        : False,
-		'detailPane'     : None,
 		'hideColumns'    : ('house',),
 		'extraParamProp' : 'houseid'
 	})

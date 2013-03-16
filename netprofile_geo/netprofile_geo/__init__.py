@@ -1,3 +1,10 @@
+from __future__ import (
+	unicode_literals,
+	print_function,
+	absolute_import,
+	division
+)
+
 from netprofile.common.modules import ModuleBase
 from .models import *
 
@@ -20,6 +27,16 @@ class Module(ModuleBase):
 			Place,
 			HouseGroup,
 			HouseGroupMapping
+		]
+
+	def get_local_js(self, request, lang):
+		return [
+			'netprofile_geo:static/webshell/locale/webshell-lang-' + lang + '.js'
+		]
+
+	def get_autoload_js(self, request):
+		return [
+			'NetProfile.geo.form.field.Address'
 		]
 
 	@property
