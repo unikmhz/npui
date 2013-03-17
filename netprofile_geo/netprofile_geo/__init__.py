@@ -39,6 +39,11 @@ class Module(ModuleBase):
 			'NetProfile.geo.form.field.Address'
 		]
 
+	def get_css(self, request):
+		return [
+			'netprofile_geo:static/css/main.css'
+		]
+
 	@property
 	def name(self):
 		return _('Geography')

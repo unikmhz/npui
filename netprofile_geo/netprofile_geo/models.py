@@ -62,13 +62,17 @@ from netprofile.db.ddl import Comment
 
 from netprofile_geo.filters import AddressFilter
 
-from pyramid.i18n import TranslationStringFactory
+from pyramid.threadlocal import get_current_request
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
 
 _ = TranslationStringFactory('netprofile_geo')
 
 class City(Base):
 	"""
-	TBW
+	City object.
 	"""
 	__tablename__ = 'addr_cities'
 	__table_args__ = (
@@ -139,7 +143,7 @@ class City(Base):
 
 class District(Base):
 	"""
-	TBW
+	City district object.
 	"""
 	__tablename__ = 'addr_districts'
 	__table_args__ = (
@@ -222,7 +226,7 @@ class District(Base):
 
 class Street(Base):
 	"""
-	TBW
+	Street object.
 	"""
 	__tablename__ = 'addr_streets'
 	__table_args__ = (
@@ -335,7 +339,7 @@ class Street(Base):
 
 class House(Base):
 	"""
-	TBW
+	House object. Used for anything with an exact address.
 	"""
 
 	@classmethod
@@ -531,18 +535,22 @@ class House(Base):
 		return query
 
 	def __str__(self):
+		req = get_current_request()
+		loc = get_localizer(req)
+
 		l = [str(self.street), str(self.number)]
 		if self.number_suffix:
 			l.append(self.number_suffix)
 		if self.second_number:
 			l.append('/' + str(self.second_number))
 		if self.building:
+			l.append(loc.translate(_('bld.')))
 			l.append(str(self.building))
 		return ' '.join(l)
 
 class Place(Base):
 	"""
-	TBW
+	Place object. Used for any container, shelf or storage space.
 	"""
 	__tablename__ = 'addr_places'
 	__table_args__ = (
@@ -651,7 +659,8 @@ class Place(Base):
 
 class HouseGroup(Base):
 	"""
-	TBW
+	Used for grouping arbitrary houses. Each house can be part of any
+	number of groups.
 	"""
 	__tablename__ = 'addr_hgroups_def'
 	__table_args__ = (
@@ -727,7 +736,7 @@ class HouseGroup(Base):
 
 class HouseGroupMapping(Base):
 	"""
-	TBW
+	Mapping between houses and house groups.
 	"""
 	__tablename__ = 'addr_hgroups_houses'
 	__table_args__ = (
