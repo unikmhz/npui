@@ -34,7 +34,7 @@ Ext.define('NetProfile.view.TopBar', {
 				items: [{
 					xtype: 'menuitem',
 					showSeparator: false,
-					iconCls: 'ico-flag',
+					iconCls: 'ico-locale',
 					text: this.chLangText,
 					menu: {
 						xtype: 'menu',

@@ -46,6 +46,14 @@ h2
 	background-color: #DEE9F7;
 }
 
+.np-inline-img
+{
+	border: 0;
+	margin: 0;
+	padding: 0;
+	vertical-align: bottom;
+}
+
 .x-grid-checkheader
 {
 	height: 14px;
@@ -123,6 +131,7 @@ h2
 .ico-info         { background-image: url(../img/info.png) !important; }
 .ico-key          { background-image: url(../img/key.png) !important; }
 .ico-last         { background-image: url(../img/last.png) !important; }
+.ico-locale       { background-image: url(../img/locale.png) !important; }
 .ico-lock         { background-image: url(../img/lock.png) !important; }
 .ico-logout       { background-image: url(../img/logout.png) !important; }
 .ico-module       { background-image: url(../img/module.png) !important; }
