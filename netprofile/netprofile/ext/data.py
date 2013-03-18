@@ -74,6 +74,10 @@ from netprofile.db.connection import (
 	DBSession
 )
 
+from netprofile.ext.columns import (
+	HybridColumn,
+	PseudoColumn
+)
 from netprofile.common import ipaddr
 from pyramid.security import has_permission
 from pyramid.i18n import get_localizer
@@ -260,6 +264,10 @@ class ExtColumn(object):
 	@property
 	def pass_request(self):
 		return self.column.info.get('pass_request', False)
+
+	@property
+	def template(self):
+		return self.column.info.get('template', None)
 
 	@property
 	def length(self):
@@ -695,6 +703,11 @@ class ExtColumn(object):
 		xt = self.column_xtype
 		if xt is not None:
 			conf['xtype'] = xt
+		tpl = self.template
+		if tpl:
+			conf['tpl'] = tpl
+			if 'xtype' not in conf:
+				conf['xtype'] = 'templatecolumn'
 		# add col width?
 		if issubclass(typecls, _FLOAT_SET):
 			conf.update({
@@ -749,6 +762,156 @@ class ExtColumn(object):
 				'primaryKey' : fk.column.name
 			})
 		return conf
+
+	def append_data(self, obj):
+		pass
+
+	def append_field(self):
+		pass
+
+	def apply_data(self, obj, data):
+		pass
+
+class ExtPseudoColumn(ExtColumn):
+	@property
+	def header_string(self):
+		return self.column.header_string
+
+	@property
+	def help_text(self):
+		return self.column.help_text
+
+	@property
+	def filter_type(self):
+		return self.column.filter_type
+
+	@property
+	def reader(self):
+		return None
+
+	@property
+	def writer(self):
+		return None
+
+#	@property
+#	def clearer(self):
+#		return self.column.info.get('clearer')
+
+	@property
+	def pass_request(self):
+		return self.column.pass_request
+
+	@property
+	def length(self):
+		return None
+
+	@property
+	def pixels(self):
+		return self.MAX_PIXELS
+
+	@property
+	def bit_length(self):
+		return None
+
+	@property
+	def unsigned(self):
+		return False
+
+	@property
+	def default(self):
+		return None
+
+	@property
+	def column_xtype(self):
+		return self.column.column_xtype
+
+	@property
+	def editor_xtype(self):
+		return self.column.editor_xtype
+
+	@property
+	def js_type(self):
+		return self.column.js_type
+
+	@property
+	def colander_type(self):
+		# FIXME: add smth here
+		raise NotImplementedError('Colander support is missing for pseudo columns.')
+
+	def _set_min_max(self, conf):
+		# FIXME: add smth here
+		raise NotImplementedError('Validation support is missing for pseudo columns.')
+
+	@property
+	def secret_value(self):
+		return self.column.secret_value
+
+	def __getattr__(self, attr):
+		return getattr(self.column, attr)
+
+	def parse_param(self, param):
+		if not hasattr(self.column, 'parse'):
+			return param
+		if not callable(self.column.parse):
+			return param
+		return self.column.parse(param)
+
+	def get_colander_schema(self, nullable=None):
+		# FIXME: add smth here
+		raise NotImplementedError('Colander support is missing for pseudo columns.')
+
+	def get_colander_validations(self):
+		# FIXME: add smth here
+		raise NotImplementedError('Colander support is missing for pseudo columns.')
+
+	def get_model_validations(self):
+		# FIXME: add smth here
+		raise NotImplementedError('Validation support is missing for pseudo columns.')
+		return {}
+
+	def get_editor_cfg(self, req, initval=None, in_form=False):
+		# FIXME: add smth here
+		return None
+
+	def get_reader_cfg(self):
+		conf = {
+			'name'       : self.name,
+			'allowBlank' : self.column.nullable,
+			'useNull'    : self.column.nullable,
+			'type'       : self.js_type,
+			'persist'    : False
+		}
+		if conf['type'] == 'date':
+			conf['dateFormat'] = self.date_format
+		val = self.default
+		if val is not None:
+			if type(val) in {int, str, list, dict, bool}:
+				conf['defaultValue'] = val
+		return conf
+
+	def get_column_cfg(self, req):
+		if self.column.secret_value:
+			return None
+		loc = get_localizer(req)
+		conf = {
+			'header'     : loc.translate(self.column.header_string),
+			'tooltip'    : loc.translate(self.column.header_string),
+			'name'       : self.name,
+			'sortable'   : True,
+			'filterable' : False if (self.column.filter_type == 'none') else True,
+			'dataIndex'  : self.name,
+			'editor'     : self.get_editor_cfg(req),
+			'xtype'      : self.column.column_xtype
+		}
+		tpl = self.column.template
+		if tpl:
+			conf['xtype'] = 'templatecolumn'
+			conf['tpl'] = tpl
+		# add col width?
+		return conf
+
+	def get_related_cfg(self):
+		return []
 
 	def append_data(self, obj):
 		pass
@@ -1073,6 +1236,8 @@ class ExtModel(object):
 		)
 
 	def get_column(self, colname):
+		if isinstance(colname, PseudoColumn):
+			return ExtPseudoColumn(colname, self.model)
 		cols = self.model.__table__.columns
 		o_prop = getattr(self.model, colname, None)
 		if isinstance(o_prop, AssociationProxy):
@@ -1150,15 +1315,20 @@ class ExtModel(object):
 
 	def get_reader_cfg(self):
 		ret = []
+		str_added = False
 		for cname, col in self.get_read_columns().items():
-			ret.append(col.get_reader_cfg())
-		ret.append({
-			'name'       : '__str__',
-			'allowBlank' : True,
-			'useNull'    : True,
-			'type'       : 'string',
-			'persist'    : False
-		})
+			cfg = col.get_reader_cfg()
+			if cfg['name'] == '__str__':
+				str_added = True
+			ret.append(cfg)
+		if not str_added:
+			ret.append({
+				'name'       : '__str__',
+				'allowBlank' : True,
+				'useNull'    : True,
+				'type'       : 'string',
+				'persist'    : False
+			})
 		return ret
 
 	def get_extra_search_cfg(self, req):
@@ -1334,6 +1504,8 @@ class ExtModel(object):
 		tot = 0
 		cols = self.get_read_columns()
 		for cname, col in cols.items():
+			if isinstance(col, ExtPseudoColumn):
+				continue
 			trans[cname] = self.model.__mapper__.get_property_by_column(
 					col.column)
 		sess = DBSession()
@@ -1369,6 +1541,12 @@ class ExtModel(object):
 		for obj in q:
 			row = {}
 			for cname, col in cols.items():
+				if isinstance(cname, PseudoColumn):
+					if cname.secret_value:
+						continue
+					if isinstance(cname, HybridColumn):
+						row[cname.name] = getattr(obj, cname.name)
+					continue
 				if col.secret_value:
 					continue
 				if trans[cname].deferred:
@@ -1412,6 +1590,8 @@ class ExtModel(object):
 		cols = self.get_columns()
 		rcols = self.get_read_columns()
 		for cname, col in rcols.items():
+			if isinstance(col, ExtPseudoColumn):
+				continue
 			trans[cname] = self.model.__mapper__.get_property_by_column(
 					col.column)
 
@@ -1447,6 +1627,12 @@ class ExtModel(object):
 				p['_clid'] = pt['_clid']
 			pt = p
 			for cname, col in rcols.items():
+				if isinstance(cname, PseudoColumn):
+					if cname.secret_value:
+						continue
+					if isinstance(cname, HybridColumn):
+						pt[cname.name] = getattr(obj, cname.name)
+					continue
 				if col.secret_value:
 					continue
 				if trans[cname].deferred:
@@ -1486,6 +1672,8 @@ class ExtModel(object):
 		cols = self.get_columns()
 		rcols = self.get_read_columns()
 		for cname, col in rcols.items():
+			if isinstance(col, ExtPseudoColumn):
+				continue
 			trans[cname] = self.model.__mapper__.get_property_by_column(
 					col.column)
 
@@ -1515,6 +1703,12 @@ class ExtModel(object):
 					setattr(obj, trans[p].key, cols[p].parse_param(pt[p]))
 			pt = {}
 			for cname, col in rcols.items():
+				if isinstance(cname, PseudoColumn):
+					if cname.secret_value:
+						continue
+					if isinstance(cname, HybridColumn):
+						pt[cname.name] = getattr(obj, cname.name)
+					continue
 				if col.secret_value:
 					continue
 				if trans[cname].deferred:
