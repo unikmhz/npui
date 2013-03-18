@@ -28,8 +28,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
 	backref,
 	contains_eager,
-	relationship,
-	joinedload
+	relationship
 )
 
 from sqlalchemy.ext.associationproxy import (
@@ -59,6 +58,7 @@ from netprofile.ext.wizards import (
 	Wizard
 )
 from netprofile.db.ddl import Comment
+from netprofile.db.util import populate_related_list
 
 from netprofile_geo.filters import AddressFilter
 
@@ -345,7 +345,7 @@ class House(Base):
 	@classmethod
 	def _filter_hgroup(cls, query, value):
 		if not isinstance(value, list):
-			value = [value];
+			value = [value]
 		return query.join(HouseGroupMapping).filter(HouseGroupMapping.group_id.in_(value))
 
 	@classmethod
@@ -516,7 +516,6 @@ class House(Base):
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params):
-		query = query.options(joinedload(House.house_groupmap))
 		query = query.join(House.street).options(contains_eager(House.street))
 		flt = {}
 		if '__filter' in params:
@@ -533,6 +532,15 @@ class House(Base):
 			val = [d.id for d in sq]
 			query = query.filter(Street.district_id.in_(val))
 		return query
+
+	@classmethod
+	def __augment_result__(cls, sess, res, params):
+		populate_related_list(
+			res, 'id', 'house_groupmap', HouseGroupMapping,
+			sess.query(HouseGroupMapping),
+			None, 'house_id'
+		)
+		return res
 
 	def __str__(self):
 		req = get_current_request()
@@ -721,7 +729,7 @@ class HouseGroup(Base):
 	)
 	mappings = relationship(
 		'HouseGroupMapping',
-		backref=backref('group', innerjoin=True),
+		backref=backref('group', innerjoin=True, lazy='joined'),
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
