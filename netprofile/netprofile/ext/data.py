@@ -1271,7 +1271,9 @@ class ExtModel(object):
 
 	def get_read_columns(self):
 		ret = OrderedDict()
-		cols = self.model.__table__.columns.keys()
+		cols = []
+		for tbl in self.model.__mapper__.tables:
+			cols.extend(tbl.columns.keys())
 		try:
 			gcols = self.model.__table__.info['grid_view']
 			for col in gcols:
@@ -1406,7 +1408,7 @@ class ExtModel(object):
 		cond = []
 		for f in fields:
 			prop = trans[f]
-			coldef = self.model.__table__.c[f]
+			coldef = self.model.__mapper__.c[prop.key]
 			col = getattr(self.model, prop.key)
 			if issubclass(coldef.type.__class__, _STRING_SET):
 				cond.append(col.contains(sstr))
@@ -1429,7 +1431,7 @@ class ExtModel(object):
 		for fcol in flist:
 			if fcol in trans:
 				prop = trans[fcol]
-				coldef = self.model.__table__.c[fcol]
+				coldef = self.model.__mapper__.c[prop.key]
 				colcls = coldef.type.__class__
 				col = getattr(self.model, prop.key)
 				extcol = self.get_column(fcol)
