@@ -28,7 +28,8 @@ from sqlalchemy import (
 	Unicode,
 	UnicodeText,
 	func,
-	text
+	text,
+	or_
 )
 
 from sqlalchemy.orm import (
@@ -45,7 +46,10 @@ from sqlalchemy.ext.associationproxy import association_proxy
 #	relationship
 #)
 
-from netprofile.db.connection import DBSession, Base
+from netprofile.db.connection import (
+	Base,
+	DBSession
+)
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
@@ -65,7 +69,12 @@ from netprofile.ext.columns import (
 	HybridColumn,
 	MarkupColumn
 )
-from netprofile_geo.models import House
+from netprofile_geo.models import (
+	District,
+	House,
+	Street
+)
+from netprofile_geo.filters import AddressFilter
 
 from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
@@ -77,7 +86,7 @@ _ = TranslationStringFactory('netprofile_entities')
 
 class EntityType(DeclEnum):
 	"""
-	Entity type.
+	Entity type ENUM.
 	"""
 	physical   = 'physical',   _('Physical'),   10
 	legal      = 'legal',      _('Legal'),      20
@@ -89,6 +98,57 @@ class Entity(Base):
 	"""
 	Base NetProfile entity type.
 	"""
+
+	@classmethod
+	def _filter_address(cls, query, value):
+		if not isinstance(value, dict):
+			return query
+		if 'houseid' in value:
+			val = int(value['houseid'])
+			if val > 0:
+				query = query.filter(or_(
+					PhysicalEntity.house_id == val,
+					LegalEntity.house_id == val,
+					StructuralEntity.house_id == val
+				))
+		elif 'streetid' in value:
+			val = int(value['streetid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).filter(House.street_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(or_(
+						PhysicalEntity.house_id.in_(val),
+						LegalEntity.house_id.in_(val),
+						StructuralEntity.house_id.in_(val)
+					))
+		elif 'districtid' in value:
+			val = int(value['districtid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).join(Street).filter(Street.district_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(or_(
+						PhysicalEntity.house_id.in_(val),
+						LegalEntity.house_id.in_(val),
+						StructuralEntity.house_id.in_(val)
+					))
+		elif 'cityid' in value:
+			val = int(value['cityid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(or_(
+						PhysicalEntity.house_id.in_(val),
+						LegalEntity.house_id.in_(val),
+						StructuralEntity.house_id.in_(val)
+					))
+		return query
+
 	__tablename__ = 'entities_def'
 	__table_args__ = (
 		Comment('Entities'),
@@ -164,7 +224,12 @@ class Entity(Base):
 					'state'
 				),
 				'easy_search'   : ('nick',),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'extra_search'  : (
+					AddressFilter('address', _filter_address,
+						title=_('Address')
+					),
+				),
 			}
 		}
 	)
@@ -535,6 +600,44 @@ class EntityFlag(Base):
 	)
 
 class PhysicalEntity(Entity):
+	"""
+	Physical entity. Describes single individual.
+	"""
+
+	@classmethod
+	def _filter_address(cls, query, value):
+		if not isinstance(value, dict):
+			return query
+		if 'houseid' in value:
+			val = int(value['houseid'])
+			if val > 0:
+				query = query.filter(PhysicalEntity.house_id == val)
+		elif 'streetid' in value:
+			val = int(value['streetid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).filter(House.street_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(PhysicalEntity.house_id.in_(val))
+		elif 'districtid' in value:
+			val = int(value['districtid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).join(Street).filter(Street.district_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(PhysicalEntity.house_id.in_(val))
+		elif 'cityid' in value:
+			val = int(value['cityid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(PhysicalEntity.house_id.in_(val))
+		return query
+
 	__tablename__ = 'entities_physical'
 	__table_args__ = (
 		Comment('Physical entities'),
@@ -569,7 +672,12 @@ class PhysicalEntity(Entity):
 					'descr'
 				),
 				'easy_search'  : ('nick', 'name_family'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'extra_search'  : (
+					AddressFilter('address', _filter_address,
+						title=_('Address')
+					),
+				),
 			}
 		}
 	)
@@ -836,6 +944,44 @@ class PhysicalEntity(Entity):
 		return ' '.join(strs)
 
 class LegalEntity(Entity):
+	"""
+	Legal entity. Describes a company.
+	"""
+
+	@classmethod
+	def _filter_address(cls, query, value):
+		if not isinstance(value, dict):
+			return query
+		if 'houseid' in value:
+			val = int(value['houseid'])
+			if val > 0:
+				query = query.filter(LegalEntity.house_id == val)
+		elif 'streetid' in value:
+			val = int(value['streetid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).filter(House.street_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(LegalEntity.house_id.in_(val))
+		elif 'districtid' in value:
+			val = int(value['districtid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).join(Street).filter(Street.district_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(LegalEntity.house_id.in_(val))
+		elif 'cityid' in value:
+			val = int(value['cityid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(LegalEntity.house_id.in_(val))
+		return query
+
 	__tablename__ = 'entities_legal'
 	__table_args__ = (
 		Comment('Legal entities'),
@@ -870,7 +1016,12 @@ class LegalEntity(Entity):
 					'descr'
 				),
 				'easy_search'  : ('nick', 'name'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'extra_search'  : (
+					AddressFilter('address', _filter_address,
+						title=_('Address')
+					),
+				),
 			}
 		}
 	)
@@ -1182,6 +1333,44 @@ class LegalEntity(Entity):
 		return str(self.name)
 
 class StructuralEntity(Entity):
+	"""
+	Structural entity. Describes a building.
+	"""
+
+	@classmethod
+	def _filter_address(cls, query, value):
+		if not isinstance(value, dict):
+			return query
+		if 'houseid' in value:
+			val = int(value['houseid'])
+			if val > 0:
+				query = query.filter(StructuralEntity.house_id == val)
+		elif 'streetid' in value:
+			val = int(value['streetid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).filter(House.street_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(StructuralEntity.house_id.in_(val))
+		elif 'districtid' in value:
+			val = int(value['districtid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).join(Street).filter(Street.district_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(StructuralEntity.house_id.in_(val))
+		elif 'cityid' in value:
+			val = int(value['cityid'])
+			if val > 0:
+				sess = DBSession()
+				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
+				val = [h.id for h in sq]
+				if len(val) > 0:
+					query = query.filter(StructuralEntity.house_id.in_(val))
+		return query
+
 	__tablename__ = 'entities_structural'
 	__table_args__ = (
 		Comment('Structural entities'),
@@ -1204,7 +1393,12 @@ class StructuralEntity(Entity):
 				'grid_view'    : ('nick', 'house'),
 				'form_view'    : ('nick', 'state', 'flags', 'house', 'descr'),
 				'easy_search'  : ('nick',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'extra_search'  : (
+					AddressFilter('address', _filter_address,
+						title=_('Address')
+					),
+				),
 			}
 		}
 	)
@@ -1252,6 +1446,10 @@ class StructuralEntity(Entity):
 		return str(self.house)
 
 class ExternalEntity(Entity):
+	"""
+	External entity. Describes an object outside of geo database.
+	"""
+
 	__tablename__ = 'entities_external'
 	__table_args__ = (
 		Comment('External entities'),
