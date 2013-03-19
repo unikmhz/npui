@@ -1,0 +1,9 @@
+.ico-mod-entity           { background-image: url(../img/entity.png) !important; }
+.ico-mod-entityflagtype   { background-image: url(../img/flag.png) !important; }
+.ico-mod-entitystate      { background-image: url(../img/entity_state.png) !important; }
+
+.ico-mod-physicalentity   { background-image: url(../img/physical.png) !important; }
+.ico-mod-legalentity      { background-image: url(../img/legal.png) !important; }
+.ico-mod-structuralentity { background-image: url(../../geo/img/building.png) !important; }
+.ico-mod-externalentity   { background-image: url(../img/external.png) !important; }
+

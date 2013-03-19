@@ -1,0 +1,336 @@
+# Translations template for netprofile_entities.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the netprofile_entities
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_entities 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-03-19 04:14+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: netprofile_entities/__init__.py:44 netprofile_entities/models.py:113
+msgid "Entities"
+msgstr ""
+
+#: netprofile_entities/models.py:82
+msgid "Physical"
+msgstr ""
+
+#: netprofile_entities/models.py:83
+msgid "Legal"
+msgstr ""
+
+#: netprofile_entities/models.py:84
+msgid "Structural"
+msgstr ""
+
+#: netprofile_entities/models.py:85
+msgid "External"
+msgstr ""
+
+#: netprofile_entities/models.py:86
+msgid "Access"
+msgstr ""
+
+#: netprofile_entities/models.py:120
+msgid "Object"
+msgstr ""
+
+#: netprofile_entities/models.py:133
+msgid "Information"
+msgstr ""
+
+#: netprofile_entities/models.py:179 netprofile_entities/models.py:397
+#: netprofile_entities/models.py:457 netprofile_entities/models.py:513
+#: netprofile_entities/models.py:587 netprofile_entities/models.py:888
+#: netprofile_entities/models.py:1222 netprofile_entities/models.py:1294
+#: netprofile_entities/models.py:1356
+msgid "ID"
+msgstr ""
+
+#: netprofile_entities/models.py:191
+msgid "Parent"
+msgstr ""
+
+#: netprofile_entities/models.py:200 netprofile_entities/models.py:405
+#: netprofile_entities/models.py:465 netprofile_entities/models.py:906
+#: netprofile_entities/models.py:1302
+msgid "Name"
+msgstr ""
+
+#: netprofile_entities/models.py:213
+msgid "State"
+msgstr ""
+
+#: netprofile_entities/models.py:223
+msgid "LDAP RDN"
+msgstr ""
+
+#: netprofile_entities/models.py:234 netprofile_entities/models.py:533
+msgid "Type"
+msgstr ""
+
+#: netprofile_entities/models.py:245 netprofile_entities/models.py:269
+msgid "Created"
+msgstr ""
+
+#: netprofile_entities/models.py:257 netprofile_entities/models.py:281
+msgid "Modified"
+msgstr ""
+
+#: netprofile_entities/models.py:292 netprofile_entities/models.py:416
+#: netprofile_entities/models.py:476
+msgid "Description"
+msgstr ""
+
+#: netprofile_entities/models.py:379
+msgid "Entity States"
+msgstr ""
+
+#: netprofile_entities/models.py:439
+msgid "Entity Flags"
+msgstr ""
+
+#: netprofile_entities/models.py:523
+msgid "Entity"
+msgstr ""
+
+#: netprofile_entities/models.py:557
+msgid "Physical entities"
+msgstr ""
+
+#: netprofile_entities/models.py:597 netprofile_entities/models.py:898
+msgid "Contract"
+msgstr ""
+
+#: netprofile_entities/models.py:605 netprofile_entities/models.py:959
+msgid "Family Name"
+msgstr ""
+
+#: netprofile_entities/models.py:613 netprofile_entities/models.py:970
+msgid "Given Name"
+msgstr ""
+
+#: netprofile_entities/models.py:623 netprofile_entities/models.py:981
+msgid "Middle Name"
+msgstr ""
+
+#: netprofile_entities/models.py:635 netprofile_entities/models.py:918
+#: netprofile_entities/models.py:1232
+msgid "House"
+msgstr ""
+
+#: netprofile_entities/models.py:645 netprofile_entities/models.py:928
+msgid "Entr."
+msgstr ""
+
+#: netprofile_entities/models.py:655 netprofile_entities/models.py:938
+msgid "Floor"
+msgstr ""
+
+#: netprofile_entities/models.py:665 netprofile_entities/models.py:948
+msgid "Flat"
+msgstr ""
+
+#: netprofile_entities/models.py:675
+msgid "Home Phone"
+msgstr ""
+
+#: netprofile_entities/models.py:685 netprofile_entities/models.py:1003
+msgid "Work Phone"
+msgstr ""
+
+#: netprofile_entities/models.py:695 netprofile_entities/models.py:1014
+msgid "Cell"
+msgstr ""
+
+#: netprofile_entities/models.py:705 netprofile_entities/models.py:1025
+msgid "E-mail"
+msgstr ""
+
+#: netprofile_entities/models.py:715 netprofile_entities/models.py:1036
+msgid "ICQ"
+msgstr ""
+
+#: netprofile_entities/models.py:725 netprofile_entities/models.py:1067
+msgid "URL"
+msgstr ""
+
+#: netprofile_entities/models.py:735
+msgid "DoB"
+msgstr ""
+
+#: netprofile_entities/models.py:746
+msgid "Pass. Series"
+msgstr ""
+
+#: netprofile_entities/models.py:757
+msgid "Pass. Number"
+msgstr ""
+
+#: netprofile_entities/models.py:768
+msgid "Pass. Issue"
+msgstr ""
+
+#: netprofile_entities/models.py:779
+msgid "Pass. Issued By"
+msgstr ""
+
+#: netprofile_entities/models.py:798 netprofile_entities/models.py:1156
+msgid "entr."
+msgstr ""
+
+#: netprofile_entities/models.py:803 netprofile_entities/models.py:1161
+msgid "fl."
+msgstr ""
+
+#: netprofile_entities/models.py:808 netprofile_entities/models.py:1166
+msgid "app."
+msgstr ""
+
+#: netprofile_entities/models.py:813
+msgid "home:"
+msgstr ""
+
+#: netprofile_entities/models.py:818 netprofile_entities/models.py:1171
+msgid "work:"
+msgstr ""
+
+#: netprofile_entities/models.py:823 netprofile_entities/models.py:1176
+msgid "cell:"
+msgstr ""
+
+#: netprofile_entities/models.py:857
+msgid "Legal entities"
+msgstr ""
+
+#: netprofile_entities/models.py:992
+msgid "Title"
+msgstr ""
+
+#: netprofile_entities/models.py:1047
+msgid "Rec."
+msgstr ""
+
+#: netprofile_entities/models.py:1057
+msgid "Fax"
+msgstr ""
+
+#: netprofile_entities/models.py:1077
+msgid "Legal Addr."
+msgstr ""
+
+#: netprofile_entities/models.py:1087
+msgid "Taxpayer ID"
+msgstr ""
+
+#: netprofile_entities/models.py:1097
+msgid "Tax Code"
+msgstr ""
+
+#: netprofile_entities/models.py:1107
+msgid "Bank ID"
+msgstr ""
+
+#: netprofile_entities/models.py:1117
+msgid "Acc. #"
+msgstr ""
+
+#: netprofile_entities/models.py:1127
+msgid "C./acc. #"
+msgstr ""
+
+#: netprofile_entities/models.py:1137
+msgid "Bank"
+msgstr ""
+
+#: netprofile_entities/models.py:1200
+msgid "Structural entities"
+msgstr ""
+
+#: netprofile_entities/models.py:1269
+msgid "External entities"
+msgstr ""
+
+#: netprofile_entities/models.py:1312
+msgid "Address"
+msgstr ""
+
+#: netprofile_entities/models.py:1335
+msgid "Access entities"
+msgstr ""
+
+#: netprofile_entities/models.py:1364
+msgid "Password"
+msgstr ""
+
+#: netprofile_entities/models.py:1376
+msgid "Stash"
+msgstr ""
+
+#: netprofile_entities/models.py:1386
+msgid "Rate"
+msgstr ""
+
+#: netprofile_entities/models.py:1398
+msgid "Alias Of"
+msgstr ""
+
+#: netprofile_entities/models.py:1410
+msgid "Next Rate"
+msgstr ""
+
+#: netprofile_entities/models.py:1422
+msgid "IPv4 Address"
+msgstr ""
+
+#: netprofile_entities/models.py:1434
+msgid "IPv6 Address"
+msgstr ""
+
+#: netprofile_entities/models.py:1445
+msgid "Used Ingress"
+msgstr ""
+
+#: netprofile_entities/models.py:1456
+msgid "Used Egress"
+msgstr ""
+
+#: netprofile_entities/models.py:1467
+msgid "Used Seconds"
+msgstr ""
+
+#: netprofile_entities/models.py:1478
+msgid "Ends"
+msgstr ""
+
+#: netprofile_entities/models.py:1489
+msgid "Access Code"
+msgstr ""
+
+#: netprofile_entities/models.py:1500
+msgid "Ingress Policy"
+msgstr ""
+
+#: netprofile_entities/models.py:1511
+msgid "Egress Policy"
+msgstr ""
+
+#: netprofile_entities/models.py:1522
+msgid "Check Blocks"
+msgstr ""
+
+#: netprofile_entities/models.py:1533
+msgid "Check Services"
+msgstr ""
+
