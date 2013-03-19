@@ -33,6 +33,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	selectIdField: null,
 	extraParams: null,
 	extraParamProp: null,
+	extraParamRelProp: null,
 	apiModule: null,
 	apiClass: null,
 	detailPane: null,

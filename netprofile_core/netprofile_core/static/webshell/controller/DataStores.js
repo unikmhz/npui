@@ -9,7 +9,8 @@ Ext.define('NetProfile.controller.DataStores', {
 	onBeforeLoad: function(store, op)
 	{
 		var rec,
-			store;
+			store,
+			val;
 
 		if(!this.extraParams && this.extraParamProp)
 		{
@@ -19,7 +20,11 @@ Ext.define('NetProfile.controller.DataStores', {
 				rec = rec.record;
 				store = this.getStore();
 				store.proxy.extraParams = { __ffilter: {} };
-				store.proxy.extraParams.__ffilter[this.extraParamProp] = { eq: rec.get(this.extraParamProp) };
+				if(this.extraParamRelProp)
+					val = rec.get(this.extraParamRelProp);
+				else
+					val = rec.get(this.extraParamProp);
+				store.proxy.extraParams.__ffilter[this.extraParamProp] = { eq: val };
 			}
 		}
 	},
