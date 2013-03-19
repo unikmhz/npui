@@ -2,8 +2,7 @@ Ext.define('NetProfile.view.ModelSelect', {
 	extend: 'Ext.form.field.Trigger',
 	alias: 'widget.modelselect',
 	requires: [
-		'Ext.window.Window',
-		'Ext.ux.layout.Center'
+		'Ext.window.Window'
 	],
 	apiModule: null,
 	apiClass: null,
