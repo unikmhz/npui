@@ -115,6 +115,16 @@ h2
 	background-image: url(../img/equals.png) !important;
 }
 
+.record-tab-hdl span.x-tab-icon
+{
+	background-position: 0px 0px;
+}
+
+.record-tab-hdl span.x-tab-inner
+{
+	padding-top: 2px;
+}
+
 .ico-accept       { background-image: url(../img/accept.png) !important; }
 .ico-add          { background-image: url(../img/add.png) !important; }
 .ico-cancel       { background-image: url(../img/cancel.png) !important; }
@@ -126,7 +136,6 @@ h2
 .ico-exit         { background-image: url(../img/exit.png) !important; }
 .ico-find         { background-image: url(../img/find.png) !important; }
 .ico-first        { background-image: url(../img/first.png) !important; }
-.ico-flag         { background-image: url(../img/flag.png) !important; }
 .ico-home         { background-image: url(../img/home.png) !important; }
 .ico-info         { background-image: url(../img/info.png) !important; }
 .ico-key          { background-image: url(../img/key.png) !important; }
@@ -151,8 +160,7 @@ h2
 .ico-selectall    { background-image: url(../img/selectall.png) !important; }
 .ico-script       { background-image: url(../img/script.png) !important; }
 .ico-script-code  { background-image: url(../img/script_code.png) !important; }
-.ico-script-start { background-image: url(../img/script_start.png) !important; }
-.ico-script-stop  { background-image: url(../img/script_stop.png) !important; }
+.ico-script-arrow { background-image: url(../img/script_arrow.png) !important; }
 .ico-tag-blue     { background-image: url(../img/tag_blue.png) !important; }
 .ico-text-center  { background-image: url(../img/text_center.png) !important; }
 .ico-text-left    { background-image: url(../img/text_left.png) !important; }
@@ -160,13 +168,19 @@ h2
 .ico-tool         { background-image: url(../img/tool.png) !important; }
 .ico-undo         { background-image: url(../img/undo.png) !important; }
 
-.ico-mod-group          { background-image: url(../img/group.png) !important; }
-.ico-mod-logaction      { background-image: url(../img/script_start.png) !important; }
-.ico-mod-logdata        { background-image: url(../img/script.png) !important; }
-.ico-mod-logtype        { background-image: url(../img/script_code.png) !important; }
-.ico-mod-npmodule       { background-image: url(../img/module.png) !important; }
-.ico-mod-privilege      { background-image: url(../img/key.png) !important; }
-.ico-mod-securitypolicy { background-image: url(../img/lock.png) !important; }
-.ico-mod-tag            { background-image: url(../img/tag_blue.png) !important; }
-.ico-mod-user           { background-image: url(../img/user.png) !important; }
+.ico-mod-globalsetting        { background-image: url(../img/item.png) !important; }
+.ico-mod-globalsettingsection { background-image: url(../img/item_group.png) !important; }
+.ico-mod-group                { background-image: url(../img/group.png) !important; }
+.ico-mod-logaction            { background-image: url(../img/script_arrow.png) !important; }
+.ico-mod-logdata              { background-image: url(../img/script.png) !important; }
+.ico-mod-logtype              { background-image: url(../img/script_code.png) !important; }
+.ico-mod-npmodule             { background-image: url(../img/module.png) !important; }
+.ico-mod-npsession            { background-image: url(../img/clock_period.png) !important; }
+.ico-mod-privilege            { background-image: url(../img/key.png) !important; }
+.ico-mod-securitypolicy       { background-image: url(../img/lock.png) !important; }
+.ico-mod-tag                  { background-image: url(../img/tag_blue.png) !important; }
+.ico-mod-user                 { background-image: url(../img/user.png) !important; }
+.ico-mod-usersetting          { background-image: url(../img/item.png) !important; }
+.ico-mod-usersettingsection   { background-image: url(../img/item_group.png) !important; }
+.ico-mod-usersettingtype      { background-image: url(../img/item_sel.png) !important; }
 

@@ -121,6 +121,9 @@ Ext.define('NetProfile.view.PropBar', {
 				closable: true,
 				cls: 'record-tab',
 				iconCls: 'ico-mod-' + model.toLowerCase(),
+				tabConfig: {
+					cls: 'record-tab-hdl'
+				},
 				listeners: {
 					removed: function(comp, ct, opts)
 					{

@@ -2,7 +2,8 @@ Ext.define('NetProfile.view.ModelSelect', {
 	extend: 'Ext.form.field.Trigger',
 	alias: 'widget.modelselect',
 	requires: [
-		'Ext.window.Window'
+		'Ext.window.Window',
+		'Ext.ux.layout.Center'
 	],
 	apiModule: null,
 	apiClass: null,
@@ -53,8 +54,26 @@ Ext.define('NetProfile.view.ModelSelect', {
 		var sel_win = Ext.create('Ext.window.Window', {
 			layout: 'fit',
 			minWidth: 500,
-			maxHeight: 650,
-			title: this.chooseText
+			constrain: true,
+			constrainHeader: true,
+			maximizable: true,
+//			animateTarget: this,
+			title: this.chooseText,
+			listeners: {
+				afterlayout: function(win)
+				{
+					var pos, sz, bodysz;
+
+					pos = win.getPosition();
+					sz = win.getSize();
+					bodysz = Ext.getBody().getSize();
+					if(pos[1] < 0)
+						win.setPosition(pos[0], 10);
+					if((sz.height + 20) > bodysz.height)
+						win.setSize(sz.width + 16, bodysz.height - 20);
+					win.center();
+				}
+			}
 		});
 
 		var sel_grid_class = 'NetProfile.view.grid.'
@@ -73,9 +92,16 @@ Ext.define('NetProfile.view.ModelSelect', {
 			selectIdField: hf,
 			stateful: false
 		});
+//		sel_grid.getView().on({
+//			viewready: function()
+//			{
+//				sel_win.center();
+//			}
+//		});
 
 		sel_win.add(sel_grid);
 		sel_win.show();
+//		sel_win.center();
 	},
 	onTrigger3Click: function(ev)
 	{
