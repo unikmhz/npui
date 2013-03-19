@@ -1170,7 +1170,7 @@ class ExtModel(object):
 
 	@property
 	def is_polymorphic(self):
-		return (self.model.__mapper__.with_polymorphic is not None)
+		return (self.model.__mapper__.polymorphic_on is not None)
 
 	@property
 	def easy_search(self):
@@ -1195,6 +1195,10 @@ class ExtModel(object):
 	@property
 	def menu_section(self):
 		return self.model.__table__.info.get('menu_section')
+
+	@property
+	def menu_parent(self):
+		return self.model.__table__.info.get('menu_parent')
 
 	@property
 	def cap_menu(self):
@@ -1245,7 +1249,11 @@ class ExtModel(object):
 			ret.alias = colname
 			ret.value_attr = o_prop.value_attr
 			return ret
-		if colname in cols:
+		if self.is_polymorphic:
+			for tbl in self.model.__mapper__.tables:
+				if colname in tbl.columns:
+					return ExtColumn(tbl.columns[colname], self.model)
+		elif colname in cols:
 			return ExtColumn(cols[colname], self.model)
 		prop = self.model.__mapper__.get_property(colname)
 		if prop.direction == MANYTOONE:
@@ -1780,6 +1788,9 @@ class ExtModel(object):
 			xsect = self.menu_section
 			if xsect is not None:
 				ret['section'] = xsect
+			xpa = self.menu_parent
+			if xpa is not None:
+				ret['parent'] = xpa
 			return ret
 
 	def get_detail_pane(self, req):
@@ -1839,11 +1850,14 @@ class ExtModuleBrowser(object):
 	def get_menu_tree(self, req, name):
 		ch = []
 		sch = {}
+		och = {}
+		id_cache = {}
 		loc = get_localizer(req)
 		for model in self:
 			em = self[model]
 			mt = em.get_menu_tree(req, name)
 			if mt:
+				id_cache[mt['id']] = mt
 				if 'section' in mt:
 					sect = mt['section']
 					if sect not in sch:
@@ -1854,8 +1868,23 @@ class ExtModuleBrowser(object):
 							'iconCls'  : 'ico-module'
 						}
 					sch[sect]['children'].append(mt)
+				elif 'parent' in mt:
+					parent = mt['parent']
+					del mt['parent']
+					if parent not in och:
+						och[parent] = []
+					och[parent].append(mt)
 				else:
 					ch.append(mt)
+		for parent, orphans in och.items():
+			if parent not in id_cache:
+				continue
+			pnode = id_cache[parent]
+			pnode['leaf'] = False
+			pnode['expanded'] = True
+			if 'children' not in pnode:
+				pnode['children'] = []
+			pnode['children'].extend(sorted(orphans, key=lambda v: v['order']))
 		for sect in sch:
 			ss = sch[sect]
 			ss['children'] = sorted(ss['children'], key=lambda mt: mt['order'])
