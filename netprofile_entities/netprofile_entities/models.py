@@ -192,12 +192,12 @@ class Entity(Base):
 						'data',
 						header_string=_('Information'),
 						template="""
-<tpl if="data.house || address">
+<tpl if="data.house || data.address">
 	<img class="np-inline-img" src="/static/entities/img/house_small.png" />
-	{address} {data.house} {data.entrance} {data.floor} {data.flat}
+	{data.address} {data.house} {data.entrance} {data.floor} {data.flat}
 </tpl>
 <tpl if="data.phone_home || data.phone_work || data.phone_cell || data.cp_phone_work || data.cp_phone_cell">
-<tpl if="data.house || address"><br /></tpl>
+<tpl if="data.house || data.address"><br /></tpl>
 <tpl if="data.phone_home">
 	<img class="np-inline-img" src="/static/entities/img/phone_small.png" />
 	{data.phone_home}
@@ -224,7 +224,7 @@ class Entity(Base):
 					'state'
 				),
 				'easy_search'   : ('nick',),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					AddressFilter('address', _filter_address,
 						title=_('Address')
@@ -672,7 +672,7 @@ class PhysicalEntity(Entity):
 					'descr'
 				),
 				'easy_search'  : ('nick', 'name_family'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					AddressFilter('address', _filter_address,
 						title=_('Address')
@@ -740,7 +740,8 @@ class PhysicalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('House')
+			'header_string' : _('House'),
+			'filter_type'   : 'none'
 		}
 	)
 	entrance = Column(
@@ -1016,7 +1017,7 @@ class LegalEntity(Entity):
 					'descr'
 				),
 				'easy_search'  : ('nick', 'name'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					AddressFilter('address', _filter_address,
 						title=_('Address')
@@ -1066,7 +1067,8 @@ class LegalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('House')
+			'header_string' : _('House'),
+			'filter_type'   : 'none'
 		}
 	)
 	entrance = Column(
@@ -1393,7 +1395,7 @@ class StructuralEntity(Entity):
 				'grid_view'    : ('nick', 'house'),
 				'form_view'    : ('nick', 'state', 'flags', 'house', 'descr'),
 				'easy_search'  : ('nick',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					AddressFilter('address', _filter_address,
 						title=_('Address')
@@ -1423,7 +1425,8 @@ class StructuralEntity(Entity):
 		Comment('House ID'),
 		nullable=False,
 		info={
-			'header_string' : _('House')
+			'header_string' : _('House'),
+			'filter_type'   : 'none'
 		}
 	)
 
@@ -1434,9 +1437,6 @@ class StructuralEntity(Entity):
 
 	@property
 	def data(self):
-		req = get_current_request()
-		loc = get_localizer(req)
-
 		ret = super(StructuralEntity, self).data
 		if self.house:
 			ret['house'] = str(self.house)
@@ -1474,7 +1474,7 @@ class ExternalEntity(Entity):
 					'name', 'address', 'descr'
 				),
 				'easy_search'  : ('nick', 'name'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities')
 			}
 		}
 	)
@@ -1510,6 +1510,13 @@ class ExternalEntity(Entity):
 			'header_string' : _('Address')
 		}
 	)
+
+	@property
+	def data(self):
+		ret = super(ExternalEntity, self).data
+		if self.address:
+			ret['address'] = str(self.address)
+		return ret
 
 	def __str__(self):
 		return str(self.name)
