@@ -1233,6 +1233,10 @@ class ExtModel(object):
 		return self.model.__table__.info.get('easy_search', ())
 
 	@property
+	def default_sort(self):
+		return self.model.__table__.info.get('default_sort', ())
+
+	@property
 	def extra_search(self):
 		return self.model.__table__.info.get('extra_search', ())
 

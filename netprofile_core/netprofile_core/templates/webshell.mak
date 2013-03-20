@@ -300,7 +300,7 @@ Ext.require([
 		extend: 'Ext.data.Store',
 		requires: 'NetProfile.model.${module}.${model}',
 		model: 'NetProfile.model.${module}.${model}',
-		sorters: [], // FIXME
+		sorters: ${mod.default_sort | n, jsone},
 		pageSize: NetProfile.userSettings.datagrid_perpage,
 		remoteFilter: true,
 		remoteGroup: true,

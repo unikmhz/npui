@@ -100,6 +100,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 				if(this.xsearch)
 					this.xsearch.clearValue(true);
 				store.sorters.clear();
+				if(store.initialSorters)
+					store.sorters.addAll(store.initialSorters);
 				this.saveState();
 				store.loadPage(1);
 				return true;

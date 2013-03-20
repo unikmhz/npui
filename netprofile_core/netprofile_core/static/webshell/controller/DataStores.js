@@ -92,6 +92,9 @@ Ext.define('NetProfile.controller.DataStores', {
 			return true;
 		});
 
+		if(store.sorters.getCount() > 0)
+			store.initialSorters = store.sorters.getRange();
+
 		if(!nocache)
 			this.stores[module][model] = store;
 		return store;

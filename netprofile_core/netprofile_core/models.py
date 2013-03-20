@@ -2066,7 +2066,7 @@ class LogData(Base):
 				'menu_section' : _('Logging'),
 				'menu_name'    : _('Log Data'),
 				'menu_order'   : 80,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' }),
 				'grid_view'    : ('ts', 'login', 'xtype', 'xaction', 'data'),
 				'easy_search'  : ('login', 'data'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
