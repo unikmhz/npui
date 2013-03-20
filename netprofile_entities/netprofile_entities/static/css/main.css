@@ -4,6 +4,6 @@
 
 .ico-mod-physicalentity   { background-image: url(../img/physical.png) !important; }
 .ico-mod-legalentity      { background-image: url(../img/legal.png) !important; }
-.ico-mod-structuralentity { background-image: url(../../geo/img/building.png) !important; }
+.ico-mod-structuralentity { background-image: url(../img/structural.png) !important; }
 .ico-mod-externalentity   { background-image: url(../img/external.png) !important; }
 

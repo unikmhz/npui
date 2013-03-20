@@ -13,7 +13,8 @@ __all__ = [
 	'PhysicalEntity',
 	'LegalEntity',
 	'StructuralEntity',
-	'ExternalEntity'
+	'ExternalEntity',
+	'AccessEntity'
 ]
 
 from sqlalchemy import (
@@ -174,6 +175,16 @@ class Entity(Base):
 				'menu_order'    : 10,
 				'default_sort'  : (),
 				'grid_view'     : (
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						help_text=_('Entity icon'),
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+					),
 					'nick',
 					MarkupColumn(
 						name='object',
@@ -661,9 +672,20 @@ class PhysicalEntity(Entity):
 				'menu_order'   : 10,
 				'menu_parent'  : 'entity',
 				'default_sort' : (),
-				'grid_view'    : ('nick', 'name_family', 'name_given', 'house', 'floor', 'flat', 'phone_home', 'phone_cell'),
+				'grid_view'    : (
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+					),
+					'nick', 'name_family', 'name_given', 'house', 'floor', 'flat', 'phone_home', 'phone_cell'
+				),
 				'form_view'    : (
-					'nick', 'state', 'flags', 'contractid',
+					'nick', 'parent', 'state', 'flags', 'contractid',
 					'name_family', 'name_given', 'name_middle',
 					'house', 'entrance', 'floor', 'flat',
 					'phone_home', 'phone_work', 'phone_cell',
@@ -1005,9 +1027,20 @@ class LegalEntity(Entity):
 				'menu_order'   : 20,
 				'menu_parent'  : 'entity',
 				'default_sort' : (),
-				'grid_view'    : ('nick', 'name', 'cp_name_family', 'cp_name_given', 'house', 'floor', 'flat', 'cp_phone_work', 'cp_phone_cell'),
+				'grid_view'    : (
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+					),
+					'nick', 'name', 'cp_name_family', 'cp_name_given', 'house', 'floor', 'flat', 'cp_phone_work', 'cp_phone_cell'
+				),
 				'form_view'    : (
-					'nick', 'state', 'flags', 'contractid',
+					'nick', 'parent', 'state', 'flags', 'contractid',
 					'name',
 					'cp_name_family', 'cp_name_given', 'cp_name_middle', 'cp_title',
 					'house', 'entrance', 'floor', 'flat',
@@ -1392,8 +1425,19 @@ class StructuralEntity(Entity):
 				'menu_order'   : 30,
 				'menu_parent'  : 'entity',
 				'default_sort' : (),
-				'grid_view'    : ('nick', 'house'),
-				'form_view'    : ('nick', 'state', 'flags', 'house', 'descr'),
+				'grid_view'    : (
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+					),
+					'nick', 'house'
+				),
+				'form_view'    : ('nick', 'parent', 'state', 'flags', 'house', 'descr'),
 				'easy_search'  : ('nick',),
 				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
@@ -1468,9 +1512,20 @@ class ExternalEntity(Entity):
 				'menu_order'   : 40,
 				'menu_parent'  : 'entity',
 				'default_sort' : (),
-				'grid_view'    : ('nick', 'name', 'address'),
+				'grid_view'    : (
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+					),
+					'nick', 'name', 'address'
+				),
 				'form_view'    : (
-					'nick', 'state', 'flags',
+					'nick', 'parent', 'state', 'flags',
 					'name', 'address', 'descr'
 				),
 				'easy_search'  : ('nick', 'name'),

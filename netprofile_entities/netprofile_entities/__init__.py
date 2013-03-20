@@ -31,7 +31,8 @@ class Module(ModuleBase):
 			PhysicalEntity,
 			LegalEntity,
 			StructuralEntity,
-			ExternalEntity
+			ExternalEntity,
+			AccessEntity
 		]
 
 	def get_css(self, request):
