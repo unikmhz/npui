@@ -46,8 +46,22 @@ h2
 	background-color: #DEE9F7;
 }
 
+.np-nopad .x-grid-cell-inner
+{
+	padding: 1px 2px 2px 2px;
+}
+
 .np-inline-img
 {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	vertical-align: bottom;
+}
+
+.np-block-img
+{
+	display: block;
 	border: 0;
 	margin: 0;
 	padding: 0;

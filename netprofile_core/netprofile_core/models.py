@@ -2272,7 +2272,7 @@ class NPSession(Base):
 	)
 
 	@classmethod
-	def __augment_query__(cls, sess, query, params):
+	def __augment_pg_query__(cls, sess, query, params):
 		lim = query._limit
 		if lim and (lim < 50):
 			return query.options(
@@ -2917,7 +2917,7 @@ class UserSettingType(Base, DynamicSetting):
 		return '%s' % str(self.name)
 
 	@classmethod
-	def __augment_query__(cls, sess, query, params):
+	def __augment_pg_query__(cls, sess, query, params):
 		lim = query._limit
 		if lim and (lim < 50):
 			return query.options(

@@ -259,14 +259,54 @@ Ext.define('NetProfile.view.ModelGrid', {
 	},
 	selectRecord: function(record)
 	{
-		if(this.propBar && this.detailPane && !this.selectRow)
+		var pb, dp, poly, api_mod, api_class;
+
+		api_mod = this.apiModule;
+		api_class = this.apiClass;
+		dp = this.detailPane;
+		poly = record.get('__poly');
+		if(poly && ((api_mod !== poly[0]) || (api_class !== poly[1])))
 		{
-			var pb = Ext.getCmp('npws_propbar');
+			api_mod = poly[0];
+			api_class = poly[1];
+			dp = NetProfile.view.grid[api_mod][api_class].prototype.detailPane;
+			var ff,
+				store = NetProfile.StoreManager.getStore(
+					api_mod,
+					api_class,
+					null, true, true
+				);
+			if(!store)
+				return false;
+			ff = { __ffilter: {} };
+			ff.__ffilter[store.model.prototype.idProperty] = { eq: parseInt(record.getId()) };
+			store.load({
+				params: ff,
+				callback: function(recs, op, success)
+				{
+					var pb;
+
+					pb = Ext.getCmp('npws_propbar');
+					if(success && pb && dp && (recs.length === 1))
+					{
+						pb.addRecordTab(api_mod, api_class, dp, recs[0]);
+						pb.show();
+					}
+				},
+				scope: this,
+				synchronous: false
+			});
+			return true;
+		}
+
+		if(this.propBar && dp && !this.selectRow)
+		{
+			pb = Ext.getCmp('npws_propbar');
 			if(!pb)
 				return true;
-			if(this.detailPane)
+			if(dp)
 			{
-				pb.addRecordTab(this.apiModule, this.apiClass, this.detailPane, record);
+				pb.addRecordTab(api_mod, api_class, dp, record);
 				pb.show();
 
 				var view = this.getView(),
