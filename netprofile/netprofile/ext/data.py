@@ -246,6 +246,22 @@ class ExtColumn(object):
 		return self.column.info.get('help_text', None)
 
 	@property
+	def column_name(self):
+		return self.column.info.get('column_name', self.header_string)
+
+	@property
+	def column_width(self):
+		return self.column.info.get('column_width', None)
+
+	@property
+	def column_resizable(self):
+		return self.column.info.get('column_resizable', True)
+
+	@property
+	def cell_class(self):
+		return self.column.info.get('cell_class', None)
+
+	@property
 	def filter_type(self):
 		return self.column.info.get('filter_type', 'default')
 
@@ -692,7 +708,8 @@ class ExtColumn(object):
 		loc = get_localizer(req)
 		conf = {
 			'header'     : loc.translate(self.header_string),
-			'tooltip'    : loc.translate(self.header_string),
+			'tooltip'    : loc.translate(self.column_name),
+			'menuText'   : loc.translate(self.column_name),
 			'name'       : self.name,
 			'sortable'   : True,
 			'filterable' : True,
@@ -708,7 +725,17 @@ class ExtColumn(object):
 			conf['tpl'] = tpl
 			if 'xtype' not in conf:
 				conf['xtype'] = 'templatecolumn'
-		# add col width?
+		cw = self.column_width
+		if cw is not None:
+			conf['width'] = cw
+		cw = self.column_resizable
+		if isinstance(cw, bool):
+			conf['resizable'] = cw
+			if (not cw) and ('width' in conf):
+				conf['minWidth'] = conf['maxWidth'] = conf['width']
+		cw = self.cell_class
+		if cw is not None:
+			conf['tdCls'] = cw
 		if issubclass(typecls, _FLOAT_SET):
 			conf.update({
 				'align'  : 'right',
@@ -780,6 +807,22 @@ class ExtPseudoColumn(ExtColumn):
 	@property
 	def help_text(self):
 		return self.column.help_text
+
+	@property
+	def column_name(self):
+		return self.column.column_name
+
+	@property
+	def column_width(self):
+		return self.column.column_width
+
+	@property
+	def column_resizable(self):
+		return self.column.column_resizable
+
+	@property
+	def cell_class(self):
+		return self.column.cell_class
 
 	@property
 	def filter_type(self):
@@ -895,19 +938,32 @@ class ExtPseudoColumn(ExtColumn):
 		loc = get_localizer(req)
 		conf = {
 			'header'     : loc.translate(self.column.header_string),
-			'tooltip'    : loc.translate(self.column.header_string),
+			'tooltip'    : loc.translate(self.column.column_name),
+			'menuText'   : loc.translate(self.column.column_name),
 			'name'       : self.name,
-			'sortable'   : True,
+			'sortable'   : False,
 			'filterable' : False if (self.column.filter_type == 'none') else True,
 			'dataIndex'  : self.name,
 			'editor'     : self.get_editor_cfg(req),
 			'xtype'      : self.column.column_xtype
 		}
+		if (not conf['sortable']) and (not conf['filterable']):
+			conf['menuDisabled'] = True
 		tpl = self.column.template
 		if tpl:
 			conf['xtype'] = 'templatecolumn'
 			conf['tpl'] = tpl
-		# add col width?
+		cw = self.column_width
+		if cw is not None:
+			conf['width'] = cw
+		cw = self.column_resizable
+		if isinstance(cw, bool):
+			conf['resizable'] = cw
+			if (not cw) and ('width' in conf):
+				conf['minWidth'] = conf['maxWidth'] = conf['width']
+		cw = self.cell_class
+		if cw is not None:
+			conf['tdCls'] = cw
 		return conf
 
 	def get_related_cfg(self):
@@ -1339,6 +1395,14 @@ class ExtModel(object):
 				'type'       : 'string',
 				'persist'    : False
 			})
+		if self.is_polymorphic:
+			ret.append({
+				'name'       : '__poly',
+				'allowBlank' : True,
+				'useNull'    : True,
+				'type'       : 'auto',
+				'persist'    : False
+			})
 		return ret
 
 	def get_extra_search_cfg(self, req):
@@ -1545,9 +1609,30 @@ class ExtModel(object):
 		if callable(helper):
 			q = helper(sess, q, params)
 		q = self._apply_pagination(q, trans, params)
+		helper = getattr(self.model, '__augment_pg_query__', None)
+		if callable(helper):
+			q = helper(sess, q, params)
 		helper = getattr(self.model, '__augment_result__', None)
 		if callable(helper):
 			q = helper(sess, q.all(), params)
+		if params.get('__empty', False):
+			row = {}
+			for cname, col in cols.items():
+				if isinstance(cname, PseudoColumn):
+					if cname.secret_value:
+						continue
+					if isinstance(cname, HybridColumn):
+						row[cname.name] = None
+					continue
+				if col.secret_value:
+					continue
+				if trans[cname].deferred:
+					continue
+				if isinstance(col, ExtRelationshipColumn):
+					continue
+				row[cname] = ''
+			row['__str__'] = ''
+			records.append(row)
 		for obj in q:
 			row = {}
 			for cname, col in cols.items():
@@ -1579,6 +1664,11 @@ class ExtModel(object):
 					else:
 						row[cname] = getattr(obj, trans[cname].key)
 			row['__str__'] = str(obj)
+			if self.is_polymorphic:
+				row['__poly'] = (
+					obj.__class__.__moddef__,
+					obj.__class__.__name__
+				)
 			records.append(row)
 		res['records'] = records
 		res['total'] = tot
