@@ -121,6 +121,8 @@ def do_logout(request):
 	if 'auth.settings' in request.session:
 		del request.session['auth.settings']
 	headers = forget(request)
+	request.session.invalidate()
+	request.session.new_csrf_token()
 	loc = request.route_url('core.login')
 	return HTTPFound(location=loc, headers=headers)
 

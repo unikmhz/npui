@@ -12,8 +12,6 @@ Ext.define('NetProfile.view.TopBar', {
 	stateId: 'npws_topbar',
 	stateful: true,
 	collapsible: false,
-//	layout: 'fit',
-//	split: false,
 	height: 32,
 
 	toolsText: 'Tools',

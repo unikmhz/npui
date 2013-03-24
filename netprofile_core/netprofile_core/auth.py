@@ -30,6 +30,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.db.connection import DBSession
 from .models import (
+	NPSession,
 	Privilege,
 	User,
 	UserSetting,
@@ -123,6 +124,17 @@ def auth_to_db(event):
 		sess.execute('SET @accessuid = :uid', { 'uid' : user.id })
 		sess.execute('SET @accessgid = :gid', { 'gid' : user.group_id })
 		sess.execute('SET @accesslogin = :login', { 'login' : user.login })
+
+		skey = request.registry.settings.get('session.key')
+		assert skey is not None, 'Session cookie name does not exist'
+		sname = request.cookies.get(skey)
+		assert skey is not None, 'Session key does not exist'
+		try:
+			npsess = sess.query(NPSession).filter(NPSession.session_name == sname).one()
+			npsess.update_time()
+		except NoResultFound:
+			npsess = user.generate_session(request, sname)
+			sess.add(npsess)
 	else:
 		sess.execute('SET @accessuid = 0')
 		sess.execute('SET @accessgid = 0')

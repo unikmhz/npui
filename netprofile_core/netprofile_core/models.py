@@ -43,6 +43,7 @@ __all__ = [
 import string
 import random
 import hashlib
+import datetime as dt
 
 from sqlalchemy import (
 	Column,
@@ -76,6 +77,7 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 #	relationship
 #)
 
+from netprofile.common import ipaddr
 from netprofile.common.phps import HybridPickler
 from netprofile.db.connection import (
 	Base,
@@ -666,6 +668,27 @@ class User(Base):
 			else:
 				ret[ust.name] = ust.parse_param(ust.default)
 		return ret
+
+	def generate_session(self, req, sname):
+		now = dt.datetime.now()
+		npsess = NPSession(
+			user=self,
+			login=self.login,
+			session_name=sname,
+			start_time=now,
+			last_time=now
+		)
+		if 'REMOTE_ADDR' in req.environ:
+			try:
+				ip = ipaddr.IPAddress(req.environ.get('REMOTE_ADDR'))
+				if isinstance(ip, ipaddr.IPv4Address):
+					npsess.ip_address = ip
+				elif isinstance(ip, ipaddr.IPv6Address):
+					npsess.ipv6_address = ip
+				print(repr(ip))
+			except ValueError:
+				pass
+		return npsess
 
 class Group(Base):
 	"""
@@ -2179,6 +2202,7 @@ class NPSession(Base):
 	__table_args__ = (
 		Comment('NetProfile UI sessions'),
 		Index('np_sessions_i_uid', 'uid'),
+		Index('np_sessions_i_sname', 'sname'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -2298,6 +2322,11 @@ class NPSession(Base):
 
 	def __str__(self):
 		return '%s' % str(self.session_name)
+
+	def update_time(self, upt=None):
+		if upt is None:
+			upt = dt.datetime.now()
+		self.last_time = upt
 
 class PasswordHistory(Base):
 	"""
