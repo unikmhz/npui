@@ -1,3 +1,4 @@
+## -*- coding: utf-8 -*-
 <%inherit file="netprofile_core:templates/base.mak"/>
 <%block name="title">Log In</%block>
 <%block name="head">

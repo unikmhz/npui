@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from __future__ import (
 	unicode_literals,
 	print_function,
@@ -129,9 +132,9 @@ def includeme(config):
 	"""
 	For inclusion by Pyramid.
 	"""
-	config.add_request_method(get_user, 'user', reify=True)
-	config.add_request_method(get_acls, 'acls', reify=True)
-	config.add_request_method(get_settings, 'settings', reify=True)
+	config.add_request_method(get_user, str('user'), reify=True)
+	config.add_request_method(get_acls, str('acls'), reify=True)
+	config.add_request_method(get_settings, str('settings'), reify=True)
 
 	authn_policy = SessionAuthenticationPolicy(callback=find_princs)
 	authz_policy = ACLAuthorizationPolicy()

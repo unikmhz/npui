@@ -1,3 +1,4 @@
+## -*- coding: utf-8 -*-
 <%inherit file="netprofile_core:templates/base.mak"/>
 <%block name="head">
 	<script type="text/javascript">//<![CDATA[
