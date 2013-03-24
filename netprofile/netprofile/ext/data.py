@@ -188,6 +188,7 @@ _JS_TYPE_MAP = {
 	Integer      : 'int',
 	IPv4Address  : 'ipv4',
 	IPv6Address  : 'ipv6',
+	PickleType   : 'auto',
 	SmallInteger : 'int',
 	TIMESTAMP    : 'date',
 	UInt8        : 'int',
