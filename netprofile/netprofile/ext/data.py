@@ -1324,9 +1324,9 @@ class ExtModel(object):
 
 	def get_columns(self):
 		ret = OrderedDict()
-		cols = self.model.__table__.columns
-		for ck in cols.keys():
-			ret[ck] = ExtColumn(cols[ck], self.model)
+		for tbl in self.model.__mapper__.tables:
+			for ck in tbl.columns.keys():
+				ret[ck] = ExtColumn(tbl.columns[ck], self.model)
 		return ret
 
 	def get_read_columns(self):
@@ -1760,6 +1760,11 @@ class ExtModel(object):
 						pt[cname] = getattr(obj, trans[cname].key)
 			pt[self.pk] = getattr(obj, self.object_pk)
 			pt['__str__'] = str(obj)
+			if self.is_polymorphic:
+				pt['__poly'] = (
+					obj.__class__.__moddef__,
+					obj.__class__.__name__
+				)
 			res['records'].append(pt)
 			res['total'] += 1
 		return res
@@ -1824,6 +1829,11 @@ class ExtModel(object):
 				else:
 					pt[cname] = getattr(obj, trans[cname].key)
 			pt['__str__'] = str(obj)
+			if self.is_polymorphic:
+				pt['__poly'] = (
+					obj.__class__.__moddef__,
+					obj.__class__.__name__
+				)
 			res['records'].append(pt)
 			res['total'] += 1
 		return res
