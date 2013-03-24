@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from __future__ import (
 	unicode_literals,
 	print_function,
@@ -1097,11 +1100,7 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 		}
 
 	def apply_data(self, obj, data):
-		print(repr(data))
-#		cont = getattr(obj, self.prop.key)
 		cont = getattr(obj, self.name)
-#		del cont[:]
-#		cont.clear()
 		for relobj in data:
 			if relobj not in cont:
 				cont.append(relobj)

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 
 from setuptools import setup, find_packages
@@ -9,6 +12,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 requires = [
 	'setuptools',
 	'python-dateutil',
+	'phpserialize',
 
 	'SQLAlchemy >= 0.8b1',
 	'zope.sqlalchemy',

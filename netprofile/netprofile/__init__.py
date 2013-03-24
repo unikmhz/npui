@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from __future__ import (
 	unicode_literals,
 	print_function,
@@ -7,6 +10,9 @@ from __future__ import (
 
 import sys
 import cdecimal
+if sys.version < '3':
+	reload(sys)
+	sys.setdefaultencoding('utf-8')
 sys.modules['decimal'] = cdecimal
 
 from pyramid.config import Configurator

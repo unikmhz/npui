@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Largely based on Igor Stroh's pyramid_extdirect
 # See http://github.com/jenner/pyramid_extdirect
 
@@ -9,7 +12,6 @@ from __future__ import (
 )
 
 from collections import defaultdict
-from html.entities import entitydefs
 import json
 import traceback
 import datetime as dt
@@ -496,7 +498,7 @@ def api_view(request):
 	"""
 	extdirect = request.registry.getUtility(IExtDirectRouter)
 	body = extdirect.dump_api(request)
-	return Response(body, content_type='text/javascript', charset='UTF-8')
+	return Response(body, content_type=str('text/javascript'), charset=str('UTF-8'))
 
 
 def router_view(request):
@@ -506,7 +508,7 @@ def router_view(request):
 	extdirect = request.registry.getUtility(IExtDirectRouter)
 	(body, is_form_data) = extdirect.route(request)
 	ctype = 'text/html' if is_form_data else 'application/json'
-	return Response(body, content_type=ctype, charset='UTF-8')
+	return Response(body, content_type=str(ctype), charset=str('UTF-8'))
 
 @register_hook('np.model.load')
 def _proc_model(mmgr, model):
@@ -517,7 +519,7 @@ def includeme(config):
 	"""
 	Let ExtDirect be included by config.include().
 	"""
-	config.add_request_method(get_ext_csrf, 'ext_csrf', reify=True)
+	config.add_request_method(get_ext_csrf, str('ext_csrf'), reify=True)
 	settings = config.registry.settings
 	extdirect_config = dict()
 	names = (
