@@ -55,10 +55,20 @@ def locale_neg(request):
 		return loc
 	return 'en'
 
+def get_debug(request):
+	return request.registry.settings.get('netprofile.debug', False)
+
 def main(global_config, **settings):
 	"""
 	This function returns a Pyramid WSGI application.
 	"""
+	debug = settings.get('netprofile.debug', False)
+	if isinstance(debug, str):
+		if debug.lower() in {'true', 't', 'y', 'yes', 'on'}:
+			debug = True
+	if not isinstance(debug, bool):
+		debug = False
+	settings['netprofile.debug'] = debug
 	engine = engine_from_config(settings, 'sqlalchemy.')
 	DBSession.configure(bind=engine)
 
@@ -76,6 +86,7 @@ def main(global_config, **settings):
 		'netprofile.common.subscribers.on_new_request',
 		'pyramid.events.NewRequest'
 	)
+	config.add_request_method(get_debug, str('debug_enabled'), reify=True)
 
 	mmgr = config.registry.getUtility(IModuleManager)
 	mmgr.load('core')
