@@ -36,6 +36,10 @@ import struct
 IPV4LENGTH = 32
 IPV6LENGTH = 128
 
+try:
+	_int_types = (int, long)
+except NameError:
+	_int_types = int
 
 class AddressValueError(ValueError):
     """A Value Error related to the address."""
@@ -504,12 +508,12 @@ class _BaseIP(_IPAddrBase):
     # Shorthand for Integer addition and subtraction. This is not
     # meant to ever support addition/subtraction of addresses.
     def __add__(self, other):
-        if not isinstance(other, int):
+        if not isinstance(other, _int_types):
             return NotImplemented
         return IPAddress(int(self) + other, version=self._version)
 
     def __sub__(self, other):
-        if not isinstance(other, int):
+        if not isinstance(other, _int_types):
             return NotImplemented
         return IPAddress(int(self) - other, version=self._version)
 
@@ -1199,7 +1203,7 @@ class IPv4Address(_BaseV4, _BaseIP):
         _BaseV4.__init__(self, address)
 
         # Efficient constructor from integer.
-        if isinstance(address, int):
+        if isinstance(address, (int, long)):
             self._ip = address
             if address < 0 or address > self._ALL_ONES:
                 raise AddressValueError(address)
@@ -1775,7 +1779,7 @@ class IPv6Address(_BaseV6, _BaseIP):
         _BaseV6.__init__(self, address)
 
         # Efficient constructor from integer.
-        if isinstance(address, int):
+        if isinstance(address, _int_types):
             self._ip = address
             if address < 0 or address > self._ALL_ONES:
                 raise AddressValueError(address)
