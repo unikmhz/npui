@@ -344,7 +344,8 @@ Ext.application({
 
 	launch: function()
 	{
-		var state_prov = null;
+		var state_prov = null,
+			state_loaded = false;
 
 		if('localStorage' in window && window['localStorage'] !== null)
 		{
@@ -360,19 +361,39 @@ Ext.application({
 		}
 
 		Ext.state.Manager.setProvider(state_prov);
+		state_loaded = state_prov.get('loaded');
 
+% if req.debug_enabled:
 		var npp = Ext.direct.Manager.getProvider('netprofile-provider');
 		npp.on('exception', function(p, e)
 		{
-			console.error(e.message);
+			if(console && console.error)
+				console.error(e.message);
 		});
 		npp.on('data', function(p, e)
 		{
-			if(!e.result.success)
-				console.log(e.result.message);
+			if(!e.result.success && console && console.warn)
+				console.warn(e.result.message);
 		});
+% endif
 
-		Ext.create('NetProfile.view.Viewport', {});
+		if(state_loaded !== 'OK')
+		{
+			NetProfile.api.DataCache.load_ls(function(data, res)
+			{
+				if(data && data.state && data.success)
+				{
+					Ext.Object.each(data.state, function(k, v)
+					{
+						state_prov.set(k, v);
+					});
+				}
+				state_prov.set('loaded', 'OK');
+				Ext.create('NetProfile.view.Viewport', {});
+			});
+		}
+		else
+			Ext.create('NetProfile.view.Viewport', {});
 	}
 });
 

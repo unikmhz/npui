@@ -36,7 +36,8 @@ __all__ = [
 	'UserSettingSection',
 	'GlobalSetting',
 	'UserSettingType',
-	'UserSetting'
+	'UserSetting',
+	'DataCache'
 ]
 
 import string
@@ -540,6 +541,13 @@ class User(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	data_cache_map = relationship(
+		'DataCache',
+		collection_class=attribute_mapped_collection('name'),
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 	sessions = relationship(
 		'NPSession',
 		backref='user'
@@ -564,6 +572,11 @@ class User(Base):
 		'setting_map',
 		'python_value',
 		creator=_gen_user_setting
+	)
+	data_cache = association_proxy(
+		'data_cache_map',
+		'value',
+		creator=lambda k,v: DataCache(name=k, value=v)
 	)
 
 	def __init__(self, **kwargs):
@@ -3030,4 +3043,79 @@ class UserSetting(Base):
 			str(self.user),
 			str(self.type)
 		)
+
+class DataCache(Base):
+	"""
+	General purpose per-user keyed data storage.
+	"""
+	__tablename__ = 'datacache'
+	__table_args__ = (
+		Comment('Data cache'),
+		Index('datacache_u_dc', 'uid', 'dcname', unique=True),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'     : 'BASE_ADMIN',
+				'cap_read'     : 'BASE_ADMIN',
+				'cap_create'   : 'BASE_ADMIN',
+				'cap_edit'     : 'BASE_ADMIN',
+				'cap_delete'   : 'BASE_ADMIN',
+
+				'show_in_menu' : 'admin',
+				'menu_section' : _('Settings'),
+				'menu_name'    : _('Data Cache'),
+				'menu_order'   : 80,
+				'default_sort' : (),
+				'grid_view'    : ('user', 'dcname'),
+				'form_view'    : ('user', 'dcname', 'dcvalue'),
+				'easy_search'  : ('name'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+			}
+		}
+	)
+	id = Column(
+		'dcid',
+		UInt32(),
+		Sequence('dcid_seq'),
+		Comment('Data cache ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='datacache_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Data cache owner'),
+		nullable=False,
+		info={
+			'header_string' : _('User')
+		}
+	)
+	name = Column(
+		'dcname',
+		ASCIIString(32),
+		Comment('Data cache name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name')
+		}
+	)
+	value = Column(
+		'dcvalue',
+		PickleType(),
+		Comment('Data cache value'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Value')
+		}
+	)
+
+	def __str__(self):
+		return '%s' % str(self.name)
 

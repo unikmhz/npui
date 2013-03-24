@@ -182,6 +182,7 @@ h2
 .ico-tool         { background-image: url(../img/tool.png) !important; }
 .ico-undo         { background-image: url(../img/undo.png) !important; }
 
+.ico-mod-datacache            { background-image: url(../img/db.png) !important; }
 .ico-mod-globalsetting        { background-image: url(../img/item.png) !important; }
 .ico-mod-globalsettingsection { background-image: url(../img/item_group.png) !important; }
 .ico-mod-group                { background-image: url(../img/group.png) !important; }

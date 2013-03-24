@@ -164,6 +164,40 @@ def dpane_simple(model, request):
 	)
 	return cont
 
+@extdirect_method('DataCache', 'save_ls', request_as_last_param=True, permission='USAGE')
+def localstorage_save(params, request):
+	"""
+	ExtDirect method to save local storage state.
+	"""
+
+	assert isinstance(params, dict), 'Dictionary required'
+
+	user = request.user
+	if user:
+		user.data_cache['ls'] = params
+		return { 'success' : True }
+	return {
+		'success' : False,
+		'message' : 'No such user or anonymous'
+	}
+
+@extdirect_method('DataCache', 'load_ls', request_as_last_param=True, permission='USAGE')
+def localstorage_load(request):
+	"""
+	ExtDirect method to restore local storage state.
+	"""
+
+	user = request.user
+	if user:
+		return {
+			'success' : True,
+			'state'   : user.data_cache.get('ls', {})
+		}
+	return {
+		'success' : False,
+		'message' : 'No such user or anonymous'
+	}
+
 @extdirect_method('MenuTree', 'settings', request_as_last_param=True, permission='USAGE')
 def menu_settings(params, request):
 	"""
@@ -194,7 +228,7 @@ def menu_settings(params, request):
 	mod = sess.query(NPModule).filter(NPModule.name == params['node']).one()
 	for uss in sess.query(UserSettingSection).filter(UserSettingSection.module == mod):
 		mi = uss.get_tree_node(request)
-		mi['xhandler'] = 'NetProfile.controller.UserSettingsForm';
+		mi['xhandler'] = 'NetProfile.controller.UserSettingsForm'
 		menu.append(mi)
 
 	return {

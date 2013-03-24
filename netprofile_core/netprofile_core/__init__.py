@@ -53,32 +53,33 @@ class Module(ModuleBase):
 			UserSettingSection,
 			GlobalSetting,
 			UserSettingType,
-			UserSetting
+			UserSetting,
+			DataCache
 		]
 
 	def get_menus(self):
-		return [
+		return (
 			Menu('modules', title=_('Modules'), order=10),
 			Menu('settings', title=_('Settings'), order=20, direct='settings'),
 			Menu('admin', title=_('Administration'), order=30, permission='BASE_ADMIN')
-		]
+		)
 
 	def get_js(self, request):
-		return [
-			'netprofile_core:static/extjs/ext-all-dev.js'
-		]
+		if request.debug_enabled:
+			return ('netprofile_core:static/extjs/ext-all-dev.js',)
+		return ('netprofile_core:static/extjs/ext-all.js',)
 
 	def get_local_js(self, request, lang):
-		return [
+		return (
 			'netprofile_core:static/extjs/locale/ext-lang-' + lang + '.js',
 			'netprofile_core:static/webshell/locale/webshell-lang-' + lang + '.js'
-		]
+		)
 
 	def get_css(self, request):
-		return [
+		return (
 			'netprofile_core:static/extjs/resources/css/ext-all.css',
 			'netprofile_core:static/css/main.css'
-		]
+		)
 
 	@property
 	def name(self):

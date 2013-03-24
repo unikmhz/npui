@@ -51,6 +51,7 @@ Ext.define('NetProfile.view.TopBar', {
 							},
 							items: [{
 								xtype: 'combo',
+								editable: false,
 								itemId: 'ch_lang',
 								store: Ext.create('NetProfile.store.Language'),
 								displayField: 'name',
@@ -81,10 +82,25 @@ Ext.define('NetProfile.view.TopBar', {
 			tooltip: { text: this.logoutTipText, title: this.logoutText },
 			handler: function()
 			{
-				window.location.href = '/logout';
-			}
+				var sp = Ext.state.Manager.getProvider();
+				if(sp && sp.state)
+				{
+					NetProfile.api.DataCache.save_ls(sp.state, function(data, res)
+					{
+						Ext.Object.getKeys(sp.state).forEach(function(k)
+						{
+							sp.clear(k);
+						});
+						sp.clear('loaded');
+						window.location.href = '/logout';
+					}.bind(this));
+				}
+				else
+					window.location.href = '/logout';
+			},
+			scope: this
 		}];
 		this.callParent(arguments);
-	},
+	}
 });
 
