@@ -39,6 +39,7 @@ Ext.define('NetProfile.view.SideBar', {
 				store: Ext.create('NetProfile.store.menu.' + mname),
 				rootVisible: false,
 				listeners: {
+					beforeselect: this.onMenuBeforeSelect,
 					select: this.onMenuSelect,
 					scope: this,
 					options: { menuId: mname }
@@ -68,6 +69,12 @@ Ext.define('NetProfile.view.SideBar', {
 			afterrender: this.onAfterRender,
 			scope: this
 		});
+	},
+	onMenuBeforeSelect: function(row, record, idx, opts)
+	{
+		if(record.get('iconCls') == 'ico-module')
+			return false;
+		return true;
 	},
 	onMenuSelect: function(row, record, idx, opts)
 	{
