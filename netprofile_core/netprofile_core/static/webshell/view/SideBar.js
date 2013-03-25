@@ -73,6 +73,14 @@ Ext.define('NetProfile.view.SideBar', {
 	{
 		var tok_old, tok_new;
 
+		Ext.Object.each(this.menus, function(k, m)
+		{
+			if(opts.options.menuId === k)
+				return;
+			var sm = m.getSelectionModel();
+			if(sm)
+				sm.deselectAll();
+		});
 		if(record.get('xhandler'))
 		{
 			// FIXME
