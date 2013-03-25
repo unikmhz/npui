@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from __future__ import (
 	unicode_literals,
 	print_function,
@@ -9,44 +12,32 @@ __all__ = [
 	'Domain',
 	'DomainAlias',
 	'DomainTXTRecord',
-	'DomainHostLinkageType'
+	'DomainServiceType'
 ]
 
 from sqlalchemy import (
 	Column,
 	Date,
-	FetchedValue,
 	ForeignKey,
 	Index,
 	Sequence,
-	TIMESTAMP,
 	Unicode,
 	UnicodeText,
-	func,
 	text,
-	Text,
-	or_
+	Text
 )
 
 from sqlalchemy.orm import (
 	backref,
-	contains_eager,
-	joinedload,
 	relationship
 )
 
-from netprofile.ext.wizards import (
-	SimpleWizard,
-	Step,
-	Wizard
-)
+from netprofile.ext.wizards import SimpleWizard
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from netprofile.db.connection import (
-	Base,
-	DBSession
-)
+from netprofile.db.connection import Base
 from netprofile.db.fields import (
+	ASCIIString,
 	ASCIIText,
 	ASCIITinyText,
 	DeclEnum,
@@ -74,7 +65,7 @@ class Domain(Base):
 	__tablename__ = 'domains_def'
 	__table_args__ = (
 		Comment('Domains'),
-		Index('domains_def_u_domain','parentid' ,'name', unique=True),
+		Index('domains_def_u_domain', 'parentid', 'name', unique=True),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -88,7 +79,7 @@ class Domain(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Domains'),
 				'menu_order'    : 40,
-				'default_sort'  : (),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' }),
 				'grid_view'     : ('name', 'parent'),
 				'form_view'		: ('name', 'parent', 'enabled', 'public', 'soa_refresh', 'soa_retry', 'soa_expire', 'soa_minimum', 'dkim_name', 'dkim_data', 'descr'),
 				'easy_search'   : ('name', 'descr'),
@@ -110,7 +101,6 @@ class Domain(Base):
 			'header_string' : _('ID')
 		}
 	)
-	
 	parent_id = Column(
 		'parentid',
 		UInt32(),
@@ -120,10 +110,9 @@ class Domain(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Parent domain')
+			'header_string' : _('Parent')
 		}
 	)
-	
 	name = Column(
 		Unicode(255),
 		Comment('Domain name'),
@@ -132,7 +121,6 @@ class Domain(Base):
 			'header_string' : _('Name')
 		}
 	)
-
 	enabled = Column(
 		NPBoolean(),
 		Comment('Is domain enabled?'),
@@ -143,7 +131,6 @@ class Domain(Base):
 			'header_string' : _('Enabled')
 		}
 	)
-
 	public = Column(
 		NPBoolean(),
 		Comment('Is domain visible to outsiders?'),
@@ -154,69 +141,75 @@ class Domain(Base):
 			'header_string' : _('Public')
 		}
 	)
-
+	signed = Column(
+		NPBoolean(),
+		Comment('Needs DNSSEC signing?'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Signed')
+		}
+	)
 	soa_refresh = Column(
 		UInt16(),
-		Comment('SOA Refresh Field'),
+		Comment('SOA refresh field'),
 		nullable=False,
 		default=3600,
 		info={
 			'header_string' : _('SOA Refresh')
 		}
 	)
-
 	soa_retry = Column(
 		UInt16(),
-		Comment('SOA Retry Field'),
+		Comment('SOA retry field'),
 		nullable=False,
 		default=300,
 		info={
 			'header_string' : _('SOA Retry')
 		}
 	)
-
 	soa_expire = Column(
 		UInt16(),
-		Comment('SOA Expire Field'),
+		Comment('SOA expire field'),
 		nullable=False,
 		default=1814400,
 		info={
 			'header_string' : _('SOA Expire')
 		}
 	)
-
 	soa_minimum = Column(
 		UInt16(),
-		Comment('SOA Minimum Field'),
+		Comment('SOA minimum field'),
 		nullable=False,
 		default=3600,
 		info={
 			'header_string' : _('SOA Minimum')
 		}
 	)
-
 	serial_date = Column(
 		Date(),
-		Comment('Domain Serial Date'),
+		Comment('Domain serial date'),
 		nullable=False,
 		info={
-			'header_string' : _('Serial Date')
+			'header_string' : _('Serial Date'),
+			'secret_value'  : True
 		}
 	)
-
-	serial_rev = Column(
+	serial_revision = Column(
+		'serial_rev',
 		UInt8(),
-		Comment('Domain Serial Revision'),
+		Comment('Domain serial revision'),
 		nullable=False,
 		default=1,
 		info={
-			'header_string' : _('Serial Revision')
+			'header_string' : _('Serial Revision'),
+			'secret_value'  : True
 		}
 	)
-
 	dkim_name = Column(
-		Unicode(255),
-		Comment('DKIM Public Key Name'),
+		ASCIIString(255),
+		Comment('DKIM public key name'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -224,16 +217,14 @@ class Domain(Base):
 			'header_string' : _('DKIM Name')
 		}
 	)
-
 	dkim_data = Column(
 		ASCIIText(),
-		Comment('DKIM Public Key Body'),
-		nullable=False,
+		Comment('DKIM public key body'),
+		nullable=True,
 		info={
 			'header_string' : _('DKIM Key')
 		}
 	)
-
 	description = Column(
 		'descr',
 		UnicodeText(),
@@ -248,22 +239,26 @@ class Domain(Base):
 
 	children = relationship(
 		'Domain',
-		backref=backref('parent', remote_side=[id]),
+		backref=backref('parent', remote_side=[id])
 	)
 
-
 	def __str__(self):
+		if self.parent:
+			return '%s.%s' % (
+				str(self.name),
+				str(self.parent)
+			)
 		return '%s' % str(self.name)
 
 class DomainAlias(Base):
 	"""
-	Domaini Alias object.
+	Domain alias object. Same contents, different name.
 	"""
 	__tablename__ = 'domains_aliases'
 	__table_args__ = (
 		Comment('Domains Aliases'),
-		Index('domains_aliases_u_da','parentid' ,'name', unique=True),
-		Index('domains_aliases_i_domain','domainid'),
+		Index('domains_aliases_u_da', 'parentid', 'name', unique=True),
+		Index('domains_aliases_i_domain', 'domainid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -274,16 +269,15 @@ class DomainAlias(Base):
 				'cap_edit'      : 'DOMAINS_EDIT',
 				'cap_delete'    : 'DOMAINS_DELETE',
 
-#				'show_in_menu'  : 'modules',
-				'menu_name'     : _('Domains aliases'),
+				'menu_name'     : _('Aliases'),
 				'menu_order'    : 40,
-				'default_sort'  : (),
-				'grid_view'     : ('name',),
-				'form_view'		: ('name', 'parent', 'original'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' }),
+				'grid_view'     : ('name', 'parent'),
+				'form_view'		: ('name', 'parent', 'domain'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
-				'create_wizard' : SimpleWizard(title=_('Add new alias'))
+				'create_wizard' : SimpleWizard(title=_('Add new domain alias'))
 			}
 		}
 	)
@@ -292,14 +286,13 @@ class DomainAlias(Base):
 		'daid',
 		UInt32(),
 		Sequence('daid_seq'),
-		Comment('Domain Alias ID'),
+		Comment('Domain alias ID'),
 		primary_key=True,
 		nullable=False,
 		info={
 			'header_string' : _('ID')
 		}
 	)
-	
 	parent_id = Column(
 		'parentid',
 		UInt32(),
@@ -309,7 +302,7 @@ class DomainAlias(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Parent domain')
+			'header_string' : _('Parent Domain')
 		}
 	)
 	domain_id = Column(
@@ -321,10 +314,9 @@ class DomainAlias(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Original domain')
+			'header_string' : _('Origin')
 		}
 	)
-	
 	name = Column(
 		Unicode(255),
 		Comment('Alias name'),
@@ -334,19 +326,24 @@ class DomainAlias(Base):
 		}
 	)
 
-	original = relationship(
+	domain = relationship(
 		'Domain',
-		backref=backref('aliases',  innerjoin=True),
+		backref='aliases',
+		innerjoin=True,
 		foreign_keys=domain_id
 	)
-
 	parent = relationship(
 		'Domain',
-		backref=backref('alias_children'),
+		backref='children_aliases',
 		foreign_keys=parent_id
 	)
 
 	def __str__(self):
+		if self.parent:
+			return '%s.%s' % (
+				str(self.name),
+				str(self.parent)
+			)
 		return '%s' % str(self.name)
 
 class ObjectVisibility(DeclEnum):
@@ -356,12 +353,12 @@ class ObjectVisibility(DeclEnum):
 
 class DomainTXTRecord(Base):
 	"""
-	Domain TXT Record object.
+	Domain TXT record object.
 	"""
 	__tablename__ = 'domains_txtrr'
 	__table_args__ = (
-		Comment('Domain TXT Records'),
-		Index('domains_txtrr_u_txtrr','domainid' ,'name', unique=True),
+		Comment('Domain TXT records'),
+		Index('domains_txtrr_u_txtrr', 'domainid', 'name', unique=True),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -373,12 +370,12 @@ class DomainTXTRecord(Base):
 				'cap_delete'    : 'DOMAINS_DELETE',
 
 #				'show_in_menu'  : 'modules',
-				'menu_name'     : _('Domain TXT records'),
+				'menu_name'     : _('TXT Records'),
 				'menu_order'    : 40,
-				'default_sort'  : (),
-				'grid_view'     : ('name','value'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' }),
+				'grid_view'     : ('name', 'value'),
 				'form_view'		: ('name', 'domain', 'ttl', 'vis', 'value'),
-				'easy_search'   : ('name',),
+				'easy_search'   : ('name', 'value'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : SimpleWizard(title=_('Add new TXT record'))
@@ -390,14 +387,13 @@ class DomainTXTRecord(Base):
 		'txtrrid',
 		UInt32(),
 		Sequence('txtrrid_seq'),
-		Comment('Domain ID'),
+		Comment('Text record ID'),
 		primary_key=True,
 		nullable=False,
 		info={
 			'header_string' : _('ID')
 		}
 	)
-	
 	domain_id = Column(
 		'domainid',
 		UInt32(),
@@ -407,21 +403,19 @@ class DomainTXTRecord(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Original domain')
+			'header_string' : _('Domain')
 		}
 	)
-	
 	name = Column(
-		Unicode(255),
-		Comment('Record name'),
+		ASCIIString(255),
+		Comment('Text record name'),
 		nullable=False,
 		info={
 			'header_string' : _('Name')
 		}
 	)
-
 	ttl = Column(
-		UInt16(),
+		UInt32(),
 		Comment('Time to live'),
 		nullable=True,
 		default=None,
@@ -430,11 +424,10 @@ class DomainTXTRecord(Base):
 			'header_string' : _('TTL')
 		}
 	)
-
 	visibility = Column(
 		'vis',
 		ObjectVisibility.db_type(),
-		Comment('Text Record Visibility'),
+		Comment('Text record visibility'),
 		nullable=False,
 		default=ObjectVisibility.both,
 		server_default=ObjectVisibility.both,
@@ -442,10 +435,9 @@ class DomainTXTRecord(Base):
 			'header_string' : _('Visibility')
 		}
 	)
-
 	value = Column(
 		ASCIITinyText(),
-		Comment('Text Record value'),
+		Comment('Text record value'),
 		nullable=False,
 		info={
 			'header_string' : _('Value')
@@ -454,21 +446,26 @@ class DomainTXTRecord(Base):
 
 	domain = relationship(
 		'Domain',
-		backref=backref('txt_records',  innerjoin=True),
-		foreign_keys=domain_id
+		innerjoin=True,
+		backref='txt_records'
 	)
 
 	def __str__(self):
+		if self.domain:
+			return '%s.%s' % (
+				str(self.name),
+				str(self.domain)
+			)
 		return '%s' % str(self.name)
 
-class DomainHostLinkageType(Base):
+class DomainServiceType(Base):
 	"""
-	Domains-Hosts Linkage Type object.
+	Domains-to-hosts linkage type.
 	"""
 	__tablename__ = 'domains_hltypes'
 	__table_args__ = (
-		Comment('Domains-Hosts Linkage Types'),
-		Index('domains_hltypes_u_name','name', unique=True),
+		Comment('Domains-hosts linkage types'),
+		Index('domains_hltypes_u_name', 'name', unique=True),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -480,13 +477,11 @@ class DomainHostLinkageType(Base):
 				'cap_delete'    : 'DOMAINS_DELETE',
 
 				'show_in_menu'  : 'admin',
-				'menu_name'     : _('Domains-Hosts Linkage Types'),
+				'menu_name'     : _('Domain Service Types'),
 				'menu_order'    : 40,
-				'default_sort'  : (),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' }),
 				'grid_view'     : ('name', 'unique'),
-#				'form_view'		: ('name', 'unique'),
 				'easy_search'   : ('name',),
-#				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : SimpleWizard(title=_('Add new type'))
 			}
@@ -497,23 +492,21 @@ class DomainHostLinkageType(Base):
 		'hltypeid',
 		UInt32(),
 		Sequence('hltypeid_seq'),
-		Comment('Domains-Hosts Linkage Type ID'),
+		Comment('Domains-hosts linkage type ID'),
 		primary_key=True,
 		nullable=False,
 		info={
 			'header_string' : _('ID')
 		}
 	)
-
 	name = Column(
 		Unicode(255),
-		Comment('Domains-Hosts Linkage Type name'),
+		Comment('Domains-hosts linkage type name'),
 		nullable=False,
 		info={
 			'header_string' : _('Name')
 		}
 	)
-
 	unique = Column(
 		NPBoolean(),
 		Comment('Is unique per domain?'),
@@ -527,3 +520,4 @@ class DomainHostLinkageType(Base):
 
 	def __str__(self):
 		return '%s' % str(self.name)
+

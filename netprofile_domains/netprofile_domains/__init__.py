@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from __future__ import (
 	unicode_literals,
 	print_function,
@@ -19,12 +22,12 @@ class Module(ModuleBase):
 		mmgr.cfg.scan()
 
 	def get_models(self):
-		return [
+		return (
 			Domain,
 			DomainAlias,
 			DomainTXTRecord,
-			DomainHostLinkageType
-		]
+			DomainServiceType
+		)
 
 	@property
 	def name(self):
