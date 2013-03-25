@@ -215,6 +215,9 @@ def menu_settings(params, request):
 					.query(NPModule) \
 					.filter(NPModule.name.in_(mmgr.loaded.keys())) \
 					.filter(NPModule.enabled == True):
+			mod_name = mod.name
+			if isinstance(mod_name, bytes):
+				mod_name = mod_name.decode()
 			mi = mod.get_tree_node(request, mmgr.loaded[mod.name])
 			mi['expanded'] = False
 			menu.append(mi)

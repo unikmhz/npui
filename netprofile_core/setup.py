@@ -11,6 +11,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
 	'setuptools',
+	'cracklib',
 	'netprofile >= 0.3'
 ]
 

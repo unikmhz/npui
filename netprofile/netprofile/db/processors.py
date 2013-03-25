@@ -22,5 +22,7 @@ def enum_to_boolean(value):
 		return None
 	if value == 'Y':
 		return True
+	if value == b'Y':
+		return True
 	return False
 

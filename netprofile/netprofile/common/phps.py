@@ -29,6 +29,8 @@ class HybridPickler(PHPPickler):
 	@classmethod
 	def loads(cls, data):
 		try:
+			if isinstance(data, str):
+				data = data.encode()
 			return _phpsa.loads(data, decode_strings=True)
 		except:
 			return pickle.loads(data)

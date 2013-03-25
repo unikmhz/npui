@@ -176,24 +176,6 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
 	def python_type(self):
 		return bool
 
-#	def process_bind_param(self, value, dialect):
-#		if value is None:
-#			return None
-#		if isinstance(dialect, mysql.dialect):
-#			if value:
-#				return 'Y'
-#			return 'N'
-#		return value
-#
-#	def process_result_value(self, value, dialect):
-#		if value is None:
-#			return None
-#		if isinstance(dialect, mysql.dialect):
-#			if value == 'Y':
-#				return True
-#			return False
-#		return value
-
 	def bind_processor(self, dialect):
 		if _is_mysql(dialect):
 			return processors.boolean_to_enum
@@ -244,6 +226,13 @@ class ASCIIString(types.TypeDecorator):
 			return mysql.VARCHAR(self.impl.length, charset='ascii', collation='ascii_bin')
 		return self.impl
 
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		if isinstance(value, bytes):
+			value = value.decode('ascii')
+		return value
+
 class ASCIIFixedString(types.TypeDecorator):
 	"""
 	ASCII-only version of fixed-length string field.
@@ -255,6 +244,13 @@ class ASCIIFixedString(types.TypeDecorator):
 			return mysql.CHAR(self.impl.length, charset='ascii', collation='ascii_bin')
 		return self.impl
 
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		if isinstance(value, bytes):
+			value = value.decode('ascii')
+		return value
+
 class ExactUnicode(types.TypeDecorator):
 	"""
 	Case-honoring unicode string.
@@ -265,6 +261,13 @@ class ExactUnicode(types.TypeDecorator):
 		if _is_mysql(dialect):
 			return mysql.VARCHAR(self.impl.length, charset='utf8', collation='utf8_bin')
 		return self.impl
+
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		if isinstance(value, bytes):
+			value = value.decode()
+		return value
 
 class Int8(types.TypeDecorator):
 	"""
@@ -372,31 +375,48 @@ class UInt64(types.TypeDecorator):
 
 class ASCIITinyText(types.TypeDecorator):
 	"""
-
+	256-byte ASCII text field.
 	"""
 	impl = types.Text
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
-			return mysql.TINYTEXT(collation='ascii_bin', charset='ascii')
+			return mysql.TINYTEXT(charset='ascii', collation='ascii_bin')
 		return self.impl
+
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		if isinstance(value, bytes):
+			value = value.decode('ascii')
+		return value
 
 class ASCIIText(types.TypeDecorator):
 	"""
-
+	Large ASCII text field.
 	"""
 	impl = types.Text
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
-			return mysql.TEXT(collation='ascii_bin', charset='ascii')
+			return mysql.TEXT(charset='ascii', collation='ascii_bin')
 		return self.impl
+
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		if isinstance(value, bytes):
+			value = value.decode('ascii')
+		return value
 
 @compiles(EnumSymbol)
 def compile_enumsym(element, compiler, **kw):
 	return compiler.sql_compiler.render_literal_value(element.value, None)
 
 class DeclEnumType(types.SchemaType, types.TypeDecorator):
+	"""
+	Enum type which is auto-configured based on provided DeclEnum class.
+	"""
 	def __init__(self, enum):
 		self.enum = enum
 		self.name = 'ck%s' % re.sub(
@@ -429,6 +449,8 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
+		if isinstance(value, bytes):
+			value = value.decode('ascii')
 		return self.enum.from_string(value.strip())
 
 	def coerce_compared_value(self, op, value):
