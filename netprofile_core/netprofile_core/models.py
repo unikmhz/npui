@@ -113,6 +113,8 @@ from pyramid.i18n import (
 
 _ = TranslationStringFactory('netprofile_core')
 
+_DEFAULT_DICT = 'netprofile_core:dicts/np_cmb_rus'
+
 def _gen_xcap(cls, k, v):
 	"""
 	Creator for privilege-related attribute-mapped collections.
@@ -622,6 +624,13 @@ class User(Base):
 
 	def change_password(self, newpwd, opts, request):
 		self.mod_pw = newpwd
+		ts = dt.datetime.now()
+		secpol = self.effective_policy
+		if secpol:
+			checkpw = secpol.check_new_password(request, self, newpwd, ts)
+			if checkpw is not True:
+				# FIXME: error reporting
+				return
 		reg = request.registry
 		hash_con = reg.settings.get('netprofile.auth.hash', 'sha1')
 		salt_len = int(reg.settings.get('netprofile.auth.salt_length', 4))
@@ -634,6 +643,8 @@ class User(Base):
 		if self.login:
 			realm = reg.settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
 			self.a1_hash = self.generate_a1hash(realm)
+		if secpol:
+			secpol.after_new_password(request, self, newpwd, ts)
 
 	@property
 	def flat_privileges(self):
@@ -656,6 +667,17 @@ class User(Base):
 				continue
 			names.append(sg.name)
 		return names
+
+	@property
+	def effective_policy(self):
+		if self.security_policy:
+			return self.security_policy
+		grp = self.group
+		secpol = None
+		while grp and (secpol is None):
+			secpol = grp.security_policy
+			grp = grp.parent
+		return secpol
 
 	def client_settings(self, req):
 		sess = DBSession()
@@ -1558,6 +1580,105 @@ class SecurityPolicy(Base):
 		'Group',
 		backref='security_policy'
 	)
+
+	def check_new_password(self, req, user, pwd, ts):
+		err = []
+		if self.pw_length_min and (len(pwd) < self.pw_length_min):
+			err.append('pw_length_min')
+		if self.pw_length_max and (len(pwd) > self.pw_length_min):
+			err.append('pw_length_max')
+		if self.pw_ctypes_min or self.pw_ctypes_max:
+			has_lower = False
+			has_upper = False
+			has_digit = False
+			has_space = False
+			has_sym = False
+			for char in pwd:
+				if char.islower():
+					has_lower = True
+				elif char.isupper():
+					has_upper = True
+				elif char.isdigit():
+					has_digit = True
+				elif char.isspace():
+					has_space = True
+				elif char.isprintable():
+					has_sym = True
+			ct_count = 0
+			for ctype in (has_lower, has_upper, has_digit, has_space, has_sym):
+				if ctype:
+					ct_count += 1
+			if self.pw_ctypes_min and (ct_count < self.pw_ctypes_min):
+				err.append('pw_ctypes_min')
+			if self.pw_ctypes_max and (ct_count > self.pw_ctypes_max):
+				err.append('pw_ctypes_max')
+		if self.pw_dict_check:
+			if self.pw_dict_name:
+				dname = self.pw_dict_name
+			else:
+				dname = _DEFAULT_DICT
+			dname = dname.split(':')
+			if len(dname) == 2:
+				from cracklib import FascistCheck
+				from pkg_resources import resource_filename
+				dfile = resource_filename(dname[0], dname[1])
+				try:
+					FascistCheck(pwd, dfile)
+				except ValueError:
+					err.append('pw_dict_check')
+		if user and user.id:
+			if req and self.pw_hist_check:
+				hist_salt = req.registry.settings.get('netprofile.pwhistory_salt', 'nppwdhist_')
+				ctx = hashlib.sha1()
+				ctx.update(hist_salt.encode())
+				ctx.update(pwd.encode())
+				hist_hash = ctx.hexdigest()
+				for pwh in user.password_history:
+					if pwh.password == hist_hash:
+						err.append('pw_hist_check')
+			if self.pw_age_min:
+				delta = dt.timedelta(self.pw_age_min)
+				minage_fail = False
+				for pwh in user.password_history:
+					if (pwh.timestamp + delta) > ts:
+						minage_fail = True
+				if minage_fail:
+					err.append('pw_age_min')
+		if len(err) == 0:
+			return True
+		return err
+
+	def after_new_password(self, req, user, pwd, ts):
+		if self.pw_hist_check:
+			hist_salt = req.registry.settings.get('netprofile.pwhistory_salt', 'nppwdhist_')
+			ctx = hashlib.sha1()
+			ctx.update(hist_salt.encode())
+			ctx.update(pwd.encode())
+			hist_hash = ctx.hexdigest()
+			hist_sz = self.pw_hist_size
+			if not hist_sz:
+				hist_sz = 3
+			hist_cursz = len(user.password_history)
+			if hist_cursz == hist_sz:
+				oldest_time = None
+				oldest_idx = None
+				for i in range(hist_cursz):
+					pwh = user.password_history[i]
+					if (oldest_time is None) or (oldest_time > pwh.timestamp):
+						oldest_time = pwh.timestamp
+						oldest_idx = i
+				if oldest_idx is not None:
+					del user.password_history[oldest_idx]
+			user.password_history.append(PasswordHistory(
+				password=hist_hash,
+				timestamp=ts
+			))
+
+	def check_new_session(self, req, user, npsess, ts):
+		pass
+
+	def check_old_session(self, req, user, npsess, ts):
+		pass
 
 	def __str__(self):
 		return '%s' % str(self.name)
