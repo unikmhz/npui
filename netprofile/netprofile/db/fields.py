@@ -370,6 +370,28 @@ class UInt64(types.TypeDecorator):
 			return mysql.BIGINT(unsigned=True)
 		return self.impl
 
+class ASCIITinyText(types.TypeDecorator):
+	"""
+
+	"""
+	impl = types.Text
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.TINYTEXT(collation='ascii_bin', charset='ascii')
+		return self.impl
+
+class ASCIIText(types.TypeDecorator):
+	"""
+
+	"""
+	impl = types.Text
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.TEXT(collation='ascii_bin', charset='ascii')
+		return self.impl
+
 @compiles(EnumSymbol)
 def compile_enumsym(element, compiler, **kw):
 	return compiler.sql_compiler.render_literal_value(element.value, None)

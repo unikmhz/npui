@@ -50,8 +50,10 @@ from sqlalchemy.orm.interfaces import (
 )
 
 from netprofile.db.fields import (
-	ASCIIString,
 	ASCIIFixedString,
+	ASCIIString,
+	ASCIIText,
+	ASCIITinyText,
 	DeclEnumType,
 	ExactUnicode,
 	Int8,
@@ -151,29 +153,31 @@ _COLUMN_XTYPE_MAP = {
 }
 
 _EDITOR_XTYPE_MAP = {
-	BigInteger   : 'numberfield',
-	Boolean      : 'checkbox',
-	Date         : 'datefield',
-	DateTime     : 'datetimefield',
-	DeclEnumType : 'combobox',
-	Enum         : 'combobox',
-	Float        : 'numberfield',
-	Int8         : 'numberfield',
-	Int16        : 'numberfield',
-	Int32        : 'numberfield',
-	Int64        : 'numberfield',
-	Integer      : 'numberfield',
-	IPv4Address  : 'ipv4field',
-	NPBoolean    : 'checkbox',
-	Numeric      : 'numberfield',
-	SmallInteger : 'numberfield',
-	Time         : 'timefield',
-	TIMESTAMP    : 'datetimefield',
-	UInt8        : 'numberfield',
-	UInt16       : 'numberfield',
-	UInt32       : 'numberfield',
-	UInt64       : 'numberfield',
-	UnicodeText  : 'textareafield'
+	ASCIITinyText : 'textareafield',
+	ASCIIText     : 'textareafield',
+	BigInteger    : 'numberfield',
+	Boolean       : 'checkbox',
+	Date          : 'datefield',
+	DateTime      : 'datetimefield',
+	DeclEnumType  : 'combobox',
+	Enum          : 'combobox',
+	Float         : 'numberfield',
+	Int8          : 'numberfield',
+	Int16         : 'numberfield',
+	Int32         : 'numberfield',
+	Int64         : 'numberfield',
+	Integer       : 'numberfield',
+	IPv4Address   : 'ipv4field',
+	NPBoolean     : 'checkbox',
+	Numeric       : 'numberfield',
+	SmallInteger  : 'numberfield',
+	Time          : 'timefield',
+	TIMESTAMP     : 'datetimefield',
+	UInt8         : 'numberfield',
+	UInt16        : 'numberfield',
+	UInt32        : 'numberfield',
+	UInt64        : 'numberfield',
+	UnicodeText   : 'textareafield'
 }
 
 _JS_TYPE_MAP = {
