@@ -3219,7 +3219,7 @@ class DataCache(Base):
 				'default_sort' : (),
 				'grid_view'    : ('user', 'dcname'),
 				'form_view'    : ('user', 'dcname', 'dcvalue'),
-				'easy_search'  : ('name',),
+				'easy_search'  : ('dcname',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
