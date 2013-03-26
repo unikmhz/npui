@@ -29,6 +29,11 @@ class Module(ModuleBase):
 			DomainServiceType
 		)
 
+	def get_css(self, request):
+		return (
+			'netprofile_domains:static/css/main.css',
+		)
+
 	@property
 	def name(self):
 		return _('Domains')

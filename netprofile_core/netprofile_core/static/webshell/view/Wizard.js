@@ -117,14 +117,14 @@ Ext.define('NetProfile.view.Wizard', {
 	{
 		if(!data || !data.fields)
 		{
-			this.fireEvent('wizardloadfailed', data, result);
+			this.fireEvent('wizardloadfailed', this, data, result);
 			return false;
 		}
 		Ext.destroy(this.removeAll());
 		this.add(data.fields);
 		this.update('init');
 
-		this.fireEvent('wizardloaded');
+		this.fireEvent('wizardloaded', this, data, result);
 	},
 	update: function(dir)
 	{

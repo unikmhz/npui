@@ -26,7 +26,7 @@ class Module(ModuleBase):
 		return ('geo',)
 
 	def get_models(self):
-		return [
+		return (
 			Entity,
 			EntityFlag,
 			EntityFlagType,
@@ -36,12 +36,12 @@ class Module(ModuleBase):
 			StructuralEntity,
 			ExternalEntity,
 			AccessEntity
-		]
+		)
 
 	def get_css(self, request):
-		return [
-			'netprofile_entities:static/css/main.css'
-		]
+		return (
+			'netprofile_entities:static/css/main.css',
+		)
 
 	@property
 	def name(self):

@@ -22,7 +22,7 @@ class Module(ModuleBase):
 		mmgr.cfg.scan()
 
 	def get_models(self):
-		return [
+		return (
 			City,
 			District,
 			Street,
@@ -30,22 +30,22 @@ class Module(ModuleBase):
 			Place,
 			HouseGroup,
 			HouseGroupMapping
-		]
+		)
 
 	def get_local_js(self, request, lang):
-		return [
-			'netprofile_geo:static/webshell/locale/webshell-lang-' + lang + '.js'
-		]
+		return (
+			'netprofile_geo:static/webshell/locale/webshell-lang-' + lang + '.js',
+		)
 
 	def get_autoload_js(self, request):
-		return [
-			'NetProfile.geo.form.field.Address'
-		]
+		return (
+			'NetProfile.geo.form.field.Address',
+		)
 
 	def get_css(self, request):
-		return [
-			'netprofile_geo:static/css/main.css'
-		]
+		return (
+			'netprofile_geo:static/css/main.css',
+		)
 
 	@property
 	def name(self):

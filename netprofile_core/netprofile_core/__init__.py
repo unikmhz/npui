@@ -30,7 +30,7 @@ class Module(ModuleBase):
 		config.add_route('core.js.webshell', '/js/webshell')
 
 	def get_models(self):
-		return [
+		return (
 			NPModule,
 			User,
 			Group,
@@ -55,7 +55,7 @@ class Module(ModuleBase):
 			UserSettingType,
 			UserSetting,
 			DataCache
-		]
+		)
 
 	def get_menus(self):
 		return (
