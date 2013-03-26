@@ -2,7 +2,8 @@ Ext.define('NetProfile.view.PropBar', {
 	extend: 'Ext.tab.Panel',
 	alias: 'widget.propbar',
 	requires: [
-		'Ext.tab.Panel'
+		'Ext.tab.Panel',
+		'Ext.util.KeyMap'
 	],
 	id: 'npws_propbar',
 	stateId: 'npws_propbar',

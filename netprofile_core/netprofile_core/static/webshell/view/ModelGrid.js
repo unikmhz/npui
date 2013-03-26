@@ -11,6 +11,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.toolbar.Paging',
 		'Ext.toolbar.TextItem',
 		'Ext.window.MessageBox',
+		'Ext.util.KeyMap',
+		'Ext.EventObject',
 		'Ext.ux.grid.FiltersFeature',
 		'Ext.ux.grid.SimpleSearchFeature',
 		'Ext.ux.grid.ExtraSearchFeature',
@@ -90,22 +92,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 			text: this.clearText,
 			tooltip: { text: this.clearTipText, title: this.clearText },
 			iconCls: 'ico-clear',
-			handler: function()
-			{
-				store = this.getStore();
-				if(this.filters)
-					this.filters.clearFilters(true);
-				if(this.ssearch)
-					this.ssearch.clearValue(true);
-				if(this.xsearch)
-					this.xsearch.clearValue(true);
-				store.sorters.clear();
-				if(store.initialSorters)
-					store.sorters.addAll(store.initialSorters);
-				this.saveState();
-				store.loadPage(1);
-				return true;
-			},
+			handler: this.onPressReset,
 			scope: this
 		}];
 		if(this.canCreate)
@@ -214,6 +201,14 @@ Ext.define('NetProfile.view.ModelGrid', {
 		});
 
 		this.on({
+			beforedestroy: function(grid)
+			{
+				if(this.kmap)
+				{
+					this.kmap.destroy();
+					this.kmap = null;
+				}
+			},
 			beforerender: function(grid)
 			{
 				this.columns.forEach(function(col)
@@ -258,6 +253,93 @@ Ext.define('NetProfile.view.ModelGrid', {
 			},
 			scope: this
 		});
+
+		var kmap_binds = [{
+			key: Ext.EventObject.LEFT,
+			fn: function(kc, ev)
+			{
+				var st = this.getStore();
+
+				if(st && ev.ctrlKey && st.currentPage > 1)
+				{
+					ev.stopEvent();
+					if(ev.shiftKey)
+						st.loadPage(1);
+					else
+						st.previousPage();
+				}
+			},
+			scope: this
+		}, {
+			key: Ext.EventObject.RIGHT,
+			fn: function(kc, ev)
+			{
+				var st = this.getStore(),
+					maxpg = Math.ceil(st.getTotalCount() / st.pageSize);
+
+				if(st && ev.ctrlKey && st.currentPage < maxpg)
+				{
+					ev.stopEvent();
+					if(ev.shiftKey)
+						st.loadPage(maxpg);
+					else
+						st.nextPage();
+				}
+			},
+			scope: this
+		}, {
+			key: 'r',
+			fn: function(kc, ev)
+			{
+				if(ev.altKey)
+				{
+					ev.stopEvent();
+					this.onPressReset();
+				}
+			},
+			scope: this
+		}];
+		if(this.simpleSearch)
+			kmap_binds.push({
+				key: 's',
+				fn: function(kc, ev)
+				{
+					var fld;
+
+					if(ev.altKey)
+					{
+						fld = this.down('textfield[cls~=np-ssearch-field]');
+						if(fld)
+						{
+							ev.stopEvent();
+							fld.focus();
+							fld.selectText();
+						}
+					}
+				},
+				scope: this
+			});
+
+		this.kmap = new Ext.util.KeyMap({
+			target: Ext.getBody(),
+			binding: kmap_binds
+		});
+	},
+	onPressReset: function()
+	{
+		store = this.getStore();
+		if(this.filters)
+			this.filters.clearFilters(true);
+		if(this.ssearch)
+			this.ssearch.clearValue(true);
+		if(this.xsearch)
+			this.xsearch.clearValue(true);
+		store.sorters.clear();
+		if(store.initialSorters)
+			store.sorters.addAll(store.initialSorters);
+		this.saveState();
+		store.loadPage(1);
+		return true;
 	},
 	selectRecord: function(record)
 	{

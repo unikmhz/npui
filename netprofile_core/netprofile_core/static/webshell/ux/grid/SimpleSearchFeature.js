@@ -77,6 +77,7 @@ Ext.define('Ext.ux.grid.SimpleSearchFeature', {
 			state;
 
 		config = {
+			cls: 'np-ssearch-field',
 			iconCls: this.iconCls,
 			emptyText: this.fieldEmptyText,
 			hideLabel: true,
