@@ -1,0 +1,159 @@
+# Translations template for netprofile_domains.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the netprofile_domains
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_domains 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-03-27 12:08+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: netprofile_domains/__init__.py:39 netprofile_domains/models.py:81
+msgid "Domains"
+msgstr ""
+
+#: netprofile_domains/models.py:87 netprofile_domains/models.py:160
+#: netprofile_domains/models.py:317 netprofile_domains/models.py:372
+#: netprofile_domains/models.py:461 netprofile_domains/models.py:554
+msgid "Name"
+msgstr ""
+
+#: netprofile_domains/models.py:94
+msgid "State"
+msgstr ""
+
+#: netprofile_domains/models.py:127
+msgid "Add new domain"
+msgstr ""
+
+#: netprofile_domains/models.py:140 netprofile_domains/models.py:340
+#: netprofile_domains/models.py:441 netprofile_domains/models.py:546
+msgid "ID"
+msgstr ""
+
+#: netprofile_domains/models.py:152 netprofile_domains/models.py:352
+msgid "Parent"
+msgstr ""
+
+#: netprofile_domains/models.py:170
+msgid "Enabled"
+msgstr ""
+
+#: netprofile_domains/models.py:180
+msgid "Public"
+msgstr ""
+
+#: netprofile_domains/models.py:190
+msgid "Signed"
+msgstr ""
+
+#: netprofile_domains/models.py:199
+msgid "SOA Refresh"
+msgstr ""
+
+#: netprofile_domains/models.py:208
+msgid "SOA Retry"
+msgstr ""
+
+#: netprofile_domains/models.py:217
+msgid "SOA Expire"
+msgstr ""
+
+#: netprofile_domains/models.py:226
+msgid "SOA Minimum"
+msgstr ""
+
+#: netprofile_domains/models.py:234
+msgid "Serial Date"
+msgstr ""
+
+#: netprofile_domains/models.py:245
+msgid "Serial Revision"
+msgstr ""
+
+#: netprofile_domains/models.py:256
+msgid "DKIM Name"
+msgstr ""
+
+#: netprofile_domains/models.py:264
+msgid "DKIM Key"
+msgstr ""
+
+#: netprofile_domains/models.py:275
+msgid "Description"
+msgstr ""
+
+#: netprofile_domains/models.py:311 netprofile_domains/views.py:32
+msgid "Aliases"
+msgstr ""
+
+#: netprofile_domains/models.py:327
+msgid "Add new domain alias"
+msgstr ""
+
+#: netprofile_domains/models.py:364
+msgid "Origin"
+msgstr ""
+
+#: netprofile_domains/models.py:397
+msgid "Both"
+msgstr ""
+
+#: netprofile_domains/models.py:398
+msgid "Internal"
+msgstr ""
+
+#: netprofile_domains/models.py:399
+msgid "External"
+msgstr ""
+
+#: netprofile_domains/models.py:420 netprofile_domains/views.py:40
+msgid "TXT Records"
+msgstr ""
+
+#: netprofile_domains/models.py:428
+msgid "Add new TXT record"
+msgstr ""
+
+#: netprofile_domains/models.py:453
+msgid "Domain"
+msgstr ""
+
+#: netprofile_domains/models.py:471
+msgid "TTL"
+msgstr ""
+
+#: netprofile_domains/models.py:482
+msgid "Visibility"
+msgstr ""
+
+#: netprofile_domains/models.py:490
+msgid "Value"
+msgstr ""
+
+#: netprofile_domains/models.py:527
+msgid "Domain Service Types"
+msgstr ""
+
+#: netprofile_domains/models.py:533
+msgid "Add new type"
+msgstr ""
+
+#: netprofile_domains/models.py:564
+msgid "Unique"
+msgstr ""
+
+#: netprofile_domains/views.py:23
+msgid "Subdomains"
+msgstr ""
+
