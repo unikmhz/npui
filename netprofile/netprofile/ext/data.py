@@ -949,7 +949,7 @@ class ExtPseudoColumn(ExtColumn):
 			'tooltip'    : loc.translate(self.column.column_name),
 			'menuText'   : loc.translate(self.column.column_name),
 			'name'       : self.name,
-			'sortable'   : False,
+			'sortable'   : self.sortable,
 			'filterable' : False if (self.column.filter_type == 'none') else True,
 			'dataIndex'  : self.name,
 			'editor'     : self.get_editor_cfg(req),

@@ -11,6 +11,7 @@ from __future__ import (
 class PseudoColumn(object):
 	def __init__(self, **kwargs):
 		self.nullable = bool(kwargs.get('nullable', True))
+		self.sortable = bool(kwargs.get('sortable', False))
 		self.template = kwargs.get('template', None)
 		self.column_xtype = kwargs.get('column_xtype', None)
 		self.editor_xtype = kwargs.get('editor_xtype', 'textfield')
