@@ -162,7 +162,7 @@ class NPModule(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Modules'),
 				'menu_order'   : 40,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name', 'curversion', 'enabled'),
 				'easy_search'  : ('name',)
 			}
@@ -303,7 +303,7 @@ class User(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Users'),
 				'menu_order'   : 20,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'login' ,'direction': 'ASC' },),
 				'grid_view'    : ('login', 'name_family', 'name_given', 'group', 'enabled', 'state', 'email'),
 				'form_view'    : ('login', 'name_family', 'name_given', 'name_middle', 'title', 'group', 'secondary_groups', 'enabled', 'pass', 'security_policy', 'state', 'email', 'manager'),
 				'easy_search'  : ('login', 'name_family'),
@@ -736,7 +736,7 @@ class Group(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Groups'),
 				'menu_order'   : 30,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name', 'parent', 'security_policy', 'root_folder'),
 				'form_view'    : ('name', 'parent', 'security_policy', 'visible', 'assignable', 'root_folder'),
 				'easy_search'  : ('name',),
@@ -919,7 +919,7 @@ class Privilege(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Privileges'),
 				'menu_order'   : 40,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'code' ,'direction': 'ASC' },),
 				'grid_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls'),
 				'form_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls', 'resclass'),
 				'easy_search'  : ('code', 'name'),
@@ -1376,7 +1376,7 @@ class SecurityPolicy(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Security Policies'),
 				'menu_order'   : 50,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size'),
 				'form_view'    : (
 					'name', 'descr',
@@ -2054,7 +2054,7 @@ class Tag(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Tags'),
 				'menu_order'    : 60,
-				'default_sort'  : (),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name', 'descr'),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -2123,7 +2123,7 @@ class LogType(Base):
 				'menu_section'  : _('Logging'),
 				'menu_name'     : _('Log Types'),
 				'menu_order'    : 81,
-				'default_sort'  : (),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
@@ -2175,7 +2175,7 @@ class LogAction(Base):
 				'menu_section' : _('Logging'),
 				'menu_name'    : _('Log Actions'),
 				'menu_order'   : 82,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name',),
 				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
@@ -2226,7 +2226,7 @@ class LogData(Base):
 				'menu_section' : _('Logging'),
 				'menu_name'    : _('Log Data'),
 				'menu_order'   : 80,
-				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' }),
+				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' },),
 				'grid_view'    : ('ts', 'login', 'xtype', 'xaction', 'data'),
 				'easy_search'  : ('login', 'data'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
@@ -2324,6 +2324,7 @@ class NPSession(Base):
 		Comment('NetProfile UI sessions'),
 		Index('np_sessions_i_uid', 'uid'),
 		Index('np_sessions_i_sname', 'sname'),
+		Index('np_sessions_i_lastts', 'lastts'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -2337,8 +2338,9 @@ class NPSession(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('UI Sessions'),
 				'menu_order'   : 90,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'lastts' ,'direction': 'DESC' },),
 				'grid_view'    : ('sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr'),
+				'easy_search'  : ('sname', 'login'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
@@ -2529,7 +2531,7 @@ class GlobalSettingSection(Base):
 				'menu_section'  : _('Settings'),
 				'menu_name'     : _('Global Setting Sections'),
 				'menu_order'    : 70,
-				'default_sort'  : (),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('module', 'name', 'descr'),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -2612,7 +2614,7 @@ class UserSettingSection(Base):
 				'menu_section'  : _('Settings'),
 				'menu_name'     : _('User Setting Sections'),
 				'menu_order'    : 71,
-				'default_sort'  : (),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('module', 'name', 'descr'),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -2787,7 +2789,7 @@ class GlobalSetting(Base, DynamicSetting):
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('Global Settings'),
 				'menu_order'   : 72,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'value', 'default'),
 				'easy_search'  : ('name', 'title'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
@@ -2947,7 +2949,7 @@ class UserSettingType(Base, DynamicSetting):
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('User Setting Types'),
 				'menu_order'   : 73,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'default'),
 				'easy_search'  : ('name', 'title'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')

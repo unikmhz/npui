@@ -86,6 +86,7 @@ Ext.define('NetProfile.view.Wizard', {
 		this.on('beforerender', this.loadWizard, this);
 
 		this.addEvents(
+			'beforeaddfields',
 			'wizardloaded',
 			'wizardloadfailed',
 			'submitsuccess',
@@ -121,6 +122,7 @@ Ext.define('NetProfile.view.Wizard', {
 			return false;
 		}
 		Ext.destroy(this.removeAll());
+		this.fireEvent('beforeaddfields', this, data, result);
 		this.add(data.fields);
 		this.update('init');
 

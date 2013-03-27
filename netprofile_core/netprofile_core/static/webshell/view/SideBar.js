@@ -144,6 +144,7 @@ Ext.define('NetProfile.view.SideBar', {
 					mainbar = Ext.getCmp('npws_mainbar');
 					mainbar.replaceWith(obj.getView(xid));
 				}
+				Ext.destroy(obj);
 			},
 			this
 		);

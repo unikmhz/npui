@@ -40,6 +40,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	apiClass: null,
 	detailPane: null,
 	hideColumns: null,
+	createControllers: null,
 	canCreate: false,
 	canEdit: false,
 	canDelete: false,
@@ -64,6 +65,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	},
 	initComponent: function()
 	{
+		this._create_ctl = {};
 		if(this.selectRow)
 		{
 			this.canCreate = false;
@@ -105,7 +107,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 					var wiz_win = Ext.create('Ext.window.Window', {
 						layout: 'fit',
 						minWidth: 500,
-						maxHeight: 650,
+						minHeight: 200,
 						title: this.addWindowText,
 						modal: true
 					});
@@ -114,6 +116,35 @@ Ext.define('NetProfile.view.ModelGrid', {
 						wizardCls: this.apiClass,
 						createInto: this.store
 					});
+					if(this.createControllers)
+					{
+						Ext.require(
+							this.createControllers,
+							function()
+							{
+								var ctl = this.createControllers,
+									me = this;
+								if(Ext.isString(ctl))
+									ctl = [ ctl ];
+								if(Ext.isArray(ctl))
+								{
+									Ext.Array.forEach(ctl, function(cclass)
+									{
+										if(!(cclass in me._create_ctl))
+											me._create_ctl[cclass] = Ext.create(cclass, {
+												caller: me
+											});
+										if(me._create_ctl[cclass].observeWizard)
+											me._create_ctl[cclass].observeWizard(wiz);
+									});
+								}
+								wiz_win.add(wiz);
+								wiz_win.show();
+							},
+							this
+						);
+						return true;
+					}
 					wiz_win.add(wiz);
 					wiz_win.show();
 
@@ -159,9 +190,20 @@ Ext.define('NetProfile.view.ModelGrid', {
 									function(btn)
 									{
 										if(btn === 'yes')
-											this.store.remove(record);
+										{
+											if(record.store && record.store.getById(record.getId()))
+											{
+												var st = record.store;
+												st.remove(record);
+											}
+											else if(this.store.getById(record.getId()))
+												this.store.remove(record);
+											else
+												record.destroy();
+										}
 										return true;
-									}.bind(this)
+									},
+									this
 								);
 							return true;
 						},
@@ -203,6 +245,11 @@ Ext.define('NetProfile.view.ModelGrid', {
 		this.on({
 			beforedestroy: function(grid)
 			{
+				if(this._create_ctl.length > 0)
+				{
+					Ext.destroy(this._create_ctl);
+					this._create_ctl = [];
+				}
 				if(this.kmap)
 				{
 					this.kmap.destroy();
@@ -260,13 +307,16 @@ Ext.define('NetProfile.view.ModelGrid', {
 			{
 				var st = this.getStore();
 
-				if(st && ev.ctrlKey && st.currentPage > 1)
+				if(st && ev.ctrlKey)
 				{
 					ev.stopEvent();
-					if(ev.shiftKey)
-						st.loadPage(1);
-					else
-						st.previousPage();
+					if(st.currentPage > 1)
+					{
+						if(ev.shiftKey)
+							st.loadPage(1);
+						else
+							st.previousPage();
+					}
 				}
 			},
 			scope: this
@@ -277,13 +327,16 @@ Ext.define('NetProfile.view.ModelGrid', {
 				var st = this.getStore(),
 					maxpg = Math.ceil(st.getTotalCount() / st.pageSize);
 
-				if(st && ev.ctrlKey && st.currentPage < maxpg)
+				if(st && ev.ctrlKey)
 				{
 					ev.stopEvent();
-					if(ev.shiftKey)
-						st.loadPage(maxpg);
-					else
-						st.nextPage();
+					if(st.currentPage < maxpg)
+					{
+						if(ev.shiftKey)
+							st.loadPage(maxpg);
+						else
+							st.nextPage();
+					}
 				}
 			},
 			scope: this
