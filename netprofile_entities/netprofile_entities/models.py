@@ -176,7 +176,7 @@ class Entity(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Entities'),
 				'menu_order'    : 10,
-				'default_sort'  : (),
+				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
 						name='icon',
@@ -457,7 +457,7 @@ class EntityState(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Entity States'),
 				'menu_order'   : 10,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name',),
 				'form_view'    : ('name', 'descr'),
 				'easy_search'  : ('name',),
@@ -517,7 +517,7 @@ class EntityFlagType(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Entity Flags'),
 				'menu_order'   : 10,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name',),
 				'form_view'    : ('name', 'descr'),
 				'easy_search'  : ('name',),
@@ -674,7 +674,7 @@ class PhysicalEntity(Entity):
 				'menu_name'    : _('Physical entities'),
 				'menu_order'   : 10,
 				'menu_parent'  : 'entity',
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'    : (
 					MarkupColumn(
 						name='icon',
@@ -1029,7 +1029,7 @@ class LegalEntity(Entity):
 				'menu_name'    : _('Legal entities'),
 				'menu_order'   : 20,
 				'menu_parent'  : 'entity',
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'    : (
 					MarkupColumn(
 						name='icon',
@@ -1427,7 +1427,7 @@ class StructuralEntity(Entity):
 				'menu_name'    : _('Structural entities'),
 				'menu_order'   : 30,
 				'menu_parent'  : 'entity',
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'    : (
 					MarkupColumn(
 						name='icon',
@@ -1514,7 +1514,7 @@ class ExternalEntity(Entity):
 				'menu_name'    : _('External entities'),
 				'menu_order'   : 40,
 				'menu_parent'  : 'entity',
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'    : (
 					MarkupColumn(
 						name='icon',
@@ -1598,7 +1598,7 @@ class AccessEntity(Entity):
 				'menu_name'    : _('Access entities'),
 				'menu_order'   : 50,
 				'menu_parent'  : 'entity',
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
 #				'grid_view'    : ('SUXX',),
 #				'easy_search'  : ('SUXX',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')

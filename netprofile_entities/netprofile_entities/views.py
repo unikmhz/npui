@@ -23,7 +23,8 @@ def dpane_entities(model, request):
 		'stateId'           : None,
 		'stateful'          : False,
 		'extraParamProp'    : 'parentid',
-		'extraParamRelProp' : 'entityid'
+		'extraParamRelProp' : 'entityid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	}]
 	request.run_hook(
 		'core.dpanetabs.%s.%s' % (model.__parent__.moddef, model.name),
