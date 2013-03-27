@@ -48,6 +48,7 @@ from netprofile.db.fields import (
 	npbool
 )
 from netprofile.db.ddl import Comment
+from netprofile.ext.columns import MarkupColumn
 
 from pyramid.i18n import (
 	TranslationStringFactory,
@@ -79,9 +80,47 @@ class Domain(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Domains'),
 				'menu_order'    : 40,
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' }),
-				'grid_view'     : ('name', 'parent'),
-				'form_view'		: ('name', 'parent', 'enabled', 'public', 'soa_refresh', 'soa_retry', 'soa_expire', 'soa_minimum', 'dkim_name', 'dkim_data', 'descr'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					MarkupColumn(
+						name='name',
+						header_string=_('Name'),
+						template='{__str__}',
+						sortable=True
+					),
+					'parent',
+					MarkupColumn(
+						name='state',
+						header_string=_('State'),
+						template="""
+<tpl if="enabled">
+	<img class="np-inline-img" src="/static/core/img/enabled.png" />
+<tpl else>
+	<img class="np-inline-img" src="/static/core/img/disabled.png" />
+</tpl>
+<tpl if="public">
+	<img class="np-inline-img" src="/static/core/img/public.png" />
+<tpl else>
+	<img class="np-inline-img" src="/static/core/img/private.png" />
+</tpl>
+<tpl if="signed">
+	<img class="np-inline-img" src="/static/core/img/lock.png" />
+<tpl else>
+	<img class="np-inline-img" src="/static/core/img/unlock.png" />
+</tpl>
+""",
+						cell_class='np-nopad',
+						column_width=60,
+						column_resizable=False
+					)
+				),
+				'form_view'		: (
+					'name', 'parent',
+					'enabled', 'public', 'signed',
+					'soa_refresh', 'soa_retry', 'soa_expire', 'soa_minimum',
+					'dkim_name', 'dkim_data',
+					'descr'
+				),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -271,9 +310,17 @@ class DomainAlias(Base):
 
 				'menu_name'     : _('Aliases'),
 				'menu_order'    : 40,
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' }),
-				'grid_view'     : ('name', 'parent'),
-				'form_view'		: ('name', 'parent', 'domain'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					MarkupColumn(
+						name='name',
+						header_string=_('Name'),
+						template='{__str__}',
+						sortable=True
+					),
+					'parent',
+					'domain'
+				),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -302,7 +349,7 @@ class DomainAlias(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Parent Domain')
+			'header_string' : _('Parent')
 		}
 	)
 	domain_id = Column(
@@ -372,8 +419,8 @@ class DomainTXTRecord(Base):
 #				'show_in_menu'  : 'modules',
 				'menu_name'     : _('TXT Records'),
 				'menu_order'    : 40,
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' }),
-				'grid_view'     : ('name', 'value'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('name', 'domain', 'value'),
 				'form_view'		: ('name', 'domain', 'ttl', 'vis', 'value'),
 				'easy_search'   : ('name', 'value'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -479,7 +526,7 @@ class DomainServiceType(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Domain Service Types'),
 				'menu_order'    : 40,
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' }),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name', 'unique'),
 				'easy_search'   : ('name',),
 
