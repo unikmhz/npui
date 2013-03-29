@@ -365,7 +365,10 @@ class House(Base):
 				sess = DBSession()
 				sq = sess.query(District).filter(District.city_id == val)
 				val = [d.id for d in sq]
-				query = query.filter(Street.district_id.in_(val))
+				if len(val) > 0:
+					query = query.filter(Street.district_id.in_(val))
+				else:
+					query = query.filter(False)
 		return query
 
 	__tablename__ = 'addr_houses'
@@ -533,7 +536,10 @@ class House(Base):
 			val = int(flt['cityid']['eq'])
 			sq = sess.query(District).filter(District.city_id == val)
 			val = [d.id for d in sq]
-			query = query.filter(Street.district_id.in_(val))
+			if len(val) > 0:
+				query = query.filter(Street.district_id.in_(val))
+			else:
+				query = query.filter(False)
 		return query
 
 	@classmethod

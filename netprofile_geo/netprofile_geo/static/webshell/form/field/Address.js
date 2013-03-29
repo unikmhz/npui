@@ -70,10 +70,12 @@ Ext.define('NetProfile.geo.form.field.Address', {
 					itemId: stype,
 					name: me._keys[stype],
 					displayField: '__str__',
+					width: 300,
+					labelAlign: 'right',
 					valueField: me._keys[stype],
 					store: me.stores[stype],
 					autoSelect: false,
-					tpl: new Ext.XTemplate('<tpl for="."><li style="height: 22px;" class="x-boundlist-item" role="option">{__str__}</li></tpl>'),
+					tpl: new Ext.XTemplate('<tpl for="."><li style="min-height: 22px;" class="x-boundlist-item" role="option">{__str__}</li></tpl>'),
 					listeners: {
 						beforeselect: function(cb, recs, idx)
 						{
