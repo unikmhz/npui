@@ -40,7 +40,8 @@ from sqlalchemy.orm import (
 	backref,
 	contains_eager,
 	joinedload,
-	relationship
+	relationship,
+	validates
 )
 
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -69,6 +70,10 @@ from netprofile.db.util import (
 	populate_related,
 	populate_related_list
 )
+from netprofile.ext.data import (
+	ExtModel,
+	_name_to_class
+)
 from netprofile.ext.columns import (
 	HybridColumn,
 	MarkupColumn
@@ -79,6 +84,12 @@ from netprofile_geo.models import (
 	Street
 )
 from netprofile_geo.filters import AddressFilter
+from netprofile.ext.wizards import (
+	ExternalWizardField,
+	SimpleWizard,
+	Step,
+	Wizard
+)
 
 from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
@@ -97,6 +108,43 @@ class EntityType(DeclEnum):
 	structural = 'structural', _('Structural'), 30
 	external   = 'external',   _('External'),   40
 	access     = 'access',     _('Access'),     50
+
+def _wizcb_ent_generic_next(wiz, step, act, val, req):
+	ret = {
+		'do'      : 'goto',
+		'goto'    : 'ent_physical1'
+	}
+	if 'etype' in val:
+		ret.update({
+			'goto'    : 'ent_%s1' % val['etype'],
+			'enable'  : [
+				st.id
+				for st in wiz.steps
+				if st.id.startswith('ent_' + val['etype'])
+			],
+			'disable' : [
+				st.id
+				for st in wiz.steps
+				if st.id.startswith('ent_')
+			]
+		})
+	return ret
+
+def _wizcb_ent_submit(cls):
+	def _wizcb_submit_hdl(wiz, step, act, val, req):
+		xcls = cls
+		if isinstance(xcls, str):
+			xcls = _name_to_class(xcls)
+		sess = DBSession()
+		em = ExtModel(xcls)
+		obj = xcls()
+		em.set_values(obj, val, req)
+		sess.add(obj)
+		return {
+			'do'     : 'close',
+			'reload' : True
+		}
+	return _wizcb_submit_hdl
 
 class Entity(Base):
 	"""
@@ -127,6 +175,8 @@ class Entity(Base):
 						LegalEntity.house_id.in_(val),
 						StructuralEntity.house_id.in_(val)
 					))
+				else:
+					query = query.filter(False)
 		elif 'districtid' in value:
 			val = int(value['districtid'])
 			if val > 0:
@@ -139,6 +189,8 @@ class Entity(Base):
 						LegalEntity.house_id.in_(val),
 						StructuralEntity.house_id.in_(val)
 					))
+				else:
+					query = query.filter(False)
 		elif 'cityid' in value:
 			val = int(value['cityid'])
 			if val > 0:
@@ -151,6 +203,8 @@ class Entity(Base):
 						LegalEntity.house_id.in_(val),
 						StructuralEntity.house_id.in_(val)
 					))
+				else:
+					query = query.filter(False)
 		return query
 
 	__tablename__ = 'entities_def'
@@ -175,6 +229,7 @@ class Entity(Base):
 
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Entities'),
+				'menu_main'     : True,
 				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
@@ -244,6 +299,94 @@ class Entity(Base):
 						title=_('Address')
 					),
 				),
+
+				'create_wizard' : Wizard(
+					Step(
+						'nick', 'etype', 'parent',
+						'state', 'flags', 'descr',
+						id='generic', title=_('Generic entity properties'),
+						on_next=_wizcb_ent_generic_next
+					),
+					Step(
+						ExternalWizardField('PhysicalEntity', 'contractid'),
+						ExternalWizardField('PhysicalEntity', 'name_family'),
+						ExternalWizardField('PhysicalEntity', 'name_given'),
+						ExternalWizardField('PhysicalEntity', 'name_middle'),
+						ExternalWizardField('PhysicalEntity', 'phone_home'),
+						ExternalWizardField('PhysicalEntity', 'phone_work'),
+						ExternalWizardField('PhysicalEntity', 'phone_cell'),
+						id='ent_physical1', title=_('Physical entity properties'),
+						on_prev='generic'
+					),
+					Step(
+						ExternalWizardField('PhysicalEntity', 'house'),
+						ExternalWizardField('PhysicalEntity', 'entrance'),
+						ExternalWizardField('PhysicalEntity', 'floor'),
+						ExternalWizardField('PhysicalEntity', 'flat'),
+						id='ent_physical2', title=_('Physical entity properties')
+					),
+					Step(
+						ExternalWizardField('PhysicalEntity', 'pass_series'),
+						ExternalWizardField('PhysicalEntity', 'pass_num'),
+						ExternalWizardField('PhysicalEntity', 'pass_issuedby'),
+						ExternalWizardField('PhysicalEntity', 'pass_issuedate'),
+						ExternalWizardField('PhysicalEntity', 'email'),
+						ExternalWizardField('PhysicalEntity', 'icq'),
+						ExternalWizardField('PhysicalEntity', 'homepage'),
+						ExternalWizardField('PhysicalEntity', 'birthdate'),
+						id='ent_physical3', title=_('Physical entity properties'),
+						on_submit=_wizcb_ent_submit('PhysicalEntity')
+					),
+					Step(
+						ExternalWizardField('LegalEntity', 'contractid'),
+						ExternalWizardField('LegalEntity', 'name'),
+						ExternalWizardField('LegalEntity', 'phone_rec'),
+						ExternalWizardField('LegalEntity', 'phone_fax'),
+						ExternalWizardField('LegalEntity', 'house'),
+						ExternalWizardField('LegalEntity', 'entrance'),
+						ExternalWizardField('LegalEntity', 'floor'),
+						ExternalWizardField('LegalEntity', 'flat'),
+						ExternalWizardField('LegalEntity', 'homepage'),
+						id='ent_legal1', title=_('Legal entity properties'),
+						on_prev='generic'
+					),
+					Step(
+						ExternalWizardField('LegalEntity', 'cp_name_family'),
+						ExternalWizardField('LegalEntity', 'cp_name_given'),
+						ExternalWizardField('LegalEntity', 'cp_name_middle'),
+						ExternalWizardField('LegalEntity', 'cp_title'),
+						ExternalWizardField('LegalEntity', 'cp_phone_work'),
+						ExternalWizardField('LegalEntity', 'cp_phone_cell'),
+						ExternalWizardField('LegalEntity', 'cp_email'),
+						ExternalWizardField('LegalEntity', 'cp_icq'),
+						id='ent_legal2', title=_('Legal entity contact person')
+					),
+					Step(
+						ExternalWizardField('LegalEntity', 'address_legal'),
+						ExternalWizardField('LegalEntity', 'props_inn'),
+						ExternalWizardField('LegalEntity', 'props_kpp'),
+						ExternalWizardField('LegalEntity', 'props_bic'),
+						ExternalWizardField('LegalEntity', 'props_rs'),
+						ExternalWizardField('LegalEntity', 'props_cs'),
+						ExternalWizardField('LegalEntity', 'props_bank'),
+						id='ent_legal3', title=_('Legal entity details'),
+						on_submit=_wizcb_ent_submit('LegalEntity')
+					),
+					Step(
+						ExternalWizardField('StructuralEntity', 'house'),
+						id='ent_structural1', title=_('Structural entity properties'),
+						on_prev='generic',
+						on_submit=_wizcb_ent_submit('StructuralEntity')
+					),
+					Step(
+						ExternalWizardField('ExternalEntity', 'name'),
+						ExternalWizardField('ExternalEntity', 'address'),
+						id='ent_external1', title=_('External entity properties'),
+						on_prev='generic',
+						on_submit=_wizcb_ent_submit('ExternalEntity')
+					),
+					title=_('Add new entity')
+				)
 			}
 		}
 	)
@@ -276,8 +419,7 @@ class Entity(Base):
 		Comment('Entity nickname'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
-#			'column_xtype'  : 'treecolumn'
+			'header_string' : _('Identifier')
 		}
 	)
 	state_id = Column(
@@ -433,6 +575,11 @@ class Entity(Base):
 			'flags' : [(ft.id, ft.name) for ft in self.flags]
 		}
 
+	@validates('nick')
+	def _set_nick(self, k, v):
+		self.relative_dn = 'cn=%s' % str(v)
+		return v
+
 	def __str__(self):
 		return '%s' % str(self.nick)
 
@@ -448,20 +595,22 @@ class EntityState(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ENTITIES',
-				'cap_read'     : 'ENTITIES_LIST',
-				'cap_create'   : 'ENTITIES_STATES_CREATE',
-				'cap_edit'     : 'ENTITIES_STATES_EDIT',
-				'cap_delete'   : 'ENTITIES_STATES_DELETE',
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_STATES_CREATE',
+				'cap_edit'      : 'ENTITIES_STATES_EDIT',
+				'cap_delete'    : 'ENTITIES_STATES_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : _('Entity States'),
-				'menu_order'   : 10,
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name',),
-				'form_view'    : ('name', 'descr'),
-				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Entity States'),
+				'menu_order'    : 10,
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('name',),
+				'form_view'     : ('name', 'descr'),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new entity state'))
 			}
 		}
 	)
@@ -508,20 +657,22 @@ class EntityFlagType(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ENTITIES',
-				'cap_read'     : 'ENTITIES_LIST',
-				'cap_create'   : 'ENTITIES_FLAGTYPES_CREATE',
-				'cap_edit'     : 'ENTITIES_FLAGTYPES_EDIT',
-				'cap_delete'   : 'ENTITIES_FLAGTYPES_DELETE',
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_FLAGTYPES_CREATE',
+				'cap_edit'      : 'ENTITIES_FLAGTYPES_EDIT',
+				'cap_delete'    : 'ENTITIES_FLAGTYPES_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : _('Entity Flags'),
-				'menu_order'   : 10,
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name',),
-				'form_view'    : ('name', 'descr'),
-				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Entity Flags'),
+				'menu_order'    : 10,
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('name',),
+				'form_view'     : ('name', 'descr'),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new entity flag type'))
 			}
 		}
 	)
@@ -634,6 +785,8 @@ class PhysicalEntity(Entity):
 				val = [h.id for h in sq]
 				if len(val) > 0:
 					query = query.filter(PhysicalEntity.house_id.in_(val))
+				else:
+					query = query.filter(False)
 		elif 'districtid' in value:
 			val = int(value['districtid'])
 			if val > 0:
@@ -642,6 +795,8 @@ class PhysicalEntity(Entity):
 				val = [h.id for h in sq]
 				if len(val) > 0:
 					query = query.filter(PhysicalEntity.house_id.in_(val))
+				else:
+					query = query.filter(False)
 		elif 'cityid' in value:
 			val = int(value['cityid'])
 			if val > 0:
@@ -650,6 +805,8 @@ class PhysicalEntity(Entity):
 				val = [h.id for h in sq]
 				if len(val) > 0:
 					query = query.filter(PhysicalEntity.house_id.in_(val))
+				else:
+					query = query.filter(False)
 		return query
 
 	__tablename__ = 'entities_physical'
@@ -664,18 +821,18 @@ class PhysicalEntity(Entity):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ENTITIES',
-				'cap_read'     : 'ENTITIES_LIST',
-				'cap_create'   : 'ENTITIES_CREATE',
-				'cap_edit'     : 'ENTITIES_EDIT',
-				'cap_delete'   : 'ENTITIES_DELETE',
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_CREATE',
+				'cap_edit'      : 'ENTITIES_EDIT',
+				'cap_delete'    : 'ENTITIES_DELETE',
 
-				'show_in_menu' : 'modules',
-				'menu_name'    : _('Physical entities'),
-				'menu_order'   : 10,
-				'menu_parent'  : 'entity',
-				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
-				'grid_view'    : (
+				'show_in_menu'  : 'modules',
+				'menu_name'     : _('Physical entities'),
+				'menu_order'    : 10,
+				'menu_parent'   : 'entity',
+				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
+				'grid_view'     : (
 					MarkupColumn(
 						name='icon',
 						header_string='&nbsp;',
@@ -687,7 +844,7 @@ class PhysicalEntity(Entity):
 					),
 					'nick', 'name_family', 'name_given', 'house', 'floor', 'flat', 'phone_home', 'phone_cell'
 				),
-				'form_view'    : (
+				'form_view'     : (
 					'nick', 'parent', 'state', 'flags', 'contractid',
 					'name_family', 'name_given', 'name_middle',
 					'house', 'entrance', 'floor', 'flat',
@@ -696,13 +853,37 @@ class PhysicalEntity(Entity):
 					'pass_series', 'pass_num', 'pass_issuedate', 'pass_issuedby',
 					'descr'
 				),
-				'easy_search'  : ('nick', 'name_family'),
-				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities'),
+				'easy_search'   : ('nick', 'name_family'),
+				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					AddressFilter('address', _filter_address,
 						title=_('Address')
 					),
 				),
+
+				'create_wizard' : Wizard(
+					Step(
+						'nick', 'parent',
+						'state', 'flags', 'descr',
+						id='generic', title=_('Generic entity properties')
+					),
+					Step(
+						'contractid',
+						'name_family', 'name_given', 'name_middle',
+						'phone_home', 'phone_work', 'phone_cell',
+						id='ent_physical1', title=_('Physical entity properties')
+					),
+					Step(
+						'house', 'entrance', 'floor', 'flat',
+						id='ent_physical2', title=_('Physical entity properties')
+					),
+					Step(
+						'pass_series', 'pass_num', 'pass_issuedby', 'pass_issuedate',
+						'email', 'icq', 'homepage', 'birthdate',
+						id='ent_physical3', title=_('Physical entity properties')
+					),
+					title=_('Add new physical entity')
+				)
 			}
 		}
 	)
@@ -899,7 +1080,7 @@ class PhysicalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Pass. Issue')
+			'header_string' : _('Pass. Issued By')
 		}
 	)
 	passport_issue_date = Column(
@@ -910,7 +1091,7 @@ class PhysicalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Pass. Issued By')
+			'header_string' : _('Pass. Issue Date')
 		}
 	)
 
@@ -990,6 +1171,8 @@ class LegalEntity(Entity):
 				val = [h.id for h in sq]
 				if len(val) > 0:
 					query = query.filter(LegalEntity.house_id.in_(val))
+				else:
+					query = query.filter(False)
 		elif 'districtid' in value:
 			val = int(value['districtid'])
 			if val > 0:
@@ -998,6 +1181,8 @@ class LegalEntity(Entity):
 				val = [h.id for h in sq]
 				if len(val) > 0:
 					query = query.filter(LegalEntity.house_id.in_(val))
+				else:
+					query = query.filter(False)
 		elif 'cityid' in value:
 			val = int(value['cityid'])
 			if val > 0:
@@ -1006,6 +1191,8 @@ class LegalEntity(Entity):
 				val = [h.id for h in sq]
 				if len(val) > 0:
 					query = query.filter(LegalEntity.house_id.in_(val))
+				else:
+					query = query.filter(False)
 		return query
 
 	__tablename__ = 'entities_legal'
@@ -1019,18 +1206,18 @@ class LegalEntity(Entity):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ENTITIES',
-				'cap_read'     : 'ENTITIES_LIST',
-				'cap_create'   : 'ENTITIES_CREATE',
-				'cap_edit'     : 'ENTITIES_EDIT',
-				'cap_delete'   : 'ENTITIES_DELETE',
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_CREATE',
+				'cap_edit'      : 'ENTITIES_EDIT',
+				'cap_delete'    : 'ENTITIES_DELETE',
 
-				'show_in_menu' : 'modules',
-				'menu_name'    : _('Legal entities'),
-				'menu_order'   : 20,
-				'menu_parent'  : 'entity',
-				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
-				'grid_view'    : (
+				'show_in_menu'  : 'modules',
+				'menu_name'     : _('Legal entities'),
+				'menu_order'    : 20,
+				'menu_parent'   : 'entity',
+				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
+				'grid_view'     : (
 					MarkupColumn(
 						name='icon',
 						header_string='&nbsp;',
@@ -1042,7 +1229,7 @@ class LegalEntity(Entity):
 					),
 					'nick', 'name', 'cp_name_family', 'cp_name_given', 'house', 'floor', 'flat', 'cp_phone_work', 'cp_phone_cell'
 				),
-				'form_view'    : (
+				'form_view'     : (
 					'nick', 'parent', 'state', 'flags', 'contractid',
 					'name',
 					'cp_name_family', 'cp_name_given', 'cp_name_middle', 'cp_title',
@@ -1052,13 +1239,42 @@ class LegalEntity(Entity):
 					'props_inn', 'props_kpp', 'props_bic', 'props_rs', 'props_cs', 'props_bank',
 					'descr'
 				),
-				'easy_search'  : ('nick', 'name'),
-				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities'),
+				'easy_search'   : ('nick', 'name'),
+				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					AddressFilter('address', _filter_address,
 						title=_('Address')
 					),
 				),
+
+				'create_wizard' : Wizard(
+					Step(
+						'nick', 'parent',
+						'state', 'flags', 'descr',
+						id='generic', title=_('Generic entity properties')
+					),
+					Step(
+						'contractid', 'name',
+						'phone_rec', 'phone_fax',
+						'house', 'entrance', 'floor', 'flat',
+						'homepage',
+						id='ent_legal1', title=_('Legal entity properties')
+					),
+					Step(
+						'cp_name_family', 'cp_name_given', 'cp_name_middle',
+						'cp_title',
+						'cp_phone_work', 'cp_phone_cell',
+						'cp_email', 'cp_icq',
+						id='ent_legal2', title=_('Legal entity contact person')
+					),
+					Step(
+						'address_legal',
+						'props_inn', 'props_kpp',
+						'props_bic', 'props_rs', 'props_cs', 'props_bank',
+						id='ent_legal3', title=_('Legal entity details')
+					),
+					title=_('Add new legal entity')
+				)
 			}
 		}
 	)
@@ -1391,6 +1607,8 @@ class StructuralEntity(Entity):
 				val = [h.id for h in sq]
 				if len(val) > 0:
 					query = query.filter(StructuralEntity.house_id.in_(val))
+				else:
+					query = query.filter(False)
 		elif 'districtid' in value:
 			val = int(value['districtid'])
 			if val > 0:
@@ -1399,6 +1617,8 @@ class StructuralEntity(Entity):
 				val = [h.id for h in sq]
 				if len(val) > 0:
 					query = query.filter(StructuralEntity.house_id.in_(val))
+				else:
+					query = query.filter(False)
 		elif 'cityid' in value:
 			val = int(value['cityid'])
 			if val > 0:
@@ -1407,6 +1627,8 @@ class StructuralEntity(Entity):
 				val = [h.id for h in sq]
 				if len(val) > 0:
 					query = query.filter(StructuralEntity.house_id.in_(val))
+				else:
+					query = query.filter(False)
 		return query
 
 	__tablename__ = 'entities_structural'
@@ -1417,18 +1639,18 @@ class StructuralEntity(Entity):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ENTITIES',
-				'cap_read'     : 'ENTITIES_LIST',
-				'cap_create'   : 'ENTITIES_CREATE',
-				'cap_edit'     : 'ENTITIES_EDIT',
-				'cap_delete'   : 'ENTITIES_DELETE',
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_CREATE',
+				'cap_edit'      : 'ENTITIES_EDIT',
+				'cap_delete'    : 'ENTITIES_DELETE',
 
-				'show_in_menu' : 'modules',
-				'menu_name'    : _('Structural entities'),
-				'menu_order'   : 30,
-				'menu_parent'  : 'entity',
-				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
-				'grid_view'    : (
+				'show_in_menu'  : 'modules',
+				'menu_name'     : _('Structural entities'),
+				'menu_order'    : 30,
+				'menu_parent'   : 'entity',
+				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
+				'grid_view'     : (
 					MarkupColumn(
 						name='icon',
 						header_string='&nbsp;',
@@ -1440,14 +1662,27 @@ class StructuralEntity(Entity):
 					),
 					'nick', 'house'
 				),
-				'form_view'    : ('nick', 'parent', 'state', 'flags', 'house', 'descr'),
-				'easy_search'  : ('nick',),
-				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities'),
+				'form_view'     : ('nick', 'parent', 'state', 'flags', 'house', 'descr'),
+				'easy_search'   : ('nick',),
+				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					AddressFilter('address', _filter_address,
 						title=_('Address')
 					),
 				),
+
+				'create_wizard' : Wizard(
+					Step(
+						'nick', 'parent',
+						'state', 'flags', 'descr',
+						id='generic', title=_('Generic entity properties')
+					),
+					Step(
+						'house',
+						id='ent_structural1', title=_('Structural entity properties')
+					),
+					title=_('Add new structural entity')
+				)
 			}
 		}
 	)
@@ -1504,18 +1739,18 @@ class ExternalEntity(Entity):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_ENTITIES',
-				'cap_read'     : 'ENTITIES_LIST',
-				'cap_create'   : 'ENTITIES_CREATE',
-				'cap_edit'     : 'ENTITIES_EDIT',
-				'cap_delete'   : 'ENTITIES_DELETE',
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_CREATE',
+				'cap_edit'      : 'ENTITIES_EDIT',
+				'cap_delete'    : 'ENTITIES_DELETE',
 
-				'show_in_menu' : 'modules',
-				'menu_name'    : _('External entities'),
-				'menu_order'   : 40,
-				'menu_parent'  : 'entity',
-				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
-				'grid_view'    : (
+				'show_in_menu'  : 'modules',
+				'menu_name'     : _('External entities'),
+				'menu_order'    : 40,
+				'menu_parent'   : 'entity',
+				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
+				'grid_view'     : (
 					MarkupColumn(
 						name='icon',
 						header_string='&nbsp;',
@@ -1527,12 +1762,25 @@ class ExternalEntity(Entity):
 					),
 					'nick', 'name', 'address'
 				),
-				'form_view'    : (
+				'form_view'     : (
 					'nick', 'parent', 'state', 'flags',
 					'name', 'address', 'descr'
 				),
-				'easy_search'  : ('nick', 'name'),
-				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities')
+				'easy_search'   : ('nick', 'name'),
+				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
+
+				'create_wizard' : Wizard(
+					Step(
+						'nick', 'parent',
+						'state', 'flags', 'descr',
+						id='generic', title=_('Generic entity properties')
+					),
+					Step(
+						'name', 'address',
+						id='ent_external1', title=_('External entity properties')
+					),
+					title=_('Add new external entity')
+				)
 			}
 		}
 	)
