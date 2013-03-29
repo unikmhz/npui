@@ -58,6 +58,13 @@ def locale_neg(request):
 def get_debug(request):
 	return request.registry.settings.get('netprofile.debug', False)
 
+def get_csrf(request):
+	if request.session:
+		csrf = request.session.get_csrf_token()
+		if isinstance(csrf, bytes):
+			csrf = csrf.decode()
+		return csrf
+
 def main(global_config, **settings):
 	"""
 	This function returns a Pyramid WSGI application.
@@ -87,6 +94,7 @@ def main(global_config, **settings):
 		'pyramid.events.NewRequest'
 	)
 	config.add_request_method(get_debug, str('debug_enabled'), reify=True)
+	config.add_request_method(get_csrf, str('get_csrf'))
 
 	mmgr = config.registry.getUtility(IModuleManager)
 	mmgr.load('core')

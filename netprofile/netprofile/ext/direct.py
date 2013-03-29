@@ -48,7 +48,7 @@ FORM_DATA_KEYS = frozenset([
 FORM_SUBMIT_RESPONSE_TPL = '<html><body><textarea>%s</textarea></body></html>'
 
 def get_ext_csrf(request):
-	return request.headers.get('X-CSRFToken', '').encode()
+	return request.headers.get('X-CSRFToken', '')
 
 def _mk_cb_key(action_name, method_name):
 	return action_name + '#' + method_name
@@ -218,6 +218,14 @@ class ExtDirectRouter(object):
 				request_as_last_param=True,
 				accepts_files=False
 			)
+			self.add_action(
+				name,
+				method_name='create_wizard_action',
+				callback=model.create_wizard_action,
+				numargs=3,
+				request_as_last_param=True,
+				accepts_files=False
+			)
 
 	def get_actions(self):
 		"""
@@ -355,7 +363,7 @@ class ExtDirectRouter(object):
 		return ret
 
 	def route(self, request):
-		token = request.session.get_csrf_token()
+		token = request.get_csrf()
 		if token != request.ext_csrf:
 			raise ValueError('CSRF token didn\'t match')
 		is_form_data = is_form_submit(request)

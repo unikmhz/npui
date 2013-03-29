@@ -219,6 +219,11 @@ _COLANDER_TYPE_MAP = {
 
 logger = logging.getLogger(__name__)
 
+def _name_to_class(xcname):
+	if xcname in Base._decl_class_registry:
+		return Base._decl_class_registry[xcname]
+	raise KeyError(xcname)
+
 def _table_to_class(tname):
 	for cname, cls in Base._decl_class_registry.items():
 		if getattr(cls, '__tablename__', None) == tname:
@@ -300,7 +305,7 @@ class ExtColumn(object):
 			if typecls is DeclEnumType:
 				xlen = 0
 				for sym in self.column.type.enum:
-					if len(sym.description) > 0:
+					if len(sym.description) > xlen:
 						xlen = len(sym.description)
 				return xlen
 			return self.column.type.length
@@ -331,7 +336,7 @@ class ExtColumn(object):
 	def pixels(self):
 		pix = self.length
 		if isinstance(pix, int) and (pix > 0):
-			pix *= 6
+			pix *= 10
 			pix = max(pix, self.MIN_PIXELS)
 			pix = min(pix, self.MAX_PIXELS)
 		else:
@@ -471,7 +476,10 @@ class ExtColumn(object):
 		if typecls is DeclEnumType:
 			return self.column.type.enum.from_string(param.strip())
 		if issubclass(typecls, _DATE_SET):
-			return dparse(param).astimezone(tzlocal())
+			param = dparse(param)
+			if param.tzinfo is not None:
+				param = param.astimezone(tzlocal())
+			return param
 		if issubclass(typecls, _IPADDR_SET):
 			if isinstance(param, dict):
 				if 'value' not in param:
@@ -672,7 +680,7 @@ class ExtColumn(object):
 				'forceSelection' : True,
 				'store'          : {
 					'xtype'  : 'simplestore',
-					'fields' : ['id', 'value'],
+					'fields' : ('id', 'value'),
 					'data'   : chx
 				}
 			})
@@ -1181,7 +1189,10 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 		if typecls is DeclEnumType:
 			return self.column.type.enum.from_string(param.strip())
 		if issubclass(typecls, _DATE_SET):
-			return dparse(param).astimezone(tzlocal())
+			param = dparse(param)
+			if param.tzinfo is not None:
+				param = param.astimezone(tzlocal())
+			return param
 		if issubclass(typecls, _IPADDR_SET):
 			if isinstance(param, dict):
 				if 'value' not in param:
@@ -1263,6 +1274,10 @@ class ExtModel(object):
 	@property
 	def menu_parent(self):
 		return self.model.__table__.info.get('menu_parent')
+
+	@property
+	def menu_main(self):
+		return self.model.__table__.info.get('menu_main', False)
 
 	@property
 	def cap_menu(self):
@@ -1525,7 +1540,9 @@ class ExtModel(object):
 							query = query.filter(not col.in_(fval))
 							continue
 					if issubclass(colcls, _DATE_SET):
-						fval = dparse(fval).astimezone(tzlocal())
+						fval = dparse(fval)
+						if fval.tzinfo is not None:
+							fval = fval.astimezone(tzlocal())
 						if fval is None:
 							continue
 						if fkey == 'gt':
@@ -1553,6 +1570,8 @@ class ExtModel(object):
 							query = query.filter(col <= fval)
 							continue
 					if issubclass(colcls, _STRING_SET):
+						if fval is None:
+							continue
 						if fkey == 'contains':
 							query = query.filter(col.contains(fval))
 							continue
@@ -1685,6 +1704,34 @@ class ExtModel(object):
 	def read_one(self, params, request):
 		logger.info('Running ExtDirect action:%s method:%s', self.name, 'read_one')
 		logger.debug('Params: %r', params)
+
+	def set_values(self, obj, values, request):
+		trans = {}
+		cols = self.get_columns()
+		rcols = self.get_read_columns()
+		for cname, col in rcols.items():
+			if isinstance(col, ExtPseudoColumn):
+				continue
+			trans[cname] = self.model.__mapper__.get_property_by_column(
+					col.column)
+		for p, val in values.items():
+			if p not in cols:
+				if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
+					cols[p] = rcols[p]
+				else:
+					continue
+			writer = cols[p].writer
+			if writer:
+				writer = getattr(obj, writer, None)
+				if callable(writer):
+					if cols[p].pass_request:
+						writer(cols[p].parse_param(val), values, request)
+					else:
+						writer(cols[p].parse_param(val), values)
+			elif isinstance(cols[p], ExtOneToManyRelationshipColumn):
+				cols[p].apply_data(obj, cols[p].parse_param(val))
+			else:
+				setattr(obj, trans[p].key, cols[p].parse_param(val))
 
 	def create(self, params, request):
 		logger.info('Running ExtDirect action:%s method:%s', self.name, 'create')
@@ -1874,14 +1921,31 @@ class ExtModel(object):
 		logger.info('Running ExtDirect action:%s method:%s', self.name, 'get_create_wizard')
 		wiz = self.create_wizard
 		if wiz:
+			title = wiz.title
+			if title:
+				loc = get_localizer(request)
+				title = loc.translate(title)
 			return {
 				'success' : True,
-				'fields'  : wiz.get_cfg(self, request, use_defaults=True)
+				'fields'  : wiz.get_cfg(self, request, use_defaults=True),
+				'title'   : title
 			}
 		return {
 			'success' : False,
 			'fields'  : []
 		}
+
+	def create_wizard_action(self, pane_id, act, values, request):
+		logger.info('Running ExtDirect action:%s method:%s', self.name, 'create_wizard_action')
+		wiz = self.create_wizard
+		if wiz:
+			ret = wiz.action(pane_id, act, values, request)
+			if ret:
+				return {
+					'success' : True,
+					'action'  : ret
+				}
+		return { 'success' : False }
 
 	def get_menu_tree(self, req, name):
 		if self.show_in_menu == name:
@@ -1901,6 +1965,8 @@ class ExtModel(object):
 			xpa = self.menu_parent
 			if xpa is not None:
 				ret['parent'] = xpa
+			if self.menu_main:
+				ret['main'] = True
 			return ret
 
 	def get_detail_pane(self, req):
@@ -1961,6 +2027,7 @@ class ExtModuleBrowser(object):
 		ch = []
 		sch = {}
 		och = {}
+		menu_main = None
 		id_cache = {}
 		loc = get_localizer(req)
 		for model in self:
@@ -1968,6 +2035,10 @@ class ExtModuleBrowser(object):
 			mt = em.get_menu_tree(req, name)
 			if mt:
 				id_cache[mt['id']] = mt
+				if mt.get('main'):
+					del mt['main']
+					menu_main = mt
+					continue
 				if 'section' in mt:
 					sect = mt['section']
 					if sect not in sch:
@@ -1986,8 +2057,10 @@ class ExtModuleBrowser(object):
 					och[parent].append(mt)
 				else:
 					ch.append(mt)
+		ext_children = {}
 		for parent, orphans in och.items():
 			if parent not in id_cache:
+				ext_children[parent] = orphans
 				continue
 			pnode = id_cache[parent]
 			pnode['leaf'] = False
@@ -2000,14 +2073,24 @@ class ExtModuleBrowser(object):
 			ss['children'] = sorted(ss['children'], key=lambda mt: mt['order'])
 			ss['order'] = sum([i['order'] for i in ss['children']]) // len(ss['children'])
 			ch.append(ss)
-		if len(ch) > 0:
-			return {
+		if (len(ch) > 0) or menu_main:
+			ret = {
 				'id'       : self.moddef,
 				'text'     : loc.translate(self.mmgr.loaded[self.moddef].name),
 				'expanded' : True,
 				'children' : sorted(ch, key=lambda mt: mt['order']),
 				'iconCls'  : 'ico-module'
 			}
+			if menu_main:
+				ret.update({
+					'iconCls' : menu_main['iconCls'],
+					'xview'   : menu_main['xview']
+				})
+				if 'children' in menu_main:
+					ret['children'].extend(menu_main['children'])
+			if len(ext_children) > 0:
+				ret['external'] = ext_children
+			return ret
 
 class ExtBrowser(object):
 	def __init__(self, mmgr):

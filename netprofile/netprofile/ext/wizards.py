@@ -8,18 +8,140 @@ from __future__ import (
 	division
 )
 
-from netprofile.ext.data import ExtRelationshipColumn
+from pyramid.i18n import get_localizer
+
+from netprofile.db.fields import EnumMeta
+from netprofile.ext.data import (
+	_name_to_class,
+	ExtModel,
+	ExtRelationshipColumn
+)
+
+class CustomWizardField(object):
+	"""
+	Non-standard wizard field.
+	"""
+	def get_cfg(self, model, req, **kwargs):
+		return None
+
+	def append_cfg(self, model, req, **kwargs):
+		return None
+
+class ExtJSWizardField(CustomWizardField):
+	"""
+	Wizard field containing arbitrary ExtJS configuration.
+	"""
+	def __init__(self, cfg):
+		self.cfg = cfg
+
+	def get_cfg(self, model, req, **kwargs):
+		return self.cfg
+
+class DeclEnumWizardField(CustomWizardField):
+	"""
+	Combo box field; auto-created from a DeclEnum.
+	"""
+	def __init__(self, name, enum, **kwargs):
+		assert isinstance(enum, EnumMeta), \
+			'Tried to generate a wizard field from something othen than an enum.'
+		self.name = name
+		self.enum = enum
+		self.kw = kwargs
+
+	def get_cfg(self, model, req, **kwargs):
+		loc = get_localizer(req)
+		store = []
+		maxlen = 0
+		for sym in self.enum:
+			store.append({
+				'id'    : sym.value,
+				'value' : loc.translate(sym.description)
+			})
+		return {
+			'xtype'          : 'combobox',
+			'allowBlank'     : self.kw.get('nullable', False),
+			'name'           : self.name,
+			'fieldLabel'     : loc.translate(self.kw.get('label', self.name)),
+			'format'         : 'string',
+			'displayField'   : 'value',
+			'valueField'     : 'id',
+			'queryMode'      : 'local',
+			'editable'       : False,
+			'forceSelection' : True,
+			'store'          : {
+				'xtype'  : 'simplestore',
+				'fields' : ('id', 'value'),
+				'data'   : store
+			}
+		}
+
+class ExternalWizardField(CustomWizardField):
+	"""
+	Generates wizard fields from arbitrary models.
+	"""
+	def __init__(self, cls, fldname, name=None):
+		if name is None:
+			name = fldname
+		self.name = name
+		self.model = cls
+		self.field = fldname
+
+	def append_cfg(self, model, req, **kwargs):
+		if isinstance(self.model, str):
+			self.model = ExtModel(_name_to_class(self.model))
+		ret = []
+		col = self.model.get_column(self.field)
+		colfld = col.get_editor_cfg(req, in_form=True)
+		if colfld:
+			colfld['name'] = self.name
+			coldef = col.default
+			if (kwargs.get('use_defaults', False)) and (coldef is not None):
+				colfld['value'] = coldef
+			ret = [colfld]
+			extra = col.append_field()
+			while extra:
+				ecol = self.model.get_column(extra)
+				ecolfld = ecol.get_editor_cfg(req, in_form=True)
+				if ecolfld:
+					ecoldef = ecol.default
+					if (kwargs.get('use_defaults', False)) and (ecoldef is not None):
+						ecolfld['value'] = ecoldef
+					ret.append(ecolfld)
+					extra = ecol.append_field()
+				else:
+					break
+			return ret
 
 class Step(object):
+	"""
+	Single pane of a wizard. Wizards always contain at least one of these.
+	"""
 	def __init__(self, *args, **kwargs):
 		self.fields = args
 		self.title = kwargs.get('title')
 		self.id = kwargs.get('id')
 		self.validate = kwargs.get('validate', True)
+		self.on_next = kwargs.get('on_next')
+		self.on_prev = kwargs.get('on_prev')
+		self.on_submit = kwargs.get('on_submit', False)
 
 	def get_cfg(self, model, req, **kwargs):
 		step = []
+		loc = get_localizer(req)
 		for field in self.fields:
+			if isinstance(field, CustomWizardField):
+				fcfg = field.get_cfg(model, req, **kwargs)
+				if fcfg is not None:
+					if (not kwargs.get('use_defaults', False)) and ('value' in fcfg):
+						del fcfg['value']
+					step.append(fcfg)
+				fcfg = field.append_cfg(model, req, **kwargs)
+				if fcfg is not None:
+					for ffld in fcfg:
+						if (not kwargs.get('use_defaults', False)) and ('value' in ffld):
+							del ffld['value']
+					step.extend(fcfg)
+				continue
 			col = model.get_column(field)
 			colfld = col.get_editor_cfg(req, in_form=True)
 			if colfld:
@@ -40,10 +162,25 @@ class Step(object):
 			'doValidation' : self.validate
 		}
 		if self.title:
-			cfg['title'] = self.title
+			cfg['title'] = loc.translate(self.title)
+		if self.on_prev:
+			if callable(self.on_prev):
+				cfg['remotePrev'] = True
+			else:
+				cfg['remotePrev'] = self.on_prev
+		if self.on_next:
+			if callable(self.on_next):
+				cfg['remoteNext'] = True
+			else:
+				cfg['remoteNext'] = self.on_next
+		if self.on_submit:
+			cfg['allowSubmit'] = True
 		return cfg
 
 class Wizard(object):
+	"""
+	Generic wizard object. Generally viewed client-side on 'create' and other events.
+	"""
 	def __init__(self, *args, **kwargs):
 		self.steps = args
 		self.title = kwargs.get('title')
@@ -59,9 +196,35 @@ class Wizard(object):
 				scfg['itemId'] = step.id
 				res.append(scfg)
 				idx += 1
+		req.run_hook(
+			'np.wizard.cfg.%s.%s' % (model.model.__moddef__, model.model.__name__),
+			self, model, res
+		)
 		return res
 
+	def action(self, step_id, act, values, req):
+		step = None
+		for xstep in self.steps:
+			if xstep.id == step_id:
+				step = xstep
+				break
+		if step:
+			cb = None
+			if act == 'prev':
+				cb = step.on_prev
+			elif act == 'next':
+				cb = step.on_next
+			elif act == 'submit':
+				cb = step.on_submit
+			if cb:
+				if callable(cb):
+					return cb(self, step, act, values, req)
+				return { 'do' : 'goto', 'goto' : cb }
+
 class SimpleWizard(Wizard):
+	"""
+	Single-pane wizard which mimics model's edit form.
+	"""
 	def get_cfg(self, model, req, **kwargs):
 		step = []
 		for cname, col in model.get_read_columns().items():
@@ -75,10 +238,15 @@ class SimpleWizard(Wizard):
 						if hdval:
 							colfld['value'] = str(hdval)
 				step.append(colfld)
-		return [{
+		res = [{
 			'itemId'       : 'step0',
 			'xtype'        : 'npwizardpane',
 			'items'        : step,
 			'doValidation' : True
 		}]
+		req.run_hook(
+			'np.wizard.cfg.%s.%s' % (model.model.__moddef__, model.model.__name__),
+			self, model, res
+		)
+		return res
 
