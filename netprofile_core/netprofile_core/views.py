@@ -77,9 +77,9 @@ def do_login(request):
 	if 'submit' in request.POST:
 		login = request.POST.get('user', '')
 		passwd = request.POST.get('pass', '')
-		csrf = request.POST.get('csrf', '').encode()
+		csrf = request.POST.get('csrf', '')
 
-		if csrf == request.session.get_csrf_token():
+		if csrf == request.get_csrf():
 			sess = DBSession()
 			reg = request.registry
 			hash_con = reg.settings.get('netprofile.auth.hash', 'sha1')
@@ -325,20 +325,4 @@ def dyn_usersettings_client(request):
 		'success'  : True,
 		'settings' : request.user.client_settings(request)
 	}
-
-conn_err_msg = """\
-Pyramid is having a problem using your SQL database.  The problem
-might be caused by one of the following things:
-
-1.  You may need to run the "initialize_netprofile_db" script
-    to initialize your database tables.  Check your virtual 
-    environment's "bin" directory for this script and try to run it.
-
-2.  Your database server may not be running.  Check that the
-    database server referred to by the "sqlalchemy.url" setting in
-    your "development.ini" file is running.
-
-After you fix the problem, please restart the Pyramid application to
-try it again.
-"""
 

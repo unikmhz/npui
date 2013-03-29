@@ -107,14 +107,35 @@ Ext.define('NetProfile.view.ModelGrid', {
 					var wiz_win = Ext.create('Ext.window.Window', {
 						layout: 'fit',
 						minWidth: 500,
-						minHeight: 200,
 						title: this.addWindowText,
-						modal: true
+						modal: true,
+						constrain: true,
+						constrainHeader: true,
+						maximizable: true,
+						listeners: {
+							afterlayout: function(win)
+							{
+								var pos, sz, bodysz;
+
+								if(!win.maximized)
+								{
+									pos = win.getPosition();
+									sz = win.getSize();
+									bodysz = Ext.getBody().getSize();
+									if(pos[1] < 0)
+										win.setPosition(pos[0], 10);
+									if((sz.height + 20) > bodysz.height)
+										win.setSize(sz.width + 16, bodysz.height - 20);
+									win.center();
+								}
+							}
+						}
 					});
 					var wiz = Ext.create('NetProfile.view.Wizard', {
 						stateful: false,
 						wizardCls: this.apiClass,
-						createInto: this.store
+						createInto: this.store,
+						actionApi: 'create_wizard_action'
 					});
 					if(this.createControllers)
 					{
@@ -186,7 +207,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 							if(this.store)
 								Ext.MessageBox.confirm(
 									this.deleteTipText,
-									this.deleteMsgText + '<div class="np-object-frame">' + record.get('__str__') + '</div>',
+									Ext.String.format('{0}<div class="np-object-frame">{1}</div>', this.deleteMsgText, record.get('__str__')),
 									function(btn)
 									{
 										if(btn === 'yes')

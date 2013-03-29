@@ -15,6 +15,7 @@ Ext.define('NetProfile.view.Wizard', {
 	border: 0,
 	api: null,
 	submitApi: 'create',
+	actionApi: null,
 	wizardCls: null,
 	createInto: null,
 //	doValidation: true, do we need this global flag???
@@ -63,9 +64,22 @@ Ext.define('NetProfile.view.Wizard', {
 			disabled: true,
 			handler: function(btn)
 			{
+				var layout = this.getLayout(),
+					curpane = layout.getActiveItem();
+
 				if(!this.validate())
 					return false;
-				if(this.createInto)
+				if(curpane.allowSubmit && this.api && this.api.action)
+				{
+					this.api.action(
+						curpane.itemId,
+						'submit',
+						this.getValues(),
+						this.actionCallback.bind(this)
+					);
+					return true;
+				}
+				else if(this.createInto)
 				{
 					if(this.createInto.add(this.getValues()))
 					{
@@ -105,7 +119,8 @@ Ext.define('NetProfile.view.Wizard', {
 		return {
 //			load      : api.read,
 			submit    : api[this.submitApi],
-			get_steps : api.get_create_wizard
+			get_steps : api.get_create_wizard,
+			action    : api[this.actionApi]
 		};
 	},
 	loadWizard: function()
@@ -116,10 +131,18 @@ Ext.define('NetProfile.view.Wizard', {
 	},
 	loadCallback: function(data, result)
 	{
+		var win;
+
 		if(!data || !data.fields)
 		{
 			this.fireEvent('wizardloadfailed', this, data, result);
 			return false;
+		}
+		if(data.title)
+		{
+			win = this.up('window');
+			if(win)
+				win.setTitle(data.title);
 		}
 		Ext.destroy(this.removeAll());
 		this.fireEvent('beforeaddfields', this, data, result);
@@ -128,29 +151,109 @@ Ext.define('NetProfile.view.Wizard', {
 
 		this.fireEvent('wizardloaded', this, data, result);
 	},
+	actionCallback: function(data, result)
+	{
+		var me = this,
+			layout = me.getLayout(),
+			pane;
+
+		if(!data || !data.success || !data.action)
+		{
+			// FIXME: add visual indication
+			return false;
+		}
+		if('disable' in data.action)
+			Ext.Array.forEach(data.action.disable, function(stepid)
+			{
+				var step = me.getComponent(stepid);
+				if(step)
+				{
+					step.doValidation = false;
+					step.doGetValues = false;
+				}
+			});
+		if('enable' in data.action)
+			Ext.Array.forEach(data.action.enable, function(stepid)
+			{
+				var step = me.getComponent(stepid);
+				if(step)
+				{
+					step.doValidation = true;
+					step.doGetValues = true;
+				}
+			});
+		if('do' in data.action)
+			switch(data.action['do'])
+			{
+				case 'prev':
+				case 'next':
+					layout[data.action]();
+					me.update('init');
+					return true;
+				case 'goto':
+					if(!('goto' in data.action))
+						return false;
+					pane = me.getComponent(data.action['goto']);
+					if(pane)
+						layout.setActiveItem(pane);
+					me.update('init');
+					return true;
+				case 'close':
+					me.up('window').close();
+					return true;
+				default:
+					break;
+			}
+		return false;
+	},
 	update: function(dir)
 	{
 		var me = this,
 			layout = me.getLayout(),
 			tbar = me.down('toolbar'),
-			curpane;
+			curpane = layout.getActiveItem();
 
 		if(dir !== 'init')
 		{
 			if(Ext.Array.contains(['prev', 'next'], dir))
 			{
-				curpane = layout.getActiveItem();
 				if(curpane && curpane.doValidation && !curpane.getForm().isValid())
 				{
 					// FIXME: add visual indication
 					return false;
 				}
-				layout[dir]();
+				var attr = false;
+				switch(dir)
+				{
+					case 'prev':
+						attr = curpane.remotePrev;
+						break;
+					case 'next':
+						attr = curpane.remoteNext;
+						break;
+					default:
+						break;
+				}
+				if(Ext.isString(attr))
+				{
+					layout.setActiveItem(attr);
+					curpane = layout.getActiveItem();
+				}
+				else if(attr && this.api && this.api.action)
+				{
+					this.api.action(curpane.itemId, dir, this.getValues(), this.actionCallback.bind(this));
+					return false;
+				}
+				else
+				{
+					layout[dir]();
+					curpane = layout.getActiveItem();
+				}
 			}
 		}
-		tbar.getComponent('goto_prev').setDisabled(!layout.getPrev());
-		tbar.getComponent('goto_next').setDisabled(!layout.getNext());
-		tbar.getComponent('act_submit').setDisabled(layout.getNext());
+		tbar.getComponent('goto_prev').setDisabled(!layout.getPrev() && !curpane.remotePrev);
+		tbar.getComponent('goto_next').setDisabled((!layout.getNext() && !curpane.remoteNext) || curpane.allowSubmit);
+		tbar.getComponent('act_submit').setDisabled(layout.getNext() && !curpane.allowSubmit);
 
 		return true;
 	},
@@ -167,9 +270,11 @@ Ext.define('NetProfile.view.Wizard', {
 	},
 	nextStep: function()
 	{
+		return this.update('next');
 	},
 	prevStep: function()
 	{
+		return this.update('prev');
 	},
 	gotoStep: function(idx)
 	{
@@ -181,6 +286,8 @@ Ext.define('NetProfile.view.Wizard', {
 
 		this.items.each(function(i)
 		{
+			if(!i.doGetValues)
+				return;
 			iv = i.getValues();
 			for(j in iv)
 				res[j] = iv[j];

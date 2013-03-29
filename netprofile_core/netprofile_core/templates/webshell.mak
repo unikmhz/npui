@@ -33,7 +33,9 @@ Ext.require([
 	NetProfile.userSettings = ${req.user.client_settings(req) | n,jsone};
 	NetProfile.baseURL = '${req.host_url}';
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
-	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {'X-CSRFToken': '${req.session.get_csrf_token().decode('utf-8')}'});
+	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {
+		'X-CSRFToken': '${req.get_csrf()}'
+	});
 
 	Ext.define('NetProfile.data.IPAddress', {
 		MAX_IPV4: 0xffffffff,

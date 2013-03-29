@@ -94,16 +94,9 @@ Ext.define('NetProfile.view.ModelSelect', {
 			selectIdField: hf,
 			stateful: false
 		});
-//		sel_grid.getView().on({
-//			viewready: function()
-//			{
-//				sel_win.center();
-//			}
-//		});
 
 		sel_win.add(sel_grid);
 		sel_win.show();
-//		sel_win.center();
 	},
 	onTrigger3Click: function(ev)
 	{

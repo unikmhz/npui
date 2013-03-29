@@ -10,6 +10,10 @@ Ext.define('NetProfile.view.WizardPane', {
 	bodyPadding: 5,
 	autoScroll: true,
 	doValidation: true,
+	doGetValues: true,
+	remotePrev: false,
+	remoteNext: false,
+	allowSubmit: false,
 	fieldDefaults: {
 		labelWidth: 120,
 		labelAlign: 'right'
