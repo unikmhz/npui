@@ -125,7 +125,9 @@ def auth_to_db(event):
 		sess.execute('SET @accessgid = :gid', { 'gid' : user.group_id })
 		sess.execute('SET @accesslogin = :login', { 'login' : user.login })
 
-		skey = request.registry.settings.get('session.key')
+		skey = request.registry.settings.get('redis.sessions.cookie_name')
+		if not skey:
+			skey = request.registry.settings.get('session.key')
 		assert skey is not None, 'Session cookie name does not exist'
 		sname = request.cookies.get(skey)
 		assert skey is not None, 'Session key does not exist'
