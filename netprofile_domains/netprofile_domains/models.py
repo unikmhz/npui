@@ -32,7 +32,6 @@ from sqlalchemy.orm import (
 	relationship
 )
 
-from netprofile.ext.wizards import SimpleWizard
 from sqlalchemy.ext.associationproxy import association_proxy
 
 from netprofile.db.connection import Base
@@ -49,6 +48,7 @@ from netprofile.db.fields import (
 )
 from netprofile.db.ddl import Comment
 from netprofile.ext.columns import MarkupColumn
+from netprofile.ext.wizards import SimpleWizard
 
 from pyramid.i18n import (
 	TranslationStringFactory,
@@ -79,6 +79,7 @@ class Domain(Base):
 
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Domains'),
+				'menu_main'     : True,
 				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : (
@@ -191,7 +192,7 @@ class Domain(Base):
 		}
 	)
 	soa_refresh = Column(
-		UInt16(),
+		UInt32(),
 		Comment('SOA refresh field'),
 		nullable=False,
 		default=3600,
@@ -200,7 +201,7 @@ class Domain(Base):
 		}
 	)
 	soa_retry = Column(
-		UInt16(),
+		UInt32(),
 		Comment('SOA retry field'),
 		nullable=False,
 		default=300,
@@ -209,7 +210,7 @@ class Domain(Base):
 		}
 	)
 	soa_expire = Column(
-		UInt16(),
+		UInt32(),
 		Comment('SOA expire field'),
 		nullable=False,
 		default=1814400,
@@ -218,7 +219,7 @@ class Domain(Base):
 		}
 	)
 	soa_minimum = Column(
-		UInt16(),
+		UInt32(),
 		Comment('SOA minimum field'),
 		nullable=False,
 		default=3600,
