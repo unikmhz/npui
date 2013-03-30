@@ -20,47 +20,51 @@ _ = TranslationStringFactory('netprofile_geo')
 def _dpane_city_districts(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
-		'title'          : loc.translate(_('Districts')),
-		'xtype'          : 'grid_geo_District',
-		'stateId'        : None,
-		'stateful'       : False,
-		'hideColumns'    : ('city',),
-		'extraParamProp' : 'cityid'
+		'title'             : loc.translate(_('Districts')),
+		'xtype'             : 'grid_geo_District',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('city',),
+		'extraParamProp'    : 'cityid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
 @register_hook('core.dpanetabs.geo.District')
 def _dpane_district_streets(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
-		'title'          : loc.translate(_('Streets')),
-		'xtype'          : 'grid_geo_Street',
-		'stateId'        : None,
-		'stateful'       : False,
-		'hideColumns'    : ('district',),
-		'extraParamProp' : 'districtid'
+		'title'             : loc.translate(_('Streets')),
+		'xtype'             : 'grid_geo_Street',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('district',),
+		'extraParamProp'    : 'districtid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
 @register_hook('core.dpanetabs.geo.Street')
 def _dpane_street_houses(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
-		'title'          : loc.translate(_('Houses')),
-		'xtype'          : 'grid_geo_House',
-		'stateId'        : None,
-		'stateful'       : False,
-		'hideColumns'    : ('street',),
-		'extraParamProp' : 'streetid'
+		'title'             : loc.translate(_('Houses')),
+		'xtype'             : 'grid_geo_House',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('street',),
+		'extraParamProp'    : 'streetid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
 @register_hook('core.dpanetabs.geo.House')
 def _dpane_house_places(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
-		'title'          : loc.translate(_('Places')),
-		'xtype'          : 'grid_geo_Place',
-		'stateId'        : None,
-		'stateful'       : False,
-		'hideColumns'    : ('house',),
-		'extraParamProp' : 'houseid'
+		'title'             : loc.translate(_('Places')),
+		'xtype'             : 'grid_geo_Place',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('house',),
+		'extraParamProp'    : 'houseid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
