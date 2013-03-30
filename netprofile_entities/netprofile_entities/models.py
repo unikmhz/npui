@@ -389,7 +389,7 @@ class Entity(Base):
 						on_prev='generic',
 						on_submit=_wizcb_ent_submit('ExternalEntity')
 					),
-					title=_('Add new entity')
+					title=_('Add new entity'), validator='CreateEntity'
 				)
 			}
 		}

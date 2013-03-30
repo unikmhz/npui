@@ -1936,7 +1936,7 @@ class ExtModel(object):
 		if self.is_polymorphic:
 			poly_name = self.model.__mapper__.polymorphic_on.name
 			poly_val = self.model.__mapper__.polymorphic_identity
-			if poly_name and (poly_val is not None) and (poly_name in cols):
+			if poly_name and (poly_val is not None) and (poly_name in cols) and (poly_name not in values):
 				values[poly_name] = poly_val
 		pkey = None
 		if self.pk in values:
@@ -1977,11 +1977,14 @@ class ExtModel(object):
 			if title:
 				loc = get_localizer(request)
 				title = loc.translate(title)
-			return {
+			ret = {
 				'success' : True,
 				'fields'  : wiz.get_cfg(self, request, use_defaults=True),
 				'title'   : title
 			}
+			if wiz.validator:
+				ret['validator'] = wiz.validator
+			return ret
 		return {
 			'success' : False,
 			'fields'  : []

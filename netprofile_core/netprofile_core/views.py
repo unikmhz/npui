@@ -200,6 +200,18 @@ def localstorage_load(request):
 		'message' : 'No such user or anonymous'
 	}
 
+@extdirect_method('CustomValidator', 'validate', request_as_last_param=True, permission='USAGE')
+def custom_valid(name, values, request):
+	ret = {
+		'success' : True,
+		'errors'  : {}
+	}
+	request.run_hook(
+		'core.validators.%s' % str(name),
+		ret, values, request
+	)
+	return ret
+
 @extdirect_method('MenuTree', 'settings', request_as_last_param=True, permission='USAGE')
 def menu_settings(params, request):
 	"""

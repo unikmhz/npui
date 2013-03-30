@@ -184,6 +184,7 @@ class Wizard(object):
 	def __init__(self, *args, **kwargs):
 		self.steps = args
 		self.title = kwargs.get('title')
+		self.validator = kwargs.get('validator')
 
 	def get_cfg(self, model, req, **kwargs):
 		res = []

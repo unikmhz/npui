@@ -67,6 +67,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	initComponent: function()
 	{
 		this._create_ctl = {};
+		this.tabConfig = { cls: 'record-tab-hdl' };
 		if(this.selectRow)
 		{
 			this.canCreate = false;

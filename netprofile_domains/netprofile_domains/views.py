@@ -21,6 +21,7 @@ def _dpane_domain_aliases(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.extend(({
 		'title'             : loc.translate(_('Subdomains')),
+		'iconCls'           : 'ico-mod-domain',
 		'xtype'             : 'grid_domains_Domain',
 		'stateId'           : None,
 		'stateful'          : False,
@@ -30,6 +31,7 @@ def _dpane_domain_aliases(tabs, model, req):
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	}, {
 		'title'             : loc.translate(_('Aliases')),
+		'iconCls'           : 'ico-mod-domainalias',
 		'xtype'             : 'grid_domains_DomainAlias',
 		'stateId'           : None,
 		'stateful'          : False,
@@ -38,6 +40,7 @@ def _dpane_domain_aliases(tabs, model, req):
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	}, {
 		'title'             : loc.translate(_('TXT Records')),
+		'iconCls'           : 'ico-mod-domaintxtrecord',
 		'xtype'             : 'grid_domains_DomainTXTRecord',
 		'stateId'           : None,
 		'stateful'          : False,

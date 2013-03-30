@@ -21,6 +21,7 @@ def _dpane_city_districts(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
 		'title'             : loc.translate(_('Districts')),
+		'iconCls'           : 'ico-mod-district',
 		'xtype'             : 'grid_geo_District',
 		'stateId'           : None,
 		'stateful'          : False,
@@ -34,6 +35,7 @@ def _dpane_district_streets(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
 		'title'             : loc.translate(_('Streets')),
+		'iconCls'           : 'ico-mod-street',
 		'xtype'             : 'grid_geo_Street',
 		'stateId'           : None,
 		'stateful'          : False,
@@ -47,6 +49,7 @@ def _dpane_street_houses(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
 		'title'             : loc.translate(_('Houses')),
+		'iconCls'           : 'ico-mod-house',
 		'xtype'             : 'grid_geo_House',
 		'stateId'           : None,
 		'stateful'          : False,
@@ -60,6 +63,7 @@ def _dpane_house_places(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
 		'title'             : loc.translate(_('Places')),
+		'iconCls'           : 'ico-mod-place',
 		'xtype'             : 'grid_geo_Place',
 		'stateId'           : None,
 		'stateful'          : False,

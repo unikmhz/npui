@@ -120,8 +120,8 @@ Ext.define('NetProfile.view.Wizard', {
 //		}
 		api = NetProfile.api[this.wizardCls];
 		if(this.validateApi)
-			valid = Ext.ClassManager.get(this.validateApi);
-		if(!valid)
+			valid = NetProfile.api.CustomValidator.validate;
+		else
 			valid = api.validate_fields;
 		return {
 //			load      : api.read,
@@ -142,9 +142,10 @@ Ext.define('NetProfile.view.Wizard', {
 		if(this.api.validate)
 		{
 			var me = this,
-				values = this.getValues();
+				values = this.getValues(),
+				cbfunc;
 
-			this.api.validate(values, function(data, res)
+			cbfunc = function(data, res)
 			{
 				var layout = this.getLayout(),
 					form = layout.getActiveItem().getForm(),
@@ -165,7 +166,12 @@ Ext.define('NetProfile.view.Wizard', {
 				});
 				form.isValid();
 				return true;
-			}, this);
+			};
+
+			if(this.validateApi)
+				this.api.validate(this.validateApi, values, cbfunc, this);
+			else
+				this.api.validate(values, cbfunc, this);
 		}
 		return true;
 	},
@@ -184,6 +190,11 @@ Ext.define('NetProfile.view.Wizard', {
 			win = this.up('window');
 			if(win)
 				win.setTitle(data.title);
+		}
+		if(data.validator)
+		{
+			this.validateApi = data.validator;
+			this.api = this.getDirectAction();
 		}
 		Ext.destroy(this.removeAll());
 		this.fireEvent('beforeaddfields', this, data, result);
