@@ -460,7 +460,8 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('E-mail')
+			'header_string' : _('E-mail'),
+			'vtype'         : 'email'
 		}
 	)
 	ip_address = Column(

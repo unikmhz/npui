@@ -13,8 +13,8 @@ Ext.define('NetProfile.view.Form', {
 	statics: {
 		formdef: {}
 	},
-//	border: 0,
 	autoScroll: true,
+	remoteValidation: false,
 	bodyPadding: 5,
 	layout: 'anchor',
 	defaults: {
@@ -72,31 +72,21 @@ Ext.define('NetProfile.view.Form', {
 						form.loadRecord(fp.record);
 					}
 				}
-//					form.submit({
-//						success: function(form, action) {
-//							Ext.Msg.alert('Success', action.result.msg);
-//							this.fireEvent('submitsuccess', form, action);
-//						},
-//						failure: function(form, action) {
-//							Ext.Msg.alert('Failed', action.result.msg);
-//							this.fireEvent('submitfailure', form, action);
-//						},
-//						scope: this
-//					});
 			},
 			tooltip: { text: this.submitTipText, title: this.submitTipTitleText }
 		}];
 
 		this.callParent();
 
-		this.on('beforerender', this.loadForm, this);
-
 		this.addEvents(
+			'fieldchanged',
 			'formloaded',
 			'formloadfailed',
 			'submitsuccess',
 			'submitfailure'
 		);
+		this.on('beforerender', this.loadForm, this);
+		this.on('fieldchanged', this.remoteValidate, this, { buffer: 500 });
 	},
 	getDirectAction: function()
 	{
@@ -112,7 +102,8 @@ Ext.define('NetProfile.view.Form', {
 		return {
 			load:       api.read,
 			submit:     api.update,
-			get_fields: api.get_fields
+			get_fields: api.get_fields,
+			validate:   api.validate_fields
 		};
 	},
 	loadForm: function()
@@ -125,22 +116,70 @@ Ext.define('NetProfile.view.Form', {
 		else
 			this.api.get_fields(this.loadCallback.bind(this));
 	},
+	remoteValidate: function(fld)
+	{
+		if(this.api.validate && this.remoteValidation)
+		{
+			var me = this,
+				values = this.getValues(false, false, false, true);
+
+			this.api.validate(values, function(data, res)
+			{
+				var form = this.getForm(),
+					xfld;
+
+				if(!data || !data.success)
+					return false;
+				if(!data.errors)
+					return true;
+				form.getFields().each(function(xfld)
+				{
+					if(!xfld.name)
+						return true;
+					if(xfld.name in data.errors)
+						xfld.asyncErrors = data.errors[xfld.name];
+					else
+						xfld.asyncErrors = [];
+				});
+				form.isValid();
+				return true;
+			}, this);
+		}
+		return true;
+	},
 	loadCallback: function(data, result)
 	{
-		var st = this.statics();
+		var me = this,
+			st = this.statics();
 
 		if(!data || !data.fields)
 		{
-			this.fireEvent('formloadfailed', data, result);
+			this.fireEvent('formloadfailed', this, data, result);
 			return false;
 		}
-		Ext.destroy(this.removeAll());
+		if(data.rvalid)
+			this.remoteValidation = true;
+		else
+			this.remoteValidation = false;
+		this.removeAll(true);
 		st.formdef[this.formCls] = data;
 		this.suspendLayouts();
+		Ext.Array.forEach(data.fields, function(fld)
+		{
+			Ext.apply(fld, {
+				listeners: {
+					change: function(fld, newval)
+					{
+						this.fireEvent('fieldchanged', fld);
+					},
+					scope: me
+				}
+			});
+		});
 		this.add(data.fields);
 		this.resumeLayouts(true);
 
-		this.fireEvent('formloaded');
+		this.fireEvent('formloaded', this);
 
 		if(this.record)
 		{
@@ -186,7 +225,9 @@ Ext.define('NetProfile.view.Form', {
 					scope: this
 				});
 			}
+			this.suspendEvents();
 			this.getForm().loadRecord(this.record);
+			this.resumeEvents();
 		}
 	}
 });

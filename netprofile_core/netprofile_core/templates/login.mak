@@ -17,11 +17,11 @@
 % endif
 	<div class="elem">
 		<label for="user">${_('User Name')}</label><br />
-		<input type="text" class="text" id="user" name="user" value="" size="28" maxlength="254" tabindex="1" style="width: 100%;" autocomplete="off" />
+		<input type="text" class="text x-form-field x-form-required-field x-form-text" id="user" name="user" value="" size="28" maxlength="254" tabindex="1" style="width: 100%;" autocomplete="off" />
 	</div>
 	<div class="elem">
 		<label for="pass">${_('Password')}</label><br />
-		<input type="password" class="text" id="pass" name="pass" value="" size="28" maxlength="254" tabindex="2" style="width: 100%;" autocomplete="off" />
+		<input type="password" class="text x-form-field x-form-required-field x-form-text" id="pass" name="pass" value="" size="28" maxlength="254" tabindex="2" style="width: 100%;" autocomplete="off" />
 	</div>
 	<div class="elem">
 		<label for="__locale">${_('Language')}</label><br />

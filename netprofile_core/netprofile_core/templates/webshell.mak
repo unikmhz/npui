@@ -18,6 +18,7 @@ Ext.Loader.setPath({
 Ext.require([
 	'Ext.data.*',
 	'Ext.direct.*',
+	'Ext.form.field.Field',
 	'Ext.tip.*',
 	'Ext.state.*',
 	'Ext.util.Cookies',
@@ -35,6 +36,17 @@ Ext.require([
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
 	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {
 		'X-CSRFToken': '${req.get_csrf()}'
+	});
+
+	Ext.define('Ext.form.field.BaseErrors', {
+		override: 'Ext.form.field.Base',
+		getErrors: function(value)
+		{
+			var errs = this.callParent(arguments);
+			if(this.asyncErrors && this.asyncErrors.length)
+				Ext.Array.push(errs, this.asyncErrors);
+			return errs;
+		}
 	});
 
 	Ext.define('NetProfile.data.IPAddress', {
@@ -369,13 +381,13 @@ Ext.application({
 		var npp = Ext.direct.Manager.getProvider('netprofile-provider');
 		npp.on('exception', function(p, e)
 		{
-			if(console && console.error)
-				console.error(e.message);
+			if(e && e.message)
+				Ext.log.error(e.message);
 		});
 		npp.on('data', function(p, e)
 		{
-			if(!e.result.success && console && console.warn)
-				console.warn(e.result.message);
+			if(e.result && !e.result.success)
+				Ext.log.warn(e.result.message);
 		});
 % endif
 

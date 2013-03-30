@@ -15,7 +15,9 @@ Ext.define('NetProfile.view.Wizard', {
 	border: 0,
 	api: null,
 	submitApi: 'create',
+	createApi: 'get_create_wizard',
 	actionApi: null,
+	validateApi: null,
 	wizardCls: null,
 	createInto: null,
 //	doValidation: true, do we need this global flag???
@@ -97,30 +99,36 @@ Ext.define('NetProfile.view.Wizard', {
 
 		this.callParent();
 
-		this.on('beforerender', this.loadWizard, this);
-
 		this.addEvents(
+			'fieldchanged',
 			'beforeaddfields',
 			'wizardloaded',
 			'wizardloadfailed',
 			'submitsuccess',
 			'submitfailure'
 		);
+		this.on('beforerender', this.loadWizard, this);
+		this.on('fieldchanged', this.remoteValidate, this, { buffer: 500 });
 	},
 	getDirectAction: function()
 	{
-		var api;
+		var api, valid = null;
 //		if(!this.wizardCls)
 //		{
 //			api = Ext.getCmp('npws_propbar');
 //			this.wizardCls = api.getApiClass();
 //		}
 		api = NetProfile.api[this.wizardCls];
+		if(this.validateApi)
+			valid = Ext.ClassManager.get(this.validateApi);
+		if(!valid)
+			valid = api.validate_fields;
 		return {
 //			load      : api.read,
 			submit    : api[this.submitApi],
-			get_steps : api.get_create_wizard,
-			action    : api[this.actionApi]
+			get_steps : api[this.createApi],
+			action    : api[this.actionApi],
+			validate  : valid
 		};
 	},
 	loadWizard: function()
@@ -129,9 +137,42 @@ Ext.define('NetProfile.view.Wizard', {
 			this.api = this.getDirectAction();
 		this.api.get_steps(this.loadCallback.bind(this));
 	},
+	remoteValidate: function(fld)
+	{
+		if(this.api.validate)
+		{
+			var me = this,
+				values = this.getValues();
+
+			this.api.validate(values, function(data, res)
+			{
+				var layout = this.getLayout(),
+					form = layout.getActiveItem().getForm(),
+					xfld;
+
+				if(!data || !data.success)
+					return false;
+				if(!data.errors)
+					return true;
+				form.getFields().each(function(xfld)
+				{
+					if(!xfld.name)
+						return true;
+					if(xfld.name in data.errors)
+						xfld.asyncErrors = data.errors[xfld.name];
+					else
+						xfld.asyncErrors = [];
+				});
+				form.isValid();
+				return true;
+			}, this);
+		}
+		return true;
+	},
 	loadCallback: function(data, result)
 	{
-		var win;
+		var me = this,
+			win;
 
 		if(!data || !data.fields)
 		{
@@ -146,6 +187,21 @@ Ext.define('NetProfile.view.Wizard', {
 		}
 		Ext.destroy(this.removeAll());
 		this.fireEvent('beforeaddfields', this, data, result);
+		Ext.Array.forEach(data.fields, function(step)
+		{
+			Ext.Array.forEach(step.items, function(fld)
+			{
+				Ext.apply(fld, {
+					listeners: {
+						change: function(fld, newval)
+						{
+							this.fireEvent('fieldchanged', fld);
+						},
+						scope: me
+					}
+				});
+			});
+		});
 		this.add(data.fields);
 		this.update('init');
 
@@ -217,7 +273,7 @@ Ext.define('NetProfile.view.Wizard', {
 		{
 			if(Ext.Array.contains(['prev', 'next'], dir))
 			{
-				if(curpane && curpane.doValidation && !curpane.getForm().isValid())
+				if((dir == 'next') && curpane && curpane.doValidation && !curpane.getForm().isValid())
 				{
 					// FIXME: add visual indication
 					return false;

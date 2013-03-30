@@ -23,6 +23,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.ux.form.field.IPv4',
 		'Ext.ux.form.field.Password',
 		'Ext.ux.form.DynamicCheckboxGroup',
+		'Ext.ux.window.CenterWindow',
 		'NetProfile.view.ModelSelect'
 	],
 	rowEditing: true,
@@ -104,32 +105,9 @@ Ext.define('NetProfile.view.ModelGrid', {
 				iconCls: 'ico-add',
 				handler: function()
 				{
-					var wiz_win = Ext.create('Ext.window.Window', {
-						layout: 'fit',
-						minWidth: 500,
+					var wiz_win = Ext.create('Ext.ux.window.CenterWindow', {
 						title: this.addWindowText,
-						modal: true,
-						constrain: true,
-						constrainHeader: true,
-						maximizable: true,
-						listeners: {
-							afterlayout: function(win)
-							{
-								var pos, sz, bodysz;
-
-								if(!win.maximized)
-								{
-									pos = win.getPosition();
-									sz = win.getSize();
-									bodysz = Ext.getBody().getSize();
-									if(pos[1] < 0)
-										win.setPosition(pos[0], 10);
-									if((sz.height + 20) > bodysz.height)
-										win.setSize(sz.width + 16, bodysz.height - 20);
-									win.center();
-								}
-							}
-						}
+						modal: true
 					});
 					var wiz = Ext.create('NetProfile.view.Wizard', {
 						stateful: false,
