@@ -55,6 +55,7 @@ from netprofile.db.fields import (
 	ASCIIText,
 	ASCIITinyText,
 	DeclEnumType,
+	EnumSymbol,
 	ExactUnicode,
 	Int8,
 	Int16,
@@ -85,7 +86,12 @@ from netprofile.ext.columns import (
 )
 from netprofile.common import ipaddr
 from pyramid.security import has_permission
-from pyramid.i18n import get_localizer
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
+
+_ = TranslationStringFactory('netprofile')
 
 _INTEGER_SET = (
 	Int8,
@@ -286,10 +292,6 @@ class ExtColumn(object):
 	def writer(self):
 		return self.column.info.get('writer')
 
-#	@property
-#	def clearer(self):
-#		return self.column.info.get('clearer')
-
 	@property
 	def pass_request(self):
 		return self.column.info.get('pass_request', False)
@@ -297,6 +299,10 @@ class ExtColumn(object):
 	@property
 	def template(self):
 		return self.column.info.get('template', None)
+
+	@property
+	def vtype(self):
+		return self.column.info.get('vtype')
 
 	@property
 	def length(self):
@@ -474,6 +480,8 @@ class ExtColumn(object):
 		if issubclass(typecls, _FLOAT_SET):
 			return float(param)
 		if typecls is DeclEnumType:
+			if isinstance(param, EnumSymbol):
+				return param
 			return self.column.type.enum.from_string(param.strip())
 		if issubclass(typecls, _DATE_SET):
 			param = dparse(param)
@@ -636,6 +644,9 @@ class ExtColumn(object):
 		val = self.help_text
 		if val is not None:
 			conf['emptyText'] = val
+		val = self.vtype
+		if val is not None:
+			conf['vtype'] = val
 		if issubclass(typecls, _BOOLEAN_SET):
 			conf.update({
 				'cls'            : 'x-grid-checkheader-editor',
@@ -1187,6 +1198,8 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 		if issubclass(typecls, _FLOAT_SET):
 			return float(param)
 		if typecls is DeclEnumType:
+			if isinstance(param, EnumSymbol):
+				return param
 			return self.column.type.enum.from_string(param.strip())
 		if issubclass(typecls, _DATE_SET):
 			param = dparse(param)
@@ -1208,6 +1221,12 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 class ExtModel(object):
 	def __init__(self, sqla_model):
 		self.model = sqla_model
+		self.u_idx = []
+		for tbl in sqla_model.__mapper__.tables:
+			for idx in tbl.indexes:
+				if not idx.unique:
+					continue
+				self.u_idx.append([c.name for c in idx.columns])
 
 	@property
 	def name(self):
@@ -1592,23 +1611,27 @@ class ExtModel(object):
 							continue
 		return query
 
+	def _get_trans(self, cols):
+		trans = {}
+		for cname, col in cols.items():
+			if isinstance(col, ExtPseudoColumn):
+				continue
+			trans[cname] = self.model.__mapper__.get_property_by_column(
+					col.column)
+		return trans
+
 	def read(self, params, request):
-		logger.info('Running ExtDirect action:%s method:%s', self.name, 'read')
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'read')
 		logger.debug('Params: %r', params)
 		res = {
 			'records' : [],
 			'success' : True,
 			'total'   : 0
 		}
-		trans = {}
 		records = []
 		tot = 0
 		cols = self.get_read_columns()
-		for cname, col in cols.items():
-			if isinstance(col, ExtPseudoColumn):
-				continue
-			trans[cname] = self.model.__mapper__.get_property_by_column(
-					col.column)
+		trans = self._get_trans(cols)
 		sess = DBSession()
 		# Cache total?
 		q = sess.query(func.count('*')).select_from(self.model)
@@ -1702,18 +1725,13 @@ class ExtModel(object):
 		return res
 
 	def read_one(self, params, request):
-		logger.info('Running ExtDirect action:%s method:%s', self.name, 'read_one')
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'read_one')
 		logger.debug('Params: %r', params)
 
 	def set_values(self, obj, values, request):
-		trans = {}
 		cols = self.get_columns()
 		rcols = self.get_read_columns()
-		for cname, col in rcols.items():
-			if isinstance(col, ExtPseudoColumn):
-				continue
-			trans[cname] = self.model.__mapper__.get_property_by_column(
-					col.column)
+		trans = self._get_trans(rcols)
 		for p, val in values.items():
 			if p not in cols:
 				if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
@@ -1734,21 +1752,16 @@ class ExtModel(object):
 				setattr(obj, trans[p].key, cols[p].parse_param(val))
 
 	def create(self, params, request):
-		logger.info('Running ExtDirect action:%s method:%s', self.name, 'create')
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'create')
 		logger.debug('Params: %r', params)
 		res = {
 			'records' : [],
 			'success' : True,
 			'total'   : 0
 		}
-		trans = {}
 		cols = self.get_columns()
 		rcols = self.get_read_columns()
-		for cname, col in rcols.items():
-			if isinstance(col, ExtPseudoColumn):
-				continue
-			trans[cname] = self.model.__mapper__.get_property_by_column(
-					col.column)
+		trans = self._get_trans(rcols)
 
 		sess = DBSession()
 
@@ -1821,21 +1834,16 @@ class ExtModel(object):
 		return res
 
 	def update(self, params, request):
-		logger.info('Running ExtDirect action:%s method:%s', self.name, 'update')
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'update')
 		logger.debug('Params: %r', params)
 		res = {
 			'records' : [],
 			'success' : True,
 			'total'   : 0
 		}
-		trans = {}
 		cols = self.get_columns()
 		rcols = self.get_read_columns()
-		for cname, col in rcols.items():
-			if isinstance(col, ExtPseudoColumn):
-				continue
-			trans[cname] = self.model.__mapper__.get_property_by_column(
-					col.column)
+		trans = self._get_trans(rcols)
 
 		sess = DBSession()
 
@@ -1890,7 +1898,7 @@ class ExtModel(object):
 		return res
 
 	def delete(self, params, request):
-		logger.info('Running ExtDirect action:%s method:%s', self.name, 'delete')
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'delete')
 		logger.debug('Params: %r', params)
 		res = {
 			'success' : True,
@@ -1906,7 +1914,7 @@ class ExtModel(object):
 		return res
 
 	def get_fields(self, request):
-		logger.info('Running ExtDirect action:%s method:%s', self.name, 'get_fields')
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'get_fields')
 		fields = []
 		for cname, col in self.get_form_columns().items():
 			fdef = col.get_editor_cfg(request, in_form=True)
@@ -1914,11 +1922,55 @@ class ExtModel(object):
 				fields.append(fdef)
 		return {
 			'success' : True,
-			'fields'  : fields
+			'fields'  : fields,
+			'rvalid'  : (True if len(self.u_idx) > 0 else False)
+		}
+
+	def validate_fields(self, values, request):
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'validate_fields')
+		logger.debug('Values: %r', values)
+		loc = get_localizer(request)
+		cols = self.get_columns()
+		trans = self._get_trans(cols)
+		sess = DBSession()
+		if self.is_polymorphic:
+			poly_name = self.model.__mapper__.polymorphic_on.name
+			poly_val = self.model.__mapper__.polymorphic_identity
+			if poly_name and (poly_val is not None) and (poly_name in cols):
+				values[poly_name] = poly_val
+		pkey = None
+		if self.pk in values:
+			pkey = cols[self.pk].parse_param(values[self.pk])
+		fields = {}
+		for index in self.u_idx:
+			has_all = True
+			for ifld in index:
+				if (ifld not in values) or (ifld not in cols) or (ifld not in trans):
+					has_all = False
+			if not has_all:
+				continue
+			q = sess.query(func.count('*')).select_from(self.model)
+			for ifld in index:
+				prop = trans[ifld]
+				extcol = cols[ifld]
+				col = getattr(self.model, prop.key)
+				q = q.filter(col == extcol.parse_param(values[ifld]))
+			if pkey is not None:
+				col = getattr(self.model, self.object_pk)
+				q = q.filter(col != pkey)
+			num = q.scalar()
+			if (num is not None) and (num > 0):
+				for ifld in index:
+					if ifld not in fields:
+						fields[ifld] = []
+					fields[ifld].append(loc.translate(_('This field must be unique.')))
+		return {
+			'success' : True,
+			'errors'  : fields
 		}
 
 	def get_create_wizard(self, request):
-		logger.info('Running ExtDirect action:%s method:%s', self.name, 'get_create_wizard')
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'get_create_wizard')
 		wiz = self.create_wizard
 		if wiz:
 			title = wiz.title
@@ -1936,7 +1988,8 @@ class ExtModel(object):
 		}
 
 	def create_wizard_action(self, pane_id, act, values, request):
-		logger.info('Running ExtDirect action:%s method:%s', self.name, 'create_wizard_action')
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'create_wizard_action')
+		logger.debug('Params: %r', (pane_id, act, values))
 		wiz = self.create_wizard
 		if wiz:
 			ret = wiz.action(pane_id, act, values, request)

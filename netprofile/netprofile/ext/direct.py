@@ -209,6 +209,14 @@ class ExtDirectRouter(object):
 			request_as_last_param=True,
 			accepts_files=False
 		)
+		self.add_action(
+			name,
+			method_name='validate_fields',
+			callback=model.validate_fields,
+			numargs=1,
+			request_as_last_param=True,
+			accepts_files=False
+		)
 		if model.create_wizard:
 			self.add_action(
 				name,

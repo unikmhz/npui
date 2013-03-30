@@ -8,6 +8,8 @@ from __future__ import (
 	division
 )
 
+from weakref import WeakSet
+
 from sqlalchemy.sql import expression
 
 class EnumSymbol(expression.ClauseElement):
@@ -43,6 +45,7 @@ class EnumMeta(type):
 	"""
 	def __init__(cls, classname, bases, dict_):
 		cls._reg = reg = cls._reg.copy()
+		cls._dbf = cls._dbf.copy()
 
 		for k, v in dict_.items():
 			if isinstance(v, tuple):
@@ -53,11 +56,19 @@ class EnumMeta(type):
 	def __iter__(cls):
 		return iter(cls._reg.values())
 
+	def add_symbol(cls, k, v):
+		if isinstance(v, tuple):
+			sym = cls._reg[v[0]] = EnumSymbol(cls, k, *v)
+			setattr(cls, k, sym)
+			for dbt in cls._dbf:
+				dbt.update_impl()
+
 class DeclEnum(object, metaclass=EnumMeta):
 	"""
 	Declarative enumeration.
 	"""
 	_reg = {}
+	_dbf = WeakSet()
 
 	@classmethod
 	def from_string(cls, value):
@@ -76,5 +87,7 @@ class DeclEnum(object, metaclass=EnumMeta):
 	@classmethod
 	def db_type(cls):
 		from netprofile.db.fields import DeclEnumType
-		return DeclEnumType(cls)
+		t = DeclEnumType(cls)
+		cls._dbf.add(t)
+		return t
 

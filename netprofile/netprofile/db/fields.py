@@ -426,6 +426,9 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 		)
 		self.impl = types.Enum(*enum.values(), name=self.name)
 
+	def update_impl(self):
+		self.impl = types.Enum(*self.enum.values(), name=self.name)
+
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
 			return mysql.ENUM(*self.enum.values(), charset='ascii', collation='ascii_bin')
