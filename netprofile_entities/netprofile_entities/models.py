@@ -9,6 +9,7 @@ from __future__ import (
 )
 
 __all__ = [
+	'EntityType',
 	'Entity',
 	'EntityFlag',
 	'EntityFlagType',
@@ -151,6 +152,8 @@ class Entity(Base):
 	Base NetProfile entity type.
 	"""
 
+	DN_ATTR = 'cn'
+
 	@classmethod
 	def _filter_address(cls, query, value):
 		if not isinstance(value, dict):
@@ -215,6 +218,7 @@ class Entity(Base):
 		Index('entities_def_i_mby', 'mby'),
 		Index('entities_def_i_esid', 'esid'),
 		Index('entities_def_i_nick', 'nick'),
+		Index('entities_def_u_nt', 'etype', 'nick', unique=True),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -577,7 +581,7 @@ class Entity(Base):
 
 	@validates('nick')
 	def _set_nick(self, k, v):
-		self.relative_dn = 'cn=%s' % str(v)
+		self.relative_dn = '%s=%s' % (self.DN_ATTR, str(v))
 		return v
 
 	def __str__(self):
@@ -1017,7 +1021,8 @@ class PhysicalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('E-mail')
+			'header_string' : _('E-mail'),
+			'vtype'         : 'email'
 		}
 	)
 	icq = Column(
@@ -1037,7 +1042,8 @@ class PhysicalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('URL')
+			'header_string' : _('URL'),
+			'vtype'         : 'url'
 		}
 	)
 	birthdate = Column(
@@ -1427,7 +1433,8 @@ class LegalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('E-mail')
+			'header_string' : _('E-mail'),
+			'vtype'         : 'email'
 		}
 	)
 	contact_icq = Column(
@@ -1469,7 +1476,8 @@ class LegalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('URL')
+			'header_string' : _('URL'),
+			'vtype'         : 'url'
 		}
 	)
 	address_legal = Column(
