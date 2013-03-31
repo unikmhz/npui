@@ -37,6 +37,7 @@ from netprofile.db.connection import DBSession
 from netprofile.ext.direct import extdirect_method
 
 from .models import (
+	FileFolder,
 	NPModule,
 	User,
 	UserSetting,
@@ -212,6 +213,35 @@ def custom_valid(name, values, request):
 	)
 	return ret
 
+@extdirect_method('MenuTree', 'folders', request_as_last_param=True, permission='FILES_LIST')
+def ff_tree(params, request):
+	"""
+	ExtDirect method used for VFS tree.
+	"""
+
+	recs = []
+	sess = DBSession()
+
+	q = sess.query(FileFolder)
+	if params['node'] == 'root':
+		q = q.filter(FileFolder.parent == request.user.group.effective_root_folder)
+	else:
+		q = q.filter(FileFolder.parent_id == int(params['node']))
+	for ff in q:
+		mi = {
+			'id'       : ff.id,
+			'text'     : ff.name,
+			'xhandler' : 'NetProfile.controller.FileBrowser',
+			'expanded' : False
+		}
+		recs.append(mi)
+
+	return {
+		'success' : True,
+		'records' : recs,
+		'total'   : len(recs)
+	}
+
 @extdirect_method('MenuTree', 'settings', request_as_last_param=True, permission='USAGE')
 def menu_settings(params, request):
 	"""
@@ -250,7 +280,8 @@ def menu_settings(params, request):
 
 	return {
 		'success' : True,
-		'records' : menu
+		'records' : menu,
+		'total'   : len(menu)
 	}
 
 @extdirect_method('UserSetting', 'usform_get', request_as_last_param=True, permission='USAGE')

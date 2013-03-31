@@ -61,7 +61,17 @@ class Module(ModuleBase):
 		return (
 			Menu('modules', title=_('Modules'), order=10),
 			Menu('settings', title=_('Settings'), order=20, direct='settings'),
-			Menu('admin', title=_('Administration'), order=30, permission='BASE_ADMIN')
+			Menu('folders', title=_('Folders'), order=30, direct='folders', permission='FILES_LIST', options={
+				'root'        : {
+					'id'       : 'root',
+					'text'     : _('Root Folder'),
+					'xhandler' : 'NetProfile.controller.FileBrowser',
+					'expanded' : True
+				},
+				'rootVisible' : True,
+				'useArrows'   : False
+			}),
+			Menu('admin', title=_('Administration'), order=40, permission='BASE_ADMIN')
 		)
 
 	def get_js(self, request):

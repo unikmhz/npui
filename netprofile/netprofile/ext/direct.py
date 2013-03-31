@@ -15,6 +15,7 @@ from collections import defaultdict
 import json
 import traceback
 import datetime as dt
+import decimal
 from dateutil.tz import tzlocal
 
 from pyramid.security import has_permission
@@ -71,6 +72,8 @@ class JsonReprEncoder(json.JSONEncoder):
 			return obj.isoformat()
 		if isinstance(obj, ipaddr.IPv4Address):
 			return int(obj)
+		if isinstance(obj, decimal.Decimal):
+			return str(obj)
 		return super(JsonReprEncoder, self).default(obj)
 
 class IExtDirectRouter(Interface):

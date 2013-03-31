@@ -31,8 +31,10 @@ Ext.define('NetProfile.view.SideBar', {
 		this.store = Ext.create('NetProfile.store.Menu');
 		this.store.each(function(menu)
 		{
+			var mname, tree, cfg;
+
 			mname = menu.get('name');
-			var tree = Ext.create('Ext.tree.Panel', {
+			cfg = Ext.apply({
 				id: 'npmenu_tree_' + mname,
 				stateId: 'npmenu_tree_' + mname,
 				stateful: true,
@@ -48,7 +50,8 @@ Ext.define('NetProfile.view.SideBar', {
 				header: false,
 				border: false,
 				bodyCls: 'x-docked-noborder-top'
-			});
+			}, menu.get('options') || {});
+			tree = Ext.create('Ext.tree.Panel', cfg);
 
 			this.menus[mname] = tree;
 
@@ -78,8 +81,9 @@ Ext.define('NetProfile.view.SideBar', {
 	},
 	onMenuSelect: function(row, record, idx, opts)
 	{
-		var tok_old, tok_new;
+		var tok_old, tok_new, toks, prec, menu;
 
+		menu = this.store.findRecord('name', opts.options.menuId);
 		Ext.Object.each(this.menus, function(k, m)
 		{
 			if(opts.options.menuId === k)
@@ -88,17 +92,28 @@ Ext.define('NetProfile.view.SideBar', {
 			if(sm)
 				sm.deselectAll();
 		});
-		if(record.get('xhandler'))
+		if(record.get('xhandler') || record.get('xview'))
 		{
-			// FIXME
-			this.doSelectMenuHandler(record.get('xhandler'), record.getId());
-		}
-		else if(record.get('xview'))
-		{
-			tok_new = opts.options.menuId + ':' + record.getId();
-			tok_old = Ext.History.getToken();
-			if(tok_old === null || (tok_old !== tok_new))
-				Ext.History.add(tok_new);
+			if(menu.get('direct'))
+			{
+				toks = [record.getId()];
+				prec = record;
+				while(prec = prec.parentNode)
+				{
+					toks.unshift(prec.getId());
+				}
+				tok_new = opts.options.menuId + ':' + toks.join('/');
+				tok_old = Ext.History.getToken();
+				if(tok_old === null || (tok_old !== tok_new))
+					Ext.History.add(tok_new);
+			}
+			else
+			{
+				tok_new = opts.options.menuId + ':' + record.getId();
+				tok_old = Ext.History.getToken();
+				if(tok_old === null || (tok_old !== tok_new))
+					Ext.History.add(tok_new);
+			}
 		}
 
 		return true;
@@ -152,7 +167,8 @@ Ext.define('NetProfile.view.SideBar', {
 	},
 	onHistoryChange: function(token)
 	{
-		var pts, store, node;
+		var me = this,
+			pts, store, node, sub, item, menu;
 
 		if(token)
 		{
@@ -163,12 +179,78 @@ Ext.define('NetProfile.view.SideBar', {
 			if(!store)
 				return true;
 			node = store.getNodeById(pts[1]);
+			menu = this.getComponent('npmenu_' + pts[0]);
+			if(menu)
+				menu.expand();
 			if(!node)
+			{
+				sub = pts[1].split('/');
+				if(sub.length == 0)
+					return true;
+				item = sub.shift();
+				node = store.getNodeById(item);
+				if(!node)
+					return true;
+				if(sub.length > 0)
+				{
+					var rec_exp;
+
+					rec_exp = function(ch)
+					{
+						var find_id, find_node = null;
+
+						find_id = sub.shift();
+						Ext.Array.forEach(ch, function(item)
+						{
+							if(item.getId() == find_id)
+								find_node = item;
+						});
+						if(!find_node)
+							return;
+						if(sub.length > 0)
+						{
+							if(find_node.isExpanded())
+								rec_exp(find_node.childNodes);
+							else
+								find_node.expand(false, rec_exp);
+						}
+						else
+							me.doSelectNode(find_node, pts[0]);
+					};
+
+					if(node.isLoading())
+					{
+						store.on('load', function(st, xnode, recs)
+						{
+							if(node.isExpanded())
+								rec_exp(recs);
+							else
+								node.expand(false, rec_exp);
+							return true;
+						}, me, { single: true });
+						node.expand();
+					}
+					else if(node.isExpanded())
+						rec_exp(node.childNodes);
+					else
+						node.expand(false, rec_exp);
+				}
+				else
+					this.selectNode(node, pts[0]);
 				return true;
-			this.doSelectMenuView(node.get('xview'));
-			this.menus[pts[0]].getSelectionModel().select(node);
+			}
+			this.doSelectNode(node, pts[0]);
 		}
 		return true;
+	},
+	doSelectNode: function(node, menu)
+	{
+		if(node.get('xview'))
+			this.doSelectMenuView(node.get('xview'));
+		else if(node.get('xhandler'))
+			this.doSelectMenuHandler(node.get('xhandler'), node.getId());
+		if(menu)
+			this.menus[menu].selectPath(node.getPath());
 	}
 });
 

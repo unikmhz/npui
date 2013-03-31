@@ -896,6 +896,28 @@ class Group(Base):
 		ppriv.update(self.privileges)
 		return ppriv
 
+	@property
+	def effective_policy(self):
+		if self.security_policy:
+			return self.security_policy
+		grp = self.parent
+		secpol = None
+		while grp and (secpol is None):
+			secpol = grp.security_policy
+			grp = grp.parent
+		return secpol
+
+	@property
+	def effective_root_folder(self):
+		if self.root_folder:
+			return self.root_folder
+		grp = self.parent
+		ff = None
+		while grp and (ff is None):
+			ff = grp.root_folder
+			grp = grp.parent
+		return ff
+
 class Privilege(Base):
 	"""
 	Generic privilege code, to be assigned to users or groups.

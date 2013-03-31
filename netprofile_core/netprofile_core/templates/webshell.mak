@@ -213,7 +213,8 @@ Ext.require([
 			{ name: 'title', type: 'string' },
 			{ name: 'order', type: 'int' },
 			{ name: 'direct', type: 'string' },
-			{ name: 'url', type: 'string' }
+			{ name: 'url', type: 'string' },
+			{ name: 'options', type: 'auto' }
 		]
 	});
 	Ext.define('NetProfile.model.MenuItem', {
