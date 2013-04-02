@@ -1337,6 +1337,10 @@ class ExtModel(object):
 			self.model.__table__.info.get('grid_view', ())
 		)
 
+	@property
+	def extra_data(self):
+		return self.model.__table__.info.get('extra_data', ())
+
 	def get_column(self, colname):
 		if isinstance(colname, PseudoColumn):
 			return ExtPseudoColumn(colname, self.model)
@@ -1440,6 +1444,14 @@ class ExtModel(object):
 		if self.is_polymorphic:
 			ret.append({
 				'name'       : '__poly',
+				'allowBlank' : True,
+				'useNull'    : True,
+				'type'       : 'auto',
+				'persist'    : False
+			})
+		for extra in self.extra_data:
+			ret.append({
+				'name'       : extra,
 				'allowBlank' : True,
 				'useNull'    : True,
 				'type'       : 'auto',
@@ -1719,6 +1731,12 @@ class ExtModel(object):
 					obj.__class__.__moddef__,
 					obj.__class__.__name__
 				)
+			for extra in self.extra_data:
+				edata = getattr(obj, extra, None)
+				if callable(edata):
+					row[extra] = edata(request)
+				else:
+					row[extra] = edata
 			records.append(row)
 		res['records'] = records
 		res['total'] = tot
@@ -1829,6 +1847,12 @@ class ExtModel(object):
 					obj.__class__.__moddef__,
 					obj.__class__.__name__
 				)
+			for extra in self.extra_data:
+				edata = getattr(obj, extra, None)
+				if callable(edata):
+					pt[extra] = edata(request)
+				else:
+					pt[extra] = edata
 			res['records'].append(pt)
 			res['total'] += 1
 		return res
@@ -1893,6 +1917,12 @@ class ExtModel(object):
 					obj.__class__.__moddef__,
 					obj.__class__.__name__
 				)
+			for extra in self.extra_data:
+				edata = getattr(obj, extra, None)
+				if callable(edata):
+					pt[extra] = edata(request)
+				else:
+					pt[extra] = edata
 			res['records'].append(pt)
 			res['total'] += 1
 		return res
