@@ -5,6 +5,7 @@ Ext.define('NetProfile.view.SideBar', {
 		'NetProfile.store.Menu',
 		'Ext.tree.Panel',
 		'Ext.util.History',
+		'Ext.state.Manager',
 		'NetProfile.view.TopBar'
 	],
 	id: 'npws_sidebar',
@@ -12,7 +13,10 @@ Ext.define('NetProfile.view.SideBar', {
 	stateful: true,
 	collapsible: true,
 	animCollapse: true,
-	layout: 'accordion',
+	layout: {
+		type: 'accordion',
+		multi: false
+	},
 	title: 'NetProfile',
 	split: true,
 	width: '15%',
@@ -24,8 +28,26 @@ Ext.define('NetProfile.view.SideBar', {
 		dock: 'top'
 	}],
 
+	lastPanel: null,
+
 	initComponent: function()
 	{
+		var token;
+
+		Ext.History.init();
+		this.applyState(Ext.state.Manager.getProvider().get(this.stateId));
+		token = Ext.History.getToken();
+		if(token)
+		{
+			token = token.split(':');
+			if(token && (token.length === 2))
+				token = token[0];
+			else
+				token = this.lastPanel;
+		}
+		else
+			token = this.lastPanel;
+
 		this.menus = {};
 		this.items = [];
 		this.store = Ext.create('NetProfile.store.Menu');
@@ -34,10 +56,10 @@ Ext.define('NetProfile.view.SideBar', {
 			var mname, tree, cfg;
 
 			mname = menu.get('name');
+			if(!token)
+				token = mname;
 			cfg = Ext.apply({
 				id: 'npmenu_tree_' + mname,
-				stateId: 'npmenu_tree_' + mname,
-				stateful: true,
 				store: Ext.create('NetProfile.store.menu.' + mname),
 				rootVisible: false,
 				listeners: {
@@ -57,21 +79,44 @@ Ext.define('NetProfile.view.SideBar', {
 
 			this.items.push({
 				id: 'npmenu_' + mname,
-				stateId: 'npmenu_' + mname,
-				stateful: true,
 				layout: 'fit',
+				collapsible: true,
+				collapsed: ((token === mname) ? false : true),
+				collapseFirst: false,
 				title: menu.get('title'),
-				items: [ tree ]
+				items: [ tree ],
+				tools: [{
+					type: 'expand',
+					handler: function() { this.expandAll(); },
+					scope: tree
+				}, {
+					type: 'collapse',
+					handler: function() { this.collapseAll(); },
+					scope: tree
+				}],
+				listeners: {
+					expand: function(p)
+					{
+						this.lastPanel = p.id.split('_')[1];
+						this.saveState();
+					},
+					scope: this
+				}
 			});
 		}, this);
 		this.callParent(arguments);
-
-		Ext.History.init();
 
 		this.on({
 			afterrender: this.onAfterRender,
 			scope: this
 		});
+	},
+    getState: function()
+	{
+		var state = this.callParent();
+
+		state = this.addPropertyToState(state, 'lastPanel');
+		return state;
 	},
 	onMenuBeforeSelect: function(row, record, idx, opts)
 	{
@@ -236,10 +281,16 @@ Ext.define('NetProfile.view.SideBar', {
 						node.expand(false, rec_exp);
 				}
 				else
-					this.selectNode(node, pts[0]);
+					this.doSelectNode(node, pts[0]);
 				return true;
 			}
 			this.doSelectNode(node, pts[0]);
+		}
+		else if(this.lastPanel)
+		{
+			menu = this.getComponent('npmenu_' + this.lastPanel);
+			if(menu)
+				menu.expand();
 		}
 		return true;
 	},
@@ -247,7 +298,7 @@ Ext.define('NetProfile.view.SideBar', {
 	{
 		if(node.get('xview'))
 			this.doSelectMenuView(node.get('xview'));
-		else if(node.get('xhandler'))
+		if(node.get('xhandler'))
 			this.doSelectMenuHandler(node.get('xhandler'), node.getId());
 		if(menu)
 			this.menus[menu].selectPath(node.getPath());

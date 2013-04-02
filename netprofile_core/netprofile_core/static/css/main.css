@@ -139,6 +139,65 @@ h2
 	padding-top: 2px;
 }
 
+.np-file-wrap
+{
+	float: left;
+	width: 96px;
+	margin: 7px;
+	margin-right: 0;
+	border: 1px solid #fff;
+	padding: 4px;
+	font-size: 85%;
+	text-align: center;
+}
+
+.np-file-wrap .np-file-icon
+{
+	display: inline-block;
+	padding: 3px;
+	padding-bottom: 0;
+}
+
+.x-quirks .np-file-wrap .np-file-icon
+{
+	padding-bottom: 3px;
+}
+
+.np-file-wrap .np-file-icon img
+{
+	width: 48px;
+	height: 48px;
+}
+
+.np-file-wrap span
+{
+	display: block;
+	text-align: center;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.x-file-item-over
+{
+	border: 1px solid #ddd;
+	background: #efefef url(../img/over.gif) repeat-x left top;
+	padding: 4px;
+}
+
+.x-item-selected
+{
+	background: #eff5fb url(../img/selected.gif) no-repeat right bottom;
+	border: 1px solid #99bbe8;
+	padding: 4px;
+}
+
+.x-view-selector
+{
+	position: absolute;
+	border: 1px dotted #39b;
+}
+
 .ico-accept       { background-image: url(../img/accept.png) !important; }
 .ico-add          { background-image: url(../img/add.png) !important; }
 .ico-cancel       { background-image: url(../img/cancel.png) !important; }
@@ -175,12 +234,14 @@ h2
 .ico-script       { background-image: url(../img/script.png) !important; }
 .ico-script-code  { background-image: url(../img/script_code.png) !important; }
 .ico-script-arrow { background-image: url(../img/script_arrow.png) !important; }
+.ico-sort         { background-image: url(../img/sort.png) !important; }
 .ico-tag-blue     { background-image: url(../img/tag_blue.png) !important; }
 .ico-text-center  { background-image: url(../img/text_center.png) !important; }
 .ico-text-left    { background-image: url(../img/text_left.png) !important; }
 .ico-text-right   { background-image: url(../img/text_right.png) !important; }
 .ico-tool         { background-image: url(../img/tool.png) !important; }
 .ico-undo         { background-image: url(../img/undo.png) !important; }
+.ico-view         { background-image: url(../img/view.png) !important; }
 
 .ico-mod-datacache            { background-image: url(../img/db.png) !important; }
 .ico-mod-globalsetting        { background-image: url(../img/item.png) !important; }

@@ -16,6 +16,10 @@ from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_core')
 
+def _int_fileid(info, request):
+	info['match']['fileid'] = int(info['match']['fileid'])
+	return True
+
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
@@ -28,6 +32,8 @@ class Module(ModuleBase):
 	def add_routes(self, config):
 		config.add_route('core.noop', '/noop')
 		config.add_route('core.js.webshell', '/js/webshell')
+		config.add_route('core.file.download', '/file/dl/{fileid:\d+}*filename',
+				custom_predicates=(_int_fileid,))
 
 	def get_models(self):
 		return (

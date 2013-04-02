@@ -40,10 +40,13 @@ __all__ = [
 	'DataCache'
 ]
 
+import io
 import string
 import random
+import re
 import hashlib
 import datetime as dt
+import urllib
 
 from sqlalchemy import (
 	Column,
@@ -77,6 +80,7 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 #	relationship
 #)
 
+from netprofile import PY3
 from netprofile.common import ipaddr
 from netprofile.common.phps import HybridPickler
 from netprofile.db.connection import (
@@ -106,6 +110,10 @@ from netprofile.ext.filters import (
 )
 from netprofile.db.ddl import Comment
 
+from pyramid.response import (
+	FileIter,
+	Response
+)
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
@@ -114,6 +122,21 @@ from pyramid.i18n import (
 _ = TranslationStringFactory('netprofile_core')
 
 _DEFAULT_DICT = 'netprofile_core:dicts/np_cmb_rus'
+
+F_OWNER_READ  = 0x0100
+F_OWNER_WRITE = 0x0080
+F_OWNER_EXEC  = 0x0040
+F_GROUP_READ  = 0x0020
+F_GROUP_WRITE = 0x0010
+F_GROUP_EXEC  = 0x0008
+F_OTHER_READ  = 0x0004
+F_OTHER_WRITE = 0x0002
+F_OTHER_EXEC  = 0x0001
+
+F_OWNER_ALL   = 0x01c0
+F_GROUP_ALL   = 0x0038
+F_OTHER_ALL   = 0x0007
+F_RIGHTS_ALL  = 0x01ff
 
 def _gen_xcap(cls, k, v):
 	"""
@@ -712,6 +735,12 @@ class User(Base):
 			except ValueError:
 				pass
 		return npsess
+
+	def group_vector(self):
+		vec = [ self.group_id ]
+		for sg in self.secondary_groups:
+			vec.append(sg.id)
+		return vec
 
 class Group(Base):
 	"""
@@ -1865,8 +1894,73 @@ class FileFolder(Base):
 		primaryjoin='FileFolder.id == Group.root_folder_id'
 	)
 
+	def can_read(self, user):
+		if self.user_id == user.id:
+			return bool(self.rights & F_OWNER_READ)
+		if self.group_id in user.group_vector():
+			return bool(self.rights & F_GROUP_READ)
+		return bool(self.rights & F_OTHER_READ)
+
+	def can_write(self, user):
+		if self.user_id == user.id:
+			return bool(self.rights & F_OWNER_WRITE)
+		if self.group_id in user.group_vector():
+			return bool(self.rights & F_GROUP_WRITE)
+		return bool(self.rights & F_OTHER_WRITE)
+
+	def can_traverse(self, user):
+		if self.user_id == user.id:
+			return bool(self.rights & F_OWNER_EXEC)
+		if self.group_id in user.group_vector():
+			return bool(self.rights & F_GROUP_EXEC)
+		return bool(self.rights & F_OTHER_EXEC)
+
+	def can_traverse_path(self, user):
+		if not self.can_traverse(user):
+			return False
+		if user.group and (self.id == user.group.root_folder_id):
+			return True
+		if self.parent:
+			return self.parent.can_traverse(user)
+		return True
+
 	def __str__(self):
 		return '%s' % str(self.name)
+
+_BLOCK_SIZE = 4096 * 64 # 256K
+
+class FileResponse(Response):
+	def __init__(self, obj, request=None, cache_max_age=None, content_encoding=None):
+		super(FileResponse, self).__init__(conditional_response=True)
+		self.last_modified = obj.modification_time
+		self.content_type = obj.plain_mime_type
+		self.charset = obj.mime_charset
+		if PY3:
+			self.content_disposition = \
+				'attachment; filename*=UTF-8\'\'%s' % (
+					urllib.parse.quote(obj.filename, '')
+				)
+		else:
+			self.content_disposition = \
+				'attachment; filename*=UTF-8\'\'%s' % (
+					urllib.quote(obj.filename.encode(), '')
+				)
+		self.etag = obj.etag
+		self.content_encoding = content_encoding
+		bio = io.BytesIO(obj.data)
+		app_iter = None
+		if request is not None:
+			environ = request.environ
+			if 'wsgi.file_wrapper' in environ:
+				app_iter = environ['wsgi.file_wrapper'](bio, _BLOCK_SIZE)
+		if app_iter is None:
+			app_iter = FileIter(bio, _BLOCK_SIZE)
+		self.app_iter = app_iter
+		self.content_length = obj.size
+		if cache_max_age is not None:
+			self.cache_expires = cache_max_age
+
+_re_charset = re.compile(r'charset=([\w\d_-]+)')
 
 class File(Base):
 	"""
@@ -2052,6 +2146,50 @@ class File(Base):
 			'header_string' : _('Data')
 		}
 	))
+
+	@property
+	def plain_mime_type(self):
+		return self.mime_type.split(';')[0]
+
+	@property
+	def mime_charset(self):
+		if not self.mime_type:
+			return None
+		csm = _re_charset.search(self.mime_type)
+		if csm:
+			cset = csm.group(1)
+			if cset in {'binary', 'unknown-8bit'}:
+				return None
+			return cset
+
+	def can_access(self, user):
+		if self.folder:
+			return self.folder.can_traverse_path(user)
+		return True
+
+	def can_read(self, user):
+		if self.user_id == user.id:
+			return bool(self.rights & F_OWNER_READ)
+		if self.group_id in user.group_vector():
+			return bool(self.rights & F_GROUP_READ)
+		return bool(self.rights & F_OTHER_READ)
+
+	def can_write(self, user):
+		if self.user_id == user.id:
+			return bool(self.rights & F_OWNER_WRITE)
+		if self.group_id in user.group_vector():
+			return bool(self.rights & F_GROUP_WRITE)
+		return bool(self.rights & F_OTHER_WRITE)
+
+	def can_execute(self, user):
+		if self.user_id == user.id:
+			return bool(self.rights & F_OWNER_EXEC)
+		if self.group_id in user.group_vector():
+			return bool(self.rights & F_GROUP_EXEC)
+		return bool(self.rights & F_OTHER_EXEC)
+
+	def get_response(self, req):
+		return FileResponse(self, req)
 
 	def __str__(self):
 		return '%s' % str(self.filename)

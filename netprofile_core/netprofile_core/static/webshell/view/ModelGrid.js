@@ -11,7 +11,6 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.toolbar.Paging',
 		'Ext.toolbar.TextItem',
 		'Ext.window.MessageBox',
-		'Ext.util.KeyMap',
 		'Ext.EventObject',
 		'Ext.ux.grid.FiltersFeature',
 		'Ext.ux.grid.SimpleSearchFeature',

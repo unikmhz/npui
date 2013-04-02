@@ -26,6 +26,7 @@ from pyramid.httpexceptions import (
 )
 
 from sqlalchemy import and_
+from sqlalchemy.orm import undefer
 from sqlalchemy.exc import DBAPIError
 
 from netprofile import (
@@ -37,6 +38,7 @@ from netprofile.db.connection import DBSession
 from netprofile.ext.direct import extdirect_method
 
 from .models import (
+	File,
 	FileFolder,
 	NPModule,
 	User,
@@ -137,6 +139,16 @@ def js_webshell(request):
 		'modules' : mmgr.get_module_browser()
 	}
 
+@view_config(route_name='core.file.download', permission='FILES_LIST')
+def file_dl(request):
+	file_id = request.matchdict.get('fileid', 0)
+	if file_id <= 0:
+		raise KeyError('Invalid file ID')
+	sess = DBSession()
+	obj = sess.query(File).options(undefer('data')).get(file_id)
+	res = obj.get_response(request)
+	return res
+
 def dpane_simple(model, request):
 	tabs = []
 	request.run_hook(
@@ -222,10 +234,18 @@ def ff_tree(params, request):
 	recs = []
 	sess = DBSession()
 
+	# TODO: check chroot bounds
+	# TODO: check file permissions
 	q = sess.query(FileFolder)
 	if params['node'] == 'root':
-		q = q.filter(FileFolder.parent == request.user.group.effective_root_folder)
+		folder = request.user.group.effective_root_folder
+		if folder and (not folder.can_read(request.user)):
+			raise ValueError('Folder access denied')
+		q = q.filter(FileFolder.parent == folder)
 	else:
+		folder = sess.query(FileFolder.id == int(params['node'])).one()
+		if folder and (not folder.can_read(request.user)):
+			raise ValueError('Folder access denied')
 		q = q.filter(FileFolder.parent_id == int(params['node']))
 	for ff in q:
 		mi = {

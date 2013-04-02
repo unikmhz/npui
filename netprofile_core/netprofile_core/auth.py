@@ -113,6 +113,8 @@ def find_princs(userid, request):
 def auth_to_db(event):
 	request = event.request
 
+	if not request.matched_route:
+		return
 	rname = request.matched_route.name
 	if rname[0] == '_':
 		return

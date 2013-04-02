@@ -3,7 +3,8 @@ Ext.define('NetProfile.view.Viewport', {
 	requires: [
 		'NetProfile.view.TopBar',
 		'NetProfile.view.MainBar',
-		'NetProfile.view.SideBar'
+		'NetProfile.view.SideBar',
+		'NetProfile.view.FileDownload'
 	],
 	id: 'npws_viewport',
 	stateId: 'npws_viewport',
@@ -23,6 +24,10 @@ Ext.define('NetProfile.view.Viewport', {
 		region: 'center',
 		split: false,
 		xtype: 'mainbar'
+	}, {
+		region: 'south',
+		split: false,
+		xtype: 'filedownload'
 	}],
 
 	initComponent: function()
