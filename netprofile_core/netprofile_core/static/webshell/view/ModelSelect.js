@@ -100,12 +100,23 @@ Ext.define('NetProfile.view.ModelSelect', {
 			params: ff,
 			callback: function(recs, op, success)
 			{
-				var dp, pb;
+				var dp, pb, poly, apim, apic;
+				poly = recs[0].get('__poly');
+				if(poly)
+				{
+					apim = poly[0];
+					apic = poly[1];
+				}
+				else
+				{
+					apim = this.apiModule;
+					apic = this.apiClass;
+				}
 
 				pb = this.up('propbar');
-				dp = NetProfile.view.grid[this.apiModule][this.apiClass].prototype.detailPane;
-				if(success && pb && dp && (recs.length === 1))
-					pb.addRecordTab(this.apiModule, this.apiClass, dp, recs[0]);
+				dp = NetProfile.view.grid[apim][apic].prototype.detailPane;
+				if(success && pb && dp)
+					pb.addRecordTab(apim, apic, dp, recs[0]);
 			},
 			scope: this,
 			synchronous: false
