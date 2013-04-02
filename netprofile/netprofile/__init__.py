@@ -10,7 +10,10 @@ from __future__ import (
 
 import sys
 import cdecimal
+
+PY3 = True
 if sys.version < '3':
+	PY3 = False
 	reload(sys)
 	sys.setdefaultencoding('utf-8')
 sys.modules['decimal'] = cdecimal
