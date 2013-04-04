@@ -249,6 +249,8 @@ Ext.define('NetProfile.view.Wizard', {
 					step.doGetValues = true;
 				}
 			});
+		if(('reload' in data.action) && data.action.reload && this.createInto)
+			this.createInto.reload();
 		if('do' in data.action)
 			switch(data.action['do'])
 			{
