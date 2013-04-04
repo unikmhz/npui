@@ -482,6 +482,8 @@ class ExtColumn(object):
 		if typecls is DeclEnumType:
 			if isinstance(param, EnumSymbol):
 				return param
+			if not param:
+				return None
 			return self.column.type.enum.from_string(param.strip())
 		if issubclass(typecls, _DATE_SET):
 			param = dparse(param)
@@ -727,6 +729,13 @@ class ExtColumn(object):
 		if val is not None:
 			if type(val) in {int, str, list, dict, bool}:
 				conf['defaultValue'] = val
+		if self.model.__mapper__.polymorphic_on is not None:
+			if self.model.__mapper__.polymorphic_on.name == self.name:
+				conf.update({
+					'allowBlank'   : False,
+					'useNull'      : False,
+					'defaultValue' : self.model.__mapper__.polymorphic_identity
+				})
 		return conf
 
 	def get_column_cfg(self, req):
