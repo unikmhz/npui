@@ -62,6 +62,9 @@ Ext.define('NetProfile.view.SideBar', {
 				id: 'npmenu_tree_' + mname,
 				store: Ext.create('NetProfile.store.menu.' + mname),
 				rootVisible: false,
+				selModel: {
+					ignoreRightMouseSelection: true
+				},
 				listeners: {
 					beforeselect: this.onMenuBeforeSelect,
 					select: this.onMenuSelect,

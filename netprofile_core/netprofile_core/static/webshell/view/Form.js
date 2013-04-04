@@ -114,7 +114,7 @@ Ext.define('NetProfile.view.Form', {
 		if(st.formdef.hasOwnProperty(this.formCls))
 			this.loadCallback(st.formdef[this.formCls], null);
 		else
-			this.api.get_fields(this.loadCallback.bind(this));
+			this.api.get_fields(this.loadCallback, this);
 	},
 	remoteValidate: function(fld)
 	{

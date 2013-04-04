@@ -28,7 +28,7 @@ Ext.define('NetProfile.view.FileDownload', {
 
 		url = params.url;
 		if(params.params)
-			url += ('?' + Ext.urlEncode(config.params));
+			url += ('?' + Ext.Object.toQueryString(config.params));
 
 		el = this.getEl();
 		if(!el)

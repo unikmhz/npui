@@ -8,12 +8,13 @@ Ext.define('NetProfile.view.FileBrowser', {
 	stateId: 'npws_filebrowser',
 	stateful: true,
 	requires: [
+		'Ext.form.*',
+		'Ext.menu.*',
 		'NetProfile.store.core.File',
 		'NetProfile.view.FileIconView'
 	],
 
 	border: 0,
-	autoScroll: true,
 	layout: 'fit',
 
 	store: null,
@@ -22,11 +23,13 @@ Ext.define('NetProfile.view.FileBrowser', {
 	viewType: 'icon',
 	sortType: 'fname',
 	sortDir: 'ASC',
+	searchStr: null,
+	uploadUrl: NetProfile.baseURL + '/core/file/ul',
 
 	viewText: 'View',
-	viewAsIconsText: 'As Icons',
-	viewAsListText: 'As List',
-	viewAsGridText: 'As Grid',
+	viewAsIconsText: 'Icons',
+	viewAsListText: 'List',
+	viewAsGridText: 'Grid',
 
 	sortText: 'Sort',
 	sortByNameText: 'By Filename',
@@ -37,6 +40,27 @@ Ext.define('NetProfile.view.FileBrowser', {
 	sortAscText: 'Sort Ascending',
 	sortDescText: 'Sort Descending',
 
+	btnDeleteText: 'Delete',
+
+	deleteTipText: 'Delete File',
+	deleteMsgText: 'Are you sure you want to delete selected file?',
+	deleteManyTipText: 'Delete Files',
+	deleteManyMsgText: 'Are you sure you want to delete selected files?',
+
+	btnUploadText: 'Upload',
+
+	uploadTitleText: 'Upload Files',
+	uploadCloseText: 'Close',
+	uploadAddText: 'Add',
+	uploadUploadText: 'Upload',
+	uploadRemoveText: 'Remove',
+	uploadWaitMsg: 'Uploading Files...',
+
+	btnPropsText: 'Properties',
+	btnDownloadText: 'Download',
+
+	searchEmptyText: 'Search...',
+
 	initComponent: function()
 	{
 		if(!this.store)
@@ -46,6 +70,42 @@ Ext.define('NetProfile.view.FileBrowser', {
 				buffered: false,
 				pageSize: -1
 			});
+		this.ctxMenu = Ext.create('Ext.menu.Menu', {
+			items: [{
+				text: this.btnPropsText,
+				iconCls: 'ico-props'
+			}, {
+				itemId: 'dl_item',
+				text: this.btnDownloadText,
+				iconCls: 'ico-save',
+				handler: function(btn, ev)
+				{
+					var rec;
+
+					rec = this.ctxMenu.record;
+					if(!rec)
+						return false;
+					return this.onFileOpen(rec);
+				},
+				scope: this
+			}, '-', {
+				itemId: 'del_item',
+				text: this.btnDeleteText,
+				iconCls: 'ico-delete',
+				handler: function(btn, ev)
+				{
+					var rec;
+
+					rec = this.ctxMenu.record;
+					if(!rec)
+						return false;
+					if(!Ext.isArray(rec))
+						rec = [rec];
+					return this.deleteRecords(rec);
+				},
+				scope: this
+			}]
+		});
 		this.selectedRecords = [];
 		this.tbar = [{
 			text: this.viewText,
@@ -118,10 +178,144 @@ Ext.define('NetProfile.view.FileBrowser', {
 				checkHandler: this.onSortDirChange,
 				scope: this
 			}]
-		}, '-'];
+		}, '-', {
+			text: this.btnDeleteText,
+			iconCls: 'ico-delete',
+			itemId: 'btn_delete',
+			disabled: true,
+			handler: function(btn, ev)
+			{
+				var me = this;
+
+				this.deleteRecords(this.selectedRecords, function()
+				{
+					me.selectedRecords = [];
+				});
+			},
+			scope: this
+		}, '-', {
+			text: this.btnUploadText,
+			iconCls: 'ico-upload',
+			itemId: 'btn_upload',
+			disabled: true,
+			menu: {
+				xtype: 'menu',
+				layout: 'fit',
+				showSeparator: false,
+				resizable: true,
+				defaults: {
+					plain: true
+				},
+				items: [{
+					xtype: 'form',
+					url: this.uploadUrl,
+					layout: 'anchor',
+					defaults: {
+						anchor: '100%'
+					},
+					minWidth: 300,
+					minHeight: 200,
+					title: this.uploadTitleText,
+					items: [],
+					buttons: [{
+						text: this.uploadCloseText,
+						iconCls: 'ico-cancel',
+						handler: function(btn, ev)
+						{
+							var xform = this.up('form');
+
+							Ext.Array.forEach(
+								xform.query('container[cls~=np-file-upload-cont]'),
+								function(cont) { this.remove(cont, true); }, xform
+							);
+							this.up('menu').hide();
+						}
+					}, '->', {
+						text: this.uploadAddText,
+						iconCls: 'ico-add',
+						handler: function(btn, ev)
+						{
+							var xform = btn.up('form');
+							if(xform)
+								xform.add(this.getUploadField());
+						},
+						scope: this
+					}, {
+						text: this.uploadUploadText,
+						iconCls: 'ico-upload',
+						handler: function(btn, ev)
+						{
+							var xform = this.getUploadForm(),
+								form = xform.getForm();
+
+							if(form && form.isValid())
+							{
+								form.submit({
+									params: this.getUploadParams(),
+									success: function(rform, act)
+									{
+										var xform = rform.owner;
+
+										this.updateStore();
+										Ext.Array.forEach(
+											xform.query('container[cls~=np-file-upload-cont]'),
+											function(cont) { this.remove(cont, true); }, xform
+										);
+										xform.up('menu').hide();
+									},
+									failure: function(rform, act)
+									{
+									},
+									scope: this,
+									waitMsg: this.uploadWaitMsg
+								});
+							}
+						},
+						scope: this
+					}]
+				}],
+				listeners: {
+					beforeshow: function(m)
+					{
+						var f = m.down('form');
+
+						if(f)
+						{
+							Ext.Array.forEach(
+								f.query('container[cls~=np-file-upload-cont]'),
+								function(cont) { this.remove(cont, true); }, f
+							);
+							f.add(this.getUploadField());
+						}
+					},
+					scope: this
+				}
+			}
+		}, '->', {
+			xtype: 'textfield',
+			cls: 'np-ssearch-field',
+			itemId: 'search_fld',
+			hideLabel: true,
+			emptyText: this.searchEmptyText,
+			listeners: {
+				change: function(fld, newval, oldval)
+				{
+					this.fireEvent('searchchange', newval);
+				},
+				scope: this
+			}
+		}];
 		this.callParent(arguments);
 
-		this.on('beforerender', this.onBeforeRender);
+		this.on({
+			beforedestroy: this.onBeforeDestroy,
+			beforerender: this.onBeforeRender,
+			folderupdate: this.onFolderUpdate,
+			searchchange: {
+				fn: this.onSearchChange,
+				buffer: 500
+			}
+		});
 	},
     getState: function()
 	{
@@ -131,6 +325,21 @@ Ext.define('NetProfile.view.FileBrowser', {
 		state = this.addPropertyToState(state, 'sortType');
 		state = this.addPropertyToState(state, 'sortDir');
 		return state;
+	},
+	onBeforeDestroy: function(me)
+	{
+		if(me.store)
+		{
+			Ext.destroy(me.store);
+			me.store = null;
+		}
+		if(me.ctxMenu)
+		{
+			me.ctxMenu.hide();
+			Ext.destroy(me.ctxMenu);
+			me.ctxMenu = null;
+		}
+		return true;
 	},
 	onBeforeRender: function(me)
 	{
@@ -148,12 +357,23 @@ Ext.define('NetProfile.view.FileBrowser', {
 			else
 				cki.setChecked(false);
 		});
+		Ext.Array.forEach(me.query('menucheckitem[group=sdir]'), function(cki)
+		{
+			if(cki.itemId == me.sortDir)
+				cki.setChecked(true);
+			else
+				cki.setChecked(false);
+		});
 		this.renderView();
+		this.fireEvent('folderupdate', this);
+		return true;
 	},
 	setFolder: function(frec)
 	{
+		this.fireEvent('beforefolderupdate', this, frec);
 		this.folder = frec;
 		this.updateStore();
+		this.fireEvent('folderupdate', this);
 	},
 	updateStore: function()
 	{
@@ -163,12 +383,15 @@ Ext.define('NetProfile.view.FileBrowser', {
 			qparam = { __ffilter: { ffid: { eq: null } } };
 		else
 			qparam = { __ffilter: { ffid: { eq: this.folder.getId() } } };
-		// TODO: insert search/sort criteria here
+		// TODO: insert other search criteria here
+		if(this.searchStr)
+			qparam.__sstr = this.searchStr;
 		qparam.__sort = [{ direction: this.sortDir, property: this.sortType }];
 		this.store.load({
 			params: qparam,
 			callback: function(recs, op, success)
 			{
+				this.fireEvent('load', this, recs, op, success);
 			},
 			scope: this,
 			synchronous: false
@@ -176,6 +399,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 	},
 	renderView: function()
 	{
+		this.fireEvent('beforerenderview', this);
 		if(this.view)
 		{
 			this.remove(this.view, true);
@@ -196,6 +420,38 @@ Ext.define('NetProfile.view.FileBrowser', {
 						{
 							this.onFileOpen(rec, ev);
 						},
+						itemcontextmenu: function(el, rec, item, idx, ev)
+						{
+							var can_act = true,
+								is_sel = this.view.isSelected(item),
+								mi;
+
+							ev.stopEvent();
+							if(this.folder && !this.folder.get('allow_write'))
+								can_act = false;
+							else if(!rec.get('allow_write'))
+								can_act = false;
+							mi = this.ctxMenu.getComponent('del_item');
+							if(mi)
+								mi.setDisabled(!can_act);
+							if(is_sel && (this.selectedRecords.length > 1))
+								can_act = false;
+							else
+								can_act = rec.get('allow_read');
+							mi = this.ctxMenu.getComponent('dl_item');
+							if(mi)
+								mi.setDisabled(!can_act);
+							if(is_sel && (this.selectedRecords.length > 1))
+								this.ctxMenu.record = this.selectedRecords;
+							else
+								this.ctxMenu.record = rec;
+							this.ctxMenu.showAt(ev.getXY());
+							return false;
+						},
+						filesdropped: function(view, files, ev)
+						{
+							this.uploadFileList(files);
+						},
 						scope: this
 					}
 				});
@@ -208,12 +464,69 @@ Ext.define('NetProfile.view.FileBrowser', {
 				break;
 		}
 	},
-	onSelectionChange: function(ids)
+	onSearchChange: function(sstr)
 	{
-		this.selectedRecords = ids;
+		if(this.searchStr !== sstr)
+		{
+			this.searchStr = sstr;
+			this.updateStore();
+		}
+	},
+	onSelectionChange: function(nodes)
+	{
+		var tbar, cmp;
+
+		this.selectedRecords = nodes;
+		tbar = this.down('toolbar[dock=top]');
+		if(!tbar)
+			return;
+		cmp = tbar.getComponent('btn_delete');
+		if(cmp)
+		{
+			if(this.folder && !this.folder.get('allow_write'))
+				cmp.setDisabled(true);
+			else if(nodes.length)
+			{
+				var can_delete = true;
+
+				Ext.Array.forEach(nodes, function(n)
+				{
+					if(!n.get('allow_write'))
+						can_delete = false;
+				});
+				if(can_delete)
+					cmp.setDisabled(false);
+			}
+			else
+				cmp.setDisabled(true);
+		}
+	},
+	onFolderUpdate: function(me)
+	{
+		var tbar = me.down('toolbar[dock=top]'),
+			btn_upload = tbar.getComponent('btn_upload');
+
+		if(me.folder)
+		{
+			if(btn_upload)
+			{
+				if(me.folder.get('allow_write'))
+					btn_upload.setDisabled(false);
+				else
+					btn_upload.setDisabled(true);
+			}
+		}
+		else
+		{
+			if(btn_upload)
+				btn_upload.setDisabled(false);
+		}
 	},
 	onFileOpen: function(rec, ev)
 	{
+		// TODO: maybe signal permission denied somehow?
+		if(!rec.get('allow_read'))
+			return false;
 		var dl = Ext.getCmp('npws_filedl');
 		if(!dl)
 			return false;
@@ -252,6 +565,130 @@ Ext.define('NetProfile.view.FileBrowser', {
 			this.saveState();
 			this.updateStore();
 		}
+	},
+	getUploadField: function()
+	{
+		var cfg = {
+			xtype: 'container',
+			cls: 'np-file-upload-cont',
+			layout: {
+				type: 'hbox',
+				align: 'stretch',
+				pack: 'end'
+			},
+			defaults: {
+				margin: 0
+			},
+			items: [{
+				xtype: 'filefield',
+				name: 'file',
+				flex: 1,
+				allowBlank: false
+			}, {
+				xtype: 'tool',
+				cls: 'np-file-upload-close',
+				tooltip: this.uploadRemoveText,
+				type: 'close',
+				handler: function()
+				{
+					var cont, pcont;
+
+					cont = this.up('container[cls~=np-file-upload-cont]');
+					if(!cont || !cont.ownerCt)
+						return;
+					pcont = cont.ownerCt;
+					pcont.remove(cont, true);
+				},
+				width: 20
+			}]
+		};
+		return cfg;
+	},
+	getUploadForm: function()
+	{
+		var cmp;
+
+		cmp = this.down('toolbar[dock=top]');
+		if(!cmp)
+			return null;
+		cmp = cmp.getComponent('btn_upload');
+		if(!cmp || !cmp.menu)
+			return null;
+		return cmp.menu.down('form');
+	},
+	getUploadParams: function()
+	{
+		var p = {};
+
+		if(this.folder)
+			p.ffid = this.folder.getId();
+		return p;
+	},
+	uploadFileList: function(files)
+	{
+		var i, fd, param;
+
+		if(typeof(FormData) === 'undefined')
+			return false;
+		if(this.folder && !this.folder.get('allow_write'))
+			return false;
+			// TODO: alert 'no permission'
+
+		fd = new FormData();
+		param = this.getUploadParams();
+		Ext.Object.each(param, function(k, v)
+		{
+			fd.append(k, v);
+		});
+		for(i = 0; i < files.length; i++)
+		{
+			fd.append('file', files[i]);
+		}
+		this.mask(this.uploadWaitMsg);
+		Ext.Ajax.request({
+			url: this.uploadUrl,
+			method: 'POST',
+			rawData: fd,
+			callback: function(opt, success, response)
+			{
+				this.unmask();
+				this.updateStore();
+			},
+			scope: this
+		});
+		return true;
+	},
+	deleteRecords: function(recs, onyes)
+	{
+		var delnum, can_del = true;
+
+		if(this.folder && !this.folder.get('allow_write'))
+			return false;
+		delnum = recs.length;
+		Ext.Array.forEach(recs, function(r)
+		{
+			if(!r.get('allow_write'))
+				can_del = false;
+		});
+		if(!can_del)
+			return false;
+
+		Ext.MessageBox.confirm(
+			(delnum > 1 ? this.deleteManyTipText : this.deleteTipText),
+			(delnum > 1 ? this.deleteManyMsgText : this.deleteMsgText),
+			function(btn)
+			{
+				if(btn === 'yes')
+				{
+					this.store.remove(recs);
+					if(typeof(onyes) === 'function')
+						onyes(recs);
+				}
+				return true;
+			},
+			this
+		);
+		return true;
 	}
 });
 

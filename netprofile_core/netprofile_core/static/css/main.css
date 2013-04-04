@@ -140,6 +140,13 @@ h2
 	height: 16px;
 }
 
+.np-file-iview .x-view-empty
+{
+	color: gray;
+	font: 11px tahoma,arial,helvetica,sans-serif;
+	padding: 10px;
+}
+
 .np-file-wrap
 {
 	float: left;
@@ -196,7 +203,29 @@ h2
 .x-view-selector
 {
 	position: absolute;
+/*	left: 0;
+	top: 0;
+	width: 0;*/
 	border: 1px dotted #39b;
+/*	opacity: .5;
+	-moz-opacity: .5;
+	filter: alpha(opacity=50);
+	zoom: 1;
+	background-color: #c3daf9;
+	border-color: #3399bb;*/
+}
+
+.np-file-upload-cont
+{
+	padding: 6px;
+	background-color: #d9e7f8;
+	border-top: 1px solid #f3f7fb;
+	border-bottom: 1px solid #99bce8;
+}
+
+.np-file-upload-cont .np-file-upload-close
+{
+	padding: 3px 0px;
 }
 
 .ico-accept       { background-image: url(../img/accept.png) !important; }
@@ -207,6 +236,7 @@ h2
 .ico-copy         { background-image: url(../img/copy.png) !important; }
 .ico-cut          { background-image: url(../img/cut.png) !important; }
 .ico-delete       { background-image: url(../img/delete.png) !important; }
+.ico-edit         { background-image: url(../img/edit.png) !important; }
 .ico-exit         { background-image: url(../img/exit.png) !important; }
 .ico-find         { background-image: url(../img/find.png) !important; }
 .ico-first        { background-image: url(../img/first.png) !important; }
@@ -241,6 +271,7 @@ h2
 .ico-text-left    { background-image: url(../img/text_left.png) !important; }
 .ico-text-right   { background-image: url(../img/text_right.png) !important; }
 .ico-tool         { background-image: url(../img/tool.png) !important; }
+.ico-upload       { background-image: url(../img/upload.png) !important; }
 .ico-undo         { background-image: url(../img/undo.png) !important; }
 .ico-view         { background-image: url(../img/view.png) !important; }
 

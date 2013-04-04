@@ -67,7 +67,8 @@ from sqlalchemy.orm import (
 	backref,
 	deferred,
 	joinedload,
-	relationship
+	relationship,
+	validates
 )
 
 from sqlalchemy.ext.declarative import declared_attr
@@ -83,6 +84,7 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 from netprofile import PY3
 from netprofile.common import ipaddr
 from netprofile.common.phps import HybridPickler
+from netprofile.common.threadlocal import magic
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -137,6 +139,9 @@ F_OWNER_ALL   = 0x01c0
 F_GROUP_ALL   = 0x0038
 F_OTHER_ALL   = 0x0007
 F_RIGHTS_ALL  = 0x01ff
+
+F_DEFAULT_FILES = F_OWNER_READ | F_OWNER_WRITE | F_GROUP_READ | F_GROUP_WRITE | F_OTHER_READ
+F_DEFAULT_DIRS = F_OWNER_ALL | F_GROUP_ALL | F_OTHER_READ | F_OTHER_EXEC
 
 def _gen_xcap(cls, k, v):
 	"""
@@ -1754,6 +1759,18 @@ class FileFolder(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
+				'cap_read'     : 'FILES_LIST',
+				'cap_create'   : 'FILES_UPLOAD',
+				'cap_edit'     : 'FILES_EDIT',
+				'cap_delete'   : 'FILES_DELETE',
+
+#				'show_in_menu' : 'admin',
+				'menu_name'    : _('Folders'),
+#				'menu_order'   : 40,
+				'default_sort' : (),
+#				'grid_view'    : ()
+				'easy_search'  : ('name',),
+				'extra_data'   : ('allow_read', 'allow_write', 'allow_traverse')
 			}
 		}
 	)
@@ -1808,8 +1825,8 @@ class FileFolder(Base):
 		UInt32(),
 		Comment('Rights bitmask'),
 		nullable=False,
-		default=0,
-		server_default=text('0'),
+		default=F_DEFAULT_DIRS,
+		server_default=text(str(F_DEFAULT_DIRS)),
 		info={
 			'header_string' : _('Rights')
 		}
@@ -1894,6 +1911,15 @@ class FileFolder(Base):
 		primaryjoin='FileFolder.id == Group.root_folder_id'
 	)
 
+	def allow_read(self, req):
+		return self.can_read(req.user)
+
+	def allow_write(self, req):
+		return self.can_write(req.user)
+
+	def allow_traverse(self, req):
+		return self.can_traverse(req.user)
+
 	def can_read(self, user):
 		if self.user_id == user.id:
 			return bool(self.rights & F_OWNER_READ)
@@ -1977,6 +2003,18 @@ class File(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
+				'cap_read'     : 'FILES_LIST',
+				'cap_create'   : 'FILES_UPLOAD',
+				'cap_edit'     : 'FILES_EDIT',
+				'cap_delete'   : 'FILES_DELETE',
+
+#				'show_in_menu' : 'admin',
+				'menu_name'    : _('Files'),
+#				'menu_order'   : 40,
+				'default_sort' : (),
+#				'grid_view'    : (),
+				'easy_search'  : ('fname', 'name'),
+				'extra_data'   : ('allow_access', 'allow_read', 'allow_write', 'allow_execute')
 			}
 		}
 	)
@@ -2048,8 +2086,8 @@ class File(Base):
 		UInt32(),
 		Comment('Rights bitmask'),
 		nullable=False,
-		default=0,
-		server_default=text('0'),
+		default=F_DEFAULT_FILES,
+		server_default=text(str(F_DEFAULT_FILES)),
 		info={
 			'header_string' : _('Rights')
 		}
@@ -2162,6 +2200,18 @@ class File(Base):
 				return None
 			return cset
 
+	def allow_access(self, req):
+		return self.can_access(req.user)
+
+	def allow_read(self, req):
+		return self.can_read(req.user)
+
+	def allow_write(self, req):
+		return self.can_write(req.user)
+
+	def allow_execute(self, req):
+		return self.can_execute(req.user)
+
 	def can_access(self, user):
 		if self.folder:
 			return self.folder.can_traverse_path(user)
@@ -2188,8 +2238,20 @@ class File(Base):
 			return bool(self.rights & F_GROUP_EXEC)
 		return bool(self.rights & F_OTHER_EXEC)
 
-	def get_response(self, req):
+	def get_response(self, req, range_start=None, range_end=None):
 		return FileResponse(self, req)
+
+	@validates('data')
+	def _set_data(self, k, v):
+		ctx = hashlib.md5()
+		ctx.update(v)
+		self.etag = ctx.hexdigest()
+		self.size = len(v)
+		m = magic.get()
+		guessed_mime = m.buffer(v)
+		if guessed_mime:
+			self.mime_type = guessed_mime
+		return v
 
 	def __str__(self):
 		return '%s' % str(self.filename)

@@ -34,6 +34,7 @@ class Module(ModuleBase):
 		config.add_route('core.js.webshell', '/js/webshell')
 		config.add_route('core.file.download', '/file/dl/{fileid:\d+}*filename',
 				custom_predicates=(_int_fileid,))
+		config.add_route('core.file.upload', '/file/ul')
 
 	def get_models(self):
 		return (

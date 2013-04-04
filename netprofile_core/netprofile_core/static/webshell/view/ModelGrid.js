@@ -160,7 +160,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 		if(this.actionCol)
 		{
 			var has_action = false;
-			this.columns.forEach(function(col)
+			Ext.Array.forEach(this.columns, function(col)
 			{
 				if(col.xtype == 'actioncolumn')
 					has_action = true;
@@ -257,7 +257,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 			},
 			beforerender: function(grid)
 			{
-				this.columns.forEach(function(col)
+				Ext.Array.forEach(this.columns, function(col)
 				{
 					if(grid.hideColumns && Ext.Array.contains(grid.hideColumns, col.dataIndex))
 						col.hidden = true;
@@ -448,7 +448,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 				var view = this.getView(),
 					node = view.getNode(record);
 				if(node)
-					node.scrollIntoView(view);
+					node.scrollIntoView();
 			}
 		}
 		return true;

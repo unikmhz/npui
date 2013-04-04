@@ -38,6 +38,23 @@ Ext.require([
 		'X-CSRFToken': '${req.get_csrf()}'
 	});
 
+	Ext.define('Ext.data.ConnectionNPOver', {
+		override: 'Ext.data.Connection',
+		setOptions: function(opt, scope)
+		{
+			res = this.callParent(arguments);
+			if(opt.rawData && (typeof(FormData) !== 'undefined') && (opt.rawData instanceof FormData))
+				res.data = opt.rawData;
+			return res;
+		},
+		setupHeaders: function(xhr, opt, data, params)
+		{
+			if(opt.rawData && (typeof(FormData) !== 'undefined') && (opt.rawData instanceof FormData))
+				return {};
+			res = this.callParent(arguments);
+			return res;
+		}
+	});
 	Ext.define('Ext.form.field.BaseErrors', {
 		override: 'Ext.form.field.Base',
 		getErrors: function(value)
@@ -275,10 +292,10 @@ Ext.require([
 		extend: 'Ext.data.proxy.Direct',
 		alias: 'proxy.${module}_${model}',
 		api: {
-			create:  NetProfile.api.${model}.create,
-			read:    NetProfile.api.${model}.read,
-			update:  NetProfile.api.${model}.update,
-			destroy: NetProfile.api.${model}.delete
+			create:  NetProfile.api.${model}['create'],
+			read:    NetProfile.api.${model}['read'],
+			update:  NetProfile.api.${model}['update'],
+			destroy: NetProfile.api.${model}['delete']
 		},
 		simpleSortMode: false,
 		filterParam: '__filter',
@@ -355,7 +372,10 @@ Ext.application({
 
 	models: [],
 	stores: [],
-	controllers: ['DataStores'],
+	controllers: [
+		'DataStores',
+		'FileFolders'
+	],
 
 	launch: function()
 	{

@@ -8,6 +8,8 @@ from __future__ import (
 	division
 )
 
+import json
+
 from pyramid.response import Response
 from pyramid.i18n import get_locale_name
 from pyramid.view import (
@@ -33,6 +35,7 @@ from netprofile import (
 	LANGUAGES,
 	locale_neg
 )
+from netprofile import PY3
 from netprofile.common.modules import IModuleManager
 from netprofile.db.connection import DBSession
 from netprofile.ext.direct import extdirect_method
@@ -47,6 +50,11 @@ from .models import (
 	UserSettingType,
 	UserState
 )
+
+if PY3:
+	from html import escape as html_escape
+else:
+	from cgi import escape as html_escape
 
 @view_config(route_name='core.home', renderer='netprofile_core:templates/home.mak', permission='USAGE')
 def home_screen(request):
@@ -131,6 +139,8 @@ def do_logout(request):
 
 @view_config(route_name='core.js.webshell', renderer='netprofile_core:templates/webshell.mak', permission='USAGE')
 def js_webshell(request):
+	request.response.content_type = 'text/javascript'
+	request.response.charset = 'UTF-8'
 	mmgr = request.registry.getUtility(IModuleManager)
 	return {
 		'langs'   : LANGUAGES,
@@ -148,6 +158,28 @@ def file_dl(request):
 	obj = sess.query(File).options(undefer('data')).get(file_id)
 	res = obj.get_response(request)
 	return res
+
+@view_config(route_name='core.file.upload', permission='FILES_UPLOAD')
+def file_ul(request):
+	sess = DBSession()
+	ff_id = request.POST['ffid']
+	folder = None
+	if ff_id:
+		ff_id = int(ff_id)
+		folder = sess.query(FileFolder).get(ff_id)
+	if folder and not folder.can_write(request.user):
+		raise ValueError('Folder access denied')
+	for fo in request.POST.getall('file'):
+		obj = File(user=request.user, group=request.user.group)
+		if fo.filename:
+			obj.name = obj.filename = fo.filename
+		obj.folder = folder
+		obj.data = fo.value
+		sess.add(obj)
+	return Response(html_escape(json.dumps({
+		'success' : True,
+		'msg'     : 'File(s) uploaded'
+	}), False))
 
 def dpane_simple(model, request):
 	tabs = []
@@ -243,7 +275,7 @@ def ff_tree(params, request):
 			raise ValueError('Folder access denied')
 		q = q.filter(FileFolder.parent == folder)
 	else:
-		folder = sess.query(FileFolder.id == int(params['node'])).one()
+		folder = q.filter(FileFolder.id == int(params['node'])).one()
 		if folder and (not folder.can_read(request.user)):
 			raise ValueError('Folder access denied')
 		q = q.filter(FileFolder.parent_id == int(params['node']))

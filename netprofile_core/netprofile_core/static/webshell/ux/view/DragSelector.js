@@ -24,7 +24,8 @@ Ext.define('Ext.ux.view.DragSelector', {
                 fn: this.onRender,
                 scope: this,
                 single: true
-            }
+            },
+			refresh: this.onRefresh
         });
     },
 
@@ -59,6 +60,15 @@ Ext.define('Ext.ux.view.DragSelector', {
          */
         this.dragRegion = Ext.create('Ext.util.Region');
     },
+
+	onRefresh: function()
+	{
+		if(this.proxy)
+		{
+			this.proxy.destroy();
+			delete this.proxy;
+		}
+	},
 
     /**
      * @private

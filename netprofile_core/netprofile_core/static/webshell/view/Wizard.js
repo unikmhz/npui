@@ -135,7 +135,7 @@ Ext.define('NetProfile.view.Wizard', {
 	{
 		if(!this.api)
 			this.api = this.getDirectAction();
-		this.api.get_steps(this.loadCallback.bind(this));
+		this.api.get_steps(this.loadCallback, this);
 	},
 	remoteValidate: function(fld)
 	{
