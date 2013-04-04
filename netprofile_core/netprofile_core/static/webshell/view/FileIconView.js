@@ -27,7 +27,7 @@ Ext.define('NetProfile.view.FileIconView', {
 	tpl: [
 		'<tpl for=".">',
 			'<div class="np-file-wrap" id="file_{fileid}">',
-				'<div class="np-file-icon"><img src="/static/core/img/mime/48/{mime_img}.png" title="{fname}" /></div>',
+				'<div class="np-file-icon"><img src="/static/core/img/mime/48/{mime_img}.png" title="{fname}" onerror=\'this.onerror = null; this.src="/static/core/img/mime/48/default.png"\' /></div>',
 				'<span class="x-editable" title="{fname}">{fname}</span>',
 			'</div>',
 		'</tpl>',

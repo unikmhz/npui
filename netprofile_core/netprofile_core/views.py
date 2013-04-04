@@ -162,7 +162,10 @@ def file_dl(request):
 @view_config(route_name='core.file.upload', permission='FILES_UPLOAD')
 def file_ul(request):
 	sess = DBSession()
-	ff_id = request.POST['ffid']
+	try:
+		ff_id = request.POST['ffid']
+	except KeyError:
+		ff_id = None
 	folder = None
 	if ff_id:
 		ff_id = int(ff_id)

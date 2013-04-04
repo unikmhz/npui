@@ -163,11 +163,14 @@ h2
 {
 	display: inline-block;
 	padding: 3px;
+	width: 54px;
+	height: 51px;
 	padding-bottom: 0;
 }
 
 .x-quirks .np-file-wrap .np-file-icon
 {
+	height: 54px;
 	padding-bottom: 3px;
 }
 
@@ -203,16 +206,7 @@ h2
 .x-view-selector
 {
 	position: absolute;
-/*	left: 0;
-	top: 0;
-	width: 0;*/
 	border: 1px dotted #39b;
-/*	opacity: .5;
-	-moz-opacity: .5;
-	filter: alpha(opacity=50);
-	zoom: 1;
-	background-color: #c3daf9;
-	border-color: #3399bb;*/
 }
 
 .np-file-upload-cont
