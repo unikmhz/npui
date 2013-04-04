@@ -148,6 +148,10 @@ class Step(object):
 				coldef = col.default
 				if (kwargs.get('use_defaults', False)) and (coldef is not None):
 					colfld['value'] = coldef
+					if isinstance(col, ExtRelationshipColumn) and ('hiddenField' in colfld):
+						hdval = col.get_related_by_value(coldef)
+						if hdval:
+							colfld['value'] = str(hdval)
 				step.append(colfld)
 				if isinstance(col, ExtRelationshipColumn) and ('hiddenField' in colfld):
 					hcol = model.get_column(colfld['hiddenField'])
