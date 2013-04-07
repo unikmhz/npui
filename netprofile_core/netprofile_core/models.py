@@ -41,6 +41,7 @@ __all__ = [
 ]
 
 import io
+import errno
 import string
 import random
 import re
@@ -142,6 +143,11 @@ F_RIGHTS_ALL  = 0x01ff
 
 F_DEFAULT_FILES = F_OWNER_READ | F_OWNER_WRITE | F_GROUP_READ | F_GROUP_WRITE | F_OTHER_READ
 F_DEFAULT_DIRS = F_OWNER_ALL | F_GROUP_ALL | F_OTHER_READ | F_OTHER_EXEC
+
+_VFS_READ     = 0x01
+_VFS_WRITE    = 0x02
+_VFS_APPEND   = 0x04
+_VFS_TRUNCATE = 0x10
 
 def _gen_xcap(cls, k, v):
 	"""
@@ -736,7 +742,6 @@ class User(Base):
 					npsess.ip_address = ip
 				elif isinstance(ip, ipaddr.IPv6Address):
 					npsess.ipv6_address = ip
-				print(repr(ip))
 			except ValueError:
 				pass
 		return npsess
@@ -1764,10 +1769,8 @@ class FileFolder(Base):
 				'cap_edit'     : 'FILES_EDIT',
 				'cap_delete'   : 'FILES_DELETE',
 
-#				'show_in_menu' : 'admin',
 				'menu_name'    : _('Folders'),
-#				'menu_order'   : 40,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 #				'grid_view'    : ()
 				'easy_search'  : ('name',),
 				'extra_data'   : ('allow_read', 'allow_write', 'allow_traverse')
@@ -1954,6 +1957,28 @@ class FileFolder(Base):
 		return '%s' % str(self.name)
 
 _BLOCK_SIZE = 4096 * 64 # 256K
+_CHUNK_SIZE = 1024 * 1024 * 2 # 2M
+
+class WindowFileIter(FileIter):
+	def __init__(self, f, block_size=_BLOCK_SIZE, window=None):
+		super(WindowFileIter, self).__init__(f, block_size)
+		self.window = window
+
+	def next(self):
+		if self.window is None:
+			return super(WindowFileIter, self).next()
+		if self.window <= 0:
+			raise StopIteration
+		to_read = self.block_size
+		if to_read > self.window:
+			to_read = self.window
+		val = self.file.read(to_read)
+		if not val:
+			raise StopIteration
+		self.window -= len(val)
+		return val
+
+	__next__ = next
 
 class FileResponse(Response):
 	def __init__(self, obj, request=None, cache_max_age=None, content_encoding=None):
@@ -1961,6 +1986,10 @@ class FileResponse(Response):
 		self.last_modified = obj.modification_time
 		self.content_type = obj.plain_mime_type
 		self.charset = obj.mime_charset
+		self.allow = ('GET', 'HEAD')
+		self.vary = ('Cookie',)
+		# TODO: self.cache_control
+		self.accept_ranges = 'bytes'
 		if PY3:
 			self.content_disposition = \
 				'attachment; filename*=UTF-8\'\'%s' % (
@@ -1973,16 +2002,51 @@ class FileResponse(Response):
 				)
 		self.etag = obj.etag
 		self.content_encoding = content_encoding
-		bio = io.BytesIO(obj.data)
-		app_iter = None
-		if request is not None:
-			environ = request.environ
-			if 'wsgi.file_wrapper' in environ:
-				app_iter = environ['wsgi.file_wrapper'](bio, _BLOCK_SIZE)
-		if app_iter is None:
-			app_iter = FileIter(bio, _BLOCK_SIZE)
-		self.app_iter = app_iter
-		self.content_length = obj.size
+		cr = None
+		if request.range and (self in request.if_range):
+			cr = request.range.content_range(length=obj.size)
+		if cr:
+			self.status = 206
+			self.content_range = cr
+		elif obj.size:
+			self.content_range = (0, obj.size, obj.size)
+			if request.range and ('If-Range' not in request.headers):
+				self.status = 416
+
+		if request.method != 'HEAD':
+			bio = None
+			app_iter = None
+			data = obj.data
+			if data is None:
+				bio = obj.open('r')
+				if cr:
+					bio.seek(cr.start)
+					self.app_iter = WindowFileIter(bio, _BLOCK_SIZE, cr.stop - cr.start)
+				else:
+					if request is not None:
+						environ = request.environ
+						if 'wsgi.file_wrapper' in environ:
+							app_iter = environ['wsgi.file_wrapper'](bio, _BLOCK_SIZE)
+					if app_iter is None:
+						app_iter = FileIter(bio, _BLOCK_SIZE)
+					self.app_iter = app_iter
+			else:
+				if cr:
+					bio = io.BytesIO(obj.data[cr.start:cr.stop])
+				else:
+					bio = io.BytesIO(obj.data)
+				if request is not None:
+					environ = request.environ
+					if 'wsgi.file_wrapper' in environ:
+						app_iter = environ['wsgi.file_wrapper'](bio, _BLOCK_SIZE)
+				if app_iter is None:
+					app_iter = FileIter(bio, _BLOCK_SIZE)
+				self.app_iter = app_iter
+
+		if cr:
+			self.content_length = (cr.stop - cr.start)
+		else:
+			self.content_length = obj.size
 		if cache_max_age is not None:
 			self.cache_expires = cache_max_age
 
@@ -2008,10 +2072,8 @@ class File(Base):
 				'cap_edit'     : 'FILES_EDIT',
 				'cap_delete'   : 'FILES_DELETE',
 
-#				'show_in_menu' : 'admin',
 				'menu_name'    : _('Files'),
-#				'menu_order'   : 40,
-				'default_sort' : (),
+				'default_sort' : ({ 'property': 'fname' ,'direction': 'ASC' },),
 #				'grid_view'    : (),
 				'easy_search'  : ('fname', 'name'),
 				'extra_data'   : ('allow_access', 'allow_read', 'allow_write', 'allow_execute')
@@ -2179,11 +2241,20 @@ class File(Base):
 	data = deferred(Column(
 		LargeBinary(),
 		Comment('Actual file data'),
-		nullable=False,
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('Data')
 		}
 	))
+
+	chunks = relationship(
+		'FileChunk',
+		backref=backref('file', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	@property
 	def plain_mime_type(self):
@@ -2238,11 +2309,34 @@ class File(Base):
 			return bool(self.rights & F_GROUP_EXEC)
 		return bool(self.rights & F_OTHER_EXEC)
 
-	def get_response(self, req, range_start=None, range_end=None):
+	def get_response(self, req):
 		return FileResponse(self, req)
+
+	def open(self, mode='r', user_perm=None, sess=None):
+		xm = 0
+		if 'r+' in mode:
+			xm |= _VFS_READ|_VFS_WRITE
+		elif 'w+' in mode:
+			xm |= _VFS_READ|_VFS_WRITE|_VFS_TRUNCATE
+		elif 'a+' in mode:
+			xm |= _VFS_READ|_VFS_WRITE|_VFS_APPEND
+		elif 'r' in mode:
+			xm |= _VFS_READ
+		elif 'w' in mode:
+			xm |= _VFS_WRITE
+		elif 'a' in mode:
+			xm |= _VFS_WRITE|_VFS_APPEND
+		if user_perm:
+			if (xm & _VFS_READ) and not self.can_read(user_perm):
+				raise IOError(errno.EACCES, 'Read access denied', self)
+			if (xm & _VFS_WRITE) and not self.can_write(user_perm):
+				raise IOError(errno.EACCES, 'Write access denied', self)
+		return VFSFileIO(self, xm, sess)
 
 	@validates('data')
 	def _set_data(self, k, v):
+		if v is None:
+			return None
 		ctx = hashlib.md5()
 		ctx.update(v)
 		self.etag = ctx.hexdigest()
@@ -2253,8 +2347,427 @@ class File(Base):
 			self.mime_type = guessed_mime
 		return v
 
+	def set_from_file(self, infile, user=None, sess=None):
+		if sess is None:
+			sess = DBSession()
+		m = magic.get()
+		self.size = 0
+		fd = -1
+		buf = bytearray(_BLOCK_SIZE)
+		mv = memoryview(buf)
+		ctx = hashlib.md5()
+		with self.open('w+', user, sess) as fd:
+			while 1:
+				rsz = infile.readinto(buf)
+				if not rsz:
+					break
+				ctx.update(mv[:rsz])
+				fd.write(mv[:rsz])
+		self.etag = ctx.hexdigest()
+		self.data = None
+		infile.seek(0)
+		try:
+			fd = infile.fileno()
+			guessed_mime = m.descriptor(fd)
+		except:
+			guessed_mime = m.buffer(infile.read())
+		if guessed_mime:
+			self.mime_type = guessed_mime
+
 	def __str__(self):
 		return '%s' % str(self.filename)
+
+class FileChunk(Base):
+	"""
+	Single chunk of a VFS file. Contains _CHUNK_SIZE bytes.
+	"""
+	__tablename__ = 'files_chunks'
+	__table_args__ = (
+		Comment('Stored File Chunks'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8'
+		}
+	)
+	file_id = Column(
+		'fileid',
+		UInt32(),
+		ForeignKey('files_def.fileid', name='files_chunks_fk_fileid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('File ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	offset = Column(
+		UInt32(),
+		Comment('File chunk offset'),
+		primary_key=True,
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('Offset')
+		}
+	)
+	# needs deferred? maybe not
+	data = Column(
+		LargeBinary(),
+		Comment('File chunk data'),
+		nullable=False,
+		info={
+			'header_string' : _('Data')
+		}
+	)
+
+	def get_buffer(self):
+		try:
+			return self._buf
+		except AttributeError:
+			pass
+		if self.data:
+			self._buf = bytearray(self.data)
+		else:
+			self._buf = bytearray()
+		return self._buf
+
+	def sync_buffer(self):
+		if not hasattr(self, '_buf'):
+			raise ValueError()
+		self.data = bytes(self._buf)
+
+class VFSFileIO(io.BufferedIOBase):
+	"""
+	VFS file handle.
+	"""
+	def __init__(self, fo, mode=_VFS_READ, sess=None):
+		if sess is None:
+			xsess = DBSession()
+			xsess.expunge(fo)
+			self.own_sess = True
+		else:
+			self.own_sess = False
+		# File mode internal bitmask
+		self._mode = mode
+		# DB session
+		self._sess = sess
+		# File object
+		self.f = fo
+		# Current chunk
+		self.c = None
+		# Last chunk number that we tried to load
+		self.last_c = None
+		# Set to true on chunk modification, to false on chunk load
+		self.mod_c = False
+		# Current memoryview (if it exists)
+		self.buf = None
+		# Offset in chunks
+		self.c_offset = 0
+		# Offset from chunk start
+		self.b_offset = 0
+
+		if self._mode & _VFS_TRUNCATE:
+			self.truncate(0)
+
+	@property
+	def sess(self):
+		if self._sess is None:
+			self._sess = DBSession()
+		return self._sess
+
+	@property
+	def name(self):
+		return self.f.filename
+
+	@property
+	def mode(self):
+		if self._mode & _VFS_APPEND:
+			if self._mode & _VFS_READ:
+				return 'a+'
+			return 'a'
+		if self._mode & _VFS_TRUNCATE:
+			return 'w+'
+		if self._mode & _VFS_WRITE:
+			if self._mode & _VFS_READ:
+				return 'r+'
+			return 'w'
+		if self._mode & _VFS_READ:
+			return 'r'
+		raise ValueError('Invalid file mode')
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, exc_type, exc_val, trace):
+		self.close()
+
+	def _update_chunk(self):
+		if self.c and (self.c.offset != self.c_offset):
+			if (self._mode & _VFS_WRITE) and self.mod_c:
+				self.c.sync_buffer()
+				self.sess.flush(objects=(self.c,))
+			self.sess.expunge(self.c)
+			self.c = None
+			self.last_c = None
+		self.mod_c = False
+		if (self.c is None) and (self.last_c != self.c_offset):
+			self.c = self.sess.query(FileChunk).get((self.f.id, self.c_offset))
+			self.last_c = self.c_offset
+			if self.c:
+				if self._mode & _VFS_WRITE:
+					self.buf = self.c.get_buffer()
+				else:
+					self.buf = self.c.data
+			else:
+				self.buf = None
+
+	def closed(self):
+		return (self.f is None)
+
+	def close(self):
+		if self._mode & _VFS_WRITE:
+			self.flush()
+		elif self.own_sess:
+			self.sess.rollback()
+		self.buf = None
+		self.c = None
+		self.f = None
+		self.c_offset = 0
+		self.b_offset = 0
+
+	def fileno(self):
+		raise IOError(errno.EBADF, 'VFS objects don\'t have file descriptors', self.f)
+
+	def flush(self):
+		if (self._mode & _VFS_WRITE) and self.c and self.mod_c:
+			self.c.sync_buffer()
+			self.sess.flush(objects=(self.c,))
+			if self.own_sess:
+				self.sess.commit()
+			self.mod_c = False
+
+	def isatty(self):
+		return False
+
+	def seekable(self):
+		return True
+
+	def seek(self, off=0, whence=0):
+		old = self.tell()
+		if whence == 0:
+			new = off
+		elif whence == 1:
+			new = old + off
+		elif whence == 2:
+			new = self.f.size + off
+		else:
+			new = old
+		if (new > self.f.size) and not (self._mode & _VFS_WRITE):
+			new = self.f.size
+		self.c_offset, self.b_offset = divmod(new, _CHUNK_SIZE)
+		return new
+
+	def tell(self):
+		return self.c_offset * _CHUNK_SIZE + self.b_offset
+
+	def truncate(self, sz=None):
+		if sz == self.f.size:
+			return sz
+		if sz < 0:
+			raise IOError(errno.EINVAL, 'New file size can\'t be negative', self.f)
+		if not (self._mode & _VFS_WRITE):
+			raise IOError(errno.EBADF, 'File is not open for writing', self.f)
+		if sz is None:
+			sz = self.c_offset * _CHUNK_SIZE + self.b_offset
+			end_c, end_b = self.c_offset, self.b_offset
+		else:
+			end_c, end_b = divmod(sz, _CHUNK_SIZE)
+		cur_c, cur_b = self.c_offset, self.b_offset
+		if sz > self.f.size:
+			self.f.size = sz
+			return sz
+		if self.mod_c:
+			self.flush()
+		if end_b == 0:
+			self.sess.query(FileChunk) \
+				.filter(FileChunk.file_id == self.f.id, FileChunk.offset >= end_c) \
+				.delete()
+		else:
+			self.sess.query(FileChunk) \
+				.filter(FileChunk.file_id == self.f.id, FileChunk.offset > end_c) \
+				.delete()
+			self.c_offset = end_c
+			self.b_offset = end_b
+			self._update_chunk()
+			if self.c and (len(self.buf) > self.b_offset):
+				del self.buf[self.b_offset:]
+				self.mod_c = True
+		self.c_offset = cur_c
+		self.b_offset = cur_b
+		self.f.size = sz
+		return sz
+
+	def detach(self):
+		raise io.UnsupportedOperation(errno.EBADF, 'Can\'t detach chunk. Data will not be complete.', self.f)
+
+	def readable(self):
+		return (self._mode & _VFS_READ)
+
+	def read(self, maxb=-1):
+		if not (self._mode & _VFS_READ):
+			raise IOError(errno.EBADF, 'File is not open for reading', self.f)
+		cur_pos = self.c_offset * _CHUNK_SIZE + self.b_offset
+		read_sz = self.f.size - cur_pos
+		if maxb is None:
+			maxb = -1
+		if (maxb == 0) or (read_sz <= 0):
+			return b''
+		if (maxb > 0) and (read_sz > maxb):
+			read_sz = maxb
+		retbuf = bytearray(read_sz)
+		cursor = 0
+		while read_sz > 0:
+			self._update_chunk()
+			if self.c is None:
+				to_read = min(read_sz, _CHUNK_SIZE - self.b_offset)
+				read_sz -= to_read
+				cursor += to_read
+				self.b_offset += to_read
+				if self.b_offset >= _CHUNK_SIZE:
+					self.c_offset += 1
+					self.b_offset = 0
+				continue
+			chunk_len = len(self.buf)
+			if self.b_offset >= chunk_len:
+				to_read = min(read_sz, _CHUNK_SIZE - self.b_offset)
+				read_sz -= to_read
+				cursor += to_read
+				self.b_offset += to_read
+				if self.b_offset >= _CHUNK_SIZE:
+					self.c_offset += 1
+					self.b_offset = 0
+				continue
+			to_read = min(chunk_len - self.b_offset, read_sz)
+			mv = memoryview(self.buf)
+			retbuf[cursor:cursor + to_read] = mv[self.b_offset:self.b_offset + to_read]
+			read_sz -= to_read
+			cursor += to_read
+			self.b_offset += to_read
+			if self.b_offset >= _CHUNK_SIZE:
+				self.c_offset += 1
+				self.b_offset = 0
+		return bytes(retbuf)
+
+	def read1(self, maxb=-1):
+		if not (self._mode & _VFS_READ):
+			raise IOError(errno.EBADF, 'File is not open for reading', self.f)
+		raise NotImplementedError
+
+	def readinto(self, retbuf):
+		if not (self._mode & _VFS_READ):
+			raise IOError(errno.EBADF, 'File is not open for reading', self.f)
+		cur_pos = self.c_offset * _CHUNK_SIZE + self.b_offset
+		read_sz = len(retbuf)
+		file_sz = self.f.size - cur_pos
+		if file_sz < read_sz:
+			read_sz = file_sz
+		cursor = 0
+		orig_read_sz = read_sz
+		while read_sz > 0:
+			self._update_chunk()
+			if self.c is None:
+				to_read = min(read_sz, _CHUNK_SIZE - self.b_offset)
+				retbuf[cursor:cursor + to_read] = (0 for x in range(to_read))
+				read_sz -= to_read
+				cursor += to_read
+				self.b_offset += to_read
+				if self.b_offset >= _CHUNK_SIZE:
+					self.c_offset += 1
+					self.b_offset = 0
+				continue
+			chunk_len = len(self.buf)
+			if self.b_offset >= chunk_len:
+				to_read = min(read_sz, _CHUNK_SIZE - self.b_offset)
+				retbuf[cursor:cursor + to_read] = (0 for x in range(to_read))
+				read_sz -= to_read
+				cursor += to_read
+				self.b_offset += to_read
+				if self.b_offset >= _CHUNK_SIZE:
+					self.c_offset += 1
+					self.b_offset = 0
+				continue
+			to_read = min(chunk_len - self.b_offset, read_sz)
+			mv = memoryview(self.buf)
+			retbuf[cursor:cursor + to_read] = mv[self.b_offset:self.b_offset + to_read]
+			read_sz -= to_read
+			cursor += to_read
+			self.b_offset += to_read
+			if self.b_offset >= _CHUNK_SIZE:
+				self.c_offset += 1
+				self.b_offset = 0
+		return orig_read_sz
+
+	def readline(self, limit=-1):
+		if not (self._mode & _VFS_READ):
+			raise IOError(errno.EBADF, 'File is not open for reading', self.f)
+		raise NotImplementedError
+
+	def readlines(self, hint=-1):
+		if not (self._mode & _VFS_READ):
+			raise IOError(errno.EBADF, 'File is not open for reading', self.f)
+		raise NotImplementedError
+
+	readall = read
+
+	def writable(self):
+		return (self._mode & _VFS_WRITE)
+
+	def write(self, b):
+		if not (self._mode & _VFS_WRITE):
+			raise IOError(errno.EBADF, 'File is not open for writing', self.f)
+		write_sz = len(b)
+		if write_sz == 0:
+			return 0
+		srcmv = memoryview(b)
+		orig_write_sz = write_sz
+		cur_pos = self.c_offset * _CHUNK_SIZE + self.b_offset
+		cursor = 0
+		while write_sz > 0:
+			self._update_chunk()
+			to_write = min(write_sz, _CHUNK_SIZE - self.b_offset)
+			if self.c is None:
+				self.c = FileChunk(
+					file=self.f,
+					offset=self.c_offset
+				)
+				self.buf = self.c._buf = bytearray(self.b_offset + to_write)
+				self.last_c = self.c_offset
+				self.mod_c = True
+			chunk_len = len(self.buf)
+			if chunk_len < (self.b_offset + to_write):
+				extend_sz = self.b_offset + to_write - chunk_len
+				self.buf[chunk_len:chunk_len + extend_sz] = (0 for x in range(extend_sz))
+			mv = memoryview(self.buf)
+			mv[self.b_offset:self.b_offset + to_write] = srcmv[cursor:cursor + to_write]
+			self.mod_c = True
+			write_sz -= to_write
+			cursor += to_write
+			self.b_offset += to_write
+			if self.b_offset >= _CHUNK_SIZE:
+				self.c_offset += 1
+				self.b_offset = 0
+		after_pos = self.c_offset * _CHUNK_SIZE + self.b_offset
+		if after_pos > self.f.size:
+			self.f.size = after_pos
+		if write_sz <= 0:
+			return orig_write_sz
+		return (orig_write_sz - write_sz)
+
+	def writelines(self, lines):
+		if not (self._mode & _VFS_WRITE):
+			raise IOError(errno.EBADF, 'File is not open for writing', self.f)
+		raise NotImplementedError
 
 class Tag(Base):
 	"""

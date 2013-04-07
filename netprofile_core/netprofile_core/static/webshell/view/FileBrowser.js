@@ -10,6 +10,8 @@ Ext.define('NetProfile.view.FileBrowser', {
 	requires: [
 		'Ext.form.*',
 		'Ext.menu.*',
+		'Ext.grid.*',
+		'Ext.XTemplate',
 		'NetProfile.store.core.File',
 		'NetProfile.view.FileIconView'
 	],
@@ -19,6 +21,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 
 	store: null,
 	view: null,
+	views: {},
 	folder: null,
 	viewType: 'icon',
 	sortType: 'fname',
@@ -61,14 +64,39 @@ Ext.define('NetProfile.view.FileBrowser', {
 
 	searchEmptyText: 'Search...',
 
+	gridNameText: 'Name',
+	gridSizeText: 'Size',
+	gridCreatedText: 'Created',
+	gridModifiedText: 'Last Modified',
+
+	kibText: 'KiB',
+	mibText: 'MiB',
+	gibText: 'GiB',
+	tibText: 'TiB',
+
 	initComponent: function()
 	{
+		this.view = null;
+		this.views = {};
+		this.folder = null;
+
 		if(!this.store)
 			this.store = Ext.create('NetProfile.store.core.File', {
 				autoDestroy: true,
 				autoLoad: false,
 				buffered: false,
-				pageSize: -1
+				pageSize: -1,
+				storeId: null,
+				proxy: {
+					type: 'core_File'
+				},
+				listeners: {
+					load: function(recs, op, success)
+					{
+						this.fireEvent('load', this, recs, op, success);
+					},
+					scope: this
+				}
 			});
 		this.ctxMenu = Ext.create('Ext.menu.Menu', {
 			items: [{
@@ -310,10 +338,15 @@ Ext.define('NetProfile.view.FileBrowser', {
 		this.on({
 			beforedestroy: this.onBeforeDestroy,
 			beforerender: this.onBeforeRender,
+			afterrender: this.onAfterRender,
 			folderupdate: this.onFolderUpdate,
 			searchchange: {
 				fn: this.onSearchChange,
 				buffer: 500
+			},
+			filesdropped: function(view, files, ev)
+			{
+				this.uploadFileList(files);
 			}
 		});
 	},
@@ -328,11 +361,11 @@ Ext.define('NetProfile.view.FileBrowser', {
 	},
 	onBeforeDestroy: function(me)
 	{
-		if(me.store)
+		Ext.Object.each(me.views, function(k, v)
 		{
-			Ext.destroy(me.store);
-			me.store = null;
-		}
+			if(v !== me.view)
+				v.clearListeners();
+		});
 		if(me.ctxMenu)
 		{
 			me.ctxMenu.hide();
@@ -343,30 +376,47 @@ Ext.define('NetProfile.view.FileBrowser', {
 	},
 	onBeforeRender: function(me)
 	{
+		this.updateCheckItems(true);
+		this.renderView();
+		this.fireEvent('folderupdate', this);
+		return true;
+	},
+	onAfterRender: function(me)
+	{
+		var el = me.getEl();
+
+		el.on({
+			drop: this.onDrop,
+			scope: this
+		});
+		el.dom.ondragenter = Ext.Function.bind(this.onDragTest, this);
+		el.dom.ondragover = Ext.Function.bind(this.onDragTest, this);
+	},
+	updateCheckItems: function(sup)
+	{
+		var me = this;
+
 		Ext.Array.forEach(me.query('menucheckitem[group=view]'), function(cki)
 		{
 			if(cki.itemId == me.viewType)
-				cki.setChecked(true);
+				cki.setChecked(true, sup);
 			else
-				cki.setChecked(false);
+				cki.setChecked(false, sup);
 		});
 		Ext.Array.forEach(me.query('menucheckitem[group=sort]'), function(cki)
 		{
 			if(cki.itemId == me.sortType)
-				cki.setChecked(true);
+				cki.setChecked(true, sup);
 			else
-				cki.setChecked(false);
+				cki.setChecked(false, sup);
 		});
 		Ext.Array.forEach(me.query('menucheckitem[group=sdir]'), function(cki)
 		{
 			if(cki.itemId == me.sortDir)
-				cki.setChecked(true);
+				cki.setChecked(true, sup);
 			else
-				cki.setChecked(false);
+				cki.setChecked(false, sup);
 		});
-		this.renderView();
-		this.fireEvent('folderupdate', this);
-		return true;
 	},
 	setFolder: function(frec)
 	{
@@ -377,7 +427,8 @@ Ext.define('NetProfile.view.FileBrowser', {
 	},
 	updateStore: function()
 	{
-		var qparam;
+		var proxy = this.store.getProxy(),
+			qparam;
 
 		if(this.folder === null)
 			qparam = { __ffilter: { ffid: { eq: null } } };
@@ -386,31 +437,115 @@ Ext.define('NetProfile.view.FileBrowser', {
 		// TODO: insert other search criteria here
 		if(this.searchStr)
 			qparam.__sstr = this.searchStr;
-		qparam.__sort = [{ direction: this.sortDir, property: this.sortType }];
-		this.store.load({
-			params: qparam,
-			callback: function(recs, op, success)
-			{
-				this.fireEvent('load', this, recs, op, success);
-			},
-			scope: this,
-			synchronous: false
-		});
+		proxy.extraParams = qparam;
+		this.store.sort(this.sortType, this.sortDir);
 	},
 	renderView: function()
 	{
+		var me = this;
+
 		this.fireEvent('beforerenderview', this);
 		if(this.view)
 		{
-			this.remove(this.view, true);
+			this.remove(this.view, false);
 			this.view = null;
+		}
+		if(this.viewType in this.views)
+		{
+			this.view = this.add(this.views[this.viewType]);
+			return;
 		}
 		switch(this.viewType)
 		{
 			case 'icon':
-				this.view = this.add({
+				this.view = this.views[this.viewType] = this.add({
 					xtype: 'fileiconview',
+					getMIME: this.getMIME,
 					store: this.store,
+					listeners: {
+						selectionchange: function(dv, nodes)
+						{
+							this.onSelectionChange(nodes);
+							if(dv.view)
+								dv.view.focus();
+						},
+						itemdblclick: function(el, rec, item, idx, ev)
+						{
+							this.onFileOpen(rec, ev);
+						},
+						itemcontextmenu: this.onItemContextMenu,
+						scope: this
+					}
+				});
+				break;
+			case 'list':
+				break;
+			case 'grid':
+				this.view = this.views[this.viewType] = this.add({
+					xtype: 'grid',
+					border: 0,
+					store: this.store,
+					allowDeselect: true,
+					selModel: {
+						mode: 'MULTI'
+					},
+					viewConfig: {
+						plugins: [{
+							ptype: 'gridviewdragdrop',
+							ddGroup: 'ddFile',
+							dragText: 'Move or attach files ({0})'
+						}]
+					},
+					columns: [{
+						xtype: 'templatecolumn',
+						tpl: new Ext.XTemplate(
+							'<img class="np-block-img" src="{staticURL}/static/core/img/mime/16/{[ this.getMIME(values.mime) ]}.png" onerror=\'this.onerror = null; this.src="{staticURL}/static/core/img/mime/16/default.png"\' />',
+							{
+								getMIME: function(mime)
+								{
+									return me.getMIME(mime);
+								}
+							}
+						),
+						width: 22,
+						minWidth: 22,
+						maxWidth: 22,
+						resizable: false,
+						sortable: false,
+						filterable: false,
+						menuDisabled: true,
+						tdCls: 'np-nopad',
+						renderData: {
+							baseURL: NetProfile.baseURL,
+							staticURL: NetProfile.staticURL,
+							xmime: this.getMIME
+						}
+					}, {
+						text: this.gridNameText,
+						dataIndex: 'fname',
+						sortable: true,
+						flex: 5
+					}, {
+						text: this.gridSizeText,
+						dataIndex: 'size',
+						sortable: true,
+						align: 'right',
+						flex: 1
+					}, {
+						text: this.gridCreatedText,
+						dataIndex: 'ctime',
+						sortable: true,
+						xtype: 'datecolumn',
+						format: 'd.m.Y H:i:s',
+						flex: 1
+					}, {
+						text: this.gridModifiedText,
+						dataIndex: 'mtime',
+						sortable: true,
+						xtype: 'datecolumn',
+						format: 'd.m.Y H:i:s',
+						flex: 1
+					}],
 					listeners: {
 						selectionchange: function(dv, nodes)
 						{
@@ -420,49 +555,51 @@ Ext.define('NetProfile.view.FileBrowser', {
 						{
 							this.onFileOpen(rec, ev);
 						},
-						itemcontextmenu: function(el, rec, item, idx, ev)
+						sortchange: function(ct, col, dir)
 						{
-							var can_act = true,
-								is_sel = this.view.isSelected(item),
-								mi;
-
-							ev.stopEvent();
-							if(this.folder && !this.folder.get('allow_write'))
-								can_act = false;
-							else if(!rec.get('allow_write'))
-								can_act = false;
-							mi = this.ctxMenu.getComponent('del_item');
-							if(mi)
-								mi.setDisabled(!can_act);
-							if(is_sel && (this.selectedRecords.length > 1))
-								can_act = false;
-							else
-								can_act = rec.get('allow_read');
-							mi = this.ctxMenu.getComponent('dl_item');
-							if(mi)
-								mi.setDisabled(!can_act);
-							if(is_sel && (this.selectedRecords.length > 1))
-								this.ctxMenu.record = this.selectedRecords;
-							else
-								this.ctxMenu.record = rec;
-							this.ctxMenu.showAt(ev.getXY());
-							return false;
+							this.sortType = col.dataIndex;
+							this.sortDir = dir;
+							this.updateCheckItems(true);
+							this.saveState();
+							return true;
 						},
-						filesdropped: function(view, files, ev)
-						{
-							this.uploadFileList(files);
-						},
+						itemcontextmenu: this.onItemContextMenu,
 						scope: this
 					}
 				});
 				break;
-			case 'list':
-				break;
-			case 'grid':
-				break;
 			default:
 				break;
 		}
+	},
+	onItemContextMenu: function(el, rec, item, idx, ev)
+	{
+		var can_act = true,
+			sel_model = this.view.getSelectionModel(),
+			is_sel = sel_model.isSelected(rec),
+			mi;
+
+		ev.stopEvent();
+		if(this.folder && !this.folder.get('allow_write'))
+			can_act = false;
+		else if(!rec.get('allow_write'))
+			can_act = false;
+		mi = this.ctxMenu.getComponent('del_item');
+		if(mi)
+			mi.setDisabled(!can_act);
+		if(is_sel && (this.selectedRecords.length > 1))
+			can_act = false;
+		else
+			can_act = rec.get('allow_read');
+		mi = this.ctxMenu.getComponent('dl_item');
+		if(mi)
+			mi.setDisabled(!can_act);
+		if(is_sel && (this.selectedRecords.length > 1))
+			this.ctxMenu.record = this.selectedRecords;
+		else
+			this.ctxMenu.record = rec;
+		this.ctxMenu.showAt(ev.getXY());
+		return false;
 	},
 	onSearchChange: function(sstr)
 	{
@@ -496,6 +633,8 @@ Ext.define('NetProfile.view.FileBrowser', {
 				});
 				if(can_delete)
 					cmp.setDisabled(false);
+				else
+					cmp.setDisabled(true);
 			}
 			else
 				cmp.setDisabled(true);
@@ -565,6 +704,43 @@ Ext.define('NetProfile.view.FileBrowser', {
 			this.saveState();
 			this.updateStore();
 		}
+	},
+	onDragTest: function(ev)
+	{
+		if(!ev.dataTransfer || !ev.dataTransfer.types)
+			return true;
+		var bad_upload = true,
+			drag_types = [
+				'application/x-moz-file',
+//				'text/x-moz-url',
+//				'text/plain',
+				'Files'
+			];
+		Ext.Array.forEach(drag_types, function(dt)
+		{
+			if(ev.dataTransfer.types.contains)
+			{
+				if(ev.dataTransfer.types.contains(dt))
+					bad_upload = false;
+			}
+			else
+			{
+				if(Ext.Array.contains(ev.dataTransfer.types, dt))
+					bad_upload = false;
+			}
+		});
+		return bad_upload;
+	},
+	onDrop: function(e)
+	{
+		var ev = e.browserEvent;
+		if(ev.dataTransfer && ev.dataTransfer.files)
+		{
+			e.stopEvent();
+			this.fireEvent('filesdropped', this, ev.dataTransfer.files, e);
+			return false;
+		}
+		return true;
 	},
 	getUploadField: function()
 	{
@@ -689,6 +865,17 @@ Ext.define('NetProfile.view.FileBrowser', {
 			this
 		);
 		return true;
+	},
+	getMIME: function(mime)
+	{
+		if(mime)
+		{
+			mime = mime.split(';')[0];
+			mime = mime.split(' ')[0];
+			mime = mime.replace('/', '_').replace('-', '_');
+			return mime;
+		}
+		return 'default';
 	}
 });
 

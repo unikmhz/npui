@@ -33,6 +33,7 @@ Ext.require([
 	NetProfile.currentLocale = '${cur_loc}';
 	NetProfile.userSettings = ${req.user.client_settings(req) | n,jsone};
 	NetProfile.baseURL = '${req.host_url}';
+	NetProfile.staticURL = '${req.host_url}';
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
 	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {
 		'X-CSRFToken': '${req.get_csrf()}'

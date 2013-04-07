@@ -155,7 +155,10 @@ def file_dl(request):
 	if file_id <= 0:
 		raise KeyError('Invalid file ID')
 	sess = DBSession()
-	obj = sess.query(File).options(undefer('data')).get(file_id)
+	obj = sess.query(File)
+	if request.method != 'HEAD':
+		obj = obj.options(undefer('data'))
+	obj = obj.get(file_id)
 	res = obj.get_response(request)
 	return res
 
@@ -177,8 +180,8 @@ def file_ul(request):
 		if fo.filename:
 			obj.name = obj.filename = fo.filename
 		obj.folder = folder
-		obj.data = fo.value
 		sess.add(obj)
+		obj.set_from_file(fo.file, request.user, sess)
 	return Response(html_escape(json.dumps({
 		'success' : True,
 		'msg'     : 'File(s) uploaded'
