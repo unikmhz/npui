@@ -735,9 +735,9 @@ class User(Base):
 			start_time=now,
 			last_time=now
 		)
-		if 'REMOTE_ADDR' in req.environ:
+		if req.remote_addr is not None:
 			try:
-				ip = ipaddr.IPAddress(req.environ.get('REMOTE_ADDR'))
+				ip = ipaddr.IPAddress(req.remote_addr)
 				if isinstance(ip, ipaddr.IPv4Address):
 					npsess.ip_address = ip
 				elif isinstance(ip, ipaddr.IPv6Address):
