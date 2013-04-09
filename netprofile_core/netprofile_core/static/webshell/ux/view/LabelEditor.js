@@ -37,6 +37,8 @@ Ext.define('Ext.ux.view.LabelEditor', {
         this.view = view;
         this.mon(view, 'render', this.bindEvents, this);
         this.on('complete', this.onSave, this);
+
+		view.relayEvents(this, [ 'afteredit' ]);
     },
 
     // initialize events
@@ -69,6 +71,7 @@ Ext.define('Ext.ux.view.LabelEditor', {
     // update record
     onSave: function(ed, value) {
         this.activeRecord.set(this.dataIndex, value);
+		this.fireEvent('afteredit', ed, this.activeRecord, value);
     }
 });
 

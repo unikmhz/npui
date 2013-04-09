@@ -103,14 +103,42 @@ Ext.define('NetProfile.view.PropBar', {
 			}
 		}, this);
 	},
+	addTab: function(tab_id, tab_cfg)
+	{
+		var tab;
+
+		if(this.tabCache.hasOwnProperty(tab_id))
+			tab = this.tabCache[tab_id];
+		else
+		{
+			Ext.apply(tab_cfg, {
+				record: record,
+				closable: true,
+				cls: 'record-tab',
+				tabConfig: {
+					cls: 'record-tab-hdl'
+				},
+				listeners: {
+					removed: function(comp, ct, opts)
+					{
+						if(ct.tabCache.hasOwnProperty(tab_id))
+							delete ct.tabCache[tab_id];
+						return true;
+					},
+					scope: this
+				}
+			});
+			this.tabCache[tab_id] = tab = this.add(cfg);
+		}
+		this.setActiveTab(tab);
+		return tab;
+	},
 	addRecordTab: function(module, model, cfg, record)
 	{
 		var tab, rec_name;
 
 		if(this.tabCache.hasOwnProperty(record.id))
-		{
 			tab = this.tabCache[record.id];
-		}
 		else
 		{
 			rec_name = record.get('__str__');

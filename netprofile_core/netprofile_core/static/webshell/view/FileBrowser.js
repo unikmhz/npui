@@ -13,7 +13,8 @@ Ext.define('NetProfile.view.FileBrowser', {
 		'Ext.grid.*',
 		'Ext.XTemplate',
 		'NetProfile.store.core.File',
-		'NetProfile.view.FileIconView'
+		'NetProfile.view.FileIconView',
+		'Ext.ux.grid.plugin.ManualEditing'
 	],
 
 	border: 0,
@@ -28,6 +29,8 @@ Ext.define('NetProfile.view.FileBrowser', {
 	sortDir: 'ASC',
 	searchStr: null,
 	uploadUrl: NetProfile.baseURL + '/core/file/ul',
+
+	emptyText: 'Folder is empty',
 
 	viewText: 'View',
 	viewAsIconsText: 'Icons',
@@ -59,6 +62,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 	uploadRemoveText: 'Remove',
 	uploadWaitMsg: 'Uploading Files...',
 
+	btnRenameText: 'Rename',
 	btnPropsText: 'Properties',
 	btnDownloadText: 'Download',
 
@@ -80,10 +84,13 @@ Ext.define('NetProfile.view.FileBrowser', {
 		this.views = {};
 		this.folder = null;
 
+		this.selectEditable = Ext.dom.Query.compile('.x-editable');
+
 		if(!this.store)
 			this.store = Ext.create('NetProfile.store.core.File', {
 				autoDestroy: true,
 				autoLoad: false,
+				autoSync: false,
 				buffered: false,
 				pageSize: -1,
 				storeId: null,
@@ -100,6 +107,41 @@ Ext.define('NetProfile.view.FileBrowser', {
 			});
 		this.ctxMenu = Ext.create('Ext.menu.Menu', {
 			items: [{
+				itemId: 'ren_item',
+				text: this.btnRenameText,
+				iconCls: 'ico-doc-ren',
+				handler: function(btn, ev)
+				{
+					var rec, plug, view;
+
+					rec = this.ctxMenu.record;
+					if(!rec)
+						return false;
+					switch(this.viewType)
+					{
+						case 'icon':
+							plug = this.view.getPlugin('editor');
+							view = this.view.getNode(rec);
+							if(!view)
+								return false;
+							view = this.selectEditable(view);
+							if(plug && view)
+								plug.onClick(ev, view[0]);
+							break;
+						case 'list':
+							break;
+						case 'grid':
+							plug = this.view.getPlugin('editor');
+							view = this.view.getView();
+							if(plug && view)
+								plug.startEdit(rec, view.getHeaderAtIndex(1));
+							break;
+						default:
+							break;
+					}
+				},
+				scope: this
+			}, {
 				text: this.btnPropsText,
 				iconCls: 'ico-props'
 			}, {
@@ -462,6 +504,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 					xtype: 'fileiconview',
 					getMIME: this.getMIME,
 					store: this.store,
+					emptyText: this.emptyText,
 					listeners: {
 						selectionchange: function(dv, nodes)
 						{
@@ -472,6 +515,10 @@ Ext.define('NetProfile.view.FileBrowser', {
 						itemdblclick: function(el, rec, item, idx, ev)
 						{
 							this.onFileOpen(rec, ev);
+						},
+						afteredit: function(ed, rec, val)
+						{
+							this.store.sync();
 						},
 						itemcontextmenu: this.onItemContextMenu,
 						scope: this
@@ -485,14 +532,19 @@ Ext.define('NetProfile.view.FileBrowser', {
 					xtype: 'grid',
 					border: 0,
 					store: this.store,
+					emptyText: this.emptyText,
 					allowDeselect: true,
 					selModel: {
 						mode: 'MULTI'
 					},
+					plugins: [{
+						ptype: 'manualediting',
+						pluginId: 'editor'
+					}],
 					viewConfig: {
 						plugins: [{
 							ptype: 'gridviewdragdrop',
-							ddGroup: 'ddFile',
+							dragGroup: 'ddFile',
 							dragText: 'Move or attach files ({0})'
 						}]
 					},
@@ -524,7 +576,11 @@ Ext.define('NetProfile.view.FileBrowser', {
 						text: this.gridNameText,
 						dataIndex: 'fname',
 						sortable: true,
-						flex: 5
+						flex: 5,
+						editor: {
+							xtype: 'textfield',
+							allowBlank: false
+						}
 					}, {
 						text: this.gridSizeText,
 						dataIndex: 'size',
@@ -563,6 +619,10 @@ Ext.define('NetProfile.view.FileBrowser', {
 							this.saveState();
 							return true;
 						},
+						edit: function(ed, ev)
+						{
+							this.store.sync();
+						},
 						itemcontextmenu: this.onItemContextMenu,
 						scope: this
 					}
@@ -585,6 +645,9 @@ Ext.define('NetProfile.view.FileBrowser', {
 		else if(!rec.get('allow_write'))
 			can_act = false;
 		mi = this.ctxMenu.getComponent('del_item');
+		if(mi)
+			mi.setDisabled(!can_act);
+		mi = this.ctxMenu.getComponent('ren_item');
 		if(mi)
 			mi.setDisabled(!can_act);
 		if(is_sel && (this.selectedRecords.length > 1))
@@ -825,6 +888,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 			url: this.uploadUrl,
 			method: 'POST',
 			rawData: fd,
+			timeout: 300000, // 5 min, maybe dynamically adjust for large files?
 			callback: function(opt, success, response)
 			{
 				this.unmask();
@@ -857,6 +921,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 				if(btn === 'yes')
 				{
 					this.store.remove(recs);
+					this.store.sync();
 					if(typeof(onyes) === 'function')
 						onyes(recs);
 				}

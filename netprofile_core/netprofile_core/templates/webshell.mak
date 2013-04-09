@@ -32,6 +32,7 @@ Ext.require([
 //	NetProfile.api.Descriptor.enableBuffer = 100;
 	NetProfile.currentLocale = '${cur_loc}';
 	NetProfile.userSettings = ${req.user.client_settings(req) | n,jsone};
+	NetProfile.rootFolder = ${req.user.get_root_folder() | n,jsone};
 	NetProfile.baseURL = '${req.host_url}';
 	NetProfile.staticURL = '${req.host_url}';
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
@@ -256,23 +257,60 @@ Ext.require([
 	});
 % for menu in modules.get_menu_data(req):
 <%np:limit cap="${menu.perm}">\
+% if len(menu.extra_fields) > 0:
+	Ext.define('NetProfile.model.customMenu.${menu.name}', {
+		extend: 'Ext.data.Model',
+		fields: [
+			{ name: 'id', type: 'string' },
+			{ name: 'text', type: 'string' },
+			{ name: 'order', type: 'int' },
+			{ name: 'leaf', type: 'boolean' },
+			{ name: 'iconCls', type: 'string' },
+% for xf in menu.extra_fields:
+			${xf | n,jsone},
+% endfor
+			{ name: 'xview', type: 'string' },
+			{ name: 'xhandler', type: 'string' }
+		]
+	});
+% endif
 	Ext.define('NetProfile.store.menu.${menu.name}', {
 		extend: 'Ext.data.TreeStore',
 		requires: 'NetProfile.model.MenuItem',
+% if len(menu.extra_fields) > 0:
+		model: 'NetProfile.model.customMenu.${menu.name}',
+% else:
 		model: 'NetProfile.model.MenuItem',
+% endif
 % if menu.direct:
+		defaultRootProperty: 'records',
 		proxy: {
 			type: 'direct',
-			directFn: NetProfile.api.MenuTree.${menu.direct},
+			api: {
+				create:  NetProfile.api.MenuTree.${menu.direct}_create,
+				read:    NetProfile.api.MenuTree.${menu.direct}_read,
+				update:  NetProfile.api.MenuTree.${menu.direct}_update,
+				destroy: NetProfile.api.MenuTree.${menu.direct}_delete
+			},
 			reader: {
 				type: 'json',
-				root: 'records'
+				root: 'records',
+				messageProperty: 'message',
+				successProperty: 'success',
+				totalProperty: 'total'
+			},
+			writer: {
+				type: 'json',
+				root: 'records',
+				writeAllFields: true,
+				allowSingle: false
 			}
 		},
 		root: {
 			expanded: true
 		},
 		autoLoad: false,
+		autoSync: false,
 % else:
 		root: {
 			expanded: true,

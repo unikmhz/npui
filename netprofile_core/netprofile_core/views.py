@@ -24,7 +24,8 @@ from pyramid.security import (
 from pyramid.httpexceptions import (
 	HTTPForbidden,
 	HTTPFound,
-	HTTPNotFound
+	HTTPNotFound,
+	HTTPSeeOther
 )
 
 from sqlalchemy import and_
@@ -73,7 +74,7 @@ def do_forbidden(request):
 	if authenticated_userid(request):
 		return HTTPForbidden()
 	loc = request.route_url('core.login', _query=(('next', request.path),))
-	return HTTPFound(location=loc)
+	return HTTPSeeOther(location=loc)
 
 @view_config(route_name='core.login', renderer='netprofile_core:templates/login.mak')
 def do_login(request):
@@ -263,7 +264,7 @@ def custom_valid(name, values, request):
 	)
 	return ret
 
-@extdirect_method('MenuTree', 'folders', request_as_last_param=True, permission='FILES_LIST')
+@extdirect_method('MenuTree', 'folders_read', request_as_last_param=True, permission='FILES_LIST')
 def ff_tree(params, request):
 	"""
 	ExtDirect method used for VFS tree.
@@ -282,15 +283,25 @@ def ff_tree(params, request):
 		q = q.filter(FileFolder.parent == folder)
 	else:
 		folder = q.filter(FileFolder.id == int(params['node'])).one()
-		if folder and (not folder.can_read(request.user)):
+		if folder and ((not folder.can_read(request.user)) or (not folder.can_traverse_path(request.user))):
+			raise ValueError('Folder access denied')
+		root_ff = request.user.group.effective_root_folder
+		if root_ff and (not folder.is_inside(root_ff)):
 			raise ValueError('Folder access denied')
 		q = q.filter(FileFolder.parent_id == int(params['node']))
 	for ff in q:
+		parent_wr = False
+		if ff.parent:
+			parent_wr = ff.parent.can_write(request.user)
 		mi = {
-			'id'       : ff.id,
-			'text'     : ff.name,
-			'xhandler' : 'NetProfile.controller.FileBrowser',
-			'expanded' : False
+			'id'             : ff.id,
+			'text'           : ff.name,
+			'xhandler'       : 'NetProfile.controller.FileBrowser',
+			'expanded'       : False,
+			'allow_read'     : ff.can_read(request.user),
+			'allow_write'    : ff.can_write(request.user),
+			'allow_traverse' : ff.can_traverse(request.user),
+			'parent_write'   : parent_wr
 		}
 		recs.append(mi)
 
@@ -300,7 +311,105 @@ def ff_tree(params, request):
 		'total'   : len(recs)
 	}
 
-@extdirect_method('MenuTree', 'settings', request_as_last_param=True, permission='USAGE')
+@extdirect_method('MenuTree', 'folders_update', request_as_last_param=True, permission='FILES_EDIT')
+def ff_tree_update(params, request):
+	sess = DBSession()
+	user = request.user
+	for rec in params.get('records', ()):
+		ff_id = int(rec.get('id'))
+		ff_name = rec.get('text')
+		ff_parent = rec.get('parentId')
+		# TODO: support changing uid/gid and rights, maybe?
+		if not ff_name:
+			raise ValueError('Empty folder names are not supported')
+		if ff_parent and (ff_parent != 'root'):
+			ff_parent = int(ff_parent)
+		else:
+			ff_parent = None
+
+		ff = sess.query(FileFolder).get(ff_id)
+		if ff is None:
+			raise KeyError('Unknown folder ID %d' % ff_id)
+
+		root_ff = user.group.effective_root_folder
+		if root_ff and (not ff.is_inside(root_ff)):
+			raise ValueError('Folder access denied')
+		cur_parent = ff.parent
+		if cur_parent and ((not cur_parent.can_write(user)) or (not cur_parent.can_traverse_path(user))):
+			raise ValueError('Folder access denied')
+
+		ff.name = ff_name
+
+		if ff_parent:
+			new_parent = sess.query(FileFolder).get(ff_parent)
+			if new_parent is None:
+				raise KeyError('Unknown parent folder ID %d' % ff_parent)
+			if (not new_parent.can_write(user)) or (not new_parent.can_traverse_path(user)):
+				raise ValueError('Folder access denied')
+			if root_ff and (not new_parent.is_inside(root_ff)):
+				raise ValueError('Folder access denied')
+			if new_parent.is_inside(ff):
+				raise ValueError('Folder loop detected')
+			ff.parent = new_parent
+		else:
+			ff.parent = None
+
+	return {
+		'success' : True
+	}
+
+@extdirect_method('MenuTree', 'folders_create', request_as_last_param=True, permission='FILES_CREATE')
+def ff_tree_create(params, request):
+	recs = []
+	sess = DBSession()
+	user = request.user
+	total = 0
+	for rec in params.get('records', ()):
+		ff_name = rec.get('text')
+		ff_parent = rec.get('parentId')
+		# TODO: support changing uid/gid and rights, maybe?
+		if not ff_name:
+			raise ValueError('Empty folder names are not supported')
+		if ff_parent and (ff_parent != 'root'):
+			ff_parent = int(ff_parent)
+		else:
+			ff_parent = None
+
+		ff = FileFolder(user=user, group=user.group)
+		ff.name = ff_name
+		root_ff = user.group.effective_root_folder
+		if root_ff and (ff_parent is None):
+			raise ValueError('Folder access denied')
+		if ff_parent:
+			ffp = sess.query(FileFolder).get(ff_parent)
+			if ffp is None:
+				raise KeyError('Unknown parent folder ID %d' % ff_parent)
+			if (not ffp.can_write(user)) or (not ffp.can_traverse_path(user)):
+				raise ValueError('Folder access denied')
+			if root_ff and (not ffp.is_inside(root_ff)):
+				raise ValueError('Folder access denied')
+			ff.parent = ffp
+
+		sess.add(ff)
+		sess.flush()
+		recs.append({
+			'id'             : str(ff.id),
+			'parentId'       : str(ff.parent.id) if ff.parent else 'root',
+			'text'           : ff.name,
+			'xhandler'       : 'NetProfile.controller.FileBrowser',
+			'allow_read'     : ff.can_read(user),
+			'allow_write'    : ff.can_write(user),
+			'allow_traverse' : ff.can_traverse(user),
+			'parent_write'   : ff.parent.can_write(user) if ff.parent else False
+		})
+		total += 1
+	return {
+		'success' : True,
+		'records' : recs,
+		'total'   : total
+	}
+
+@extdirect_method('MenuTree', 'settings_read', request_as_last_param=True, permission='USAGE')
 def menu_settings(params, request):
 	"""
 	ExtDirect method for settings menu tree.

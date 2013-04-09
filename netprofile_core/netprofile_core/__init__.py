@@ -76,8 +76,36 @@ class Module(ModuleBase):
 					'expanded' : True
 				},
 				'rootVisible' : True,
-				'useArrows'   : False
-			}),
+				'hideHeaders' : True,
+				'columns'     : ({
+					'xtype'     : 'treecolumn',
+					'name'      : 'text',
+					'dataIndex' : 'text',
+					'flex'      : 1,
+					'editable'  : True,
+					'editor'    : {
+						'xtype'      : 'textfield',
+						'allowBlank' : False
+					}
+				},),
+				'plugins'     : ({
+					'ptype'    : 'manualediting',
+					'pluginId' : 'editor'
+				},),
+				'useArrows'   : False,
+				'viewConfig'  : {
+					'plugins'   : ({
+						'ptype'      : 'treeviewdragdrop',
+						'ddGroup'    : 'ddFile',
+						'appendOnly' : True
+					},)
+				}
+			}, extra_fields=(
+				{ 'name' : 'allow_read',     'type' : 'boolean' },
+				{ 'name' : 'allow_write',    'type' : 'boolean' },
+				{ 'name' : 'allow_traverse', 'type' : 'boolean' },
+				{ 'name' : 'parent_write',   'type' : 'boolean' }
+			)),
 			Menu('admin', title=_('Administration'), order=40, permission='BASE_ADMIN')
 		)
 

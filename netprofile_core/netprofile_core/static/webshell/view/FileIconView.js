@@ -38,8 +38,11 @@ Ext.define('NetProfile.view.FileIconView', {
 	initComponent: function()
 	{
 		this.plugins = [
-			Ext.create('Ext.ux.view.DragSelector', {}),
-			Ext.create('Ext.ux.view.LabelEditor', { dataIndex: 'fname' })
+			Ext.create('Ext.ux.view.DragSelector', { pluginId: 'dragsel' }),
+			Ext.create('Ext.ux.view.LabelEditor', {
+				dataIndex: 'fname',
+				pluginId: 'editor'
+			})
 		];
 		this.emptyText = '<div class="x-view-empty">' + this.emptyText + '</div>';
 		this.mixins.draggable.init(this, {

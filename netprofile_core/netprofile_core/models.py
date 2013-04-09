@@ -752,6 +752,24 @@ class User(Base):
 			vec.append(sg.id)
 		return vec
 
+	def get_root_folder(self):
+		if self.group is None:
+			return None
+		ff = self.group.effective_root_folder
+		if ff is None:
+			return None
+		p_wr = False
+		if ff.parent:
+			p_wr = ff.parent.can_write(self)
+		return {
+			'id'             : ff.id,
+			'name'           : ff.name,
+			'allow_read'     : ff.can_read(self),
+			'allow_write'    : ff.can_write(self),
+			'allow_traverse' : ff.can_traverse(self),
+			'parent_write'   : p_wr
+		}
+
 class Group(Base):
 	"""
 	Defines a group of NetProfile users.
@@ -1904,9 +1922,7 @@ class FileFolder(Base):
 	)
 	subfolders = relationship(
 		'FileFolder',
-		backref=backref('parent', remote_side=[id]),
-		cascade='all, delete-orphan',
-		passive_deletes=True
+		backref=backref('parent', remote_side=[id])
 	)
 	root_groups = relationship(
 		'Group',
@@ -1952,6 +1968,14 @@ class FileFolder(Base):
 		if self.parent:
 			return self.parent.can_traverse(user)
 		return True
+
+	def is_inside(self, cont):
+		par = self
+		while par:
+			if par.id == cont.id:
+				return True
+			par = par.parent
+		return False
 
 	def __str__(self):
 		return '%s' % str(self.name)

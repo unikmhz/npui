@@ -230,8 +230,12 @@ h2
 .ico-copy         { background-image: url(../img/copy.png) !important; }
 .ico-cut          { background-image: url(../img/cut.png) !important; }
 .ico-delete       { background-image: url(../img/delete.png) !important; }
+.ico-doc-ren      { background-image: url(../img/doc_rename.png) !important; }
 .ico-edit         { background-image: url(../img/edit.png) !important; }
 .ico-exit         { background-image: url(../img/exit.png) !important; }
+.ico-folder-del   { background-image: url(../img/folder_delete.png) !important; }
+.ico-folder-ren   { background-image: url(../img/folder_rename.png) !important; }
+.ico-folder-tree  { background-image: url(../img/folder_tree.png) !important; }
 .ico-find         { background-image: url(../img/find.png) !important; }
 .ico-first        { background-image: url(../img/first.png) !important; }
 .ico-home         { background-image: url(../img/home.png) !important; }

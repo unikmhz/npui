@@ -6,6 +6,7 @@ Ext.define('NetProfile.view.SideBar', {
 		'Ext.tree.Panel',
 		'Ext.util.History',
 		'Ext.state.Manager',
+		'Ext.ux.grid.plugin.ManualEditing',
 		'NetProfile.view.TopBar'
 	],
 	id: 'npws_sidebar',
