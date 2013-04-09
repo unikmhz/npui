@@ -14,6 +14,7 @@ __all__ = [
 	'EntityFlag',
 	'EntityFlagType',
 	'EntityState',
+	'EntityFile',
 	'PhysicalEntity',
 	'LegalEntity',
 	'StructuralEntity',
@@ -548,11 +549,22 @@ class Entity(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	filemap = relationship(
+		'EntityFile',
+		backref=backref('entity', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	flags = association_proxy(
 		'flagmap',
 		'type',
 		creator=lambda v: EntityFlag(type=v)
+	)
+	files = association_proxy(
+		'filemap',
+		'file',
+		creator=lambda v: EntityFile(file=v)
 	)
 
 	@classmethod
@@ -728,12 +740,26 @@ class EntityFlagType(Base):
 		return '%s' % str(self.name)
 
 class EntityFlag(Base):
+	"""
+	Many-to-many relationship object. Links entities and entity flags.
+	"""
 	__tablename__ = 'entities_flags_def'
 	__table_args__ = (
 		Comment('Entity flag mappings'),
 		Index('entities_flags_def_u_ef', 'entityid', 'flagid', unique=True),
 		Index('entities_flags_def_i_flagid', 'flagid'),
 		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_EDIT',
+				'cap_edit'      : 'ENTITIES_EDIT',
+				'cap_delete'    : 'ENTITIES_EDIT',
+
+				'menu_name'     : _('Entity Flags')
+			}
 		}
 	)
 	id = Column(
@@ -767,6 +793,76 @@ class EntityFlag(Base):
 			'header_string' : _('Type')
 		}
 	)
+
+class EntityFile(Base):
+	"""
+	Many-to-many relationship object. Links entities and files from VFS.
+	"""
+	__tablename__ = 'entities_files'
+	__table_args__ = (
+		Comment('File mappings to entities'),
+		Index('entities_files_u_efl', 'entityid', 'fileid', unique=True),
+		Index('entities_files_i_fileid', 'fileid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'FILES_ATTACH_2ENTITIES',
+				'cap_edit'      : 'FILES_ATTACH_2ENTITIES',
+				'cap_delete'    : 'FILES_ATTACH_2ENTITIES',
+
+				'menu_name'     : _('Files'),
+				'grid_view'     : ('entity', 'file'),
+
+				'create_wizard' : SimpleWizard(title=_('Attach file'))
+			}
+		}
+	)
+	id = Column(
+		'efid',
+		UInt32(),
+		Sequence('file_efid_seq'),
+		Comment('Entity-file mapping ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	entity_id = Column(
+		'entityid',
+		UInt32(),
+		ForeignKey('entities_def.entityid', name='entities_files_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Entity ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Entity')
+		}
+	)
+	file_id = Column(
+		'fileid',
+		UInt32(),
+		ForeignKey('files_def.fileid', name='entities_files_fk_fileid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('File ID'),
+		nullable=False,
+		info={
+			'header_string' : _('File')
+		}
+	)
+
+	file = relationship(
+		'File',
+		backref=backref(
+			'linked_entities',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+
+	def __str__(self):
+		return '%s' % str(self.file)
 
 class PhysicalEntity(Entity):
 	"""

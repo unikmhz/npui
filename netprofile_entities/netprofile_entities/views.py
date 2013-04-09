@@ -28,6 +28,26 @@ def dpane_entities(model, request):
 		'extraParamProp'    : 'parentid',
 		'extraParamRelProp' : 'entityid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
+		'title'             : loc.translate(_('Files')),
+		'iconCls'           : 'ico-attach',
+		'componentCls'      : 'file-attach',
+		'xtype'             : 'grid_entities_EntityFile',
+		'stateId'           : None,
+		'stateful'          : False,
+		'rowEditing'        : False,
+		'hideColumns'       : ('entity',),
+		'extraParamProp'    : 'entityid',
+		'viewConfig'        : {
+			'plugins' : ({
+				'ptype'           : 'gridviewdragdrop',
+				'dropGroup'       : 'ddFile',
+				'enableDrag'      : False,
+				'enableDrop'      : True,
+				'containerScroll' : True
+			},)
+		},
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	}]
 	request.run_hook(
 		'core.dpanetabs.%s.%s' % (model.__parent__.moddef, model.name),

@@ -40,6 +40,33 @@ Ext.define('NetProfile.view.FileDownload', {
 		}
 		el.dom.src = url;
 		return true;
+	},
+	loadFileById: function(file_id)
+	{
+		var store = NetProfile.StoreManager.getStore(
+			'core', 'File',
+			null, true, true
+		);
+
+		if(!store)
+			return false;
+		store.load({
+			params: { __ffilter: { fileid: { eq: file_id } } },
+			callback: function(recs, op, success)
+			{
+				if(!success || !recs || (recs.length <= 0))
+					return;
+				this.load({
+					url: Ext.String.format(
+						'{0}/core/file/dl/{1}/{2}',
+						NetProfile.baseURL,
+						recs[0].getId(), recs[0].get('fname')
+					)
+				});
+			},
+			scope: this
+		});
+		return true;
 	}
 });
 

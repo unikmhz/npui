@@ -412,8 +412,12 @@ Ext.application({
 	models: [],
 	stores: [],
 	controllers: [
-		'DataStores',
-		'FileFolders'
+		'NetProfile.controller.DataStores',
+		'NetProfile.controller.FileAttachments',
+% for cont in res_ctl:
+		'${cont}',
+% endfor
+		'NetProfile.controller.FileFolders'
 	],
 
 	launch: function()

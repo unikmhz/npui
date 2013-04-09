@@ -220,7 +220,6 @@ Ext.define('NetProfile.view.ModelGrid', {
 					});
 			}
 		}
-		this.plugins = [];
 		if(this.rowEditing)
 			this.plugins.push({
 				ptype: 'rowediting',

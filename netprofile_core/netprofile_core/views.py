@@ -147,6 +147,7 @@ def js_webshell(request):
 		'langs'   : LANGUAGES,
 		'cur_loc' : get_locale_name(request),
 		'res_ajs' : mmgr.get_autoload_js(request),
+		'res_ctl' : mmgr.get_controllers(request),
 		'modules' : mmgr.get_module_browser()
 	}
 

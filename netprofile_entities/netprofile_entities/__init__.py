@@ -28,9 +28,11 @@ class Module(ModuleBase):
 	def get_models(self):
 		return (
 			Entity,
+			EntityFile,
 			EntityFlag,
 			EntityFlagType,
 			EntityState,
+
 			PhysicalEntity,
 			LegalEntity,
 			StructuralEntity,

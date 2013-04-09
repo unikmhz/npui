@@ -69,6 +69,9 @@ class ModuleBase(object):
 	def get_autoload_js(self, request):
 		return ()
 
+	def get_controllers(self, request):
+		return ()
+
 	def load(self):
 		pass
 
@@ -277,6 +280,15 @@ class ModuleManager(object):
 		l = []
 		for moddef, mod in self.loaded.items():
 			l.extend(mod.get_autoload_js(request))
+		return l
+
+	def get_controllers(self, request):
+		"""
+		Get a list of ExtJS classes to use as MVC controllers.
+		"""
+		l = []
+		for moddef, mod in self.loaded.items():
+			l.extend(mod.get_controllers(request))
 		return l
 
 def includeme(config):

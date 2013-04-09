@@ -2098,8 +2098,9 @@ class File(Base):
 
 				'menu_name'    : _('Files'),
 				'default_sort' : ({ 'property': 'fname' ,'direction': 'ASC' },),
-#				'grid_view'    : (),
+				'grid_view'    : ('folder', 'fname', 'size', 'ctime', 'mtime'),
 				'easy_search'  : ('fname', 'name'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 				'extra_data'   : ('allow_access', 'allow_read', 'allow_write', 'allow_execute')
 			}
 		}
@@ -2124,7 +2125,8 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Folder')
+			'header_string' : _('Folder'),
+			'filter_type'   : 'list'
 		}
 	)
 	filename = Column(
