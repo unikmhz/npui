@@ -33,6 +33,7 @@ class Menu(object):
 		self.direct = kwargs.get('direct')
 		self.url = kwargs.get('url')
 		self.options = kwargs.get('options')
+		self.extra_fields = kwargs.get('extra_fields', ())
 
 	def get_data(self, req):
 		ttl = self.title

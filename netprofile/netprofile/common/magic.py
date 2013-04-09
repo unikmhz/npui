@@ -9,11 +9,34 @@ from ctypes import *
 from ctypes.util import find_library
 
 def _init():
-    """
-    Loads the shared library through ctypes and returns a library
-    L{ctypes.CDLL} instance 
-    """
-    return ctypes.cdll.LoadLibrary(find_library('magic'))
+	"""
+	Loads the shared library through ctypes and returns a library
+	L{ctypes.CDLL} instance 
+	"""
+	dll = None
+	lib = find_library('magic') or find_library('magic1')
+	if lib:
+		dll = ctypes.cdll.LoadLibrary(lib)
+	# Following shamelessly copied from python-magic
+	if (not dll) or (not dll._name):
+		import sys
+
+		lib_map = {
+			'darwin' : (
+				'/opt/local/lib/libmagic.dylib',
+				'/usr/local/lib/libmagic.dylib',
+				'/usr/local/Cellar/libmagic/5.10/lib/libmagic.dylib',
+			),
+			'win32' : (
+				'magic1.dll',
+			)
+		}
+		for libpath in lib_map.get(sys.platform, ()):
+			try:
+				dll = ctypes.cdll.LoadLibrary(libpath)
+			except OSError:
+				dll = None
+	return dll
 
 _libraries = {}
 _libraries['magic'] = _init()
