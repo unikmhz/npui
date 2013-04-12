@@ -111,8 +111,14 @@ class Module(ModuleBase):
 
 	def get_js(self, request):
 		if request.debug_enabled:
-			return ('netprofile_core:static/extjs/ext-all-dev.js',)
-		return ('netprofile_core:static/extjs/ext-all.js',)
+			return (
+				'netprofile_core:static/extjs/ext-all-dev.js',
+				'netprofile_core:static/sockjs/sockjs.js'
+			)
+		return (
+			'netprofile_core:static/extjs/ext-all.js',
+			'netprofile_core:static/sockjs/sockjs.min.js'
+		)
 
 	def get_local_js(self, request, lang):
 		return (

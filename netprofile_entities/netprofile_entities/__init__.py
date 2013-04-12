@@ -28,6 +28,7 @@ class Module(ModuleBase):
 	def get_models(self):
 		return (
 			Entity,
+			EntityComment,
 			EntityFile,
 			EntityFlag,
 			EntityFlagType,

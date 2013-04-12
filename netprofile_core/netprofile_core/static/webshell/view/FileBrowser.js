@@ -1,6 +1,6 @@
 /**
  * @class NetProfile.view.FileBrowser
- * @extends Ext.form.Panel
+ * @extends Ext.panel.Panel
  */
 Ext.define('NetProfile.view.FileBrowser', {
 	extend: 'Ext.panel.Panel',
@@ -14,6 +14,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 		'Ext.XTemplate',
 		'NetProfile.store.core.File',
 		'NetProfile.view.FileIconView',
+		'Ext.ux.form.RightsBitmaskField',
 		'Ext.ux.grid.plugin.ManualEditing'
 	],
 
@@ -115,7 +116,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 					var rec, plug, view;
 
 					rec = this.ctxMenu.record;
-					if(!rec)
+					if(!rec || Ext.isArray(rec))
 						return false;
 					switch(this.viewType)
 					{
@@ -143,7 +144,35 @@ Ext.define('NetProfile.view.FileBrowser', {
 				scope: this
 			}, {
 				text: this.btnPropsText,
-				iconCls: 'ico-props'
+				iconCls: 'ico-props',
+				handler: function(btn, ev)
+				{
+					var pb = Ext.getCmp('npws_propbar'),
+						rec = this.ctxMenu.record,
+						dp = NetProfile.view.grid.core.File.prototype.detailPane,
+						can_wr = true;
+
+					if(this.folder && !this.folder.get('allow_write'))
+						can_wr = false;
+					if(!pb || !rec || !dp)
+						return false;
+					if(Ext.isArray(rec))
+					{
+						var r;
+						for(r in rec)
+						{
+							rec[r].readOnly = !can_wr || !rec[r].get('allow_write');
+							pb.addRecordTab('core', 'File', dp, rec[r]);
+						}
+					}
+					else
+					{
+						rec.readOnly = !can_wr || !rec.get('allow_write');
+						pb.addRecordTab('core', 'File', dp, rec);
+					}
+					pb.show();
+				},
+				scope: this
 			}, {
 				itemId: 'dl_item',
 				text: this.btnDownloadText,
@@ -526,6 +555,35 @@ Ext.define('NetProfile.view.FileBrowser', {
 				});
 				break;
 			case 'list':
+				this.view = this.views[this.viewType] = this.add({
+					xtype: 'fileiconview',
+					getMIME: this.getMIME,
+					cls: 'np-file-lview',
+					useColumns: true,
+					browser: this,
+					iconSize: 16,
+					shrinkWrap: 1,
+					store: this.store,
+					emptyText: this.emptyText,
+					listeners: {
+						selectionchange: function(dv, nodes)
+						{
+							this.onSelectionChange(nodes);
+							if(dv.view)
+								dv.view.focus();
+						},
+						itemdblclick: function(el, rec, item, idx, ev)
+						{
+							this.onFileOpen(rec, ev);
+						},
+						afteredit: function(ed, rec, val)
+						{
+							this.store.sync();
+						},
+						itemcontextmenu: this.onItemContextMenu,
+						scope: this
+					}
+				});
 				break;
 			case 'grid':
 				this.view = this.views[this.viewType] = this.add({
@@ -647,6 +705,8 @@ Ext.define('NetProfile.view.FileBrowser', {
 		mi = this.ctxMenu.getComponent('del_item');
 		if(mi)
 			mi.setDisabled(!can_act);
+		if(is_sel && (this.selectedRecords.length > 1))
+			can_act = false;
 		mi = this.ctxMenu.getComponent('ren_item');
 		if(mi)
 			mi.setDisabled(!can_act);

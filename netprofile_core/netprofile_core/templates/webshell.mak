@@ -39,6 +39,45 @@ Ext.require([
 	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {
 		'X-CSRFToken': '${req.get_csrf()}'
 	});
+	NetProfile.msg = function()
+	{
+		var msgCt;
+
+		function createBox(t, s, cls)
+		{
+			return '<div class="msg ' + cls + '"><h3>' + t + '</h3><p>' + s + '</p></div>';
+		}
+
+		function getMsg(cls, title, args)
+		{
+			if(!msgCt)
+				msgCt = Ext.DomHelper.insertFirst(document.body, { id: 'msg-div' }, true);
+			var s = Ext.String.format.apply(String, args);
+			var m = Ext.DomHelper.append(msgCt, createBox(title, s, cls), true);
+			m.hide();
+			m.slideIn('t').ghost('t', { delay: 1250, remove: true });
+		}
+
+		return {
+			notify: function(title, fmt)
+			{
+				return getMsg('', title, Array.prototype.slice.call(arguments, 1));
+			},
+			warn: function(title, fmt)
+			{
+				return getMsg('warning', title, Array.prototype.slice.call(arguments, 1));
+			},
+			err: function(title, fmt)
+			{
+				return getMsg('error', title, Array.prototype.slice.call(arguments, 1));
+			},
+			init: function()
+			{
+				if(!msgCt)
+					msgCt = Ext.DomHelper.insertFirst(document.body, { id: 'msg-div' }, true);
+			}
+		};
+	}();
 
 	Ext.define('Ext.data.ConnectionNPOver', {
 		override: 'Ext.data.Connection',
@@ -425,6 +464,7 @@ Ext.application({
 		var state_prov = null,
 			state_loaded = false;
 
+		Ext.onReady(NetProfile.msg.init, NetProfile.msg);
 		if('localStorage' in window && window['localStorage'] !== null)
 		{
 			state_prov = new Ext.state.LocalStorageProvider({
@@ -441,19 +481,32 @@ Ext.application({
 		Ext.state.Manager.setProvider(state_prov);
 		state_loaded = state_prov.get('loaded');
 
-% if req.debug_enabled:
 		var npp = Ext.direct.Manager.getProvider('netprofile-provider');
 		npp.on('exception', function(p, e)
 		{
 			if(e && e.message)
+			{
+% if req.debug_enabled:
 				Ext.log.error(e.message);
+% endif
+				NetProfile.msg.err('${_('Error')}', '{0}', e.message);
+			}
 		});
 		npp.on('data', function(p, e)
 		{
 			if(e.result && !e.result.success)
-				Ext.log.warn(e.result.message);
-		});
+			{
+				if(e.result.message)
+				{
+% if req.debug_enabled:
+					Ext.log.warn(e.result.message);
+					if(e.result.stacktrace)
+						Ext.log.info(e.result.stacktrace);
 % endif
+					NetProfile.msg.warn('${_('Warning')}', '{0}', e.result.message);
+				}
+			}
+		});
 
 		if(state_loaded !== 'OK')
 		{

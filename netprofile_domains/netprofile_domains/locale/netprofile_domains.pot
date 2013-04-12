@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_domains 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-27 12:08+0400\n"
+"POT-Creation-Date: 2013-04-12 07:49+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,134 +22,134 @@ msgstr ""
 msgid "Domains"
 msgstr ""
 
-#: netprofile_domains/models.py:87 netprofile_domains/models.py:160
-#: netprofile_domains/models.py:317 netprofile_domains/models.py:372
-#: netprofile_domains/models.py:461 netprofile_domains/models.py:554
+#: netprofile_domains/models.py:88 netprofile_domains/models.py:161
+#: netprofile_domains/models.py:318 netprofile_domains/models.py:373
+#: netprofile_domains/models.py:462 netprofile_domains/models.py:555
 msgid "Name"
 msgstr ""
 
-#: netprofile_domains/models.py:94
+#: netprofile_domains/models.py:95
 msgid "State"
 msgstr ""
 
-#: netprofile_domains/models.py:127
+#: netprofile_domains/models.py:128
 msgid "Add new domain"
 msgstr ""
 
-#: netprofile_domains/models.py:140 netprofile_domains/models.py:340
-#: netprofile_domains/models.py:441 netprofile_domains/models.py:546
+#: netprofile_domains/models.py:141 netprofile_domains/models.py:341
+#: netprofile_domains/models.py:442 netprofile_domains/models.py:547
 msgid "ID"
 msgstr ""
 
-#: netprofile_domains/models.py:152 netprofile_domains/models.py:352
+#: netprofile_domains/models.py:153 netprofile_domains/models.py:353
 msgid "Parent"
 msgstr ""
 
-#: netprofile_domains/models.py:170
+#: netprofile_domains/models.py:171
 msgid "Enabled"
 msgstr ""
 
-#: netprofile_domains/models.py:180
+#: netprofile_domains/models.py:181
 msgid "Public"
 msgstr ""
 
-#: netprofile_domains/models.py:190
+#: netprofile_domains/models.py:191
 msgid "Signed"
 msgstr ""
 
-#: netprofile_domains/models.py:199
+#: netprofile_domains/models.py:200
 msgid "SOA Refresh"
 msgstr ""
 
-#: netprofile_domains/models.py:208
+#: netprofile_domains/models.py:209
 msgid "SOA Retry"
 msgstr ""
 
-#: netprofile_domains/models.py:217
+#: netprofile_domains/models.py:218
 msgid "SOA Expire"
 msgstr ""
 
-#: netprofile_domains/models.py:226
+#: netprofile_domains/models.py:227
 msgid "SOA Minimum"
 msgstr ""
 
-#: netprofile_domains/models.py:234
+#: netprofile_domains/models.py:235
 msgid "Serial Date"
 msgstr ""
 
-#: netprofile_domains/models.py:245
+#: netprofile_domains/models.py:246
 msgid "Serial Revision"
 msgstr ""
 
-#: netprofile_domains/models.py:256
+#: netprofile_domains/models.py:257
 msgid "DKIM Name"
 msgstr ""
 
-#: netprofile_domains/models.py:264
+#: netprofile_domains/models.py:265
 msgid "DKIM Key"
 msgstr ""
 
-#: netprofile_domains/models.py:275
+#: netprofile_domains/models.py:276
 msgid "Description"
 msgstr ""
 
-#: netprofile_domains/models.py:311 netprofile_domains/views.py:32
+#: netprofile_domains/models.py:312 netprofile_domains/views.py:33
 msgid "Aliases"
 msgstr ""
 
-#: netprofile_domains/models.py:327
+#: netprofile_domains/models.py:328
 msgid "Add new domain alias"
 msgstr ""
 
-#: netprofile_domains/models.py:364
+#: netprofile_domains/models.py:365
 msgid "Origin"
 msgstr ""
 
-#: netprofile_domains/models.py:397
+#: netprofile_domains/models.py:398
 msgid "Both"
 msgstr ""
 
-#: netprofile_domains/models.py:398
+#: netprofile_domains/models.py:399
 msgid "Internal"
 msgstr ""
 
-#: netprofile_domains/models.py:399
+#: netprofile_domains/models.py:400
 msgid "External"
 msgstr ""
 
-#: netprofile_domains/models.py:420 netprofile_domains/views.py:40
+#: netprofile_domains/models.py:421 netprofile_domains/views.py:42
 msgid "TXT Records"
 msgstr ""
 
-#: netprofile_domains/models.py:428
+#: netprofile_domains/models.py:429
 msgid "Add new TXT record"
 msgstr ""
 
-#: netprofile_domains/models.py:453
+#: netprofile_domains/models.py:454
 msgid "Domain"
 msgstr ""
 
-#: netprofile_domains/models.py:471
+#: netprofile_domains/models.py:472
 msgid "TTL"
 msgstr ""
 
-#: netprofile_domains/models.py:482
+#: netprofile_domains/models.py:483
 msgid "Visibility"
 msgstr ""
 
-#: netprofile_domains/models.py:490
+#: netprofile_domains/models.py:491
 msgid "Value"
 msgstr ""
 
-#: netprofile_domains/models.py:527
+#: netprofile_domains/models.py:528
 msgid "Domain Service Types"
 msgstr ""
 
-#: netprofile_domains/models.py:533
+#: netprofile_domains/models.py:534
 msgid "Add new type"
 msgstr ""
 
-#: netprofile_domains/models.py:564
+#: netprofile_domains/models.py:565
 msgid "Unique"
 msgstr ""
 

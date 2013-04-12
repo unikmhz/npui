@@ -11,6 +11,7 @@ from __future__ import (
 __all__ = [
 	'EntityType',
 	'Entity',
+	'EntityComment',
 	'EntityFlag',
 	'EntityFlagType',
 	'EntityState',
@@ -140,7 +141,7 @@ def _wizcb_ent_submit(cls):
 		sess = DBSession()
 		em = ExtModel(xcls)
 		obj = xcls()
-		em.set_values(obj, val, req)
+		em.set_values(obj, val, req, True)
 		sess.add(obj)
 		return {
 			'do'     : 'close',
@@ -555,6 +556,12 @@ class Entity(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	comments = relationship(
+		'EntityComment',
+		backref=backref('entity', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	flags = association_proxy(
 		'flagmap',
@@ -863,6 +870,101 @@ class EntityFile(Base):
 
 	def __str__(self):
 		return '%s' % str(self.file)
+
+class EntityComment(Base):
+	"""
+	Append-only text comments for entities.
+	"""
+	__tablename__ = 'entities_comments'
+	__table_args__ = (
+		Comment('Historic comments on entities'),
+		Index('entities_comments_i_entityid', 'entityid'),
+		Index('entities_comments_i_uid', 'uid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_COMMENT',
+				'cap_edit'      : 'ENTITIES_COMMENTS_EDIT',
+				'cap_delete'    : 'ENTITIES_COMMENTS_DELETE',
+
+				'menu_name'     : _('Comments'),
+				'grid_view'     : ('entity', 'ts', 'user', 'text')
+			}
+		}
+	)
+	id = Column(
+		'ecid',
+		UInt32(),
+		Sequence('ecid_seq'),
+		Comment('Entity comment ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	entity_id = Column(
+		'entityid',
+		UInt32(),
+		ForeignKey('entities_def.entityid', name='entities_comments_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Entity ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Entity')
+		}
+	)
+	timestamp = Column(
+		'ts',
+		TIMESTAMP(),
+		Comment('Time stamp'),
+		nullable=False,
+#		default=zzz,
+		server_default=func.current_timestamp(),
+		info={
+			'header_string' : _('Time')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='entities_comments_fk_uid', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('User')
+		}
+	)
+	obsolete = Column(
+		NPBoolean(),
+		Comment('Is comment obsolete?'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Obsolete')
+		}
+	)
+	text = Column(
+		UnicodeText(),
+		Comment('Entity comment text'),
+		nullable=False,
+		info={
+			'header_string' : _('Text')
+		}
+	)
+
+	user = relationship(
+		'User',
+		backref=backref(
+			'entity_comments',
+			passive_deletes=True
+		)
+	)
 
 class PhysicalEntity(Entity):
 	"""

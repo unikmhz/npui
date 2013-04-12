@@ -143,7 +143,7 @@ Ext.define('NetProfile.view.PropBar', {
 		{
 			rec_name = record.get('__str__');
 			if(!rec_name)
-				rec_name = this.recordText + ' ' + record.id;
+				rec_name = this.recordText + ' ' + record.getId();
 			Ext.apply(cfg, {
 				title: rec_name,
 				record: record,

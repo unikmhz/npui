@@ -1,3 +1,7 @@
+/**
+ * @class NetProfile.view.ModelGrid
+ * @extends Ext.grid.Panel
+ */
 Ext.define('NetProfile.view.ModelGrid', {
 	extend: 'Ext.grid.Panel',
 	alias: 'widget.modelgrid',

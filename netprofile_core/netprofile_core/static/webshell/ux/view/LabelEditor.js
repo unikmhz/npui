@@ -57,9 +57,11 @@ Ext.define('Ext.ux.view.LabelEditor', {
             item, record;
 
         if (Ext.fly(target).hasCls(me.labelSelector) && !me.editing && !e.ctrlKey && !e.shiftKey) {
-            e.stopEvent();
             item = me.view.findItemByChild(target);
             record = me.view.store.getAt(me.view.indexOf(item));
+			if(!this.view.getSelectionModel().isSelected(record))
+				return;
+            e.stopEvent();
             me.startEdit(target, record.data[me.dataIndex]);
             me.activeRecord = record;
         } else if (me.editing) {

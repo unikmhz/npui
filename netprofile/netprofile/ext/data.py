@@ -462,6 +462,36 @@ class ExtColumn(object):
 	def secret_value(self):
 		return self.column.info.get('secret_value', False)
 
+	@property
+	def read_only(self):
+		return self.column.info.get('read_only', False)
+
+	@property
+	def read_cap(self):
+		return self.column.info.get('read_cap')
+
+	@property
+	def write_cap(self):
+		return self.column.info.get('write_cap')
+
+	def get_secret_value(self, req):
+		cap = self.secret_value
+		if cap:
+			return True
+		cap = self.read_cap
+		if cap and (not has_permission(cap, req.context, req)):
+			return True
+		return False
+
+	def get_read_only(self, req):
+		cap = self.read_only
+		if cap:
+			return True
+		cap = self.write_cap
+		if cap and (not has_permission(cap, req.context, req)):
+			return True
+		return False
+
 	def __getattr__(self, attr):
 		return getattr(self.column, attr)
 
@@ -638,6 +668,9 @@ class ExtColumn(object):
 		val = self.length
 		if val is not None:
 			conf['maxLength'] = val
+		ro = self.get_read_only(req)
+		if ro:
+			conf['readOnly'] = True
 		val = self.default
 		if initval is not None:
 			conf['value'] = initval
@@ -739,7 +772,7 @@ class ExtColumn(object):
 		return conf
 
 	def get_column_cfg(self, req):
-		if self.secret_value:
+		if self.get_secret_value(req):
 			return None
 		loc = get_localizer(req)
 		conf = {
@@ -837,48 +870,12 @@ class ExtColumn(object):
 
 class ExtPseudoColumn(ExtColumn):
 	@property
-	def header_string(self):
-		return self.column.header_string
-
-	@property
-	def help_text(self):
-		return self.column.help_text
-
-	@property
-	def column_name(self):
-		return self.column.column_name
-
-	@property
-	def column_width(self):
-		return self.column.column_width
-
-	@property
-	def column_resizable(self):
-		return self.column.column_resizable
-
-	@property
-	def cell_class(self):
-		return self.column.cell_class
-
-	@property
-	def filter_type(self):
-		return self.column.filter_type
-
-	@property
 	def reader(self):
 		return None
 
 	@property
 	def writer(self):
 		return None
-
-#	@property
-#	def clearer(self):
-#		return self.column.info.get('clearer')
-
-	@property
-	def pass_request(self):
-		return self.column.pass_request
 
 	@property
 	def length(self):
@@ -901,10 +898,6 @@ class ExtPseudoColumn(ExtColumn):
 		return None
 
 	@property
-	def column_xtype(self):
-		return self.column.column_xtype
-
-	@property
 	def editor_xtype(self):
 		return self.column.editor_xtype
 
@@ -921,15 +914,11 @@ class ExtPseudoColumn(ExtColumn):
 		# FIXME: add smth here
 		raise NotImplementedError('Validation support is missing for pseudo columns.')
 
-	@property
-	def secret_value(self):
-		return self.column.secret_value
-
 	def __getattr__(self, attr):
 		return getattr(self.column, attr)
 
 	def parse_param(self, param):
-		if not hasattr(self.column, 'parse'):
+		if not hasattr(self.column.info, 'parse'):
 			return param
 		if not callable(self.column.parse):
 			return param
@@ -969,7 +958,7 @@ class ExtPseudoColumn(ExtColumn):
 		return conf
 
 	def get_column_cfg(self, req):
-		if self.column.secret_value:
+		if self.get_secret_value(req):
 			return None
 		loc = get_localizer(req)
 		conf = {
@@ -1092,6 +1081,10 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 				'editable'    : False,
 				'hiddenField' : self.name
 			})
+			if self.get_read_only(req):
+				conf.update({
+					'readOnly' : True
+				})
 			if in_form:
 				loc = get_localizer(req)
 				conf['fieldLabel'] = loc.translate(self.header_string)
@@ -1690,12 +1683,12 @@ class ExtModel(object):
 			row = {}
 			for cname, col in cols.items():
 				if isinstance(cname, PseudoColumn):
-					if cname.secret_value:
+					if col.get_secret_value(request):
 						continue
 					if isinstance(cname, HybridColumn):
 						row[cname.name] = None
 					continue
-				if col.secret_value:
+				if col.get_secret_value(request):
 					continue
 				if trans[cname].deferred:
 					continue
@@ -1708,12 +1701,12 @@ class ExtModel(object):
 			row = {}
 			for cname, col in cols.items():
 				if isinstance(cname, PseudoColumn):
-					if cname.secret_value:
+					if col.get_secret_value(request):
 						continue
 					if isinstance(cname, HybridColumn):
 						row[cname.name] = getattr(obj, cname.name)
 					continue
-				if col.secret_value:
+				if col.get_secret_value(request):
 					continue
 				if trans[cname].deferred:
 					continue
@@ -1755,16 +1748,25 @@ class ExtModel(object):
 		logger.info('Running ExtDirect class:%s method:%s', self.name, 'read_one')
 		logger.debug('Params: %r', params)
 
-	def set_values(self, obj, values, request):
+	def set_values(self, obj, values, request, is_create=False):
 		cols = self.get_columns()
 		rcols = self.get_read_columns()
 		trans = self._get_trans(rcols)
+		helper = None
+		if is_create:
+			helper = getattr(self.model, '__augment_create__', None)
+		else:
+			helper = getattr(self.model, '__augment_update__', None)
+		if callable(helper) and not helper(sess, obj, values, request):
+			return
 		for p, val in values.items():
 			if p not in cols:
 				if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
 					cols[p] = rcols[p]
 				else:
 					continue
+			if cols[p].get_read_only(request):
+				continue
 			writer = cols[p].writer
 			if writer:
 				writer = getattr(obj, writer, None)
@@ -1797,12 +1799,17 @@ class ExtModel(object):
 			if p in pt:
 				del pt[p]
 			obj = self.model()
+			helper = getattr(self.model, '__augment_create__', None)
+			if callable(helper) and not helper(sess, obj, pt, request):
+				continue
 			for p in pt:
 				if p not in cols:
 					if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
 						cols[p] = rcols[p]
 					else:
 						continue
+				if cols[p].get_read_only(request):
+					continue
 				writer = cols[p].writer
 				if writer:
 					writer = getattr(obj, writer, None)
@@ -1823,12 +1830,12 @@ class ExtModel(object):
 			pt = p
 			for cname, col in rcols.items():
 				if isinstance(cname, PseudoColumn):
-					if cname.secret_value:
+					if col.get_secret_value(request):
 						continue
 					if isinstance(cname, HybridColumn):
 						pt[cname.name] = getattr(obj, cname.name)
 					continue
-				if col.secret_value:
+				if col.get_secret_value(request):
 					continue
 				if trans[cname].deferred:
 					continue
@@ -1884,12 +1891,17 @@ class ExtModel(object):
 			if self.pk not in pt:
 				raise Exception('Can\'t find primary key in record parameters')
 			obj = sess.query(self.model).get(pt[self.pk])
+			helper = getattr(self.model, '__augment_update__', None)
+			if callable(helper) and not helper(sess, obj, pt, request):
+				continue
 			for p in pt:
 				if (p not in cols) or (p == self.pk):
 					if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
 						cols[p] = rcols[p]
 					else:
 						continue
+				if cols[p].get_read_only(request):
+					continue
 				writer = cols[p].writer
 				if writer:
 					writer = getattr(obj, writer, None)
@@ -1905,12 +1917,12 @@ class ExtModel(object):
 			pt = {}
 			for cname, col in rcols.items():
 				if isinstance(cname, PseudoColumn):
-					if cname.secret_value:
+					if col.get_secret_value(request):
 						continue
 					if isinstance(cname, HybridColumn):
 						pt[cname.name] = getattr(obj, cname.name)
 					continue
-				if col.secret_value:
+				if col.get_secret_value(request):
 					continue
 				if trans[cname].deferred:
 					continue
@@ -1948,6 +1960,9 @@ class ExtModel(object):
 			if self.pk not in pt:
 				raise Exception('Can\'t find primary key in record parameters')
 			obj = sess.query(self.model).get(pt[self.pk])
+			helper = getattr(self.model, '__augment_delete__', None)
+			if callable(helper) and not helper(sess, obj, pt, request):
+				continue
 			sess.delete(obj)
 			res['total'] += 1
 		return res
@@ -2127,6 +2142,9 @@ class ExtModuleBrowser(object):
 		loc = get_localizer(req)
 		for model in self:
 			em = self[model]
+			cap = em.cap_menu
+			if cap and (not has_permission(cap, req.context, req)):
+				continue
 			mt = em.get_menu_tree(req, name)
 			if mt:
 				id_cache[mt['id']] = mt

@@ -72,6 +72,12 @@ class ModuleBase(object):
 	def get_controllers(self, request):
 		return ()
 
+	def get_rt_handlers(self):
+		return {}
+
+	def get_rt_routes(self):
+		return ()
+
 	def load(self):
 		pass
 

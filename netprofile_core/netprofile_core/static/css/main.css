@@ -140,14 +140,20 @@ h2
 	height: 16px;
 }
 
-.np-file-iview .x-view-empty
+.np-file-iview .x-view-empty, .np-file-lview .x-view-empty
 {
 	color: gray;
 	font: 11px tahoma,arial,helvetica,sans-serif;
 	padding: 10px;
 }
 
-.np-file-wrap
+.np-file-lview
+{
+	position: relative;
+	white-space: nowrap;
+}
+
+.np-file-iview .np-file-wrap, .x-dd-drag-ghost .np-file-wrap
 {
 	float: left;
 	width: 96px;
@@ -159,7 +165,17 @@ h2
 	text-align: center;
 }
 
-.np-file-wrap .np-file-icon
+.np-file-lview .np-file-wrap
+{
+	position: absolute;
+	height: 20px;
+	padding: 1px 3px;
+	margin: 1px 0 0 1px;
+	border: 1px solid #fff;
+	font-size: 85%;
+}
+
+.np-file-iview .np-file-wrap .np-file-icon, .x-dd-drag-ghost .np-file-wrap .np-file-icon
 {
 	display: inline-block;
 	padding: 3px;
@@ -168,19 +184,35 @@ h2
 	padding-bottom: 0;
 }
 
-.x-quirks .np-file-wrap .np-file-icon
+.np-file-lview .np-file-wrap .np-file-icon
+{
+	display: block;
+	float: left;
+	padding: 0;
+	margin: 0 3px 0 0;
+	width: 16px;
+	height: 16px;
+}
+
+.x-quirks .np-file-iview .np-file-wrap .np-file-icon, .x-quirks .x-dd-drag-ghost .np-file-wrap .np-file-icon
 {
 	height: 54px;
 	padding-bottom: 3px;
 }
 
-.np-file-wrap .np-file-icon img
+.np-file-iview .np-file-wrap .np-file-icon img, .x-dd-drag-ghost .np-file-wrap .np-file-icon img
 {
 	width: 48px;
 	height: 48px;
 }
 
-.np-file-wrap span
+.np-file-lview .np-file-wrap .np-file-icon img
+{
+	width: 16px;
+	height: 16px;
+}
+
+.np-file-iview .np-file-wrap span, .x-dd-drag-ghost .np-file-wrap span
 {
 	display: block;
 	text-align: center;
@@ -189,18 +221,40 @@ h2
 	white-space: nowrap;
 }
 
-.x-file-item-over
+.np-file-lview .np-file-wrap span
+{
+	display: inline-block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	margin-top: 3px;
+	max-width: 174px;
+}
+
+.np-file-iview .x-file-item-over
 {
 	border: 1px solid #ddd;
 	background: #efefef url(../img/over.gif) repeat-x left top;
 	padding: 4px;
 }
 
-.x-item-selected
+.np-file-lview .x-file-item-over
+{
+	border: 1px solid #ddd;
+	background: #efefef url(../img/over.gif) repeat-x left top;
+}
+
+.np-file-iview .x-item-selected
 {
 	background: #eff5fb url(../img/selected.gif) no-repeat right bottom;
 	border: 1px solid #99bbe8;
 	padding: 4px;
+}
+
+.np-file-lview .x-item-selected
+{
+	background: #eff5fb url(../img/selected.gif) no-repeat right bottom;
+	border: 1px solid #99bbe8;
 }
 
 .x-view-selector
@@ -220,6 +274,82 @@ h2
 .np-file-upload-cont .np-file-upload-close
 {
 	padding: 3px 0px;
+}
+
+table.np-rights-tbl td
+{
+	text-align: center;
+}
+
+table.np-rights-tbl td.hlabel
+{
+	text-align: right;
+}
+
+table.np-rights-tbl td.vlabel
+{
+	min-width: 4em;
+}
+
+.x-tree-icon-parent
+{
+	background-image: url(../img/folder.png);
+}
+
+.x-grid-tree-node-expanded .x-tree-icon-parent
+{
+	background-image: url(../img/folder_open.png);
+}
+
+.msg .x-box-mc
+{
+	font-size: 14px;
+}
+
+#msg-div
+{
+	position: absolute;
+	left: 10px;
+	top: 10px;
+	width: 300px;
+	z-index: 20000;
+}
+
+#msg-div .msg
+{
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	background: #f6f6f6;
+	border: 2px solid #ccc;
+	margin-top: 2px;
+	padding: 10px 15px;
+	color: #555;
+}
+
+#msg-div .warning
+{
+	background: #fdff8b;
+	border: 2px solid #e61f00;
+	color: #e61f00;
+}
+
+#msg-div .error
+{
+	background: #cf0000;
+	border: 2px solid #fee;
+	color: #fff;
+}
+
+#msg-div .msg h3
+{
+	margin: 0 0 8px;
+	font-weight: bold;
+	font-size: 15px;
+}
+
+#msg-div .msg p
+{
+	margin: 0;
 }
 
 .ico-accept       { background-image: url(../img/accept.png) !important; }
@@ -277,6 +407,8 @@ h2
 .ico-mod-datacache            { background-image: url(../img/db.png) !important; }
 .ico-mod-globalsetting        { background-image: url(../img/item.png) !important; }
 .ico-mod-globalsettingsection { background-image: url(../img/item_group.png) !important; }
+.ico-mod-file                 { background-image: url(../img/file.png) !important; }
+.ico-mod-folder               { background-image: url(../img/folder.png) !important; }
 .ico-mod-group                { background-image: url(../img/group.png) !important; }
 .ico-mod-logaction            { background-image: url(../img/script_arrow.png) !important; }
 .ico-mod-logdata              { background-image: url(../img/script.png) !important; }

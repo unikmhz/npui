@@ -43,6 +43,7 @@ Ext.define('NetProfile.view.Form', {
 		this.buttons = [{
 			text: this.resetText,
 			iconCls: 'ico-undo',
+			itemId: 'btn_reset',
 			handler: function()
 			{
 				this.up('form').getForm().reset();
@@ -51,6 +52,7 @@ Ext.define('NetProfile.view.Form', {
 		}, {
 			text: this.submitText,
 			iconCls: 'ico-accept',
+			itemId: 'btn_submit',
 			formBind: true,
 			disabled: true,
 			handler: function()
@@ -60,17 +62,20 @@ Ext.define('NetProfile.view.Form', {
 
 				if(form.isValid())
 				{
-					if(fp.record)
+					if(!fp.record)
+						return;
+					if(fp.record.store)
 					{
-						if(fp.record.store)
-							form.updateRecord(fp.record);
-						else
-						{
-							form.updateRecord(fp.record);
-							fp.record.save();
-						}
-						form.loadRecord(fp.record);
+						form.updateRecord(fp.record);
+						if(!fp.record.store.autoSync)
+							fp.record.store.sync();
 					}
+					else
+					{
+						form.updateRecord(fp.record);
+						fp.record.save();
+					}
+					form.loadRecord(fp.record);
 				}
 			},
 			tooltip: { text: this.submitTipText, title: this.submitTipTitleText }
@@ -225,6 +230,12 @@ Ext.define('NetProfile.view.Form', {
 					scope: this
 				});
 			}
+			var tb = this.down('toolbar[dock=bottom]'),
+				ro = !!this.record.readOnly;
+			if(ro)
+				tb.hide();
+			else
+				tb.show();
 			this.suspendEvents();
 			this.getForm().loadRecord(this.record);
 			this.resumeEvents();

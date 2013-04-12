@@ -10,21 +10,27 @@ from __future__ import (
 
 class PseudoColumn(object):
 	def __init__(self, **kwargs):
-		self.nullable = bool(kwargs.get('nullable', True))
-		self.sortable = bool(kwargs.get('sortable', False))
-		self.template = kwargs.get('template', None)
-		self.column_xtype = kwargs.get('column_xtype', None)
-		self.editor_xtype = kwargs.get('editor_xtype', 'textfield')
-		self.js_type = kwargs.get('js_type', 'auto')
-		self.header_string = kwargs.get('header_string', self.name)
-		self.column_name = kwargs.get('column_name', self.header_string)
-		self.help_text = kwargs.get('help_text', None)
-		self.column_width = kwargs.get('column_width', None)
-		self.column_resizable = bool(kwargs.get('column_resizable', True))
-		self.cell_class = kwargs.get('cell_class', None)
-		self.filter_type = kwargs.get('filter_type', 'none')
-		self.pass_request = bool(kwargs.get('pass_request', False))
-		self.secret_value = bool(kwargs.get('secret_value', False))
+		kwargs['nullable'] = bool(kwargs.get('nullable', True))
+		kwargs['sortable'] = bool(kwargs.get('sortable', False))
+		if 'editor_xtype' not in kwargs:
+			kwargs['editor_xtype'] = 'textfield'
+		if 'js_type' not in kwargs:
+			kwargs['js_type'] = 'auto'
+		if 'header_string' not in kwargs:
+			kwargs['header_string'] = self.name
+		if 'column_name' not in kwargs:
+			kwargs['column_name'] = kwargs['header_string']
+		kwargs['column_resizable'] = bool(kwargs.get('column_resizable', True))
+		if 'filter_type' not in kwargs:
+			kwargs['filter_type'] = 'none'
+		kwargs['pass_request'] = bool(kwargs.get('pass_request', False))
+		kwargs['secret_value'] = bool(kwargs.get('secret_value', False))
+		kwargs['read_only'] = bool(kwargs.get('read_only', False))
+
+		self.info = kwargs
+
+	def __getattr__(self, attr):
+		return self.info.get(attr)
 
 class HybridColumn(PseudoColumn):
 	def __init__(self, pname, **kwargs):

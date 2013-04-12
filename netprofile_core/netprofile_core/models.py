@@ -766,7 +766,7 @@ class User(Base):
 			'name'           : ff.name,
 			'allow_read'     : ff.can_read(self),
 			'allow_write'    : ff.can_write(self),
-			'allow_traverse' : ff.can_traverse(self),
+			'allow_traverse' : ff.can_traverse_path(self),
 			'parent_write'   : p_wr
 		}
 
@@ -1930,6 +1930,68 @@ class FileFolder(Base):
 		primaryjoin='FileFolder.id == Group.root_folder_id'
 	)
 
+	@classmethod
+	def __augment_create__(cls, sess, obj, values, req):
+		u = req.user
+		if 'parentid' in values:
+			try:
+				pid = int(values['parentid'])
+			except ValueError:
+				return False
+			parent = sess.query(FileFolder).get(pid)
+			if parent is None:
+				return False
+			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+				return False
+			root_ff = u.group.effective_root_folder
+			if root_ff and (not parent.is_inside(root_ff)):
+				return False
+		# FIXME: handle null parent
+		return True
+
+	@classmethod
+	def __augment_update__(cls, sess, obj, values, req):
+		u = req.user
+		if not obj.can_write(u):
+			return False
+		parent = obj.parent
+		if parent:
+			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+				return False
+		root_ff = u.group.effective_root_folder
+		if root_ff and (not obj.is_inside(root_ff)):
+			return False
+		# FIXME: handle null parent
+		if 'parentid' in values:
+			try:
+				pid = int(values['parentid'])
+			except ValueError:
+				return False
+			new_parent = sess.query(FileFolder).get(pid)
+			if new_parent is None:
+				return False
+			if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
+				return False
+			if root_ff and (not new_parent.is_inside(root_ff)):
+				return False
+		# FIXME: handle null newparent
+		return True
+
+	@classmethod
+	def __augment_delete__(cls, sess, obj, values, req):
+		u = req.user
+		if not obj.can_write(u):
+			return False
+		parent = obj.parent
+		if parent:
+			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+				return False
+		root_ff = u.group.effective_root_folder
+		if root_ff and (not obj.is_inside(root_ff)):
+			return False
+		# FIXME: handle null parent
+		return True
+
 	def allow_read(self, req):
 		return self.can_read(req.user)
 
@@ -1937,7 +1999,7 @@ class FileFolder(Base):
 		return self.can_write(req.user)
 
 	def allow_traverse(self, req):
-		return self.can_traverse(req.user)
+		return self.can_traverse_path(req.user)
 
 	def can_read(self, user):
 		if self.user_id == user.id:
@@ -1963,10 +2025,10 @@ class FileFolder(Base):
 	def can_traverse_path(self, user):
 		if not self.can_traverse(user):
 			return False
-		if user.group and (self.id == user.group.root_folder_id):
+		if user.group and (self == user.group.effective_root_folder):
 			return True
 		if self.parent:
-			return self.parent.can_traverse(user)
+			return self.parent.can_traverse_path(user)
 		return True
 
 	def is_inside(self, cont):
@@ -2099,6 +2161,7 @@ class File(Base):
 				'menu_name'    : _('Files'),
 				'default_sort' : ({ 'property': 'fname' ,'direction': 'ASC' },),
 				'grid_view'    : ('folder', 'fname', 'size', 'ctime', 'mtime'),
+				'form_view'    : ('fname', 'folder', 'size', 'user', 'group', 'rights', 'ctime', 'mtime', 'name', 'descr'),
 				'easy_search'  : ('fname', 'name'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 				'extra_data'   : ('allow_access', 'allow_read', 'allow_write', 'allow_execute')
@@ -2177,7 +2240,8 @@ class File(Base):
 		default=F_DEFAULT_FILES,
 		server_default=text(str(F_DEFAULT_FILES)),
 		info={
-			'header_string' : _('Rights')
+			'header_string' : _('Rights'),
+			'editor_xtype'  : 'filerights'
 		}
 	)
 	mime_type = Column(
@@ -2196,7 +2260,8 @@ class File(Base):
 		Comment('File size (in bytes)'),
 		nullable=False,
 		info={
-			'header_string' : _('Size')
+			'header_string' : _('Size'),
+			'read_only'     : True
 		}
 	)
 	creation_time = Column(
@@ -2207,7 +2272,8 @@ class File(Base):
 		default=None,
 		server_default=FetchedValue(),
 		info={
-			'header_string' : _('Created')
+			'header_string' : _('Created'),
+			'read_only'     : True
 		}
 	)
 	modification_time = Column(
@@ -2219,7 +2285,8 @@ class File(Base):
 		server_default=func.current_timestamp(),
 		server_onupdate=func.current_timestamp(),
 		info={
-			'header_string' : _('Modified')
+			'header_string' : _('Modified'),
+			'read_only'     : True
 		}
 	)
 	etag = Column(
@@ -2229,7 +2296,8 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('E-Tag')
+			'header_string' : _('E-Tag'),
+			'read_only'     : True
 		}
 	)
 	read_count = Column(
@@ -3008,7 +3076,7 @@ class LogData(Base):
 	)
 	timestamp = Column(
 		'ts',
-		TIMESTAMP(timezone=True),
+		TIMESTAMP(),
 		Comment('Log entry timestamp'),
 		nullable=False,
 #		default=zzz,
@@ -3843,9 +3911,6 @@ class UserSettingType(Base, DynamicSetting):
 		passive_deletes=True
 	)
 
-	def __str__(self):
-		return '%s' % str(self.name)
-
 	@classmethod
 	def __augment_pg_query__(cls, sess, query, params):
 		lim = query._limit
@@ -3855,6 +3920,9 @@ class UserSettingType(Base, DynamicSetting):
 				joinedload(UserSettingType.section)
 			)
 		return query
+
+	def __str__(self):
+		return '%s' % str(self.name)
 
 class UserSetting(Base):
 	"""
