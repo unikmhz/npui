@@ -50,7 +50,11 @@ def get_user(request):
 
 	if userid is not None:
 		try:
-			return sess.query(User).filter(User.state == UserState.active).filter(User.enabled == True).filter(User.login == userid).one()
+			return sess.query(User).filter(
+				User.state == UserState.active,
+				User.enabled == True,
+				User.login == userid
+			).one()
 		except NoResultFound:
 			return None
 
@@ -165,13 +169,13 @@ def auth_to_db(event):
 			skey = request.registry.settings.get('session.key')
 		assert skey is not None, 'Session cookie name does not exist'
 		sname = request.cookies.get(skey)
-		assert skey is not None, 'Session key does not exist'
-		try:
-			npsess = sess.query(NPSession).filter(NPSession.session_name == sname).one()
-			npsess.update_time()
-		except NoResultFound:
-			npsess = user.generate_session(request, sname)
-			sess.add(npsess)
+		if sname:
+			try:
+				npsess = sess.query(NPSession).filter(NPSession.session_name == sname).one()
+				npsess.update_time()
+			except NoResultFound:
+				npsess = user.generate_session(request, sname)
+				sess.add(npsess)
 	else:
 		sess.execute('SET @accessuid = 0')
 		sess.execute('SET @accessgid = 0')
