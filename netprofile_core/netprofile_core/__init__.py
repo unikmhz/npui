@@ -11,6 +11,7 @@ from __future__ import (
 from netprofile.common.modules import ModuleBase
 from netprofile.common.menus import Menu
 from .models import *
+from .dav import DAVPluginVFS
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -27,6 +28,7 @@ class Module(ModuleBase):
 		mmgr.cfg.add_route('core.home', '/')
 		mmgr.cfg.add_route('core.login', '/login')
 		mmgr.cfg.add_route('core.logout', '/logout')
+		mmgr.cfg.add_route('core.dav', '/dav/*traverse', factory='netprofile.dav.DAVRoot')
 		mmgr.cfg.scan()
 
 	def add_routes(self, config):
@@ -131,6 +133,11 @@ class Module(ModuleBase):
 			'netprofile_core:static/extjs/resources/css/ext-all.css',
 			'netprofile_core:static/css/main.css'
 		)
+
+	def get_dav_plugins(self, request):
+		return {
+			'fs' : DAVPluginVFS(request)
+		}
 
 	@property
 	def name(self):

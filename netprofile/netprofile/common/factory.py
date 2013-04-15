@@ -17,7 +17,7 @@ class RootFactory(object):
 
 	@property
 	def __acl__(self):
-		return getattr(self.req, 'acls', [])
+		return getattr(self.req, 'acls', ())
 
 	def __init__(self, request):
 		self.req = request

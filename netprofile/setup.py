@@ -25,6 +25,7 @@ requires = [
 	'pyramid_debugtoolbar >= 1.0',
 	'pyramid_tm >= 0.3',
 
+	'lxml',
 	'cdecimal',
 ]
 

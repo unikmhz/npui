@@ -8,6 +8,8 @@ from __future__ import (
 	division
 )
 
+import hashlib
+
 from pyramid.security import (
 	Allow,
 	Deny,
@@ -28,6 +30,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm.exc import NoResultFound
 
+from netprofile.common.auth import (
+	DigestAuthenticationPolicy,
+	PluginAuthenticationPolicy
+)
 from netprofile.db.connection import DBSession
 from .models import (
 	NPSession,
@@ -104,10 +110,37 @@ def find_princs(userid, request):
 	if user and (user.login == userid):
 		return []
 	try:
-		user = sess.query(User).filter(User.state == UserState.active).filter(User.enabled == True).filter(User.login == userid).one()
+		user = sess.query(User).filter(
+			User.state == UserState.active,
+			User.enabled == True,
+			User.login == userid
+		).one()
 	except NoResultFound:
 		return None
 	return []
+
+def find_princs_digest(param, request):
+	sess = DBSession()
+
+	try:
+		user = sess.query(User).filter(
+			User.state == UserState.active,
+			User.enabled == True,
+			User.login == param['username']
+		).one()
+	except NoResultFound:
+		return None
+	if not user.a1_hash:
+		return None
+	ha2 = hashlib.md5(('%s:%s' % (request.method, request.path)).encode()).hexdigest()
+	data = '%s:%s:%s:%s:%s' % (
+		param['nonce'], param['nc'],
+		param['cnonce'], 'auth', ha2
+	)
+	resp = hashlib.md5(('%s:%s' % (user.a1_hash, data)).encode()).hexdigest()
+	if resp == param['response']:
+		return []
+	return None
 
 @subscriber(ContextFound)
 def auth_to_db(event):
@@ -152,7 +185,18 @@ def includeme(config):
 	config.add_request_method(get_acls, str('acls'), reify=True)
 	config.add_request_method(get_settings, str('settings'), reify=True)
 
-	authn_policy = SessionAuthenticationPolicy(callback=find_princs)
+	settings = config.registry.settings
+
+	authn_policy = PluginAuthenticationPolicy(
+		SessionAuthenticationPolicy(callback=find_princs),
+		{
+			'/dav' : DigestAuthenticationPolicy(
+				settings.get('netprofile.auth.secret'),
+				find_princs_digest,
+				settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
+			)
+		}
+	)
 	authz_policy = ACLAuthorizationPolicy()
 
 	config.set_authorization_policy(authz_policy)

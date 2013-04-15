@@ -76,6 +76,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm.collections import attribute_mapped_collection
+from sqlalchemy.orm.exc import NoResultFound
 
 #from colanderalchemy import (
 #	Column,
@@ -108,6 +109,12 @@ from netprofile.ext.wizards import (
 	Step,
 	Wizard
 )
+from netprofile.dav import (
+	IDAVFile,
+	IDAVCollection,
+	DAVResourceTypeValue,
+	dprops
+)
 from netprofile.ext.filters import (
 	SelectFilter
 )
@@ -121,6 +128,7 @@ from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
+from zope.interface import implementer
 
 _ = TranslationStringFactory('netprofile_core')
 
@@ -631,14 +639,17 @@ class User(Base):
 
 	def generate_salt(self, salt_len=4, system_rng=True, chars=(string.ascii_lowercase + string.ascii_uppercase + string.digits)):
 		if system_rng:
-			rng = random.SystemRandom()
+			try:
+				rng = random.SystemRandom()
+			except NotImplementedError:
+				rng = random
 		else:
 			rng = random
 		return ''.join(rng.choice(chars) for i in range(salt_len))
 
 	def generate_a1hash(self, realm):
 		ctx = hashlib.md5()
-		ctx.update('%s:%s:%s' % (self.login, realm, self.mod_pw))
+		ctx.update(('%s:%s:%s' % (self.login, realm, self.mod_pw)).encode())
 		return ctx.hexdigest()
 
 	def check_password(self, pwd, hash_con='sha1', salt_len=4):
@@ -757,6 +768,7 @@ class User(Base):
 			return None
 		ff = self.group.effective_root_folder
 		if ff is None:
+			# FIXME: get root folder props from global config
 			return None
 		p_wr = False
 		if ff.parent:
@@ -1665,9 +1677,9 @@ class SecurityPolicy(Base):
 		err = []
 		if self.pw_length_min and (len(pwd) < self.pw_length_min):
 			err.append('pw_length_min')
-		if self.pw_length_max and (len(pwd) > self.pw_length_min):
+		if self.pw_length_max and (len(pwd) > self.pw_length_max):
 			err.append('pw_length_max')
-		if self.pw_ctypes_min or self.pw_ctypes_max:
+		if self.pw_ctype_min or self.pw_ctype_max:
 			has_lower = False
 			has_upper = False
 			has_digit = False
@@ -1688,10 +1700,10 @@ class SecurityPolicy(Base):
 			for ctype in (has_lower, has_upper, has_digit, has_space, has_sym):
 				if ctype:
 					ct_count += 1
-			if self.pw_ctypes_min and (ct_count < self.pw_ctypes_min):
-				err.append('pw_ctypes_min')
-			if self.pw_ctypes_max and (ct_count > self.pw_ctypes_max):
-				err.append('pw_ctypes_max')
+			if self.pw_ctype_min and (ct_count < self.pw_ctype_min):
+				err.append('pw_ctype_min')
+			if self.pw_ctype_max and (ct_count > self.pw_ctype_max):
+				err.append('pw_ctype_max')
 		if self.pw_dict_check:
 			if self.pw_dict_name:
 				dname = self.pw_dict_name
@@ -1768,6 +1780,7 @@ class FileFolderAccessRule(DeclEnum):
 	group   = 'group',   _('Group-only access'), 20
 	public  = 'public',  _('Public access'),     30
 
+@implementer(IDAVCollection)
 class FileFolder(Base):
 	"""
 	NetProfile VFS folder definition.
@@ -1992,6 +2005,51 @@ class FileFolder(Base):
 		# FIXME: handle null parent
 		return True
 
+	@property
+	def __name__(self):
+		return self.name
+
+	def __iter__(self):
+		sess = DBSession()
+		q = [t[0] for t in sess.query(FileFolder.name).filter(FileFolder.parent == self)]
+		q.extend(t[0] for t in sess.query(File.filename).filter(File.folder == self))
+		return iter(q)
+
+	def __getitem__(self, name):
+		sess = DBSession()
+		try:
+			f = sess.query(FileFolder).filter(FileFolder.parent == self, FileFolder.name == name).one()
+		except NoResultFound:
+			try:
+				f = sess.query(File).filter(File.folder == self, File.filename == name).one()
+			except NoResultFound:
+				raise KeyError('No such file or directory')
+		f.__req__ = getattr(self, '__req__', None)
+		f.__parent__ = self
+		return f
+
+	def get_uri(self):
+		p = getattr(self, '__parent__', None)
+		if p is None:
+			p = self.parent
+		if p is None:
+			return [ self.name ]
+		uri = p.get_uri()
+		uri.append(self.name)
+		return uri
+
+	def dav_props(self, pset):
+		ret = {}
+		if dprops.RESOURCE_TYPE in pset:
+			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.COLLECTION)
+		if dprops.CREATION_DATE in pset:
+			ret[dprops.CREATION_DATE] = self.creation_time
+		if dprops.DISPLAY_NAME in pset:
+			ret[dprops.DISPLAY_NAME] = self.name
+		if dprops.LAST_MODIFIED in pset:
+			ret[dprops.LAST_MODIFIED] = self.modification_time
+		return ret
+
 	def allow_read(self, req):
 		return self.can_read(req.user)
 
@@ -2138,6 +2196,7 @@ class FileResponse(Response):
 
 _re_charset = re.compile(r'charset=([\w\d_-]+)')
 
+@implementer(IDAVFile)
 class File(Base):
 	"""
 	NetProfile VFS file definition.
@@ -2365,6 +2424,39 @@ class File(Base):
 				return None
 			return cset
 
+	@property
+	def __name__(self):
+		return self.filename
+
+	def get_uri(self):
+		p = getattr(self, '__parent__', None)
+		if p is None:
+			p = self.folder
+		if p is None:
+			return [ self.filename ]
+		uri = p.get_uri()
+		uri.append(self.filename)
+		return uri
+
+	def dav_props(self, pset):
+		ret = {}
+		if dprops.RESOURCE_TYPE in pset:
+			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue()
+		if dprops.CONTENT_LENGTH in pset:
+			ret[dprops.CONTENT_LENGTH] = self.size
+		if dprops.CONTENT_TYPE in pset:
+			ret[dprops.CONTENT_TYPE] = self.plain_mime_type
+		if dprops.CREATION_DATE in pset:
+			ret[dprops.CREATION_DATE] = self.creation_time
+		if dprops.DISPLAY_NAME in pset:
+			ret[dprops.DISPLAY_NAME] = self.filename
+		if dprops.ETAG in pset:
+			ret[dprops.ETAG] = self.etag
+#		if dprops.EXECUTABLE
+		if dprops.LAST_MODIFIED in pset:
+			ret[dprops.LAST_MODIFIED] = self.modification_time
+		return ret
+
 	def allow_access(self, req):
 		return self.can_access(req.user)
 
@@ -2529,6 +2621,11 @@ class FileChunk(Base):
 	def sync_buffer(self):
 		if not hasattr(self, '_buf'):
 			raise ValueError()
+		if self.file and self.file.etag:
+			ctx = hashlib.md5()
+			ctx.update(self.file.etag.encode())
+			ctx.update(self._buf)
+			self.file.etag = ctx.hexdigest()
 		self.data = bytes(self._buf)
 
 class VFSFileIO(io.BufferedIOBase):

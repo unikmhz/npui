@@ -78,6 +78,9 @@ class ModuleBase(object):
 	def get_rt_routes(self):
 		return ()
 
+	def get_dav_plugins(self, request):
+		return {}
+
 	def load(self):
 		pass
 
@@ -110,12 +113,17 @@ class ModuleManager(object):
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
 			ep.load()
 
-	def __init__(self, cfg):
+	def __init__(self, cfg, vhost=None):
 		self.cfg = cfg
 		self.modules = {}
 		self.loaded = {}
 		self.models = {}
 		self.menus = {}
+		if vhost is None:
+			sett = cfg.get_settings()
+			self.vhost = sett.get('netprofile.vhost', None)
+		else:
+			self.vhost = vhost
 
 	def scan(self):
 		"""
@@ -296,6 +304,33 @@ class ModuleManager(object):
 		for moddef, mod in self.loaded.items():
 			l.extend(mod.get_controllers(request))
 		return l
+
+	def get_rt_handlers(self, request):
+		"""
+		Get a dict of all realtime event handlers.
+		"""
+		ret = {}
+		for moddef, mod in self.loaded.items():
+			ret.update(mod.get_rt_handlers())
+		return ret
+
+	def get_rt_routes(self):
+		"""
+		Get a list of all additional realtime routes.
+		"""
+		l = []
+		for moddef, mod in self.loaded.items():
+			l.extend(mod.get_rt_routes())
+		return l
+
+	def get_dav_plugins(self, request):
+		"""
+		Get a dict of all DAV plugins.
+		"""
+		ret = {}
+		for moddef, mod in self.loaded.items():
+			ret.update(mod.get_dav_plugins(request))
+		return ret
 
 def includeme(config):
 	"""

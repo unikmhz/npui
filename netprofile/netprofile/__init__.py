@@ -70,7 +70,7 @@ def get_csrf(request):
 
 def main(global_config, **settings):
 	"""
-	This function returns a Pyramid WSGI application.
+	Pyramid WSGI application for main NetProfile vhost.
 	"""
 	debug = settings.get('netprofile.debug', False)
 	if isinstance(debug, str):
