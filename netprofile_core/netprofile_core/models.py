@@ -3726,13 +3726,39 @@ class DynamicSetting(object):
 				'inputValue'     : 'true',
 				'uncheckedValue' : 'false'
 			})
-			pass
 		if self.type == 'select':
-			pass
+			chx = []
+			if self.get_constraint('nullok', False):
+				chx.append({
+					'id'    : '',
+					'value' : ''
+				})
+			opts = self.get_option('options')
+			if opts:
+				for k, v in opts.items():
+					chx.append({
+						'id'    : k,
+						'value' : v
+					})
+			cfg.update({
+				'xtype'          : 'combobox',
+				'format'         : 'string',
+				'displayField'   : 'value',
+				'hiddenName'     : self.name,
+				'valueField'     : 'id',
+				'queryMode'      : 'local',
+				'editable'       : False,
+				'forceSelection' : True,
+				'store'          : {
+					'xtype'  : 'simplestore',
+					'fields' : ('id', 'value'),
+					'data'   : chx
+				}
+			})
 		if self.type == 'password':
-			pass
+			cfg['xtype'] = 'passwordfield'
 		if self.type == 'textarea':
-			pass
+			cfg['xtype'] = 'textareafield'
 		return cfg
 
 class GlobalSetting(Base, DynamicSetting):
