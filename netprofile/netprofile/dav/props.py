@@ -48,10 +48,25 @@ PRINCIPAL               = CN_DAV + 'principal'
 
 ERROR                   = CN_DAV + 'error'
 HREF                    = CN_DAV + 'href'
+MKCOL                   = CN_DAV + 'mkcol'
 MULTISTATUS             = CN_DAV + 'multistatus'
 PROP                    = CN_DAV + 'prop'
 PROPFIND                = CN_DAV + 'propfind'
 PROPSTAT                = CN_DAV + 'propstat'
 RESPONSE                = CN_DAV + 'response'
+SET                     = CN_DAV + 'set'
 STATUS                  = CN_DAV + 'status'
+
+SUPPORTED_REPORT        = CN_DAV + 'supported-report'
+VALID_RESOURCETYPE      = CN_DAV + 'valid-resourcetype'
+
+DEFAULT_PROPS = frozenset((
+	CONTENT_LENGTH,
+	CONTENT_TYPE,
+	ETAG,
+	LAST_MODIFIED,
+	QUOTA_AVAIL_BYTES,
+	QUOTA_USED_BYTES,
+	RESOURCE_TYPE
+))
 

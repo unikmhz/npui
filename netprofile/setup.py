@@ -13,6 +13,7 @@ requires = [
 	'setuptools',
 	'python-dateutil',
 	'phpserialize',
+	'repoze.tm2',
 
 	'SQLAlchemy >= 0.8b1',
 	'zope.sqlalchemy',
@@ -23,7 +24,6 @@ requires = [
 	'pyramid >= 1.4a1',
 	'pyramid_beaker >= 0.7',
 	'pyramid_debugtoolbar >= 1.0',
-	'pyramid_tm >= 0.3',
 
 	'lxml',
 	'cdecimal',

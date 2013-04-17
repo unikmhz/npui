@@ -52,6 +52,7 @@ class PluginAuthenticationPolicy(object):
 			request.auth_policy = cur
 		else:
 			request.auth_policy = self._default
+		request.registry.notify(PluginPolicySelected(request, request.auth_policy))
 		return request.auth_policy
 
 	def authenticated_userid(self, request):
@@ -150,7 +151,7 @@ class DigestAuthenticationPolicy(object):
 			return None
 		userid = params['username']
 		if self.callback(params, request) is not None:
-			return userid
+			return 'u:%s' % userid
 		_add_www_authenticate(request, self.secret, self.realm)
 
 	def unauthenticated_userid(self, request):
@@ -160,14 +161,32 @@ class DigestAuthenticationPolicy(object):
 		if not _is_valid_nonce(params['nonce'], self.secret):
 			_add_www_authenticate(request, self.secret, self.realm)
 			return None
-		return params['username']
+		return 'u:%s' % params['username']
 
 	def effective_principals(self, request):
-		pass
+		creds = [Everyone]
+		params = _parse_authorization(request, self.secret, self.realm)
+		if params is None:
+			return creds
+		if not _is_valid_nonce(params['nonce'], self.secret):
+			_add_www_authenticate(request, self.secret, self.realm)
+			return creds
+		groups = self.callback(params, request)
+		if groups is None:
+			return creds
+		creds.append(Authenticated)
+		creds.append('u:%s' % params['username'])
+		creds.extend(groups)
+		return creds
 
 	def remember(self, request, principal, *kw):
 		return []
 
 	def forget(self, request):
-		pass
+		return [('WWW-Authenticate', _generate_digest_challenge(
+			round(time.time()),
+			self.secret,
+			self.realm,
+			'NPDIGEST'
+		))]
 

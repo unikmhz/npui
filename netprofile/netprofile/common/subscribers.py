@@ -16,7 +16,6 @@ from pyramid.i18n import (
 def add_renderer_globals(event):
 	request = event['request']
 	event['_'] = request.translate
-	event['localizer'] = request.localizer
 
 def on_new_request(event):
 	request = event.request
@@ -25,11 +24,11 @@ def on_new_request(event):
 		mr = 'netprofile_core'
 	else:
 		mr = 'netprofile_' + mr.name.split('.')[0]
-	localizer = get_localizer(request)
+
 	def auto_translate(*args, **kwargs):
 		kwargs['domain'] = mr
-		return localizer.translate(TranslationString(*args, **kwargs))
-	request.localizer = localizer
+		return get_localizer(request).translate(TranslationString(*args, **kwargs))
+
 	request.translate = auto_translate
 
 #	request.response.headerlist.append((

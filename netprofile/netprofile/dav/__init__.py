@@ -9,7 +9,9 @@ from __future__ import (
 )
 
 import urllib
+import itertools
 import datetime as dt
+from dateutil.parser import parse as dparse
 from lxml import etree
 
 from zope.interface import (
@@ -21,6 +23,7 @@ from zope.interface.exceptions import DoesNotImplement
 from webob.util import status_reasons
 
 from pyramid.response import Response
+from netprofile.db.connection import DBSession
 from netprofile.common.modules import IModuleManager
 from netprofile.dav import props as dprops
 
@@ -62,7 +65,7 @@ class DAVRoot(object):
 
 	@property
 	def __acl__(self):
-		return getattr(self.req, 'acls', ())
+		return ()
 
 	def __getitem__(self, name):
 		return self.plugs[name]
@@ -89,6 +92,14 @@ class DAVRoot(object):
 			ret[dprops.DISPLAY_NAME] = 'dav'
 		return ret
 
+	def dav_create(self, req, name, rtype=None, props=None, data=None):
+		raise DAVForbiddenError('Unable to create child node.')
+
+	@property
+	def dav_children(self):
+		for plug in self.plugs.values():
+			yield plug
+
 class DAVPlugin(object):
 	def __init__(self, req):
 		self.req = req
@@ -114,7 +125,20 @@ def get_http_status(code, http_ver='1.1'):
 		status_reasons[code]
 	)
 
-def parse_props(pnode, mapdict=None):
+def _parse_datetime(self, el):
+	return dparse(el.text)
+
+def _parse_resource_type(self, el):
+	ret = [item.tag for item in el]
+	return DAVResourceTypeValue(*ret)
+
+VALUE_PARSERS = {
+	dprops.RESOURCE_TYPE : _parse_resource_type,
+	dprops.CREATION_DATE : _parse_datetime,
+	dprops.LAST_MODIFIED : _parse_datetime
+}
+
+def parse_props(pnode, mapdict=VALUE_PARSERS):
 	ret = {}
 	if pnode is None:
 		return ret
@@ -146,15 +170,7 @@ def get_node_props(ctx, pset=None):
 	all_props = False
 	if (pset is None) or (len(pset) == 0):
 		all_props = True
-		pset = set(
-			dprops.CONTENT_LENGTH,
-			dprops.CONTENT_TYPE,
-			dprops.ETAG,
-			dprops.LAST_MODIFIED,
-			dprops.QUOTA_AVAIL_BYTES,
-			dprops.QUOTA_USED_BYTES,
-			dprops.RESOURCE_TYPE
-		)
+		pset = dprops.DEFAULT_PROPS
 	# TODO: handle add/remove from pset from hooks
 	ret = {
 		200 : {},
@@ -172,32 +188,39 @@ def get_node_props(ctx, pset=None):
 		del props
 	return ret
 
+def set_node_props(ctx, pdict):
+	pass
+
+def make_collection(req, parent, name, rtype, props):
+	sess = DBSession()
+	creator = getattr(parent, 'dav_create', None)
+	if (creator is None) or (not callable(creator)):
+		raise DAVNotImplementedError('Unable to create child node.')
+	obj = creator(req, name, rtype.types, props)
+	if len(props) == 0:
+		pset = set(dprops.DEFAULT_PROPS)
+		pset.update(props.keys())
+	else:
+		pset = set(props.keys())
+	sess.flush()
+	obj.__parent__ = parent
+	return (obj, get_node_props(obj, pset))
+
+def dav_children(parent):
+	if hasattr(parent, 'dav_children'):
+		for ch in parent.dav_children:
+			yield ch
+	else:
+		for chname in parent:
+			yield parent[chname]
+
 def get_path_props(ctx, pset, depth):
 	ret = {}
 	ret[ctx] = get_node_props(ctx, pset) # catch exceptions
 	if depth:
-		child_iter = None
-		if hasattr(ctx, 'dav_children'):
-			for ch in ctx.dav_children:
-				ret[ch] = get_node_props(ch, pset) # catch exceptions
-		else:
-			for chname in ctx:
-				ch = ctx[chname]
-				ret[ch] = get_node_props(ch, pset) # catch exceptions
+		for ch in dav_children(ctx):
+			ret[ch] = get_node_props(ch, pset) # catch exceptions
 	return ret
-
-class DAVError(RuntimeError):
-	def __init__(self, *args, status=500):
-		super(DAVError, self).__init__(*args)
-		self.status = status
-
-class DAVNotFoundError(DAVError):
-	def __init__(self, *args):
-		super(DAVNotFoundError, self).__init__(*args, status=404)
-
-class DAVNotAuthenticatedError(DAVError):
-	def __init__(self, *args):
-		super(DAVNotAuthenticatedError, self).__init__(*args, status=401)
 
 class DAVValue(object):
 	def render(self, parent):
@@ -221,10 +244,75 @@ class DAVResourceTypeValue(DAVValue):
 		for t in self.types:
 			etree.SubElement(parent, t)
 
+class DAVError(RuntimeError, DAVValue):
+	def __init__(self, *args, status=500):
+		super(DAVError, self).__init__(*args)
+		self.status = status
+
+	def render(self, parent):
+		pass
+
+	def response(self, resp):
+		pass
+
+class DAVBadRequestError(DAVError):
+	def __init__(self, *args):
+		super(DAVNotFoundError, self).__init__(*args, status=400)
+
+class DAVNotAuthenticatedError(DAVError):
+	def __init__(self, *args):
+		super(DAVNotAuthenticatedError, self).__init__(*args, status=401)
+
+class DAVForbiddenError(DAVError):
+	def __init__(self, *args):
+		super(DAVNotAuthenticatedError, self).__init__(*args, status=403)
+
+class DAVNotFoundError(DAVError):
+	def __init__(self, *args):
+		super(DAVNotFoundError, self).__init__(*args, status=404)
+
+class DAVInvalidResourceTypeError(DAVForbiddenError):
+	def render(self, parent):
+		etree.SubElement(parent, dprops.VALID_RESOURCETYPE)
+		super(DAVInvalidResourceTypeError, self).render(parent)
+
+class DAVReportNotSupportedError(DAVForbiddenError):
+	def render(self, parent):
+		etree.SubElement(parent, dprops.SUPPORTED_REPORT)
+		super(DAVReportNotSupportedError, self).render(parent)
+
+class DAVMethodNotAllowedError(DAVError):
+	def __init__(self, *args):
+		super(DAVMethodNotAllowedError, self).__init__(*args, status=405)
+
+class DAVConflictError(DAVError):
+	def __init__(self, *args):
+		super(DAVConflictError, self).__init__(*args, status=409)
+
+class DAVPreconditionError(DAVError):
+	def __init__(self, *args, header=None):
+		super(DAVConflictError, self).__init__(*args, status=412)
+		self.header = header
+
+class DAVUnsupportedMediaTypeError(DAVError):
+	def __init__(self, *args):
+		super(DAVUnsupportedMediaTypeError, self).__init__(*args, status=415)
+
+class DAVNotImplementedError(DAVError):
+	def __init__(self, *args):
+		super(DAVNotImplementedError, self).__init__(*args, status=501)
+
+	def response(self, resp):
+		resp.allow = self.args
+
 class DAVRequest(object):
 	def __init__(self, req):
 		self.req = req
 		self.ctx = req.context
+
+class DAVPropFindRequest(DAVRequest):
+	def __init__(self, req):
+		super(DAVPropFindRequest, self).__init__(req)
 		if req.body:
 			self.xml = etree.XML(req.body)
 			if self.xml.tag != dprops.PROPFIND:
@@ -232,9 +320,50 @@ class DAVRequest(object):
 		else:
 			self.xml = None
 
-class DAVPropFindRequest(DAVRequest):
 	def get_props(self):
 		return parse_propnames(self.xml)
+
+class DAVMkColRequest(DAVRequest):
+	def __init__(self, req):
+		super(DAVMkColRequest, self).__init__(req)
+		self.new_name = req.view_name
+		if len(req.subpath) > 0:
+			raise DAVConflictError('Parent node does not exist.')
+		# TODO: check if parent is a collection, if needed
+		if req.body:
+			if req.content_type not in {'application/xml', 'text/xml'}:
+				raise DAVUnsupportedMediaTypeError('MKCOL method must be supplied with an XML request body.')
+			self.xml = etree.XML(req.body)
+			if not self.xml or (self.xml.tag != dprops.MKCOL):
+				raise DAVUnsupportedMediaTypeError('MKCOL method body must contain mkcol root XML tag.')
+		else:
+			self.xml = None
+
+	def get_props(self):
+		if self.xml is None:
+			return {
+				dprops.RESOURCE_TYPE: DAVResourceTypeValue(dprops.COLLECTION)
+			}
+		ret = {}
+		for el in self.xml:
+			if el.tag != dprops.SET:
+				continue
+			ret.extend(parse_props(el))
+		return ret
+
+	def process(self):
+		props = self.get_props()
+		try:
+			rtype = props.pop(dprops.RESOURCE_TYPE)
+		except KeyError:
+			raise DAVBadRequestError('MKCOL method body must contain resource type property.')
+		ret = make_collection(self.req, self.ctx, self.new_name, rtype, props)
+		if ret is None:
+			return DAVCreateResponse()
+		resp = DAVMultiStatusResponse()
+		resp.add_element(DAVResponseElement(*ret))
+		resp.make_body()
+		return resp
 
 class DAVElement(object):
 	pass
@@ -290,6 +419,17 @@ class DAVResponseElement(DAVNodeElement):
 				status.text = get_http_status(st)
 		return el
 
+class DAVETagResponse(Response):
+	def __init__(self, *args, etag=None, **kwargs):
+		super(DAVETagResponse, self).__init__(*args, **kwargs)
+		self.etag = etag
+		self.status = 204
+
+class DAVCreateResponse(DAVETagResponse):
+	def __init__(self, *args, etag=None, **kwargs):
+		super(DAVCreateResponse, self).__init__(*args, etag=etag, **kwargs)
+		self.status = 201
+
 class DAVXMLResponse(Response):
 	def __init__(self, *args, nsmap=None, **kwargs):
 		super(DAVXMLResponse, self).__init__(*args, **kwargs)
@@ -313,7 +453,15 @@ class DAVErrorResponse(DAVXMLResponse):
 		else:
 			self.err = DAVError()
 		self.status = self.err.status
-		self.xml_root = etree.Element(dprops.ERROR, nsmap=dprops.NS_MAP)
+		ns_map = dprops.NS_MAP.copy()
+		if self.nsmap:
+			ns_map.update(self.nsmap)
+		self.xml_root = etree.Element(dprops.ERROR, nsmap=ns_map)
+		self.err.render(self.xml_root)
+
+	def make_body(self):
+		self.err.response(self)
+		super(DAVErrorResponse, self).make_body()
 
 class DAVMultiStatusResponse(DAVXMLResponse):
 	def __init__(self, *args, strip_notfound=False, **kwargs):
