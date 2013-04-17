@@ -14,7 +14,7 @@ from sqlalchemy.util import pickle
 class PHPPickler(object):
 
 	@classmethod
-	def dumps(cls, data):
+	def dumps(cls, data, proto, *, fix_imports=True):
 		return _phpsa.dumps(data)
 
 	@classmethod
@@ -23,8 +23,8 @@ class PHPPickler(object):
 
 class HybridPickler(PHPPickler):
 	@classmethod
-	def dumps(cls, data):
-		return pickle.dumps(data)
+	def dumps(cls, data, proto=2, *, fix_imports=True):
+		return pickle.dumps(data, proto, fix_imports=fix_imports)
 
 	@classmethod
 	def loads(cls, data):
