@@ -28,7 +28,7 @@ class Module(ModuleBase):
 		mmgr.cfg.add_route('core.home', '/')
 		mmgr.cfg.add_route('core.login', '/login')
 		mmgr.cfg.add_route('core.logout', '/logout')
-		mmgr.cfg.add_route('core.dav', '/dav/*traverse', factory='netprofile.dav.DAVRoot')
+		mmgr.cfg.add_route('core.dav', '/dav*traverse', factory='netprofile.dav.DAVRoot')
 		mmgr.cfg.scan()
 
 	def add_routes(self, config):

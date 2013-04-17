@@ -49,6 +49,8 @@ def get_user(request):
 	userid = unauthenticated_userid(request)
 
 	if userid is not None:
+		if userid[:2] == 'u:':
+			userid = userid[2:]
 		try:
 			return sess.query(User).filter(
 				User.state == UserState.active,
@@ -143,7 +145,12 @@ def find_princs_digest(param, request):
 	)
 	resp = hashlib.md5(('%s:%s' % (user.a1_hash, data)).encode()).hexdigest()
 	if resp == param['response']:
-		return []
+		groups = [ 'g:%s' % user.group.name ]
+		for sgr in user.secondary_groups:
+			if sgr == user.group:
+				continue
+			groups.append('g:%s' % sgr.name)
+		return groups
 	return None
 
 @subscriber(ContextFound)

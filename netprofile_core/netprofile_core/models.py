@@ -48,6 +48,7 @@ import re
 import hashlib
 import datetime as dt
 import urllib
+import itertools
 
 from sqlalchemy import (
 	Column,
@@ -2010,10 +2011,10 @@ class FileFolder(Base):
 		return self.name
 
 	def __iter__(self):
-		sess = DBSession()
-		q = [t[0] for t in sess.query(FileFolder.name).filter(FileFolder.parent == self)]
-		q.extend(t[0] for t in sess.query(File.filename).filter(File.folder == self))
-		return iter(q)
+		for t in self.subfolders:
+			yield t.name
+		for t in self.files:
+			yield t.filename
 
 	def __getitem__(self, name):
 		sess = DBSession()
@@ -2049,6 +2050,48 @@ class FileFolder(Base):
 		if dprops.LAST_MODIFIED in pset:
 			ret[dprops.LAST_MODIFIED] = self.modification_time
 		return ret
+
+	def dav_create(self, req, name, rtype=None, props=None, data=None):
+		# TODO: externalize type resolution
+		user = req.user
+		sess = DBSession()
+		if rtype and (dprops.COLLECTION in rtype):
+			obj = FileFolder(
+				user_id=user.id,
+				group_id=user.group_id,
+				name=name,
+				parent=self,
+				rights=F_DEFAULT_DIRS
+			)
+			sess.add(obj)
+		else:
+			obj = File(
+				user_id=user.id,
+				group_id=user.group_id,
+				filename=name,
+				name=name,
+				folder=self,
+				rights=F_DEFAULT_FILES
+			)
+			sess.add(obj)
+			if props and (dprops.CONTENT_TYPE in props):
+				obj.mime_type = props[dprops.CONTENT_TYPE]
+			if data is not None:
+				# TODO: detect type of data (fd / buffer)
+				obj.set_from_file(data, user, sess)
+		if props:
+			if dprops.CREATION_DATE in props:
+				obj.creation_time = props[dprops.CREATION_DATE]
+			if dprops.LAST_MODIFIED in props:
+				obj.modification_time = props[dprops.LAST_MODIFIED]
+		return obj
+
+	@property
+	def dav_children(self):
+		for t in itertools.chain(self.subfolders, self.files):
+			t.__req__ = getattr(self, '__req__', None)
+			t.__parent__ = self
+			yield t
 
 	def allow_read(self, req):
 		return self.can_read(req.user)
