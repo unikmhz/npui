@@ -3679,7 +3679,7 @@ class DynamicSetting(object):
 		if self.type == 'checkbox':
 			if isinstance(param, bool):
 				return param
-			if param.lower() in {'true', '1', 'on'}:
+			if param.lower() in {'true', '1', 'on', 'yes'}:
 				return True
 			return False
 		cast = self.get_constraint('cast')
@@ -3917,6 +3917,14 @@ class GlobalSetting(Base, DynamicSetting):
 			'header_string' : _('Description')
 		}
 	)
+
+	@hybrid_property
+	def python_value(self):
+		return self.parse_param(self.value)
+
+	@python_value.setter
+	def python_value_set(self, value):
+		self.value = self.param_to_db(value)
 
 	def __str__(self):
 		return '%s' % str(self.name)
