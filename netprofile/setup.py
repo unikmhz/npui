@@ -13,6 +13,7 @@ requires = [
 	'setuptools',
 	'python-dateutil',
 	'phpserialize',
+	'dogpile.cache >= 0.4.1',
 	'repoze.tm2',
 
 	'SQLAlchemy >= 0.8b1',
@@ -22,8 +23,8 @@ requires = [
 
 	'waitress >= 0.7',
 	'pyramid >= 1.4a1',
-	'pyramid_beaker >= 0.7',
 	'pyramid_debugtoolbar >= 1.0',
+	'pyramid_redis_sessions >= 0.9b5',
 
 	'lxml',
 	'cdecimal',

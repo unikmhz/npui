@@ -19,8 +19,10 @@ if sys.version < '3':
 sys.modules['decimal'] = cdecimal
 
 from pyramid.config import Configurator
+from pyramid.settings import asbool
 from sqlalchemy import engine_from_config
 
+from netprofile.common import cache
 from netprofile.common.modules import IModuleManager
 from netprofile.common.factory import RootFactory
 from netprofile.db.connection import DBSession
@@ -72,15 +74,10 @@ def main(global_config, **settings):
 	"""
 	Pyramid WSGI application for main NetProfile vhost.
 	"""
-	debug = settings.get('netprofile.debug', False)
-	if isinstance(debug, str):
-		if debug.lower() in {'true', 't', 'y', 'yes', 'on'}:
-			debug = True
-	if not isinstance(debug, bool):
-		debug = False
-	settings['netprofile.debug'] = debug
+	settings['netprofile.debug'] = asbool(settings.get('netprofile.debug'))
 	engine = engine_from_config(settings, 'sqlalchemy.')
 	DBSession.configure(bind=engine)
+	cache.cache = cache.configure_cache(settings)
 
 	config = Configurator(
 		settings=settings,
