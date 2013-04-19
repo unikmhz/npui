@@ -37,7 +37,9 @@ __all__ = [
 	'GlobalSetting',
 	'UserSettingType',
 	'UserSetting',
-	'DataCache'
+	'DataCache',
+
+	'global_setting'
 ]
 
 import io
@@ -61,6 +63,7 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
+	event,
 	func,
 	text
 )
@@ -88,6 +91,7 @@ from netprofile import PY3
 from netprofile.common import ipaddr
 from netprofile.common.phps import HybridPickler
 from netprofile.common.threadlocal import magic
+from netprofile.common.cache import cache
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -769,11 +773,45 @@ class User(Base):
 			return None
 		ff = self.group.effective_root_folder
 		if ff is None:
-			# FIXME: get root folder props from global config
-			return None
+			root_uid = global_setting('vfs_root_uid')
+			root_gid = global_setting('vfs_root_gid')
+			root_rights = global_setting('vfs_root_rights')
+			allow_read = False
+			allow_write = False
+			allow_traverse = False
+			if self.id == root_uid:
+				allow_read = bool(root_rights & F_OWNER_READ)
+				allow_write = bool(root_rights & F_OWNER_WRITE)
+				allow_traverse = bool(root_rights & F_OWNER_EXEC)
+			elif root_gid in self.group_vector():
+				allow_read = bool(root_rights & F_GROUP_READ)
+				allow_write = bool(root_rights & F_GROUP_WRITE)
+				allow_traverse = bool(root_rights & F_GROUP_EXEC)
+			else:
+				allow_read = bool(root_rights & F_OTHER_READ)
+				allow_write = bool(root_rights & F_OTHER_WRITE)
+				allow_traverse = bool(root_rights & F_OTHER_EXEC)
+			return {
+				'id'             : 'root',
+				'name'           : 'root',
+				'allow_read'     : allow_read,
+				'allow_write'    : allow_write,
+				'allow_traverse' : allow_traverse,
+				'parent_write'   : (allow_traverse and allow_write)
+			}
 		p_wr = False
 		if ff.parent:
 			p_wr = ff.parent.can_write(self)
+		else:
+			root_uid = global_setting('vfs_root_uid')
+			root_gid = global_setting('vfs_root_gid')
+			root_rights = global_setting('vfs_root_rights')
+			if self.id == root_uid:
+				p_wr = bool(root_rights & F_OWNER_WRITE)
+			elif root_gid in self.group_vector():
+				p_wr = bool(root_rights & F_GROUP_WRITE)
+			else:
+				p_wr = bool(root_rights & F_OTHER_WRITE)
 		return {
 			'id'             : ff.id,
 			'name'           : ff.name,
@@ -782,6 +820,34 @@ class User(Base):
 			'allow_traverse' : ff.can_traverse_path(self),
 			'parent_write'   : p_wr
 		}
+
+	@property
+	def root_readable(self):
+		ff = self.group.effective_root_folder
+		if ff is not None:
+			return ff.can_read(self)
+		root_uid = global_setting('vfs_root_uid')
+		root_gid = global_setting('vfs_root_gid')
+		root_rights = global_setting('vfs_root_rights')
+		if self.id == root_uid:
+			return bool(root_rights & F_OWNER_READ)
+		if root_gid in self.group_vector():
+			return bool(root_rights & F_GROUP_READ)
+		return bool(root_rights & F_OTHER_READ)
+
+	@property
+	def root_writable(self):
+		ff = self.group.effective_root_folder
+		if ff is not None:
+			return ff.can_write(self)
+		root_uid = global_setting('vfs_root_uid')
+		root_gid = global_setting('vfs_root_gid')
+		root_rights = global_setting('vfs_root_rights')
+		if self.id == root_uid:
+			return bool(root_rights & F_OWNER_WRITE)
+		if root_gid in self.group_vector():
+			return bool(root_rights & F_GROUP_WRITE)
+		return bool(root_rights & F_OTHER_WRITE)
 
 class Group(Base):
 	"""
@@ -1948,6 +2014,8 @@ class FileFolder(Base):
 	def __augment_create__(cls, sess, obj, values, req):
 		u = req.user
 		if 'parentid' in values:
+			if (values['parentid'] is None) and (not u.root_writable):
+				return False
 			try:
 				pid = int(values['parentid'])
 			except ValueError:
@@ -1960,7 +2028,6 @@ class FileFolder(Base):
 			root_ff = u.group.effective_root_folder
 			if root_ff and (not parent.is_inside(root_ff)):
 				return False
-		# FIXME: handle null parent
 		return True
 
 	@classmethod
@@ -1975,8 +2042,11 @@ class FileFolder(Base):
 		root_ff = u.group.effective_root_folder
 		if root_ff and (not obj.is_inside(root_ff)):
 			return False
-		# FIXME: handle null parent
+		if (not root_ff) and (not u.root_writable):
+			return False
 		if 'parentid' in values:
+			if (values['parentid'] is None) and (not u.root_writable):
+				return False
 			try:
 				pid = int(values['parentid'])
 			except ValueError:
@@ -1988,7 +2058,6 @@ class FileFolder(Base):
 				return False
 			if root_ff and (not new_parent.is_inside(root_ff)):
 				return False
-		# FIXME: handle null newparent
 		return True
 
 	@classmethod
@@ -2003,7 +2072,8 @@ class FileFolder(Base):
 		root_ff = u.group.effective_root_folder
 		if root_ff and (not obj.is_inside(root_ff)):
 			return False
-		# FIXME: handle null parent
+		if (not root_ff) and (not u.root_writeable):
+			return False
 		return True
 
 	@property
@@ -2452,6 +2522,72 @@ class File(Base):
 		passive_deletes=True
 	)
 
+	@classmethod
+	def __augment_create__(cls, sess, obj, values, req):
+		u = req.user
+		if 'ffid' in values:
+			if (values['ffid'] is None) and (not u.root_writable):
+				return False
+			try:
+				ffid = int(values['ffid'])
+			except ValueError:
+				return False
+			parent = sess.query(FileFolder).get(ffid)
+			if parent is None:
+				return False
+			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+				return False
+			root_ff = u.group.effective_root_folder
+			if root_ff and (not parent.is_inside(root_ff)):
+				return False
+		return True
+
+	@classmethod
+	def __augment_update__(cls, sess, obj, values, req):
+		u = req.user
+		if not obj.can_write(u):
+			return False
+		parent = obj.folder
+		if parent:
+			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+				return False
+		root_ff = u.group.effective_root_folder
+		if root_ff and (not obj.is_inside(root_ff)):
+			return False
+		if (not root_ff) and (not u.root_writable):
+			return False
+		if 'ffid' in values:
+			if (values['ffid'] is None) and (not u.root_writable):
+				return False
+			try:
+				ffid = int(values['ffid'])
+			except ValueError:
+				return False
+			new_parent = sess.query(FileFolder).get(ffid)
+			if new_parent is None:
+				return False
+			if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
+				return False
+			if root_ff and (not new_parent.is_inside(root_ff)):
+				return False
+		return True
+
+	@classmethod
+	def __augment_delete__(cls, sess, obj, values, req):
+		u = req.user
+		if not obj.can_write(u):
+			return False
+		parent = obj.folder
+		if parent:
+			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+				return False
+		root_ff = u.group.effective_root_folder
+		if root_ff and (not obj.is_inside(root_ff)):
+			return False
+		if (not root_ff) and (not u.root_writeable):
+			return False
+		return True
+
 	@property
 	def plain_mime_type(self):
 		return self.mime_type.split(';')[0]
@@ -2495,10 +2631,17 @@ class File(Base):
 			ret[dprops.DISPLAY_NAME] = self.filename
 		if dprops.ETAG in pset:
 			ret[dprops.ETAG] = self.etag
-#		if dprops.EXECUTABLE
+		if hasattr(self, '__req__'):
+			req = self.__req__
+			if dprops.EXECUTABLE in pset:
+				ret[dprops.EXECUTABLE] = 'T' if self.can_execute(req.user) else 'F'
 		if dprops.LAST_MODIFIED in pset:
 			ret[dprops.LAST_MODIFIED] = self.modification_time
 		return ret
+
+	def dav_put(self, req, data):
+		self.etag = None
+		self.set_from_file(data, req.user)
 
 	def allow_access(self, req):
 		return self.can_access(req.user)
@@ -2537,6 +2680,16 @@ class File(Base):
 		if self.group_id in user.group_vector():
 			return bool(self.rights & F_GROUP_EXEC)
 		return bool(self.rights & F_OTHER_EXEC)
+
+	def is_inside(self, cont):
+		if (self.folder_id is None) and (cont is None):
+			return True
+		par = self.folder
+		while par:
+			if par.id == cont.id:
+				return True
+			par = par.parent
+		return False
 
 	def get_response(self, req):
 		return FileResponse(self, req)
@@ -3928,6 +4081,29 @@ class GlobalSetting(Base, DynamicSetting):
 
 	def __str__(self):
 		return '%s' % str(self.name)
+
+@cache.cache_on_arguments()
+def global_setting(name):
+	sess = DBSession()
+	try:
+		gs = sess.query(GlobalSetting).filter(GlobalSetting.name == name).one()
+	except NoResultFound:
+		return None
+	if gs.value is None:
+		return None
+	return gs.python_value
+
+def _set_gs(mapper, conn, tgt):
+	if tgt.name:
+		global_setting.set(tgt.python_value, tgt.name)
+
+def _del_gs(mapper, conn, tgt):
+	if tgt.name:
+		global_setting.invalidate(tgt.name)
+
+event.listen(GlobalSetting, 'after_delete', _del_gs)
+event.listen(GlobalSetting, 'after_insert', _set_gs)
+event.listen(GlobalSetting, 'after_update', _set_gs)
 
 class UserSettingType(Base, DynamicSetting):
 	"""

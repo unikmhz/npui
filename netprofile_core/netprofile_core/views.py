@@ -276,32 +276,35 @@ def ff_tree(params, request):
 
 	# TODO: check chroot bounds
 	# TODO: check file permissions
+	u = request.user
 	q = sess.query(FileFolder)
 	if params['node'] == 'root':
-		folder = request.user.group.effective_root_folder
-		if folder and (not folder.can_read(request.user)):
+		folder = u.group.effective_root_folder
+		if folder and (not folder.can_read(u)):
 			raise ValueError('Folder access denied')
 		q = q.filter(FileFolder.parent == folder)
 	else:
 		folder = q.filter(FileFolder.id == int(params['node'])).one()
-		if folder and ((not folder.can_read(request.user)) or (not folder.can_traverse_path(request.user))):
+		if folder and ((not folder.can_read(u)) or (not folder.can_traverse_path(u))):
 			raise ValueError('Folder access denied')
-		root_ff = request.user.group.effective_root_folder
+		root_ff = u.group.effective_root_folder
 		if root_ff and (not folder.is_inside(root_ff)):
 			raise ValueError('Folder access denied')
 		q = q.filter(FileFolder.parent_id == int(params['node']))
 	for ff in q:
 		parent_wr = False
 		if ff.parent:
-			parent_wr = ff.parent.can_write(request.user)
+			parent_wr = ff.parent.can_write(u)
+		else:
+			parent_wr = u.root_writable
 		mi = {
 			'id'             : ff.id,
 			'text'           : ff.name,
 			'xhandler'       : 'NetProfile.controller.FileBrowser',
 			'expanded'       : False,
-			'allow_read'     : ff.can_read(request.user),
-			'allow_write'    : ff.can_write(request.user),
-			'allow_traverse' : ff.can_traverse(request.user),
+			'allow_read'     : ff.can_read(u),
+			'allow_write'    : ff.can_write(u),
+			'allow_traverse' : ff.can_traverse(u),
 			'parent_write'   : parent_wr
 		}
 		recs.append(mi)
@@ -317,7 +320,10 @@ def ff_tree_update(params, request):
 	sess = DBSession()
 	user = request.user
 	for rec in params.get('records', ()):
-		ff_id = int(rec.get('id'))
+		ff_id = rec.get('id')
+		if ff_id == 'root':
+			continue
+		ff_id = int(ff_id)
 		ff_name = rec.get('text')
 		ff_parent = rec.get('parentId')
 		# TODO: support changing uid/gid and rights, maybe?

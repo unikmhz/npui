@@ -189,7 +189,37 @@ def get_node_props(ctx, pset=None):
 	return ret
 
 def set_node_props(ctx, pdict):
-	pass
+	is_ok = True
+	ret = {
+		200 : {},
+		403 : {},
+		424 : {}
+	}
+	ro_props = dprops.RO_PROPS.intersect(pdict)
+	if len(ro_props) > 0:
+		is_ok = False
+		ret[403] = dict.fromkeys(ro_props, None)
+		for prop in ro_props:
+			del pdict[prop]
+	if is_ok and (len(pdict) > 0):
+		setter = getattr(ctx, 'dav_props_set', None)
+		if (not setter) or not callable(setter):
+			for prop in pdict:
+				ret[403][prop] = None
+		else:
+			result = setter(pdict)
+			# TODO: handle composite results
+			if result:
+				for prop in pdict:
+					ret[200][prop] = None
+			else:
+				for prop in pdict:
+					ret[403][prop] = None
+		pdict = {}
+	
+	for prop in pdict:
+		ret[424][prop] = None
+	return ret
 
 def make_collection(req, parent, name, rtype, props):
 	sess = DBSession()
@@ -211,8 +241,16 @@ def dav_children(parent):
 		for ch in parent.dav_children:
 			yield ch
 	else:
-		for chname in parent:
-			yield parent[chname]
+		try:
+			for chname in parent:
+				yield parent[chname]
+		except TypeError:
+			pass
+
+def dav_delete(ctx):
+	sess = DBSession()
+	sess.delete(ctx)
+	sess.flush()
 
 def get_path_props(ctx, pset, depth):
 	ret = {}
@@ -323,6 +361,26 @@ class DAVPropFindRequest(DAVRequest):
 	def get_props(self):
 		return parse_propnames(self.xml)
 
+class DAVPropPatchRequest(DAVRequest):
+	def __init__(self, req):
+		super(DAVPropFindRequest, self).__init__(req)
+		if not req.body:
+			raise DAVUnsupportedMediaTypeError('PROPPATCH method must be supplied with an XML request body.')
+		self.xml = etree.XML(req.body)
+		if not self.xml or (self.xml.tag != dprops.PROPERTY_UPDATE):
+			raise DAVUnsupportedMediaTypeError('PROPPATCH method must be supplied with an XML request body.')
+
+	def get_props(self):
+		ret = {}
+		for el in self.xml:
+			props = None
+			if el.tag == dprops.SET:
+				props = parse_props(el)
+			elif el.tag == dprops.REMOVE:
+				props = dict.fromkeys(parse_propnames(el), None)
+			ret.update(props)
+		return ret
+
 class DAVMkColRequest(DAVRequest):
 	def __init__(self, req):
 		super(DAVMkColRequest, self).__init__(req)
@@ -348,7 +406,7 @@ class DAVMkColRequest(DAVRequest):
 		for el in self.xml:
 			if el.tag != dprops.SET:
 				continue
-			ret.extend(parse_props(el))
+			ret.update(parse_props(el))
 		return ret
 
 	def process(self):
@@ -418,6 +476,11 @@ class DAVResponseElement(DAVNodeElement):
 				status = etree.SubElement(propstat, dprops.STATUS)
 				status.text = get_http_status(st)
 		return el
+
+class DAVDeleteResponse(Response):
+	def __init__(self, *args, **kwargs):
+		super(DAVDeleteResponse, self).__init__(*args, **kwargs)
+		self.status = 204
 
 class DAVETagResponse(Response):
 	def __init__(self, *args, etag=None, **kwargs):

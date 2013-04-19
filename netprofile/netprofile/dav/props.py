@@ -39,6 +39,7 @@ LOCK_DISCOVERY          = CN_DAV + 'lockdiscovery'
 QUOTA_AVAIL_BYTES       = CN_DAV + 'quota-available-bytes'
 QUOTA_USED_BYTES        = CN_DAV + 'quota-used-bytes'
 RESOURCE_TYPE           = CN_DAV + 'resourcetype'
+SUPPORTED_LIVE_PROP_SET = CN_DAV + 'supported-live-property-set'
 SUPPORTED_LOCK          = CN_DAV + 'supportedlock'
 SUPPORTED_PRIVILEGE_SET = CN_DAV + 'supported-privilege-set'
 SUPPORTED_REPORT_SET    = CN_DAV + 'supported-report-set'
@@ -46,14 +47,20 @@ SUPPORTED_REPORT_SET    = CN_DAV + 'supported-report-set'
 COLLECTION              = CN_DAV + 'collection'
 PRINCIPAL               = CN_DAV + 'principal'
 
+ALL_PROPS               = CN_DAV + 'allprop'
 ERROR                   = CN_DAV + 'error'
 HREF                    = CN_DAV + 'href'
+INCLUDE                 = CN_DAV + 'include'
 MKCOL                   = CN_DAV + 'mkcol'
 MULTISTATUS             = CN_DAV + 'multistatus'
 PROP                    = CN_DAV + 'prop'
+PROPERTY_UPDATE         = CN_DAV + 'propertyupdate'
 PROPFIND                = CN_DAV + 'propfind'
+PROPNAME                = CN_DAV + 'propname'
 PROPSTAT                = CN_DAV + 'propstat'
+REMOVE                  = CN_DAV + 'remove'
 RESPONSE                = CN_DAV + 'response'
+RESPONSE_DESCRIPTION    = CN_DAV + 'responsedescription'
 SET                     = CN_DAV + 'set'
 STATUS                  = CN_DAV + 'status'
 
@@ -68,5 +75,21 @@ DEFAULT_PROPS = frozenset((
 	QUOTA_AVAIL_BYTES,
 	QUOTA_USED_BYTES,
 	RESOURCE_TYPE
+))
+
+RO_PROPS = frozenset((
+	ACL,
+	ACL_RESTRICTIONS,
+	CONTENT_LENGTH,
+	CUR_USER_PRIVILEGE_SET,
+	ETAG,
+	EXECUTABLE,
+	INHERITED_ACL_SET,
+	LAST_MODIFIED,
+	LOCK_DISCOVERY,
+	QUOTA_AVAIL_BYTES,
+	QUOTA_USED_BYTES,
+	SUPPORTED_LOCK,
+	SUPPORTED_PRIVILEGE_SET
 ))
 

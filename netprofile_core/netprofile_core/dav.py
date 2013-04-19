@@ -60,10 +60,8 @@ class DAVPluginVFS(dav.DAVPlugin):
 		root = None
 		if user:
 			root = user.group.effective_root_folder
-#		else:
-#			return iter(())
 		sess = DBSession()
-		# XXX: maybe add read access to root?
+		# TODO: add access controls
 		for t in sess.query(FileFolder.name).filter(FileFolder.parent == root):
 			yield t[0]
 		for t in sess.query(File.filename).filter(File.folder == root):
@@ -74,10 +72,8 @@ class DAVPluginVFS(dav.DAVPlugin):
 		root = None
 		if user:
 			root = user.group.effective_root_folder
-#		else:
-#			raise KeyError('No logged-in user')
 		sess = DBSession()
-		# XXX: maybe add read access to root?
+		# TODO: add access controls
 		try:
 			f = sess.query(FileFolder).filter(FileFolder.parent == root, FileFolder.name == name).one()
 		except NoResultFound:
@@ -143,8 +139,6 @@ class DAVPluginVFS(dav.DAVPlugin):
 		root = None
 		if user:
 			root = user.group.effective_root_folder
-#		else:
-#			return iter(())
 		sess = DBSession()
 		for t in itertools.chain(
 			sess.query(FileFolder).filter(FileFolder.parent == root),
@@ -180,6 +174,10 @@ class DAVHandler(object):
 
 @view_defaults(route_name='core.dav', context=dav.IDAVCollection, decorator=dav_decorator)
 class DAVCollectionHandler(DAVHandler):
+	@notfound_view_config(containment=dav.IDAVCollection, decorator=dav_decorator)
+	def notfound_generic(self):
+		raise dav.DAVNotFoundError('Node not found.')
+
 	@view_config(request_method='OPTIONS')
 	def options(self):
 		resp = Response()
@@ -228,9 +226,32 @@ class DAVCollectionHandler(DAVHandler):
 		resp.vary = ('Brief', 'Prefer')
 		return resp
 
-	@notfound_view_config(request_method='PROPFIND', containment=dav.IDAVCollection, decorator=dav_decorator)
-	def notfound_propfind(self):
-		raise dav.DAVNotFoundError('Node not found.')
+#	@notfound_view_config(request_method='PROPFIND', containment=dav.IDAVCollection, decorator=dav_decorator)
+#	def notfound_propfind(self):
+#		raise dav.DAVNotFoundError('Node not found.')
+
+	@view_config(request_method='PROPPATCH')
+	def proppatch(self):
+		req = self.req
+		self.conditional_request(req.context)
+		ppreq = dav.DAVPropPatchRequest(req)
+		pdict = ppreq.get_props()
+		props = dav.set_node_props(req.context, pdict)
+		# TODO: handle 'minimal' flags
+		resp = dav.DAVMultiStatusResponse()
+		el = dav.DAVResponseElement(req.context, props)
+		resp.add_element(el)
+		resp.make_body()
+		resp.vary = ('Brief', 'Prefer')
+		return resp
+
+	@view_config(request_method='DELETE')
+	def delete(self):
+		req = self.req
+		self.conditional_request(req.context)
+		dav.dav_delete(req.context)
+		resp = dav.DAVDeleteResponse()
+		return resp
 
 	@view_config(request_method='PUT')
 	def put(self):
@@ -284,8 +305,31 @@ class DAVFileHandler(DAVHandler):
 			el = dav.DAVResponseElement(ctx, node_props)
 			resp.add_element(el)
 		resp.make_body()
-		resp.headers.add('DAV', '1')
+		resp.headers.add('DAV', '1, extended-mkcol')
 		resp.vary = ('Brief', 'Prefer')
+		return resp
+
+	@view_config(request_method='PROPPATCH')
+	def proppatch(self):
+		req = self.req
+		self.conditional_request(req.context)
+		ppreq = dav.DAVPropPatchRequest(req)
+		pdict = ppreq.get_props()
+		props = dav.set_node_props(req.context, pdict)
+		# TODO: handle 'minimal' flags
+		resp = dav.DAVMultiStatusResponse()
+		el = dav.DAVResponseElement(req.context, props)
+		resp.add_element(el)
+		resp.make_body()
+		resp.vary = ('Brief', 'Prefer')
+		return resp
+
+	@view_config(request_method='DELETE')
+	def delete(self):
+		req = self.req
+		self.conditional_request(req.context)
+		dav.dav_delete(req.context)
+		resp = dav.DAVDeleteResponse()
 		return resp
 
 	@view_config(request_method='PUT')
@@ -296,8 +340,10 @@ class DAVFileHandler(DAVHandler):
 			raise dav.DAVNotImplementedError('Can\'t PUT partial content.')
 		obj = req.context
 		self.conditional_request(obj)
-		obj.etag = None
-		obj.set_from_file(req.body_file_seekable, req.user) # TODO: handle IOErrors, handle non-seekable request body
+		putter = getattr(obj, 'dav_put', None)
+		if putter is None:
+			raise dav.DAVNotImplementedError('Unable to overwrite node.')
+		putter(req, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
 		etag = getattr(obj, 'etag', None)
 		resp = dav.DAVCreateResponse(etag=etag)
 		return resp

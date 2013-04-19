@@ -6,6 +6,7 @@ Ext.define('NetProfile.controller.FileFolders', {
 	extend: 'Ext.app.Controller',
 	requires: [
 		'NetProfile.model.core.File',
+		'NetProfile.model.core.FileFolder',
 		'NetProfile.view.FileFolderContextMenu'
 	],
 
@@ -33,7 +34,17 @@ Ext.define('NetProfile.controller.FileFolders', {
 	},
 	onAfterRender: function(tp)
 	{
-		var view = tp.getView();
+		var view = tp.getView(),
+			root;
+
+		root = tp.getStore().getById('root');
+		if(root && NetProfile.rootFolder)
+		{
+			root.set('allow_read', NetProfile.rootFolder.allow_read);
+			root.set('allow_write', NetProfile.rootFolder.allow_write);
+			root.set('allow_traverse', NetProfile.rootFolder.allow_traverse);
+			root.set('parent_write', NetProfile.rootFolder.parent_write);
+		}
 
 		if(!view)
 			return;
@@ -119,12 +130,13 @@ Ext.define('NetProfile.controller.FileFolders', {
 	},
 	onFolderCtxMenu: function(el, rec, item, idx, ev)
 	{
-		var menu;
+		var is_root = (rec.getId() === 'root'),
+			menu;
 
 		ev.stopEvent();
 		menu = Ext.create('NetProfile.view.FileFolderContextMenu', {
-			allowRename: rec.get('parent_write'),
-			allowDelete: rec.get('parent_write')
+			allowRename: rec.get('parent_write') && !is_root,
+			allowDelete: rec.get('parent_write') && !is_root
 		});
 		menu.on({
 			create: function(ev)
