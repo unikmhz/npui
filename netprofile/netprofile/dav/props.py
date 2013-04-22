@@ -10,13 +10,11 @@ from __future__ import (
 
 from lxml import etree
 
+STANDARD_PROPS = set()
+
 NS_DAV = 'DAV:'
 NS_NETPROFILE = 'http://netprofile.ru/ns/dav/'
 NS_APACHE = 'http://apache.org/dav/props/'
-
-CN_DAV = '{DAV:}'
-CN_NETPROFILE = '{http://netprofile.ru/ns/dav/}'
-CN_APACHE = '{http://apache.org/dav/props/}'
 
 NS_MAP = {
 	'd'  : NS_DAV,
@@ -24,48 +22,70 @@ NS_MAP = {
 	'np' : NS_NETPROFILE
 }
 
-ACL                     = CN_DAV + 'acl'
-ACL_RESTRICTIONS        = CN_DAV + 'acl-restrictions'
-CONTENT_LENGTH          = CN_DAV + 'getcontentlength'
-CONTENT_TYPE            = CN_DAV + 'getcontenttype'
-CREATION_DATE           = CN_DAV + 'creationdate'
-CUR_USER_PRIVILEGE_SET  = CN_DAV + 'current-user-privilege-set'
-DISPLAY_NAME            = CN_DAV + 'displayname'
-ETAG                    = CN_DAV + 'getetag'
-EXECUTABLE              = CN_APACHE + 'executable'
-INHERITED_ACL_SET       = CN_DAV + 'inherited-acl-set'
-LAST_MODIFIED           = CN_DAV + 'getlastmodified'
-LOCK_DISCOVERY          = CN_DAV + 'lockdiscovery'
-QUOTA_AVAIL_BYTES       = CN_DAV + 'quota-available-bytes'
-QUOTA_USED_BYTES        = CN_DAV + 'quota-used-bytes'
-RESOURCE_TYPE           = CN_DAV + 'resourcetype'
-SUPPORTED_LIVE_PROP_SET = CN_DAV + 'supported-live-property-set'
-SUPPORTED_LOCK          = CN_DAV + 'supportedlock'
-SUPPORTED_PRIVILEGE_SET = CN_DAV + 'supported-privilege-set'
-SUPPORTED_REPORT_SET    = CN_DAV + 'supported-report-set'
+def TAG(ns, name):
+	return '{%s}%s' % (ns, name)
 
-COLLECTION              = CN_DAV + 'collection'
-PRINCIPAL               = CN_DAV + 'principal'
+def PROP(ns, name):
+	pn = '{%s}%s' % (ns, name)
+	STANDARD_PROPS.add(pn)
+	return pn
 
-ALL_PROPS               = CN_DAV + 'allprop'
-ERROR                   = CN_DAV + 'error'
-HREF                    = CN_DAV + 'href'
-INCLUDE                 = CN_DAV + 'include'
-MKCOL                   = CN_DAV + 'mkcol'
-MULTISTATUS             = CN_DAV + 'multistatus'
-PROP                    = CN_DAV + 'prop'
-PROPERTY_UPDATE         = CN_DAV + 'propertyupdate'
-PROPFIND                = CN_DAV + 'propfind'
-PROPNAME                = CN_DAV + 'propname'
-PROPSTAT                = CN_DAV + 'propstat'
-REMOVE                  = CN_DAV + 'remove'
-RESPONSE                = CN_DAV + 'response'
-RESPONSE_DESCRIPTION    = CN_DAV + 'responsedescription'
-SET                     = CN_DAV + 'set'
-STATUS                  = CN_DAV + 'status'
+ACL                     = PROP(NS_DAV, 'acl')
+ACL_RESTRICTIONS        = PROP(NS_DAV, 'acl-restrictions')
+CONTENT_LENGTH          = PROP(NS_DAV, 'getcontentlength')
+CONTENT_TYPE            = PROP(NS_DAV, 'getcontenttype')
+CREATION_DATE           = PROP(NS_DAV, 'creationdate')
+CUR_USER_PRIVILEGE_SET  = PROP(NS_DAV, 'current-user-privilege-set')
+DISPLAY_NAME            = PROP(NS_DAV, 'displayname')
+ETAG                    = PROP(NS_DAV, 'getetag')
+EXECUTABLE              = PROP(NS_APACHE, 'executable')
+INHERITED_ACL_SET       = PROP(NS_DAV, 'inherited-acl-set')
+LAST_MODIFIED           = PROP(NS_DAV, 'getlastmodified')
+LOCK_DISCOVERY          = PROP(NS_DAV, 'lockdiscovery')
+QUOTA_AVAIL_BYTES       = PROP(NS_DAV, 'quota-available-bytes')
+QUOTA_USED_BYTES        = PROP(NS_DAV, 'quota-used-bytes')
+RESOURCE_TYPE           = PROP(NS_DAV, 'resourcetype')
+SUPPORTED_LIVE_PROP_SET = PROP(NS_DAV, 'supported-live-property-set')
+SUPPORTED_LOCK          = PROP(NS_DAV, 'supportedlock')
+SUPPORTED_PRIVILEGE_SET = PROP(NS_DAV, 'supported-privilege-set')
+SUPPORTED_REPORT_SET    = PROP(NS_DAV, 'supported-report-set')
 
-SUPPORTED_REPORT        = CN_DAV + 'supported-report'
-VALID_RESOURCETYPE      = CN_DAV + 'valid-resourcetype'
+COLLECTION              = TAG(NS_DAV, 'collection')
+PRINCIPAL               = TAG(NS_DAV, 'principal')
+
+ACTIVE_LOCK             = TAG(NS_DAV, 'activelock')
+ALL_PROPS               = TAG(NS_DAV, 'allprop')
+DEPTH                   = TAG(NS_DAV, 'depth')
+ERROR                   = TAG(NS_DAV, 'error')
+EXCLUSIVE               = TAG(NS_DAV, 'exclusive')
+HREF                    = TAG(NS_DAV, 'href')
+INCLUDE                 = TAG(NS_DAV, 'include')
+LOCK_ROOT               = TAG(NS_DAV, 'lockroot')
+LOCK_SCOPE              = TAG(NS_DAV, 'lockscope')
+LOCK_TOKEN              = TAG(NS_DAV, 'locktoken')
+LOCK_TYPE               = TAG(NS_DAV, 'locktype')
+MKCOL                   = TAG(NS_DAV, 'mkcol')
+MULTI_STATUS            = TAG(NS_DAV, 'multistatus')
+OWNER                   = TAG(NS_DAV, 'owner')
+PROP                    = TAG(NS_DAV, 'prop')
+PROPERTY_UPDATE         = TAG(NS_DAV, 'propertyupdate')
+PROPFIND                = TAG(NS_DAV, 'propfind')
+PROPNAME                = TAG(NS_DAV, 'propname')
+PROPSTAT                = TAG(NS_DAV, 'propstat')
+REMOVE                  = TAG(NS_DAV, 'remove')
+RESPONSE                = TAG(NS_DAV, 'response')
+RESPONSE_DESCRIPTION    = TAG(NS_DAV, 'responsedescription')
+SET                     = TAG(NS_DAV, 'set')
+SHARED                  = TAG(NS_DAV, 'shared')
+STATUS                  = TAG(NS_DAV, 'status')
+TIMEOUT                 = TAG(NS_DAV, 'limeout')
+WRITE                   = TAG(NS_DAV, 'write')
+
+LOCK_TOKEN_REQUEST_URI  = TAG(NS_DAV, 'lock-token-matches-request-uri')
+LOCK_TOKEN_SUBMITTED    = TAG(NS_DAV, 'lock-token-submitted')
+NO_CONFLICTING_LOCK     = TAG(NS_DAV, 'no-conflicting-lock')
+SUPPORTED_REPORT        = TAG(NS_DAV, 'supported-report')
+VALID_RESOURCETYPE      = TAG(NS_DAV, 'valid-resourcetype')
 
 DEFAULT_PROPS = frozenset((
 	CONTENT_LENGTH,
@@ -77,19 +97,5 @@ DEFAULT_PROPS = frozenset((
 	RESOURCE_TYPE
 ))
 
-RO_PROPS = frozenset((
-	ACL,
-	ACL_RESTRICTIONS,
-	CONTENT_LENGTH,
-	CUR_USER_PRIVILEGE_SET,
-	ETAG,
-	EXECUTABLE,
-	INHERITED_ACL_SET,
-	LAST_MODIFIED,
-	LOCK_DISCOVERY,
-	QUOTA_AVAIL_BYTES,
-	QUOTA_USED_BYTES,
-	SUPPORTED_LOCK,
-	SUPPORTED_PRIVILEGE_SET
-))
+RO_PROPS = frozenset(STANDARD_PROPS)
 

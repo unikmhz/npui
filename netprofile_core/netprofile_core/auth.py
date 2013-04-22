@@ -138,7 +138,9 @@ def find_princs_digest(param, request):
 		return None
 	if not user.a1_hash:
 		return None
-	ha2 = hashlib.md5(('%s:%s' % (request.method, request.path)).encode()).hexdigest()
+	if request.path.lower() != param['uri'].lower():
+		return None
+	ha2 = hashlib.md5(('%s:%s' % (request.method, param['uri'])).encode()).hexdigest()
 	data = '%s:%s:%s:%s:%s' % (
 		param['nonce'], param['nc'],
 		param['cnonce'], 'auth', ha2

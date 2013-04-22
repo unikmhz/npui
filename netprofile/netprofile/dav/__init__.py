@@ -8,7 +8,17 @@ from __future__ import (
 	division
 )
 
-import urllib
+from netprofile import PY3
+if PY3:
+	from urllib.parse import (
+		urlparse,
+		quote
+	)
+else:
+	from urllib import quote
+	from urlparse import urlparse
+
+import uuid
 import itertools
 import datetime as dt
 from dateutil.parser import parse as dparse
@@ -22,7 +32,9 @@ from zope.interface.verify import verifyObject
 from zope.interface.exceptions import DoesNotImplement
 from webob.util import status_reasons
 
+from sqlalchemy.exc import IntegrityError
 from pyramid.response import Response
+from pyramid.traversal import traverse
 from netprofile.db.connection import DBSession
 from netprofile.common.modules import IModuleManager
 from netprofile.dav import props as dprops
@@ -95,6 +107,15 @@ class DAVRoot(object):
 	def dav_create(self, req, name, rtype=None, props=None, data=None):
 		raise DAVForbiddenError('Unable to create child node.')
 
+	def resolve_uri(self, uri, exact=False):
+		url = urlparse(uri)
+		if url.netloc != self.req.host:
+			raise ValueError('Alien URL supplied.')
+		tr = traverse(self, url.path.strip('/').split('/')[1:])
+		if exact and (tr.view_name or (len(tr.subpath) > 0)):
+			raise ValueError('Object not found.')
+		return tr
+
 	@property
 	def dav_children(self):
 		for plug in self.plugs.values():
@@ -105,6 +126,25 @@ class DAVPlugin(object):
 		self.req = req
 
 DEPTH_INFINITY = -1
+
+def get_path(uri):
+	if not uri:
+		return None
+	uri = urlparse(uri)
+	if not uri.path:
+		return None
+	path = uri.path
+	if path[0] != '/':
+		return None
+	path = path.strip('/').split('/')
+	if len(path) == 0:
+		return None
+	if uri.scheme or uri.hostname:
+		path.pop(0)
+	return path
+
+def get_ctx_path(ctx):
+	return [quote(el) for el in ctx.get_uri()[2:]]
 
 def get_http_depth(req, dd=DEPTH_INFINITY):
 	d = req.headers.get('Depth')
@@ -117,6 +157,21 @@ def get_http_depth(req, dd=DEPTH_INFINITY):
 	except ValueError:
 		pass
 	return dd
+
+def get_http_timeout(req):
+	t = req.headers.get('Timeout')
+	if not t:
+		return 0
+	ret = None
+	t = t.lower().split(' ')
+	for el in t:
+		if el[:7] == 'second-':
+			ret = int(el[7:])
+		elif el == 'infinite':
+			ret = None
+		else:
+			raise DAVBadRequestError('Invalid HTTP Timeout: header.')
+	return ret
 
 def get_http_status(code, http_ver='1.1'):
 	return 'HTTP/%s %d %s' % (
@@ -195,7 +250,7 @@ def set_node_props(ctx, pdict):
 		403 : {},
 		424 : {}
 	}
-	ro_props = dprops.RO_PROPS.intersect(pdict)
+	ro_props = dprops.RO_PROPS.intersection(pdict)
 	if len(ro_props) > 0:
 		is_ok = False
 		ret[403] = dict.fromkeys(ro_props, None)
@@ -211,7 +266,8 @@ def set_node_props(ctx, pdict):
 			# TODO: handle composite results
 			if result:
 				for prop in pdict:
-					ret[200][prop] = None
+					if pdict[prop] is not None:
+						ret[200][prop] = None
 			else:
 				for prop in pdict:
 					ret[403][prop] = None
@@ -247,10 +303,24 @@ def dav_children(parent):
 		except TypeError:
 			pass
 
-def dav_delete(ctx):
+def dav_delete(ctx, recurse=True, _flush=True):
 	sess = DBSession()
+	if recurse:
+		for ch in dav_children(ctx):
+			dav_delete(ch, recurse, False)
 	sess.delete(ctx)
-	sess.flush()
+	if _flush:
+		sess.flush()
+
+def dav_clone(req, ctx, recurse=True, _flush=True):
+	sess = DBSession()
+	obj = ctx.dav_clone(req)
+	sess.add(obj)
+	if recurse:
+		for ch in dav_children(ctx):
+			newch = dav_clone(req, ch, recurse, False)
+			obj.dav_append(req, newch, ch.__name__)
+	return obj
 
 def get_path_props(ctx, pset, depth):
 	ret = {}
@@ -282,6 +352,40 @@ class DAVResourceTypeValue(DAVValue):
 		for t in self.types:
 			etree.SubElement(parent, t)
 
+class DAVLockDiscoveryValue(DAVValue):
+	def __init__(self, baseuri, locks, show_token=False):
+		self.base_uri = baseuri
+		self.locks = locks
+		self.show_token = show_token
+
+	def render(self, parent):
+		for lock in self.locks:
+			active = etree.SubElement(parent, props.ACTIVE_LOCK)
+			el = etree.SubElement(active, props.LOCK_SCOPE)
+			etree.SubElement(el, lock.get_dav_scope())
+			el = etree.SubElement(active, dprops.LOCK_TYPE)
+			etree.SubElement(el, dprops.WRITE)
+
+			lockroot = etree.SubElement(active, dprops.LOCK_ROOT)
+			el = etree.SubElement(lockroot, dprops.HREF)
+			el.text = '/'.join((self.base_uri, lock.uri))
+
+			el = etree.SubElement(active, dprops.DEPTH)
+			if lock.depth == DEPTH_INFINITY:
+				el.text = 'infinity'
+			else:
+				el.text = str(lock.depth)
+
+			if lock.creation_time and lock.timeout:
+				delta = lock.timeout - lock.creation_time
+				el = etree.SubElement(active, dprops.TIMEOUT)
+				el.text = 'Second-%d' % delta.seconds
+
+			if self.show_token:
+				tok = etree.SubElement(active, dprops.LOCK_TOKEN)
+				el = etree.SubElement(tok, dprops.HREF)
+				el.text = 'opaquelocktoken:%s' % lock.token
+
 class DAVError(RuntimeError, DAVValue):
 	def __init__(self, *args, status=500):
 		super(DAVError, self).__init__(*args)
@@ -295,7 +399,7 @@ class DAVError(RuntimeError, DAVValue):
 
 class DAVBadRequestError(DAVError):
 	def __init__(self, *args):
-		super(DAVNotFoundError, self).__init__(*args, status=400)
+		super(DAVBadRequestError, self).__init__(*args, status=400)
 
 class DAVNotAuthenticatedError(DAVError):
 	def __init__(self, *args):
@@ -303,7 +407,7 @@ class DAVNotAuthenticatedError(DAVError):
 
 class DAVForbiddenError(DAVError):
 	def __init__(self, *args):
-		super(DAVNotAuthenticatedError, self).__init__(*args, status=403)
+		super(DAVForbiddenError, self).__init__(*args, status=403)
 
 class DAVNotFoundError(DAVError):
 	def __init__(self, *args):
@@ -327,14 +431,37 @@ class DAVConflictError(DAVError):
 	def __init__(self, *args):
 		super(DAVConflictError, self).__init__(*args, status=409)
 
+class DAVLockTokenMatchError(DAVConflictError):
+	def render(self, parent):
+		etree.SubElement(parent, dprops.LOCK_TOKEN_REQUEST_URI)
+		super(DAVLockTokenMatchError, self).render(parent)
+
 class DAVPreconditionError(DAVError):
 	def __init__(self, *args, header=None):
-		super(DAVConflictError, self).__init__(*args, status=412)
+		super(DAVPreconditionError, self).__init__(*args, status=412)
 		self.header = header
 
 class DAVUnsupportedMediaTypeError(DAVError):
 	def __init__(self, *args):
 		super(DAVUnsupportedMediaTypeError, self).__init__(*args, status=415)
+
+class DAVLockedError(DAVError):
+	def __init__(self, *args, lock=None):
+		super(DAVLockedError, self).__init__(*args, status=423)
+		self.lock = lock
+
+	def render(self, parent):
+		err = etree.SubElement(parent, dprops.LOCK_TOKEN_SUBMITTED)
+		if self.lock:
+			href = etree.SubElement(err, dprops.HREF)
+			href.text = self.lock.uri
+
+class DAVConflictingLockError(DAVLockedError):
+	def render(self, parent):
+		err = etree.SubElement(parent, dprops.NO_CONFLICTING_LOCK)
+		if self.lock:
+			href = etree.SubElement(err, dprops.HREF)
+			href.text = self.lock.uri
 
 class DAVNotImplementedError(DAVError):
 	def __init__(self, *args):
@@ -352,7 +479,10 @@ class DAVPropFindRequest(DAVRequest):
 	def __init__(self, req):
 		super(DAVPropFindRequest, self).__init__(req)
 		if req.body:
-			self.xml = etree.XML(req.body)
+			try:
+				self.xml = etree.XML(req.body)
+			except etree.XMLSyntaxError:
+				raise DAVBadRequestError('Invalid or not well-formed XML supplied in a request.')
 			if self.xml.tag != dprops.PROPFIND:
 				self.xml = self.xml.find('.//%s' % dprops.PROPFIND)
 		else:
@@ -363,10 +493,13 @@ class DAVPropFindRequest(DAVRequest):
 
 class DAVPropPatchRequest(DAVRequest):
 	def __init__(self, req):
-		super(DAVPropFindRequest, self).__init__(req)
+		super(DAVPropPatchRequest, self).__init__(req)
 		if not req.body:
 			raise DAVUnsupportedMediaTypeError('PROPPATCH method must be supplied with an XML request body.')
-		self.xml = etree.XML(req.body)
+		try:
+			self.xml = etree.XML(req.body)
+		except etree.XMLSyntaxError:
+			raise DAVBadRequestError('Invalid or not well-formed XML supplied in a request.')
 		if not self.xml or (self.xml.tag != dprops.PROPERTY_UPDATE):
 			raise DAVUnsupportedMediaTypeError('PROPPATCH method must be supplied with an XML request body.')
 
@@ -378,7 +511,8 @@ class DAVPropPatchRequest(DAVRequest):
 				props = parse_props(el)
 			elif el.tag == dprops.REMOVE:
 				props = dict.fromkeys(parse_propnames(el), None)
-			ret.update(props)
+			if props:
+				ret.update(props)
 		return ret
 
 class DAVMkColRequest(DAVRequest):
@@ -391,7 +525,10 @@ class DAVMkColRequest(DAVRequest):
 		if req.body:
 			if req.content_type not in {'application/xml', 'text/xml'}:
 				raise DAVUnsupportedMediaTypeError('MKCOL method must be supplied with an XML request body.')
-			self.xml = etree.XML(req.body)
+			try:
+				self.xml = etree.XML(req.body)
+			except etree.XMLSyntaxError:
+				raise DAVBadRequestError('Invalid or not well-formed XML supplied in a request.')
 			if not self.xml or (self.xml.tag != dprops.MKCOL):
 				raise DAVUnsupportedMediaTypeError('MKCOL method body must contain mkcol root XML tag.')
 		else:
@@ -419,9 +556,33 @@ class DAVMkColRequest(DAVRequest):
 		if ret is None:
 			return DAVCreateResponse()
 		resp = DAVMultiStatusResponse()
-		resp.add_element(DAVResponseElement(*ret))
+#		resp.add_element(DAVResponseElement(*ret))
 		resp.make_body()
 		return resp
+
+class DAVLockRequest(DAVRequest):
+	def __init__(self, req):
+		super(DAVLockRequest, self).__init__(req)
+		try:
+			self.xml = etree.XML(req.body)
+		except etree.XMLSyntaxError:
+			raise DAVBadRequestError('Invalid or not well-formed XML supplied in a request.')
+
+	def _content(self, node):
+		return (node.text or '') + ''.join(etree.tostring(el, encoding='unicode') for el in node)
+
+	def get_lock(self, cls):
+		lock = cls(user_id = self.req.user.id)
+		el = self.xml.find(dprops.OWNER)
+		if el:
+			lock.owner = self._content(el)
+		lock.token = str(uuid.uuid4())
+		if len(self.xml.xpath('d:lockscope/d:exclusive', namespaces=dprops.NS_MAP)) > 0:
+			lock.scope = cls.SCOPE_EXCLUSIVE
+		else:
+			lock.scope = cls.SCOPE_SHARED
+		lock.creation_time = dt.datetime.now()
+		return lock
 
 class DAVElement(object):
 	pass
@@ -431,6 +592,7 @@ class DAVNodeElement(DAVElement):
 		self.ctx = ctx
 
 	def get_uri(self):
+		# FIXME: get scheme from config
 		uri = ['http:/']
 		uri.extend(self.ctx.get_uri())
 		try:
@@ -440,7 +602,7 @@ class DAVNodeElement(DAVElement):
 				uri.append('')
 		except DoesNotImplement:
 			pass
-		uri[2:] = [urllib.parse.quote(el) for el in uri[2:]]
+		uri[2:] = [quote(el) for el in uri[2:]]
 		return '/'.join(uri)
 
 class DAVResponseElement(DAVNodeElement):
@@ -477,6 +639,16 @@ class DAVResponseElement(DAVNodeElement):
 				status.text = get_http_status(st)
 		return el
 
+class DAVUnlockResponse(Response):
+	def __init__(self, *args, **kwargs):
+		super(DAVUnlockResponse, self).__init__(*args, **kwargs)
+		self.status = 204
+
+class DAVOverwriteResponse(Response):
+	def __init__(self, *args, **kwargs):
+		super(DAVOverwriteResponse, self).__init__(*args, **kwargs)
+		self.status = 204
+
 class DAVDeleteResponse(Response):
 	def __init__(self, *args, **kwargs):
 		super(DAVDeleteResponse, self).__init__(*args, **kwargs)
@@ -503,7 +675,13 @@ class DAVXMLResponse(Response):
 
 	def make_body(self):
 		# TODO: pretty-print only when debugging
-		self.body = etree.tostring(self.xml_root, encoding='utf-8', xml_declaration=True, pretty_print=True, with_tail=False)
+		self.body = etree.tostring(
+			self.xml_root,
+			encoding='utf-8',
+			xml_declaration=True,
+			pretty_print=True,
+			with_tail=False
+		)
 
 	def append(self, el):
 		self.xml_root.append(el)
@@ -534,8 +712,26 @@ class DAVMultiStatusResponse(DAVXMLResponse):
 		ns_map = dprops.NS_MAP.copy()
 		if self.nsmap:
 			ns_map.update(self.nsmap)
-		self.xml_root = etree.Element(dprops.MULTISTATUS, nsmap=ns_map)
+		self.xml_root = etree.Element(dprops.MULTI_STATUS, nsmap=ns_map)
 
 	def add_element(self, resp_el):
 		self.xml_root.append(resp_el.to_xml())
+
+class DAVLockResponse(DAVXMLResponse):
+	def __init__(self, *args, lock=None, base_url=None, new_file=False, **kwargs):
+		super(DAVLockResponse, self).__init__(*args, **kwargs)
+		if new_file:
+			self.status = 201
+		else:
+			self.status = 200
+		self.lock = lock
+		ns_map = dprops.NS_MAP.copy()
+		if self.nsmap:
+			ns_map.update(self.nsmap)
+		self.xml_root = etree.Element(dprops.PROP, nsmap=ns_map)
+		if lock:
+			self.headers.add('Lock-Token', '<opaquelocktoken:%s>' % (lock.token,))
+			ld = etree.SubElement(self.xml_root, dprops.LOCK_DISCOVERY)
+			val = DAVLockDiscoveryValue(base_url, (lock,), show_token=True)
+			val.render(ld)
 

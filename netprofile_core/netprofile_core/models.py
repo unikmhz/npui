@@ -38,6 +38,7 @@ __all__ = [
 	'UserSettingType',
 	'UserSetting',
 	'DataCache',
+	'DAVLock',
 
 	'global_setting'
 ]
@@ -79,6 +80,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.mutable import Mutable
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -101,6 +103,7 @@ from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
 	ExactUnicode,
+	Int8,
 	IPv4Address,
 	IPv6Address,
 	NPBoolean,
@@ -546,9 +549,20 @@ class User(Base):
 		}
 	)
 
+	photo = relationship(
+		'File',
+		backref='photo_of',
+		foreign_keys=(photo_id,)
+	)
 	secondary_groupmap = relationship(
 		'UserGroup',
 		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	dav_locks = relationship(
+		'DAVLock',
+		backref='user',
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
@@ -1842,6 +1856,183 @@ class SecurityPolicy(Base):
 	def __str__(self):
 		return '%s' % str(self.name)
 
+class DAVLock(Base):
+	"""
+	Persistent locking primitive used in DAV access.
+	"""
+
+	SCOPE_SHARED = 0
+	SCOPE_EXCLUSIVE = 1
+
+	__tablename__ = 'dav_locks'
+	__table_args__ = (
+		Comment('DAV locks'),
+		Index('dav_locks_i_uid', 'uid'),
+		Index('dav_locks_i_token', 'token'),
+		Index('dav_locks_i_timeout', 'timeout'),
+		Index('dav_locks_i_uri', 'uri'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8'
+		}
+	)
+	id = Column(
+		'dlid',
+		UInt32(),
+		Sequence('dlid_seq'),
+		Comment('DAV lock ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='dav_locks_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Owner\'s user ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('User')
+		}
+	)
+	timeout = Column(
+		TIMESTAMP(),
+		Comment('Lock timeout'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Timeout')
+		}
+	)
+	creation_time = Column(
+		'ctime',
+		TIMESTAMP(),
+		Comment('Creation timestamp'),
+		nullable=True,
+		default=None,
+		server_default=FetchedValue(),
+		info={
+			'header_string' : _('Created')
+		}
+	)
+	token = Column(
+		Unicode(100),
+		Comment('Lock token'),
+		nullable=False,
+		info={
+			'header_string' : _('Token')
+		}
+	)
+	owner = Column(
+		Unicode(100),
+		Comment('Lock owner'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Owner')
+		}
+	)
+	scope = Column(
+		Int8(),
+		Comment('Lock scope'),
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('Scope')
+		}
+	)
+	depth = Column(
+		Int8(),
+		Comment('Lock depth'),
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('Depth')
+		}
+	)
+	uri = Column(
+		Unicode(1000),
+		Comment('Lock URI'),
+		nullable=False,
+		info={
+			'header_string' : _('URI')
+		}
+	)
+
+	def get_dav_scope(self):
+		if self.scope == self.SCOPE_SHARED:
+			return dprops.SHARED
+		if self.scope == self.SCOPE_EXCLUSIVE:
+			return dprops.EXCLUSIVE
+		raise ValueError('Invalid lock scope: %r' % self.scope)
+
+	def test_token(self, value):
+		if ('opaquelocktoken:%s' % self.token) == value:
+			return True
+		return False
+
+	def refresh(self, new_td=None):
+		old_td = None
+		if self.creation_time and self.timeout:
+			old_td = self.timeout - self.creation_time
+		self.creation_time = dt.datetime.now()
+		if new_td:
+			self.timeout = self.creation_time + dt.timedelta(seconds=new_td)
+		elif old_td:
+			self.timeout = self.creation_time + old_td
+		else:
+			self.timeout = self.creation_time + dt.timedelta(seconds=1800)
+		return old_td
+
+class FileMeta(Mutable, dict):
+	@classmethod
+	def coerce(cls, key, value):
+		if not isinstance(value, FileMeta):
+			if isinstance(value, dict):
+				return FileMeta(value)
+			return Mutable.coerce(key, value)
+		else:
+			return value
+
+	def __setitem__(self, key, value):
+		dict.__setitem__(self, key, value)
+		self.changed()
+
+	def __delitem__(self, key):
+		dict.__delitem__(self, key)
+		self.changed()
+
+	def __getstate__(self):
+		return dict(self)
+
+	def __setstate__(self, st):
+		self.update(st)
+
+	def get_prop(self, name):
+		return self['p'][name]
+
+	def set_prop(self, name, value):
+		if 'p' not in self:
+			self['p'] = {}
+		self['p'][name] = value
+		self.changed()
+
+	def del_prop(self, name):
+		if ('p' not in self) or (name not in self['p']):
+			return
+		del self['p'][name]
+		if len(self['p']) == 0:
+			del self['p']
+		self.changed()
+
 class FileFolderAccessRule(DeclEnum):
 	private = 'private', _('Owner-only access'), 10
 	group   = 'group',   _('Group-only access'), 20
@@ -1985,7 +2176,7 @@ class FileFolder(Base):
 		}
 	)
 	meta = Column(
-		PickleType(),
+		FileMeta.as_mutable(PickleType),
 		Comment('Serialized meta-data'),
 		nullable=True,
 		default=None,
@@ -2119,7 +2310,38 @@ class FileFolder(Base):
 			ret[dprops.DISPLAY_NAME] = self.name
 		if dprops.LAST_MODIFIED in pset:
 			ret[dprops.LAST_MODIFIED] = self.modification_time
+		custom = pset.difference(dprops.RO_PROPS)
+		for cprop in custom:
+			try:
+				ret[cprop] = self.get_prop(cprop)
+			except KeyError:
+				pass
 		return ret
+
+	def dav_props_set(self, pdict):
+		pset = set(pdict)
+		custom = pset.difference(dprops.RO_PROPS)
+		for cprop in custom:
+			if pdict[cprop] is None:
+				self.del_prop(cprop)
+			else:
+				self.set_prop(cprop, pdict[cprop])
+		return True
+
+	def get_prop(self, name):
+		if not self.meta:
+			self.meta = FileMeta()
+		return self.meta.get_prop(name)
+
+	def set_prop(self, name, value):
+		if not self.meta:
+			self.meta = FileMeta()
+		return self.meta.set_prop(name, value)
+
+	def del_prop(self, name):
+		if not self.meta:
+			self.meta = FileMeta()
+		return self.meta.del_prop(name)
 
 	def dav_create(self, req, name, rtype=None, props=None, data=None):
 		# TODO: externalize type resolution
@@ -2154,6 +2376,28 @@ class FileFolder(Base):
 				obj.creation_time = props[dprops.CREATION_DATE]
 			if dprops.LAST_MODIFIED in props:
 				obj.modification_time = props[dprops.LAST_MODIFIED]
+		return obj
+
+	def dav_append(self, req, ctx, name):
+		if isinstance(ctx, File):
+			ctx.folder = self
+			ctx.filename = name
+		elif isinstance(ctx, FileFolder):
+			if self.is_inside(ctx):
+				raise ValueError('Infinite folder loop detected.')
+			ctx.parent = self
+			ctx.name = name
+
+	def dav_clone(self, req):
+		obj = FileFolder(
+			parent_id=None,
+			name=self.name,
+			user_id=self.user_id,
+			group_id=self.group_id,
+			rights=self.rights,
+			access=self.access,
+			description=self.description
+		)
 		return obj
 
 	@property
@@ -2495,7 +2739,7 @@ class File(Base):
 		}
 	)
 	meta = Column(
-		PickleType(),
+		FileMeta.as_mutable(PickleType),
 		Comment('Serialized meta-data'),
 		nullable=True,
 		default=None,
@@ -2630,18 +2874,71 @@ class File(Base):
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.filename
 		if dprops.ETAG in pset:
-			ret[dprops.ETAG] = self.etag
+			etag = None
+			if self.etag:
+				etag = '"%s"' % self.etag
+			ret[dprops.ETAG] = etag
 		if hasattr(self, '__req__'):
 			req = self.__req__
 			if dprops.EXECUTABLE in pset:
 				ret[dprops.EXECUTABLE] = 'T' if self.can_execute(req.user) else 'F'
 		if dprops.LAST_MODIFIED in pset:
 			ret[dprops.LAST_MODIFIED] = self.modification_time
+		custom = pset.difference(dprops.RO_PROPS)
+		for cprop in custom:
+			try:
+				ret[cprop] = self.get_prop(cprop)
+			except KeyError:
+				pass
 		return ret
+
+	def dav_props_set(self, pdict):
+		pset = set(pdict)
+		custom = pset.difference(dprops.RO_PROPS)
+		for cprop in custom:
+			if pdict[cprop] is None:
+				self.del_prop(cprop)
+			else:
+				self.set_prop(cprop, pdict[cprop])
+		return True
+
+	def get_prop(self, name):
+		if not self.meta:
+			self.meta = FileMeta()
+		return self.meta.get_prop(name)
+
+	def set_prop(self, name, value):
+		if not self.meta:
+			self.meta = FileMeta()
+		return self.meta.set_prop(name, value)
+
+	def del_prop(self, name):
+		if not self.meta:
+			self.meta = FileMeta()
+		return self.meta.del_prop(name)
+
+	def dav_get(self, req):
+		return self.get_response(req)
 
 	def dav_put(self, req, data):
 		self.etag = None
 		self.set_from_file(data, req.user)
+
+	def dav_clone(self, req):
+		obj = File(
+			folder_id=self.folder_id,
+			filename=self.filename,
+			name=self.name,
+			user_id=self.user_id,
+			group_id=self.group_id,
+			rights=self.rights,
+			mime_type=self.mime_type,
+			size=0,
+			etag=None,
+			description=self.description
+		)
+		obj.set_from_object(self, req.user)
+		return obj
 
 	def allow_access(self, req):
 		return self.can_access(req.user)
@@ -2755,6 +3052,24 @@ class File(Base):
 			guessed_mime = m.buffer(infile.read())
 		if guessed_mime:
 			self.mime_type = guessed_mime
+
+	def set_from_object(self, infile, user=None, sess=None):
+		if sess is None:
+			sess = DBSession()
+		self.size = 0
+		self.etag = None
+		buf = bytearray(_BLOCK_SIZE)
+		mv = memoryview(buf)
+		with self.open('w+', user, sess) as fd:
+			with infile.open('r', user, sess) as infd:
+				while 1:
+					rsz = infd.readinto(buf)
+					if not rsz:
+						break
+					fd.write(mv[:rsz])
+		self.etag = infile.etag
+		self.data = None
+		self.mime_type = infile.mime_type
 
 	def __str__(self):
 		return '%s' % str(self.filename)
