@@ -66,7 +66,9 @@ from sqlalchemy import (
 	UnicodeText,
 	event,
 	func,
-	text
+	text,
+	or_,
+	and_
 )
 
 from sqlalchemy.orm import (
@@ -120,6 +122,7 @@ from netprofile.ext.wizards import (
 from netprofile.dav import (
 	IDAVFile,
 	IDAVCollection,
+	IDAVPrincipal,
 	DAVResourceTypeValue,
 	dprops
 )
@@ -135,6 +138,12 @@ from pyramid.response import (
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
+)
+from pyramid.security import (
+	Allow, Deny,
+	Everyone, Authenticated,
+	DENY_ALL,
+	has_permission
 )
 from zope.interface import implementer
 
@@ -326,6 +335,7 @@ class UserState(DeclEnum):
 	active  = 'A', _('Active'),  20
 	deleted = 'D', _('Deleted'), 30
 
+@implementer(IDAVFile, IDAVPrincipal)
 class User(Base):
 	"""
 	NetProfile operator user.
@@ -863,6 +873,29 @@ class User(Base):
 			return bool(root_rights & F_GROUP_WRITE)
 		return bool(root_rights & F_OTHER_WRITE)
 
+	@property
+	def __name__(self):
+		return self.login
+
+	def get_uri(self):
+		p = getattr(self, '__parent__', None)
+		if p is None:
+			return [ self.login ]
+		uri = p.get_uri()
+		uri.append(self.login)
+		return uri
+
+	def dav_props(self, pset):
+		ret = {}
+		if dprops.RESOURCE_TYPE in pset:
+			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.PRINCIPAL)
+		if dprops.CONTENT_TYPE in pset:
+			ret[dprops.CONTENT_TYPE] = 'text/x-vcard; charset=utf-8'
+		if dprops.DISPLAY_NAME in pset:
+			ret[dprops.DISPLAY_NAME] = self.login
+		return ret
+
+@implementer(IDAVFile, IDAVPrincipal)
 class Group(Base):
 	"""
 	Defines a group of NetProfile users.
@@ -1067,6 +1100,28 @@ class Group(Base):
 			ff = grp.root_folder
 			grp = grp.parent
 		return ff
+
+	@property
+	def __name__(self):
+		return self.name
+
+	def get_uri(self):
+		p = getattr(self, '__parent__', None)
+		if p is None:
+			return [ self.name ]
+		uri = p.get_uri()
+		uri.append(self.name)
+		return uri
+
+	def dav_props(self, pset):
+		ret = {}
+		if dprops.RESOURCE_TYPE in pset:
+			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.PRINCIPAL)
+		if dprops.CONTENT_TYPE in pset:
+			ret[dprops.CONTENT_TYPE] = 'text/x-vcard; charset=utf-8'
+		if dprops.DISPLAY_NAME in pset:
+			ret[dprops.DISPLAY_NAME] = self.name
+		return ret
 
 class Privilege(Base):
 	"""
@@ -1870,6 +1925,7 @@ class DAVLock(Base):
 		Index('dav_locks_i_uid', 'uid'),
 		Index('dav_locks_i_token', 'token'),
 		Index('dav_locks_i_timeout', 'timeout'),
+		Index('dav_locks_i_fileid', 'fileid'),
 		Index('dav_locks_i_uri', 'uri'),
 		{
 			'mysql_engine'  : 'InnoDB',
@@ -1897,6 +1953,18 @@ class DAVLock(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('User')
+		}
+	)
+	file_id = Column(
+		'fileid',
+		UInt32(),
+		ForeignKey('files_def.fileid', name='dav_locks_fk_fileid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Linked file ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('File')
 		}
 	)
 	timeout = Column(
@@ -1966,6 +2034,24 @@ class DAVLock(Base):
 			'header_string' : _('URI')
 		}
 	)
+
+	@classmethod
+	def find(cls, path, children=False):
+		sess = DBSession()
+		full_path = '/'.join(path)
+		q = sess.query(DAVLock).filter(or_(
+			DAVLock.timeout == None,
+			DAVLock.timeout > func.now()
+		))
+		alter = [DAVLock.uri == full_path]
+		for i in range(len(path) - 1):
+			alter.append(and_(
+				DAVLock.depth != 0,
+				DAVLock.uri == '/'.join(path[:i + 1])
+			))
+		if children:
+			alter.append(DAVLock.uri.startswith(full_path + '/'))
+		return q.filter(or_(*alter))
 
 	def get_dav_scope(self):
 		if self.scope == self.SCOPE_SHARED:
@@ -2289,6 +2375,39 @@ class FileFolder(Base):
 		f.__req__ = getattr(self, '__req__', None)
 		f.__parent__ = self
 		return f
+
+	@property
+	def __acl__(self):
+		rights = self.rights
+		ff_user = 'u:%s' % self.user.login
+		ff_group = 'g:%s' % self.group.name
+		can_access_u = has_permission('access', self.__parent__, ff_user)
+		can_access_g = has_permission('access', self.__parent__, ff_group)
+		can_access_o = has_permission('access', self.__parent__, Everyone)
+		return (
+			(Allow if ((rights & F_OWNER_EXEC) and can_access_u) else Deny, ff_user, 'access'),
+			(Allow if ((rights & F_OWNER_READ) and can_access_u) else Deny, ff_user, 'read'),
+			(Allow if ((rights & F_OWNER_WRITE) and can_access_u) else Deny, ff_user, 'write'),
+			(Allow if ((rights & F_OWNER_EXEC) and can_access_u) else Deny, ff_user, 'execute'),
+			(Allow if ((rights & F_OWNER_WRITE) and can_access_u) else Deny, ff_user, 'create'),
+			(Allow if ((rights & F_OWNER_WRITE) and can_access_u) else Deny, ff_user, 'delete'),
+
+			(Allow if ((rights & F_GROUP_EXEC) and can_access_g) else Deny, ff_group, 'access'),
+			(Allow if ((rights & F_GROUP_READ) and can_access_g) else Deny, ff_group, 'read'),
+			(Allow if ((rights & F_GROUP_WRITE) and can_access_g) else Deny, ff_group, 'write'),
+			(Allow if ((rights & F_GROUP_EXEC) and can_access_g) else Deny, ff_group, 'execute'),
+			(Allow if ((rights & F_GROUP_WRITE) and can_access_g) else Deny, ff_group, 'create'),
+			(Allow if ((rights & F_GROUP_WRITE) and can_access_g) else Deny, ff_group, 'delete'),
+
+			(Allow if ((rights & F_OTHER_EXEC) and can_access_o) else Deny, Everyone, 'access'),
+			(Allow if ((rights & F_OTHER_READ) and can_access_o) else Deny, Everyone, 'read'),
+			(Allow if ((rights & F_OTHER_WRITE) and can_access_o) else Deny, Everyone, 'write'),
+			(Allow if ((rights & F_OTHER_EXEC) and can_access_o) else Deny, Everyone, 'execute'),
+			(Allow if ((rights & F_OTHER_WRITE) and can_access_o) else Deny, Everyone, 'create'),
+			(Allow if ((rights & F_OTHER_WRITE) and can_access_o) else Deny, Everyone, 'delete'),
+
+			DENY_ALL
+		)
 
 	def get_uri(self):
 		p = getattr(self, '__parent__', None)
@@ -2765,6 +2884,12 @@ class File(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	locks = relationship(
+		'DAVLock',
+		backref='file',
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	@classmethod
 	def __augment_create__(cls, sess, obj, values, req):
@@ -2850,6 +2975,33 @@ class File(Base):
 	@property
 	def __name__(self):
 		return self.filename
+
+	@property
+	def __acl__(self):
+		rights = self.rights
+		ff_user = 'u:%s' % self.user.login
+		ff_group = 'g:%s' % self.group.name
+		can_access_u = has_permission('access', self.__parent__, ff_user)
+		can_access_g = has_permission('access', self.__parent__, ff_group)
+		can_access_o = has_permission('access', self.__parent__, Everyone)
+		return (
+			(Allow if ((rights & F_OWNER_READ) and can_access_u) else Deny, ff_user, 'access'),
+			(Allow if ((rights & F_OWNER_READ) and can_access_u) else Deny, ff_user, 'read'),
+			(Allow if ((rights & F_OWNER_WRITE) and can_access_u) else Deny, ff_user, 'write'),
+			(Allow if ((rights & F_OWNER_EXEC) and can_access_u) else Deny, ff_user, 'execute'),
+
+			(Allow if ((rights & F_GROUP_READ) and can_access_g) else Deny, ff_group, 'access'),
+			(Allow if ((rights & F_GROUP_READ) and can_access_g) else Deny, ff_group, 'read'),
+			(Allow if ((rights & F_GROUP_WRITE) and can_access_g) else Deny, ff_group, 'write'),
+			(Allow if ((rights & F_GROUP_EXEC) and can_access_g) else Deny, ff_group, 'execute'),
+
+			(Allow if ((rights & F_OTHER_READ) and can_access_o) else Deny, Everyone, 'access'),
+			(Allow if ((rights & F_OTHER_READ) and can_access_o) else Deny, Everyone, 'read'),
+			(Allow if ((rights & F_OTHER_WRITE) and can_access_o) else Deny, Everyone, 'write'),
+			(Allow if ((rights & F_OTHER_EXEC) and can_access_o) else Deny, Everyone, 'execute'),
+
+			DENY_ALL
+		)
 
 	def get_uri(self):
 		p = getattr(self, '__parent__', None)

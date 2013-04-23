@@ -10,8 +10,17 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 from netprofile.common.menus import Menu
+from netprofile.dav import (
+	IDAVManager,
+	DAVRoot,
+	DAVTraverser
+)
 from .models import *
-from .dav import DAVPluginVFS
+from .dav import (
+	DAVPluginVFS,
+	DAVPluginUsers,
+	DAVPluginGroups
+)
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -24,12 +33,18 @@ def _int_fileid(info, request):
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
-		mmgr.cfg.add_translation_dirs('netprofile_core:locale/')
-		mmgr.cfg.add_route('core.home', '/')
-		mmgr.cfg.add_route('core.login', '/login')
-		mmgr.cfg.add_route('core.logout', '/logout')
-		mmgr.cfg.add_route('core.dav', '/dav*traverse', factory='netprofile.dav.DAVRoot')
-		mmgr.cfg.scan()
+		cfg = mmgr.cfg
+		cfg.add_translation_dirs('netprofile_core:locale/')
+		cfg.add_route('core.home', '/')
+		cfg.add_route('core.login', '/login')
+		cfg.add_route('core.logout', '/logout')
+		cfg.add_traverser(DAVTraverser, DAVRoot)
+		cfg.add_route('core.dav', '/dav*traverse', factory='netprofile.dav.DAVRoot')
+		cfg.scan()
+
+		dav = cfg.registry.getUtility(IDAVManager)
+		if dav:
+			dav.set_locks_backend(DAVLock)
 
 	def add_routes(self, config):
 		config.add_route('core.noop', '/noop')
@@ -136,7 +151,9 @@ class Module(ModuleBase):
 
 	def get_dav_plugins(self, request):
 		return {
-			'fs' : DAVPluginVFS(request)
+			'fs'     : DAVPluginVFS,
+			'users'  : DAVPluginUsers,
+			'groups' : DAVPluginGroups
 		}
 
 	@property

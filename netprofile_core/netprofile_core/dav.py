@@ -22,11 +22,12 @@ from pyramid.view import (
 )
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPNotFound
-from pyramid.security import authenticated_userid
-from sqlalchemy import (
-	func,
-	and_,
-	or_
+from pyramid.security import (
+	Allow, Deny,
+	Everyone, Authenticated,
+	DENY_ALL,
+	authenticated_userid,
+	has_permission
 )
 from sqlalchemy.orm.exc import NoResultFound
 from netprofile import dav
@@ -36,17 +37,26 @@ from .models import (
 	DAVLock,
 	File,
 	FileFolder,
+	Group,
+	User,
+
 	F_DEFAULT_FILES,
-	F_DEFAULT_DIRS
+	F_DEFAULT_DIRS,
+
+	F_OWNER_READ,
+	F_OWNER_WRITE,
+	F_OWNER_EXEC,
+	F_GROUP_READ,
+	F_GROUP_WRITE,
+	F_GROUP_EXEC,
+	F_OTHER_READ,
+	F_OTHER_WRITE,
+	F_OTHER_EXEC,
+
+	global_setting
 )
 
 logger = logging.getLogger(__name__)
-
-SUPPORTED_METHODS = (
-	'OPTIONS', 'GET', 'HEAD', 'DELETE', 'PROPFIND',
-	'PUT', 'PROPPATCH', 'COPY', 'MOVE', 'REPORT',
-	'PATCH', 'LOCK', 'UNLOCK'
-)
 
 _re_if = re.compile(
 	r'(?:<(?P<uri>.*?)>\s)?\((?P<not>Not\s)?(?:<(?P<token>[^>]*)>)?(?:\s?)(?:\[(?P<etag>[^\]]*)\])?\)',
@@ -105,18 +115,47 @@ class DAVPluginVFS(dav.DAVPlugin):
 		f.__parent__ = self
 		return f
 
-	def get_uri(self):
-		uri = self.__parent__.get_uri()
-		uri.append(self.__name__)
-		return uri
+	@property
+	def __acl__(self):
+		user = self.req.user
+		root = user.group.effective_root_folder
+		if root:
+			rights = root.rights
+			ff_user = 'u:%s' % root.user.login
+			ff_group = 'g:%s' % root.group.name
+		else:
+			try:
+				root_user = sess.query(User).get(global_setting('vfs_root_uid'))
+				root_group = sess.query(Group).get(global_setting('vfs_root_gid'))
+			except NoResultFound:
+				return (DENY_ALL,)
+			ff_user = 'u:%s' % root_user.login
+			ff_group = 'g:%s' % root_group.name
+			rights = global_setting('vfs_root_rights')
+		return (
+			(Allow if (rights & F_OWNER_EXEC) else Deny, ff_user, 'access'),
+			(Allow if (rights & F_OWNER_READ) else Deny, ff_user, 'read'),
+			(Allow if (rights & F_OWNER_WRITE) else Deny, ff_user, 'write'),
+			(Allow if (rights & F_OWNER_EXEC) else Deny, ff_user, 'execute'),
+			(Allow if (rights & F_OWNER_WRITE) else Deny, ff_user, 'create'),
+			(Allow if (rights & F_OWNER_WRITE) else Deny, ff_user, 'delete'),
 
-	def dav_props(self, pset):
-		ret = {}
-		if dprops.RESOURCE_TYPE in pset:
-			ret[dprops.RESOURCE_TYPE] = dav.DAVResourceTypeValue(dprops.COLLECTION)
-		if dprops.DISPLAY_NAME in pset:
-			ret[dprops.DISPLAY_NAME] = 'fs'
-		return ret
+			(Allow if (rights & F_GROUP_EXEC) else Deny, ff_group, 'access'),
+			(Allow if (rights & F_GROUP_READ) else Deny, ff_group, 'read'),
+			(Allow if (rights & F_GROUP_WRITE) else Deny, ff_group, 'write'),
+			(Allow if (rights & F_GROUP_EXEC) else Deny, ff_group, 'execute'),
+			(Allow if (rights & F_GROUP_WRITE) else Deny, ff_group, 'create'),
+			(Allow if (rights & F_GROUP_WRITE) else Deny, ff_group, 'delete'),
+
+			(Allow if (rights & F_OTHER_EXEC) else Deny, Everyone, 'access'),
+			(Allow if (rights & F_OTHER_READ) else Deny, Everyone, 'read'),
+			(Allow if (rights & F_OTHER_WRITE) else Deny, Everyone, 'write'),
+			(Allow if (rights & F_OTHER_EXEC) else Deny, Everyone, 'execute'),
+			(Allow if (rights & F_OTHER_WRITE) else Deny, Everyone, 'create'),
+			(Allow if (rights & F_OTHER_WRITE) else Deny, Everyone, 'delete'),
+
+			DENY_ALL
+		)
 
 	def dav_create(self, req, name, rtype=None, props=None, data=None):
 		# TODO: externalize type resolution
@@ -161,9 +200,6 @@ class DAVPluginVFS(dav.DAVPlugin):
 			ctx.parent = None
 			ctx.name = name
 
-	def dav_clone(self, req):
-		raise dav.DAVForbiddenError('Can\'t copy plug-in root folder.')
-
 	@property
 	def dav_children(self):
 		user = self.req.user
@@ -179,14 +215,64 @@ class DAVPluginVFS(dav.DAVPlugin):
 			t.__parent__ = self
 			yield t
 
+@implementer(dav.IDAVCollection)
+class DAVPluginUsers(dav.DAVPlugin):
+	def __iter__(self):
+		sess = DBSession()
+		for t in sess.query(User.login):
+			yield t[0]
+
+	def __getitem__(self, name):
+		sess = DBSession()
+		try:
+			u = sess.query(User).filter(User.login == name).one()
+		except NoResultFound:
+			raise KeyError('No such file or directory')
+		u.__req__ = self.req
+		u.__parent__ = self
+		return u
+
+	@property
+	def dav_children(self):
+		sess = DBSession()
+		for u in sess.query(User):
+			u.__req__ = self.req
+			u.__parent__ = self
+			yield u
+
+@implementer(dav.IDAVCollection)
+class DAVPluginGroups(dav.DAVPlugin):
+	def __iter__(self):
+		sess = DBSession()
+		for t in sess.query(Group.name):
+			yield t[0]
+
+	def __getitem__(self, name):
+		sess = DBSession()
+		try:
+			g = sess.query(Group).filter(Group.name == name).one()
+		except NoResultFound:
+			raise KeyError('No such file or directory')
+		g.__req__ = self.req
+		g.__parent__ = self
+		return g
+
+	@property
+	def dav_children(self):
+		sess = DBSession()
+		for g in sess.query(Group):
+			g.__req__ = self.req
+			g.__parent__ = self
+			yield g
+
+@notfound_view_config(request_method='OPTIONS')
+@view_config(route_name='core.home', request_method='OPTIONS')
+def root_options(request):
+	return DAVCollectionHandler(request).notfound_options()
+
 class DAVHandler(object):
 	def __init__(self, req):
 		self.req = req
-
-	def set_dav_headers(self, resp):
-		resp.headers.add('DAV', '1, 2, 3, extended-mkcol')
-		resp.headers.add('MS-Author-Via', 'DAV')
-		resp.accept_ranges = 'bytes'
 
 	def conditional_request(self, ctx):
 		req = self.req
@@ -213,26 +299,26 @@ class DAVHandler(object):
 
 		# TODO: Move this into separe method when SYNC comes around
 		if ctx:
-			path = dav.get_ctx_path(ctx)
+			path = req.dav.get_ctx_path(ctx)
 		else:
-			path = dav.get_path(req.path)
+			path = req.dav.get_path(req.path)
 		oldlocks = []
 		meth = req.method
 		if meth == 'DELETE':
-			oldlocks.extend(self.get_locks(path, True))
+			oldlocks.extend(req.dav.get_locks(path, True))
 		elif meth in {'MKCOL', 'MKCALENDAR', 'PROPPATCH', 'PUT', 'PATCH'}:
-			oldlocks.extend(self.get_locks(path, False))
+			oldlocks.extend(req.dav.get_locks(path, False))
 		elif meth == 'MOVE':
-			oldlocks.extend(self.get_locks(path, True))
-			dest = dav.get_path(req.headers.get('Destination'))
+			oldlocks.extend(req.dav.get_locks(path, True))
+			dest = req.dav.get_path(req.headers.get('Destination'))
 			if not dest:
 				raise KeyError('Destination')
-			oldlocks.extend(self.get_locks(dest, False))
+			oldlocks.extend(req.dav.get_locks(dest, False))
 		elif meth == 'COPY':
-			dest = dav.get_path(req.headers.get('Destination'))
+			dest = req.dav.get_path(req.headers.get('Destination'))
 			if not dest:
 				raise KeyError('Destination')
-			oldlocks.extend(self.get_locks(dest, False))
+			oldlocks.extend(req.dav.get_locks(dest, False))
 		lockidx = {}
 		for lock in oldlocks:
 			lockidx[lock.token] = lock
@@ -259,7 +345,7 @@ class DAVHandler(object):
 					del oldlocks[found]
 					continue
 
-				for xlock in self.get_locks(ifobj['uri']):
+				for xlock in req.dav.get_locks(ifobj['uri']):
 					if xlock.token == tok:
 						token['valid'] = True
 						break
@@ -290,8 +376,8 @@ class DAVHandler(object):
 					else:
 						root = dav.DAVRoot(req)
 						try:
-							full_uri = [req.scheme, ':/'] + root.get_uri() + uri
-							tr = root.resolve_uri('/'.join(full_uri), True)
+							full_uri = req.route_url('core.dav', traverse=(root.get_uri() + uri))
+							tr = root.resolve_uri(full_uri, True)
 							check_etag = '"%s"' % tr.context.etag
 						except (ValueError, AttributeError):
 							pass
@@ -371,9 +457,9 @@ class DAVHandler(object):
 			else:
 				uri = m.group('uri')
 				if uri:
-					uri = dav.get_path(uri)
+					uri = req.dav.get_path(uri)
 				else:
-					uri = dav.get_path(req.url)
+					uri = req.dav.get_path(req.url)
 				if not uri:
 					raise dav.DAVForbiddenError('Invalid URI supplied in If: header.')
 				last = {
@@ -388,32 +474,15 @@ class DAVHandler(object):
 				ret.append(last)
 		return ret
 
-	def get_locks(self, path, children=False):
-		sess = DBSession()
-		full_path = '/'.join(path)
-		q = sess.query(DAVLock).filter(or_(
-			DAVLock.timeout == None,
-			DAVLock.timeout > func.now()
-		))
-		alter = [DAVLock.uri == full_path]
-		for i in range(len(path) - 1):
-			alter.append(and_(
-				DAVLock.depth != 0,
-				DAVLock.uri == '/'.join(path[:i + 1])
-			))
-		if children:
-			alter.append(DAVLock.uri.startswith(full_path + '/'))
-		return q.filter(or_(*alter))
-
 	def proppatch(self):
 		req = self.req
 		self.conditional_request(req.context)
 		ppreq = dav.DAVPropPatchRequest(req)
 		pdict = ppreq.get_props()
-		props = dav.set_node_props(req.context, pdict)
+		props = req.dav.set_node_props(req, req.context, pdict)
 		# TODO: handle 'minimal' flags
 		resp = dav.DAVMultiStatusResponse()
-		el = dav.DAVResponseElement(req.context, props)
+		el = dav.DAVResponseElement(req, req.context, props)
 		resp.add_element(el)
 		resp.make_body()
 		resp.vary = ('Brief', 'Prefer')
@@ -422,24 +491,25 @@ class DAVHandler(object):
 	def delete(self):
 		req = self.req
 		self.conditional_request(req.context)
-		dav.dav_delete(req.context)
+		req.dav.delete(req, req.context)
 		resp = dav.DAVDeleteResponse()
 		return resp
 
 	def propfind(self):
-		pfreq = dav.DAVPropFindRequest(self.req)
+		req = self.req
+		pfreq = dav.DAVPropFindRequest(req)
 		pset = pfreq.get_props()
-		depth = dav.get_http_depth(self.req, 1)
+		depth = req.dav.get_http_depth(req, 1)
 		if depth != 0:
 			depth = 1
-		props = dav.get_path_props(self.req.context, pset, depth)
+		props = req.dav.get_path_props(req, req.context, pset, depth)
 		# TODO: handle 'minimal' flags
 		resp = dav.DAVMultiStatusResponse()
 		for ctx, node_props in props.items():
-			el = dav.DAVResponseElement(ctx, node_props)
+			el = dav.DAVResponseElement(self.req, ctx, node_props)
 			resp.add_element(el)
 		resp.make_body()
-		resp.headers.add('DAV', '1, 2, 3, extended-mkcol')
+		self.req.dav.set_features(resp)
 		resp.vary = ('Brief', 'Prefer')
 		return resp
 
@@ -453,7 +523,7 @@ class DAVHandler(object):
 		over = False
 		if node:
 			over = True
-			dav.dav_delete(node)
+			req.dav.delete(req, node)
 		appender = getattr(parent, 'dav_append', None)
 		if appender is None:
 			raise dav.DAVNotImplementedError('Unable to move node.')
@@ -474,11 +544,11 @@ class DAVHandler(object):
 		over = False
 		if node:
 			over = True
-			dav.dav_delete(node)
+			req.dav.delete(req, node)
 		appender = getattr(parent, 'dav_append', None)
 		if appender is None:
 			raise dav.DAVNotImplementedError('Unable to copy node.')
-		new_ctx = dav.dav_clone(req, ctx)
+		new_ctx = req.dav.clone(req, ctx)
 		appender(req, new_ctx, node_name)
 		if over:
 			resp = dav.DAVOverwriteResponse()
@@ -490,9 +560,9 @@ class DAVHandler(object):
 		req = self.req
 		ctx = req.context
 
-		path = dav.get_ctx_path(ctx)
+		path = req.dav.get_ctx_path(ctx)
 		str_path = '/'.join(path)
-		locks = self.get_locks(path)
+		locks = req.dav.get_locks(path)
 		lock = None
 
 		if req.body:
@@ -506,7 +576,9 @@ class DAVHandler(object):
 			if oldlock and (lock.scope != DAVLock.SCOPE_SHARED):
 				raise dav.DAVConflictingLockError(lock=oldlock)
 			lock.uri = str_path
-			lock.depth = dav.get_http_depth(req)
+			lock.depth = req.dav.get_http_depth(req)
+			if isinstance(ctx, File):
+				lock.file = ctx
 		else:
 			# Refreshing old lock
 			ifh = self.get_if()
@@ -527,13 +599,13 @@ class DAVHandler(object):
 				else:
 					raise dav.DAVBadRequestError('New LOCK request must be accompanied by a request body.')
 
-		lock.refresh(dav.get_http_timeout(req))
+		lock.refresh(req.dav.get_http_timeout(req))
 
 		if req.body:
 			sess = DBSession()
 			sess.add(lock)
 
-		resp = dav.DAVLockResponse(lock=lock, base_url=req.host_url, new_file=False)
+		resp = dav.DAVLockResponse(lock=lock, request=req, new_file=False)
 		resp.make_body()
 		return resp
 
@@ -544,10 +616,10 @@ class DAVHandler(object):
 		token = req.headers.get('Lock-Token')
 		if not token:
 			raise dav.DAVBadRequestError('UNLOCK request must be accompanied by a valid lock token header.')
-		path = dav.get_ctx_path(ctx)
+		path = req.dav.get_ctx_path(ctx)
 		if token[0] != '<':
 			token = '<%s>' % (token,)
-		locks = self.get_locks(path)
+		locks = req.dav.get_locks(path)
 		for lock in locks:
 			token_str = '<opaquelocktoken:%s>' % (lock.token,)
 			if token == token_str:
@@ -555,6 +627,15 @@ class DAVHandler(object):
 				sess.delete(lock)
 				return dav.DAVUnlockResponse()
 		raise dav.DAVLockTokenMatchError('Invalid lock token supplied.')
+
+	def report(self):
+		req = self.req
+		rreq = dav.DAVReportRequest(req)
+		rname = rreq.get_name()
+		if rname is None:
+			raise dav.DAVBadRequestError('Need to supply report name.')
+		r = req.dav.report(rname, rreq)
+		return r(req)
 
 @view_defaults(route_name='core.dav', context=dav.IDAVCollection, decorator=dav_decorator)
 class DAVCollectionHandler(DAVHandler):
@@ -565,15 +646,15 @@ class DAVCollectionHandler(DAVHandler):
 	@view_config(request_method='OPTIONS')
 	def options(self):
 		resp = Response()
-		self.set_dav_headers(resp)
-		resp.allow = SUPPORTED_METHODS
+		self.req.dav.set_headers(resp)
+		self.req.dav.set_allow(resp)
 		return resp
 
 	@notfound_view_config(request_method='OPTIONS', containment=dav.IDAVCollection, decorator=dav_decorator)
 	def notfound_options(self):
 		resp = Response()
-		self.set_dav_headers(resp)
-		resp.allow = SUPPORTED_METHODS + ('MKCOL',)
+		self.req.dav.set_headers(resp)
+		self.req.dav.set_allow(resp, ('MKCOL',))
 		return resp
 
 	# TODO: Make this into file browser
@@ -584,7 +665,7 @@ class DAVCollectionHandler(DAVHandler):
 	@view_config(request_method='MKCOL')
 	def mkcol(self):
 		# Try to create collection on top of existing collection
-		raise dav.DAVMethodNotAllowedError(*SUPPORTED_METHODS)
+		raise dav.DAVMethodNotAllowedError(*self.req.dav.methods)
 
 	@notfound_view_config(request_method='MKCOL', containment=dav.IDAVCollection, decorator=dav_decorator)
 	def notfound_mkcol(self):
@@ -633,8 +714,7 @@ class DAVCollectionHandler(DAVHandler):
 
 	@view_config(request_method='REPORT')
 	def report(self):
-		# TODO: write this
-		raise dav.DAVReportNotSupportedError()
+		return super(DAVCollectionHandler, self).report()
 
 	@view_config(request_method='MOVE')
 	def move(self):
@@ -653,9 +733,9 @@ class DAVCollectionHandler(DAVHandler):
 		# TODO: DRY, unify this with normal lock
 		req = self.req
 
-		path = dav.get_path(req.url)
+		path = req.dav.get_path(req.url)
 		str_path = '/'.join(path)
-		locks = self.get_locks(path)
+		locks = req.dav.get_locks(path)
 		lock = None
 
 		if req.body:
@@ -669,7 +749,7 @@ class DAVCollectionHandler(DAVHandler):
 			if oldlock and (lock.scope != DAVLock.SCOPE_SHARED):
 				raise dav.DAVConflictingLockError(lock=oldlock)
 			lock.uri = str_path
-			lock.depth = dav.get_http_depth(req)
+			lock.depth = req.dav.get_http_depth(req)
 		else:
 			# Refreshing old lock
 			ifh = self.get_if()
@@ -699,14 +779,17 @@ class DAVCollectionHandler(DAVHandler):
 		creator = getattr(req.context, 'dav_create', None)
 		if creator is None:
 			raise dav.DAVNotImplementedError('Unable to create child node.')
-		obj = creator(req, req.view_name, None, None, io.BytesIO(b'')) # TODO: handle IOErrors, handle non-seekable request body
-		lock.refresh(dav.get_http_timeout(req))
+		with io.BytesIO(b'') as bio:
+			obj = creator(req, req.view_name, None, None, bio) # TODO: handle IOErrors, handle non-seekable request body
+		if isinstance(obj, File):
+			lock.file = obj
+		lock.refresh(req.dav.get_http_timeout(req))
 
 		if req.body:
 			sess = DBSession()
 			sess.add(lock)
 
-		resp = dav.DAVLockResponse(lock=lock, base_url=req.host_url, new_file=True)
+		resp = dav.DAVLockResponse(lock=lock, request=req, new_file=True)
 		resp.make_body()
 		return resp
 
@@ -751,7 +834,11 @@ class DAVFileHandler(DAVHandler):
 	@view_config(request_method='MKCOL')
 	def mkcol(self):
 		# Try to create collection on top of existing file
-		raise dav.DAVMethodNotAllowedError(*SUPPORTED_METHODS)
+		raise dav.DAVMethodNotAllowedError(*self.req.dav.methods)
+
+	@view_config(request_method='REPORT')
+	def report(self):
+		return super(DAVFileHandler, self).report()
 
 	@view_config(request_method='MOVE')
 	def move(self):

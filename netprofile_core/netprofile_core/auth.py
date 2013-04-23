@@ -10,6 +10,12 @@ from __future__ import (
 
 import hashlib
 
+from netprofile import PY3
+if PY3:
+	from urllib.parse import unquote
+else:
+	from urllib import unquote
+
 from pyramid.security import (
 	Allow,
 	Deny,
@@ -138,7 +144,9 @@ def find_princs_digest(param, request):
 		return None
 	if not user.a1_hash:
 		return None
-	if request.path.lower() != param['uri'].lower():
+	req_path = unquote(request.path.lower())
+	uri_path = unquote(param['uri'].lower())
+	if req_path != uri_path:
 		return None
 	ha2 = hashlib.md5(('%s:%s' % (request.method, param['uri'])).encode()).hexdigest()
 	data = '%s:%s:%s:%s:%s' % (
@@ -163,6 +171,8 @@ def auth_to_db(event):
 		return
 	rname = request.matched_route.name
 	if rname[0] == '_':
+		return
+	if request.method == 'OPTIONS':
 		return
 
 	sess = DBSession()

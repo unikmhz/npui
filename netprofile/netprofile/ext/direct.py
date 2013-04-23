@@ -309,6 +309,8 @@ class ExtDirectRouter(object):
 				pinst = RootFactory(request)
 				if permission is not None:
 					permission_ok = has_permission(permission, pinst, request)
+				else:
+					permission_ok = has_permission('USAGE', pinst, request)
 				if append_request:
 					params.append(request)
 			else:
@@ -317,6 +319,8 @@ class ExtDirectRouter(object):
 				params.insert(0, instance)
 				if permission is not None:
 					permission_ok = has_permission(permission, instance, request)
+				else:
+					permission_ok = has_permission('USAGE', pinst, request)
 		elif append_request:
 			params.append(request)
 
