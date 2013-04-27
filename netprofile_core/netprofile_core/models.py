@@ -123,7 +123,12 @@ from netprofile.dav import (
 	IDAVFile,
 	IDAVCollection,
 	IDAVPrincipal,
+
+	DAVACEValue,
+	DAVACLValue,
+	DAVPrincipalValue,
 	DAVResourceTypeValue,
+
 	dprops
 )
 from netprofile.ext.filters import (
@@ -792,6 +797,21 @@ class User(Base):
 			vec.append(sg.id)
 		return vec
 
+	def is_member_of(self, grp):
+		if self == grp:
+			return True
+		if not isinstance(grp, Group):
+			return False
+		xgrp = self.group
+		while xgrp:
+			if xgrp == grp:
+				return True
+			xgrp = xgrp.parent
+		for xgrp in self.secondary_groups:
+			if xgrp == grp:
+				return True
+		return False
+
 	def get_root_folder(self):
 		if self.group is None:
 			return None
@@ -878,12 +898,7 @@ class User(Base):
 		return self.login
 
 	def get_uri(self):
-		p = getattr(self, '__parent__', None)
-		if p is None:
-			return [ self.login ]
-		uri = p.get_uri()
-		uri.append(self.login)
-		return uri
+		return [ '', 'users', self.login ]
 
 	def dav_props(self, pset):
 		ret = {}
@@ -894,6 +909,22 @@ class User(Base):
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.login
 		return ret
+
+	def dav_group_members(self, req):
+		return set()
+
+	def dav_memberships(self, req):
+		gmset = set()
+		if self.group:
+			gmset.add(self.group)
+		gmset.update(self.secondary_groups)
+		return gmset
+
+	def dav_alt_uri(self, req):
+		uris = []
+		if self.email:
+			uris.append('mailto:' + self.email)
+		return uris
 
 @implementer(IDAVFile, IDAVPrincipal)
 class Group(Base):
@@ -1106,12 +1137,7 @@ class Group(Base):
 		return self.name
 
 	def get_uri(self):
-		p = getattr(self, '__parent__', None)
-		if p is None:
-			return [ self.name ]
-		uri = p.get_uri()
-		uri.append(self.name)
-		return uri
+		return [ '', 'groups', self.name ]
 
 	def dav_props(self, pset):
 		ret = {}
@@ -1122,6 +1148,29 @@ class Group(Base):
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.name
 		return ret
+
+	def dav_group_members(self, req):
+		gmset = set()
+		gmset.update(self.children)
+		gmset.update(self.users)
+		gmset.update(self.secondary_users)
+		return gmset
+
+	def dav_memberships(self, req):
+		gmset = set()
+		if self.parent:
+			gmset.add(self.parent)
+		return gmset
+
+	def is_member_of(self, grp):
+		if not isinstance(grp, Group):
+			return False
+		xgrp = self
+		while xgrp:
+			if xgrp == grp:
+				return True
+			xgrp = xgrp.parent
+		return False
 
 class Privilege(Base):
 	"""
@@ -2373,17 +2422,36 @@ class FileFolder(Base):
 			except NoResultFound:
 				raise KeyError('No such file or directory')
 		f.__req__ = getattr(self, '__req__', None)
+		f.__plugin__ = getattr(self, '__plugin__', None)
 		f.__parent__ = self
 		return f
 
 	@property
 	def __acl__(self):
 		rights = self.rights
-		ff_user = 'u:%s' % self.user.login
-		ff_group = 'g:%s' % self.group.name
-		can_access_u = has_permission('access', self.__parent__, ff_user)
-		can_access_g = has_permission('access', self.__parent__, ff_group)
-		can_access_o = has_permission('access', self.__parent__, Everyone)
+		if self.user:
+			ff_user = 'u:%s' % self.user.login
+		else:
+			ff_user = 'u:'
+		if self.group:
+			ff_group = 'g:%s' % self.group.name
+		else:
+			ff_group = 'g:'
+		can_access_u = None
+		can_access_g = None
+		can_access_o = None
+		for pacl in self.__parent__.__acl__:
+			if pacl[2] == 'access':
+				if pacl[1] == ff_user:
+					can_access_u = (True if (pacl[0] == Allow) else False)
+				elif pacl[1] == ff_group:
+					can_access_g = (True if (pacl[0] == Allow) else False)
+				elif pacl[1] == Everyone:
+					can_access_o = (True if (pacl[0] == Allow) else False)
+		if can_access_g is None:
+			can_access_g = can_access_o
+		if can_access_u is None:
+			can_access_u = can_access_o
 		return (
 			(Allow if ((rights & F_OWNER_EXEC) and can_access_u) else Deny, ff_user, 'access'),
 			(Allow if ((rights & F_OWNER_READ) and can_access_u) else Deny, ff_user, 'read'),
@@ -2409,6 +2477,72 @@ class FileFolder(Base):
 			DENY_ALL
 		)
 
+	@property
+	def dav_owner(self):
+		return self.user
+
+	@property
+	def dav_group(self):
+		return self.group
+
+	def dav_acl(self, req):
+		if self.user:
+			ff_user = 'u:%s' % self.user.login
+		else:
+			ff_user = 'u:'
+		if self.group:
+			ff_group = 'g:%s' % self.group.name
+		else:
+			ff_group = 'g:'
+		owner_y = []
+		group_y = []
+		other_y = []
+		for ace in self.__acl__:
+			if ace[0] != Allow:
+				continue
+			bucket = None
+			if ace[1] == ff_user:
+				bucket = owner_y
+			elif ace[1] == ff_group:
+				bucket = group_y
+			elif ace[1] == Everyone:
+				bucket = other_y
+			if bucket is None:
+				continue
+			if ace[2] == 'read':
+				bucket.append(dprops.ACL_READ)
+			elif ace[2] == 'write':
+				bucket.extend((
+					dprops.ACL_WRITE,
+					dprops.ACL_WRITE_CONTENT,
+					dprops.ACL_WRITE_PROPERTIES
+				))
+			elif ace[2] == 'create':
+				bucket.append(dprops.ACL_BIND)
+			elif ace[2] == 'delete':
+				bucket.append(dprops.ACL_UNBIND)
+			# TODO: access, execute
+		aces = []
+		if len(owner_y):
+			aces.append(DAVACEValue(
+				DAVPrincipalValue(DAVPrincipalValue.PROPERTY, prop=dprops.OWNER),
+				grant=owner_y,
+				protected=True
+			))
+		if len(group_y):
+			aces.append(DAVACEValue(
+				DAVPrincipalValue(DAVPrincipalValue.PROPERTY, prop=dprops.GROUP),
+				grant=group_y,
+				protected=True
+			))
+		if len(other_y):
+			aces.append(DAVACEValue(
+				DAVPrincipalValue(DAVPrincipalValue.ALL),
+				grant=other_y,
+				protected=True
+			))
+		return DAVACLValue(aces)
+
 	def get_uri(self):
 		p = getattr(self, '__parent__', None)
 		if p is None:
@@ -2429,6 +2563,12 @@ class FileFolder(Base):
 			ret[dprops.DISPLAY_NAME] = self.name
 		if dprops.LAST_MODIFIED in pset:
 			ret[dprops.LAST_MODIFIED] = self.modification_time
+		if dprops.IS_COLLECTION in pset:
+			ret[dprops.IS_COLLECTION] = '1'
+		if dprops.IS_FOLDER in pset:
+			ret[dprops.IS_FOLDER] = 't'
+		if dprops.IS_HIDDEN in pset:
+			ret[dprops.IS_HIDDEN] = '0'
 		custom = pset.difference(dprops.RO_PROPS)
 		for cprop in custom:
 			try:
@@ -2508,6 +2648,7 @@ class FileFolder(Base):
 			ctx.name = name
 
 	def dav_clone(self, req):
+		# TODO: clone meta
 		obj = FileFolder(
 			parent_id=None,
 			name=self.name,
@@ -2523,6 +2664,7 @@ class FileFolder(Base):
 	def dav_children(self):
 		for t in itertools.chain(self.subfolders, self.files):
 			t.__req__ = getattr(self, '__req__', None)
+			t.__plugin__ = getattr(self, '__plugin__', None)
 			t.__parent__ = self
 			yield t
 
@@ -2979,11 +3121,29 @@ class File(Base):
 	@property
 	def __acl__(self):
 		rights = self.rights
-		ff_user = 'u:%s' % self.user.login
-		ff_group = 'g:%s' % self.group.name
-		can_access_u = has_permission('access', self.__parent__, ff_user)
-		can_access_g = has_permission('access', self.__parent__, ff_group)
-		can_access_o = has_permission('access', self.__parent__, Everyone)
+		if self.user:
+			ff_user = 'u:%s' % self.user.login
+		else:
+			ff_user = 'u:'
+		if self.group:
+			ff_group = 'g:%s' % self.group.name
+		else:
+			ff_group = 'g:'
+		can_access_u = None
+		can_access_g = None
+		can_access_o = None
+		for pacl in self.__parent__.__acl__:
+			if pacl[2] == 'access':
+				if pacl[1] == ff_user:
+					can_access_u = (True if (pacl[0] == Allow) else False)
+				elif pacl[1] == ff_group:
+					can_access_g = (True if (pacl[0] == Allow) else False)
+				elif pacl[1] == Everyone:
+					can_access_o = (True if (pacl[0] == Allow) else False)
+		if can_access_g is None:
+			can_access_g = can_access_o
+		if can_access_u is None:
+			can_access_u = can_access_o
 		return (
 			(Allow if ((rights & F_OWNER_READ) and can_access_u) else Deny, ff_user, 'access'),
 			(Allow if ((rights & F_OWNER_READ) and can_access_u) else Deny, ff_user, 'read'),
@@ -3012,6 +3172,68 @@ class File(Base):
 		uri = p.get_uri()
 		uri.append(self.filename)
 		return uri
+
+	@property
+	def dav_owner(self):
+		return self.user
+
+	@property
+	def dav_group(self):
+		return self.group
+
+	def dav_acl(self, req):
+		if self.user:
+			ff_user = 'u:%s' % self.user.login
+		else:
+			ff_user = 'u:'
+		if self.group:
+			ff_group = 'g:%s' % self.group.name
+		else:
+			ff_group = 'g:'
+		owner_y = []
+		group_y = []
+		other_y = []
+		for ace in self.__acl__:
+			if ace[0] != Allow:
+				continue
+			bucket = None
+			if ace[1] == ff_user:
+				bucket = owner_y
+			elif ace[1] == ff_group:
+				bucket = group_y
+			elif ace[1] == Everyone:
+				bucket = other_y
+			if bucket is None:
+				continue
+			if ace[2] == 'read':
+				bucket.append(dprops.ACL_READ)
+			elif ace[2] == 'write':
+				bucket.extend((
+					dprops.ACL_WRITE,
+					dprops.ACL_WRITE_CONTENT,
+					dprops.ACL_WRITE_PROPERTIES
+				))
+			# TODO: access, execute
+		aces = []
+		if len(owner_y):
+			aces.append(DAVACEValue(
+				DAVPrincipalValue(DAVPrincipalValue.PROPERTY, prop=dprops.OWNER),
+				grant=owner_y,
+				protected=True
+			))
+		if len(group_y):
+			aces.append(DAVACEValue(
+				DAVPrincipalValue(DAVPrincipalValue.PROPERTY, prop=dprops.GROUP),
+				grant=group_y,
+				protected=True
+			))
+		if len(other_y):
+			aces.append(DAVACEValue(
+				DAVPrincipalValue(DAVPrincipalValue.ALL),
+				grant=other_y,
+				protected=True
+			))
+		return DAVACLValue(aces)
 
 	def dav_props(self, pset):
 		ret = {}
@@ -3077,6 +3299,7 @@ class File(Base):
 		self.set_from_file(data, req.user)
 
 	def dav_clone(self, req):
+		# TODO: clone meta
 		obj = File(
 			folder_id=self.folder_id,
 			filename=self.filename,

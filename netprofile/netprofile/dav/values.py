@@ -15,7 +15,13 @@ __all__ = [
 	'DAVSupportedLockValue',
 	'DAVLockDiscoveryValue',
 	'DAVSupportedReportSetValue',
-	'DAVSupportedPrivilegeSetValue'
+	'DAVSupportedPrivilegeSetValue',
+	'DAVHrefValue',
+	'DAVHrefListValue',
+
+	'_parse_resource_type',
+	'_parse_href',
+	'_parse_hreflist'
 ]
 
 from lxml import etree
@@ -23,7 +29,7 @@ from lxml import etree
 from . import props as dprops
 
 class DAVValue(object):
-	def render(self, parent):
+	def render(self, req, parent):
 		raise NotImplementedError('No render method defined for DAV value')
 
 class DAVTagValue(DAVValue):
@@ -31,7 +37,7 @@ class DAVTagValue(DAVValue):
 		self.tag = tag
 		self.value = value
 
-	def render(self, parent):
+	def render(self, req, parent):
 		node = etree.SubElement(parent, self.tag)
 		if self.value is not None:
 			node.text = self.value
@@ -40,15 +46,19 @@ class DAVResourceTypeValue(DAVValue):
 	def __init__(self, *types):
 		self.types = types
 
-	def render(self, parent):
+	def render(self, req, parent):
 		for t in self.types:
 			etree.SubElement(parent, t)
+
+def _parse_resource_type(el):
+	ret = [item.tag for item in el]
+	return DAVResourceTypeValue(*ret)
 
 class DAVSupportedLockValue(DAVValue):
 	def __init__(self, allow_locks=True):
 		self.allow_locks = allow_locks
 
-	def render(self, parent):
+	def render(self, req, parent):
 		if not self.allow_locks:
 			return
 
@@ -67,12 +77,11 @@ class DAVSupportedLockValue(DAVValue):
 		etree.SubElement(lt_sh, dprops.WRITE)
 
 class DAVLockDiscoveryValue(DAVValue):
-	def __init__(self, req, locks, show_token=False):
-		self.req = req
+	def __init__(self, locks, show_token=False):
 		self.locks = locks
 		self.show_token = show_token
 
-	def render(self, parent):
+	def render(self, req, parent):
 		for lock in self.locks:
 			active = etree.SubElement(parent, dprops.ACTIVE_LOCK)
 			el = etree.SubElement(active, dprops.LOCK_SCOPE)
@@ -82,8 +91,7 @@ class DAVLockDiscoveryValue(DAVValue):
 
 			lockroot = etree.SubElement(active, dprops.LOCK_ROOT)
 			el = etree.SubElement(lockroot, dprops.HREF)
-			#el.text = '/'.join((self.base_uri, lock.uri))
-			el.text = self.req.route_url('core.dav', traverse=('/' + lock.uri))
+			el.text = req.dav.uri(req, '/' + lock.uri)
 
 			el = etree.SubElement(active, dprops.DEPTH)
 			if lock.depth == dprops.DEPTH_INFINITY:
@@ -105,7 +113,7 @@ class DAVSupportedReportSetValue(DAVValue):
 	def __init__(self, reports):
 		self.reports = reports
 
-	def render(self, parent):
+	def render(self, req, parent):
 		for rep in self.reports:
 			suprep = etree.SubElement(parent, dprops.SUPPORTED_REPORT)
 			el = etree.SubElement(suprep, dprops.REPORT)
@@ -114,4 +122,55 @@ class DAVSupportedReportSetValue(DAVValue):
 class DAVSupportedPrivilegeSetValue(DAVValue):
 	def __init__(self, privileges):
 		self.priv = privileges
+
+	def render(self, req, parent):
+		for p in self.priv:
+			p.render(req, parent)
+
+class DAVHrefValue(DAVValue):
+	def __init__(self, value, prefix=False):
+		self.value = value
+		self.prefix = prefix
+
+	def render(self, req, parent):
+		href = etree.SubElement(parent, dprops.HREF)
+		val = self.value
+		if not issubclass(val.__class__, str):
+			href.text = req.dav.node_uri(req, val)
+		elif self.prefix:
+			href.text = req.dav.uri(req) + val
+		else:
+			href.text = val
+
+def _parse_href(el):
+	try:
+		el = el[0]
+	except IndexError:
+		return None
+	if el.tag != dprops.HREF:
+		return None
+	return DAVHrefValue(el.text.strip())
+
+class DAVHrefListValue(DAVValue):
+	def __init__(self, values, prefix=False):
+		self.values = values
+		self.prefix = prefix
+
+	def render(self, req, parent):
+		pfx = req.dav.uri(req)
+		for val in self.values:
+			el = etree.SubElement(parent, dprops.HREF)
+			if not isinstance(val, str):
+				el.text = req.dav.node_uri(req, val)
+			elif self.prefix:
+				el.text = pfx + val
+			else:
+				el.text = val
+
+def _parse_hreflist(el):
+	ret = []
+	for href in el:
+		if href.tag == dprops.HREF:
+			ret.append(href.text.strip())
+	return DAVHrefListValue(ret)
 

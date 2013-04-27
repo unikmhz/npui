@@ -17,8 +17,10 @@ __all__ = [
 from netprofile import PY3
 if PY3:
 	from urllib.parse import urlparse
+	from urllib.request import unquote
 else:
 	from urlparse import urlparse
+	from urllib import unquote
 
 from pyramid.traversal import (
 	traverse,
@@ -36,6 +38,11 @@ from netprofile.common.modules import IModuleManager
 from . import props as dprops
 from .interfaces import IDAVCollection
 from .values import DAVResourceTypeValue
+from .acls import (
+	DAVACEValue,
+	DAVACLValue,
+	DAVPrincipalValue
+)
 
 class DAVTraverser(ResourceTreeTraverser):
 	VIEW_SELECTOR = None
@@ -60,6 +67,15 @@ class DAVRoot(object):
 			DENY_ALL
 		)
 
+	def dav_acl(self, req):
+		return DAVACLValue((
+			DAVACEValue(
+				DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
+				grant=(dprops.ACL_READ,),
+				protected=True
+			),
+		))
+
 	def __getitem__(self, name):
 		plug = self.plugs[name](self.req)
 		plug.__name__ = name
@@ -83,6 +99,12 @@ class DAVRoot(object):
 			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.COLLECTION)
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = 'dav'
+		if dprops.IS_COLLECTION in pset:
+			ret[dprops.IS_COLLECTION] = '1'
+		if dprops.IS_FOLDER in pset:
+			ret[dprops.IS_FOLDER] = 't'
+		if dprops.IS_HIDDEN in pset:
+			ret[dprops.IS_HIDDEN] = '0'
 		return ret
 
 	def dav_create(self, req, name, rtype=None, props=None, data=None):
@@ -90,10 +112,15 @@ class DAVRoot(object):
 
 	def resolve_uri(self, uri, exact=False):
 		url = urlparse(uri)
-		if url.netloc != self.req.host:
+		url_loc = url.netloc
+		if not url.port:
+			url_loc += ':80'
+		if url_loc != self.req.host:
 			raise ValueError('Alien URL supplied.')
-		tr = traverse(self, url.path.strip('/').split('/')[1:])
-		if exact and (tr.view_name or (len(tr.subpath) > 0)):
+		path = url.path.strip('/').split('/')[1:]
+		path = [unquote(n) for n in path]
+		tr = traverse(self, path)
+		if exact and (tr['view_name'] or (len(tr['subpath']) > 0)):
 			raise ValueError('Object not found.')
 		return tr
 
@@ -120,10 +147,20 @@ class DAVPlugin(object):
 			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.COLLECTION)
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.__name__
+		if dprops.IS_COLLECTION in pset:
+			ret[dprops.IS_COLLECTION] = '1'
+		if dprops.IS_FOLDER in pset:
+			ret[dprops.IS_FOLDER] = 't'
+		if dprops.IS_HIDDEN in pset:
+			ret[dprops.IS_HIDDEN] = '0'
 		return ret
 
 	def dav_clone(self, req):
 		raise DAVForbiddenError('Can\'t copy plug-in root folder.')
+
+	@property
+	def __plugin__(self):
+		return self
 
 	@property
 	def __acl__(self):
@@ -132,4 +169,13 @@ class DAVPlugin(object):
 			(Allow, Authenticated, 'read'),
 			DENY_ALL
 		)
+
+	def dav_acl(self, req):
+		return DAVACLValue((
+			DAVACEValue(
+				DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
+				grant=(dprops.ACL_READ,),
+				protected=True
+			),
+		))
 

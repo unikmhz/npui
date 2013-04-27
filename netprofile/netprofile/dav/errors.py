@@ -41,7 +41,7 @@ class DAVError(RuntimeError, DAVValue):
 		super(DAVError, self).__init__(*args)
 		self.status = status
 
-	def render(self, parent):
+	def render(self, req, parent):
 		pass
 
 	def response(self, resp):
@@ -64,14 +64,14 @@ class DAVNotFoundError(DAVError):
 		super(DAVNotFoundError, self).__init__(*args, status=404)
 
 class DAVInvalidResourceTypeError(DAVForbiddenError):
-	def render(self, parent):
+	def render(self, req, parent):
 		etree.SubElement(parent, dprops.VALID_RESOURCETYPE)
-		super(DAVInvalidResourceTypeError, self).render(parent)
+		super(DAVInvalidResourceTypeError, self).render(req, parent)
 
 class DAVReportNotSupportedError(DAVForbiddenError):
-	def render(self, parent):
+	def render(self, req, parent):
 		etree.SubElement(parent, dprops.SUPPORTED_REPORT)
-		super(DAVReportNotSupportedError, self).render(parent)
+		super(DAVReportNotSupportedError, self).render(req, parent)
 
 class DAVNeedPrivilegesError(DAVForbiddenError):
 	def __init__(self, uri, privileges):
@@ -85,16 +85,19 @@ class DAVNeedPrivilegesError(DAVForbiddenError):
 		)
 		super(DAVNeedPrivilegesError, self).__init__(msg)
 
-	def render(self, parent):
+	def render(self, req, parent):
 		need = etree.SubElement(parent, dprops.NEED_PRIVILEGES)
 		for p in self.priv:
 			res = etree.SubElement(need, dprops.RESOURCE)
 			el = etree.SubElement(res, dprops.HREF)
-			# Need absolute URIs
-			el.text = self.uri
+			if isinstance(self.uri, str):
+				# Need absolute URIs
+				el.text = req.dav.uri(req) + self.uri
+			else:
+				el.text = req.dav.node_uri(req, self.uri)
 			el = etree.SubElement(res, dprops.PRIVILEGE)
-			el.text = p
-		super(DAVNeedPrivilegesError, self).render(parent)
+			etree.SubElement(el, p)
+		super(DAVNeedPrivilegesError, self).render(req, parent)
 
 class DAVMethodNotAllowedError(DAVError):
 	def __init__(self, *args):
@@ -105,14 +108,14 @@ class DAVConflictError(DAVError):
 		super(DAVConflictError, self).__init__(*args, status=409)
 
 class DAVLockTokenMatchError(DAVConflictError):
-	def render(self, parent):
+	def render(self, req, parent):
 		etree.SubElement(parent, dprops.LOCK_TOKEN_REQUEST_URI)
-		super(DAVLockTokenMatchError, self).render(parent)
+		super(DAVLockTokenMatchError, self).render(req, parent)
 
 class DAVACEConflictError(DAVConflictError):
-	def render(self, parent):
+	def render(self, req, parent):
 		etree.SubElement(parent, dprops.NO_ACE_CONFLICT)
-		super(DAVACEConflictError, self).render(parent)
+		super(DAVACEConflictError, self).render(req, parent)
 
 class DAVPreconditionError(DAVError):
 	def __init__(self, *args, header=None):
@@ -120,19 +123,19 @@ class DAVPreconditionError(DAVError):
 		self.header = header
 
 class DAVNoAbstractPrivilegeError(DAVPreconditionError):
-	def render(self, parent):
+	def render(self, req, parent):
 		etree.subElement(parent, dprops.NO_ABSTRACT)
-		super(DAVNoAbstractPrivilegeError, self).render(parent)
+		super(DAVNoAbstractPrivilegeError, self).render(req, parent)
 
 class DAVNotRecognizedPrincipalError(DAVPreconditionError):
-	def render(self, parent):
+	def render(self, req, parent):
 		etree.subElement(parent, dprops.RECOGNIZED_PRINCIPAL)
-		super(DAVNotRecognizedPrincipalError, self).render(parent)
+		super(DAVNotRecognizedPrincipalError, self).render(req, parent)
 
 class DAVNotSupportedPrivilegeError(DAVPreconditionError):
-	def render(self, parent):
+	def render(self, req, parent):
 		etree.subElement(parent, dprops.NOT_SUPPORTED_PRIVILEGE)
-		super(DAVNotSupportedPrivilegeError, self).render(parent)
+		super(DAVNotSupportedPrivilegeError, self).render(req, parent)
 
 class DAVUnsupportedMediaTypeError(DAVError):
 	def __init__(self, *args):
@@ -143,18 +146,20 @@ class DAVLockedError(DAVError):
 		super(DAVLockedError, self).__init__(*args, status=423)
 		self.lock = lock
 
-	def render(self, parent):
+	def render(self, req, parent):
 		err = etree.SubElement(parent, dprops.LOCK_TOKEN_SUBMITTED)
 		if self.lock:
 			href = etree.SubElement(err, dprops.HREF)
 			href.text = self.lock.uri
+		super(DAVLockedError, self).render(req, parent)
 
 class DAVConflictingLockError(DAVLockedError):
-	def render(self, parent):
+	def render(self, req, parent):
 		err = etree.SubElement(parent, dprops.NO_CONFLICTING_LOCK)
 		if self.lock:
 			href = etree.SubElement(err, dprops.HREF)
 			href.text = self.lock.uri
+		super(DAVConflictingLockError, self).render(req, parent)
 
 class DAVNotImplementedError(DAVError):
 	def __init__(self, *args):

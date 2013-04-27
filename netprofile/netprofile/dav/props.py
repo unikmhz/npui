@@ -12,13 +12,18 @@ from lxml import etree
 
 STANDARD_PROPS = set()
 
-NS_DAV = 'DAV:'
+NS_XML        = 'http://www.w3.org/XML/1998/namespace'
+NS_DAV        = 'DAV:'
 NS_NETPROFILE = 'http://netprofile.ru/ns/dav/'
-NS_APACHE = 'http://apache.org/dav/props/'
+NS_APACHE     = 'http://apache.org/dav/props/'
+NS_CALDAV     = 'urn:ietf:params:xml:ns:caldav'
+NS_MSXMLDATA  = 'urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/'
 
 NS_MAP = {
 	'd'  : NS_DAV,
+	'cd' : NS_CALDAV,
 	'ap' : NS_APACHE,
+#	'dt' : NS_MSXMLDATA,
 	'np' : NS_NETPROFILE
 }
 
@@ -26,6 +31,9 @@ def _TAG(ns, name):
 	return '{%s}%s' % (ns, name)
 
 def _ACL(ns, name):
+	return '{%s}%s' % (ns, name)
+
+def _ATTR(ns, name):
 	return '{%s}%s' % (ns, name)
 
 def _PROP(ns, name):
@@ -39,17 +47,27 @@ DEPTH_INFINITY = -1
 # Property tags
 ACL                     = _PROP(NS_DAV, 'acl')
 ACL_RESTRICTIONS        = _PROP(NS_DAV, 'acl-restrictions')
+ALTERNATE_URI_SET       = _PROP(NS_DAV, 'alternate-URI-set')
 CONTENT_LENGTH          = _PROP(NS_DAV, 'getcontentlength')
 CONTENT_TYPE            = _PROP(NS_DAV, 'getcontenttype')
 CREATION_DATE           = _PROP(NS_DAV, 'creationdate')
+CUR_USER_PRINCIPAL      = _PROP(NS_DAV, 'current-user-principal')
 CUR_USER_PRIVILEGE_SET  = _PROP(NS_DAV, 'current-user-privilege-set')
 DISPLAY_NAME            = _PROP(NS_DAV, 'displayname')
 ETAG                    = _PROP(NS_DAV, 'getetag')
 EXECUTABLE              = _PROP(NS_APACHE, 'executable')
+GROUP                   = _PROP(NS_DAV, 'group')
+GROUP_MEMBER_SET        = _PROP(NS_DAV, 'group-member-set')
+GROUP_MEMBERSHIP        = _PROP(NS_DAV, 'group-membership')
 INHERITED_ACL_SET       = _PROP(NS_DAV, 'inherited-acl-set')
+IS_COLLECTION           = _PROP(NS_DAV, 'iscollection')
+IS_FOLDER               = _PROP(NS_DAV, 'isFolder')
+IS_HIDDEN               = _PROP(NS_DAV, 'ishidden')
 LAST_MODIFIED           = _PROP(NS_DAV, 'getlastmodified')
 LOCK_DISCOVERY          = _PROP(NS_DAV, 'lockdiscovery')
+OWNER                   = _PROP(NS_DAV, 'owner')
 PRINCIPAL_URL           = _PROP(NS_DAV, 'principal-URL')
+PRINCIPAL_COLL_SET      = _PROP(NS_DAV, 'principal-collection-set')
 QUOTA_AVAIL_BYTES       = _PROP(NS_DAV, 'quota-available-bytes')
 QUOTA_USED_BYTES        = _PROP(NS_DAV, 'quota-used-bytes')
 RESOURCE_TYPE           = _PROP(NS_DAV, 'resourcetype')
@@ -63,14 +81,24 @@ COLLECTION              = _TAG(NS_DAV, 'collection')
 PRINCIPAL               = _TAG(NS_DAV, 'principal')
 
 # Generic tags
+ABSTRACT                = _TAG(NS_DAV, 'abstract')
+ACE                     = _TAG(NS_DAV, 'ace')
 ACTIVE_LOCK             = _TAG(NS_DAV, 'activelock')
 ALL_PROPS               = _TAG(NS_DAV, 'allprop')
+AUTHENTICATED           = _TAG(NS_DAV, 'authenticated')
+DENY                    = _TAG(NS_DAV, 'deny')
+DENY_BEFORE_GRANT       = _TAG(NS_DAV, 'deny-before-grant')
 DEPTH                   = _TAG(NS_DAV, 'depth')
+DESCRIPTION             = _TAG(NS_DAV, 'description')
 ERROR                   = _TAG(NS_DAV, 'error')
 EXCLUSIVE               = _TAG(NS_DAV, 'exclusive')
 EXPAND_PROPERTY         = _TAG(NS_DAV, 'expand-property')
+GRANT                   = _TAG(NS_DAV, 'grant')
+GRANT_ONLY              = _TAG(NS_DAV, 'grant-only')
 HREF                    = _TAG(NS_DAV, 'href')
 INCLUDE                 = _TAG(NS_DAV, 'include')
+INHERITED               = _TAG(NS_DAV, 'inherited')
+INVERT                  = _TAG(NS_DAV, 'invert')
 LOCK_ENTRY              = _TAG(NS_DAV, 'lockentry')
 LOCK_ROOT               = _TAG(NS_DAV, 'lockroot')
 LOCK_SCOPE              = _TAG(NS_DAV, 'lockscope')
@@ -78,26 +106,31 @@ LOCK_TOKEN              = _TAG(NS_DAV, 'locktoken')
 LOCK_TYPE               = _TAG(NS_DAV, 'locktype')
 MKCOL                   = _TAG(NS_DAV, 'mkcol')
 MULTI_STATUS            = _TAG(NS_DAV, 'multistatus')
-OWNER                   = _TAG(NS_DAV, 'owner')
+NO_INVERT               = _TAG(NS_DAV, 'no-invert')
 PRINC_PROP_SEARCH       = _TAG(NS_DAV, 'principal-property-search')
 PRINC_SEARCH_PROP_SET   = _TAG(NS_DAV, 'principal-search-property-set')
 PRIVILEGE               = _TAG(NS_DAV, 'privilege')
 PROP                    = _TAG(NS_DAV, 'prop')
+PROPERTY                = _TAG(NS_DAV, 'property')
 PROPERTY_UPDATE         = _TAG(NS_DAV, 'propertyupdate')
 PROPFIND                = _TAG(NS_DAV, 'propfind')
 PROPNAME                = _TAG(NS_DAV, 'propname')
 PROPSTAT                = _TAG(NS_DAV, 'propstat')
+PROTECTED               = _TAG(NS_DAV, 'protected')
 REMOVE                  = _TAG(NS_DAV, 'remove')
 REPORT                  = _TAG(NS_DAV, 'report')
+REQUIRED_PRINCIPAL      = _TAG(NS_DAV, 'required-principal')
 RESOURCE                = _TAG(NS_DAV, 'resource')
 RESPONSE                = _TAG(NS_DAV, 'response')
 RESPONSE_DESCRIPTION    = _TAG(NS_DAV, 'responsedescription')
+SELF                    = _TAG(NS_DAV, 'self')
 SET                     = _TAG(NS_DAV, 'set')
 SHARED                  = _TAG(NS_DAV, 'shared')
 STATUS                  = _TAG(NS_DAV, 'status')
 SUPPORTED_PRIVILEGE     = _TAG(NS_DAV, 'supported-privilege')
 SUPPORTED_REPORT        = _TAG(NS_DAV, 'supported-report')
-TIMEOUT                 = _TAG(NS_DAV, 'limeout')
+TIMEOUT                 = _TAG(NS_DAV, 'timeout')
+UNAUTHENTICATED         = _TAG(NS_DAV, 'unauthenticated')
 WRITE                   = _TAG(NS_DAV, 'write')
 
 # Error tags
@@ -123,6 +156,10 @@ ACL_WRITE               = _ACL(NS_DAV, 'write')
 ACL_WRITE_ACL           = _ACL(NS_DAV, 'write-acl')
 ACL_WRITE_CONTENT       = _ACL(NS_DAV, 'write-content')
 ACL_WRITE_PROPERTIES    = _ACL(NS_DAV, 'write-properties')
+
+# Attributes
+#ATTR_DT                 = _ATTR(NS_MSXMLDATA, 'dt')
+ATTR_LANG               = _ATTR(NS_XML, 'lang')
 
 DEFAULT_PROPS = frozenset((
 	CONTENT_LENGTH,

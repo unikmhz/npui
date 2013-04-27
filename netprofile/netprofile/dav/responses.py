@@ -27,22 +27,27 @@ from . import props as dprops
 from .errors import DAVError
 from .values import DAVLockDiscoveryValue
 
-class DAVUnlockResponse(Response):
+class DAVResponse(Response):
+	def __init__(self, *args, request=None, **kwargs):
+		super(DAVResponse, self).__init__(*args, **kwargs)
+		self.req = request
+
+class DAVUnlockResponse(DAVResponse):
 	def __init__(self, *args, **kwargs):
 		super(DAVUnlockResponse, self).__init__(*args, **kwargs)
 		self.status = 204
 
-class DAVOverwriteResponse(Response):
+class DAVOverwriteResponse(DAVResponse):
 	def __init__(self, *args, **kwargs):
 		super(DAVOverwriteResponse, self).__init__(*args, **kwargs)
 		self.status = 204
 
-class DAVDeleteResponse(Response):
+class DAVDeleteResponse(DAVResponse):
 	def __init__(self, *args, **kwargs):
 		super(DAVDeleteResponse, self).__init__(*args, **kwargs)
 		self.status = 204
 
-class DAVETagResponse(Response):
+class DAVETagResponse(DAVResponse):
 	def __init__(self, *args, etag=None, **kwargs):
 		super(DAVETagResponse, self).__init__(*args, **kwargs)
 		self.etag = etag
@@ -53,7 +58,7 @@ class DAVCreateResponse(DAVETagResponse):
 		super(DAVCreateResponse, self).__init__(*args, etag=etag, **kwargs)
 		self.status = 201
 
-class DAVXMLResponse(Response):
+class DAVXMLResponse(DAVResponse):
 	def __init__(self, *args, nsmap=None, **kwargs):
 		super(DAVXMLResponse, self).__init__(*args, **kwargs)
 		self.content_type = 'application/xml'
@@ -62,12 +67,11 @@ class DAVXMLResponse(Response):
 		self.nsmap = nsmap
 
 	def make_body(self):
-		# TODO: pretty-print only when debugging
 		self.body = etree.tostring(
 			self.xml_root,
 			encoding='utf-8',
 			xml_declaration=True,
-			pretty_print=True,
+			pretty_print=self.req.debug_enabled,
 			with_tail=False
 		)
 
@@ -86,7 +90,7 @@ class DAVErrorResponse(DAVXMLResponse):
 		if self.nsmap:
 			ns_map.update(self.nsmap)
 		self.xml_root = etree.Element(dprops.ERROR, nsmap=ns_map)
-		self.err.render(self.xml_root)
+		self.err.render(self.req, self.xml_root)
 
 	def make_body(self):
 		self.err.response(self)
@@ -106,7 +110,7 @@ class DAVMultiStatusResponse(DAVXMLResponse):
 		self.xml_root.append(resp_el.to_xml())
 
 class DAVLockResponse(DAVXMLResponse):
-	def __init__(self, *args, lock=None, request=None, new_file=False, **kwargs):
+	def __init__(self, *args, lock=None, new_file=False, **kwargs):
 		super(DAVLockResponse, self).__init__(*args, **kwargs)
 		if new_file:
 			self.status = 201
@@ -120,6 +124,6 @@ class DAVLockResponse(DAVXMLResponse):
 		if lock:
 			self.headers.add('Lock-Token', '<opaquelocktoken:%s>' % (lock.token,))
 			ld = etree.SubElement(self.xml_root, dprops.LOCK_DISCOVERY)
-			val = DAVLockDiscoveryValue(request, (lock,), show_token=True)
-			val.render(ld)
+			val = DAVLockDiscoveryValue((lock,), show_token=True)
+			val.render(self.req, ld)
 

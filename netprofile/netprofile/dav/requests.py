@@ -120,8 +120,8 @@ class DAVMkColRequest(DAVRequest):
 		req = self.req
 		ret = req.dav.make_collection(req, self.ctx, self.new_name, rtype, props)
 		if ret is None:
-			return DAVCreateResponse()
-		resp = DAVMultiStatusResponse()
+			return DAVCreateResponse(request=req)
+		resp = DAVMultiStatusResponse(request=req)
 #		resp.add_element(DAVResponseElement(*ret))
 		resp.make_body()
 		return resp

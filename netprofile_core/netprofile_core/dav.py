@@ -12,7 +12,6 @@ import io
 import re
 import itertools
 import logging
-import datetime as dt
 from zope.interface import implementer
 
 from pyramid.view import (
@@ -77,7 +76,7 @@ def dav_decorator(view):
 				raise dav.DAVNotAuthenticatedError()
 			return view(context, request)
 		except dav.DAVError as e:
-			resp = dav.DAVErrorResponse(error=e)
+			resp = dav.DAVErrorResponse(request=request, error=e)
 			resp.www_authenticate = request.response.www_authenticate
 			resp.make_body()
 			return resp
@@ -113,7 +112,30 @@ class DAVPluginVFS(dav.DAVPlugin):
 				raise KeyError('No such file or directory')
 		f.__req__ = self.req
 		f.__parent__ = self
+		f.__plugin__ = self
 		return f
+
+	@property
+	def dav_owner(self):
+		user = self.req.user
+		root = None
+		if user:
+			root = user.group.effective_root_folder
+		if root:
+			return root.user
+		else:
+			return DBSession().query(User).get(global_setting('vfs_root_uid'))
+
+	@property
+	def dav_group(self):
+		user = self.req.user
+		root = None
+		if user:
+			root = user.group.effective_root_folder
+		if root:
+			return root.group
+		else:
+			return DBSession().query(Group).get(global_setting('vfs_root_gid'))
 
 	@property
 	def __acl__(self):
@@ -124,6 +146,7 @@ class DAVPluginVFS(dav.DAVPlugin):
 			ff_user = 'u:%s' % root.user.login
 			ff_group = 'g:%s' % root.group.name
 		else:
+			sess = DBSession()
 			try:
 				root_user = sess.query(User).get(global_setting('vfs_root_uid'))
 				root_group = sess.query(Group).get(global_setting('vfs_root_gid'))
@@ -156,6 +179,72 @@ class DAVPluginVFS(dav.DAVPlugin):
 
 			DENY_ALL
 		)
+
+	def dav_acl(self, req):
+		user = self.req.user
+		root = user.group.effective_root_folder
+		if root:
+			rights = root.rights
+			ff_user = 'u:%s' % root.user.login
+			ff_group = 'g:%s' % root.group.name
+		else:
+			sess = DBSession()
+			try:
+				root_user = sess.query(User).get(global_setting('vfs_root_uid'))
+				root_group = sess.query(Group).get(global_setting('vfs_root_gid'))
+			except NoResultFound:
+				return None
+			ff_user = 'u:%s' % root_user.login
+			ff_group = 'g:%s' % root_group.name
+			rights = global_setting('vfs_root_rights')
+		owner_y = []
+		group_y = []
+		other_y = []
+		for ace in self.__acl__:
+			if ace[0] != Allow:
+				continue
+			bucket = None
+			if ace[1] == ff_user:
+				bucket = owner_y
+			elif ace[1] == ff_group:
+				bucket = group_y
+			elif ace[1] == Everyone:
+				bucket = other_y
+			if bucket is None:
+				continue
+			if ace[2] == 'read':
+				bucket.append(dprops.ACL_READ)
+			elif ace[2] == 'write':
+				bucket.extend((
+					dprops.ACL_WRITE,
+					dprops.ACL_WRITE_CONTENT,
+					dprops.ACL_WRITE_PROPERTIES
+				))
+			elif ace[2] == 'create':
+				bucket.append(dprops.ACL_BIND)
+			elif ace[2] == 'delete':
+				bucket.append(dprops.ACL_UNBIND)
+			# TODO: access, execute
+		aces = []
+		if len(owner_y):
+			aces.append(dav.DAVACEValue(
+				dav.DAVPrincipalValue(dav.DAVPrincipalValue.PROPERTY, prop=dprops.OWNER),
+				grant=owner_y,
+				protected=True
+			))
+		if len(group_y):
+			aces.append(dav.DAVACEValue(
+				dav.DAVPrincipalValue(dav.DAVPrincipalValue.PROPERTY, prop=dprops.GROUP),
+				grant=group_y,
+				protected=True
+			))
+		if len(other_y):
+			aces.append(dav.DAVACEValue(
+				dav.DAVPrincipalValue(dav.DAVPrincipalValue.ALL),
+				grant=other_y,
+				protected=True
+			))
+		return dav.DAVACLValue(aces)
 
 	def dav_create(self, req, name, rtype=None, props=None, data=None):
 		# TODO: externalize type resolution
@@ -213,7 +302,17 @@ class DAVPluginVFS(dav.DAVPlugin):
 		):
 			t.__req__ = self.req
 			t.__parent__ = self
+			t.__plugin__ = self
 			yield t
+
+	def acl_restrictions(self):
+		cls = dav.DAVACLRestrictions
+		princ = dav.DAVPrincipalValue
+		return cls(cls.GRANT_ONLY | cls.NO_INVERT, required=(
+			princ(princ.PROPERTY, prop=dprops.OWNER),
+			princ(princ.PROPERTY, prop=dprops.GROUP),
+			princ(princ.ALL)
+		))
 
 @implementer(dav.IDAVCollection)
 class DAVPluginUsers(dav.DAVPlugin):
@@ -230,6 +329,7 @@ class DAVPluginUsers(dav.DAVPlugin):
 			raise KeyError('No such file or directory')
 		u.__req__ = self.req
 		u.__parent__ = self
+		u.__plugin__ = self
 		return u
 
 	@property
@@ -238,6 +338,7 @@ class DAVPluginUsers(dav.DAVPlugin):
 		for u in sess.query(User):
 			u.__req__ = self.req
 			u.__parent__ = self
+			u.__plugin__ = self
 			yield u
 
 @implementer(dav.IDAVCollection)
@@ -255,6 +356,7 @@ class DAVPluginGroups(dav.DAVPlugin):
 			raise KeyError('No such file or directory')
 		g.__req__ = self.req
 		g.__parent__ = self
+		g.__plugin__ = self
 		return g
 
 	@property
@@ -263,6 +365,7 @@ class DAVPluginGroups(dav.DAVPlugin):
 		for g in sess.query(Group):
 			g.__req__ = self.req
 			g.__parent__ = self
+			g.__plugin__ = self
 			yield g
 
 @notfound_view_config(request_method='OPTIONS')
@@ -299,23 +402,24 @@ class DAVHandler(object):
 
 		# TODO: Move this into separe method when SYNC comes around
 		if ctx:
-			path = req.dav.get_ctx_path(ctx)
+			path = req.dav.ctx_path(ctx)
 		else:
-			path = req.dav.get_path(req.path)
+			path = req.dav.path(req.path)
 		oldlocks = []
 		meth = req.method
+		dest_url = req.headers.get('Destination')
 		if meth == 'DELETE':
 			oldlocks.extend(req.dav.get_locks(path, True))
 		elif meth in {'MKCOL', 'MKCALENDAR', 'PROPPATCH', 'PUT', 'PATCH'}:
 			oldlocks.extend(req.dav.get_locks(path, False))
 		elif meth == 'MOVE':
 			oldlocks.extend(req.dav.get_locks(path, True))
-			dest = req.dav.get_path(req.headers.get('Destination'))
+			dest = req.dav.path(dest_url)
 			if not dest:
 				raise KeyError('Destination')
 			oldlocks.extend(req.dav.get_locks(dest, False))
 		elif meth == 'COPY':
-			dest = req.dav.get_path(req.headers.get('Destination'))
+			dest = req.dav.path(dest_url)
 			if not dest:
 				raise KeyError('Destination')
 			oldlocks.extend(req.dav.get_locks(dest, False))
@@ -376,7 +480,7 @@ class DAVHandler(object):
 					else:
 						root = dav.DAVRoot(req)
 						try:
-							full_uri = req.route_url('core.dav', traverse=(root.get_uri() + uri))
+							full_uri = req.route_url('core.dav', traverse=(root.get_uri() + [uri]))
 							tr = root.resolve_uri(full_uri, True)
 							check_etag = '"%s"' % tr.context.etag
 						except (ValueError, AttributeError):
@@ -457,9 +561,9 @@ class DAVHandler(object):
 			else:
 				uri = m.group('uri')
 				if uri:
-					uri = req.dav.get_path(uri)
+					uri = req.dav.path(uri)
 				else:
-					uri = req.dav.get_path(req.url)
+					uri = req.dav.path(req.url)
 				if not uri:
 					raise dav.DAVForbiddenError('Invalid URI supplied in If: header.')
 				last = {
@@ -474,15 +578,23 @@ class DAVHandler(object):
 				ret.append(last)
 		return ret
 
+	def acl(self):
+		req = self.req
+		ctx = req.context
+		req.dav.user_acl(req, ctx, dprops.ACL_WRITE_ACL)
+		# TODO: write this
+
 	def proppatch(self):
 		req = self.req
-		self.conditional_request(req.context)
+		ctx = req.context
+		req.dav.user_acl(req, ctx, dprops.ACL_WRITE_PROPERTIES)
+		self.conditional_request(ctx)
 		ppreq = dav.DAVPropPatchRequest(req)
 		pdict = ppreq.get_props()
-		props = req.dav.set_node_props(req, req.context, pdict)
+		props = req.dav.set_node_props(req, ctx, pdict)
 		# TODO: handle 'minimal' flags
-		resp = dav.DAVMultiStatusResponse()
-		el = dav.DAVResponseElement(req, req.context, props)
+		resp = dav.DAVMultiStatusResponse(request=req)
+		el = dav.DAVResponseElement(req, ctx, props)
 		resp.add_element(el)
 		resp.make_body()
 		resp.vary = ('Brief', 'Prefer')
@@ -490,13 +602,16 @@ class DAVHandler(object):
 
 	def delete(self):
 		req = self.req
-		self.conditional_request(req.context)
-		req.dav.delete(req, req.context)
-		resp = dav.DAVDeleteResponse()
+		ctx = req.context
+		req.dav.user_acl(req, ctx.__parent__, dprops.ACL_UNBIND)
+		self.conditional_request(ctx)
+		req.dav.delete(req, ctx)
+		resp = dav.DAVDeleteResponse(request=req)
 		return resp
 
 	def propfind(self):
 		req = self.req
+		req.dav.user_acl(req, req.context, dprops.ACL_READ) # FIXME: parent
 		pfreq = dav.DAVPropFindRequest(req)
 		pset = pfreq.get_props()
 		depth = req.dav.get_http_depth(req, 1)
@@ -504,7 +619,7 @@ class DAVHandler(object):
 			depth = 1
 		props = req.dav.get_path_props(req, req.context, pset, depth)
 		# TODO: handle 'minimal' flags
-		resp = dav.DAVMultiStatusResponse()
+		resp = dav.DAVMultiStatusResponse(request=req)
 		for ctx, node_props in props.items():
 			el = dav.DAVResponseElement(self.req, ctx, node_props)
 			resp.add_element(el)
@@ -516,34 +631,45 @@ class DAVHandler(object):
 	def move(self):
 		req = self.req
 		ctx = req.context
+		req.dav.user_acl(req, ctx, dprops.ACL_READ)
+		req.dav.user_acl(req, ctx.__parent__, dprops.ACL_UNBIND)
 		self.conditional_request(ctx)
 		parent, node, node_name = self.prepare_copy_move()
+		if ctx.__plugin__.__name__ != parent.__plugin__.__name__:
+			raise dav.DAVForbiddenError('Can\'t move a node between plugins.')
 		if node == ctx:
 			raise dav.DAVForbiddenError('Can\'t move a node onto itself.')
+		req.dav.user_acl(req, parent, dprops.ACL_BIND)
 		over = False
 		if node:
 			over = True
+			req.dav.user_acl(req, parent, dprops.ACL_UNBIND)
 			req.dav.delete(req, node)
 		appender = getattr(parent, 'dav_append', None)
 		if appender is None:
 			raise dav.DAVNotImplementedError('Unable to move node.')
 		appender(req, ctx, node_name)
 		if over:
-			resp = dav.DAVOverwriteResponse()
+			resp = dav.DAVOverwriteResponse(request=req)
 		else:
-			resp = dav.DAVCreateResponse()
+			resp = dav.DAVCreateResponse(request=req)
 		return resp
 
 	def copy(self):
 		req = self.req
 		ctx = req.context
+		req.dav.user_acl(req, ctx, dprops.ACL_READ)
 		self.conditional_request(ctx)
 		parent, node, node_name = self.prepare_copy_move()
+		if ctx.__plugin__.__name__ != parent.__plugin__.__name__:
+			raise dav.DAVForbiddenError('Can\'t copy a node between plugins.')
 		if node == ctx:
 			raise dav.DAVForbiddenError('Can\'t copy a node onto itself.')
+		req.dav.user_acl(req, parent, dprops.ACL_BIND)
 		over = False
 		if node:
 			over = True
+			req.dav.user_acl(req, parent, dprops.ACL_UNBIND)
 			req.dav.delete(req, node)
 		appender = getattr(parent, 'dav_append', None)
 		if appender is None:
@@ -551,16 +677,17 @@ class DAVHandler(object):
 		new_ctx = req.dav.clone(req, ctx)
 		appender(req, new_ctx, node_name)
 		if over:
-			resp = dav.DAVOverwriteResponse()
+			resp = dav.DAVOverwriteResponse(request=req)
 		else:
-			resp = dav.DAVCreateResponse()
+			resp = dav.DAVCreateResponse(request=req)
 		return resp
 
 	def lock(self):
 		req = self.req
 		ctx = req.context
+		req.dav.user_acl(req, ctx, dprops.ACL_WRITE_CONTENT)
 
-		path = req.dav.get_ctx_path(ctx)
+		path = req.dav.ctx_path(ctx)
 		str_path = '/'.join(path)
 		locks = req.dav.get_locks(path)
 		lock = None
@@ -612,11 +739,12 @@ class DAVHandler(object):
 	def unlock(self):
 		req = self.req
 		ctx = req.context
+		req.dav.user_acl(req, ctx, dprops.ACL_WRITE_CONTENT)
 
 		token = req.headers.get('Lock-Token')
 		if not token:
 			raise dav.DAVBadRequestError('UNLOCK request must be accompanied by a valid lock token header.')
-		path = req.dav.get_ctx_path(ctx)
+		path = req.dav.ctx_path(ctx)
 		if token[0] != '<':
 			token = '<%s>' % (token,)
 		locks = req.dav.get_locks(path)
@@ -625,7 +753,7 @@ class DAVHandler(object):
 			if token == token_str:
 				sess = DBSession()
 				sess.delete(lock)
-				return dav.DAVUnlockResponse()
+				return dav.DAVUnlockResponse(request=req)
 		raise dav.DAVLockTokenMatchError('Invalid lock token supplied.')
 
 	def report(self):
@@ -660,16 +788,21 @@ class DAVCollectionHandler(DAVHandler):
 	# TODO: Make this into file browser
 	@notfound_view_config(request_method='GET', containment=dav.IDAVCollection)
 	def notfound_get(self):
+		# TODO: ACL
 		return HTTPNotFound()
 
 	@view_config(request_method='MKCOL')
 	def mkcol(self):
 		# Try to create collection on top of existing collection
+		req = self.req
+		req.dav.user_acl(req, req.context, dprops.ACL_BIND)
 		raise dav.DAVMethodNotAllowedError(*self.req.dav.methods)
 
 	@notfound_view_config(request_method='MKCOL', containment=dav.IDAVCollection, decorator=dav_decorator)
 	def notfound_mkcol(self):
-		mcreq = dav.DAVMkColRequest(self.req)
+		req = self.req
+		req.dav.user_acl(req, req.context, dprops.ACL_BIND)
+		mcreq = dav.DAVMkColRequest(req)
 		resp = mcreq.process()
 		return resp
 
@@ -687,6 +820,8 @@ class DAVCollectionHandler(DAVHandler):
 
 	@view_config(request_method='PUT')
 	def put(self):
+		req = self.req
+		req.dav.user_acl(req, req.context, dprops.ACL_BIND)
 		# Try to overwrite directory with a file
 		raise dav.DAVConflictError('PUT on collections is undefined.')
 
@@ -704,12 +839,13 @@ class DAVCollectionHandler(DAVHandler):
 			raise dav.DAVNotImplementedError('Can\'t PUT partial content.')
 		if 'If-Match' in req.headers:
 			raise dav.DAVPreconditionError('If-Match was present in the request to create new file.', header='If-Match')
+		req.dav.user_acl(req, req.context, dprops.ACL_BIND)
 		creator = getattr(req.context, 'dav_create', None)
 		if creator is None:
 			raise dav.DAVNotImplementedError('Unable to create child node.')
 		obj = creator(req, req.view_name, None, None, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
 		etag = getattr(obj, 'etag', None)
-		resp = dav.DAVCreateResponse(etag=etag)
+		resp = dav.DAVCreateResponse(request=req, etag=etag)
 		return resp
 
 	@view_config(request_method='REPORT')
@@ -731,9 +867,10 @@ class DAVCollectionHandler(DAVHandler):
 	@notfound_view_config(request_method='LOCK', containment=dav.IDAVCollection, decorator=dav_decorator)
 	def notfound_lock(self):
 		# TODO: DRY, unify this with normal lock
+		# TODO: ACL
 		req = self.req
 
-		path = req.dav.get_path(req.url)
+		path = req.dav.path(req.url)
 		str_path = '/'.join(path)
 		locks = req.dav.get_locks(path)
 		lock = None
@@ -776,6 +913,7 @@ class DAVCollectionHandler(DAVHandler):
 		if len(req.subpath) > 0:
 			# TODO: find proper DAV error to put here
 			raise Exception('Invalid file name (slashes are not allowed).')
+		req.dav.user_acl(req, req.context, dprops.ACL_BIND)
 		creator = getattr(req.context, 'dav_create', None)
 		if creator is None:
 			raise dav.DAVNotImplementedError('Unable to create child node.')
@@ -797,11 +935,17 @@ class DAVCollectionHandler(DAVHandler):
 	def unlock(self):
 		return super(DAVCollectionHandler, self).unlock()
 
+	@view_config(request_method='ACL')
+	def acl(self):
+		return super(DAVCollectionHandler, self).acl()
+
 @view_defaults(route_name='core.dav', context=dav.IDAVFile, decorator=dav_decorator)
 class DAVFileHandler(DAVHandler):
 	@view_config(request_method='GET')
 	def get(self):
-		return self.req.context.dav_get(self.req)
+		req = self.req
+		req.dav.user_acl(req, req.context, dprops.ACL_READ)
+		return req.context.dav_get(req)
 
 	@view_config(request_method='PROPFIND')
 	def propfind(self):
@@ -819,22 +963,25 @@ class DAVFileHandler(DAVHandler):
 	def put(self):
 		# Overwrite existing file
 		req = self.req
+		obj = req.context
+		req.dav.user_acl(req, obj, dprops.ACL_WRITE_CONTENT)
 		if req.range:
 			raise dav.DAVNotImplementedError('Can\'t PUT partial content.')
-		obj = req.context
 		self.conditional_request(obj)
 		putter = getattr(obj, 'dav_put', None)
 		if putter is None:
 			raise dav.DAVNotImplementedError('Unable to overwrite node.')
 		putter(req, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
 		etag = getattr(obj, 'etag', None)
-		resp = dav.DAVCreateResponse(etag=etag)
+		resp = dav.DAVCreateResponse(request=req, etag=etag)
 		return resp
 
 	@view_config(request_method='MKCOL')
 	def mkcol(self):
 		# Try to create collection on top of existing file
-		raise dav.DAVMethodNotAllowedError(*self.req.dav.methods)
+		req = self.req
+		req.dav.user_acl(req, req.context, dprops.ACL_BIND)
+		raise dav.DAVMethodNotAllowedError(*req.dav.methods)
 
 	@view_config(request_method='REPORT')
 	def report(self):
@@ -855,4 +1002,8 @@ class DAVFileHandler(DAVHandler):
 	@view_config(request_method='UNLOCK')
 	def unlock(self):
 		return super(DAVFileHandler, self).unlock()
+
+	@view_config(request_method='ACL')
+	def acl(self):
+		return super(DAVFileHandler, self).acl()
 
