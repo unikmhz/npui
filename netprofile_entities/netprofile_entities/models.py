@@ -73,6 +73,7 @@ from netprofile.db.util import (
 	populate_related,
 	populate_related_list
 )
+from netprofile.tpl import TemplateObject
 from netprofile.ext.data import (
 	ExtModel,
 	_name_to_class
@@ -247,54 +248,18 @@ class Entity(Base):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
 					),
 					'nick',
 					MarkupColumn(
 						name='object',
 						header_string=_('Object'),
-						template="""
-{__str__}
-<tpl if="data.flags && data.flags.length">
-	<br />
-	<tpl for="data.flags">
-		<img class="np-inline-img" src="/static/entities/img/flags/{0}.png" alt="{1}" />
-	</tpl>
-</tpl>
-"""
+						template=TemplateObject('netprofile_entities:templates/entity_nick.mak')
 					),
 					HybridColumn(
 						'data',
 						header_string=_('Information'),
-						template="""
-<tpl if="data.house || data.address">
-	<img class="np-inline-img" src="/static/entities/img/house_small.png" />
-	{data.address} {data.house} {data.entrance} {data.floor} {data.flat}
-</tpl>
-<tpl if="data.phone_home || data.phone_work || data.phone_cell || data.cp_phone_work || data.cp_phone_cell">
-<tpl if="data.house || data.address"><br /></tpl>
-<tpl if="data.phone_home">
-	<img class="np-inline-img" src="/static/entities/img/phone_small.png" />
-	{data.phone_home}
-</tpl>
-<tpl if="data.phone_work">
-	<img class="np-inline-img" src="/static/entities/img/phone_small.png" />
-	{data.phone_work}
-</tpl>
-<tpl if="data.phone_cell">
-	<img class="np-inline-img" src="/static/entities/img/mobile_small.png" />
-	{data.phone_cell}
-</tpl>
-<tpl if="data.cp_phone_work">
-	<img class="np-inline-img" src="/static/entities/img/phone_small.png" />
-	{data.cp_phone_work}
-</tpl>
-<tpl if="data.cp_phone_cell">
-	<img class="np-inline-img" src="/static/entities/img/mobile_small.png" />
-	{data.cp_phone_cell}
-</tpl>
-</tpl>
-"""
+						template=TemplateObject('netprofile_entities:templates/entity_data.mak')
 					),
 					'state'
 				),
@@ -1042,7 +1007,7 @@ class PhysicalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
 					),
 					'nick', 'name_family', 'name_given', 'house', 'floor', 'flat', 'phone_home', 'phone_cell'
 				),
@@ -1429,7 +1394,7 @@ class LegalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
 					),
 					'nick', 'name', 'cp_name_family', 'cp_name_given', 'house', 'floor', 'flat', 'cp_phone_work', 'cp_phone_cell'
 				),
@@ -1864,7 +1829,7 @@ class StructuralEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
 					),
 					'nick', 'house'
 				),
@@ -1964,7 +1929,7 @@ class ExternalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="/static/entities/img/{etype}.png" />'
+						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
 					),
 					'nick', 'name', 'address'
 				),
