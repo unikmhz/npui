@@ -47,6 +47,7 @@ from netprofile.db.fields import (
 	npbool
 )
 from netprofile.db.ddl import Comment
+from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import SimpleWizard
 
@@ -93,23 +94,7 @@ class Domain(Base):
 					MarkupColumn(
 						name='state',
 						header_string=_('State'),
-						template="""
-<tpl if="enabled">
-	<img class="np-inline-img" src="/static/core/img/enabled.png" />
-<tpl else>
-	<img class="np-inline-img" src="/static/core/img/disabled.png" />
-</tpl>
-<tpl if="public">
-	<img class="np-inline-img" src="/static/core/img/public.png" />
-<tpl else>
-	<img class="np-inline-img" src="/static/core/img/private.png" />
-</tpl>
-<tpl if="signed">
-	<img class="np-inline-img" src="/static/core/img/lock.png" />
-<tpl else>
-	<img class="np-inline-img" src="/static/core/img/unlock.png" />
-</tpl>
-""",
+						template=TemplateObject('netprofile_domains:templates/domain_icons.mak'),
 						cell_class='np-nopad',
 						column_width=60,
 						column_resizable=False
