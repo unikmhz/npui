@@ -85,6 +85,7 @@ from netprofile.ext.columns import (
 	PseudoColumn
 )
 from netprofile.common import ipaddr
+from netprofile.tpl import TemplateObject
 from pyramid.security import has_permission
 from pyramid.i18n import (
 	TranslationStringFactory,
@@ -791,7 +792,10 @@ class ExtColumn(object):
 			conf['xtype'] = xt
 		tpl = self.template
 		if tpl:
-			conf['tpl'] = tpl
+			if isinstance(tpl, TemplateObject):
+				conf['tpl'] = tpl.render(req)
+			else:
+				conf['tpl'] = tpl
 			if 'xtype' not in conf:
 				conf['xtype'] = 'templatecolumn'
 		cw = self.column_width
@@ -976,8 +980,11 @@ class ExtPseudoColumn(ExtColumn):
 			conf['menuDisabled'] = True
 		tpl = self.column.template
 		if tpl:
+			if isinstance(tpl, TemplateObject):
+				conf['tpl'] = tpl.render(req)
+			else:
+				conf['tpl'] = tpl
 			conf['xtype'] = 'templatecolumn'
-			conf['tpl'] = tpl
 		cw = self.column_width
 		if cw is not None:
 			conf['width'] = cw
