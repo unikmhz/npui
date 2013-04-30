@@ -16,6 +16,10 @@ Ext.define('NetProfile.view.Wizard', {
 	api: null,
 	submitApi: 'create',
 	createApi: 'get_create_wizard',
+	resetOnClose: false,
+	extraParams: null,
+	extraParamProp: null,
+	extraParamRelProp: null,
 	actionApi: null,
 	validateApi: null,
 	wizardCls: null,
@@ -35,7 +39,7 @@ Ext.define('NetProfile.view.Wizard', {
 			iconCls: 'ico-cancel',
 			handler: function(btn)
 			{
-				this.up('window').close();
+				this.close();
 				return true;
 			},
 			scope: this
@@ -85,7 +89,7 @@ Ext.define('NetProfile.view.Wizard', {
 				{
 					if(this.createInto.add(this.getValues()))
 					{
-						this.up('window').close();
+						this.close();
 						return true;
 					}
 				}
@@ -135,7 +139,11 @@ Ext.define('NetProfile.view.Wizard', {
 	{
 		if(!this.api)
 			this.api = this.getDirectAction();
-		this.api.get_steps(this.loadCallback, this);
+		this.fetchExtraParams();
+		if(this.extraParams)
+			this.api.get_steps(this.extraParams, this.loadCallback, this);
+		else
+			this.api.get_steps(this.loadCallback, this);
 	},
 	remoteValidate: function(fld)
 	{
@@ -190,6 +198,8 @@ Ext.define('NetProfile.view.Wizard', {
 			win = this.up('window');
 			if(win)
 				win.setTitle(data.title);
+			else
+				this.setTitle(data.title);
 		}
 		if(data.validator)
 		{
@@ -362,6 +372,32 @@ Ext.define('NetProfile.view.Wizard', {
 				res[j] = iv[j];
 		});
 		return res;
+	},
+	fetchExtraParams: function()
+	{
+		var rec;
+
+		if(!this.extraParams && this.extraParamProp)
+		{
+			rec = this.up('panel[cls~=record-tab]');
+			if(rec)
+			{
+				rec = rec.record;
+				this.extraParams = {};
+				if(this.extraParamRelProp)
+					this.extraParams[this.extraParamProp] = rec.get(this.extraParamRelProp);
+				else
+					this.extraParams[this.extraParamProp] = rec.get(this.extraParamProp);
+			}
+		}
+	},
+	close: function()
+	{
+		if(this.resetOnClose)
+		{
+		}
+		else
+			this.up('window').close();
 	},
 	submit: function()
 	{

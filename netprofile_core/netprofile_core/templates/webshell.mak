@@ -100,9 +100,14 @@ Ext.require([
 		override: 'Ext.form.field.Base',
 		getErrors: function(value)
 		{
-			var errs = this.callParent(arguments);
+			var errs, i;
+
+			errs = this.callParent(arguments);
 			if(this.asyncErrors && this.asyncErrors.length)
-				Ext.Array.push(errs, this.asyncErrors);
+				for(i in this.asyncErrors)
+				{
+					Ext.Array.push(errs, this.asyncErrors[i]);
+				}
 			return errs;
 		}
 	});
@@ -326,10 +331,10 @@ Ext.require([
 		proxy: {
 			type: 'direct',
 			api: {
-				create:  NetProfile.api.MenuTree.${menu.direct}_create,
-				read:    NetProfile.api.MenuTree.${menu.direct}_read,
-				update:  NetProfile.api.MenuTree.${menu.direct}_update,
-				destroy: NetProfile.api.MenuTree.${menu.direct}_delete
+				create:  NetProfile.api.MenuTree.${menu.direct}_create || Ext.emptyFn,
+				read:    NetProfile.api.MenuTree.${menu.direct}_read || Ext.emptyFn,
+				update:  NetProfile.api.MenuTree.${menu.direct}_update || Ext.emptyFn,
+				destroy: NetProfile.api.MenuTree.${menu.direct}_delete || Ext.emptyFn
 			},
 			reader: {
 				type: 'json',
@@ -441,7 +446,7 @@ Ext.require([
 	});
 % endfor
 % endfor
-});
+
 
 Ext.application({
 	name: 'NetProfile',
@@ -526,5 +531,7 @@ Ext.application({
 		else
 			Ext.create('NetProfile.view.Viewport', {});
 	}
+});
+
 });
 

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_core 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-04-11 17:24+0400\n"
-"PO-Revision-Date: 2013-04-11 17:26+0300\n"
+"POT-Creation-Date: 2013-04-27 19:50+0400\n"
+"PO-Revision-Date: 2013-04-27 19:53+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
@@ -20,502 +20,531 @@ msgstr ""
 "Generated-By: Babel 0.9.6\n"
 "X-Generator: Poedit 1.5.5\n"
 
-#: netprofile_core/__init__.py:69 netprofile_core/models.py:197
+#: netprofile_core/__init__.py:86 netprofile_core/models.py:227
 msgid "Modules"
 msgstr "Модули"
 
-#: netprofile_core/__init__.py:70 netprofile_core/models.py:3299
-#: netprofile_core/models.py:3382 netprofile_core/models.py:3557
-#: netprofile_core/models.py:3717 netprofile_core/models.py:3890
-#: netprofile_core/models.py:3986
+#: netprofile_core/__init__.py:87 netprofile_core/models.py:4344
+#: netprofile_core/models.py:4427 netprofile_core/models.py:4628
+#: netprofile_core/models.py:4819 netprofile_core/models.py:4992
+#: netprofile_core/models.py:5088
 msgid "Settings"
 msgstr "Настройки"
 
-#: netprofile_core/__init__.py:71 netprofile_core/models.py:1790
+#: netprofile_core/__init__.py:88 netprofile_core/models.py:2196
 msgid "Folders"
 msgstr "Папки"
 
-#: netprofile_core/__init__.py:74 netprofile_core/models.py:886
+#: netprofile_core/__init__.py:91 netprofile_core/models.py:1043
 msgid "Root Folder"
 msgstr "Корневая папка"
 
-#: netprofile_core/__init__.py:109
+#: netprofile_core/__init__.py:126
 msgid "Administration"
 msgstr "Управление"
 
-#: netprofile_core/__init__.py:137
+#: netprofile_core/__init__.py:161
 msgid "Core"
 msgstr "Ядро"
 
-#: netprofile_core/models.py:213 netprofile_core/models.py:356
-#: netprofile_core/models.py:820 netprofile_core/models.py:1021
-#: netprofile_core/models.py:1139 netprofile_core/models.py:1268
-#: netprofile_core/models.py:1403 netprofile_core/models.py:1483
-#: netprofile_core/models.py:1806 netprofile_core/models.py:2117
-#: netprofile_core/models.py:2432 netprofile_core/models.py:2846
-#: netprofile_core/models.py:2909 netprofile_core/models.py:2961
-#: netprofile_core/models.py:3012 netprofile_core/models.py:3124
-#: netprofile_core/models.py:3246 netprofile_core/models.py:3319
-#: netprofile_core/models.py:3402 netprofile_core/models.py:3575
-#: netprofile_core/models.py:3735 netprofile_core/models.py:3915
-#: netprofile_core/models.py:4005
+#: netprofile_core/models.py:243 netprofile_core/models.py:387
+#: netprofile_core/models.py:977 netprofile_core/models.py:1218
+#: netprofile_core/models.py:1336 netprofile_core/models.py:1465
+#: netprofile_core/models.py:1600 netprofile_core/models.py:1680
+#: netprofile_core/models.py:1992 netprofile_core/models.py:2212
+#: netprofile_core/models.py:2856 netprofile_core/models.py:3472
+#: netprofile_core/models.py:3891 netprofile_core/models.py:3954
+#: netprofile_core/models.py:4006 netprofile_core/models.py:4057
+#: netprofile_core/models.py:4169 netprofile_core/models.py:4291
+#: netprofile_core/models.py:4364 netprofile_core/models.py:4447
+#: netprofile_core/models.py:4646 netprofile_core/models.py:4837
+#: netprofile_core/models.py:5017 netprofile_core/models.py:5107
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_core/models.py:222 netprofile_core/models.py:854
-#: netprofile_core/models.py:1061 netprofile_core/models.py:1491
-#: netprofile_core/models.py:1893 netprofile_core/models.py:2147
-#: netprofile_core/models.py:2854 netprofile_core/models.py:2917
-#: netprofile_core/models.py:2969 netprofile_core/models.py:3133
-#: netprofile_core/models.py:3338 netprofile_core/models.py:3421
-#: netprofile_core/models.py:3605 netprofile_core/models.py:3765
-#: netprofile_core/models.py:4024
+#: netprofile_core/models.py:252 netprofile_core/models.py:1011
+#: netprofile_core/models.py:1258 netprofile_core/models.py:1688
+#: netprofile_core/models.py:2299 netprofile_core/models.py:2886
+#: netprofile_core/models.py:3899 netprofile_core/models.py:3962
+#: netprofile_core/models.py:4014 netprofile_core/models.py:4178
+#: netprofile_core/models.py:4383 netprofile_core/models.py:4466
+#: netprofile_core/models.py:4676 netprofile_core/models.py:4867
+#: netprofile_core/models.py:5126
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_core/models.py:233
+#: netprofile_core/models.py:263
 msgid "Version"
 msgstr "Версия"
 
-#: netprofile_core/models.py:243 netprofile_core/models.py:435
+#: netprofile_core/models.py:273 netprofile_core/models.py:466
 msgid "Enabled"
 msgstr "Включено"
 
-#: netprofile_core/models.py:309
+#: netprofile_core/models.py:339
 msgid "Pending"
 msgstr "Ожидает"
 
-#: netprofile_core/models.py:310
+#: netprofile_core/models.py:340
 msgid "Active"
 msgstr "Активен"
 
-#: netprofile_core/models.py:311
+#: netprofile_core/models.py:341
 msgid "Deleted"
 msgstr "Удалён"
 
-#: netprofile_core/models.py:338
+#: netprofile_core/models.py:369
 msgid "Users"
 msgstr "Пользователи"
 
-#: netprofile_core/models.py:366 netprofile_core/models.py:1213
-#: netprofile_core/models.py:1348 netprofile_core/models.py:1423
-#: netprofile_core/models.py:1842 netprofile_core/models.py:2171
+#: netprofile_core/models.py:397 netprofile_core/models.py:1410
+#: netprofile_core/models.py:1545 netprofile_core/models.py:1620
+#: netprofile_core/models.py:2248 netprofile_core/models.py:2910
 msgid "Group"
 msgstr "Группа"
 
-#: netprofile_core/models.py:379 netprofile_core/models.py:845
+#: netprofile_core/models.py:410 netprofile_core/models.py:1002
 msgid "Security Policy"
 msgstr "Политика безопасности"
 
-#: netprofile_core/models.py:389
+#: netprofile_core/models.py:420
 msgid "State"
 msgstr "Состояние"
 
-#: netprofile_core/models.py:397 netprofile_core/models.py:3031
-#: netprofile_core/models.py:3156
+#: netprofile_core/models.py:428 netprofile_core/models.py:4076
+#: netprofile_core/models.py:4201
 msgid "Username"
 msgstr "Имя пользователя"
 
-#: netprofile_core/models.py:408 netprofile_core/models.py:3276
+#: netprofile_core/models.py:439 netprofile_core/models.py:4321
 #: netprofile_core/templates/login.mak:23
 msgid "Password"
 msgstr "Пароль"
 
-#: netprofile_core/models.py:423
+#: netprofile_core/models.py:454
 msgid "A1 Hash"
 msgstr "Хэш A1"
 
-#: netprofile_core/models.py:445
+#: netprofile_core/models.py:476
 msgid "Family Name"
 msgstr "Фамилия"
 
-#: netprofile_core/models.py:455
+#: netprofile_core/models.py:486
 msgid "Given Name"
 msgstr "Имя"
 
-#: netprofile_core/models.py:465
+#: netprofile_core/models.py:496
 msgid "Middle Name"
 msgstr "Отчество"
 
-#: netprofile_core/models.py:475 netprofile_core/models.py:3613
-#: netprofile_core/models.py:3773
+#: netprofile_core/models.py:506 netprofile_core/models.py:4684
+#: netprofile_core/models.py:4875
 msgid "Title"
 msgstr "Заголовок"
 
-#: netprofile_core/models.py:487
+#: netprofile_core/models.py:518
 msgid "Manager"
 msgstr "Менеджер"
 
-#: netprofile_core/models.py:497
+#: netprofile_core/models.py:528
 msgid "E-mail"
 msgstr "E-mail"
 
-#: netprofile_core/models.py:509
+#: netprofile_core/models.py:540
 msgid "IP Address"
 msgstr "Адрес IP"
 
-#: netprofile_core/models.py:520
+#: netprofile_core/models.py:551
 msgid "Random Key"
 msgstr "Случайный ключ"
 
-#: netprofile_core/models.py:532
+#: netprofile_core/models.py:563
 msgid "Photo"
 msgstr "Фото"
 
-#: netprofile_core/models.py:795
+#: netprofile_core/models.py:952
 msgid "Groups"
 msgstr "Группы"
 
-#: netprofile_core/models.py:805
+#: netprofile_core/models.py:962
 msgid "New group data"
 msgstr "Данные новой группы"
 
-#: netprofile_core/models.py:806
+#: netprofile_core/models.py:963
 msgid "New group details"
 msgstr "Детали новой группы"
 
-#: netprofile_core/models.py:807
+#: netprofile_core/models.py:964
 msgid "Add new group"
 msgstr "Добавить новую группу"
 
-#: netprofile_core/models.py:832 netprofile_core/models.py:1818
+#: netprofile_core/models.py:989 netprofile_core/models.py:2224
 msgid "Parent"
 msgstr "Родитель"
 
-#: netprofile_core/models.py:864
+#: netprofile_core/models.py:1021
 msgid "Visible"
 msgstr "Видимая"
 
-#: netprofile_core/models.py:874
+#: netprofile_core/models.py:1031
 msgid "Assignable"
 msgstr "Назначаемая"
 
-#: netprofile_core/models.py:1000
+#: netprofile_core/models.py:1197
 msgid "Privileges"
 msgstr "Привилегии"
 
-#: netprofile_core/models.py:1009
+#: netprofile_core/models.py:1206
 msgid "Add new privilege"
 msgstr "Добавить новую привилегию"
 
-#: netprofile_core/models.py:1033 netprofile_core/models.py:3329
-#: netprofile_core/models.py:3412 netprofile_core/models.py:3596
-#: netprofile_core/models.py:3756
+#: netprofile_core/models.py:1230 netprofile_core/models.py:4374
+#: netprofile_core/models.py:4457 netprofile_core/models.py:4667
+#: netprofile_core/models.py:4858
 msgid "Module"
 msgstr "Модуль"
 
-#: netprofile_core/models.py:1045
+#: netprofile_core/models.py:1242
 msgid "Can be Set"
 msgstr "Может быть установлено"
 
-#: netprofile_core/models.py:1053
+#: netprofile_core/models.py:1250
 msgid "Code"
 msgstr "Код"
 
-#: netprofile_core/models.py:1072
+#: netprofile_core/models.py:1269
 msgid "Guest Value"
 msgstr "Гостевое значение"
 
-#: netprofile_core/models.py:1083
+#: netprofile_core/models.py:1280
 msgid "Has ACLs"
 msgstr "Имеет ACL"
 
-#: netprofile_core/models.py:1094
+#: netprofile_core/models.py:1291
 msgid "Resource Class"
 msgstr "Класс ресурсов"
 
-#: netprofile_core/models.py:1152 netprofile_core/models.py:1281
+#: netprofile_core/models.py:1349 netprofile_core/models.py:1478
 msgid "Privilege"
 msgstr "Привилегия"
 
-#: netprofile_core/models.py:1165 netprofile_core/models.py:1305
-#: netprofile_core/models.py:3631 netprofile_core/models.py:3945
-#: netprofile_core/models.py:4035
+#: netprofile_core/models.py:1362 netprofile_core/models.py:1502
+#: netprofile_core/models.py:4702 netprofile_core/models.py:5047
+#: netprofile_core/models.py:5137
 msgid "Value"
 msgstr "Значение"
 
-#: netprofile_core/models.py:1199
+#: netprofile_core/models.py:1396
 msgid "Group Capabilities"
 msgstr "Права групп"
 
-#: netprofile_core/models.py:1236
+#: netprofile_core/models.py:1433
 msgid "User Capabilities"
 msgstr "Права пользователей"
 
-#: netprofile_core/models.py:1250 netprofile_core/models.py:1375
-#: netprofile_core/models.py:1413 netprofile_core/models.py:1830
-#: netprofile_core/models.py:2159 netprofile_core/models.py:3145
-#: netprofile_core/models.py:3256 netprofile_core/models.py:3925
-#: netprofile_core/models.py:4015
+#: netprofile_core/models.py:1447 netprofile_core/models.py:1572
+#: netprofile_core/models.py:1610 netprofile_core/models.py:2004
+#: netprofile_core/models.py:2236 netprofile_core/models.py:2898
+#: netprofile_core/models.py:4190 netprofile_core/models.py:4301
+#: netprofile_core/models.py:5027 netprofile_core/models.py:5117
 msgid "User"
 msgstr "Пользователь"
 
-#: netprofile_core/models.py:1292
+#: netprofile_core/models.py:1489
 msgid "Resource"
 msgstr "Ресурс"
 
-#: netprofile_core/models.py:1434
+#: netprofile_core/models.py:1631
 msgid "No action"
 msgstr "Ничего не делать"
 
-#: netprofile_core/models.py:1435
+#: netprofile_core/models.py:1632
 msgid "Force new password"
 msgstr "Заставить сменить пароль"
 
-#: netprofile_core/models.py:1436
+#: netprofile_core/models.py:1633
 msgid "Drop connection"
 msgstr "Игнорировать соединение"
 
-#: netprofile_core/models.py:1457
+#: netprofile_core/models.py:1654
 msgid "Security Policies"
 msgstr "Политики безопасности"
 
-#: netprofile_core/models.py:1501
+#: netprofile_core/models.py:1698
 msgid "Min. Password Len."
 msgstr "Мин. длина пароля"
 
-#: netprofile_core/models.py:1511
+#: netprofile_core/models.py:1708
 msgid "Max. Password Len."
 msgstr "Макс. длина пароля"
 
-#: netprofile_core/models.py:1521
+#: netprofile_core/models.py:1718
 msgid "Min. Char Types"
 msgstr "Мин. типы символов"
 
-#: netprofile_core/models.py:1531
+#: netprofile_core/models.py:1728
 msgid "Max. Char Types"
 msgstr "Макс. типы символов"
 
-#: netprofile_core/models.py:1541
+#: netprofile_core/models.py:1738
 msgid "Dictionary Check"
 msgstr "Проверка по словарю"
 
-#: netprofile_core/models.py:1551
+#: netprofile_core/models.py:1748
 msgid "Custom Dictionary"
 msgstr "Нестандартный словарь"
 
-#: netprofile_core/models.py:1561
+#: netprofile_core/models.py:1758
 msgid "Keep History"
 msgstr "Хранить историю"
 
-#: netprofile_core/models.py:1571
+#: netprofile_core/models.py:1768
 msgid "History Size"
 msgstr "Размер истории"
 
-#: netprofile_core/models.py:1581
+#: netprofile_core/models.py:1778
 msgid "Min. Password Age"
 msgstr "Мин. срок хранения истории"
 
-#: netprofile_core/models.py:1591
+#: netprofile_core/models.py:1788
 msgid "Max. Password Age"
 msgstr "Макс. срок хранения истории"
 
-#: netprofile_core/models.py:1601
+#: netprofile_core/models.py:1798
 msgid "Notify Days"
 msgstr "Уведомить за (дней)"
 
-#: netprofile_core/models.py:1611
+#: netprofile_core/models.py:1808
 msgid "Warn by E-mail"
 msgstr "Уведомить по e-mail"
 
-#: netprofile_core/models.py:1621
+#: netprofile_core/models.py:1818
 msgid "On Expire"
 msgstr "По истечении срока"
 
-#: netprofile_core/models.py:1631
+#: netprofile_core/models.py:1828
 msgid "Address Whitelist"
 msgstr "Белый список адресов"
 
-#: netprofile_core/models.py:1641
+#: netprofile_core/models.py:1838
 msgid "Session Timeout"
 msgstr "Тайм-аут сессии"
 
-#: netprofile_core/models.py:1652 netprofile_core/models.py:1904
-#: netprofile_core/models.py:2260 netprofile_core/models.py:2865
-#: netprofile_core/models.py:3349 netprofile_core/models.py:3432
-#: netprofile_core/models.py:3689 netprofile_core/models.py:3841
+#: netprofile_core/models.py:1849 netprofile_core/models.py:2310
+#: netprofile_core/models.py:2999 netprofile_core/models.py:3910
+#: netprofile_core/models.py:4394 netprofile_core/models.py:4477
+#: netprofile_core/models.py:4760 netprofile_core/models.py:4943
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_core/models.py:1767
-msgid "Owner-only access"
-msgstr "Доступ только владельца"
+#: netprofile_core/models.py:2016
+#| msgid "Title"
+msgid "File"
+msgstr "Файл"
 
-#: netprofile_core/models.py:1768
-msgid "Group-only access"
-msgstr "Доступ только группы"
+#: netprofile_core/models.py:2026
+msgid "Timeout"
+msgstr "Тайм-аут"
 
-#: netprofile_core/models.py:1769
-msgid "Public access"
-msgstr "Публичный доступ"
-
-#: netprofile_core/models.py:1852 netprofile_core/models.py:2181
-msgid "Rights"
-msgstr "Права"
-
-#: netprofile_core/models.py:1862
-msgid "Access Rule"
-msgstr "Правило доступа"
-
-#: netprofile_core/models.py:1873 netprofile_core/models.py:2213
+#: netprofile_core/models.py:2037 netprofile_core/models.py:2279
+#: netprofile_core/models.py:2952
 msgid "Created"
 msgstr "Создано"
 
-#: netprofile_core/models.py:1885 netprofile_core/models.py:2226
+#: netprofile_core/models.py:2045
+msgid "Token"
+msgstr "Признак"
+
+#: netprofile_core/models.py:2055
+msgid "Owner"
+msgstr "Владелец"
+
+#: netprofile_core/models.py:2065
+msgid "Scope"
+msgstr "Предел"
+
+#: netprofile_core/models.py:2075
+msgid "Depth"
+msgstr "Глубина"
+
+#: netprofile_core/models.py:2083
+msgid "URI"
+msgstr "URI"
+
+#: netprofile_core/models.py:2172
+msgid "Owner-only access"
+msgstr "Доступ только владельца"
+
+#: netprofile_core/models.py:2173
+msgid "Group-only access"
+msgstr "Доступ только группы"
+
+#: netprofile_core/models.py:2174
+msgid "Public access"
+msgstr "Публичный доступ"
+
+#: netprofile_core/models.py:2258 netprofile_core/models.py:2920
+msgid "Rights"
+msgstr "Права"
+
+#: netprofile_core/models.py:2268
+msgid "Access Rule"
+msgstr "Правило доступа"
+
+#: netprofile_core/models.py:2291 netprofile_core/models.py:2965
 msgid "Modified"
 msgstr "Изменено"
 
-#: netprofile_core/models.py:1914 netprofile_core/models.py:2270
+#: netprofile_core/models.py:2320 netprofile_core/models.py:3009
 msgid "Metadata"
 msgstr "Метаданные"
 
-#: netprofile_core/models.py:2099
-#| msgid "Title"
+#: netprofile_core/models.py:2838
 msgid "Files"
 msgstr "Файлы"
 
-#: netprofile_core/models.py:2129
+#: netprofile_core/models.py:2868
 msgid "Folder"
 msgstr "Папка"
 
-#: netprofile_core/models.py:2139
+#: netprofile_core/models.py:2878
 msgid "Filename"
 msgstr "Имя файла"
 
-#: netprofile_core/models.py:2193 netprofile_core/models.py:3041
-#: netprofile_core/models.py:3623 netprofile_core/models.py:3783
-#: netprofile_core/models.py:3936
+#: netprofile_core/models.py:2932 netprofile_core/models.py:4086
+#: netprofile_core/models.py:4694 netprofile_core/models.py:4885
+#: netprofile_core/models.py:5038
 msgid "Type"
 msgstr "Тип"
 
-#: netprofile_core/models.py:2201
+#: netprofile_core/models.py:2940
 msgid "Size"
 msgstr "Размер"
 
-#: netprofile_core/models.py:2237
+#: netprofile_core/models.py:2976
 msgid "E-Tag"
 msgstr "E-тэг"
 
-#: netprofile_core/models.py:2249
+#: netprofile_core/models.py:2988
 msgid "Read Count"
 msgstr "Счётчик прочтений"
 
-#: netprofile_core/models.py:2280 netprofile_core/models.py:2452
-#: netprofile_core/models.py:3063
+#: netprofile_core/models.py:3019 netprofile_core/models.py:3492
+#: netprofile_core/models.py:4108
 msgid "Data"
 msgstr "Данные"
 
-#: netprofile_core/models.py:2443
+#: netprofile_core/models.py:3483
 msgid "Offset"
 msgstr "Смещение"
 
-#: netprofile_core/models.py:2823
+#: netprofile_core/models.py:3868
 msgid "Tags"
 msgstr "Тэги"
 
-#: netprofile_core/models.py:2832
+#: netprofile_core/models.py:3877
 msgid "Tag info"
 msgstr "Информация о тэге"
 
-#: netprofile_core/models.py:2833
+#: netprofile_core/models.py:3878
 msgid "Add new tag"
 msgstr "Добавить новый тэг"
 
-#: netprofile_core/models.py:2891 netprofile_core/models.py:2943
-#: netprofile_core/models.py:2994
+#: netprofile_core/models.py:3936 netprofile_core/models.py:3988
+#: netprofile_core/models.py:4039
 msgid "Logging"
 msgstr "Журналирование"
 
-#: netprofile_core/models.py:2892
+#: netprofile_core/models.py:3937
 msgid "Log Types"
 msgstr "Типы журналов"
 
-#: netprofile_core/models.py:2944
+#: netprofile_core/models.py:3989
 msgid "Log Actions"
 msgstr "Действия в журналах"
 
-#: netprofile_core/models.py:2995
+#: netprofile_core/models.py:4040
 msgid "Log Data"
 msgstr "Данные журнала"
 
-#: netprofile_core/models.py:3023 netprofile_core/models.py:3267
+#: netprofile_core/models.py:4068 netprofile_core/models.py:4312
 msgid "Time"
 msgstr "Время"
 
-#: netprofile_core/models.py:3052
+#: netprofile_core/models.py:4097
 msgid "Action"
 msgstr "Действие"
 
-#: netprofile_core/models.py:3107
+#: netprofile_core/models.py:4152
 msgid "UI Sessions"
 msgstr "Сессии АРМ"
 
-#: netprofile_core/models.py:3166
+#: netprofile_core/models.py:4211
 msgid "Start"
 msgstr "Начало"
 
-#: netprofile_core/models.py:3179
+#: netprofile_core/models.py:4224
 msgid "Last Update"
 msgstr "Последнее обновление"
 
-#: netprofile_core/models.py:3190
+#: netprofile_core/models.py:4235
 msgid "IPv4 Address"
 msgstr "Адрес IPv4"
 
-#: netprofile_core/models.py:3201
+#: netprofile_core/models.py:4246
 msgid "IPv6 Address"
 msgstr "Адрес IPv6"
 
-#: netprofile_core/models.py:3300
+#: netprofile_core/models.py:4345
 msgid "Global Setting Sections"
 msgstr "Секции общих настроек"
 
-#: netprofile_core/models.py:3307 netprofile_core/models.py:3390
+#: netprofile_core/models.py:4352 netprofile_core/models.py:4435
 msgid "Add new section"
 msgstr "Добавить новую секцию"
 
-#: netprofile_core/models.py:3383
+#: netprofile_core/models.py:4428
 msgid "User Setting Sections"
 msgstr "Секции настроек пользователей"
 
-#: netprofile_core/models.py:3558
+#: netprofile_core/models.py:4629
 msgid "Global Settings"
 msgstr "Общие настройки"
 
-#: netprofile_core/models.py:3585 netprofile_core/models.py:3745
-#: netprofile_core/models.py:3898
+#: netprofile_core/models.py:4656 netprofile_core/models.py:4847
+#: netprofile_core/models.py:5000
 msgid "Section"
 msgstr "Секция"
 
-#: netprofile_core/models.py:3640 netprofile_core/models.py:3792
+#: netprofile_core/models.py:4711 netprofile_core/models.py:4894
 msgid "Default"
 msgstr "По умолчанию"
 
-#: netprofile_core/models.py:3649 netprofile_core/models.py:3801
+#: netprofile_core/models.py:4720 netprofile_core/models.py:4903
 msgid "Options"
 msgstr "Параметры"
 
-#: netprofile_core/models.py:3658 netprofile_core/models.py:3810
+#: netprofile_core/models.py:4729 netprofile_core/models.py:4912
 msgid "Dynamic Options"
 msgstr "Дин. параметры"
 
-#: netprofile_core/models.py:3667 netprofile_core/models.py:3819
+#: netprofile_core/models.py:4738 netprofile_core/models.py:4921
 msgid "Constraints"
 msgstr "Ограничения"
 
-#: netprofile_core/models.py:3678 netprofile_core/models.py:3830
+#: netprofile_core/models.py:4749 netprofile_core/models.py:4932
 msgid "Client-side"
 msgstr "Отправлять клиенту"
 
-#: netprofile_core/models.py:3718
+#: netprofile_core/models.py:4820
 msgid "User Setting Types"
 msgstr "Типы настроек пользователей"
 
-#: netprofile_core/models.py:3891
+#: netprofile_core/models.py:4993
 msgid "User Settings"
 msgstr "Настройки пользователей"
 
-#: netprofile_core/models.py:3987
+#: netprofile_core/models.py:5089
 msgid "Data Cache"
 msgstr "Кэш данных"
 
@@ -539,10 +568,10 @@ msgstr "Язык"
 msgid "Log In"
 msgstr "Войти"
 
-#: netprofile_core/templates/webshell.mak:497
+#: netprofile_core/templates/webshell.mak:492
 msgid "Error"
 msgstr "Ошибка"
 
-#: netprofile_core/templates/webshell.mak:511
+#: netprofile_core/templates/webshell.mak:506
 msgid "Warning"
 msgstr "Предупреждение"

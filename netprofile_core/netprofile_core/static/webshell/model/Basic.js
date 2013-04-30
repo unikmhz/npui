@@ -1,5 +1,8 @@
 Ext.define('NetProfile.model.Basic', {
 	extend: 'Ext.data.Model',
+	requires: [
+		'Ext.data.reader.Json'
+	],
 	getData: function(includeAssociated)
 	{
 		var me = this,

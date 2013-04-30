@@ -74,7 +74,7 @@ Ext.define('NetProfile.controller.FileFolders', {
 				var stores = [],
 					can_write = false,
 					drop_ff = false,
-					ffid;
+					ffid, rr, rec;
 
 				if(dropPos !== 'append')
 					return false;
@@ -106,6 +106,19 @@ Ext.define('NetProfile.controller.FileFolders', {
 					dropHdl.cancelDrop(); // FIXME: <-- what's that for?
 					return false;
 				}
+				for(rr in data.records)
+				{
+					rec = data.records[rr];
+					if(rec instanceof NetProfile.model.customMenu.folders)
+					{
+						if(!rec.get('parent_write'))
+						{
+							dropHdl.cancelDrop(); // FIXME: <-- what's that for?
+							return false;
+						}
+						drop_ff = true;
+					}
+				}
 				Ext.Array.forEach(data.records, function(rec)
 				{
 					if(rec instanceof NetProfile.model.core.File)
@@ -114,8 +127,6 @@ Ext.define('NetProfile.controller.FileFolders', {
 						if(rec.store && !(rec.store in stores))
 							stores.push(rec.store);
 					}
-					else if(rec instanceof NetProfile.model.customMenu.folders)
-						drop_ff = true;
 				});
 				Ext.Array.forEach(stores, function(st)
 				{

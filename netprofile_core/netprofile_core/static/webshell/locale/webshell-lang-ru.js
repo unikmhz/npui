@@ -145,5 +145,65 @@ Ext.onReady(function()
 		btnSaveTipTitleText: 'Сохранить настройки',
 		btnSaveTipText: 'Проверить и сохранить ваши настройки'
 	});
+
+	Ext.define('Ext.locale.ru.NetProfile.view.FileFolderContextMenu', {
+		override: 'NetProfile.view.FileFolderContextMenu',
+		createText: 'Создать подпапку',
+		propText: 'Свойства',
+		renameText: 'Переименовать',
+		deleteText: 'Удалить'
+	});
+
+	Ext.define('Ext.locale.ru.NetProfile.view.FileBrowser', {
+		override: 'NetProfile.view.FileBrowser',
+
+		emptyText: 'Папка пуста',
+
+		viewText: 'Просмотр',
+		viewAsIconsText: 'Иконки',
+		viewAsListText: 'Список',
+		viewAsGridText: 'Таблица',
+
+		sortText: 'Сортировка',
+		sortByNameText: 'По имени файла',
+		sortByCTimeText: 'По времени создания',
+		sortByMTimeText: 'По времени изменения',
+		sortBySizeText: 'По размеру',
+
+		sortAscText: 'По возрастанию',
+		sortDescText: 'По убыванию',
+
+		btnDeleteText: 'Удалить',
+
+		deleteTipText: 'Удалить файл',
+		deleteMsgText: 'Вы уверены что хотите удалить выбранный файл?',
+		deleteManyTipText: 'Удалить файлы',
+		deleteManyMsgText: 'Вы уверены что хотите удалить выбранные файлы?',
+
+		btnUploadText: 'Залить',
+
+		uploadTitleText: 'Заливка файлов',
+		uploadCloseText: 'Закрыть',
+		uploadAddText: 'Добавить',
+		uploadUploadText: 'Залить',
+		uploadRemoveText: 'Убрать',
+		uploadWaitMsg: 'Файлы заливаются...',
+
+		btnRenameText: 'Переименовать',
+		btnPropsText: 'Свойства',
+		btnDownloadText: 'Скачать',
+
+		searchEmptyText: 'Поиск...',
+
+		gridNameText: 'Имя',
+		gridSizeText: 'Размер',
+		gridCreatedText: 'Создан',
+		gridModifiedText: 'Изменён',
+
+		kibText: 'Кбайт',
+		mibText: 'Мбайт',
+		gibText: 'Гбайт',
+		tibText: 'Тбайт'
+	});
 });
 

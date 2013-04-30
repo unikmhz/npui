@@ -1,6 +1,7 @@
 Ext.define('NetProfile.view.Viewport', {
 	extend: 'Ext.container.Viewport',
 	requires: [
+		'Ext.layout.container.Border',
 		'NetProfile.view.TopBar',
 		'NetProfile.view.MainBar',
 		'NetProfile.view.SideBar',

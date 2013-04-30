@@ -2021,7 +2021,7 @@ class DAVLock(Base):
 		Comment('Lock timeout'),
 		nullable=True,
 		default=None,
-		server_default=text('NULL'),
+#		server_default=text('NULL'),
 		info={
 			'header_string' : _('Timeout')
 		}

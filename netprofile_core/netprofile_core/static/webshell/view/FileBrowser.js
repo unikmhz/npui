@@ -997,7 +997,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 		{
 			mime = mime.split(';')[0];
 			mime = mime.split(' ')[0];
-			mime = mime.replace('/', '_').replace('-', '_');
+			mime = mime.replace(new RegExp('/|-', 'g'), '_');
 			return mime;
 		}
 		return 'default';

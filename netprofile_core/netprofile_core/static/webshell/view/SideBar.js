@@ -4,9 +4,11 @@ Ext.define('NetProfile.view.SideBar', {
 	requires: [
 		'NetProfile.store.Menu',
 		'Ext.tree.Panel',
+		'Ext.tree.plugin.TreeViewDragDrop',
 		'Ext.util.History',
 		'Ext.state.Manager',
 		'Ext.ux.grid.plugin.ManualEditing',
+		'Ext.layout.container.Accordion',
 		'NetProfile.view.TopBar'
 	],
 	id: 'npws_sidebar',
