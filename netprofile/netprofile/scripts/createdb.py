@@ -24,6 +24,7 @@ from netprofile.db.connection import (
 	Base
 )
 
+from netprofile.common import cache
 from netprofile.common.modules import ModuleManager
 
 def usage(argv):
@@ -38,6 +39,7 @@ def main(argv=sys.argv):
 	config_uri = argv[1]
 	setup_logging(config_uri)
 	settings = get_appsettings(config_uri)
+	cache.cache = cache.configure_cache(settings)
 	engine = engine_from_config(settings, 'sqlalchemy.')
 	DBSession.configure(bind=engine)
 	ModuleManager.prepare()

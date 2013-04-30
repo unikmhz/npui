@@ -654,12 +654,22 @@ class ExtColumn(object):
 			return None
 		if (self.column.primary_key) or \
 				(len(self.column.foreign_keys) > 0): # add check for read-only non-pk fields
-			return {
+			hret = {
 				'xtype'      : 'hidden',
 				'editable'   : False,
 				'allowBlank' : self.nullable,
 				'name'       : self.name
 			}
+			if initval is not None:
+				if isinstance(initval, int):
+					hret['value'] = initval
+				elif (len(self.column.foreign_keys) > 0):
+					fk = self.column.foreign_keys.copy().pop()
+					ftable = fk.column.table
+					fclass = _table_to_class(ftable.name)
+					fprop = fclass.__mapper__.get_property_by_column(fk.column)
+					hret['value'] = getattr(initval, fprop.key, None)
+			return hret
 		conf = {
 			'xtype'      : ed_xtype,
 			'allowBlank' : self.nullable,
@@ -946,20 +956,7 @@ class ExtPseudoColumn(ExtColumn):
 		return None
 
 	def get_reader_cfg(self):
-		conf = {
-			'name'       : self.name,
-			'allowBlank' : self.column.nullable,
-			'useNull'    : self.column.nullable,
-			'type'       : self.js_type,
-			'persist'    : False
-		}
-		if conf['type'] == 'date':
-			conf['dateFormat'] = self.date_format
-		val = self.default
-		if val is not None:
-			if type(val) in {int, str, list, dict, bool}:
-				conf['defaultValue'] = val
-		return conf
+		return None
 
 	def get_column_cfg(self, req):
 		if self.get_secret_value(req):
@@ -1097,6 +1094,8 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 				conf['fieldLabel'] = loc.translate(self.header_string)
 				val = self.pixels
 				conf['width'] = self.MAX_PIXELS + 125
+			if initval is not None:
+				conf['value'] = str(initval)
 		return conf
 
 	def get_reader_cfg(self):
@@ -1439,6 +1438,8 @@ class ExtModel(object):
 		str_added = False
 		for cname, col in self.get_read_columns().items():
 			cfg = col.get_reader_cfg()
+			if cfg is None:
+				continue
 			if cfg['name'] == '__str__':
 				str_added = True
 			ret.append(cfg)

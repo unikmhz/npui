@@ -79,32 +79,36 @@ class ExternalWizardField(CustomWizardField):
 	"""
 	Generates wizard fields from arbitrary models.
 	"""
-	def __init__(self, cls, fldname, name=None):
+	def __init__(self, cls, fldname, name=None, value=None, extra_config=None):
 		if name is None:
 			name = fldname
 		self.name = name
 		self.model = cls
 		self.field = fldname
+		self.value = value
+		self.extra_config = extra_config
 
 	def append_cfg(self, model, req, **kwargs):
 		if isinstance(self.model, str):
 			self.model = ExtModel(_name_to_class(self.model))
 		ret = []
 		col = self.model.get_column(self.field)
-		colfld = col.get_editor_cfg(req, in_form=True)
+		colfld = col.get_editor_cfg(req, in_form=True, initval=self.value)
 		if colfld:
 			colfld['name'] = self.name
 			coldef = col.default
-			if (kwargs.get('use_defaults', False)) and (coldef is not None):
+			if (kwargs.get('use_defaults', False)) and (coldef is not None) and (not self.value):
 				colfld['value'] = coldef
+			if self.extra_config:
+				colfld.update(self.extra_config)
 			ret = [colfld]
 			extra = col.append_field()
 			while extra:
 				ecol = self.model.get_column(extra)
-				ecolfld = ecol.get_editor_cfg(req, in_form=True)
+				ecolfld = ecol.get_editor_cfg(req, in_form=True, initval=self.value)
 				if ecolfld:
 					ecoldef = ecol.default
-					if (kwargs.get('use_defaults', False)) and (ecoldef is not None):
+					if (kwargs.get('use_defaults', False)) and (ecoldef is not None) and (not self.value):
 						ecolfld['value'] = ecoldef
 					ret.append(ecolfld)
 					extra = ecol.append_field()

@@ -38,11 +38,15 @@ class ModuleBase(object):
 		return ()
 
 	@classmethod
-	def install(cls):
+	def install(cls, sess):
 		pass
 
 	@classmethod
-	def uninstall(cls):
+	def uninstall(cls, sess):
+		pass
+
+	@classmethod
+	def upgrade(cls, sess, from_version):
 		pass
 
 	def __init__(self, mmgr):
@@ -236,13 +240,13 @@ class ModuleManager(object):
 			if mod.name != 'core':
 				self.load(mod.name)
 
-	def install(self, moddef):
+	def install(self, moddef, sess):
 		"""
 		Run module's installation hooks and register the module in DB.
 		"""
 		pass
 
-	def uninstall(self, moddef):
+	def uninstall(self, moddef, sess):
 		"""
 		Unregister the module from DB and run module's uninstallation hooks.
 		"""
