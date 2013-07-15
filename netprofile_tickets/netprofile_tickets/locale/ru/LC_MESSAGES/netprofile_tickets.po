@@ -1,0 +1,258 @@
+# Russian translations for netprofile_tickets.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the netprofile_tickets
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_tickets 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-06-03 10:16+0400\n"
+"PO-Revision-Date: 2013-06-03 10:18+0300\n"
+"Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+"X-Generator: Poedit 1.5.5\n"
+
+#: netprofile_tickets/__init__.py:51 netprofile_tickets/models.py:716
+#: netprofile_tickets/views.py:111
+msgid "Tickets"
+msgstr "Задачи"
+
+#: netprofile_tickets/models.py:121
+msgid "Ticket Origins"
+msgstr "Источники задач"
+
+#: netprofile_tickets/models.py:129
+msgid "Add new ticket origin"
+msgstr ""
+
+#: netprofile_tickets/models.py:141 netprofile_tickets/models.py:220
+#: netprofile_tickets/models.py:367 netprofile_tickets/models.py:479
+#: netprofile_tickets/models.py:555 netprofile_tickets/models.py:613
+#: netprofile_tickets/models.py:755 netprofile_tickets/models.py:1081
+#: netprofile_tickets/models.py:1137 netprofile_tickets/models.py:1264
+#: netprofile_tickets/models.py:1344
+msgid "ID"
+msgstr "ID"
+
+#: netprofile_tickets/models.py:149 netprofile_tickets/models.py:375
+#: netprofile_tickets/models.py:487 netprofile_tickets/models.py:859
+#: netprofile_tickets/models.py:1089
+msgid "Name"
+msgstr "Название"
+
+#: netprofile_tickets/models.py:160 netprofile_tickets/models.py:304
+#: netprofile_tickets/models.py:415 netprofile_tickets/models.py:498
+#: netprofile_tickets/models.py:870
+msgid "Description"
+msgstr "Описание"
+
+#: netprofile_tickets/models.py:190
+msgid "Ticket States"
+msgstr "Состояния задач"
+
+#: netprofile_tickets/models.py:208
+msgid "Add new ticket state"
+msgstr "Добавить новое состояние задач"
+
+#: netprofile_tickets/models.py:228
+msgid "Title"
+msgstr "Заголовок"
+
+#: netprofile_tickets/models.py:238
+msgid "Subtitle"
+msgstr "Подзаголовок"
+
+#: netprofile_tickets/models.py:248
+msgid "Flow"
+msgstr ""
+
+#: netprofile_tickets/models.py:258
+msgid "Start"
+msgstr ""
+
+#: netprofile_tickets/models.py:268
+msgid "End"
+msgstr ""
+
+#: netprofile_tickets/models.py:279 netprofile_tickets/models.py:839
+msgid "Duration"
+msgstr ""
+
+#: netprofile_tickets/models.py:347
+msgid "Ticket Transitions"
+msgstr ""
+
+#: netprofile_tickets/models.py:355
+msgid "Add new ticket transition"
+msgstr ""
+
+#: netprofile_tickets/models.py:385
+msgid "From"
+msgstr ""
+
+#: netprofile_tickets/models.py:395
+msgid "To"
+msgstr ""
+
+#: netprofile_tickets/models.py:459 netprofile_tickets/models.py:543
+msgid "Ticket Flags"
+msgstr ""
+
+#: netprofile_tickets/models.py:467
+msgid "Add new ticket flag type"
+msgstr ""
+
+#: netprofile_tickets/models.py:565 netprofile_tickets/models.py:623
+#: netprofile_tickets/models.py:1147
+msgid "Ticket"
+msgstr "Задача"
+
+#: netprofile_tickets/models.py:575
+msgid "Type"
+msgstr "Тип"
+
+#: netprofile_tickets/models.py:598 netprofile_tickets/views.py:56
+msgid "Files"
+msgstr "Файлы"
+
+#: netprofile_tickets/models.py:601
+msgid "Attach file"
+msgstr ""
+
+#: netprofile_tickets/models.py:633
+msgid "File"
+msgstr "Файл"
+
+#: netprofile_tickets/models.py:674 netprofile_tickets/models.py:777
+#: netprofile_tickets/models.py:1373
+msgid "State"
+msgstr ""
+
+#: netprofile_tickets/models.py:742
+msgid "Add new ticket"
+msgstr ""
+
+#: netprofile_tickets/models.py:765
+msgid "Entity"
+msgstr ""
+
+#: netprofile_tickets/models.py:788
+msgid "Origin"
+msgstr ""
+
+#: netprofile_tickets/models.py:801 netprofile_tickets/models.py:1173
+msgid "User"
+msgstr ""
+
+#: netprofile_tickets/models.py:815
+msgid "Group"
+msgstr ""
+
+#: netprofile_tickets/models.py:827
+msgid "Due"
+msgstr ""
+
+#: netprofile_tickets/models.py:850
+msgid "Archived"
+msgstr ""
+
+#: netprofile_tickets/models.py:881 netprofile_tickets/models.py:919
+msgid "Created"
+msgstr ""
+
+#: netprofile_tickets/models.py:894 netprofile_tickets/models.py:932
+msgid "Modified"
+msgstr ""
+
+#: netprofile_tickets/models.py:906 netprofile_tickets/models.py:945
+#: netprofile_tickets/models.py:1160 netprofile_tickets/views.py:162
+msgid "Transition"
+msgstr ""
+
+#: netprofile_tickets/models.py:1062
+msgid "Change Fields"
+msgstr ""
+
+#: netprofile_tickets/models.py:1069
+msgid "Add new change field"
+msgstr ""
+
+#: netprofile_tickets/models.py:1122
+msgid "Changes"
+msgstr ""
+
+#: netprofile_tickets/models.py:1185
+msgid "Time"
+msgstr ""
+
+#: netprofile_tickets/models.py:1195
+msgid "Show to Client"
+msgstr ""
+
+#: netprofile_tickets/models.py:1205
+msgid "Comments"
+msgstr ""
+
+#: netprofile_tickets/models.py:1249
+msgid "Change Bits"
+msgstr ""
+
+#: netprofile_tickets/models.py:1274 netprofile_tickets/models.py:1354
+msgid "Change"
+msgstr ""
+
+#: netprofile_tickets/models.py:1285
+msgid "Field"
+msgstr ""
+
+#: netprofile_tickets/models.py:1296
+msgid "Old"
+msgstr ""
+
+#: netprofile_tickets/models.py:1306
+msgid "New"
+msgstr ""
+
+#: netprofile_tickets/models.py:1329
+msgid "Flag Bits"
+msgstr ""
+
+#: netprofile_tickets/models.py:1364
+msgid "Flag"
+msgstr ""
+
+#: netprofile_tickets/models.py:1395
+msgid "Dependencies"
+msgstr ""
+
+#: netprofile_tickets/models.py:1410
+msgid "Parent"
+msgstr ""
+
+#: netprofile_tickets/models.py:1422
+msgid "Child"
+msgstr ""
+
+#: netprofile_tickets/views.py:47
+msgid "Update"
+msgstr ""
+
+#: netprofile_tickets/views.py:129
+msgid "No changes"
+msgstr ""
+
+#: netprofile_tickets/views.py:130
+msgid "Do not change ticket state."
+msgstr ""
+
+#: netprofile_tickets/views.py:210
+msgid "Update ticket"
+msgstr ""
