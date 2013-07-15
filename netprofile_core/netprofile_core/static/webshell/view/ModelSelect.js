@@ -7,6 +7,7 @@ Ext.define('NetProfile.view.ModelSelect', {
 	apiModule: null,
 	apiClass: null,
 	hiddenField: null,
+	gridConfig: null,
 	showLink: true,
 	trigger1Cls: 'x-form-clear-trigger',
 	trigger2Cls: ' ',
@@ -63,14 +64,16 @@ Ext.define('NetProfile.view.ModelSelect', {
 			hf = form.down('field[name=' + this.hiddenField + ']');
 		if(!hf)
 			hf = this.hiddenField;
-		var sel_grid = Ext.create(sel_grid_class, {
+		var sel_grid_cfg = Ext.apply({
+//		var sel_grid = Ext.create(sel_grid_class, {
 			rowEditing: false,
 			actionCol: false,
 			selectRow: true,
 			selectField: this,
 			selectIdField: hf,
 			stateful: false
-		});
+		}, this.gridConfig || {});
+		var sel_grid = Ext.create(sel_grid_class, sel_grid_cfg);
 
 		sel_win.add(sel_grid);
 		sel_win.show();

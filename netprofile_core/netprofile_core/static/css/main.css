@@ -291,6 +291,19 @@ table.np-rights-tbl td.vlabel
 	min-width: 4em;
 }
 
+div.np-propbar-tabbar div.x-tab-bar-body
+{
+	border-top-color: #dfe8f6;
+	border-left: 0;
+	border-right: 0;
+}
+
+div.np-propbar-tabbar div.x-tab-bar-strip
+{
+	border-left: 0;
+	border-right: 0;
+}
+
 .x-tree-icon-parent
 {
 	background-image: url(../img/folder.png);

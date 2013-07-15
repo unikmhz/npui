@@ -27,6 +27,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.ux.form.field.Password',
 		'Ext.ux.form.DynamicCheckboxGroup',
 		'Ext.ux.window.CenterWindow',
+		'Ext.ux.RowExpander',
 		'NetProfile.view.ModelSelect'
 	],
 	rowEditing: true,
@@ -79,12 +80,14 @@ Ext.define('NetProfile.view.ModelGrid', {
 		}
 		if(!this.canEdit)
 			this.rowEditing = false;
-		this.features = [{
+		if(!this.features)
+			this.features = [];
+		this.features.push({
 			ftype: 'filters',
 			multi: true,
 			encode: false,
 			local: false
-		}];
+		});
 		if(this.extraSearch)
 			this.features.push({
 				ftype: 'extrasearch',
@@ -274,7 +277,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 					return true;
 				return this.selectRecord(recs[0]);
 			},
-			itemdblclick: function(view, record, item, idx, ev, opts)
+			beforeitemdblclick: function(view, record, item, idx, ev, opts)
 			{
 				if(this.selectRow)
 				{
@@ -297,6 +300,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 					if(this.selectField)
 						this.selectField.setValue(record.get('__str__'));
 					this.up('window').close();
+					return false;
 				}
 				return true;
 			},

@@ -9,17 +9,20 @@ Ext.define('NetProfile.view.PropBar', {
 	stateId: 'npws_propbar',
 	stateful: true,
 	collapsible: false,
-	title: 'Properties',
-	header: {
-		iconCls: 'ico-props'
-	},
-	headerPosition: 'right',
+//	title: 'Properties',
+//	header: {
+//		iconCls: 'ico-props'
+//	},
+//	headerPosition: 'right',
 	hidden: true,
 	layout: 'fit',
 	split: false,
 	height: '40%',
 	minHeight: 300,
 	border: 0,
+	tabBar: {
+		cls: 'np-propbar-tabbar'
+	},
 	tabCache: {},
 	items: [
 	],
@@ -30,23 +33,23 @@ Ext.define('NetProfile.view.PropBar', {
 	initComponent: function()
 	{
 		this.tabCache = {};
-		this.tools = [{
-			itemId: 'minimize',
-			type: 'minimize',
-			handler: function()
-			{
-				this.hide();
-			},
-			scope: this
-		}, {
-			itemId: 'close',
-			type: 'close',
-			handler: function()
-			{
-				this.clearAll();
-			},
-			scope: this
-		}];
+//		this.tools = [{
+//			itemId: 'minimize',
+//			type: 'minimize',
+//			handler: function()
+//			{
+//				this.hide();
+//			},
+//			scope: this
+//		}, {
+//			itemId: 'close',
+//			type: 'close',
+//			handler: function()
+//			{
+//				this.clearAll();
+//			},
+//			scope: this
+//		}];
 		this.callParent(arguments);
 
 		this.on({

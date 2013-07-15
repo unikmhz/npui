@@ -52,6 +52,7 @@ import hashlib
 import datetime as dt
 import urllib
 import itertools
+import base64
 
 from sqlalchemy import (
 	Column,
@@ -370,9 +371,16 @@ class User(Base):
 				'menu_order'   : 20,
 				'default_sort' : ({ 'property': 'login' ,'direction': 'ASC' },),
 				'grid_view'    : ('login', 'name_family', 'name_given', 'group', 'enabled', 'state', 'email'),
-				'form_view'    : ('login', 'name_family', 'name_given', 'name_middle', 'title', 'group', 'secondary_groups', 'enabled', 'pass', 'security_policy', 'state', 'email', 'manager'),
+				'form_view'    : (
+					'login', 'name_family', 'name_given', 'name_middle',
+					'title', 'group', 'secondary_groups', 'enabled',
+					'pass', 'security_policy', 'state',
+					'email', 'manager', 'photo'
+				),
 				'easy_search'  : ('login', 'name_family'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'ldap_classes' : ('npUser', 'posixAccount', 'shadowAccount'),
+				'ldap_rdn'     : 'login'
 			}
 		}
 	)
@@ -384,7 +392,8 @@ class User(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : _('ID')
+			'header_string' : _('ID'),
+			'ldap_attr'     : 'uidNumber'
 		}
 	)
 	group_id = Column(
@@ -395,7 +404,8 @@ class User(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'ldap_attr'     : 'gidNumber'
 		}
 	)
 	security_policy_id = Column(
@@ -417,7 +427,9 @@ class User(Base):
 		default=UserState.pending,
 		server_default=UserState.pending,
 		info={
-			'header_string' : _('State')
+			'header_string' : _('State'),
+			'ldap_attr'     : 'npAccountStatus',
+			'ldap_value'    : 'ldap_status'
 		}
 	)
 	login = Column(
@@ -427,7 +439,8 @@ class User(Base):
 		info={
 			'header_string' : _('Username'),
 			'writer'        : 'change_login',
-			'pass_request'  : True
+			'pass_request'  : True,
+			'ldap_attr'     : ('uid', 'xmozillanickname', 'gecos', 'displayName')
 		}
 	)
 	password = Column(
@@ -440,7 +453,9 @@ class User(Base):
 			'secret_value'  : True,
 			'editor_xtype'  : 'passwordfield',
 			'writer'        : 'change_password',
-			'pass_request'  : True
+			'pass_request'  : True,
+			'ldap_attr'     : 'userPassword', # FIXME!
+			'ldap_value'    : 'ldap_password'
 		}
 	)
 	a1_hash = Column(
@@ -453,7 +468,8 @@ class User(Base):
 		info={
 			'header_string' : _('A1 Hash'),
 			'secret_value'  : True,
-			'editor_xtype'  : None
+			'editor_xtype'  : None,
+			'ldap_attr'     : 'npDigestHA1'
 		}
 	)
 	enabled = Column(
@@ -473,7 +489,8 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Family Name')
+			'header_string' : _('Family Name'),
+			'ldap_attr'     : ('sn', 'cn') # FIXME: move 'cn' to dynamic attr
 		}
 	)
 	name_given = Column(
@@ -483,7 +500,8 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Given Name')
+			'header_string' : _('Given Name'),
+			'ldap_attr'     : 'givenName'
 		}
 	)
 	name_middle = Column(
@@ -493,7 +511,8 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Middle Name')
+			'header_string' : _('Middle Name'),
+			'ldap_attr'     : 'initials' # FIXME?
 		}
 	)
 	title = Column(
@@ -503,7 +522,8 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Title')
+			'header_string' : _('Title'),
+			'ldap_attr'     : 'title'
 		}
 	)
 	manager_id = Column(
@@ -526,7 +546,8 @@ class User(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('E-mail'),
-			'vtype'         : 'email'
+			'vtype'         : 'email',
+			'ldap_attr'     : 'mail'
 		}
 	)
 	ip_address = Column(
@@ -680,6 +701,27 @@ class User(Base):
 		else:
 			rng = random
 		return ''.join(rng.choice(chars) for i in range(salt_len))
+
+	def ldap_status(self, settings):
+		if self.state == UserState.pending:
+			return b'noaccess'
+		elif self.state == UserState.active:
+			if self.enabled:
+				return b'active'
+			else:
+				return b'disabled'
+		else:
+			return b'deleted'
+
+	def ldap_password(self, settings):
+		pw = getattr(self, 'mod_pw', False)
+		if not pw:
+			raise ValueError
+		salt = self.generate_salt(4).encode()
+		ctx = hashlib.sha1()
+		ctx.update(pw.encode())
+		ctx.update(salt)
+		return b'{SSHA}' + base64.b64encode(ctx.digest() + salt)
 
 	def generate_a1hash(self, realm):
 		ctx = hashlib.md5()
@@ -897,6 +939,25 @@ class User(Base):
 	def __name__(self):
 		return self.login
 
+	def ldap_attrs(self, settings):
+		from netprofile_ldap.ldap import get_dn
+		groupset = set()
+		if self.group:
+			groupset.add(self.group)
+		for g in self.secondary_groups:
+			groupset.add(g)
+		dnlist = []
+		for g in groupset:
+			dnlist.append(get_dn(g, settings).encode())
+		ret = {}
+		if self.login:
+			ret['homeDirectory'] = ('/home/%s' % self.login).encode()
+		if 'netprofile.ldap.orm.User.default_shell' in settings:
+			ret['loginShell'] = settings['netprofile.ldap.orm.User.default_shell'].encode()
+		if len(dnlist) > 0:
+			ret['memberOf'] = dnlist
+		return ret
+
 	def get_uri(self):
 		return [ '', 'users', self.login ]
 
@@ -962,7 +1023,10 @@ class Group(Base):
 						Step('name', 'parent', 'security_policy', title=_('New group data')),
 						Step('visible', 'assignable', 'root_folder', title=_('New group details')),
 						title=_('Add new group')
-					)
+					),
+
+				'ldap_classes' : ('npGroup',),
+				'ldap_rdn'     : 'name'
 			}
 		}
 	)
@@ -974,7 +1038,8 @@ class Group(Base):
 		primary_key=True,
 		nullable=False,
 		info={
-			'header_string' : _('ID')
+			'header_string' : _('ID'),
+			'ldap_attr'     : 'gidNumber'
 		}
 	)
 	parent_id = Column(
@@ -1008,7 +1073,8 @@ class Group(Base):
 		Comment('Group Name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'ldap_attr'     : 'cn'
 		}
 	)
 	visible = Column(
@@ -1135,6 +1201,25 @@ class Group(Base):
 	@property
 	def __name__(self):
 		return self.name
+
+	def ldap_attrs(self, settings):
+		from netprofile_ldap.ldap import get_dn
+		userset = set()
+		for u in self.users:
+			userset.add(u)
+		for u in self.secondary_users:
+			userset.add(u)
+		dnlist = []
+		for u in userset:
+			dnlist.append(get_dn(u, settings).encode())
+		ret = {}
+		if len(dnlist) > 0:
+			ret['uniqueMember'] = dnlist
+#		if self.login:
+#			ret['homeDirectory'] = ('/home/%s' % self.login).encode()
+#		if 'netprofile.ldap.orm.User.default_shell' in settings:
+#			ret['loginShell'] = settings['netprofile.ldap.orm.User.default_shell'].encode()
+		return ret
 
 	def get_uri(self):
 		return [ '', 'groups', self.name ]
@@ -2548,7 +2633,7 @@ class FileFolder(Base):
 		if p is None:
 			p = self.parent
 		if p is None:
-			return [ self.name ]
+			return [ '', 'fs', self.name ]
 		uri = p.get_uri()
 		uri.append(self.name)
 		return uri
@@ -3102,6 +3187,10 @@ class File(Base):
 	@property
 	def plain_mime_type(self):
 		return self.mime_type.split(';')[0]
+
+	@property
+	def mime_class(self):
+		return self.mime_type.split('/')[0]
 
 	@property
 	def mime_charset(self):

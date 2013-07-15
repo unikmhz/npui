@@ -95,6 +95,11 @@ Ext.define('NetProfile.view.Wizard', {
 				}
 				else if(this.api.submit)
 				{
+					this.api.submit(
+						this.getValues(),
+						this.actionCallback.bind(this)
+					);
+					return true;
 				}
 				return false;
 			},
@@ -259,6 +264,10 @@ Ext.define('NetProfile.view.Wizard', {
 					step.doGetValues = true;
 				}
 			});
+		if('redraw' in data.action)
+			Ext.Array.forEach(data.action.redraw, function(widget)
+			{
+			});
 		if(('reload' in data.action) && data.action.reload && this.createInto)
 			this.createInto.reload();
 		if('do' in data.action)
@@ -278,8 +287,7 @@ Ext.define('NetProfile.view.Wizard', {
 					me.update('init');
 					return true;
 				case 'close':
-					me.up('window').close();
-					return true;
+					return me.close();
 				default:
 					break;
 			}
@@ -394,10 +402,10 @@ Ext.define('NetProfile.view.Wizard', {
 	close: function()
 	{
 		if(this.resetOnClose)
-		{
-		}
+			this.loadWizard();
 		else
 			this.up('window').close();
+		return true;
 	},
 	submit: function()
 	{

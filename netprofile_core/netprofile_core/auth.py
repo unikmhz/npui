@@ -41,6 +41,7 @@ from netprofile.common.auth import (
 	PluginAuthenticationPolicy
 )
 from netprofile.db.connection import DBSession
+from netprofile.db.clauses import SetVariable
 from .models import (
 	NPSession,
 	Privilege,
@@ -179,9 +180,9 @@ def auth_to_db(event):
 	user = request.user
 
 	if user:
-		sess.execute('SET @accessuid = :uid', { 'uid' : user.id })
-		sess.execute('SET @accessgid = :gid', { 'gid' : user.group_id })
-		sess.execute('SET @accesslogin = :login', { 'login' : user.login })
+		sess.execute(SetVariable('accessuid', user.id))
+		sess.execute(SetVariable('accessgid', user.group_id))
+		sess.execute(SetVariable('accesslogin', user.login))
 
 		skey = request.registry.settings.get('redis.sessions.cookie_name')
 		if not skey:
@@ -196,9 +197,9 @@ def auth_to_db(event):
 				npsess = user.generate_session(request, sname)
 				sess.add(npsess)
 	else:
-		sess.execute('SET @accessuid = 0')
-		sess.execute('SET @accessgid = 0')
-		sess.execute('SET @accesslogin = \'[GUEST]\'')
+		sess.execute(SetVariable('accessuid', 0))
+		sess.execute(SetVariable('accessgid', 0))
+		sess.execute(SetVariable('accesslogin', '[GUEST]'))
 
 def includeme(config):
 	"""
