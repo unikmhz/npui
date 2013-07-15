@@ -1,28 +1,25 @@
-<tpl if="data.house || data.address">
-	<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/house_small.png')}" />
-	{data.address} {data.house} {data.entrance} {data.floor} {data.flat}
+<tpl if="data.addrs && data.addrs.length">
+<tpl for="data.addrs">
+	<div>
+		<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/house_small.png')}" />
+		{.}
+	</div>
 </tpl>
-<tpl if="data.phone_home || data.phone_work || data.phone_cell || data.cp_phone_work || data.cp_phone_cell">
-<tpl if="data.house || data.address"><br /></tpl>
-<tpl if="data.phone_home">
-	<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/phone_small.png')}" />
-	{data.phone_home}
 </tpl>
-<tpl if="data.phone_work">
-	<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/phone_small.png')}" />
-	{data.phone_work}
+<tpl if="data.address">
+	<div>
+		<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/house_small.png')}" />
+		{data.address}
+	</div>
 </tpl>
-<tpl if="data.phone_cell">
-	<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/mobile_small.png')}" />
-	{data.phone_cell}
+<tpl if="data.phones && data.phones.length">
+	<div>
+<tpl for="data.phones">
+	<span>
+		<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img')}/{img}.png" />
+		{str}
+	</span>
 </tpl>
-<tpl if="data.cp_phone_work">
-	<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/phone_small.png')}" />
-	{data.cp_phone_work}
-</tpl>
-<tpl if="data.cp_phone_cell">
-	<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/mobile_small.png')}" />
-	{data.cp_phone_cell}
-</tpl>
+	</div>
 </tpl>
 

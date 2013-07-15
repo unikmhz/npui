@@ -27,6 +27,8 @@ class Module(ModuleBase):
 
 	def get_models(self):
 		return (
+			Address,
+			Phone,
 			Entity,
 			EntityComment,
 			EntityFile,

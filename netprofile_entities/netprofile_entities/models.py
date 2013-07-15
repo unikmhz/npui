@@ -14,6 +14,9 @@ __all__ = [
 	'EntityComment',
 	'EntityFlag',
 	'EntityFlagType',
+	'Address',
+	'PhoneType',
+	'Phone',
 	'EntityState',
 	'EntityFile',
 	'PhysicalEntity',
@@ -49,11 +52,6 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-#from colanderalchemy import (
-#	Column,
-#	relationship
-#)
-
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -61,6 +59,7 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Int16,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -82,6 +81,7 @@ from netprofile.ext.columns import (
 	HybridColumn,
 	MarkupColumn
 )
+from netprofile.ext.filters import TextFilter
 from netprofile_geo.models import (
 	District,
 	House,
@@ -164,53 +164,26 @@ class Entity(Base):
 		if 'houseid' in value:
 			val = int(value['houseid'])
 			if val > 0:
-				query = query.filter(or_(
-					PhysicalEntity.house_id == val,
-					LegalEntity.house_id == val,
-					StructuralEntity.house_id == val
-				))
+				query = query.join(Address).filter(Address.house_id == val)
 		elif 'streetid' in value:
 			val = int(value['streetid'])
 			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).filter(House.street_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(or_(
-						PhysicalEntity.house_id.in_(val),
-						LegalEntity.house_id.in_(val),
-						StructuralEntity.house_id.in_(val)
-					))
-				else:
-					query = query.filter(False)
+				query = query.join(Address).join(House).filter(House.street_id == val)
 		elif 'districtid' in value:
 			val = int(value['districtid'])
 			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(or_(
-						PhysicalEntity.house_id.in_(val),
-						LegalEntity.house_id.in_(val),
-						StructuralEntity.house_id.in_(val)
-					))
-				else:
-					query = query.filter(False)
+				query = query.join(Address).join(House).join(Street).filter(Street.district_id == val)
 		elif 'cityid' in value:
 			val = int(value['cityid'])
 			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(or_(
-						PhysicalEntity.house_id.in_(val),
-						LegalEntity.house_id.in_(val),
-						StructuralEntity.house_id.in_(val)
-					))
-				else:
-					query = query.filter(False)
+				query = query.join(Address).join(House).join(Street).join(District).filter(District.city_id == val)
+		return query
+
+	@classmethod
+	def _filter_phone(cls, query, value):
+		if value:
+			value = str(value)
+			query = query.join(Phone).filter(Phone.number.contains(value))
 		return query
 
 	__tablename__ = 'entities_def'
@@ -264,8 +237,12 @@ class Entity(Base):
 					'state'
 				),
 				'easy_search'   : ('nick',),
+				'extra_data'    : ('data',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
+					TextFilter('phone', _filter_phone,
+						title=_('Phone')
+					),
 					AddressFilter('address', _filter_address,
 						title=_('Address')
 					),
@@ -283,17 +260,17 @@ class Entity(Base):
 						ExternalWizardField('PhysicalEntity', 'name_family'),
 						ExternalWizardField('PhysicalEntity', 'name_given'),
 						ExternalWizardField('PhysicalEntity', 'name_middle'),
-						ExternalWizardField('PhysicalEntity', 'phone_home'),
-						ExternalWizardField('PhysicalEntity', 'phone_work'),
-						ExternalWizardField('PhysicalEntity', 'phone_cell'),
+#						ExternalWizardField('PhysicalEntity', 'phone_home'),
+#						ExternalWizardField('PhysicalEntity', 'phone_work'),
+#						ExternalWizardField('PhysicalEntity', 'phone_cell'),
 						id='ent_physical1', title=_('Physical entity properties'),
 						on_prev='generic'
 					),
 					Step(
-						ExternalWizardField('PhysicalEntity', 'house'),
-						ExternalWizardField('PhysicalEntity', 'entrance'),
-						ExternalWizardField('PhysicalEntity', 'floor'),
-						ExternalWizardField('PhysicalEntity', 'flat'),
+#						ExternalWizardField('PhysicalEntity', 'house'),
+#						ExternalWizardField('PhysicalEntity', 'entrance'),
+#						ExternalWizardField('PhysicalEntity', 'floor'),
+#						ExternalWizardField('PhysicalEntity', 'flat'),
 						id='ent_physical2', title=_('Physical entity properties')
 					),
 					Step(
@@ -311,12 +288,12 @@ class Entity(Base):
 					Step(
 						ExternalWizardField('LegalEntity', 'contractid'),
 						ExternalWizardField('LegalEntity', 'name'),
-						ExternalWizardField('LegalEntity', 'phone_rec'),
-						ExternalWizardField('LegalEntity', 'phone_fax'),
-						ExternalWizardField('LegalEntity', 'house'),
-						ExternalWizardField('LegalEntity', 'entrance'),
-						ExternalWizardField('LegalEntity', 'floor'),
-						ExternalWizardField('LegalEntity', 'flat'),
+#						ExternalWizardField('LegalEntity', 'phone_rec'),
+#						ExternalWizardField('LegalEntity', 'phone_fax'),
+#						ExternalWizardField('LegalEntity', 'house'),
+#						ExternalWizardField('LegalEntity', 'entrance'),
+#						ExternalWizardField('LegalEntity', 'floor'),
+#						ExternalWizardField('LegalEntity', 'flat'),
 						ExternalWizardField('LegalEntity', 'homepage'),
 						id='ent_legal1', title=_('Legal entity properties'),
 						on_prev='generic'
@@ -326,8 +303,8 @@ class Entity(Base):
 						ExternalWizardField('LegalEntity', 'cp_name_given'),
 						ExternalWizardField('LegalEntity', 'cp_name_middle'),
 						ExternalWizardField('LegalEntity', 'cp_title'),
-						ExternalWizardField('LegalEntity', 'cp_phone_work'),
-						ExternalWizardField('LegalEntity', 'cp_phone_cell'),
+#						ExternalWizardField('LegalEntity', 'cp_phone_work'),
+#						ExternalWizardField('LegalEntity', 'cp_phone_cell'),
 						ExternalWizardField('LegalEntity', 'cp_email'),
 						ExternalWizardField('LegalEntity', 'cp_icq'),
 						id='ent_legal2', title=_('Legal entity contact person')
@@ -344,7 +321,7 @@ class Entity(Base):
 						on_submit=_wizcb_ent_submit('LegalEntity')
 					),
 					Step(
-						ExternalWizardField('StructuralEntity', 'house'),
+#						ExternalWizardField('StructuralEntity', 'house'),
 						id='ent_structural1', title=_('Structural entity properties'),
 						on_prev='generic',
 						on_submit=_wizcb_ent_submit('StructuralEntity')
@@ -527,6 +504,18 @@ class Entity(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	addresses = relationship(
+		'Address',
+		backref=backref('entity', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	phones = relationship(
+		'Phone',
+		backref=backref('entity', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	flags = association_proxy(
 		'flagmap',
@@ -542,17 +531,17 @@ class Entity(Base):
 	@classmethod
 	def __augment_result__(cls, sess, res, params):
 		populate_related(
-			res, 'house_id', 'house', House,
-			sess.query(House).options(joinedload(House.street)),
-			lambda e: isinstance(e, (PhysicalEntity, LegalEntity, StructuralEntity))
-		)
-		populate_related(
 			res, 'state_id', 'state', EntityState,
 			sess.query(EntityState)
 		)
 		populate_related_list(
 			res, 'id', 'flagmap', EntityFlag,
 			sess.query(EntityFlag),
+			None, 'entity_id'
+		)
+		populate_related_list(
+			res, 'id', 'addresses', Address,
+			sess.query(Address),
 			None, 'entity_id'
 		)
 		return res
@@ -752,7 +741,8 @@ class EntityFlag(Base):
 		Comment('Entity ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Entity')
+			'header_string' : _('Entity'),
+			'filter_type'   : 'none'
 		}
 	)
 	type_id = Column(
@@ -765,6 +755,308 @@ class EntityFlag(Base):
 			'header_string' : _('Type')
 		}
 	)
+
+class Address(Base):
+	"""
+	Entity address.
+	"""
+	__tablename__ = 'addr_def'
+	__table_args__ = (
+		Comment('Addresses'),
+		Index('addr_def_i_entityid', 'entityid'),
+		Index('addr_def_i_houseid', 'houseid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_EDIT',
+				'cap_edit'      : 'ENTITIES_EDIT',
+				'cap_delete'    : 'ENTITIES_EDIT',
+
+				'menu_name'     : _('Addresses'),
+				'default_sort'  : (
+					{ 'property': 'houseid' ,'direction': 'ASC' },
+					{ 'property': 'flat' ,'direction': 'ASC' }
+				),
+				'grid_view'     : ('entity', 'primary', 'house', 'entrance', 'floor', 'flat', 'descr'),
+				'form_view'     : ('entity', 'primary', 'house', 'entrance', 'floor', 'flat', 'entrycode', 'descr'),
+#				'easy_search'   : (),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new address'))
+			}
+		}
+	)
+
+	id = Column(
+		'addrid',
+		UInt32(),
+		Sequence('addrid_seq'),
+		Comment('Address ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	entity_id = Column(
+		'entityid',
+		UInt32(),
+		ForeignKey('entities_def.entityid', name='addr_def_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Entity ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Entity'),
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Is address primary?'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	house_id = Column(
+		'houseid',
+		UInt32(),
+		ForeignKey('addr_houses.houseid', name='addr_def_fk_houseid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('House ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('House'),
+			'filter_type'   : 'none'
+		}
+	)
+	entrance = Column(
+		UInt8(),
+		Comment('Entrance number'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Entr.')
+		}
+	)
+	floor = Column(
+		Int16(),
+		Comment('Floor number'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Floor')
+		}
+	)
+	flat = Column(
+		UInt16(),
+		Comment('Flat number'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Flat')
+		}
+	)
+	entry_code = Column(
+		'entrycode',
+		Unicode(8),
+		Comment('Entry code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Entry Code')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Address description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	house = relationship(
+		'House',
+		innerjoin=True,
+		backref='addresses'
+	)
+
+	def __str__(self):
+		req = get_current_request()
+		loc = get_localizer(req)
+
+		ret = []
+		if self.house:
+			ret.append(str(self.house))
+		if self.entrance:
+			ret.extend((
+				loc.translate(_('entr.')),
+				str(self.entrance)
+			))
+		if self.floor:
+			ret.extend((
+				loc.translate(_('fl.')),
+				str(self.floor)
+			))
+		if self.flat:
+			ret.extend((
+				loc.translate(_('app.')),
+				str(self.flat)
+			))
+
+		return ' '.join(ret)
+
+class PhoneType(DeclEnum):
+	"""
+	Phone type ENUM.
+	"""
+	home = 'home', _('Home Phone'), 10
+	cell = 'cell', _('Cell Phone'), 20
+	work = 'work', _('Work Phone'), 30
+	pager = 'pager', _('Pager Number'), 40
+	fax = 'fax', _('Fax Number'), 50
+	rec = 'rec', _('Receptionist'), 60
+
+class Phone(Base):
+	"""
+	Generic telephone numbers.
+	"""
+	__tablename__ = 'addr_phones'
+	__table_args__ = (
+		Index('addr_def_i_entityid', 'entityid'),
+		Index('addr_phones_i_num', 'num'),
+		Comment('Phone numbers'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_EDIT',
+				'cap_edit'      : 'ENTITIES_EDIT',
+				'cap_delete'    : 'ENTITIES_EDIT',
+
+				'menu_name'     : _('Phones'),
+				'default_sort'  : (
+					{ 'property': 'ptype' ,'direction': 'ASC' },
+					{ 'property': 'num' ,'direction': 'ASC' }
+				),
+				'grid_view'     : ('entity', 'primary', 'ptype', 'num', 'descr'),
+#				'easy_search'   : (),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new phone'))
+			}
+		}
+	)
+
+	id = Column(
+		'phoneid',
+		UInt32(),
+		Sequence('phoneid_seq'),
+		Comment('Phone ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	entity_id = Column(
+		'entityid',
+		UInt32(),
+		ForeignKey('entities_def.entityid', name='addr_phones_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Entity ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Entity'),
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Is phone primary?'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	type = Column(
+		'ptype',
+		PhoneType.db_type(),
+		Comment('Phone type'),
+		nullable=False,
+		default=PhoneType.home,
+		server_default=PhoneType.home
+	)
+	number = Column(
+		'num',
+		ASCIIString(255),
+		Comment('Phone number'),
+		nullable=False,
+		info={
+			'header_string' : _('Number')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Phone description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	def __str__(self):
+		req = get_current_request()
+		loc = get_localizer(req)
+
+		pfx = None
+		if self.type == PhoneType.home:
+			pfx = _('home')
+		elif self.type == PhoneType.cell:
+			pfx = _('cell')
+		elif self.type == PhoneType.work:
+			pfx = _('work')
+		elif self.type == PhoneType.pager:
+			pfx = _('pg.')
+		elif self.type == PhoneType.fax:
+			pfx = _('fax')
+		elif self.type == PhoneType.rec:
+			pfx = _('rec.')
+		else:
+			pfx = _('tel.')
+		return '%s: %s' % (
+			loc.translate(pfx),
+			self.number
+		)
+
+	@property
+	def data(self):
+		img = 'phone_small'
+		if self.type == PhoneType.cell:
+			img = 'mobile_small'
+		return {
+			'img' : img,
+			'str' : str(self)
+		}
 
 class EntityFile(Base):
 	"""
@@ -936,45 +1228,45 @@ class PhysicalEntity(Entity):
 	Physical entity. Describes single individual.
 	"""
 
-	@classmethod
-	def _filter_address(cls, query, value):
-		if not isinstance(value, dict):
-			return query
-		if 'houseid' in value:
-			val = int(value['houseid'])
-			if val > 0:
-				query = query.filter(PhysicalEntity.house_id == val)
-		elif 'streetid' in value:
-			val = int(value['streetid'])
-			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).filter(House.street_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(PhysicalEntity.house_id.in_(val))
-				else:
-					query = query.filter(False)
-		elif 'districtid' in value:
-			val = int(value['districtid'])
-			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(PhysicalEntity.house_id.in_(val))
-				else:
-					query = query.filter(False)
-		elif 'cityid' in value:
-			val = int(value['cityid'])
-			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(PhysicalEntity.house_id.in_(val))
-				else:
-					query = query.filter(False)
-		return query
+#	@classmethod
+#	def _filter_address(cls, query, value):
+#		if not isinstance(value, dict):
+#			return query
+#		if 'houseid' in value:
+#			val = int(value['houseid'])
+#			if val > 0:
+#				query = query.filter(PhysicalEntity.house_id == val)
+#		elif 'streetid' in value:
+#			val = int(value['streetid'])
+#			if val > 0:
+#				sess = DBSession()
+#				sq = sess.query(House).filter(House.street_id == val)
+#				val = [h.id for h in sq]
+#				if len(val) > 0:
+#					query = query.filter(PhysicalEntity.house_id.in_(val))
+#				else:
+#					query = query.filter(False)
+#		elif 'districtid' in value:
+#			val = int(value['districtid'])
+#			if val > 0:
+#				sess = DBSession()
+#				sq = sess.query(House).join(Street).filter(Street.district_id == val)
+#				val = [h.id for h in sq]
+#				if len(val) > 0:
+#					query = query.filter(PhysicalEntity.house_id.in_(val))
+#				else:
+#					query = query.filter(False)
+#		elif 'cityid' in value:
+#			val = int(value['cityid'])
+#			if val > 0:
+#				sess = DBSession()
+#				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
+#				val = [h.id for h in sq]
+#				if len(val) > 0:
+#					query = query.filter(PhysicalEntity.house_id.in_(val))
+#				else:
+#					query = query.filter(False)
+#		return query
 
 	__tablename__ = 'entities_physical'
 	__table_args__ = (
@@ -982,8 +1274,6 @@ class PhysicalEntity(Entity):
 		Index('entities_physical_u_contractid', 'contractid', unique=True),
 		Index('entities_physical_i_name_family', 'name_family'),
 		Index('entities_physical_i_name_given', 'name_given'),
-		Index('entities_physical_i_houseid', 'houseid'),
-		Index('entities_physical_i_flat', 'flat'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1009,13 +1299,12 @@ class PhysicalEntity(Entity):
 						cell_class='np-nopad',
 						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
 					),
-					'nick', 'name_family', 'name_given', 'house', 'floor', 'flat', 'phone_home', 'phone_cell'
+					'nick', 'name_family', 'name_given'
 				),
 				'form_view'     : (
 					'nick', 'parent', 'state', 'flags', 'contractid',
 					'name_family', 'name_given', 'name_middle',
-					'house', 'entrance', 'floor', 'flat',
-					'phone_home', 'phone_work', 'phone_cell',
+#					'phones', 'addresses',
 					'email', 'icq', 'homepage', 'birthdate',
 					'pass_series', 'pass_num', 'pass_issuedate', 'pass_issuedby',
 					'descr'
@@ -1023,7 +1312,10 @@ class PhysicalEntity(Entity):
 				'easy_search'   : ('nick', 'name_family'),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
-					AddressFilter('address', _filter_address,
+					TextFilter('phone', Entity._filter_phone,
+						title=_('Phone')
+					),
+					AddressFilter('address', Entity._filter_address,
 						title=_('Address')
 					),
 				),
@@ -1037,13 +1329,12 @@ class PhysicalEntity(Entity):
 					Step(
 						'contractid',
 						'name_family', 'name_given', 'name_middle',
-						'phone_home', 'phone_work', 'phone_cell',
 						id='ent_physical1', title=_('Physical entity properties')
 					),
-					Step(
-						'house', 'entrance', 'floor', 'flat',
-						id='ent_physical2', title=_('Physical entity properties')
-					),
+#					Step(
+#						'house', 'entrance', 'floor', 'flat',
+#						id='ent_physical2', title=_('Physical entity properties')
+#					),
 					Step(
 						'pass_series', 'pass_num', 'pass_issuedby', 'pass_issuedate',
 						'email', 'icq', 'homepage', 'birthdate',
@@ -1102,79 +1393,6 @@ class PhysicalEntity(Entity):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Middle Name')
-		}
-	)
-	house_id = Column(
-		'houseid',
-		UInt32(),
-		ForeignKey('addr_houses.houseid', name='entities_physical_fk_houseid', onupdate='CASCADE'),
-		Comment('House ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('House'),
-			'filter_type'   : 'none'
-		}
-	)
-	entrance = Column(
-		UInt8(),
-		Comment('Entrance number'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Entr.')
-		}
-	)
-	floor = Column(
-		UInt8(),
-		Comment('Floor number'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Floor')
-		}
-	)
-	flat = Column(
-		UInt16(),
-		Comment('Flat number'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Flat')
-		}
-	)
-	phone_home = Column(
-		Unicode(24),
-		Comment('Home phone'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Home Phone')
-		}
-	)
-	phone_work = Column(
-		Unicode(24),
-		Comment('Work phone'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Work Phone')
-		}
-	)
-	phone_cell = Column(
-		Unicode(24),
-		Comment('Cell phone'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Cell')
 		}
 	)
 	email = Column(
@@ -1264,49 +1482,51 @@ class PhysicalEntity(Entity):
 		}
 	)
 
-	house = relationship(
-		'House',
-		backref='physical_entities'
-	)
-
 	@property
 	def data(self):
 		req = get_current_request()
 		loc = get_localizer(req)
 
 		ret = super(PhysicalEntity, self).data
-		if self.house:
-			ret['house'] = str(self.house)
-		if self.entrance:
-			ret['entrance'] = '%s %s' % (
-				loc.translate(_('entr.')),
-				str(self.entrance)
-			)
-		if self.floor:
-			ret['floor'] = '%s %s' % (
-				loc.translate(_('fl.')),
-				str(self.floor)
-			)
-		if self.flat:
-			ret['flat'] = '%s %s' % (
-				loc.translate(_('app.')),
-				str(self.flat)
-			)
-		if self.phone_home:
-			ret['phone_home'] = '%s %s' % (
-				loc.translate(_('home:')),
-				str(self.phone_home)
-			)
-		if self.phone_work:
-			ret['phone_work'] = '%s %s' % (
-				loc.translate(_('work:')),
-				str(self.phone_work)
-			)
-		if self.phone_cell:
-			ret['phone_cell'] = '%s %s' % (
-				loc.translate(_('cell:')),
-				str(self.phone_cell)
-			)
+
+		ret['addrs'] = []
+		ret['phones'] = []
+		for obj in self.addresses:
+			ret['addrs'].append(str(obj))
+		for obj in self.phones:
+			ret['phones'].append(obj.data)
+#		if self.house:
+#			ret['house'] = str(self.house)
+#		if self.entrance:
+#			ret['entrance'] = '%s %s' % (
+#				loc.translate(_('entr.')),
+#				str(self.entrance)
+#			)
+#		if self.floor:
+#			ret['floor'] = '%s %s' % (
+#				loc.translate(_('fl.')),
+#				str(self.floor)
+#			)
+#		if self.flat:
+#			ret['flat'] = '%s %s' % (
+#				loc.translate(_('app.')),
+#				str(self.flat)
+#			)
+#		if self.phone_home:
+#			ret['phone_home'] = '%s %s' % (
+#				loc.translate(_('home:')),
+#				str(self.phone_home)
+#			)
+#		if self.phone_work:
+#			ret['phone_work'] = '%s %s' % (
+#				loc.translate(_('work:')),
+#				str(self.phone_work)
+#			)
+#		if self.phone_cell:
+#			ret['phone_cell'] = '%s %s' % (
+#				loc.translate(_('cell:')),
+#				str(self.phone_cell)
+#			)
 		return ret
 
 	def __str__(self):
@@ -1324,53 +1544,51 @@ class LegalEntity(Entity):
 	Legal entity. Describes a company.
 	"""
 
-	@classmethod
-	def _filter_address(cls, query, value):
-		if not isinstance(value, dict):
-			return query
-		if 'houseid' in value:
-			val = int(value['houseid'])
-			if val > 0:
-				query = query.filter(LegalEntity.house_id == val)
-		elif 'streetid' in value:
-			val = int(value['streetid'])
-			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).filter(House.street_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(LegalEntity.house_id.in_(val))
-				else:
-					query = query.filter(False)
-		elif 'districtid' in value:
-			val = int(value['districtid'])
-			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(LegalEntity.house_id.in_(val))
-				else:
-					query = query.filter(False)
-		elif 'cityid' in value:
-			val = int(value['cityid'])
-			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(LegalEntity.house_id.in_(val))
-				else:
-					query = query.filter(False)
-		return query
+#	@classmethod
+#	def _filter_address(cls, query, value):
+#		if not isinstance(value, dict):
+#			return query
+#		if 'houseid' in value:
+#			val = int(value['houseid'])
+#			if val > 0:
+#				query = query.filter(LegalEntity.house_id == val)
+#		elif 'streetid' in value:
+#			val = int(value['streetid'])
+#			if val > 0:
+#				sess = DBSession()
+#				sq = sess.query(House).filter(House.street_id == val)
+#				val = [h.id for h in sq]
+#				if len(val) > 0:
+#					query = query.filter(LegalEntity.house_id.in_(val))
+#				else:
+#					query = query.filter(False)
+#		elif 'districtid' in value:
+#			val = int(value['districtid'])
+#			if val > 0:
+#				sess = DBSession()
+#				sq = sess.query(House).join(Street).filter(Street.district_id == val)
+#				val = [h.id for h in sq]
+#				if len(val) > 0:
+#					query = query.filter(LegalEntity.house_id.in_(val))
+#				else:
+#					query = query.filter(False)
+#		elif 'cityid' in value:
+#			val = int(value['cityid'])
+#			if val > 0:
+#				sess = DBSession()
+#				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
+#				val = [h.id for h in sq]
+#				if len(val) > 0:
+#					query = query.filter(LegalEntity.house_id.in_(val))
+#				else:
+#					query = query.filter(False)
+#		return query
 
 	__tablename__ = 'entities_legal'
 	__table_args__ = (
 		Comment('Legal entities'),
 		Index('entities_legal_u_name', 'name', unique=True),
 		Index('entities_legal_u_contractid', 'contractid', unique=True),
-		Index('entities_legal_i_houseid', 'houseid'),
-		Index('entities_legal_i_flat', 'flat'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1396,14 +1614,12 @@ class LegalEntity(Entity):
 						cell_class='np-nopad',
 						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
 					),
-					'nick', 'name', 'cp_name_family', 'cp_name_given', 'house', 'floor', 'flat', 'cp_phone_work', 'cp_phone_cell'
+					'nick', 'name', 'cp_name_family', 'cp_name_given'
 				),
 				'form_view'     : (
 					'nick', 'parent', 'state', 'flags', 'contractid',
 					'name',
 					'cp_name_family', 'cp_name_given', 'cp_name_middle', 'cp_title',
-					'house', 'entrance', 'floor', 'flat',
-					'cp_phone_work', 'cp_phone_cell', 'phone_rec', 'phone_fax',
 					'cp_email', 'cp_icq', 'homepage', 'address_legal',
 					'props_inn', 'props_kpp', 'props_bic', 'props_rs', 'props_cs', 'props_bank',
 					'descr'
@@ -1411,7 +1627,10 @@ class LegalEntity(Entity):
 				'easy_search'   : ('nick', 'name'),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
-					AddressFilter('address', _filter_address,
+					TextFilter('phone', Entity._filter_phone,
+						title=_('Phone')
+					),
+					AddressFilter('address', Entity._filter_address,
 						title=_('Address')
 					),
 				),
@@ -1424,15 +1643,12 @@ class LegalEntity(Entity):
 					),
 					Step(
 						'contractid', 'name',
-						'phone_rec', 'phone_fax',
-						'house', 'entrance', 'floor', 'flat',
 						'homepage',
 						id='ent_legal1', title=_('Legal entity properties')
 					),
 					Step(
 						'cp_name_family', 'cp_name_given', 'cp_name_middle',
 						'cp_title',
-						'cp_phone_work', 'cp_phone_cell',
 						'cp_email', 'cp_icq',
 						id='ent_legal2', title=_('Legal entity contact person')
 					),
@@ -1479,49 +1695,6 @@ class LegalEntity(Entity):
 			'header_string' : _('Name')
 		}
 	)
-	house_id = Column(
-		'houseid',
-		UInt32(),
-		ForeignKey('addr_houses.houseid', name='entities_legal_fk_houseid', onupdate='CASCADE'),
-		Comment('House ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('House'),
-			'filter_type'   : 'none'
-		}
-	)
-	entrance = Column(
-		UInt8(),
-		Comment('Entrance number'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Entr.')
-		}
-	)
-	floor = Column(
-		UInt8(),
-		Comment('Floor number'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Floor')
-		}
-	)
-	flat = Column(
-		UInt16(),
-		Comment('Flat number'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Flat')
-		}
-	)
 	contact_name_family = Column(
 		'cp_name_family',
 		Unicode(255),
@@ -1566,28 +1739,6 @@ class LegalEntity(Entity):
 			'header_string' : _('Title')
 		}
 	)
-	contact_phone_work = Column(
-		'cp_phone_work',
-		Unicode(24),
-		Comment('Contact person - work phone'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Work Phone')
-		}
-	)
-	contact_phone_cell = Column(
-		'cp_phone_cell',
-		Unicode(24),
-		Comment('Contact person - cell phone'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Cell')
-		}
-	)
 	contact_email = Column(
 		'cp_email',
 		Unicode(64),
@@ -1609,27 +1760,6 @@ class LegalEntity(Entity):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('ICQ')
-		}
-	)
-	phone_reception = Column(
-		'phone_rec',
-		Unicode(64),
-		Comment('Reception phone number'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Rec.')
-		}
-	)
-	phone_fax = Column(
-		Unicode(64),
-		Comment('Facsimile number'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Fax')
 		}
 	)
 	homepage = Column(
@@ -1714,44 +1844,46 @@ class LegalEntity(Entity):
 		}
 	)
 
-	house = relationship(
-		'House',
-		backref='legal_entities'
-	)
-
 	@property
 	def data(self):
 		req = get_current_request()
 		loc = get_localizer(req)
 
 		ret = super(LegalEntity, self).data
-		if self.house:
-			ret['house'] = str(self.house)
-		if self.entrance:
-			ret['entrance'] = '%s %s' % (
-				loc.translate(_('entr.')),
-				str(self.entrance)
-			)
-		if self.floor:
-			ret['floor'] = '%s %s' % (
-				loc.translate(_('fl.')),
-				str(self.floor)
-			)
-		if self.flat:
-			ret['flat'] = '%s %s' % (
-				loc.translate(_('app.')),
-				str(self.flat)
-			)
-		if self.contact_phone_work:
-			ret['cp_phone_work'] = '%s %s' % (
-				loc.translate(_('work:')),
-				str(self.contact_phone_work)
-			)
-		if self.contact_phone_cell:
-			ret['cp_phone_cell'] = '%s %s' % (
-				loc.translate(_('cell:')),
-				str(self.contact_phone_cell)
-			)
+
+		ret['addrs'] = []
+		ret['phones'] = []
+		for obj in self.addresses:
+			ret['addrs'].append(str(obj))
+		for obj in self.phones:
+			ret['phones'].append(obj.data)
+#		if self.house:
+#			ret['house'] = str(self.house)
+#		if self.entrance:
+#			ret['entrance'] = '%s %s' % (
+#				loc.translate(_('entr.')),
+#				str(self.entrance)
+#			)
+#		if self.floor:
+#			ret['floor'] = '%s %s' % (
+#				loc.translate(_('fl.')),
+#				str(self.floor)
+#			)
+#		if self.flat:
+#			ret['flat'] = '%s %s' % (
+#				loc.translate(_('app.')),
+#				str(self.flat)
+#			)
+#		if self.contact_phone_work:
+#			ret['cp_phone_work'] = '%s %s' % (
+#				loc.translate(_('work:')),
+#				str(self.contact_phone_work)
+#			)
+#		if self.contact_phone_cell:
+#			ret['cp_phone_cell'] = '%s %s' % (
+#				loc.translate(_('cell:')),
+#				str(self.contact_phone_cell)
+#			)
 		return ret
 
 	def __str__(self):
@@ -1762,50 +1894,49 @@ class StructuralEntity(Entity):
 	Structural entity. Describes a building.
 	"""
 
-	@classmethod
-	def _filter_address(cls, query, value):
-		if not isinstance(value, dict):
-			return query
-		if 'houseid' in value:
-			val = int(value['houseid'])
-			if val > 0:
-				query = query.filter(StructuralEntity.house_id == val)
-		elif 'streetid' in value:
-			val = int(value['streetid'])
-			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).filter(House.street_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(StructuralEntity.house_id.in_(val))
-				else:
-					query = query.filter(False)
-		elif 'districtid' in value:
-			val = int(value['districtid'])
-			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(StructuralEntity.house_id.in_(val))
-				else:
-					query = query.filter(False)
-		elif 'cityid' in value:
-			val = int(value['cityid'])
-			if val > 0:
-				sess = DBSession()
-				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-				val = [h.id for h in sq]
-				if len(val) > 0:
-					query = query.filter(StructuralEntity.house_id.in_(val))
-				else:
-					query = query.filter(False)
-		return query
+#	@classmethod
+#	def _filter_address(cls, query, value):
+#		if not isinstance(value, dict):
+#			return query
+#		if 'houseid' in value:
+#			val = int(value['houseid'])
+#			if val > 0:
+#				query = query.filter(StructuralEntity.house_id == val)
+#		elif 'streetid' in value:
+#			val = int(value['streetid'])
+#			if val > 0:
+#				sess = DBSession()
+#				sq = sess.query(House).filter(House.street_id == val)
+#				val = [h.id for h in sq]
+#				if len(val) > 0:
+#					query = query.filter(StructuralEntity.house_id.in_(val))
+#				else:
+#					query = query.filter(False)
+#		elif 'districtid' in value:
+#			val = int(value['districtid'])
+#			if val > 0:
+#				sess = DBSession()
+#				sq = sess.query(House).join(Street).filter(Street.district_id == val)
+#				val = [h.id for h in sq]
+#				if len(val) > 0:
+#					query = query.filter(StructuralEntity.house_id.in_(val))
+#				else:
+#					query = query.filter(False)
+#		elif 'cityid' in value:
+#			val = int(value['cityid'])
+#			if val > 0:
+#				sess = DBSession()
+#				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
+#				val = [h.id for h in sq]
+#				if len(val) > 0:
+#					query = query.filter(StructuralEntity.house_id.in_(val))
+#				else:
+#					query = query.filter(False)
+#		return query
 
 	__tablename__ = 'entities_structural'
 	__table_args__ = (
 		Comment('Structural entities'),
-		Index('entities_structural_i_houseid', 'houseid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1831,13 +1962,16 @@ class StructuralEntity(Entity):
 						cell_class='np-nopad',
 						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
 					),
-					'nick', 'house'
+					'nick'
 				),
-				'form_view'     : ('nick', 'parent', 'state', 'flags', 'house', 'descr'),
+				'form_view'     : ('nick', 'parent', 'state', 'flags', 'descr'),
 				'easy_search'   : ('nick',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
-					AddressFilter('address', _filter_address,
+					TextFilter('phone', Entity._filter_phone,
+						title=_('Phone')
+					),
+					AddressFilter('address', Entity._filter_address,
 						title=_('Address')
 					),
 				),
@@ -1871,32 +2005,24 @@ class StructuralEntity(Entity):
 			'header_string' : _('ID')
 		}
 	)
-	house_id = Column(
-		'houseid',
-		UInt32(),
-		ForeignKey('addr_houses.houseid', name='entities_structural_fk_houseid', onupdate='CASCADE'),
-		Comment('House ID'),
-		nullable=False,
-		info={
-			'header_string' : _('House'),
-			'filter_type'   : 'none'
-		}
-	)
-
-	house = relationship(
-		'House',
-		backref='structural_entities'
-	)
 
 	@property
 	def data(self):
 		ret = super(StructuralEntity, self).data
-		if self.house:
-			ret['house'] = str(self.house)
+
+		ret['addrs'] = []
+		ret['phones'] = []
+		for obj in self.addresses:
+			ret['addrs'].append(str(obj))
+		for obj in self.phones:
+			ret['phones'].append(obj.data)
+#		if self.house:
+#			ret['house'] = str(self.house)
 		return ret
 
 	def __str__(self):
-		return str(self.house)
+		return ''
+#		return str(self.house)
 
 class ExternalEntity(Entity):
 	"""
@@ -2000,6 +2126,9 @@ class ExternalEntity(Entity):
 
 # FIXME: needs own module
 class AccessEntity(Entity):
+
+	DN_ATTR = 'uid'
+
 	__tablename__ = 'entities_access'
 	__table_args__ = (
 		Comment('Access entities'),

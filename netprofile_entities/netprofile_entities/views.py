@@ -20,6 +20,24 @@ _ = TranslationStringFactory('netprofile_entities')
 def dpane_entities(model, request):
 	loc = get_localizer(request)
 	tabs = [{
+		'title'             : loc.translate(_('Addresses')),
+		'iconCls'           : 'ico-mod-address',
+		'xtype'             : 'grid_entities_Address',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('entity',),
+		'extraParamProp'    : 'entityid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
+		'title'             : loc.translate(_('Phones')),
+		'iconCls'           : 'ico-mod-phone',
+		'xtype'             : 'grid_entities_Phone',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('entity',),
+		'extraParamProp'    : 'entityid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
 		'title'             : loc.translate(_('Children')),
 		'iconCls'           : 'ico-mod-entity',
 		'xtype'             : 'grid_entities_Entity',
