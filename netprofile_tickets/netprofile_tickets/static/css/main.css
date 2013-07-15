@@ -1,0 +1,19 @@
+div.np-xradiolabel
+{
+	display: inline-block;
+	vertical-align: top;
+}
+
+div.np-xradiolabel div.title
+{
+	font-weight: bold;
+}
+
+.ico-ticket-update { background-image: url(../img/ticket_update.png) !important; }
+
+.ico-mod-ticket { background-image: url(../img/ticket.png) !important; }
+.ico-mod-ticketflagtype { background-image: url(../img/ticket_flag.png) !important; }
+.ico-mod-ticketorigin { background-image: url(../img/ticket_origin.png) !important; }
+.ico-mod-ticketstate { background-image: url(../img/ticket_state.png) !important; }
+.ico-mod-ticketstatetransition { background-image: url(../img/ticket_transition.png) !important; }
+
