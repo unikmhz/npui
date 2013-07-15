@@ -49,7 +49,11 @@ from netprofile.db.fields import (
 from netprofile.db.ddl import Comment
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
-from netprofile.ext.wizards import SimpleWizard
+from netprofile.ext.wizards import (
+	SimpleWizard,
+	Step,
+	Wizard
+)
 
 from pyramid.i18n import (
 	TranslationStringFactory,
@@ -110,7 +114,11 @@ class Domain(Base):
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
-				'create_wizard' : SimpleWizard(title=_('Add new domain'))
+				'create_wizard' : Wizard(
+					Step('name', 'parent', 'enabled', 'public', 'signed', 'descr', title=_('Domain info')),
+					Step('soa_refresh', 'soa_retry', 'soa_expire', 'soa_minimum', 'dkim_name', 'dkim_data', title=_('DNS options')),
+					title=_('Add new domain')
+				)
 			}
 		}
 	)
