@@ -33,6 +33,16 @@ class TextFilter(Filter):
 		self.regex = kwargs.get('regex')
 		self.regex_text = kwargs.get('regex_err')
 
+	def get_cfg(self, req):
+		loc = get_localizer(req)
+		cfg = {
+			'xtype'      : 'textfield',
+			'name'       : self.name,
+			'fieldLabel' : loc.translate(self.title),
+		}
+		# TODO: add config
+		return cfg
+
 class NumberFilter(TextFilter):
 	pass
 

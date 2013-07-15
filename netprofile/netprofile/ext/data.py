@@ -12,6 +12,7 @@ import importlib
 import logging
 import colander
 
+import datetime as dt
 from dateutil.tz import tzlocal
 from dateutil.parser import parse as dparse
 from collections import OrderedDict
@@ -274,6 +275,10 @@ class ExtColumn(object):
 		return self.column.info.get('column_width', None)
 
 	@property
+	def column_flex(self):
+		return self.column.info.get('column_flex', None)
+
+	@property
 	def column_resizable(self):
 		return self.column.info.get('column_resizable', True)
 
@@ -304,6 +309,10 @@ class ExtColumn(object):
 	@property
 	def vtype(self):
 		return self.column.info.get('vtype')
+
+	@property
+	def editor_config(self):
+		return self.column.info.get('editor_config')
 
 	@property
 	def length(self):
@@ -520,6 +529,7 @@ class ExtColumn(object):
 			param = dparse(param)
 			if param.tzinfo is not None:
 				param = param.astimezone(tzlocal())
+				param = param.replace(tzinfo=None)
 			return param
 		if issubclass(typecls, _IPADDR_SET):
 			if isinstance(param, dict):
@@ -531,6 +541,8 @@ class ExtColumn(object):
 			if issubclass(typecls, IPv6Address):
 				return ipaddr.IPv6Address(param)
 			return None
+		if issubclass(typecls, _INTEGER_SET):
+			return int(param)
 		return param
 
 	def get_colander_schema(self, nullable=None):
@@ -743,13 +755,25 @@ class ExtColumn(object):
 			})
 		elif issubclass(typecls, _DATE_SET):
 			conf.update({
-				'format' : _DATE_FMT_MAP[typecls]
+				'format'       : _DATE_FMT_MAP[typecls],
+				'submitFormat' : _DATE_FMT_MAP[typecls]
 			})
 			# FIXME: configurable formats
+			init_fmt = None
 			if issubclass(typecls, (DateTime, TIMESTAMP, Date)):
 				conf['format'] = 'd.m.Y'
+				if issubclass(typecls, Date):
+					init_fmt = '%d.%m.%Y'
+				else:
+					conf['altFormats'] = 'c'
 			if issubclass(typecls, Time):
 				conf['format'] = 'H:i:s'
+				init_fmt = '%H:%M:%S'
+			if ('value' in conf) and isinstance(conf['value'], dt.datetime):
+				if init_fmt is None:
+					conf['value'] = conf['value'].isoformat()
+				else:
+					conf['value'] = conf['value'].strftime(init_fmt)
 		if in_form:
 			conf['fieldLabel'] = loc.translate(self.header_string)
 			val = self.pixels
@@ -757,6 +781,9 @@ class ExtColumn(object):
 				conf['width'] = val + 125
 				if ('xtype' in conf) and (conf['xtype'] in ('numberfield', 'combobox')):
 					conf['width'] += 25
+		val = self.editor_config
+		if val:
+			conf.update(val)
 		return conf
 
 	def get_reader_cfg(self):
@@ -811,6 +838,9 @@ class ExtColumn(object):
 		cw = self.column_width
 		if cw is not None:
 			conf['width'] = cw
+		cw = self.column_flex
+		if cw is not None:
+			conf['flex'] = cw
 		cw = self.column_resizable
 		if isinstance(cw, bool):
 			conf['resizable'] = cw
@@ -985,6 +1015,9 @@ class ExtPseudoColumn(ExtColumn):
 		cw = self.column_width
 		if cw is not None:
 			conf['width'] = cw
+		cw = self.column_flex
+		if cw is not None:
+			conf['flex'] = cw
 		cw = self.column_resizable
 		if isinstance(cw, bool):
 			conf['resizable'] = cw
@@ -1096,6 +1129,9 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 				conf['width'] = self.MAX_PIXELS + 125
 			if initval is not None:
 				conf['value'] = str(initval)
+		val = self.editor_config
+		if val:
+			conf.update(val)
 		return conf
 
 	def get_reader_cfg(self):
@@ -1148,6 +1184,7 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 		relpk = relcls.__mapper__.primary_key
 		if len(relpk) > 0:
 			relpk = relpk[0]
+			relprop = relcls.__mapper__.get_property_by_column(relpk)
 		conf = {
 			'xtype'          : 'dyncheckboxgroup',
 			'allowBlank'     : True,
@@ -1163,7 +1200,11 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 		}
 		if in_form:
 			conf['fieldLabel'] = loc.translate(relname)
-			conf['width'] = 400
+		if (initval is not None) and relprop:
+			conf['value'] = [getattr(el, relprop.key) for el in initval]
+		val = self.editor_config
+		if val:
+			conf.update(val)
 		return conf
 
 	def get_reader_cfg(self):
@@ -1190,41 +1231,6 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 
 	def parse_param(self, param):
 		return self.get_related_by_value(param)
-		typecls = self.column.type.__class__
-		relcls = _table_to_class(self.prop.target.name)
-		if not isinstance(param, list):
-			return None
-		return
-		if self.column.nullable and (param == ''):
-			return None
-		if issubclass(typecls, _BOOLEAN_SET):
-			if type(param) is str:
-				if param.lower() in {'true', '1', 'on'}:
-					return True
-				return False
-			return bool(param)
-		if issubclass(typecls, _FLOAT_SET):
-			return float(param)
-		if typecls is DeclEnumType:
-			if isinstance(param, EnumSymbol):
-				return param
-			return self.column.type.enum.from_string(param.strip())
-		if issubclass(typecls, _DATE_SET):
-			param = dparse(param)
-			if param.tzinfo is not None:
-				param = param.astimezone(tzlocal())
-			return param
-		if issubclass(typecls, _IPADDR_SET):
-			if isinstance(param, dict):
-				if 'value' not in param:
-					return None
-				param = param['value']
-			if issubclass(typecls, IPv4Address):
-				return ipaddr.IPv4Address(param)
-			if issubclass(typecls, IPv6Address):
-				return ipaddr.IPv6Address(param)
-			return None
-		return param
 
 class ExtModel(object):
 	def __init__(self, sqla_model):
@@ -1807,6 +1813,7 @@ class ExtModel(object):
 			if p in pt:
 				del pt[p]
 			obj = self.model()
+			apply_onetomany = []
 			helper = getattr(self.model, '__augment_create__', None)
 			if callable(helper) and not helper(sess, obj, pt, request):
 				continue
@@ -1827,11 +1834,13 @@ class ExtModel(object):
 						else:
 							writer(cols[p].parse_param(pt[p]), pt)
 				elif isinstance(cols[p], ExtOneToManyRelationshipColumn):
-					cols[p].apply_data(obj, cols[p].parse_param(pt[p]))
+					apply_onetomany.append((cols[p], cols[p].parse_param(pt[p])))
 				else:
 					setattr(obj, trans[p].key, cols[p].parse_param(pt[p]))
 			sess.add(obj)
 			sess.flush()
+			for otm in apply_onetomany:
+				otm[0].apply_data(obj, otm[1])
 			p = {}
 			if '_clid' in pt:
 				p['_clid'] = pt['_clid']
@@ -2001,7 +2010,7 @@ class ExtModel(object):
 			if poly_name and (poly_val is not None) and (poly_name in cols) and (poly_name not in values):
 				values[poly_name] = poly_val
 		pkey = None
-		if self.pk in values:
+		if (self.pk in values) and values[self.pk]:
 			pkey = cols[self.pk].parse_param(values[self.pk])
 		fields = {}
 		for index in self.u_idx:

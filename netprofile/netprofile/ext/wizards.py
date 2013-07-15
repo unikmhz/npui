@@ -35,6 +35,8 @@ class ExtJSWizardField(CustomWizardField):
 		self.cfg = cfg
 
 	def get_cfg(self, model, req, **kwargs):
+		if callable(self.cfg):
+			return self.cfg(self, model, req, **kwargs)
 		return self.cfg
 
 class DeclEnumWizardField(CustomWizardField):
@@ -236,7 +238,7 @@ class SimpleWizard(Wizard):
 	"""
 	def get_cfg(self, model, req, **kwargs):
 		step = []
-		for cname, col in model.get_read_columns().items():
+		for cname, col in model.get_form_columns().items():
 			colfld = col.get_editor_cfg(req, in_form=True)
 			if colfld:
 				coldef = col.default
