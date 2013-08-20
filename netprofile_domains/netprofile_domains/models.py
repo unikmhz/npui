@@ -274,7 +274,9 @@ class Domain(Base):
 		'Domain',
 		backref=backref('parent', remote_side=[id])
 	)
-
+	
+	domains_elements = relationship("Network", backref=backref('netdomain', innerjoin=True))
+	
 	def __str__(self):
 		if self.parent:
 			return '%s.%s' % (

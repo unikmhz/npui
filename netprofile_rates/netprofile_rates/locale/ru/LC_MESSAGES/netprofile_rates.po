@@ -1,0 +1,391 @@
+# Translations template for netprofile_rates.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the netprofile_rates
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_rates 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-07-29 12:45+0400\n"
+"PO-Revision-Date: 2013-07-29 14:14+0300\n"
+"Last-Translator: annndrey <gontchar@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: build/lib/netprofile_rates/__init__.py:43
+#: netprofile_rates/__init__.py:43
+msgid "Rates"
+msgstr "Тарифы"
+
+#: build/lib/netprofile_rates/models.py:105
+#: netprofile_rates/models.py:107
+msgid "Prepaid"
+msgstr "Предоплатный"
+
+#: build/lib/netprofile_rates/models.py:106
+#: netprofile_rates/models.py:108
+msgid "Prepaid Cont"
+msgstr "Предоплатный с ценой активации"
+
+#: build/lib/netprofile_rates/models.py:107
+#: netprofile_rates/models.py:109
+msgid "Postpaid"
+msgstr "Постоплатный"
+
+#: build/lib/netprofile_rates/models.py:108
+#: netprofile_rates/models.py:110
+msgid "Free"
+msgstr "Свободный"
+
+#: build/lib/netprofile_rates/models.py:115
+#: build/lib/netprofile_rates/models.py:119
+#: netprofile_rates/models.py:117
+#: netprofile_rates/models.py:121
+msgid "Hour"
+msgstr "Час"
+
+#: build/lib/netprofile_rates/models.py:116
+#: build/lib/netprofile_rates/models.py:120
+#: netprofile_rates/models.py:118
+#: netprofile_rates/models.py:122
+msgid "Day"
+msgstr "День"
+
+#: build/lib/netprofile_rates/models.py:117
+#: netprofile_rates/models.py:119
+msgid "Week"
+msgstr "Неделя"
+
+#: build/lib/netprofile_rates/models.py:118
+#: build/lib/netprofile_rates/models.py:121
+#: netprofile_rates/models.py:120
+#: netprofile_rates/models.py:123
+msgid "Month"
+msgstr "Месяц"
+
+#: build/lib/netprofile_rates/models.py:127
+#: build/lib/netprofile_rates/models.py:134
+#: build/lib/netprofile_rates/models.py:141
+#: netprofile_rates/models.py:129
+#: netprofile_rates/models.py:136
+#: netprofile_rates/models.py:143
+msgid "Yes"
+msgstr "Да"
+
+#: build/lib/netprofile_rates/models.py:128
+#: build/lib/netprofile_rates/models.py:135
+#: build/lib/netprofile_rates/models.py:142
+#: netprofile_rates/models.py:130
+#: netprofile_rates/models.py:137
+#: netprofile_rates/models.py:144
+msgid "No"
+msgstr "Нет"
+
+#: build/lib/netprofile_rates/models.py:161
+#: netprofile_rates/models.py:163
+msgid "Billing Periods"
+msgstr "Расчетные периоды"
+
+#: build/lib/netprofile_rates/models.py:171
+#: netprofile_rates/models.py:173
+msgid "Add new billing period"
+msgstr "Добавить новый расчетный период"
+
+#: build/lib/netprofile_rates/models.py:182
+#: build/lib/netprofile_rates/models.py:334
+#: build/lib/netprofile_rates/models.py:386
+#: build/lib/netprofile_rates/models.py:438
+#: build/lib/netprofile_rates/models.py:732
+#: build/lib/netprofile_rates/models.py:801
+#: build/lib/netprofile_rates/models.py:863
+#: netprofile_rates/models.py:184
+#: netprofile_rates/models.py:336
+#: netprofile_rates/models.py:388
+#: netprofile_rates/models.py:440
+#: netprofile_rates/models.py:734
+#: netprofile_rates/models.py:803
+#: netprofile_rates/models.py:865
+msgid "ID"
+msgstr "ID"
+
+#: build/lib/netprofile_rates/models.py:191
+#: build/lib/netprofile_rates/models.py:343
+#: build/lib/netprofile_rates/models.py:395
+#: netprofile_rates/models.py:193
+#: netprofile_rates/models.py:345
+#: netprofile_rates/models.py:397
+msgid "Name"
+msgstr "Название"
+
+#: build/lib/netprofile_rates/models.py:201
+#: netprofile_rates/models.py:203
+msgid "Start Month"
+msgstr "Нач. месяц"
+
+#: build/lib/netprofile_rates/models.py:211
+#: netprofile_rates/models.py:213
+msgid "Start Day of Month"
+msgstr "Нач. день месяца"
+
+#: build/lib/netprofile_rates/models.py:221
+#: netprofile_rates/models.py:223
+msgid "Start Day of Week"
+msgstr "Нач. день недели"
+
+#: build/lib/netprofile_rates/models.py:231
+#: netprofile_rates/models.py:233
+msgid "Start Hour"
+msgstr "Нач. час"
+
+#: build/lib/netprofile_rates/models.py:241
+#: netprofile_rates/models.py:243
+msgid "Start Minute"
+msgstr "Нач. минута"
+
+#: build/lib/netprofile_rates/models.py:251
+#: netprofile_rates/models.py:253
+msgid "End Month"
+msgstr "Оконч. месяц"
+
+#: build/lib/netprofile_rates/models.py:261
+#: netprofile_rates/models.py:263
+msgid "End Day of Month"
+msgstr "Оконч. день месяца"
+
+#: build/lib/netprofile_rates/models.py:271
+#: netprofile_rates/models.py:273
+msgid "End Day of Week"
+msgstr "Оконч. день недели"
+
+#: build/lib/netprofile_rates/models.py:281
+#: netprofile_rates/models.py:283
+msgid "End Hour"
+msgstr "Оконч. час"
+
+#: build/lib/netprofile_rates/models.py:291
+#: netprofile_rates/models.py:293
+msgid "End Minute"
+msgstr "Оконч. минута"
+
+#: build/lib/netprofile_rates/models.py:314
+#: netprofile_rates/models.py:316
+msgid "Accounting Destination Sets"
+msgstr "Направления"
+
+#: build/lib/netprofile_rates/models.py:322
+#: netprofile_rates/models.py:324
+msgid "Add new accounting destination set"
+msgstr "Добавить новые направления"
+
+#: build/lib/netprofile_rates/models.py:366
+#: netprofile_rates/models.py:368
+msgid "Accounting Filter Sets"
+msgstr "Фильтры"
+
+#: build/lib/netprofile_rates/models.py:374
+#: netprofile_rates/models.py:376
+msgid "Add new accounting filter set"
+msgstr "Добавить новый фильтр"
+
+#: build/lib/netprofile_rates/models.py:417
+#: netprofile_rates/models.py:419
+msgid "Payment Rates"
+msgstr "Платежная ставка"
+
+#: build/lib/netprofile_rates/models.py:426
+#: netprofile_rates/models.py:428
+msgid "Add new payment rate"
+msgstr "Добавить новую платежную ставку"
+
+#: build/lib/netprofile_rates/models.py:448
+#: netprofile_rates/models.py:450
+msgid "Rate Type"
+msgstr "Тип тарифа"
+
+#: build/lib/netprofile_rates/models.py:457
+#: netprofile_rates/models.py:459
+msgid "Rate Name"
+msgstr "Название тарифа"
+
+#: build/lib/netprofile_rates/models.py:467
+#: netprofile_rates/models.py:469
+msgid "Is Periodically Polled?"
+msgstr "С таймером"
+
+#: build/lib/netprofile_rates/models.py:477
+#: netprofile_rates/models.py:479
+msgid "Advanced Billing Features"
+msgstr "Расширенный"
+
+#: build/lib/netprofile_rates/models.py:487
+#: netprofile_rates/models.py:489
+msgid "Is User Selectable?"
+msgstr "Смена клиентом"
+
+#: build/lib/netprofile_rates/models.py:496
+#: netprofile_rates/models.py:498
+msgid "Rate Class"
+msgstr "Класс тарифа"
+
+#: build/lib/netprofile_rates/models.py:505
+#: netprofile_rates/models.py:507
+msgid "IP Address Pool"
+msgstr "Пул адресов"
+
+#: build/lib/netprofile_rates/models.py:525
+#: netprofile_rates/models.py:527
+msgid "Quota Period Amount"
+msgstr "Количество"
+
+#: build/lib/netprofile_rates/models.py:535
+#: netprofile_rates/models.py:537
+msgid "Quota Period Unit"
+msgstr "Единица"
+
+#: build/lib/netprofile_rates/models.py:545
+#: netprofile_rates/models.py:547
+msgid "Quota Sum"
+msgstr "Сумма"
+
+#: build/lib/netprofile_rates/models.py:556
+#: netprofile_rates/models.py:558
+msgid "Auxillary Sum"
+msgstr "Добавочная сумма"
+
+#: build/lib/netprofile_rates/models.py:566
+#: netprofile_rates/models.py:568
+msgid "Quota Ingress Traffic"
+msgstr "Входящий трафик"
+
+#: build/lib/netprofile_rates/models.py:576
+#: netprofile_rates/models.py:578
+msgid "Quota Egress Traffic"
+msgstr "Исходящий трафик"
+
+#: build/lib/netprofile_rates/models.py:593
+#: netprofile_rates/models.py:595
+msgid "Over Quota Ingress Payment"
+msgstr "Оплата превышения за входящий трафик"
+
+#: build/lib/netprofile_rates/models.py:603
+#: netprofile_rates/models.py:605
+msgid "Over Quota Egress Payment"
+msgstr "Оплата превышения за исходящий трафик"
+
+#: build/lib/netprofile_rates/models.py:619
+#: netprofile_rates/models.py:621
+msgid "Number of Simultaneous Uses"
+msgstr "Лимит подключений"
+
+#: build/lib/netprofile_rates/models.py:627
+#: netprofile_rates/models.py:629
+msgid "Ingress Traffic Policy"
+msgstr "Входящая политика"
+
+#: build/lib/netprofile_rates/models.py:635
+#: netprofile_rates/models.py:637
+msgid "Egress Traffic Policy"
+msgstr "Исходящая политика"
+
+#: build/lib/netprofile_rates/models.py:643
+#: netprofile_rates/models.py:645
+msgid "Max Continuous Blocking Time"
+msgstr "Время блокировки"
+
+#: build/lib/netprofile_rates/models.py:652
+#: netprofile_rates/models.py:654
+msgid "Callback before Quota Payment"
+msgstr "Предварительный обработчик"
+
+#: build/lib/netprofile_rates/models.py:660
+#: netprofile_rates/models.py:662
+msgid "Callback on Successful Quota Payment"
+msgstr "Обработчик при наличии средств"
+
+#: build/lib/netprofile_rates/models.py:668
+#: netprofile_rates/models.py:670
+msgid "Callback on Failed Quota Payment"
+msgstr "Обработчик при нехватке средств"
+
+#: build/lib/netprofile_rates/models.py:676
+#: netprofile_rates/models.py:678
+msgid "Callback after Connecting"
+msgstr "Обработчик после открытия сессии"
+
+#: build/lib/netprofile_rates/models.py:684
+#: netprofile_rates/models.py:686
+msgid "Callback after Disconnecting"
+msgstr "Обработчик после закрытия сессии"
+
+#: build/lib/netprofile_rates/models.py:692
+#: build/lib/netprofile_rates/models.py:818
+#: netprofile_rates/models.py:694
+#: netprofile_rates/models.py:820
+msgid "Description"
+msgstr "Описание"
+
+#: build/lib/netprofile_rates/models.py:713
+#: netprofile_rates/models.py:715
+msgid "Periodic Rate Modifiers"
+msgstr "Периодические модификаторы тарифа"
+
+#: build/lib/netprofile_rates/models.py:721
+#: netprofile_rates/models.py:723
+msgid "Add new Periodic Rate Modifier"
+msgstr "Добавить новый периодический модификатор тарифа"
+
+#: build/lib/netprofile_rates/models.py:742
+#: netprofile_rates/models.py:744
+msgid "Billing Period"
+msgstr "Расчетный период"
+
+#: build/lib/netprofile_rates/models.py:752
+#: netprofile_rates/models.py:754
+msgid "Ingress Overquota Sum Multiplier"
+msgstr "Множитель входящего трафика при превышении"
+
+#: build/lib/netprofile_rates/models.py:762
+#: netprofile_rates/models.py:764
+msgid "Egress Overquota Sum Multiplier"
+msgstr "Множитель входящего трафика при превышении исходящего трафика"
+
+#: build/lib/netprofile_rates/models.py:782
+#: netprofile_rates/models.py:784
+msgid "Rate Classes"
+msgstr "Классы тарифов"
+
+#: build/lib/netprofile_rates/models.py:790
+#: netprofile_rates/models.py:792
+msgid "Add new rate class"
+msgstr "Добавить новый класс тарифов"
+
+#: build/lib/netprofile_rates/models.py:810
+#: netprofile_rates/models.py:812
+msgid "Rate Class Name"
+msgstr "Название класса тарифа"
+
+#: build/lib/netprofile_rates/models.py:844
+#: netprofile_rates/models.py:846
+msgid "Rate Classes Mappings to Entity Types"
+msgstr "Привязка классов тарифов к типам объектов"
+
+#: build/lib/netprofile_rates/models.py:852
+#: netprofile_rates/models.py:854
+msgid "Add new rate class mapping to entity type"
+msgstr "Добавить новую привязку класса тарифа к типу объекта"
+
+#: build/lib/netprofile_rates/models.py:873
+#: netprofile_rates/models.py:875
+msgid "Rate ID"
+msgstr "ID"
+
+#: build/lib/netprofile_rates/models.py:882
+#: netprofile_rates/models.py:884
+msgid "Entity Type"
+msgstr "Тип объекта"
+

@@ -74,8 +74,14 @@ class JsonReprEncoder(json.JSONEncoder):
 			return int(obj)
 		if isinstance(obj, decimal.Decimal):
 			return str(obj)
+		#beacuse in netprofile_rates pol_ingress & pol_egress raised
+		#TypeError: b'rate512' is not JSON serializable
+		if isinstance(obj, bytes):
+			return(obj.decode('utf-8'))
+		
 		return super(JsonReprEncoder, self).default(obj)
-
+		
+			
 class IExtDirectRouter(Interface):
 	"""
 	Marker interface for ExtDirectRouter utility.

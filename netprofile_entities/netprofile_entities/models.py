@@ -528,6 +528,7 @@ class Entity(Base):
 		creator=lambda v: EntityFile(file=v)
 	)
 
+	entities_all = relationship("Device", backref=backref('entities', innerjoin=True))    
 	@classmethod
 	def __augment_result__(cls, sess, res, params):
 		populate_related(
