@@ -1,0 +1,210 @@
+# Translations template for netprofile_networks.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the netprofile_networks
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_networks 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-08-19 15:29+0400\n"
+"PO-Revision-Date: 2013-08-19 16:18+0300\n"
+"Last-Translator: annndrey <gontchar@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: build/lib/netprofile_networks/__init__.py:40
+#: build/lib/netprofile_networks/models.py:154
+#: netprofile_networks/__init__.py:40
+#: netprofile_networks/models.py:155
+msgid "Networks"
+msgstr "Сети"
+
+#: build/lib/netprofile_networks/models.py:117
+#: build/lib/netprofile_networks/models.py:125
+#: build/lib/netprofile_networks/models.py:132
+#: netprofile_networks/models.py:118
+#: netprofile_networks/models.py:126
+#: netprofile_networks/models.py:133
+msgid "Yes"
+msgstr "Да"
+
+#: build/lib/netprofile_networks/models.py:118
+#: build/lib/netprofile_networks/models.py:126
+#: build/lib/netprofile_networks/models.py:133
+#: netprofile_networks/models.py:119
+#: netprofile_networks/models.py:127
+#: netprofile_networks/models.py:134
+msgid "No"
+msgstr "Нет"
+
+#: build/lib/netprofile_networks/models.py:172
+#: netprofile_networks/models.py:173
+msgid "Add new network"
+msgstr "Добавить новую сеть"
+
+#: build/lib/netprofile_networks/models.py:183
+#: build/lib/netprofile_networks/models.py:390
+#: build/lib/netprofile_networks/models.py:452
+#: build/lib/netprofile_networks/models.py:516
+#: build/lib/netprofile_networks/models.py:549
+#: netprofile_networks/models.py:184
+#: netprofile_networks/models.py:391
+#: netprofile_networks/models.py:453
+#: netprofile_networks/models.py:517
+#: netprofile_networks/models.py:550
+msgid "ID"
+msgstr "ID"
+
+#: build/lib/netprofile_networks/models.py:192
+#: netprofile_networks/models.py:193
+msgid "Name"
+msgstr "Название"
+
+#: build/lib/netprofile_networks/models.py:202
+#: netprofile_networks/models.py:203
+msgid "Domain ID"
+msgstr "Домен"
+
+#: build/lib/netprofile_networks/models.py:212
+#: netprofile_networks/models.py:213
+msgid "Netgork Group ID"
+msgstr "Группа"
+
+#: build/lib/netprofile_networks/models.py:222
+#: netprofile_networks/models.py:223
+msgid "Management Device ID"
+msgstr "Управление"
+
+#: build/lib/netprofile_networks/models.py:232
+#: netprofile_networks/models.py:233
+msgid "Is Network Enabled?"
+msgstr "Включена"
+
+#: build/lib/netprofile_networks/models.py:242
+#: netprofile_networks/models.py:243
+msgid "Is Public?"
+msgstr "Публичная"
+
+#: build/lib/netprofile_networks/models.py:252
+#: netprofile_networks/models.py:253
+msgid "IP Address"
+msgstr "Адрес IPv4"
+
+#: build/lib/netprofile_networks/models.py:260
+#: netprofile_networks/models.py:261
+msgid "IPV6 Address"
+msgstr "Адрес IPv6"
+
+#: build/lib/netprofile_networks/models.py:270
+#: netprofile_networks/models.py:271
+msgid "CIDR Number"
+msgstr "Номер CIDR"
+
+#: build/lib/netprofile_networks/models.py:280
+#: netprofile_networks/models.py:281
+msgid "CIDR6 Number"
+msgstr "Номер CIDRv6"
+
+#: build/lib/netprofile_networks/models.py:290
+#: netprofile_networks/models.py:291
+msgid "VLAN ID"
+msgstr "Идентификатор VLAN"
+
+#: build/lib/netprofile_networks/models.py:299
+#: netprofile_networks/models.py:300
+msgid "Route Table ID"
+msgstr "Таблица маршрутизации"
+
+#: build/lib/netprofile_networks/models.py:307
+#: netprofile_networks/models.py:308
+msgid "Start of Guest Allocation Area"
+msgstr "Начало диапазона"
+
+#: build/lib/netprofile_networks/models.py:315
+#: netprofile_networks/models.py:316
+msgid "End of Guest Allocation Area"
+msgstr "Конец диапазона"
+
+#: build/lib/netprofile_networks/models.py:323
+#: netprofile_networks/models.py:324
+msgid "Start of Guest Allocation Area (IPV6)"
+msgstr "Начало диапазона (IPv6)"
+
+#: build/lib/netprofile_networks/models.py:331
+#: netprofile_networks/models.py:332
+msgid "End of Guest Allocation Area (IPV6)"
+msgstr "Конец диапазона (IPv6)"
+
+#: build/lib/netprofile_networks/models.py:339
+#: netprofile_networks/models.py:340
+msgid "Description"
+msgstr "Описание"
+
+#: build/lib/netprofile_networks/models.py:370
+#: netprofile_networks/models.py:371
+msgid "Network Groups"
+msgstr "Группы сетей"
+
+#: build/lib/netprofile_networks/models.py:379
+#: netprofile_networks/models.py:380
+msgid "Add new network group"
+msgstr "Добавить новую группу"
+
+#: build/lib/netprofile_networks/models.py:399
+#: netprofile_networks/models.py:400
+msgid "Network Group Name"
+msgstr "Название"
+
+#: build/lib/netprofile_networks/models.py:407
+#: netprofile_networks/models.py:408
+msgid "Network Group Description"
+msgstr "Описание"
+
+#: build/lib/netprofile_networks/models.py:432
+#: netprofile_networks/models.py:433
+msgid "Networks-Hosts Linkage Types"
+msgstr "Тип привязки"
+
+#: build/lib/netprofile_networks/models.py:441
+#: netprofile_networks/models.py:442
+msgid "Add new network-host linkage type"
+msgstr "Добавить новый тип привязки"
+
+#: build/lib/netprofile_networks/models.py:461
+#: netprofile_networks/models.py:462
+msgid "Linkage Type Name"
+msgstr "Название"
+
+#: build/lib/netprofile_networks/models.py:471
+#: netprofile_networks/models.py:472
+msgid "Is Unique?"
+msgstr "Уникальная"
+
+#: build/lib/netprofile_networks/models.py:496
+msgid "Network Host"
+msgstr "Узел сети"
+
+#: build/lib/netprofile_networks/models.py:505
+#: netprofile_networks/models.py:506
+msgid "Add new network host"
+msgstr "Добавить новый"
+
+#: build/lib/netprofile_networks/models.py:527
+#: netprofile_networks/models.py:528
+msgid "Network ID"
+msgstr "Сеть"
+
+#: build/lib/netprofile_networks/models.py:538
+#: netprofile_networks/models.py:539
+msgid "Host ID"
+msgstr "Узел"
+
+#: netprofile_networks/models.py:497
+msgid "Network Host"
+msgstr "Узел сети"
+
