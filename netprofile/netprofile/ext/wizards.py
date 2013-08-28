@@ -17,14 +17,41 @@ from netprofile.ext.data import (
 	ExtRelationshipColumn
 )
 
+def _add_field(step, model, req, field, **kwargs):
+	if isinstance(field, CustomWizardField):
+		fcfg = field.get_cfg(model, req, **kwargs)
+		if fcfg is not None:
+			if (not kwargs.get('use_defaults', False)) and ('value' in fcfg):
+				del fcfg['value']
+			if isinstance(fcfg, list):
+				step.extend(fcfg)
+			else:
+				step.append(fcfg)
+		return
+	col = model.get_column(field)
+	colfld = col.get_editor_cfg(req, in_form=True)
+	if colfld:
+		coldef = col.default
+		if (kwargs.get('use_defaults', False)) and (coldef is not None):
+			colfld['value'] = coldef
+			if isinstance(col, ExtRelationshipColumn) and ('hiddenField' in colfld):
+				hdval = col.get_related_by_value(coldef)
+				if hdval:
+					colfld['value'] = str(hdval)
+		step.append(colfld)
+		if isinstance(col, ExtRelationshipColumn) and ('hiddenField' in colfld):
+			hcol = model.get_column(colfld['hiddenField'])
+			colfld = hcol.get_editor_cfg(req, in_form=True)
+			coldef = hcol.default
+			if (kwargs.get('use_defaults', False)) and (coldef is not None):
+				colfld['value'] = coldef
+			step.append(colfld)
+
 class CustomWizardField(object):
 	"""
 	Non-standard wizard field.
 	"""
 	def get_cfg(self, model, req, **kwargs):
-		return None
-
-	def append_cfg(self, model, req, **kwargs):
 		return None
 
 class ExtJSWizardField(CustomWizardField):
@@ -77,6 +104,24 @@ class DeclEnumWizardField(CustomWizardField):
 			}
 		}
 
+class CompositeWizardField(CustomWizardField):
+	"""
+	Custom wizard field that is composed of several other fields.
+	"""
+	def __init__(self, *fields, **kwargs):
+		self.fields = fields
+
+	def get_cfg(self, model, req, **kwargs):
+		items = []
+		for f in self.fields:
+			_add_field(items, model, req, f, **kwargs)
+		return {
+			'xtype'  : 'panel',
+			'layout' : 'hbox',
+			'items'  : items,
+			'border' : 0
+		}
+
 class ExternalWizardField(CustomWizardField):
 	"""
 	Generates wizard fields from arbitrary models.
@@ -90,7 +135,7 @@ class ExternalWizardField(CustomWizardField):
 		self.value = value
 		self.extra_config = extra_config
 
-	def append_cfg(self, model, req, **kwargs):
+	def get_cfg(self, model, req, **kwargs):
 		if isinstance(self.model, str):
 			self.model = ExtModel(_name_to_class(self.model))
 		ret = []
@@ -140,13 +185,10 @@ class Step(object):
 				if fcfg is not None:
 					if (not kwargs.get('use_defaults', False)) and ('value' in fcfg):
 						del fcfg['value']
-					step.append(fcfg)
-				fcfg = field.append_cfg(model, req, **kwargs)
-				if fcfg is not None:
-					for ffld in fcfg:
-						if (not kwargs.get('use_defaults', False)) and ('value' in ffld):
-							del ffld['value']
-					step.extend(fcfg)
+					if isinstance(fcfg, list):
+						step.extend(fcfg)
+					else:
+						step.append(fcfg)
 				continue
 			col = model.get_column(field)
 			colfld = col.get_editor_cfg(req, in_form=True)

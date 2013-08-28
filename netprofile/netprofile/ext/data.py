@@ -442,8 +442,12 @@ class ExtColumn(object):
 
 	def _set_min_max(self, conf):
 		typecls = self.column.type.__class__
-		vmin = getattr(typecls, 'MIN_VALUE')
-		vmax = getattr(typecls, 'MAX_VALUE')
+		vmin = self.column.info.get('min_value', None)
+		vmax = self.column.info.get('max_value', None)
+		if vmin is None:
+			vmin = getattr(typecls, 'MIN_VALUE')
+		if vmax is None:
+			vmax = getattr(typecls, 'MAX_VALUE')
 		if vmax is None:
 			if issubclass(typecls, SmallInteger):
 				if getattr(self.column.type, 'unsigned', False):
@@ -1341,6 +1345,10 @@ class ExtModel(object):
 		return self.model.__table__.info.get('create_wizard')
 
 	@property
+	def wizards(self):
+		return self.model.__table__.info.get('wizards')
+
+	@property
 	def grid_view(self):
 		return self.model.__table__.info.get('grid_view', ())
 
@@ -1572,13 +1580,6 @@ class ExtModel(object):
 				for fkey, fval in flist[fcol].items():
 					if fkey == 'type':
 						continue
-					fval = extcol.parse_param(fval)
-					if fkey == 'eq':
-						query = query.filter(col == fval)
-						continue
-					if fkey == 'ne':
-						query = query.filter(col != fval)
-						continue
 					if isinstance(fval, list):
 						if fkey == 'in':
 							query = query.filter(col.in_(fval))
@@ -1586,8 +1587,17 @@ class ExtModel(object):
 						if fkey == 'notin':
 							query = query.filter(not col.in_(fval))
 							continue
+						# parse_param chokes on list values (maybe fix?)
+						continue
+					fval = extcol.parse_param(fval)
+					if fkey == 'eq':
+						query = query.filter(col == fval)
+						continue
+					if fkey == 'ne':
+						query = query.filter(col != fval)
+						continue
 					if issubclass(colcls, _DATE_SET):
-						fval = dparse(fval)
+						#fval = dparse(fval)
 						if fval.tzinfo is not None:
 							fval = fval.astimezone(tzlocal())
 						if fval is None:
@@ -2061,11 +2071,47 @@ class ExtModel(object):
 			'fields'  : []
 		}
 
+	def get_wizard(self, wname, request):
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'get_wizard')
+		wizdict = self.wizards
+		if wizdict and (wname in wizdict):
+			wiz = wizdict[wname]
+			title = wiz.title
+			if title:
+				loc = get_localizer(request)
+				title = loc.translate(title)
+			ret = {
+				'success' : True,
+				'fields'  : wiz.get_cfg(self, request, use_defaults=True),
+				'title'   : title
+			}
+			if wiz.validator:
+				ret['validator'] = wiz.validator
+			return ret
+		return {
+			'success' : False,
+			'fields'  : []
+		}
+
 	def create_wizard_action(self, pane_id, act, values, request):
 		logger.info('Running ExtDirect class:%s method:%s', self.name, 'create_wizard_action')
 		logger.debug('Params: %r', (pane_id, act, values))
 		wiz = self.create_wizard
 		if wiz:
+			ret = wiz.action(pane_id, act, values, request)
+			if ret:
+				return {
+					'success' : True,
+					'action'  : ret
+				}
+		return { 'success' : False }
+
+	def wizard_action(self, wname, pane_id, act, values, request):
+		logger.info('Running ExtDirect class:%s method:%s', self.name, 'wizard_action')
+		logger.debug('Params: %r', (wname, pane_id, act, values))
+		wizdict = self.wizards
+		if wizdict and (wname in wizdict):
+			wiz = wizdict[wname]
 			ret = wiz.action(pane_id, act, values, request)
 			if ret:
 				return {

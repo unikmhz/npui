@@ -74,14 +74,9 @@ class JsonReprEncoder(json.JSONEncoder):
 			return int(obj)
 		if isinstance(obj, decimal.Decimal):
 			return str(obj)
-		#beacuse in netprofile_rates pol_ingress & pol_egress raised
-		#TypeError: b'rate512' is not JSON serializable
-		if isinstance(obj, bytes):
-			return(obj.decode('utf-8'))
-		
+
 		return super(JsonReprEncoder, self).default(obj)
-		
-			
+
 class IExtDirectRouter(Interface):
 	"""
 	Marker interface for ExtDirectRouter utility.
@@ -240,6 +235,23 @@ class ExtDirectRouter(object):
 				method_name='create_wizard_action',
 				callback=model.create_wizard_action,
 				numargs=3,
+				request_as_last_param=True,
+				accepts_files=False
+			)
+		if model.wizards:
+			self.add_action(
+				name,
+				method_name='get_wizard',
+				callback=model.get_wizard,
+				numargs=1,
+				request_as_last_param=True,
+				accepts_files=False
+			)
+			self.add_action(
+				name,
+				method_name='wizard_action',
+				callback=model.wizard_action,
+				numargs=4,
 				request_as_last_param=True,
 				accepts_files=False
 			)

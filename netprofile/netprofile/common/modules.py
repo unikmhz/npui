@@ -16,6 +16,7 @@ from zope.interface import (
 	Interface
 )
 
+from distutils import version
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.db.connection import DBSession
@@ -31,7 +32,9 @@ class ModuleBase(object):
 
 	@classmethod
 	def version(cls):
-		return (0, 0, 1)
+		dist = pkg_resources.get_distribution(cls.__module__)
+		if dist:
+			return version.StrictVersion(dist.version)
 
 	@classmethod
 	def get_deps(cls):
@@ -142,6 +145,14 @@ class ModuleManager(object):
 				continue
 			self.modules[ep.name] = mod
 
+	def _get_dist(self, moddef=None):
+		"""
+		Get distribution object for a module.
+		"""
+		if moddef is None:
+			return pkg_resources.get_distribution('netprofile')
+		return pkg_resources.get_distribution('netprofile_' + moddef)
+
 	def _load(self, moddef, mstack):
 		"""
 		Private method which actually loads a module.
@@ -192,6 +203,8 @@ class ModuleManager(object):
 		"""
 		Add a module to the list of enabled modules.
 		"""
+		from netprofile_core.models import NPModule
+
 		if moddef not in self.modules:
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
@@ -210,6 +223,8 @@ class ModuleManager(object):
 		"""
 		Remove a module from the list of enabled modules.
 		"""
+		from netprofile_core.models import NPModule
+
 		if moddef not in self.modules:
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
