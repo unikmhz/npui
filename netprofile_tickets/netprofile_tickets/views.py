@@ -14,7 +14,13 @@ if PY3:
 else:
 	from cgi import escape as html_escape
 
+import datetime as dt
+from dateutil.parser import parse as dparse
+
+from sqlalchemy.orm import joinedload
+
 from netprofile.ext.wizards import (
+	CompositeWizardField,
 	ExternalWizardField,
 	ExtJSWizardField,
 	Step,
@@ -26,10 +32,18 @@ from netprofile.db.connection import DBSession
 from netprofile.ext.data import ExtModel
 from netprofile.ext.direct import extdirect_method
 
+from netprofile_core.models import (
+	Group,
+	User
+)
+
 from .models import (
 	Ticket,
 	TicketChange,
-	TicketStateTransition
+	TicketScheduler,
+	TicketState,
+	TicketStateTransition,
+	TicketTemplate
 )
 
 from pyramid.i18n import (
@@ -72,6 +86,15 @@ def dpane_tickets(model, request):
 			},)
 		},
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
+		'title'             : loc.translate(_('Dependent')),
+		'iconCls'           : 'ico-ticket-related',
+		'xtype'             : 'grid_tickets_Ticket',
+		'stateId'           : None,
+		'stateful'          : False,
+		'extraParamProp'    : 'parentid',
+		'extraParamRelProp' : 'ticketid',
+		'createControllers' : 'NetProfile.tickets.controller.DependentTicket'
 	}]
 	request.run_hook(
 		'core.dpanetabs.%s.%s' % (model.__parent__.moddef, model.name),
@@ -105,7 +128,7 @@ def dpane_tickets(model, request):
 @register_hook('core.dpanetabs.entities.PhysicalEntity')
 @register_hook('core.dpanetabs.entities.LegalEntity')
 @register_hook('core.dpanetabs.entities.StructuralEntity')
-def _dpane_ticket_order(tabs, model, req):
+def _dpane_entity_tickets(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
 		'title'             : loc.translate(_('Tickets')),
@@ -117,6 +140,62 @@ def _dpane_ticket_order(tabs, model, req):
 		'extraParamProp'    : 'entityid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
+
+# FIXME: use something more sane?
+@register_hook('core.dpanetabs.core.User')
+def _dpane_user_sched(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Scheduler')),
+		'iconCls'           : 'ico-mod-ticketscheduler',
+		'xtype'             : 'grid_tickets_TicketSchedulerUserAssignment',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('user',),
+		'extraParamProp'    : 'uid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
+# FIXME: use something more sane?
+@register_hook('core.dpanetabs.core.Group')
+def _dpane_group_sched(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Scheduler')),
+		'iconCls'           : 'ico-mod-ticketscheduler',
+		'xtype'             : 'grid_tickets_TicketSchedulerGroupAssignment',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('group',),
+		'extraParamProp'    : 'gid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
+@register_hook('entities.history.get.all')
+@register_hook('entities.history.get.tickets')
+def _ent_hist_tickets(hist, ent, req, begin, end, max_num):
+	sess = DBSession()
+
+	# TODO: check permissions
+	qc = sess.query(TicketChange).options(joinedload(TicketChange.user)).join(Ticket).filter(Ticket.entity == ent)
+	qt = sess.query(Ticket).options(joinedload(Ticket.created_by)).filter(Ticket.entity == ent)
+	if begin is not None:
+		qc = qc.filter(TicketChange.timestamp >= begin)
+		qt = qt.filter(Ticket.creation_time >= begin)
+	if end is not None:
+		qc = qc.filter(TicketChange.timestamp <= end)
+		qt = qt.filter(Ticket.creation_time <= end)
+	if max_num:
+		qc = qc.limit(max_num)
+		qt = qt.limit(max_num)
+	for tc in qc:
+		eh = tc.get_entity_history(req)
+		if eh:
+			hist.append(eh)
+	for tkt in qt:
+		eh = tkt.get_entity_history(req)
+		if eh:
+			hist.append(eh)
 
 @extdirect_method('Ticket', 'get_update_wizard', request_as_last_param=True, permission='TICKETS_UPDATE')
 def dyn_ticket_uwiz(params, request):
@@ -190,12 +269,21 @@ def dyn_ticket_uwiz(params, request):
 			model, 'ticketid',
 			value=ticket.id
 		),
-		ExternalWizardField(
-			model, 'assigned_time',
-			value=ticket.assigned_time,
-			extra_config={
-				'readOnly' : not bool(has_permission('TICKETS_CHANGE_DATE', request.context, request))
-			}
+		CompositeWizardField(
+			ExternalWizardField(
+				model, 'assigned_time',
+				value=ticket.assigned_time,
+				extra_config={
+					'readOnly' : not bool(has_permission('TICKETS_CHANGE_DATE', request.context, request))
+				}
+			),
+			ExtJSWizardField({
+				'xtype'   : 'button',
+				'text'    : 'Schedule',
+				'iconCls' : 'ico-schedule',
+				'margin'  : '0 0 0 2',
+				'itemId'  : 'btn_sched'
+			})
 		),
 		ExternalWizardField(
 			model, 'archived',
@@ -228,15 +316,15 @@ def dyn_ticket_uwiz_update(params, request):
 		if param in params:
 			del params[param]
 
-#	ENTITIES_LIST
+#	TODO: ENTITIES_LIST
 	if not has_permission('TICKETS_CHANGE_STATE', request.context, request):
 		if 'ttrid' in params:
 			del params['ttrid']
 	if not has_permission('TICKETS_CHANGE_FLAGS', request.context, request):
 		if 'flags' in params:
 			del params['flags']
-#	USERS_LIST
-#	GROUPS_LIST
+#	TODO: USERS_LIST
+#	TODO: GROUPS_LIST
 
 	sess.execute(SetVariable('ticketid', ticket.id))
 	if 'ttrid' in params:
@@ -270,5 +358,71 @@ def dyn_ticket_uwiz_update(params, request):
 			'do'     : 'close',
 			'redraw' : []
 		}
+	}
+
+@extdirect_method('Ticket', 'schedule_date', request_as_last_param=True, permission='TICKETS_UPDATE')
+def dyn_ticket_sched_find(params, request):
+	if 'date' not in params:
+		raise ValueError('No date given')
+	dur = 0
+	tkt = None
+	tpl = None
+	sess = DBSession()
+	if params.get('ticketid'):
+		tkt = sess.query(Ticket).get(int(params['ticketid']))
+		if not tkt:
+			raise KeyError('No matching ticket found')
+		dur = tkt.duration
+	elif params.get('tstid'):
+		tst = sess.query(TicketState).get(int(params['tstid']))
+		if not tst:
+			raise KeyError('No matching ticket state found')
+		dur = tst.duration
+	elif params.get('ttplid'):
+		tpl = sess.query(TicketTemplate).get(int(params['ttplid']))
+		if not tpl:
+			raise KeyError('No matching ticket template found')
+		dur = tpl.duration
+	else:
+		raise ValueError('No ticket or ticket state ID given')
+	p_dt = dparse(params['date'])
+	from_dt = dt.datetime(p_dt.year, p_dt.month, p_dt.day, 0, 0, 0)
+	to_dt = dt.datetime(p_dt.year, p_dt.month, p_dt.day, 23, 59, 59)
+	sched = []
+	if params.get('tschedid'):
+		xs = sess.query(TicketScheduler).get(int(params['tschedid']))
+		if xs:
+			sched.append(xs)
+	if params.get('xtschedid'):
+		xs = sess.query(TicketScheduler).get(int(params['xtschedid']))
+		if xs:
+			sched.append(xs)
+	if tpl and tpl.scheduler:
+		sched.append(tpl.scheduler)
+	user = None
+	group = None
+	numdates = int(params.get('numdates', 5))
+	if 'uid' in params:
+		user = sess.query(User).get(int(params['uid']))
+	elif tpl:
+		if tpl.assign_to_self:
+			user = request.user
+		elif tpl.assign_to_user:
+			user = tpl.assign_to_user
+	if user and user.schedule_map:
+		sched.append(user.schedule_map.scheduler)
+	if 'gid' in params:
+		group = sess.query(Group).get(int(params['gid']))
+	elif tpl:
+		if tpl.assign_to_own_group:
+			group = request.user.group
+		elif tpl.assign_to_group:
+			group = tpl.assign_to_group
+	if group and group.schedule_map:
+		sched.append(group.schedule_map.scheduler)
+	dates = TicketScheduler.find_schedule(tkt, sched, from_dt, to_dt, user, group, max_dates=numdates, duration=dur)
+	return {
+		'success' : True,
+		'dates'   : dates
 	}
 

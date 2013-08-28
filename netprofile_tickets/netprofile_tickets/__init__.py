@@ -38,12 +38,26 @@ class Module(ModuleBase):
 			TicketFlagType,
 			TicketOrigin,
 			TicketState,
-			TicketStateTransition
+			TicketStateTransition,
+			TicketTemplate,
+			TicketScheduler,
+			TicketSchedulerUserAssignment,
+			TicketSchedulerGroupAssignment
 		)
 
 	def get_css(self, request):
 		return (
 			'netprofile_tickets:static/css/main.css',
+		)
+
+	def get_local_js(self, request, lang):
+		return (
+			'netprofile_tickets:static/webshell/locale/webshell-lang-' + lang + '.js',
+		)
+
+	def get_controllers(self, request):
+		return (
+			'NetProfile.tickets.controller.TicketGrid',
 		)
 
 	@property

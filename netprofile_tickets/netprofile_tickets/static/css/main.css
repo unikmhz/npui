@@ -9,7 +9,9 @@ div.np-xradiolabel div.title
 	font-weight: bold;
 }
 
+.ico-ticket-related { background-image: url(../img/ticket_related.png) !important; }
 .ico-ticket-update { background-image: url(../img/ticket_update.png) !important; }
+.ico-schedule { background-image: url(../img/calendar_task.png) !important; }
 
 .ico-mod-ticket { background-image: url(../img/ticket.png) !important; }
 .ico-mod-ticketflagtype { background-image: url(../img/ticket_flag.png) !important; }

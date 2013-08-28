@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_tickets 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-03 10:16+0400\n"
+"POT-Creation-Date: 2013-08-28 09:09+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,240 +18,361 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: netprofile_tickets/__init__.py:51 netprofile_tickets/models.py:716
-#: netprofile_tickets/views.py:111
+#: netprofile_tickets/__init__.py:65 netprofile_tickets/models.py:796
+#: netprofile_tickets/views.py:134
 msgid "Tickets"
 msgstr ""
 
-#: netprofile_tickets/models.py:121
+#: netprofile_tickets/models.py:145
 msgid "Ticket Origins"
 msgstr ""
 
-#: netprofile_tickets/models.py:129
+#: netprofile_tickets/models.py:153
 msgid "Add new ticket origin"
 msgstr ""
 
-#: netprofile_tickets/models.py:141 netprofile_tickets/models.py:220
-#: netprofile_tickets/models.py:367 netprofile_tickets/models.py:479
-#: netprofile_tickets/models.py:555 netprofile_tickets/models.py:613
-#: netprofile_tickets/models.py:755 netprofile_tickets/models.py:1081
-#: netprofile_tickets/models.py:1137 netprofile_tickets/models.py:1264
-#: netprofile_tickets/models.py:1344
+#: netprofile_tickets/models.py:165 netprofile_tickets/models.py:244
+#: netprofile_tickets/models.py:391 netprofile_tickets/models.py:503
+#: netprofile_tickets/models.py:579 netprofile_tickets/models.py:637
+#: netprofile_tickets/models.py:871 netprofile_tickets/models.py:1255
+#: netprofile_tickets/models.py:1502 netprofile_tickets/models.py:1558
+#: netprofile_tickets/models.py:1707 netprofile_tickets/models.py:1839
+#: netprofile_tickets/models.py:2094 netprofile_tickets/models.py:2165
+#: netprofile_tickets/models.py:2237
 msgid "ID"
 msgstr ""
 
-#: netprofile_tickets/models.py:149 netprofile_tickets/models.py:375
-#: netprofile_tickets/models.py:487 netprofile_tickets/models.py:859
-#: netprofile_tickets/models.py:1089
+#: netprofile_tickets/models.py:173 netprofile_tickets/models.py:399
+#: netprofile_tickets/models.py:511 netprofile_tickets/models.py:975
+#: netprofile_tickets/models.py:1263 netprofile_tickets/models.py:1510
+#: netprofile_tickets/models.py:1847
 msgid "Name"
 msgstr ""
 
-#: netprofile_tickets/models.py:160 netprofile_tickets/models.py:304
-#: netprofile_tickets/models.py:415 netprofile_tickets/models.py:498
-#: netprofile_tickets/models.py:870
+#: netprofile_tickets/models.py:184 netprofile_tickets/models.py:328
+#: netprofile_tickets/models.py:439 netprofile_tickets/models.py:522
+#: netprofile_tickets/models.py:986
 msgid "Description"
 msgstr ""
 
-#: netprofile_tickets/models.py:190
+#: netprofile_tickets/models.py:214
 msgid "Ticket States"
 msgstr ""
 
-#: netprofile_tickets/models.py:208
+#: netprofile_tickets/models.py:232
 msgid "Add new ticket state"
 msgstr ""
 
-#: netprofile_tickets/models.py:228
+#: netprofile_tickets/models.py:252
 msgid "Title"
 msgstr ""
 
-#: netprofile_tickets/models.py:238
+#: netprofile_tickets/models.py:262
 msgid "Subtitle"
 msgstr ""
 
-#: netprofile_tickets/models.py:248
+#: netprofile_tickets/models.py:272
 msgid "Flow"
 msgstr ""
 
-#: netprofile_tickets/models.py:258
+#: netprofile_tickets/models.py:282
 msgid "Start"
 msgstr ""
 
-#: netprofile_tickets/models.py:268
+#: netprofile_tickets/models.py:292
 msgid "End"
 msgstr ""
 
-#: netprofile_tickets/models.py:279 netprofile_tickets/models.py:839
+#: netprofile_tickets/models.py:303 netprofile_tickets/models.py:955
+#: netprofile_tickets/models.py:1352
 msgid "Duration"
 msgstr ""
 
-#: netprofile_tickets/models.py:347
+#: netprofile_tickets/models.py:371
 msgid "Ticket Transitions"
 msgstr ""
 
-#: netprofile_tickets/models.py:355
+#: netprofile_tickets/models.py:379
 msgid "Add new ticket transition"
 msgstr ""
 
-#: netprofile_tickets/models.py:385
+#: netprofile_tickets/models.py:409
 msgid "From"
 msgstr ""
 
-#: netprofile_tickets/models.py:395
+#: netprofile_tickets/models.py:419
 msgid "To"
 msgstr ""
 
-#: netprofile_tickets/models.py:459 netprofile_tickets/models.py:543
+#: netprofile_tickets/models.py:483 netprofile_tickets/models.py:567
 msgid "Ticket Flags"
 msgstr ""
 
-#: netprofile_tickets/models.py:467
+#: netprofile_tickets/models.py:491
 msgid "Add new ticket flag type"
 msgstr ""
 
-#: netprofile_tickets/models.py:565 netprofile_tickets/models.py:623
-#: netprofile_tickets/models.py:1147
+#: netprofile_tickets/models.py:589 netprofile_tickets/models.py:647
+#: netprofile_tickets/models.py:1568
 msgid "Ticket"
 msgstr ""
 
-#: netprofile_tickets/models.py:575
+#: netprofile_tickets/models.py:599
 msgid "Type"
 msgstr ""
 
-#: netprofile_tickets/models.py:598 netprofile_tickets/views.py:56
+#: netprofile_tickets/models.py:622 netprofile_tickets/views.py:70
 msgid "Files"
 msgstr ""
 
-#: netprofile_tickets/models.py:601
+#: netprofile_tickets/models.py:625
 msgid "Attach file"
 msgstr ""
 
-#: netprofile_tickets/models.py:633
+#: netprofile_tickets/models.py:657
 msgid "File"
 msgstr ""
 
-#: netprofile_tickets/models.py:674 netprofile_tickets/models.py:777
-#: netprofile_tickets/models.py:1373
+#: netprofile_tickets/models.py:698 netprofile_tickets/models.py:893
+#: netprofile_tickets/models.py:1362 netprofile_tickets/models.py:2266
 msgid "State"
 msgstr ""
 
-#: netprofile_tickets/models.py:742
+#: netprofile_tickets/models.py:726
+msgid "Template"
+msgstr ""
+
+#: netprofile_tickets/models.py:836
 msgid "Add new ticket"
 msgstr ""
 
-#: netprofile_tickets/models.py:765
+#: netprofile_tickets/models.py:857
+msgid "Add from template"
+msgstr ""
+
+#: netprofile_tickets/models.py:881
 msgid "Entity"
 msgstr ""
 
-#: netprofile_tickets/models.py:788
+#: netprofile_tickets/models.py:904 netprofile_tickets/models.py:1372
 msgid "Origin"
 msgstr ""
 
-#: netprofile_tickets/models.py:801 netprofile_tickets/models.py:1173
+#: netprofile_tickets/models.py:917 netprofile_tickets/models.py:1594
+#: netprofile_tickets/models.py:2104
 msgid "User"
 msgstr ""
 
-#: netprofile_tickets/models.py:815
+#: netprofile_tickets/models.py:931 netprofile_tickets/models.py:2175
 msgid "Group"
 msgstr ""
 
-#: netprofile_tickets/models.py:827
+#: netprofile_tickets/models.py:943
 msgid "Due"
 msgstr ""
 
-#: netprofile_tickets/models.py:850
+#: netprofile_tickets/models.py:966 netprofile_tickets/models.py:1771
 msgid "Archived"
 msgstr ""
 
-#: netprofile_tickets/models.py:881 netprofile_tickets/models.py:919
+#: netprofile_tickets/models.py:997 netprofile_tickets/models.py:1035
 msgid "Created"
 msgstr ""
 
-#: netprofile_tickets/models.py:894 netprofile_tickets/models.py:932
+#: netprofile_tickets/models.py:1010 netprofile_tickets/models.py:1048
 msgid "Modified"
 msgstr ""
 
-#: netprofile_tickets/models.py:906 netprofile_tickets/models.py:945
-#: netprofile_tickets/models.py:1160 netprofile_tickets/views.py:162
+#: netprofile_tickets/models.py:1022 netprofile_tickets/models.py:1061
+#: netprofile_tickets/models.py:1581 netprofile_tickets/views.py:241
 msgid "Transition"
 msgstr ""
 
-#: netprofile_tickets/models.py:1062
-msgid "Change Fields"
-msgstr ""
-
-#: netprofile_tickets/models.py:1069
-msgid "Add new change field"
-msgstr ""
-
-#: netprofile_tickets/models.py:1122
-msgid "Changes"
-msgstr ""
-
-#: netprofile_tickets/models.py:1185
-msgid "Time"
-msgstr ""
-
 #: netprofile_tickets/models.py:1195
-msgid "Show to Client"
+#, python-format
+msgid "Ticket #%d Created: %s"
 msgstr ""
 
-#: netprofile_tickets/models.py:1205
-msgid "Comments"
+#: netprofile_tickets/models.py:1227
+msgid "Templates"
 msgstr ""
 
-#: netprofile_tickets/models.py:1249
-msgid "Change Bits"
+#: netprofile_tickets/models.py:1243
+msgid "Add new template"
 msgstr ""
 
-#: netprofile_tickets/models.py:1274 netprofile_tickets/models.py:1354
-msgid "Change"
+#: netprofile_tickets/models.py:1272
+msgid "Name Template"
 msgstr ""
 
-#: netprofile_tickets/models.py:1285
-msgid "Field"
+#: netprofile_tickets/models.py:1283
+msgid "Description Template"
 msgstr ""
 
-#: netprofile_tickets/models.py:1296
-msgid "Old"
+#: netprofile_tickets/models.py:1294
+msgid "Assign to Self"
 msgstr ""
 
-#: netprofile_tickets/models.py:1306
-msgid "New"
+#: netprofile_tickets/models.py:1305
+msgid "Assign to My Group"
+msgstr ""
+
+#: netprofile_tickets/models.py:1317
+msgid "Assign to User"
 msgstr ""
 
 #: netprofile_tickets/models.py:1329
+msgid "Assign to Group"
+msgstr ""
+
+#: netprofile_tickets/models.py:1341 netprofile_tickets/models.py:2114
+#: netprofile_tickets/models.py:2185 netprofile_tickets/views.py:149
+#: netprofile_tickets/views.py:164
+msgid "Scheduler"
+msgstr ""
+
+#: netprofile_tickets/models.py:1384
+msgid "Creation Callback"
+msgstr ""
+
+#: netprofile_tickets/models.py:1484
+msgid "Change Fields"
+msgstr ""
+
+#: netprofile_tickets/models.py:1490
+msgid "Add new change field"
+msgstr ""
+
+#: netprofile_tickets/models.py:1543
+msgid "Changes"
+msgstr ""
+
+#: netprofile_tickets/models.py:1606
+msgid "Time"
+msgstr ""
+
+#: netprofile_tickets/models.py:1616
+msgid "Show to Client"
+msgstr ""
+
+#: netprofile_tickets/models.py:1626
+msgid "Comments"
+msgstr ""
+
+#: netprofile_tickets/models.py:1656
+#, python-format
+msgid "Ticket #%d Changed: %s"
+msgstr ""
+
+#: netprofile_tickets/models.py:1692
+msgid "Change Bits"
+msgstr ""
+
+#: netprofile_tickets/models.py:1717 netprofile_tickets/models.py:2247
+msgid "Change"
+msgstr ""
+
+#: netprofile_tickets/models.py:1728
+msgid "Field"
+msgstr ""
+
+#: netprofile_tickets/models.py:1739
+msgid "Old"
+msgstr ""
+
+#: netprofile_tickets/models.py:1749
+msgid "New"
+msgstr ""
+
+#: netprofile_tickets/models.py:1772
+msgid "Unarchived"
+msgstr ""
+
+#: netprofile_tickets/models.py:1814
+msgid "Schedulers"
+msgstr ""
+
+#: netprofile_tickets/models.py:1827
+msgid "Add new scheduling preset"
+msgstr ""
+
+#: netprofile_tickets/models.py:1857
+msgid "Max. Simultaneous per User"
+msgstr ""
+
+#: netprofile_tickets/models.py:1867
+msgid "Max. Simultaneous per Group"
+msgstr ""
+
+#: netprofile_tickets/models.py:1879
+msgid "Force Duration"
+msgstr ""
+
+#: netprofile_tickets/models.py:1890
+msgid "Start Hour"
+msgstr ""
+
+#: netprofile_tickets/models.py:1902
+msgid "End Hour"
+msgstr ""
+
+#: netprofile_tickets/models.py:1914
+msgid "Weekdays"
+msgstr ""
+
+#: netprofile_tickets/models.py:1924
+msgid "Ticket Spacing"
+msgstr ""
+
+#: netprofile_tickets/models.py:2079
+msgid "Scheduler Assignments for Users"
+msgstr ""
+
+#: netprofile_tickets/models.py:2082 netprofile_tickets/models.py:2153
+msgid "Add new scheduling assignment"
+msgstr ""
+
+#: netprofile_tickets/models.py:2150
+msgid "Scheduler Assignments for Groups"
+msgstr ""
+
+#: netprofile_tickets/models.py:2222
 msgid "Flag Bits"
 msgstr ""
 
-#: netprofile_tickets/models.py:1364
+#: netprofile_tickets/models.py:2257
 msgid "Flag"
 msgstr ""
 
-#: netprofile_tickets/models.py:1395
+#: netprofile_tickets/models.py:2288
 msgid "Dependencies"
 msgstr ""
 
-#: netprofile_tickets/models.py:1410
+#: netprofile_tickets/models.py:2303
 msgid "Parent"
 msgstr ""
 
-#: netprofile_tickets/models.py:1422
+#: netprofile_tickets/models.py:2315
 msgid "Child"
 msgstr ""
 
-#: netprofile_tickets/views.py:47
+#: netprofile_tickets/views.py:61
 msgid "Update"
 msgstr ""
 
-#: netprofile_tickets/views.py:129
+#: netprofile_tickets/views.py:90
+msgid "Dependent"
+msgstr ""
+
+#: netprofile_tickets/views.py:208
 msgid "No changes"
 msgstr ""
 
-#: netprofile_tickets/views.py:130
+#: netprofile_tickets/views.py:209
 msgid "Do not change ticket state."
 msgstr ""
 
-#: netprofile_tickets/views.py:210
+#: netprofile_tickets/views.py:298
 msgid "Update ticket"
 msgstr ""
 
