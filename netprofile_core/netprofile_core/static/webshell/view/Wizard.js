@@ -14,6 +14,7 @@ Ext.define('NetProfile.view.Wizard', {
 	layout: 'card',
 	border: 0,
 	api: null,
+	wizardName: null,
 	submitApi: 'create',
 	createApi: 'get_create_wizard',
 	resetOnClose: false,
@@ -77,12 +78,15 @@ Ext.define('NetProfile.view.Wizard', {
 					return false;
 				if(curpane.allowSubmit && this.api && this.api.action)
 				{
-					this.api.action(
+					var args = [
 						curpane.itemId,
 						'submit',
 						this.getValues(),
 						this.actionCallback.bind(this)
-					);
+					];
+					if(this.wizardName)
+						args.unshift(this.wizardName);
+					this.api.action.apply(this.api, args);
 					return true;
 				}
 				else if(this.createInto)
@@ -145,10 +149,12 @@ Ext.define('NetProfile.view.Wizard', {
 		if(!this.api)
 			this.api = this.getDirectAction();
 		this.fetchExtraParams();
+		var args = [this.loadCallback, this];
 		if(this.extraParams)
-			this.api.get_steps(this.extraParams, this.loadCallback, this);
-		else
-			this.api.get_steps(this.loadCallback, this);
+			args.unshift(this.extraParams);
+		if(this.wizardName)
+			args.unshift(this.wizardName);
+		this.api.get_steps.apply(this.api, args);
 	},
 	remoteValidate: function(fld)
 	{
@@ -328,7 +334,10 @@ Ext.define('NetProfile.view.Wizard', {
 				}
 				else if(attr && this.api && this.api.action)
 				{
-					this.api.action(curpane.itemId, dir, this.getValues(), this.actionCallback.bind(this));
+					var args = [curpane.itemId, dir, this.getValues(), this.actionCallback.bind(this)];
+					if(this.wizardName)
+						args.unshift(this.wizardName);
+					this.api.action.apply(this.api, args);
 					return false;
 				}
 				else

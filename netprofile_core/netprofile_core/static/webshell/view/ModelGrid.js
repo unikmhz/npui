@@ -110,6 +110,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 				text: this.addText,
 				tooltip: { text: this.addTipText, title: this.addText },
 				iconCls: 'ico-add',
+				itemId: 'addBtn',
 				handler: function()
 				{
 					var wiz_win = Ext.create('Ext.ux.window.CenterWindow', {
@@ -467,6 +468,55 @@ Ext.define('NetProfile.view.ModelGrid', {
 		me.fstate = state;
 		me.callParent(arguments);
 		me.columns = columns;
+	},
+	spawnWizard: function(wname)
+	{
+		var wiz_win = Ext.create('Ext.ux.window.CenterWindow', {
+			title: 'FIXME',
+			modal: true
+		});
+		var wiz = Ext.create('NetProfile.view.Wizard', {
+			stateful: false,
+			wizardCls: this.apiClass,
+			createInto: this.store,
+			wizardName: wname,
+			createApi: 'get_wizard',
+			actionApi: 'wizard_action'
+		});
+		// Do these apply to non-create wizards?
+		if(this.createControllers)
+		{
+			Ext.require(
+				this.createControllers,
+				function()
+				{
+					var ctl = this.createControllers,
+						me = this;
+					if(Ext.isString(ctl))
+						ctl = [ ctl ];
+					if(Ext.isArray(ctl))
+					{
+						Ext.Array.forEach(ctl, function(cclass)
+						{
+							if(!(cclass in me._create_ctl))
+								me._create_ctl[cclass] = Ext.create(cclass, {
+									caller: me
+								});
+							if(me._create_ctl[cclass].observeWizard)
+								me._create_ctl[cclass].observeWizard(wiz);
+						});
+					}
+					wiz_win.add(wiz);
+					wiz_win.show();
+				},
+				this
+			);
+			return true;
+		}
+		wiz_win.add(wiz);
+		wiz_win.show();
+
+		return true;
 	}
 });
 

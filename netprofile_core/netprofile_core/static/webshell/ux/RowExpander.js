@@ -242,6 +242,32 @@ Ext.define('Ext.ux.RowExpander', {
         Ext.resumeLayouts(true);
     },
 
+	toggleAll: function(exp)
+	{
+		var me = this,
+			store = me.getCmp().getStore(),
+			records = store.getRange(),
+			l = records.length,
+			i, rec;
+
+		for(i = 0; i < l; i++)
+		{
+			rec = records[i];
+			if(me.recordsExpanded[rec.internalId] !== exp)
+				me.toggleRow(i, rec);
+		}
+	},
+
+	expandAll: function()
+	{
+		return this.toggleAll(true);
+	},
+
+	collapseAll: function()
+	{
+		return this.toggleAll(false);
+	},
+
     getHeaderConfig: function() {
         var me = this;
 
