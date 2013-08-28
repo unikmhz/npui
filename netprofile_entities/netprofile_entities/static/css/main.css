@@ -1,3 +1,29 @@
+div.change_details
+{
+	margin: 0 4px 4px 4px;
+}
+
+div.change_details div.change_bit
+{
+	clear: left;
+	margin-top: 7px;
+}
+
+div.change_details div.change_icon
+{
+	clear: left;
+	float: left;
+	width: 20px;
+}
+
+div.change_details div.change_text
+{
+	margin-left: 24px;
+	padding-top: 2px;
+}
+
+.ico-entity-history       { background-image: url(../img/history.png) !important; }
+
 .ico-mod-entity           { background-image: url(../img/entity.png) !important; }
 .ico-mod-entityflagtype   { background-image: url(../img/flag.png) !important; }
 .ico-mod-entitystate      { background-image: url(../img/entity_state.png) !important; }
@@ -6,4 +32,7 @@
 .ico-mod-legalentity      { background-image: url(../img/legal.png) !important; }
 .ico-mod-structuralentity { background-image: url(../img/structural.png) !important; }
 .ico-mod-externalentity   { background-image: url(../img/external.png) !important; }
+
+.ico-mod-address          { background-image: url(../../geo/img/house.png) !important; }
+.ico-mod-phone            { background-image: url(../img/phone.png) !important; }
 

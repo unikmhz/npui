@@ -43,6 +43,16 @@ class Module(ModuleBase):
 			AccessEntity
 		)
 
+	def get_local_js(self, request, lang):
+		return (
+			'netprofile_entities:static/webshell/locale/webshell-lang-' + lang + '.js',
+		)
+
+	def get_autoload_js(self, request):
+		return (
+			'NetProfile.entities.view.HistoryGrid',
+		)
+
 	def get_css(self, request):
 		return (
 			'netprofile_entities:static/css/main.css',

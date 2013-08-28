@@ -26,6 +26,8 @@ __all__ = [
 	'AccessEntity'
 ]
 
+import datetime as dt
+
 from sqlalchemy import (
 	Column,
 	Date,
@@ -528,7 +530,6 @@ class Entity(Base):
 		creator=lambda v: EntityFile(file=v)
 	)
 
-	entities_all = relationship("Device", backref=backref('entities', innerjoin=True))    
 	@classmethod
 	def __augment_result__(cls, sess, res, params):
 		populate_related(
@@ -560,6 +561,28 @@ class Entity(Base):
 
 	def __str__(self):
 		return '%s' % str(self.nick)
+
+	def get_history(self, req, begin=None, end=None, category=None, max_num=20, sort=None, sdir=None):
+		hcat = 'entities.history.get.%s' % ('all' if category is None else category)
+		hist = []
+		req.run_hook(
+			hcat,
+			hist, self, req, begin, end, max_num
+		)
+		if sort == 'title':
+			sort_lambda = lambda x: x.title
+		elif sort == 'author':
+			sort_lambda = lambda x: '' if (x.author is None) else x.author
+		else:
+			sort_lambda = lambda x: x.time
+		if sdir == 'DESC':
+			sort_reverse = True
+		else:
+			sort_reverse = False
+		hist = sorted(hist, key=sort_lambda, reverse=sort_reverse)
+		if max_num is not None:
+			hist = hist[:max_num]
+		return hist
 
 class EntityState(Base):
 	"""
@@ -2345,4 +2368,37 @@ class AccessEntity(Entity):
 			'header_string' : _('Check Services')
 		}
 	)
+
+class EntityHistory(object):
+	def __init__(self, ent, title, time=None, author=None):
+		self.entity = ent
+		self.title = title
+		if time is None:
+			self.time = dt.datetime.now()
+		else:
+			self.time = time
+		self.author = author
+		self.parts = []
+
+	def json_repr(self):
+		return {
+			'title'  : self.title,
+			'author' : self.author,
+			'time'   : self.time,
+			'parts'  : [x.json_repr() for x in self.parts]
+		}
+
+class EntityHistoryPart(object):
+	def __init__(self, icon, text):
+		self.icon = icon
+		self.text = text
+
+	def __str__(self):
+		return str(self.text)
+
+	def json_repr(self):
+		return {
+			'icon' : self.icon,
+			'text' : self.text
+		}
 

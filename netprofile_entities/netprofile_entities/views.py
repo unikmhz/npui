@@ -8,12 +8,18 @@ from __future__ import (
 	division
 )
 
+from dateutil.parser import parse as dparse
+
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
 from netprofile.common.modules import IModuleManager
 from netprofile.common.hooks import register_hook
+from netprofile.db.connection import DBSession
+from netprofile.ext.direct import extdirect_method
+
+from .models import Entity
 
 _ = TranslationStringFactory('netprofile_entities')
 
@@ -66,6 +72,10 @@ def dpane_entities(model, request):
 			},)
 		},
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
+		'title'             : loc.translate(_('History')),
+		'iconCls'           : 'ico-entity-history',
+		'xtype'             : 'historygrid'
 	}]
 	request.run_hook(
 		'core.dpanetabs.%s.%s' % (model.__parent__.moddef, model.name),
@@ -116,4 +126,38 @@ def new_entity_validator(ret, values, request):
 	xret = em.validate_fields(values, request)
 	if 'errors' in xret:
 		ret['errors'].update(xret['errors'])
+
+@extdirect_method('Entity', 'get_history', request_as_last_param=True, permission='ENTITIES_LIST')
+def dyn_entity_history(params, request):
+	eid = params.get('eid')
+	if not eid:
+		raise ValueError('No entity ID specified')
+	begin = params.get('begin')
+	end = params.get('end')
+	cat = params.get('cat')
+	maxnum = params.get('maxnum')
+	sort = params.get('sort')
+	sdir = params.get('dir')
+	sess = DBSession()
+	e = sess.query(Entity).get(int(eid))
+	if not e:
+		raise KeyError('No such entity found')
+	if begin:
+		begin = dparse(begin)
+	else:
+		begin = None
+	if end:
+		end = dparse(end)
+	else:
+		end = None
+	if maxnum:
+		maxnum = int(maxnum)
+	else:
+		maxnum = 20
+	ret = {
+		'success' : True,
+		'history' : e.get_history(request, begin, end, cat, maxnum, sort, sdir)
+	}
+	ret['total'] = len(ret['history'])
+	return ret
 
