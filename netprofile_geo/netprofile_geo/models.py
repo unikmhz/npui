@@ -671,10 +671,8 @@ class Place(Base):
 		}
 	)
 
-	allplaces = relationship("Device", backref=backref('addr', innerjoin=True))    
-	#вот это добавлено, был просто номер. 
 	def __str__(self):
-		return self.name
+		return '%s' % str(self.number)
 
 class HouseGroup(Base):
 	"""
