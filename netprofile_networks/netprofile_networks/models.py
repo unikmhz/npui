@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 
 #netd_def.rtid references on non-existent table
-# перевести
-# установить
-# закоммитить
 
 from __future__ import (
 	unicode_literals,
@@ -13,15 +10,17 @@ from __future__ import (
 	division
 )
 
-#тут возвращаем названия классов
 __all__ = [
-    "IsNetworkEnabled",
-    "IsPublic",
     "IsUnique",
     "Network",
     "NetworkGroup",
     "NetworkHostLinkage",
-    "NetworkHost"
+    "NetworkHostLinkageType",
+    "SNMPScheme",
+    "SNMPAuthProtocol",
+    "SNMPCryptProtocol",
+    "ManagementType",
+    "NetworkDevice"
     ]
 
 from sqlalchemy import (
@@ -90,6 +89,10 @@ from netprofile.ext.wizards import (
 	Wizard
         )
 
+from netprofile_domains.models import Domain
+from netprofile_devices.models import Device
+from netprofile_hosts.models import Host
+
 from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
     TranslationStringFactory,
@@ -101,21 +104,6 @@ from mako.template import Template
 
 _ = TranslationStringFactory('netprofile_networks')
 
-
-class IsNetworkEnabled(DeclEnum):
-    """
-    Is Network Enabled class
-    """
-    yes   = 'Y',   _('Yes'),   10
-    no   = 'N',   _('No'),   20
-
-
-class IsPublic(DeclEnum):
-    """
-    Is Network Visible To Outsiders class
-    """
-    yes   = 'Y',   _('Yes'),   10
-    no   = 'N',   _('No'),   20
 
 class IsUnique(DeclEnum):
     """
@@ -156,7 +144,7 @@ class Network(Base):
                                column_resizable=False
                                )
                                ),
-                'form_view' : ('netid', 'name', 'netdomain', 'netgroup', 'mgmtdid', 'enabled', 'public', 'ipaddr', 'ip6addr', 'cidr', 'cidr6', 'vlanid', 'rtid', 'gueststart', 'guestend', 'gueststart6', 'guestend6', 'descr'),
+                'form_view' : ('name', 'networkdomain', 'netgroup', 'networkdevice', 'enabled', 'public', 'ipaddr', 'ip6addr', 'cidr', 'cidr6', 'vlanid', 'rtid', 'gueststart', 'guestend', 'gueststart6', 'guestend6', 'descr'),
                 'easy_search' : ('name',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard' : SimpleWizard(title=_('Add new network'))
@@ -185,7 +173,7 @@ class Network(Base):
     domainid = Column(
         'domainid',
         UInt32(10),
-        #netdomain
+        #networkdomain
         ForeignKey('domains_def.domainid', name='nets_def_fk_domainid', onupdate='CASCADE'),
         nullable=False,
         info={
@@ -199,13 +187,13 @@ class Network(Base):
         ForeignKey('nets_groups.netgid', name='nets_def_fk_domainid', onupdate='CASCADE'),
         nullable=False,
         info={
-            'header_string' : _('Netgork Group ID')
+            'header_string' : _('Network Group ID')
             }
         )
     mgmtdid = Column(
         'mgmtdid',
         UInt32(10),
-        #netdevice
+        #networkdevice
         ForeignKey('devices_network.did', name='nets_def_fk_mgmtdid', onupdate='CASCADE'),
         nullable=False,
         info={
@@ -213,12 +201,10 @@ class Network(Base):
             }
         )
     enabled = Column(
-        #'enabled',
         NPBoolean(),
-        #IsNetworkEnabled.db_type(),
         Comment('Is network enabled?'),
         nullable=False,
-        default=False,#IsNetworkEnabled.yes,
+        default=False,
         server_default=npbool(False),
         info={
             'header_string' : _('Is Network Enabled?')
@@ -226,12 +212,9 @@ class Network(Base):
         )
     public = Column(
         NPBoolean(),
-        #'public',
-        #IsPublic.db_type(),
         Comment('Is network visible to outsiders?'),
         nullable=False,
         default=False,
-        #default=IsPublic.yes,
         server_default=npbool(False),
         info={
             'header_string' : _('Is Public?')
@@ -336,8 +319,8 @@ class Network(Base):
         )
     
 
-    network = relationship("NetworkHost", backref=backref('network', innerjoin=True))
-
+    network = relationship("NetworkHostLinkage", backref=backref('network', innerjoin=True))
+    Domain.networkdomain = relationship('Network', backref=backref('networkdomain', innerjoin=True))
 
     def __str__(self):
         return self.name
@@ -408,9 +391,9 @@ class NetworkGroup(Base):
         return self.name
 
 
-class NetworkHostLinkage(Base):
+class NetworkHostLinkageType(Base):
     """
-    Netprofile Network-Host Linkage definition
+    Netprofile Network-Host Linkage Type definition
     """
     __tablename__ = 'nets_hltypes'
     __table_args__ = (
@@ -429,8 +412,8 @@ class NetworkHostLinkage(Base):
                 'menu_order'    : 60,
                 'default_sort' : ({ 'property': 'hltypeid' ,'direction': 'ASC' },),
                 #дописать после описания столбцов
-                'grid_view' : ('hltypeid', 'name', 'unique'),
-                'form_view' : ('hltypeid', 'name', 'unique'),
+                'grid_view' : ('name', 'unique'),
+                'form_view' : ('name', 'unique'),
                 'easy_search' : ('name',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard' : SimpleWizard(title=_('Add new network-host linkage type'))
@@ -444,7 +427,7 @@ class NetworkHostLinkage(Base):
         primary_key=True,
         nullable=False,
         info={
-            'header_string' : _('ID')
+            'header_string' : _('Type ID')
             }
         )
     name = Column(
@@ -461,24 +444,24 @@ class NetworkHostLinkage(Base):
         IsUnique.db_type(),
         Comment('Is unique per network?'),
         nullable=False,
-        default=IsNetworkEnabled.no,
+        default=IsUnique.no,
         info={
             'header_string' : _('Is Unique?')
             }
         )
         
-    linkage = relationship('NetworkHost', backref=backref('linkage', innerjoin=True))
+    linkage = relationship('NetworkHostLinkage', backref=backref('linkagetype', innerjoin=True))
 
     def __str__(self):
         return self.name
 
-class NetworkHost(Base):
+class NetworkHostLinkage(Base):
     """
-    Netprofile Network Host Description definition
+    Netprofile Network Host Linkage definition
     """
     __tablename__ = 'nets_hosts'
     __table_args__ = (
-        Comment('Network Hosts definition'),
+        Comment('Networks-Hosts Linkage'),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -488,16 +471,16 @@ class NetworkHost(Base):
                 #'cap_create'    : 'NAS_CREATE',
                 #'cap_edit'      : 'NAS_EDIT',
                 #'cap_delete'    : 'NAS_DELETE',
-                'menu_name'    : _('Network Host'),
+                'menu_name'    : _('Network-Host Linkage'),
                 'show_in_menu'  : 'admin', #modules
                 'menu_order'    : 60,
                 'default_sort' : ({ 'property': 'nhid' ,'direction': 'ASC' },),
                 #дописать после описания столбцов
-                'grid_view' : ('network', 'hostid', 'linkage'),
-                'form_view' : ('network', 'hostid', 'linkage'),
+                'grid_view' : ('network', 'networklinkagehost', 'linkagetype'),
+                'form_view' : ('network', 'networklinkagehost', 'linkagetype'),
                 'easy_search' : ('network',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard' : SimpleWizard(title=_('Add new network host'))
+                'create_wizard' : SimpleWizard(title=_('Add new network-host linkage'))
                 }
             }
         )
@@ -526,8 +509,8 @@ class NetworkHost(Base):
         'hostid',
         UInt32(10),
         Comment('Host ID'),
-        #hosts_def еще не готова
-        #  CONSTRAINT `nets_hosts_fk_hostid` FOREIGN KEY (`hostid`) REFERENCES `hosts_def` (`hostid`) ON DELETE CASCADE ON UPDATE CASCADE,
+        #networklinkagehost
+        ForeignKey('hosts_def.hostid', name='nets_hosts_fk_hostid', onupdate='CASCADE', ondelete='CASCADE'),
         nullable=False,
         info={
             'header_string' : _('Host ID')
@@ -536,14 +519,205 @@ class NetworkHost(Base):
     hltypeid = Column(
         'hltypeid',
         UInt32(10),
-        #linkage
+        #linkagetype
         ForeignKey('nets_hltypes.hltypeid', name='nets_hosts_fk_hltypeid', onupdate='CASCADE'),
         Comment('Network-Host Linkage Type'),
         nullable=False,
         info={
-            'header_string' : _('ID')
+            'header_string' : _('Type ID')
             }
         )
     
+    Host.networklinkagehost = relationship('NetworkHostLinkage', backref=backref('networklinkagehost', innerjoin=True))
+
     def __str__(self):
         return "{0}-{1}".format(self.netid, self.hostid)
+
+
+class SNMPType(DeclEnum):
+    v1 = 'v1', _('Version 1'), 10
+    v2 = 'v2', _('Version 2'), 20
+    v3 = 'v3', _('Version 3'), 30
+
+
+class SNMPScheme(DeclEnum):
+    noAuthNoPriv = 'noAuthNoPriv', _('Not authorized, no privileges'), 10
+    authNoPriv = 'authNoPriv', _('Authorized, no privileges'), 20
+    authPriv = 'authPriv', _('Authorized, privileged'), 30
+
+
+class SNMPAuthProtocol(DeclEnum):
+    md5 = 'MD5', _('MD5'), 10
+    sha = 'SHA', _('SHA'), 20
+
+
+class SNMPCryptProtocol(DeclEnum):
+    des = 'DES', _('DES'), 10
+    aes128 = 'AES128', _('AES128'), 20
+    aes192 = 'AES192', _('AES192'), 30 
+    aes256 = 'AES256', _('AES256'), 40
+
+class ManagementType(DeclEnum):
+    ssh = 'ssh', _('ssh'), 10
+    telnet = 'telnet', _('telnet'), 20
+    vnc = 'vnc', _('vnc'), 30
+    rdp = 'rdp', _('rdp'), 40
+
+
+class NetworkDevice(Base):
+    """
+    Netprofile Network Device definition
+    """
+    __tablename__ = 'devices_network'
+    __table_args__ = (
+        Comment('Network Devices'),
+        {
+            'mysql_engine'  : 'InnoDB',
+            'mysql_charset' : 'utf8',
+            'info'          : {
+                'menu_name'    : _('Network Device'),
+                'show_in_menu'  : 'admin',
+                'menu_order'    : 70,
+                'default_sort' : ({ 'property': 'nhid' ,'direction': 'ASC' },),
+                'grid_view' : ('netdevice', 'networkdevicehost'),
+                'form_view' : ('netdevice', 'networkdevicehost', 'snmptype', 'mgmtpass', 'mgmtepass'),
+                'easy_search' : ('did',),
+                'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+                'create_wizard' : SimpleWizard(title=_('Add new network device'))
+                }
+            }
+        )
+    did = Column(
+        'did',
+        UInt32(10),
+        Comment('Device ID'),
+        #netdevice
+        ForeignKey('devices_def.did', name='devices_network_fk_did', onupdate='CASCADE', ondelete='CASCADE'),
+        primary_key=True,
+        nullable=False,
+        info={
+            'header_string' : _('Device')
+            }
+        )
+    hostid = Column(
+        'hostid',
+        UInt32(10),
+        Comment('Host ID'),
+        #networkdevicehost
+        ForeignKey('hosts_def.hostid', name='devices_network_fk_hostid', ondelete='SET NULL', onupdate='CASCADE'),
+        nullable=False,
+        info={
+            'header_string' : _('Host')
+            }
+        )
+    snmptype = Column(
+        'snmptype',
+        SNMPType.db_type(),
+        Comment('SNMP Access Type'),
+        info={
+            'header_string' : _('SNMP type')
+            }
+        )
+    v2readonly = Column(
+        'cs_ro',
+        Unicode(255),
+        Comment('SNMPv2 Read-Only Community'),
+        info={
+            'header_string' : _('SNMPv2 Read Only')
+            }
+        )
+    v2readwrite = Column(
+        'cs_rw',
+        Unicode(255),
+        Comment('SNMPv2 Read-Write Community'),
+        info={
+            'header_string' : _('SNMPv2 Read-Write')
+            }
+        )
+    v3user = Column(
+        'v3user',
+        Unicode(255),
+        Comment('SNMPv3 User Name'),
+        info={
+            'header_string' : _('SNMPv3 User Name')
+            }
+        )
+    v3scheme = Column(
+        'v3scheme',
+        SNMPScheme.db_type(),
+        Comment('SNMPv3 Connection Level'),
+        info={
+            'header_string' : 'Connection level'
+            }
+        )
+    v3authproto = Column(
+        'v3authproto',
+        SNMPAuthProtocol.db_type(),
+        Comment('SNMPv3 Auth Protocol'),
+        info={
+            'header_string' : 'Auth protocol'
+            }
+        )
+    v3authpass = Column(
+        'v3authpass',
+        Unicode(255),
+        Comment('SNMPv3 Auth Passphrase'),
+        info={
+            'header_string' : 'Passphrase'
+            }
+        )
+    v3privproto = Column(
+        'v3privproto',
+        SNMPCryptProtocol.db_type(),
+        Comment('SNMPv3 Crypt Protocol'),
+        info={
+            'header_string' : 'Crypt protocol'
+            }
+        )
+    v3privpass = Column(
+        'v3privpass',
+        Unicode(255),
+        Comment('SNMPv3 Crypt Passphrase'),
+        info={
+            'header_string' : 'Crypt Passphrase'
+            }
+        )
+    mgmttype = Column(
+        'mgmttype',
+        ManagementType.db_type(),
+        Comment('Management Access Type'),
+        info={
+            'header_string' : 'Management access type'
+            }
+        )
+    mgmtuser = Column(
+        'mgmtuser',
+        Unicode(255),
+        Comment('Management User Name'),
+        info={
+            'header_string' : 'Management User Name'
+            }
+        )
+    mgmtpass = Column(
+        'mgmtpass',
+        Unicode(255),
+        Comment('Management Password'),
+        info={
+            'header_string' : 'Management Password'
+            }
+        )
+    mgmtepass = Column(
+        'mgmtepass',
+        Unicode(255),
+        Comment('Management Enablement Password'),
+        info={
+            'header_string' : 'Enabled password'
+            }
+        )
+    networkdevice = relationship('Network', backref=backref('networkdevice', innerjoin=True))
+    Host.networkdevicehost = relationship('NetworkDevice', backref=backref('networkdevicehost', innerjoin=True))
+    Device.netdevice = relationship('NetworkDevice', backref=backref('netdevice', innerjoin=True))
+
+    def __str__(self):
+        return "{0}".format(self.did)
+    

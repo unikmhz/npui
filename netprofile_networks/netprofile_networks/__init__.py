@@ -27,7 +27,8 @@ class Module(ModuleBase):
 			Network,
 			NetworkGroup,
 			NetworkHostLinkage,
-			NetworkHost
+			NetworkHostLinkageType,
+			NetworkDevice
 			)
 	
 	def get_css(self, request):
