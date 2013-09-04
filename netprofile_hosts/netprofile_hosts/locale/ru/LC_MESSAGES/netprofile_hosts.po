@@ -1,0 +1,148 @@
+# Translations template for netprofile_hosts.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the netprofile_hosts
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_hosts 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-08-22 18:15+0400\n"
+"PO-Revision-Date: 2013-08-22 18:23+0300\n"
+"Last-Translator: annndrey <gontchar@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: netprofile_hosts/__init__.py:39
+#: netprofile_hosts/models.py:170
+msgid "Hosts"
+msgstr "Хосты"
+
+#: netprofile_hosts/models.py:179
+msgid "Add new host"
+msgstr "Добавить новый хост"
+
+#: netprofile_hosts/models.py:191
+#: netprofile_hosts/models.py:357
+#: netprofile_hosts/models.py:492
+#: netprofile_hosts/models.py:648
+msgid "ID"
+msgstr "ID"
+
+#: netprofile_hosts/models.py:202
+#: netprofile_hosts/models.py:502
+#: netprofile_hosts/models.py:658
+msgid "Host Group ID"
+msgstr "Группа"
+
+#: netprofile_hosts/models.py:213
+#: netprofile_hosts/models.py:512
+#: netprofile_hosts/models.py:668
+msgid "Entity ID"
+msgstr "Объект"
+
+#: netprofile_hosts/models.py:224
+#: netprofile_hosts/models.py:522
+#: netprofile_hosts/models.py:678
+msgid "Domain ID"
+msgstr "Домен"
+
+#: netprofile_hosts/models.py:233
+#: netprofile_hosts/models.py:531
+#: netprofile_hosts/models.py:687
+msgid "Host Name"
+msgstr "Имя хоста"
+
+#: netprofile_hosts/models.py:245
+#: netprofile_hosts/models.py:542
+msgid "Alias ID"
+msgstr "Псевдоним"
+
+#: netprofile_hosts/models.py:256
+#: netprofile_hosts/models.py:282
+#: netprofile_hosts/models.py:553
+#: netprofile_hosts/models.py:578
+#: netprofile_hosts/models.py:698
+#: netprofile_hosts/models.py:723
+msgid "Created"
+msgstr "Создан"
+
+#: netprofile_hosts/models.py:268
+#: netprofile_hosts/models.py:296
+#: netprofile_hosts/models.py:565
+#: netprofile_hosts/models.py:591
+#: netprofile_hosts/models.py:710
+#: netprofile_hosts/models.py:736
+msgid "Modified"
+msgstr "Изменен"
+
+#: netprofile_hosts/models.py:309
+#: netprofile_hosts/models.py:604
+#: netprofile_hosts/models.py:749
+msgid "Description"
+msgstr "Описание"
+
+#: netprofile_hosts/models.py:336
+msgid "Hosts groups"
+msgstr "Группы хостов"
+
+#: netprofile_hosts/models.py:345
+msgid "Add new host group"
+msgstr "Добавить новую группу"
+
+#: netprofile_hosts/models.py:366
+msgid "Host Group Name"
+msgstr "Имя группы"
+
+#: netprofile_hosts/models.py:376
+msgid "Is Public?"
+msgstr "Публичная"
+
+#: netprofile_hosts/models.py:386
+msgid "Start Offset"
+msgstr "Начало смещения"
+
+#: netprofile_hosts/models.py:396
+msgid "End Offset"
+msgstr "Конец смещения"
+
+#: netprofile_hosts/models.py:406
+msgid "IPv6 Start Offset"
+msgstr "Начало смещения IPv6"
+
+#: netprofile_hosts/models.py:416
+msgid "IPv6 End Offset"
+msgstr "Конец смещения IPv6"
+
+#: netprofile_hosts/models.py:426
+msgid "Use Unique Hardware Check"
+msgstr "Проверка уникальности оборудования"
+
+#: netprofile_hosts/models.py:436
+msgid "DHCP"
+msgstr "DHCP-сервер"
+
+#: netprofile_hosts/models.py:446
+msgid "Use Banning System"
+msgstr "Использовать болкировку"
+
+#: netprofile_hosts/models.py:472
+msgid "Hosts Aliases"
+msgstr "Псеводнимы хостов"
+
+#: netprofile_hosts/models.py:480
+msgid "Add new host alias"
+msgstr "Добавить новый псевдоним"
+
+#: netprofile_hosts/models.py:628
+msgid "Hosts Real"
+msgstr "Настоящие хосты"
+
+#: netprofile_hosts/models.py:636
+msgid "Add new real host"
+msgstr "Добавить новый"
+
