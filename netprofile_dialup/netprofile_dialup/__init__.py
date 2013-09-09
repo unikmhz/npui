@@ -20,15 +20,14 @@ class Module(ModuleBase):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_dialup:locale/')
 		mmgr.cfg.scan()
-		
 
 	def get_models(self):
 		return (
-			NAS,
 			IPPool,
-			NASPool,
-			)
-	
+			NAS,
+			NASPool
+		)
+
 	def get_css(self, request):
 		return (
 			'netprofile_dialup:static/css/main.css',

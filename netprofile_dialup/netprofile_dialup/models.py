@@ -9,8 +9,8 @@ from __future__ import (
 )
 
 __all__ = [
-	'NAS',
 	'IPPool',
+	'NAS',
 	'NASPool'
 ]
 
