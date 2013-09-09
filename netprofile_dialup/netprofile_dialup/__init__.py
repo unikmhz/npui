@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 
 from __future__ import (
 	unicode_literals,
