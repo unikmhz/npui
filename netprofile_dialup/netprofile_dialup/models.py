@@ -16,26 +16,17 @@ __all__ = [
 
 from sqlalchemy import (
     Column,
-    Date,
-    FetchedValue,
     ForeignKey,
     Index,
-    Numeric,
     Sequence,
-    TIMESTAMP,
     Unicode,
     UnicodeText,
-    func,
-    text,
-    or_
+    text
     )
 
 from sqlalchemy.orm import (
     backref,
-    contains_eager,
-    joinedload,
-    relationship,
-    validates
+    relationship
     )
 
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -46,41 +37,19 @@ from netprofile.db.connection import (
     )
 from netprofile.db.fields import (
     ASCIIString,
-    DeclEnum,
-    NPBoolean,
-    UInt8,
-    UInt16,
+    IPv6Address,
     UInt32,
-    UInt64,
-    npbool
+    UInt8
     )
 from netprofile.db.ddl import Comment
-from netprofile.db.util import (
-    populate_related,
-    populate_related_list
-    )
-from netprofile.tpl import TemplateObject
-from netprofile.ext.data import (
-    ExtModel,
-    _name_to_class
-    )
-from netprofile.ext.columns import (
-    HybridColumn,
-    MarkupColumn
-    )
 
 from netprofile.ext.wizards import (
-    ExternalWizardField,
-	SimpleWizard,
-	Step,
-	Wizard
-        )
+	SimpleWizard
+    )
 
-from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
-    TranslationStringFactory,
-	get_localizer
-        )
+    TranslationStringFactory
+    )
 
 _ = TranslationStringFactory('netprofile_dialup')
 
@@ -91,7 +60,8 @@ class NAS(Base):
     """
     __tablename__ = 'nas_def'
     __table_args__ = (
-        Comment('Network Access Servers'),
+        Comment('Network access servers'),
+        Index('nas_def_u_idstr', 'idstr', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -103,8 +73,8 @@ class NAS(Base):
                 #'cap_delete'    : 'NAS_DELETE',
                 'menu_name'    : _('Network Access Servers'),
                 'show_in_menu'  : 'admin',
-                'menu_order'    : 90,
-                'default_sort' : ({ 'property': 'nasid' ,'direction': 'ASC' },),
+                'menu_order'    : 10,
+                'default_sort' : ({ 'property': 'idstr', 'direction': 'ASC' },),
                 'grid_view' : ('idstr',),
                 'form_view' : ('idstr', 'descr'),
                 'easy_search' : ('idstr',),
@@ -114,39 +84,53 @@ class NAS(Base):
             }
         )
 
-    nasid = Column(
+    id = Column(
         'nasid',
-        UInt32(10),
-        Comment('Network Access Server ID'),
+        UInt32(),
+        Sequence('nasid_seq'),
+        Comment('Network access server ID'),
         primary_key=True,
         nullable=False,
         info={
             'header_string' : _('ID')
             }
         )
-
-    idstr = Column(
+    id_string = Column(
         'idstr',
-        Unicode(255),
-        Comment('Network Access Server Identification String'),
-        unique=True,
+        ASCIIString(255),
+        Comment('Network access server identification string'),
         nullable=False,
         info={
-            'header_string' : _('ID string')
+            'header_string' : _('ID String')
             }
         )
-
-    descr  = Column(
+    description  = Column(
         'descr',
         UnicodeText(),
-        Comment('Network Access Server Description'),
+        Comment('Network access server description'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
         info={
             'header_string' : _('Description')
             }
         )
 
-    #here will be a relationship with nas_pools
-    network_access_servers = relationship("NASPool", backref=backref('naservers', innerjoin=True))
+    poolmap = relationship(
+        'NASPool',
+        backref=backref('nas', innerjoin=True),
+        cascade='all, delete-orphan',
+        passive_deletes=True
+    )
+
+    pools = association_proxy(
+        'poolmap',
+        'pool',
+        creator=lambda v: NASPool(pool=v)
+    )
+
+    def __str__(self):
+        return '%s' % str(self.id_string)
 
 class IPPool(Base):
     """
@@ -155,7 +139,8 @@ class IPPool(Base):
 
     __tablename__ = 'ippool_def'
     __table_args__ = (
-        Comment('IP Address Pools'),
+        Comment('IP address pools'),
+        Index('ippool_def_u_name', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -167,10 +152,10 @@ class IPPool(Base):
                 #'cap_delete'    : 'IPPOOL_DELETE',
                 'menu_name'    : _('IP Address Pools'),
                 'show_in_menu'  : 'admin',
-                'menu_order'    : 90,
-                'default_sort' : ({ 'property': 'poolid' ,'direction': 'ASC' },),
+                'menu_order'    : 20,
+                'default_sort' : ({ 'property': 'name', 'direction': 'ASC' },),
                 'grid_view' : ('name',),
-                'form_view' : ('name', 'descr'),
+                'form_view' : ('name', 'ip6prefix', 'ip6plen', 'descr'),
                 'easy_search' : ('name',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard' : SimpleWizard(title=_('Add new IP address pool'))
@@ -178,40 +163,73 @@ class IPPool(Base):
             }
         )
 
-    poolid = Column(
+    id = Column(
         'poolid',
-        UInt32(10),
-        Comment('IP Address Pool ID'),
+        UInt32(),
+        Sequence('poolid_seq'),
+        Comment('IP address pool ID'),
         primary_key=True,
         nullable=False,
         info={
             'header_string' : _('ID')
             }
         )
-
     name = Column(
         'name',
         Unicode(255),
-        Comment('IP Address Pool Name'),
-        unique=True,
+        Comment('IP address pool name'),
         nullable=False,
         info={
             'header_string' : _('Name')
             }
         )
-
-    descr  = Column(
+    ipv6_prefix = Column(
+        'ip6prefix',
+        IPv6Address(),
+        Comment('IPv6 prefix'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string' : _('IPv6 Prefix')
+        }
+    )
+    ipv6_prefix_length = Column(
+        'ip6plen',
+        UInt8(),
+        Comment('IPv6 prefix length'),
+        nullable=False,
+        info={
+            'header_string' : _('IPv6 Prefix Len.')
+        }
+    )
+    description  = Column(
         'descr',
         UnicodeText(),
-        Comment('IP Address Pool Description'),
+        Comment('IP address pool description'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
         info={
             'header_string' : _('Description')
             }
         )
 
-    #here will be a relationship with nas_pools
-    ip_pools = relationship("NASPool", backref=backref('ippools', innerjoin=True))
-    ip_pools_elements = relationship("Rates", backref=backref('ippoolselements', innerjoin=True))
+    nasmap = relationship(
+        'NASPool',
+        backref=backref('pool', innerjoin=True),
+        cascade='all, delete-orphan',
+        passive_deletes=True
+    )
+
+    nases = association_proxy(
+        'nasmap',
+        'nas',
+        creator=lambda v: NASPool(nas=v)
+    )
+
+    def __str__(self):
+        return '%s' % str(self.name)
 
 class NASPool(Base):
     """
@@ -220,7 +238,9 @@ class NASPool(Base):
 
     __tablename__ = 'nas_pools'
     __table_args__ = (
-        Comment('NAS IP Pools'),
+        Comment('NAS IP pools'),
+        Index('nas_pools_u_linkage', 'nasid', 'poolid', unique=True),
+        Index('nas_pools_i_poolid', 'poolid'),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -230,50 +250,44 @@ class NASPool(Base):
                 #'cap_create'    : 'NAS_CREATE',
                 #'cap_edit'      : 'NAS_EDIT',
                 #'cap_delete'    : 'NAS_DELETE',
-                'menu_main': True,
                 'menu_name'    : _('NAS IP Pools'),
-                'show_in_menu'  : 'modules',
-                'menu_order'    :90,
-                'default_sort' : ({ 'property': 'nasid' ,'direction': 'ASC' },),
-                'grid_view' : ('naservers','ippools'),
-                'form_view' : ('naservers', 'ippools'),
-                'easy_search' : ('npid', 'naservers', 'ippools'),
-                'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+                'default_sort' : ({ 'property': 'nasid', 'direction': 'ASC' },),
+                'grid_view' : ('nas', 'pool'),
+                'form_view' : ('nas', 'pool'),
                 'create_wizard' : SimpleWizard(title=_('Add new NAS IP pool'))
                 }
             }
         )
 
-    npid = Column(
+    id = Column(
         'npid',
-        UInt32(10),
-        Comment('NAS IP Pool ID'),
+        UInt32(),
+        Sequence('npid_seq'),
+        Comment('NAS IP pool ID'),
         primary_key=True,
         nullable=False,
         info={
-            'header_string' : _('NAS IP Pool Linkage ID')
+            'header_string' : _('ID')
             }
         )
-    
-    nasid = Column(
+    nas_id = Column(
         'nasid',
-        UInt32(10),
-        ForeignKey('nas_def.nasid', name='nas_pools_fk_nasid', onupdate='CASCADE'),
-        Comment('Network Access Server ID'),
+        UInt32(),
+        ForeignKey('nas_def.nasid', name='nas_pools_fk_nasid', ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('Network access server ID'),
         nullable=False,
         info={
-            'header_string' : _('Network Access Server')
+            'header_string' : _('NAS')
             }
         )
-
-    poolid = Column(
+    pool_id = Column(
         'poolid',
-        UInt32(10),
-        ForeignKey('ippool_def.poolid', name='nas_pools_fk_poolid', onupdate='CASCADE'),
-        Comment('IP Address Pool ID'),
+        UInt32(),
+        ForeignKey('ippool_def.poolid', name='nas_pools_fk_poolid', ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('IP address pool ID'),
         nullable=False,
         info={
-            'header_string' : _('IP Address Pool')
+            'header_string' : _('Pool')
             }
         )
 

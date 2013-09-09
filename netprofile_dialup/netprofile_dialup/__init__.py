@@ -36,5 +36,5 @@ class Module(ModuleBase):
 
 	@property
 	def name(self):
-		return _('Dialup')
+		return _('Dial-Up')
 
