@@ -29,6 +29,7 @@ from netprofile.db import processors
 from netprofile.common import ipaddr
 
 import sys
+import binascii
 
 if sys.version < '3':
 	from netprofile.db.enum2 import (
@@ -143,6 +144,28 @@ class IPv6Address(types.TypeDecorator):
 		if value is None:
 			return None
 		return ipaddr.IPv6Address(value)
+
+class MACAddress(types.TypeDecorator):
+	"""
+	MAC address
+	"""
+	impl = types.String(17)
+	
+	@property
+	def python_type(self):
+		return types.String
+
+	def process_bind_param(self, value, dialect):
+		if value is None:
+			return None
+		return binascii.unhexlify(value.replace(b':', b''))
+
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		return ':'.join( [ "%02X" % x for x in value ] )
+
+
 
 class NPBoolean(types.TypeDecorator, types.SchemaType):
 	"""
