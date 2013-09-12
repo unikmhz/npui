@@ -29,7 +29,6 @@ from netprofile.db import processors
 from netprofile.common import ipaddr
 
 import sys
-import binascii
 
 if sys.version < '3':
 	from netprofile.db.enum2 import (
