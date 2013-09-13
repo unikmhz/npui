@@ -1,29 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#| devices_network | CREATE TABLE `devices_network` (
-#  `did` int(10) unsigned NOT NULL COMMENT 'Device ID',
-#  `hostid` int(10) unsigned DEFAULT NULL COMMENT 'Host ID',
-#  `snmptype` enum('v1','v2c','v3') CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'SNMP Access Type',
-#  `cs_ro` varchar(255) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'SNMPv2 Read-Only Community',
-#  `cs_rw` varchar(255) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'SNMPv2 Read-Write Community',
-#  `v3user` varchar(255) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'SNMPv3 User Name',
-#  `v3scheme` enum('noAuthNoPriv','authNoPriv','authPriv') CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'SNMPv3 Connection Level',
-#  `v3authproto` enum('MD5','SHA') CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'SNMPv3 Auth Protocol',
-#  `v3authpass` varchar(255) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'SNMPv3 Auth Passphrase',
-#  `v3privproto` enum('DES','AES128','AES192','AES256') CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'SNMPv3 Crypt Protocol',
-#  `v3privpass` varchar(255) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'SNMPv3 Crypt Passphrase',
-#  `mgmttype` enum('ssh','telnet','vnc','rdp') CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL COMMENT 'Management Access Type',
-#  `mgmtuser` varchar(255) DEFAULT NULL COMMENT 'Management User Name',
-#  `mgmtpass` varchar(255) DEFAULT NULL COMMENT 'Management Password',
-#  `mgmtepass` varchar(255) DEFAULT NULL COMMENT 'Management Enablement Password',
-#  PRIMARY KEY (`did`),
-#  UNIQUE KEY `u_hostid` (`hostid`),
-#  CONSTRAINT `devices_network_fk_did` FOREIGN KEY (`did`) REFERENCES `devices_def` (`did`) ON DELETE CASCADE ON UPDATE CASCADE,
-#  CONSTRAINT `devices_network_fk_hostid` FOREIGN KEY (`hostid`) REFERENCES `hosts_def` (`hostid`) ON DELETE SET NULL ON UPDATE CASCADE
-#) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Network Devices' |
-
-
 from __future__ import (
 	unicode_literals,
 	print_function,
@@ -32,7 +9,6 @@ from __future__ import (
 )
 
 __all__ = [
-    'IsOperational',
     'DeviceMetatype',
     'DeviceTypeFlagType',
     'DeviceFlagType',
@@ -40,7 +16,6 @@ __all__ = [
     'DeviceManufacturer',
     'DeviceType',
     'Device',
-    'DeviceNetwork'
     ]
 
 from sqlalchemy import (
@@ -105,6 +80,14 @@ from netprofile.ext.wizards import (
 	Wizard
         )
 
+from netprofile_geo import Place
+#addr_places.placeid
+from netprofile_entities import Entity
+#entities_def.entityid
+from netprofile_core import User
+#users.uid
+
+
 from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
     TranslationStringFactory,
@@ -113,16 +96,9 @@ from pyramid.i18n import (
 
 _ = TranslationStringFactory('netprofile_devices')
 
-class IsOperational(DeclEnum):
-    """
-    Is Device Operational ENUM
-    """
-    yes   = 'Y',   _('Yes'),   10
-    no   = 'N',   _('No'),   20
-
 
 class DeviceMetatype(DeclEnum):
-    """                                                                                                                                                                                                                                     Device type ENUM.                                                                                                                                                                                                                 
+    """                                                                                                                                    Device metatypes class
     """
     simple = 'simple', _('Simple'),   10
     network = 'network', _('Network'), 20
@@ -135,6 +111,7 @@ class DeviceCategory(Base):
     __tablename__ = 'devices_types_cats'
     __table_args__ = (
         Comment('Device Categories'),
+        Index('devices_types_cats_u_name', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -157,9 +134,10 @@ class DeviceCategory(Base):
             }
         )
     
-    dtcid = Column(
+    id = Column(
         'dtcid',
-        UInt32(10),
+        UInt32(),
+        Sequence('dtcid_seq'),
         Comment('Device Type Category ID'),
         primary_key=True,
         nullable=False,
@@ -169,7 +147,7 @@ class DeviceCategory(Base):
         )
     name = Column(
         'name',
-        Unicode(255),
+        ASCIIString(255),
         Comment('Device Type Category Name'),
         unique=True,
         nullable=False,
@@ -190,6 +168,7 @@ class DeviceManufacturer(Base):
     __tablename__ = 'devices_types_mfct'
     __table_args__ = (
         Comment('Device Type Manufacturers'),
+        Index('devices_types_mfct_u_name', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -202,7 +181,7 @@ class DeviceManufacturer(Base):
                 'menu_name'    : _('Device manufacturers'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 3,
-                'default_sort' : ({ 'property': 'dtmid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
                 'grid_view'    : ('sname', 'name', 'website'),
                 'form_view'    : ('sname', 'name', 'website'),
                 'easy_search'  : ('name',),
@@ -212,9 +191,9 @@ class DeviceManufacturer(Base):
             }
         )
     
-    dtmid = Column(
+    id = Column(
         'dtmid',
-        UInt32(10),
+        UInt32(),
         Sequence('dtmid_seq'),
         Comment('Device Type Manufacturer ID'),
         primary_key=True,
@@ -225,7 +204,7 @@ class DeviceManufacturer(Base):
         )
     sname = Column(
         'sname',
-        Unicode(48),
+        ASCIIString(48),
         Comment('Device Manufacturer Short Name'),
         nullable=False,
         info={
@@ -234,7 +213,7 @@ class DeviceManufacturer(Base):
         )
     name = Column(
         'name',
-        Unicode(255),
+        ASCIIString(255),
         Comment('Device Type Manufacturer Name'),
         unique=True,
         nullable=False,
@@ -244,7 +223,7 @@ class DeviceManufacturer(Base):
         )
     website = Column(
         'website',
-        Unicode(255),
+        ASCIIString(255),
         Comment('Device Type Manufacturer Website URL'),
         nullable=True,
         info={
@@ -264,8 +243,7 @@ class DeviceType(Base):
     __tablename__ = 'devices_types_def'
     __table_args__ = (
         Comment('Device Types'),
-        #Index('devices_types_def_device_u_devicemanufacturer', 'dtmid', 'name', unique=True),
-        #Index('devices_types_def_device_u_devicecategory', 'dtcid', 'name', unique=True),
+        Index('devices_types_def_u_dt', 'dtmid', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -278,7 +256,7 @@ class DeviceType(Base):
                 'menu_name'    : _('Device types'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 3,
-                'default_sort' : ({ 'property': 'dtid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
                 'grid_view'    : ('category', 'manufacturer', 'name', 'descr'),
                 'form_view'    : ('category', 'manufacturer', 'name', 'descr'),
                 'easy_search'  : ('name',),
@@ -288,10 +266,10 @@ class DeviceType(Base):
             }
         )
 
-    dtid = Column(
+    id = Column(
         'dtid',
-        UInt32(10),
-        Sequence('dtmid_seq'),
+        UInt32(),
+        Sequence('dtid_seq'),
         Comment('Device Type ID'),
         primary_key=True,
         nullable=False,
@@ -301,33 +279,33 @@ class DeviceType(Base):
         )
     dtmid = Column(
         'dtmid',
-        UInt32(10),
+        UInt32(),
         ForeignKey('devices_types_mfct.dtmid', name='devices_types_def_fk_dtmid', onupdate='CASCADE'),
         Comment('Device Manufacturer ID'),
         nullable=False,
         unique=True,
         info={
-            'header_string' : _('Device Manufacturer'),
+            'header_string' : _('Device manufacturer'),
             'filter_type'   : 'list'
             }
         )
     dtcid = Column(
         'dtcid',
-        UInt32(10),
+        UInt32(),
         ForeignKey('devices_types_cats.dtcid', name='devices_types_def_fk_dtcid', onupdate='CASCADE'),
         Comment('Device Category ID'),
         nullable=False,
         info={
-            'header_string' : _('Device Category')
+            'header_string' : _('Device category')
             }
         )
     name = Column(
         'name',
-        Unicode(255),
+        ASCIIString(255),
         Comment('Device Type Name'),
         nullable=False,
         info={
-            'header_string' : _('Device Type')
+            'header_string' : _('Device type')
             }
         )
     descr = Column(
@@ -351,8 +329,6 @@ class DeviceFlagType(Base):
     __tablename__ = 'devices_flags_types'
     __table_args__ = (
         Comment('Devices Flag Types'),
-        #Index('devices_flags_types_device_u_devicemanufacturer', 'dtmid', 'name', unique=True),
-        #Index('devices_types_def_device_u_devicecategory', 'dtcid', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -365,7 +341,7 @@ class DeviceFlagType(Base):
                 'menu_name'    : _('Device flag types'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 3,
-                'default_sort' : ({ 'property': 'dftid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
                 'grid_view'    : ('name', 'descr'),
                 'form_view'    : ('name', 'descr'),
                 'easy_search'  : ('name',),
@@ -375,9 +351,9 @@ class DeviceFlagType(Base):
             }
         )
 
-    dftid = Column(
+    id = Column(
         'dftid',
-        UInt32(10),
+        UInt32(),
         Sequence('dftid_seq'),
         Comment('Device Flag Type ID'),
         primary_key=True,
@@ -388,11 +364,11 @@ class DeviceFlagType(Base):
         )
     name = Column(
         'name',
-        Unicode(255),
+        ASCIIString(255),
         Comment('Device Flag Type Name'),
         nullable=False,
         info={
-            'header_string' : _('Device Flag Type')
+            'header_string' : _('Device flag type name')
             }
         )
     descr = Column(
@@ -403,11 +379,9 @@ class DeviceFlagType(Base):
             'header_string' : _('Description')
             }
         )
-
     
     def __str__(self):
         return "%s" % str(self.name)
-
 
 
 class DeviceTypeFlagType(Base):
@@ -417,6 +391,7 @@ class DeviceTypeFlagType(Base):
     __tablename__ = 'devices_types_flags_types'
     __table_args__ = (
         Comment('Devices Types Flag Types'),
+        Index('devices_types_flags_types_u_name', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -429,7 +404,7 @@ class DeviceTypeFlagType(Base):
                 'menu_name'    : _('Device type flag types'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 3,
-                'default_sort' : ({ 'property': 'dtftid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
                 'grid_view'    : ('name', 'descr'),
                 'form_view'    : ('name', 'descr'),
                 'easy_search'  : ('name',),
@@ -440,9 +415,9 @@ class DeviceTypeFlagType(Base):
             }
         )
 
-    dtftid = Column(
+    id = Column(
         'dtftid',
-        UInt32(10),
+        UInt32(),
         Sequence('dtftid_seq'),
         Comment('Device Type Flag Type ID'),
         primary_key=True,
@@ -453,11 +428,11 @@ class DeviceTypeFlagType(Base):
         )
     name = Column(
         'name',
-        Unicode(255),
+        ASCIIString(255),
         Comment('Device Type Flag Type Name'),
         nullable=False,
         info={
-            'header_string' : _('Device Type Flag Type')
+            'header_string' : _('Device type flag type')
             }
         )
     descr = Column(
@@ -493,23 +468,27 @@ class Device(Base):
                 'show_in_menu'  : 'modules',
                 'menu_main'     : True,
                 'menu_order'    : 40,
-                'default_sort' : ({ 'property': 'did' ,'direction': 'ASC' },),
-                #столбцы, которые будем отображать в таблице.
-                #эти названия берутся из Reference классов, на которые ссылаются внешние ключи.
+                'default_sort' : ({ 'property': 'serial' ,'direction': 'ASC' },),
                 'grid_view'    : ('devtype', 'serial', 'entities', 'addr', 'descr'),
-                'form_view'    : ('devtype', 'serial', 'entities', 'addr', 'oper', 'dtype', 'ctime', 'mtime', 'itime', 'cby', 'mby', 'iby', 'cby', 'iby', 'mby', 'descr'),
+                'form_view'    : ('devtype',
+                                  'serial',
+                                  'dtype',
+                                  'oper',
+                                  'deviceplaces',
+                                  'deviceentities',
+                                  'devicecreated',
+                                  'devicemodified',
+                                  'deviceinstalled',
+                                  'descr'),
                 'easy_search'  : ('devtype',),
-                #'form_view'    : ('serial', 'dtype', 'entities', 'addr', 'oper', 'creation_time', 'modification_time', 
-                #                  'installation_time', 'created_by_id', 'modified_by_id', 'installed_by_id', 'descr'),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard' : SimpleWizard(title=_('Add new device'))
                 }
             }
         )
-
-    did = Column(
+    id = Column(
         'did',
-        UInt32(10),
+        UInt32(),
         Sequence('did_seq'),
         Comment('Device ID'),
         primary_key=True,
@@ -518,10 +497,9 @@ class Device(Base):
             'header_string' : _('Device ID')
             }
         )
-
     serial = Column(
         'serial', 
-        Unicode(64), 
+        ASCIIString(64), 
         Comment('Device serial'),
         nullable=True,
         default='NULL',
@@ -529,10 +507,10 @@ class Device(Base):
             'header_string' : _('Device Serial')
             }
         )
-
+    #devtype
     dtid = Column(
         'dtid',
-        UInt32(10),
+        UInt32(),
         ForeignKey('devices_types_def.dtid', name='devices_def_fk_dtid', onupdate='CASCADE'),
         Comment('Device Type ID'),
         nullable=False,
@@ -542,7 +520,6 @@ class Device(Base):
             'filter_type'   : 'list'
             }
         )
-
     dtype = Column(
         'dtype',
         DeviceMetatype.db_type(),
@@ -550,24 +527,23 @@ class Device(Base):
         nullable=False,
         default=DeviceMetatype.simple,
         info={
-            'header_string' : _('Device Type')
+            'header_string' : _('Device metatype')
             }
         )
-
     oper = Column(
         'oper',
-        IsOperational.db_type(),
+        NPBoolean(),
         Comment('Is Operational?'),
         nullable=False,
-        default=IsOperational.no,
+        default=False,
         info={
             'header_string' : _('Is Operational?')
             }
         )
-
+    #deviceplaces
     placeid = Column(
         'placeid',
-        UInt32(10),
+        UInt32(),
         ForeignKey('addr_places.placeid', name='devices_def_fk_placeid', onupdate='CASCADE'),
         Comment('Place ID'),
         nullable=False,
@@ -575,9 +551,10 @@ class Device(Base):
             'header_string' : _('Place')
             }
         )
+    #deviceentities
     entityid = Column(
         'entityid',
-        UInt32(10),
+        UInt32(),
         ForeignKey('entities_def.entityid', name='devices_def_fk_entityid', onupdate='CASCADE', ondelete='SET NULL'),
         Comment('Entity ID'),
         nullable=True,
@@ -585,8 +562,7 @@ class Device(Base):
             'header_string' : _('Entity')
             }
         )
-    #ctime
-    ctime = Column(
+    creation_time = Column(
         'ctime',
         TIMESTAMP(),
         Comment('Creation timestamp'),
@@ -597,7 +573,6 @@ class Device(Base):
             'header_string' : _('Created')
             }
         )
-    #mtime
     modification_time = Column(
         'mtime',
         TIMESTAMP(),
@@ -609,8 +584,6 @@ class Device(Base):
             'header_string' : _('Modified')
             }
         )
-
-    #itime
     installation_time = Column(
         'itime',
         TIMESTAMP(),
@@ -622,11 +595,10 @@ class Device(Base):
             'header_string' : _('Installed')
             }
         )
-    #cby
+    #devicecreated
     created_by_id = Column(
         'cby',
         UInt32(),
-        #добавить reference
         ForeignKey('users.uid', name='devices_def_fk_cby', ondelete='SET NULL', onupdate='CASCADE'),
         Comment('Created by'),
         nullable=True,
@@ -636,27 +608,23 @@ class Device(Base):
             'header_string' : _('Created')
             }
         )
-    #mby
+    #devicemodified
     modified_by_id = Column(
         'mby',
         UInt32(),
-        #добавить reference
         ForeignKey('users.uid', name='devices_def_fk_mby', ondelete='SET NULL', onupdate='CASCADE'),
         Comment('Modified by'),
         nullable=True,
         default=None,
-       server_default=text('NULL'),
+        server_default=text('NULL'),
         info={
             'header_string' : _('Modified')
             }
         )
-
-
-    #iby
+    #deviceinstalled
     installed_by_id = Column(
         'iby',
         UInt32(),
-        #добавить reference
         ForeignKey('users.uid', name='devices_def_fk_iby', ondelete='SET NULL', onupdate='CASCADE'),
         Comment('Installed by'),
         nullable=True,
@@ -666,7 +634,6 @@ class Device(Base):
             'header_string' : _('Installed')
             }
         )
-
     descr = Column(
         'descr',
         UnicodeText(),
@@ -676,15 +643,17 @@ class Device(Base):
             }
         )
 
-    device_name = relationship('DeviceType', backref=backref('linked_devtypes'))
+    Place.deviceplaces = relationship('Device', backref=backref('deviceplaces', innerjoin=True))
+    Entity.deviceentities = relationship('Device', backref=backref('deviceentities', innerjoin=True))
+    User.devicecreated = relationship('Device', backref=backref('devicecreated', innerjoin=True), foreign_keys=created_by_id)
+    User.devicemodified = relationship('Device', backref=backref('devicemodified', innerjoin=True), foreign_keys=modified_by_id)
+    User.deviceinstalled = relationship('Device', backref=backref('deviceinstalled', innerjoin=True), foreign_keys=installed_by_id)
+
+    devicetypes = association_proxy('devtype', 'name', creator=lambda v: DeviceType(id=v))
 
     def __str__(self):
-        return "{0}".format(self.device_name)
+        return "{0}".format(self.devicetypes)
 
 
-class DeviceNetwork(Base):
-    """
-    Network Device definition
-    """
     
 

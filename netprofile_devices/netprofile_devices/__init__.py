@@ -29,7 +29,6 @@ class Module(ModuleBase):
 			DeviceManufacturer,
 			DeviceType,
 			Device,
-			DeviceNetwork,
 			)
 
 	def get_css(self, request):
