@@ -469,7 +469,7 @@ class Device(Base):
                 'menu_main'     : True,
                 'menu_order'    : 40,
                 'default_sort' : ({ 'property': 'serial' ,'direction': 'ASC' },),
-                'grid_view'    : ('devtype', 'serial', 'entities', 'addr', 'descr'),
+                'grid_view'    : ('devtype', 'serial', 'deviceentities', 'addr', 'descr'),
                 'form_view'    : ('devtype',
                                   'serial',
                                   'dtype',
@@ -479,6 +479,9 @@ class Device(Base):
                                   'devicecreated',
                                   'devicemodified',
                                   'deviceinstalled',
+                                  'ctime',
+                                  'mtime',
+                                  'itime',
                                   'descr'),
                 'easy_search'  : ('devtype',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -562,37 +565,40 @@ class Device(Base):
             'header_string' : _('Entity')
             }
         )
-    creation_time = Column(
+    ctime = Column(
         'ctime',
         TIMESTAMP(),
-        Comment('Creation timestamp'),
+        Comment('Creation time'),
         nullable=True,
         default=None,
         server_default=FetchedValue(),
         info={
-            'header_string' : _('Created')
+            'header_string' : _('Created'),
+            'read_only'     : True
             }
         )
-    modification_time = Column(
+    mtime = Column(
         'mtime',
         TIMESTAMP(),
-        Comment('Last modification timestamp'),
-        nullable=False,
-        server_default=func.current_timestamp(),
-        server_onupdate=func.current_timestamp(),
+        Comment('Modification time'),
+        nullable=True,
+        default=None,
+        server_default=FetchedValue(),
         info={
-            'header_string' : _('Modified')
+            'header_string' : _('Modified'),
+            'read_only'     : True
             }
         )
-    installation_time = Column(
+    itime = Column(
         'itime',
         TIMESTAMP(),
-        Comment('Installation timestamp'),
-        nullable=False,
-        server_default=func.current_timestamp(),
-        server_onupdate=func.current_timestamp(),
+        Comment('Installation time'),
+        nullable=True,
+        default=None,
+        server_default=FetchedValue(),
         info={
-            'header_string' : _('Installed')
+            'header_string' : _('Installed'),
+            'read_only'     : True
             }
         )
     #devicecreated
