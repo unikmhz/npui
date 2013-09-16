@@ -1,119 +1,120 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+ #!/usr/bin/env python
+ # -*- coding: utf-8 -*-
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
+ from __future__ import (
+         unicode_literals,
+         print_function,
+         absolute_import,
+         division
+ )
 
-__all__ = [
-	'Host',
-        'HostAlias',
-        'HostReal',
-        'HostGroup'
-]
+ __all__ = [
+         'Host',
+         'HostAlias',
+         'HostReal',
+         'HostGroup'
+ ]
 
-from sqlalchemy import (
-	Column,
-	Date,
-	ForeignKey,
-	Index,
-	Sequence,
-	Unicode,
-	UnicodeText,
-	text,
-	Text,
-	TIMESTAMP, 
-	FetchedValue,
-	func
-)
+ from sqlalchemy import (
+         Column,
+         Date,
+         ForeignKey,
+         Index,
+         Sequence,
+         Unicode,
+         UnicodeText,
+         text,
+         Text,
+         TIMESTAMP, 
+         FetchedValue,
+         func
+ )
 
-from sqlalchemy.orm import (
-	backref,
-	relationship
-)
+ from sqlalchemy.orm import (
+         backref,
+         relationship
+ )
 
-from sqlalchemy.ext.associationproxy import association_proxy
+ from sqlalchemy.ext.associationproxy import association_proxy
 
-from netprofile.db.connection import Base
-from netprofile.db.fields import (
-	ASCIIString,
-	ASCIIText,
-	ASCIITinyText,
-	DeclEnum,
-	NPBoolean,
-	UInt8,
-	UInt16,
-	UInt32,
-	npbool
-)
-from netprofile.db.ddl import Comment
-from netprofile.tpl import TemplateObject
-from netprofile.ext.columns import MarkupColumn
-from netprofile.ext.wizards import (
-	SimpleWizard,
-	Step,
-	Wizard
-)
+ from netprofile.db.connection import Base
+ from netprofile.db.fields import (
+         ASCIIString,
+         ASCIIText,
+         ASCIITinyText,
+         DeclEnum,
+         NPBoolean,
+         UInt8,
+         UInt16,
+         UInt32,
+         npbool
+ )
+ from netprofile.db.ddl import Comment
+ from netprofile.tpl import TemplateObject
+ from netprofile.ext.columns import MarkupColumn
+ from netprofile.ext.wizards import (
+         SimpleWizard,
+         Step,
+         Wizard
+ )
 
-from netprofile_entities.models import Entity
-from netprofile_domains.models import Domain
-from netprofile_core.models import User
+ from netprofile_entities.models import Entity
+ from netprofile_domains.models import Domain
+ from netprofile_core.models import User
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+ from pyramid.i18n import (
+         TranslationStringFactory,
+         get_localizer
+ )
 
-_ = TranslationStringFactory('netprofile_domains')
+ _ = TranslationStringFactory('netprofile_domains')
 
 
-class Host(Base):
-    """
-    Netprofile Host definition
-    """
-    __tablename__ = 'hosts_def'
-    __table_args__ = (
-        Comment('Hosts'),
-        Index('hosts_def_u_hostname', 'domainid', 'name', unique=True),
-        {
-            'mysql_engine'  : 'InnoDB',
-            'mysql_charset' : 'utf8',
-            'info'          : {
-		#'cap_menu'      : 'BASE_HOST',
-                #'cap_read'      : 'HOST_LIST',
-                #'cap_create'    : 'HOST_CREATE',
-                #'cap_edit'      : 'HOST_EDIT',
-                #'cap_delete'    : 'HOST_DELETE',
-                'menu_name'    : _('Hosts'),
-                'show_in_menu'  : 'modules',
-                'menu_order'    : 80,
-                'menu_main'     : True,
-                'default_sort' : ({ 'property': 'hostid' ,'direction': 'ASC' },),
-                'grid_view' : ('hostgroup', 'hostentities', 'hostdomains', 'name', 'ctime', 'mtime', 'hostcreateuser', 'hostmodifyuser', 'descr'),
-                'form_view' : ('hostgroup', 'hostentities', 'hostdomains', 'name', 'ctime', 'mtime', 'hostcreateuser', 'hostmodifyuser', 'descr'),
-                'easy_search' : ('name',),
-                'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard' : SimpleWizard(title=_('Add new host'))
-                }
-            }
-        )
-	
-    hostid = Column(
-	    'hostid',
-	    UInt32(10),
-	    Comment('Host ID'),
-	    primary_key=True,
-	    nullable=False,
-	    info={
-		    'header_string' : _('ID')
-		    }
-	    )
+ class Host(Base):
+     """
+     Netprofile Host definition
+     """
+     __tablename__ = 'hosts_def'
+     __table_args__ = (
+         Comment('Hosts'),
+         Index('hosts_def_u_hostname', 'domainid', 'name', unique=True),
+         {
+             'mysql_engine'  : 'InnoDB',
+             'mysql_charset' : 'utf8',
+             'info'          : {
+                 #'cap_menu'      : 'BASE_HOST',
+                 #'cap_read'      : 'HOST_LIST',
+                 #'cap_create'    : 'HOST_CREATE',
+                 #'cap_edit'      : 'HOST_EDIT',
+                 #'cap_delete'    : 'HOST_DELETE',
+                 'menu_name'    : _('Hosts'),
+                 'show_in_menu'  : 'modules',
+                 'menu_order'    : 80,
+                 'menu_main'     : True,
+                 'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+                 'grid_view' : ('hostgroup', 'hostentities', 'hostdomains', 'name', 'ctime', 'mtime', 'hostcreateuser', 'hostmodifyuser', 'descr'),
+                 'form_view' : ('hostgroup', 'hostentities', 'hostdomains', 'name', 'ctime', 'mtime', 'hostcreateuser', 'hostmodifyuser', 'descr'),
+                 'easy_search' : ('name',),
+                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+                 'create_wizard' : SimpleWizard(title=_('Add new host'))
+                 }
+             }
+         )
+
+     id = Column(
+             'hostid',
+             UInt32(),
+             Sequence('hostid_seq'),
+             Comment('Host ID'),
+             primary_key=True,
+             nullable=False,
+             info={
+             'header_string' : _('ID')
+             }
+             )
     hgid = Column(
 	    'hgid',
-	    UInt32(10),
+	    UInt32(),
             #hostgroup
             ForeignKey('hosts_groups.hgid', name='hosts_def_fk_hgid', onupdate='CASCADE'),
 	    Comment('Host Group ID'),
@@ -124,7 +125,7 @@ class Host(Base):
 	    )
     entityid = Column(
 	    'entityid',
-	    UInt32(10),
+	    UInt32(),
             #hostentities
             ForeignKey('entities_def.entityid', name='hosts_def_fk_entityid', onupdate='CASCADE', ondelete='CASCADE'),
 	    Comment('Entity ID'),
@@ -135,7 +136,7 @@ class Host(Base):
 	    )
     domainid = Column(
 	    'domainid',
-	    UInt32(10),
+	    UInt32(),
             #hostdomains
             ForeignKey('domains_def.domainid', name='hosts_def_fk_domainid', onupdate="CASCADE"),
 	    Comment('Domain ID'),
@@ -146,7 +147,7 @@ class Host(Base):
 	    )
     name = Column(
 	    'name',
-	    Unicode(255),
+	    ASCIIString(255),
 	    Comment('Host Name'),
 	    nullable=False,
 	    info={
@@ -155,7 +156,7 @@ class Host(Base):
 	    )
     aliasid = Column(
 	    'aliasid',
-	    UInt32(10),
+	    UInt32(),
             #hostaliases
             ForeignKey('hosts_def.hostid', name='hosts_def_fk_aliasid', ondelete='CASCADE', onupdate='CASCADE'),
 	    nullable=True,
@@ -191,7 +192,7 @@ class Host(Base):
 	    )
     cby = Column(
 	    'cby',
-	    UInt32(10),
+	    UInt32(),
             #hostcreateuser
             ForeignKey('users.uid', name='hosts_def_fk_cby', ondelete='SET NULL', onupdate='CASCADE'),
 	    Comment('Created By'),
@@ -205,7 +206,7 @@ class Host(Base):
 	    )
     mby = Column(
 	    'mby',
-	    UInt32(10),
+	    UInt32(),
             #hostmodifyuser
             ForeignKey('users.uid', name='hosts_def_fk_mby', ondelete='SET NULL', onupdate='CASCADE'),
 	    Comment('Last Modified By'),
@@ -220,7 +221,7 @@ class Host(Base):
 
     descr = Column(
 	    'descr',
-	    UnicodeText(),
+	    ASCIIText(),
 	    Comment('Host description'),
 	    nullable=True,
 	    default=None,
@@ -247,6 +248,7 @@ class HostGroup(Base):
     __tablename__ = 'hosts_groups'
     __table_args__ = (
         Comment('Hosts Groups'),
+        Index('hosts_groups_u_hgname', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -259,7 +261,7 @@ class HostGroup(Base):
                 'menu_name'    : _('Hosts groups'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 80,
-                'default_sort' : ({ 'property': 'hgid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
                 'grid_view' : ('name', 'public', 'startoffset', 'endoffset', 'startoffset6', 'endoffset6', 'use_hwaddr', 'use_dhcp', 'use_banning'
                                #'name', 
                                #MarkupColumn(
@@ -277,9 +279,10 @@ class HostGroup(Base):
                 }
             }
         )
-    hgid = Column(
+    id = Column(
         'hgid',
-        UInt32(10),
+        UInt32(),
+        Sequence('hgid_seq'),
         Comment('Host Group ID'),
         primary_key=True,
         nullable=False,
@@ -289,7 +292,7 @@ class HostGroup(Base):
         )
     name = Column(
         'name',
-        Unicode(255),
+        ASCIIString(255),
         Comment('Host Group Name'),
         nullable=False,
         info={
@@ -392,6 +395,7 @@ class HostAlias(Base):
     __tablename__ = 'hosts_aliases'
     __table_args__ = (
         Comment('Hosts Aliases'),
+        Index('hosts_def_u_hostname', 'domainid', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -404,7 +408,7 @@ class HostAlias(Base):
                 'menu_name'    : _('Hosts Aliases'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 80,
-                'default_sort' : ({ 'property': 'hostid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
                 'grid_view' : ('name', 'hostaliasgroup', 'hostaliasentities', 'hostaliasdomains', 'hostaliasaliases', 'ctime', 'mtime', 'hostaliascreateuser', 'hostaliasmodifyuser', 'descr'),
                 'form_view' : ('hostid', 'name'),
                 'easy_search' : ('name',),
@@ -414,9 +418,10 @@ class HostAlias(Base):
             }
         )
 	
-    hostid = Column(
+    id = Column(
 	    'hostid',
-	    UInt32(10),
+	    UInt32(),
+            Sequence('hostid_seq'),
 	    Comment('Host ID'),
 	    primary_key=True,
 	    nullable=False,
@@ -426,7 +431,7 @@ class HostAlias(Base):
 	    )
     hgid = Column(
 	    'hgid',
-	    UInt32(10),
+	    UInt32(),
             #hostaliasgroup
             ForeignKey('hosts_groups.hgid', name='hosts_def_fk_hgid', onupdate='CASCADE'),
 	    Comment('Host Group ID'),
@@ -437,7 +442,7 @@ class HostAlias(Base):
 	    )
     entityid = Column(
 	    'entityid',
-	    UInt32(10),
+	    UInt32(),
             #hostaliasentities
             ForeignKey('entities_def.entityid', name='hosts_def_fk_entityid', onupdate='CASCADE', ondelete='CASCADE'),
 	    Comment('Entity ID'),
@@ -448,7 +453,7 @@ class HostAlias(Base):
 	    )
     domainid = Column(
 	    'domainid',
-	    UInt32(10),
+	    UInt32(),
             #hostaliasdomains
             ForeignKey('domains_def.domainid', name='hosts_def_fk_domainid', onupdate="CASCADE"),
 	    Comment('Domain ID'),
@@ -459,7 +464,7 @@ class HostAlias(Base):
 	    )
     name = Column(
 	    'name',
-	    Unicode(255),
+	    ASCIIString(255),
 	    Comment('Host Name'),
 	    nullable=False,
 	    info={
@@ -468,7 +473,7 @@ class HostAlias(Base):
 	    )
     aliasid = Column(
 	    'aliasid',
-	    UInt32(10),
+	    UInt32(),
             #hostaliasaliases
             ForeignKey('hosts_def.hostid', name='hosts_def_fk_aliasid', ondelete='CASCADE', onupdate='CASCADE'),
 	    nullable=True,
@@ -504,7 +509,7 @@ class HostAlias(Base):
 	    )
     cby = Column(
 	    'cby',
-	    UInt32(10),
+	    UInt32(),
             #hostaliascreateuser
             ForeignKey('users.uid', name='hosts_def_fk_cby', ondelete='SET NULL', onupdate='CASCADE'),
 	    Comment('Created By'),
@@ -518,7 +523,7 @@ class HostAlias(Base):
 	    )
     mby = Column(
 	    'mby',
-	    UInt32(10),
+	    UInt32(),
             #hostaliasmodifyuser
             ForeignKey('users.uid', name='hosts_def_fk_mby', ondelete='SET NULL', onupdate='CASCADE'),
 	    Comment('Last Modified By'),
@@ -533,7 +538,7 @@ class HostAlias(Base):
 
     descr = Column(
 	    'descr',
-	    UnicodeText(),
+	    ASCIIText(),
 	    Comment('Host description'),
 	    nullable=True,
 	    default=None,
@@ -570,7 +575,7 @@ class HostReal(Base):
                 'menu_name'    : _('Hosts Real'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 80,
-                'default_sort' : ({ 'property': 'hostid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
                 'grid_view' : ('name', 'hostrealgroup', 'hostrealentities', 'hostrealdomains', 'ctime', 'mtime', 'hostrealcreateuser', 'hostrealmodifyuser', 'descr'),
                 'form_view' : ('name', 'hostrealgroup', 'hostrealentities', 'hostrealdomains', 'ctime', 'mtime', 'hostrealcreateuser', 'hostrealmodifyuser', 'descr'),
                 'easy_search' : ('name',),
@@ -580,9 +585,10 @@ class HostReal(Base):
             }
         )
 	
-    hostid = Column(
+    id = Column(
 	    'hostid',
-	    UInt32(10),
+	    UInt32(),
+            Sequence('hostid_seq'),
 	    Comment('Host ID'),
 	    primary_key=True,
 	    nullable=False,
@@ -592,7 +598,7 @@ class HostReal(Base):
 	    )
     hgid = Column(
 	    'hgid',
-	    UInt32(10),
+	    UInt32(),
             #hostrealgroup
             ForeignKey('hosts_groups.hgid', name='hosts_def_fk_hgid', onupdate='CASCADE'),
 	    Comment('Host Group ID'),
@@ -603,7 +609,7 @@ class HostReal(Base):
 	    )
     entityid = Column(
 	    'entityid',
-	    UInt32(10),
+	    UInt32(),
             #hostrealentities
             ForeignKey('entities_def.entityid', name='hosts_def_fk_entityid', onupdate='CASCADE', ondelete='CASCADE'),
 	    Comment('Entity ID'),
@@ -614,7 +620,7 @@ class HostReal(Base):
 	    )
     domainid = Column(
 	    'domainid',
-	    UInt32(10),
+	    UInt32(),
             #hostrealdomains
             ForeignKey('domains_def.domainid', name='hosts_def_fk_domainid', onupdate="CASCADE"),
 	    Comment('Domain ID'),
@@ -625,7 +631,7 @@ class HostReal(Base):
 	    )
     name = Column(
 	    'name',
-	    Unicode(255),
+	    ASCIIString(255),
 	    Comment('Host Name'),
 	    nullable=False,
 	    info={
@@ -658,7 +664,7 @@ class HostReal(Base):
 	    )
     cby = Column(
 	    'cby',
-	    UInt32(10),
+	    UInt32(),
             #hostrealcreateuser
             ForeignKey('users.uid', name='hosts_def_fk_cby', ondelete='SET NULL', onupdate='CASCADE'),
 	    Comment('Created By'),
@@ -672,7 +678,7 @@ class HostReal(Base):
 	    )
     mby = Column(
 	    'mby',
-	    UInt32(10),
+	    UInt32(),
             #hostrealmodifyuser
             ForeignKey('users.uid', name='hosts_def_fk_mby', ondelete='SET NULL', onupdate='CASCADE'),
 	    Comment('Last Modified By'),
@@ -687,7 +693,7 @@ class HostReal(Base):
 
     descr = Column(
 	    'descr',
-	    UnicodeText(),
+	    ASCIIText(),
 	    Comment('Host description'),
 	    nullable=True,
 	    default=None,

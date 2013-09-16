@@ -11,7 +11,6 @@ from __future__ import (
 )
 
 __all__ = [
-    "IsUnique",
     "Network",
     "NetworkGroup",
     "NetworkHostLinkage",
@@ -105,14 +104,6 @@ from mako.template import Template
 _ = TranslationStringFactory('netprofile_networks')
 
 
-class IsUnique(DeclEnum):
-    """
-    Is Networks-Hosts Linkage Type unique per network class
-    """
-    yes   = 'Y',   _('Yes'),   10
-    no   = 'N',   _('No'),   20
-
-
 class Network(Base):
     """
     Netprofile Network Description definition
@@ -120,6 +111,9 @@ class Network(Base):
     __tablename__ = 'nets_def'
     __table_args__ = (
         Comment('Networks'),
+        Index('nets_def_u_name', 'name', unique=True),
+        Index('nets_def_u_ipaddr', 'ipaddr', unique=True),
+        Index('nets_def_u_ip6addr', 'ip6addr', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -133,7 +127,7 @@ class Network(Base):
                 'show_in_menu'  : 'modules', #modules
                 'menu_order'    : 70,
                 'menu_main'     : True,
-                'default_sort' : ({ 'property': 'netid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'name', 'direction': 'ASC' },),
                 'grid_view' : ('name',
                                'ipaddr',
                                MarkupColumn(
@@ -151,9 +145,10 @@ class Network(Base):
                 }
             }
         )
-    netid = Column(
+    id = Column(
         'netid',
-        UInt32(10),
+        UInt32(),
+        Sequence('netid_seq'),
         Comment('Network ID'),
         primary_key=True,
         nullable=False,
@@ -163,7 +158,7 @@ class Network(Base):
         )
     name = Column(
         'name',
-        Unicode(255),
+        ASCIIString(),
         Comment('Network Name'),
         nullable=False,
         info={
@@ -172,7 +167,7 @@ class Network(Base):
         )
     domainid = Column(
         'domainid',
-        UInt32(10),
+        UInt32(),
         #networkdomain
         ForeignKey('domains_def.domainid', name='nets_def_fk_domainid', onupdate='CASCADE'),
         nullable=False,
@@ -182,7 +177,7 @@ class Network(Base):
         )
     netgid = Column(
         'netgid',
-        UInt32(10),
+        UInt32(),
         #netgroup
         ForeignKey('nets_groups.netgid', name='nets_def_fk_domainid', onupdate='CASCADE'),
         nullable=False,
@@ -192,7 +187,7 @@ class Network(Base):
         )
     mgmtdid = Column(
         'mgmtdid',
-        UInt32(10),
+        UInt32(),
         #networkdevice
         ForeignKey('devices_network.did', name='nets_def_fk_mgmtdid', onupdate='CASCADE'),
         nullable=False,
@@ -270,7 +265,7 @@ class Network(Base):
         )
     rtid = Column(
         'rtid',
-        #foreignkey to RoutingTables, этого модуля еще нет. 
+        #foreignkey to RoutingTables, this module isn't ready yet. 
         UInt8(10),
         Comment('Route Table ID'),
         info={
@@ -317,16 +312,12 @@ class Network(Base):
             'header_string' : _('Description')
             }
         )
-    
 
     network = relationship("NetworkHostLinkage", backref=backref('network', innerjoin=True))
     Domain.networkdomain = relationship('Network', backref=backref('networkdomain', innerjoin=True))
 
     def __str__(self):
         return self.name
-
-    def __repr__(self):
-        return "123 {0}".format(self.ipaddr)
 
 
 class NetworkGroup(Base):
@@ -336,6 +327,7 @@ class NetworkGroup(Base):
     __tablename__ = 'nets_groups'
     __table_args__ = (
         Comment('Network Groups definition'),
+        Index('nets_group_u_name', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -346,10 +338,9 @@ class NetworkGroup(Base):
                 #'cap_edit'      : 'NAS_EDIT',
                 #'cap_delete'    : 'NAS_DELETE',
                 'menu_name'    : _('Network Groups'),
-                'show_in_menu'  : 'admin', #modules
+                'show_in_menu'  : 'admin',
                 'menu_order'    : 70,
                 'default_sort' : ({ 'property': 'netgid' ,'direction': 'ASC' },),
-                #дописать после описания столбцов
                 'grid_view' : ('name', 'descr'),
                 'form_view' : ('name', 'descr'),
                 'easy_search' : ('name',),
@@ -358,9 +349,10 @@ class NetworkGroup(Base):
                 }
             }
         )    
-    netgid = Column(
+    id = Column(
         'netgid',
-        UInt32(10),
+        UInt32(),
+        Sequence('netgid_seq'),
         Comment('Network Group ID'),
         primary_key=True,
         nullable=False,
@@ -370,7 +362,7 @@ class NetworkGroup(Base):
         )
     name = Column(
         'name',
-        Unicode(255),
+        ASCIIString(),
         Comment('Network Group Name'),
         nullable=False,
         info={
@@ -398,6 +390,7 @@ class NetworkHostLinkageType(Base):
     __tablename__ = 'nets_hltypes'
     __table_args__ = (
         Comment('Networks-Hosts Linkage Types'),
+        Index('nets_hltypes_u_name', 'name', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -420,9 +413,10 @@ class NetworkHostLinkageType(Base):
                 }
             }
         )    
-    hltypeid = Column(
+    id = Column(
         'hltypeid',
-        UInt32(10),
+        UInt32(),
+        Sequence('hltypeid_seq'),
         Comment('Networks-Hosts Linkage Type ID'),
         primary_key=True,
         nullable=False,
@@ -432,7 +426,7 @@ class NetworkHostLinkageType(Base):
         )
     name = Column(
         'name',
-        Unicode(255),
+        ASCIIString(),
         Comment('Networks-Hosts Linkage Type Name'),
         nullable=False,
         info={
@@ -441,10 +435,11 @@ class NetworkHostLinkageType(Base):
         )
     unique = Column(
         'unique',
-        IsUnique.db_type(),
+        NPBoolean()
         Comment('Is unique per network?'),
         nullable=False,
-        default=IsUnique.no,
+        default=False,
+        server_default=npbool(False),
         info={
             'header_string' : _('Is Unique?')
             }
@@ -462,6 +457,7 @@ class NetworkHostLinkage(Base):
     __tablename__ = 'nets_hosts'
     __table_args__ = (
         Comment('Networks-Hosts Linkage'),
+        Index('nets_hosts_u_nhl', 'netid', 'hostid', 'hltypeid', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -475,7 +471,6 @@ class NetworkHostLinkage(Base):
                 'show_in_menu'  : 'admin', #modules
                 'menu_order'    : 60,
                 'default_sort' : ({ 'property': 'nhid' ,'direction': 'ASC' },),
-                #дописать после описания столбцов
                 'grid_view' : ('network', 'networklinkagehost', 'linkagetype'),
                 'form_view' : ('network', 'networklinkagehost', 'linkagetype'),
                 'easy_search' : ('network',),
@@ -484,9 +479,10 @@ class NetworkHostLinkage(Base):
                 }
             }
         )
-    nhid = Column(
+    id = Column(
         'nhid',
-        UInt32(10),
+        UInt32(),
+        Sequence('nhid_seq'),
         Comment('Network-Host Linkage ID'),
         primary_key=True,
         nullable=False,
@@ -496,7 +492,7 @@ class NetworkHostLinkage(Base):
         )
     netid = Column(
         'netid',
-        UInt32(10),
+        UInt32(),
         #network
         ForeignKey('nets_def.netid', name='nets_hosts_fk_netid', ondelete='CASCADE', onupdate='CASCADE'),
         Comment('Network ID'),
@@ -507,7 +503,7 @@ class NetworkHostLinkage(Base):
         )
     hostid = Column(
         'hostid',
-        UInt32(10),
+        UInt32(),
         Comment('Host ID'),
         #networklinkagehost
         ForeignKey('hosts_def.hostid', name='nets_hosts_fk_hostid', onupdate='CASCADE', ondelete='CASCADE'),
@@ -518,7 +514,7 @@ class NetworkHostLinkage(Base):
         )
     hltypeid = Column(
         'hltypeid',
-        UInt32(10),
+        UInt32(),
         #linkagetype
         ForeignKey('nets_hltypes.hltypeid', name='nets_hosts_fk_hltypeid', onupdate='CASCADE'),
         Comment('Network-Host Linkage Type'),
@@ -571,6 +567,7 @@ class NetworkDevice(Base):
     __tablename__ = 'devices_network'
     __table_args__ = (
         Comment('Network Devices'),
+        Index('devices_network_u_hostid', 'hostid', unique=True),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -578,7 +575,7 @@ class NetworkDevice(Base):
                 'menu_name'    : _('Network Device'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 70,
-                'default_sort' : ({ 'property': 'nhid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'did' ,'direction': 'ASC' },),
                 'grid_view' : ('netdevice', 'networkdevicehost'),
                 'form_view' : ('netdevice', 'networkdevicehost', 'snmptype', 'mgmtpass', 'mgmtepass'),
                 'easy_search' : ('did',),
@@ -589,7 +586,8 @@ class NetworkDevice(Base):
         )
     did = Column(
         'did',
-        UInt32(10),
+        UInt32(),
+        Sequence('did_seq'),
         Comment('Device ID'),
         #netdevice
         ForeignKey('devices_def.did', name='devices_network_fk_did', onupdate='CASCADE', ondelete='CASCADE'),
@@ -601,7 +599,7 @@ class NetworkDevice(Base):
         )
     hostid = Column(
         'hostid',
-        UInt32(10),
+        UInt32(),
         Comment('Host ID'),
         #networkdevicehost
         ForeignKey('hosts_def.hostid', name='devices_network_fk_hostid', ondelete='SET NULL', onupdate='CASCADE'),
@@ -620,7 +618,7 @@ class NetworkDevice(Base):
         )
     v2readonly = Column(
         'cs_ro',
-        Unicode(255),
+        ASCIIString(),
         Comment('SNMPv2 Read-Only Community'),
         info={
             'header_string' : _('SNMPv2 Read Only')
@@ -628,7 +626,7 @@ class NetworkDevice(Base):
         )
     v2readwrite = Column(
         'cs_rw',
-        Unicode(255),
+        ASCIIString(),
         Comment('SNMPv2 Read-Write Community'),
         info={
             'header_string' : _('SNMPv2 Read-Write')
@@ -636,7 +634,7 @@ class NetworkDevice(Base):
         )
     v3user = Column(
         'v3user',
-        Unicode(255),
+        ASCIIString(),
         Comment('SNMPv3 User Name'),
         info={
             'header_string' : _('SNMPv3 User Name')
@@ -660,7 +658,7 @@ class NetworkDevice(Base):
         )
     v3authpass = Column(
         'v3authpass',
-        Unicode(255),
+        ASCIIString(),
         Comment('SNMPv3 Auth Passphrase'),
         info={
             'header_string' : 'Passphrase'
@@ -676,7 +674,7 @@ class NetworkDevice(Base):
         )
     v3privpass = Column(
         'v3privpass',
-        Unicode(255),
+        ASCIIString(),
         Comment('SNMPv3 Crypt Passphrase'),
         info={
             'header_string' : 'Crypt Passphrase'
@@ -692,7 +690,7 @@ class NetworkDevice(Base):
         )
     mgmtuser = Column(
         'mgmtuser',
-        Unicode(255),
+        ASCIIString(),
         Comment('Management User Name'),
         info={
             'header_string' : 'Management User Name'
@@ -700,7 +698,7 @@ class NetworkDevice(Base):
         )
     mgmtpass = Column(
         'mgmtpass',
-        Unicode(255),
+        ASCIIString(),
         Comment('Management Password'),
         info={
             'header_string' : 'Management Password'
@@ -708,7 +706,7 @@ class NetworkDevice(Base):
         )
     mgmtepass = Column(
         'mgmtepass',
-        Unicode(255),
+        ASCIIString(),
         Comment('Management Enablement Password'),
         info={
             'header_string' : 'Enabled password'
