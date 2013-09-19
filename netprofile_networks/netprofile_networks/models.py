@@ -435,7 +435,7 @@ class NetworkHostLinkageType(Base):
         )
     unique = Column(
         'unique',
-        NPBoolean()
+        NPBoolean(),
         Comment('Is unique per network?'),
         nullable=False,
         default=False,
