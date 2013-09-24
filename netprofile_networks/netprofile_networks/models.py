@@ -87,18 +87,12 @@ from netprofile.ext.wizards import (
 	Step,
 	Wizard
         )
-
-from netprofile_domains.models import Domain
-from netprofile_devices.models import Device
-from netprofile_hosts.models import Host
-
 from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
     TranslationStringFactory,
 	get_localizer
         )
 
-from IPy import IP
 from mako.template import Template
 
 _ = TranslationStringFactory('netprofile_networks')
@@ -114,6 +108,9 @@ class Network(Base):
         Index('nets_def_u_name', 'name', unique=True),
         Index('nets_def_u_ipaddr', 'ipaddr', unique=True),
         Index('nets_def_u_ip6addr', 'ip6addr', unique=True),
+		Index('nets_def_i_domainid', 'domainid'),
+		Index('nets_def_i_mgmtdid', 'mgmtdid'),
+		Index('nets_def_i_rtid', 'rtid'),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -124,7 +121,7 @@ class Network(Base):
                 #'cap_edit'      : 'NAS_EDIT',
                 #'cap_delete'    : 'NAS_DELETE',
                 'menu_name'    : _('Networks'),
-                'show_in_menu'  : 'modules', #modules
+                'show_in_menu'  : 'modules',
                 'menu_order'    : 70,
                 'menu_main'     : True,
                 'default_sort' : ({ 'property': 'name', 'direction': 'ASC' },),
@@ -168,31 +165,28 @@ class Network(Base):
     domainid = Column(
         'domainid',
         UInt32(),
-        #networkdomain
         ForeignKey('domains_def.domainid', name='nets_def_fk_domainid', onupdate='CASCADE'),
         nullable=False,
         info={
-            'header_string' : _('Domain ID')
+            'header_string' : _('Domain')
             }
         )
     netgid = Column(
         'netgid',
         UInt32(),
-        #netgroup
         ForeignKey('nets_groups.netgid', name='nets_def_fk_domainid', onupdate='CASCADE'),
         nullable=False,
         info={
-            'header_string' : _('Network Group ID')
+            'header_string' : _('Network Group')
             }
         )
     mgmtdid = Column(
         'mgmtdid',
         UInt32(),
-        #networkdevice
         ForeignKey('devices_network.did', name='nets_def_fk_mgmtdid', onupdate='CASCADE'),
         nullable=False,
         info={
-            'header_string' : _('Management Device ID')
+            'header_string' : _('Management Device')
             }
         )
     enabled = Column(
@@ -240,7 +234,7 @@ class Network(Base):
         nullable=False,
         default=24,
         info={
-            'header_string' : _('Network mask')
+            'header_string' : _('Netmask')
             }
         )
     cidr6 = Column(
@@ -260,7 +254,7 @@ class Network(Base):
         nullable=False,
         default=0,
         info={
-            'header_string' : _('VLAN ID')
+            'header_string' : _('VLAN')
             }
         )
     rtid = Column(
@@ -269,7 +263,7 @@ class Network(Base):
         UInt8(10),
         Comment('Route Table ID'),
         info={
-            'header_string' : _('Route Table ID')
+            'header_string' : _('Route Table')
             }
         )
     gueststart = Column(
@@ -314,7 +308,7 @@ class Network(Base):
         )
 
     network = relationship("NetworkHostLinkage", backref=backref('network', innerjoin=True))
-    Domain.networkdomain = relationship('Network', backref=backref('networkdomain', innerjoin=True))
+    networkdomain = relationship('Domain', backref=backref('networkdomain', innerjoin=True))
 
     def __str__(self):
         return self.name
@@ -340,7 +334,7 @@ class NetworkGroup(Base):
                 'menu_name'    : _('Network Groups'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 70,
-                'default_sort' : ({ 'property': 'netgid' ,'direction': 'ASC' },),
+                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
                 'grid_view' : ('name', 'descr'),
                 'form_view' : ('name', 'descr'),
                 'easy_search' : ('name',),
@@ -362,11 +356,11 @@ class NetworkGroup(Base):
         )
     name = Column(
         'name',
-        ASCIIString(),
+        Unicode(255),
         Comment('Network Group Name'),
         nullable=False,
         info={
-            'header_string' : _('Network Group Name')
+            'header_string' : _('Name')
             }
         )
     descr = Column(
@@ -374,7 +368,7 @@ class NetworkGroup(Base):
         UnicodeText(),
         Comment('Network Group Description'),
         info={
-            'header_string' : _('Network Group Description')
+            'header_string' : _('Description')
             }
         )
     netgroups = relationship("Network", backref=backref('netgroup', innerjoin=True))
@@ -403,8 +397,7 @@ class NetworkHostLinkageType(Base):
                 'menu_name'    : _('Networks-Hosts Linkage Types'),
                 'show_in_menu'  : 'admin', 
                 'menu_order'    : 60,
-                'default_sort' : ({ 'property': 'hltypeid' ,'direction': 'ASC' },),
-                #дописать после описания столбцов
+                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
                 'grid_view' : ('name', 'unique'),
                 'form_view' : ('name', 'unique'),
                 'easy_search' : ('name',),
@@ -421,16 +414,16 @@ class NetworkHostLinkageType(Base):
         primary_key=True,
         nullable=False,
         info={
-            'header_string' : _('Type ID')
+            'header_string' : _('ID')
             }
         )
     name = Column(
         'name',
-        ASCIIString(),
+        Unicode(255),
         Comment('Networks-Hosts Linkage Type Name'),
         nullable=False,
         info={
-            'header_string' : _('Linkage Type Name')
+            'header_string' : _('Name')
             }
         )
     unique = Column(
@@ -450,6 +443,7 @@ class NetworkHostLinkageType(Base):
     def __str__(self):
         return self.name
 
+
 class NetworkHostLinkage(Base):
     """
     Netprofile Network Host Linkage definition
@@ -458,21 +452,23 @@ class NetworkHostLinkage(Base):
     __table_args__ = (
         Comment('Networks-Hosts Linkage'),
         Index('nets_hosts_u_nhl', 'netid', 'hostid', 'hltypeid', unique=True),
+		Index('nets_hosts_i_hostid', 'hostid'),
+		Index('nets_hosts_i_hltypeid', 'hltypeid'),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
             'info'          : {
                 #'cap_menu'      : 'BASE_NAS',
                 #'cap_read'      : 'NAS_LIST',
-                #'cap_create'    : 'NAS_CREATE',
+				#'cap_create'    : 'NAS_CREATE',
                 #'cap_edit'      : 'NAS_EDIT',
                 #'cap_delete'    : 'NAS_DELETE',
                 'menu_name'    : _('Network-Host Linkage'),
                 'show_in_menu'  : 'admin', #modules
                 'menu_order'    : 60,
                 'default_sort' : ({ 'property': 'nhid' ,'direction': 'ASC' },),
-                'grid_view' : ('network', 'networklinkagehost', 'linkagetype'),
-                'form_view' : ('network', 'networklinkagehost', 'linkagetype'),
+                'grid_view' : ('network', 'host', 'linkagetype'),
+                'form_view' : ('network', 'host', 'linkagetype'),
                 'easy_search' : ('network',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard' : SimpleWizard(title=_('Add new network-host linkage'))
@@ -524,7 +520,7 @@ class NetworkHostLinkage(Base):
             }
         )
     
-    Host.networklinkagehost = relationship('NetworkHostLinkage', backref=backref('networklinkagehost', innerjoin=True))
+    host = relationship('Host', backref=backref('networklinkagehost', innerjoin=True))
 
     def __str__(self):
         return "{0}-{1}".format(self.netid, self.hostid)
@@ -576,8 +572,8 @@ class NetworkDevice(Base):
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 70,
                 'default_sort' : ({ 'property': 'did' ,'direction': 'ASC' },),
-                'grid_view' : ('netdevice', 'networkdevicehost'),
-                'form_view' : ('netdevice', 'networkdevicehost', 'snmptype', 'mgmtpass', 'mgmtepass'),
+                'grid_view' : ('device', 'host'),
+                'form_view' : ('device', 'host', 'snmptype', 'cs_ro', 'cs_rw', 'v3user', 'v3scheme', 'v3authproto', 'v3authpass', 'v3privproto', 'v3privpass', 'mgmttype', 'mgmtuser', 'mgmtpass', 'mgmtepass'),
                 'easy_search' : ('did',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard' : SimpleWizard(title=_('Add new network device'))
@@ -588,9 +584,8 @@ class NetworkDevice(Base):
         'did',
         UInt32(),
         Sequence('did_seq'),
-        Comment('Device ID'),
-        #netdevice
-        ForeignKey('devices_def.did', name='devices_network_fk_did', onupdate='CASCADE', ondelete='CASCADE'),
+		Comment('Device ID'),
+		ForeignKey('devices_def.did', name='devices_network_fk_did', onupdate='CASCADE', ondelete='CASCADE'),
         primary_key=True,
         nullable=False,
         info={
@@ -601,7 +596,6 @@ class NetworkDevice(Base):
         'hostid',
         UInt32(),
         Comment('Host ID'),
-        #networkdevicehost
         ForeignKey('hosts_def.hostid', name='devices_network_fk_hostid', ondelete='SET NULL', onupdate='CASCADE'),
         nullable=False,
         info={
@@ -616,17 +610,17 @@ class NetworkDevice(Base):
             'header_string' : _('SNMP type')
             }
         )
-    v2readonly = Column(
+    cs_ro = Column(
         'cs_ro',
-        ASCIIString(),
+        ASCIIString(255),
         Comment('SNMPv2 Read-Only Community'),
         info={
             'header_string' : _('SNMPv2 Read Only')
             }
         )
-    v2readwrite = Column(
+    cs_rw = Column(
         'cs_rw',
-        ASCIIString(),
+        ASCIIString(255),
         Comment('SNMPv2 Read-Write Community'),
         info={
             'header_string' : _('SNMPv2 Read-Write')
@@ -634,7 +628,7 @@ class NetworkDevice(Base):
         )
     v3user = Column(
         'v3user',
-        ASCIIString(),
+        ASCIIString(255),
         Comment('SNMPv3 User Name'),
         info={
             'header_string' : _('SNMPv3 User Name')
@@ -658,7 +652,7 @@ class NetworkDevice(Base):
         )
     v3authpass = Column(
         'v3authpass',
-        ASCIIString(),
+        ASCIIString(255),
         Comment('SNMPv3 Auth Passphrase'),
         info={
             'header_string' : 'Passphrase'
@@ -674,7 +668,7 @@ class NetworkDevice(Base):
         )
     v3privpass = Column(
         'v3privpass',
-        ASCIIString(),
+        ASCIIString(255),
         Comment('SNMPv3 Crypt Passphrase'),
         info={
             'header_string' : 'Crypt Passphrase'
@@ -690,7 +684,7 @@ class NetworkDevice(Base):
         )
     mgmtuser = Column(
         'mgmtuser',
-        ASCIIString(),
+        Unicode(255),
         Comment('Management User Name'),
         info={
             'header_string' : 'Management User Name'
@@ -698,7 +692,7 @@ class NetworkDevice(Base):
         )
     mgmtpass = Column(
         'mgmtpass',
-        ASCIIString(),
+        Unicode(255),
         Comment('Management Password'),
         info={
             'header_string' : 'Management Password'
@@ -706,16 +700,16 @@ class NetworkDevice(Base):
         )
     mgmtepass = Column(
         'mgmtepass',
-        ASCIIString(),
+        Unicode(255),
         Comment('Management Enablement Password'),
         info={
             'header_string' : 'Enabled password'
             }
         )
     networkdevice = relationship('Network', backref=backref('networkdevice', innerjoin=True))
-    Host.networkdevicehost = relationship('NetworkDevice', backref=backref('networkdevicehost', innerjoin=True))
-    Device.netdevice = relationship('NetworkDevice', backref=backref('netdevice', innerjoin=True))
+    host = relationship('Host', backref=backref('networkdevicehost'))
+    device = relationship('Device', backref=backref('netdevice', innerjoin=True))
 
     def __str__(self):
-        return "{0}".format(self.did)
+        return "{0}, {1}".format(self.host, self.device)
     
