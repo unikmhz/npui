@@ -80,14 +80,6 @@ from netprofile.ext.wizards import (
 	Wizard
         )
 
-from netprofile_geo import Place
-#addr_places.placeid
-from netprofile_entities import Entity
-#entities_def.entityid
-from netprofile_core import User
-#users.uid
-
-
 from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
     TranslationStringFactory,
@@ -98,7 +90,8 @@ _ = TranslationStringFactory('netprofile_devices')
 
 
 class DeviceMetatype(DeclEnum):
-    """                                                                                                                                    Device metatypes class
+    """
+	Device metatypes class
     """
     simple = 'simple', _('Simple'),   10
     network = 'network', _('Network'), 20
@@ -133,7 +126,6 @@ class DeviceCategory(Base):
                 }
             }
         )
-    
     id = Column(
         'dtcid',
         UInt32(),
@@ -147,9 +139,8 @@ class DeviceCategory(Base):
         )
     name = Column(
         'name',
-        ASCIIString(255),
+        Unicode(255),
         Comment('Device Type Category Name'),
-        unique=True,
         nullable=False,
         info={
             'header_string' : _('Name')
@@ -178,7 +169,7 @@ class DeviceManufacturer(Base):
                 'cap_create'    : 'DEVICES_CREATE',
                 'cap_edit'      : 'DEVICES_EDIT',
                 'cap_delete'    : 'DEVICES_DELETE',
-                'menu_name'    : _('Device manufacturers'),
+                'menu_name'    : _('Device Manufacturers'),
                 'show_in_menu'  : 'admin',
                 'menu_order'    : 3,
                 'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
@@ -190,7 +181,6 @@ class DeviceManufacturer(Base):
                 }
             }
         )
-    
     id = Column(
         'dtmid',
         UInt32(),
@@ -204,18 +194,17 @@ class DeviceManufacturer(Base):
         )
     sname = Column(
         'sname',
-        ASCIIString(48),
+        Unicode(48),
         Comment('Device Manufacturer Short Name'),
         nullable=False,
         info={
-            'header_string' : _('Short name')
+            'header_string' : _('Short Name')
             }
         )
     name = Column(
         'name',
-        ASCIIString(255),
+        Unicode(255),
         Comment('Device Type Manufacturer Name'),
-        unique=True,
         nullable=False,
         info={
             'header_string' : _('Name')
@@ -223,7 +212,7 @@ class DeviceManufacturer(Base):
         )
     website = Column(
         'website',
-        ASCIIString(255),
+        Unicode(255),
         Comment('Device Type Manufacturer Website URL'),
         nullable=True,
         info={
@@ -236,6 +225,7 @@ class DeviceManufacturer(Base):
     def __str__(self):
         return "%s" % str(self.name)
     
+
 class DeviceType(Base):
     """
     NetProfile device type definition
@@ -244,6 +234,7 @@ class DeviceType(Base):
     __table_args__ = (
         Comment('Device Types'),
         Index('devices_types_def_u_dt', 'dtmid', 'name', unique=True),
+		Index('devices_types_def_i_dtcid', 'dtcid', 'dtcid'),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -285,7 +276,7 @@ class DeviceType(Base):
         nullable=False,
         unique=True,
         info={
-            'header_string' : _('Device manufacturer'),
+            'header_string' : _('Device Manufacturer'),
             'filter_type'   : 'list'
             }
         )
@@ -296,16 +287,16 @@ class DeviceType(Base):
         Comment('Device Category ID'),
         nullable=False,
         info={
-            'header_string' : _('Device category')
+            'header_string' : _('Device Category')
             }
         )
     name = Column(
         'name',
-        ASCIIString(255),
+        Unicode(255),
         Comment('Device Type Name'),
         nullable=False,
         info={
-            'header_string' : _('Device type')
+            'header_string' : _('Device Type')
             }
         )
     descr = Column(
@@ -317,10 +308,10 @@ class DeviceType(Base):
             }
         )
     
-    device_types = relationship("Device", backref=backref('devtype', innerjoin=True))    
 
     def __str__(self):
         return "%s" % str(self.name)
+
 
 class DeviceFlagType(Base):
     """
@@ -364,11 +355,11 @@ class DeviceFlagType(Base):
         )
     name = Column(
         'name',
-        ASCIIString(255),
+        Unicode(255),
         Comment('Device Flag Type Name'),
         nullable=False,
         info={
-            'header_string' : _('Device flag type name')
+            'header_string' : _('Name')
             }
         )
     descr = Column(
@@ -428,22 +419,21 @@ class DeviceTypeFlagType(Base):
         )
     name = Column(
         'name',
-        ASCIIString(255),
+		Unicode(255),
         Comment('Device Type Flag Type Name'),
         nullable=False,
         info={
-            'header_string' : _('Device type flag type')
+            'header_string' : _('Name')
             }
         )
     descr = Column(
         'descr',
         UnicodeText(),
-        Comment('Device Type Flag Type Description'),
+        Comment('Description'),
         info={
             'header_string' : _('Description')
             }
         )
-    
     def __str__(self):
         return "%s" % str(self.name)
 
@@ -455,6 +445,12 @@ class Device(Base):
     __tablename__ = 'devices_def'
     __table_args__ = (
         Comment('Devices'),
+		Index('device_def_i_dtid', 'dtid'),
+		Index('device_def_i_placeid', 'placeid'),
+		Index('device_def_i_entityid', 'entityid'),
+		Index('device_def_i_cby', 'cby'),
+		Index('device_def_i_mby', 'mby'),
+		Index('device_def_i_iby', 'iby'),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -469,21 +465,21 @@ class Device(Base):
                 'menu_main'     : True,
                 'menu_order'    : 40,
                 'default_sort' : ({ 'property': 'serial' ,'direction': 'ASC' },),
-                'grid_view'    : ('devtype', 'serial', 'deviceentities', 'addr', 'descr'),
-                'form_view'    : ('devtype',
+                'grid_view'    : ('devicetype', 'serial', 'entity', 'addr', 'descr'),
+                'form_view'    : ('devicetype',
                                   'serial',
                                   'dtype',
                                   'oper',
-                                  'deviceplaces',
-                                  'deviceentities',
-                                  'devicecreated',
-                                  'devicemodified',
-                                  'deviceinstalled',
+                                  'place',
+                                  'entity',
+                                  'created',
+                                  'modified',
+                                  'installed',
                                   'ctime',
                                   'mtime',
                                   'itime',
                                   'descr'),
-                'easy_search'  : ('devtype',),
+                'easy_search'  : ('devicetype',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard' : SimpleWizard(title=_('Add new device'))
                 }
@@ -497,20 +493,19 @@ class Device(Base):
         primary_key=True,
         nullable=False,
         info={
-            'header_string' : _('Device ID')
+            'header_string' : _('ID')
             }
         )
     serial = Column(
         'serial', 
-        ASCIIString(64), 
+        Unicode(64), 
         Comment('Device serial'),
         nullable=True,
         default='NULL',
         info={
-            'header_string' : _('Device Serial')
+            'header_string' : _('Serial')
             }
         )
-    #devtype
     dtid = Column(
         'dtid',
         UInt32(),
@@ -519,7 +514,7 @@ class Device(Base):
         nullable=False,
         unique=True,
         info={
-            'header_string' : _('Device Type'),
+            'header_string' : _('Type'),
             'filter_type'   : 'list'
             }
         )
@@ -530,7 +525,7 @@ class Device(Base):
         nullable=False,
         default=DeviceMetatype.simple,
         info={
-            'header_string' : _('Device metatype')
+            'header_string' : _('Metatype')
             }
         )
     oper = Column(
@@ -543,7 +538,6 @@ class Device(Base):
             'header_string' : _('Is Operational?')
             }
         )
-    #deviceplaces
     placeid = Column(
         'placeid',
         UInt32(),
@@ -554,7 +548,6 @@ class Device(Base):
             'header_string' : _('Place')
             }
         )
-    #deviceentities
     entityid = Column(
         'entityid',
         UInt32(),
@@ -601,7 +594,6 @@ class Device(Base):
             'read_only'     : True
             }
         )
-    #devicecreated
     created_by_id = Column(
         'cby',
         UInt32(),
@@ -614,7 +606,6 @@ class Device(Base):
             'header_string' : _('Created')
             }
         )
-    #devicemodified
     modified_by_id = Column(
         'mby',
         UInt32(),
@@ -627,7 +618,6 @@ class Device(Base):
             'header_string' : _('Modified')
             }
         )
-    #deviceinstalled
     installed_by_id = Column(
         'iby',
         UInt32(),
@@ -649,16 +639,15 @@ class Device(Base):
             }
         )
 
-    Place.deviceplaces = relationship('Device', backref=backref('deviceplaces', innerjoin=True))
-    Entity.deviceentities = relationship('Device', backref=backref('deviceentities', innerjoin=True))
-    User.devicecreated = relationship('Device', backref=backref('devicecreated', innerjoin=True), foreign_keys=created_by_id)
-    User.devicemodified = relationship('Device', backref=backref('devicemodified', innerjoin=True), foreign_keys=modified_by_id)
-    User.deviceinstalled = relationship('Device', backref=backref('deviceinstalled', innerjoin=True), foreign_keys=installed_by_id)
-
-    devicetypes = association_proxy('devtype', 'name', creator=lambda v: DeviceType(id=v))
+    place = relationship('Place', backref=backref('deviceplaces', innerjoin=True))
+    entity = relationship('Entity', backref=backref('deviceentities', innerjoin=True))
+    created = relationship('User', backref=backref('devicecreated'), foreign_keys=created_by_id)
+    modified = relationship('User', backref=backref('devicemodified'), foreign_keys=modified_by_id)
+    installed = relationship('User', backref=backref('deviceinstalled'), foreign_keys=installed_by_id)
+    devicetype = relationship('DeviceType', backref=backref('devicetype', innerjoin=True))
 
     def __str__(self):
-        return "{0}".format(self.devicetypes)
+        return "{0}".format(self.devicetype)
 
 
     
