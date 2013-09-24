@@ -27,7 +27,7 @@ from sqlalchemy import (
 	text,
 	Text,
 	TIMESTAMP, 
-        BINARY,
+	BINARY,
 	FetchedValue,
 	func
 )
@@ -50,9 +50,9 @@ from netprofile.db.fields import (
 	UInt16,
 	UInt32,
 	npbool,
-        IPv4Address,
-        ExactUnicode,
-        MACAddress
+	IPv4Address,
+	ExactUnicode,
+	MACAddress
 )
 
 
@@ -69,7 +69,7 @@ from netprofile_hosts import Host
 from netprofile_dialup import IPPool
 from netprofile_networks import Network
 from netprofile_domains import Domain
-#domain - Domain, Parent Domain
+
 
 from pyramid.i18n import (
 	TranslationStringFactory,
@@ -84,9 +84,9 @@ class IPAddressVisibility(DeclEnum):
     IP Address Visibility class 
     """
 
-    B = 'B', _('B'), 10
-    I = 'I', _('I'), 20
-    E = 'E', _('E'), 30
+    B = 'B', _('Both'), 10
+    I = 'I', _('Internal'), 20
+    E = 'E', _('External'), 30
 
 
 class IPAddressAction(DeclEnum):
@@ -107,9 +107,9 @@ class IPAddress(Base):
     __table_args__ = (
         Comment('IP Addresses'),
         Index('ipaddr_def_u_address', 'netid', 'offset', unique=True),
-        #Index('ipaddr_def_i_hostid', 'hostid'),
-        #Index('ipaddr_def_i_poolid', 'poolid'),
-        #Index('ipaddr_def_i_inuse', 'inuse'),
+        Index('ipaddr_def_i_hostid', 'hostid'),
+        Index('ipaddr_def_i_poolid', 'poolid'),
+        Index('ipaddr_def_i_inuse', 'inuse'),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -118,9 +118,8 @@ class IPAddress(Base):
                 'show_in_menu'  : 'modules',
                 'menu_order'    : 20,
                 'menu_main'     : True,
-                'default_sort' : ({ 'property': 'id' ,'direction': 'ASC' },),
-                'grid_view' : ('ipaddrhost', 'ipaddrnetwork', 'hwaddr'),
-                'form_view' : ('ipaddrhost', 'ipaddrpool', 'ipaddrnetwork', 'offset', 'hwaddr'),
+                'grid_view' : ('host', 'network', 'hwaddr'),
+                'form_view' : ('host', 'pool', 'network', 'offset', 'hwaddr'),
                 'easy_search' : ('host_id',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard' : SimpleWizard(title=_('Add new IP address'))
@@ -155,7 +154,7 @@ class IPAddress(Base):
         ForeignKey('ippool_def.poolid', name='ipaddr_def_fk_poolid', onupdate='CASCADE', ondelete='SET NULL'),
         Comment('IP Address Pool ID'),
         info={
-            'header_string' : _('IP Address pool')
+            'header_string' : _('Pool')
             }
         )
     net_id = Column(
@@ -200,7 +199,7 @@ class IPAddress(Base):
         nullable=False,
         default=IPAddressVisibility.B,
         info={
-            'header_string' : _('IP visibslity')
+            'header_string' : _('IP Visibslity')
             }
         )
     owned = Column(
@@ -210,7 +209,7 @@ class IPAddress(Base):
         nullable=False,
         default=False,
         info={
-            'header_string' : _('Is statically assigned?')
+            'header_string' : _('Is Statically Assigned?')
             }
         )
     in_use = Column(
@@ -220,18 +219,16 @@ class IPAddress(Base):
         nullable=False,
         default=False,
         info={
-            'header_string' : _('In use')
+            'header_string' : _('In Use')
             }
         )
 
-    Host.ipaddrhost = relationship('IPAddress', backref=backref('ipaddrhost', innerjoin=True))
-    IPPool.ipaddrpool = relationship('IPAddress', backref=backref('ipaddrpool', innerjoin=True))
-    Network.ipaddrnetwork = relationship('IPAddress', backref=backref('ipaddrnetwork', innerjoin=True))
+    host = relationship('Host', backref=backref('ipaddrhost', innerjoin=True))
+    pool = relationship('IPPool', backref=backref('ipaddrpool'))
+    network = relationship('Network', backref=backref('ipaddrnetwork', innerjoin=True))
 
-    hosts = association_proxy('ipaddrhost', 'name', creator=lambda v: Host(hostid=v))
-    nets = association_proxy('ipaddrnetwork', 'name', creator=lambda v: Host(hostid=v))
     def __str__(self):
-        return "{0} - {1}".format(self.hosts, self.nets)
+        return "{0} - {1}".format(self.host, self.network)
 
 class IPAddressHistory(Base):
     """
@@ -240,8 +237,8 @@ class IPAddressHistory(Base):
     __tablename__ = 'ipaddr_history'
     __table_args__ = (
         Comment('IP Addresses'),
-        #KEY `i_ipaddr` (`ipaddr`),
-        #KEY `i_hwaddr` (`hwaddr`)
+		Index('ipaddr_history_i_ipaddr', 'ipaddr', unique=True),
+		Index('ipaddr_history_i_hwaddr', 'hwaddr'),
         {
             'mysql_engine'  : 'InnoDB',
             'mysql_charset' : 'utf8',
@@ -279,10 +276,10 @@ class IPAddressHistory(Base):
         )
     hostname = Column(
         'hostname',
-        ASCIIString(255),
+        Unicode(255),
         Comment('Host Name'),
         info={
-            'header_string' : _('Host name')
+            'header_string' : _('Host Name')
             }
         )
     action = Column(
@@ -298,6 +295,7 @@ class IPAddressHistory(Base):
 
     def __str__(self):
         return "{0}".format(self.ipaddr)
+
 
 class IPAddressFlat(Base):
     """
@@ -315,15 +313,14 @@ class IPAddressFlat(Base):
                 'menu_order'    : 20,
                 'menu_main'     : False,
                 'default_sort' : ({ 'property': 'hostname' ,'direction': 'ASC' },),
-                'grid_view' : ('hostname', 'ip', 'hwaddr'),
-                'form_view' : ('flathost', 'flatnetwork', 'flatdomain', 'hostname', 'flatparent', 'ip', 'hwaddr'),
+                'grid_view' : ('flathost', 'flatnetwork', 'flatdomain', 'ip', 'hwaddr'),
+                'form_view' : ('flathost', 'flatnetwork', 'flatdomain', 'flatparent', 'ip', 'hwaddr'),
                 'easy_search' : ('hostname',),
                 'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard' : SimpleWizard(title=_('Add new IP address'))
                 }
             }
         )
-    
     id = Column(
         'ipaddrid',
         UInt32(),
@@ -358,7 +355,6 @@ class IPAddressFlat(Base):
     domainid = Column(
         'domainid',
         UInt32(),
-        #foreign key
         ForeignKey('domains_def.domainid', name='domains_aliases_fk_domainid', ondelete='CASCADE', onupdate='CASCADE'),
         Comment('Domain'),
         nullable=False,
@@ -368,7 +364,7 @@ class IPAddressFlat(Base):
         )
     hostname = Column(
         'hostname',
-        ASCIIString(255),
+        Unicode(255),
         Comment('Host name'),
         nullable=False,
         info={
@@ -378,7 +374,6 @@ class IPAddressFlat(Base):
     domainparent = Column(
         'dp',
         UInt32(),
-        #foreign key
         ForeignKey('domains_def.domainid', name='domains_aliases_fk_parentid', ondelete='CASCADE', onupdate='CASCADE'),
         Comment('Parent domain ID'),
         info={
@@ -387,7 +382,7 @@ class IPAddressFlat(Base):
         )
     ip = Column(
         'ip',
-        ASCIIString(255),
+        ASCIIString(),
         Comment('IP Address'),
         info={
             'header_string' : _('IP Address')
@@ -403,10 +398,10 @@ class IPAddressFlat(Base):
             }
         )
 
-    Host.flathost = relationship('IPAddressFlat', backref=backref('flathost', innerjoin=True))
-    Network.flatnetwork = relationship('IPAddressFlat', backref=backref('flatnetwork', innerjoin=True))
-    Domain.flatdomain = relationship('IPAddressFlat', backref=backref('flatdomain', innerjoin=True), foreign_keys=domainid)
-    Domain.flatparent = relationship('IPAddressFlat', backref=backref('flatparent', innerjoin=True), foreign_keys=domainparent)
+    flathost = relationship('Host', backref=backref('flathost', innerjoin=True))
+    flatnetwork = relationship('Network', backref=backref('flatnetwork', innerjoin=True))
+    flatdomain = relationship('Domain', backref=backref('flatdomain', innerjoin=True), foreign_keys=domainid)
+    flatparent = relationship('Domain', backref=backref('flatparent'), foreign_keys=domainparent)
 
     def __str__(self):
         return "{0}".format(self.hostname)
