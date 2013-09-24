@@ -366,7 +366,6 @@ class DomainAlias(Base):
 			'header_string' : _('Name')
 		}
 	)
-
 	domain = relationship(
 		'Domain',
 		backref='aliases',
@@ -387,10 +386,12 @@ class DomainAlias(Base):
 			)
 		return '%s' % str(self.name)
 
+
 class ObjectVisibility(DeclEnum):
 	both = 'B', _('Both'), 10
 	internal = 'I', _('Internal'), 20
 	external = 'E', _('External'), 30
+
 
 class DomainTXTRecord(Base):
 	"""
@@ -409,8 +410,6 @@ class DomainTXTRecord(Base):
 				'cap_create'    : 'DOMAINS_CREATE',
 				'cap_edit'      : 'DOMAINS_EDIT',
 				'cap_delete'    : 'DOMAINS_DELETE',
-
-#				'show_in_menu'  : 'modules',
 				'menu_name'     : _('TXT Records'),
 				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
@@ -498,6 +497,7 @@ class DomainTXTRecord(Base):
 				str(self.domain)
 			)
 		return '%s' % str(self.name)
+
 
 class DomainServiceType(Base):
 	"""
