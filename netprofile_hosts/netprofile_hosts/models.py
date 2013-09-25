@@ -58,10 +58,6 @@ from netprofile.ext.wizards import (
     Wizard
     )
 
-from netprofile_entities.models import Entity
-from netprofile_domains.models import Domain
-from netprofile_core.models import User
-
 from pyramid.i18n import (
     TranslationStringFactory,
     get_localizer
