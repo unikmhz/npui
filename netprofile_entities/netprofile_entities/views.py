@@ -8,6 +8,7 @@ from __future__ import (
 	division
 )
 
+import datetime as dt
 from dateutil.parser import parse as dparse
 
 from pyramid.i18n import (
@@ -143,11 +144,29 @@ def dyn_entity_history(params, request):
 	if not e:
 		raise KeyError('No such entity found')
 	if begin:
-		begin = dparse(begin)
+		xbegin = dparse(begin)
+		if xbegin:
+			begin = dt.datetime(
+				xbegin.year,
+				xbegin.month,
+				xbegin.day,
+				0, 0, 0
+			)
+		else:
+			begin = None
 	else:
 		begin = None
 	if end:
-		end = dparse(end)
+		xend = dparse(end)
+		if xend:
+			end = dt.datetime(
+				xend.year,
+				xend.month,
+				xend.day,
+				23, 59, 59
+			)
+		else:
+			end = None
 	else:
 		end = None
 	if maxnum:
