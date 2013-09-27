@@ -719,7 +719,7 @@ class HouseGroup(Base):
 	)
 	name = Column(
 		Unicode(255),
-		Comment('Place name'),
+		Comment('House group name'),
 		nullable=False,
 		info={
 			'header_string' : _('Name')
@@ -728,7 +728,7 @@ class HouseGroup(Base):
 	description = Column(
 		'descr',
 		UnicodeText(),
-		Comment('Place description'),
+		Comment('House group description'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
