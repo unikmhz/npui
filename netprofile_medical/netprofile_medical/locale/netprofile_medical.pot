@@ -1,0 +1,256 @@
+# Translations template for netprofile_medical.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the netprofile_medical
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_medical 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-09-18 09:51+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: netprofile_medical/__init__.py:51
+msgid "Medical"
+msgstr ""
+
+#: netprofile_medical/models.py:139
+msgid "Scheduled Test"
+msgstr ""
+
+#: netprofile_medical/models.py:151
+msgid "Add medical test"
+msgstr ""
+
+#: netprofile_medical/models.py:173
+msgid "Test Types"
+msgstr ""
+
+#: netprofile_medical/models.py:181
+msgid "Add new test type"
+msgstr ""
+
+#: netprofile_medical/models.py:193 netprofile_medical/models.py:260
+#: netprofile_medical/models.py:373 netprofile_medical/models.py:448
+#: netprofile_medical/models.py:535 netprofile_medical/models.py:636
+#: netprofile_medical/models.py:817
+msgid "ID"
+msgstr ""
+
+#: netprofile_medical/models.py:201 netprofile_medical/models.py:389
+#: netprofile_medical/models.py:476 netprofile_medical/models.py:563
+msgid "Name"
+msgstr ""
+
+#: netprofile_medical/models.py:211
+msgid "Template"
+msgstr ""
+
+#: netprofile_medical/models.py:240 netprofile_medical/views.py:38
+msgid "Tests"
+msgstr ""
+
+#: netprofile_medical/models.py:248
+msgid "Add new test"
+msgstr ""
+
+#: netprofile_medical/models.py:270 netprofile_medical/models.py:708
+msgid "Type"
+msgstr ""
+
+#: netprofile_medical/models.py:280 netprofile_medical/models.py:671
+#: netprofile_medical/models.py:851
+msgid "Ticket"
+msgstr ""
+
+#: netprofile_medical/models.py:290
+msgid "Sample"
+msgstr ""
+
+#: netprofile_medical/models.py:301
+msgid "Description"
+msgstr ""
+
+#: netprofile_medical/models.py:312
+msgid "Results"
+msgstr ""
+
+#: netprofile_medical/models.py:353
+msgid "ICD Classes"
+msgstr ""
+
+#: netprofile_medical/models.py:361
+msgid "Add new ICD class"
+msgstr ""
+
+#: netprofile_medical/models.py:381 netprofile_medical/models.py:468
+#: netprofile_medical/models.py:555
+msgid "Code"
+msgstr ""
+
+#: netprofile_medical/models.py:428
+msgid "ICD Blocks"
+msgstr ""
+
+#: netprofile_medical/models.py:436
+msgid "Add new ICD block"
+msgstr ""
+
+#: netprofile_medical/models.py:458
+msgid "Class"
+msgstr ""
+
+#: netprofile_medical/models.py:515
+msgid "ICD Entries"
+msgstr ""
+
+#: netprofile_medical/models.py:523
+msgid "Add new ICD entry"
+msgstr ""
+
+#: netprofile_medical/models.py:545
+msgid "Block"
+msgstr ""
+
+#: netprofile_medical/models.py:584
+msgid "Suspicion"
+msgstr ""
+
+#: netprofile_medical/models.py:585
+msgid "History"
+msgstr ""
+
+#: netprofile_medical/models.py:586
+msgid "Diagnosis"
+msgstr ""
+
+#: netprofile_medical/models.py:610 netprofile_medical/views.py:29
+#: netprofile_medical/views.py:52
+msgid "Diseases"
+msgstr ""
+
+#: netprofile_medical/models.py:620
+msgid "Enter classification and type"
+msgstr ""
+
+#: netprofile_medical/models.py:622
+msgid "Add new disease"
+msgstr ""
+
+#: netprofile_medical/models.py:646
+msgid "Entry"
+msgstr ""
+
+#: netprofile_medical/models.py:658 netprofile_medical/models.py:839
+msgid "Entity"
+msgstr ""
+
+#: netprofile_medical/models.py:684 netprofile_medical/models.py:863
+msgid "User"
+msgstr ""
+
+#: netprofile_medical/models.py:697 netprofile_medical/models.py:766
+msgid "Created"
+msgstr ""
+
+#: netprofile_medical/models.py:718 netprofile_medical/models.py:938
+msgid "Comment"
+msgstr ""
+
+#: netprofile_medical/models.py:746
+msgid "Disease"
+msgstr ""
+
+#: netprofile_medical/models.py:767 netprofile_medical/models.py:991
+msgid "Modified"
+msgstr ""
+
+#: netprofile_medical/models.py:768
+msgid "Deleted"
+msgstr ""
+
+#: netprofile_medical/models.py:794
+msgid "Disease History"
+msgstr ""
+
+#: netprofile_medical/models.py:829
+msgid "Mapping"
+msgstr ""
+
+#: netprofile_medical/models.py:875
+msgid "Event"
+msgstr ""
+
+#: netprofile_medical/models.py:885
+msgid "Time"
+msgstr ""
+
+#: netprofile_medical/models.py:897
+msgid "Old Type"
+msgstr ""
+
+#: netprofile_medical/models.py:908
+msgid "New Type"
+msgstr ""
+
+#: netprofile_medical/models.py:918
+msgid "Old Entry"
+msgstr ""
+
+#: netprofile_medical/models.py:928
+msgid "New Entry"
+msgstr ""
+
+#: netprofile_medical/models.py:976
+#, python-format
+msgid "%s %s: %s"
+msgstr ""
+
+#: netprofile_medical/models.py:981
+msgid "probable diagnosis"
+msgstr ""
+
+#: netprofile_medical/models.py:983
+msgid "past history"
+msgstr ""
+
+#: netprofile_medical/models.py:985
+msgid "diagnosis"
+msgstr ""
+
+#: netprofile_medical/models.py:989
+msgid "Added"
+msgstr ""
+
+#: netprofile_medical/models.py:993
+msgid "Erased"
+msgstr ""
+
+#: netprofile_medical/models.py:996
+msgid "Confirmed"
+msgstr ""
+
+#: netprofile_medical/models.py:998
+msgid "Contested"
+msgstr ""
+
+#: netprofile_medical/models.py:1000
+msgid "Changed"
+msgstr ""
+
+#: netprofile_medical/views.py:66
+msgid "Blocks"
+msgstr ""
+
+#: netprofile_medical/views.py:80
+msgid "Entries"
+msgstr ""
+

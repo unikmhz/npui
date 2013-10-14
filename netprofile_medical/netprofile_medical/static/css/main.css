@@ -1,0 +1,7 @@
+.ico-mod-medicaltesttype { background-image: url(../img/flask_type.png) !important; }
+.ico-mod-medicaltest     { background-image: url(../img/flask.png) !important; }
+.ico-mod-icdclass        { background-image: url(../img/bug_red.png) !important; }
+.ico-mod-icdblock        { background-image: url(../img/bug_yellow.png) !important; }
+
+.ico-mod-icdentry, .ico-mod-icdmapping { background-image: url(../img/bug.png) !important; }
+
