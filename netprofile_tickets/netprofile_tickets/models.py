@@ -346,6 +346,14 @@ class TicketState(Base):
 			j.append(self.subtitle)
 		return ': '.join(j)
 
+	@classmethod
+	def get_acls(cls):
+		sess = DBSession()
+		res = {}
+		for ts in sess.query(TicketState):
+			res[ts.id] = str(ts)
+		return res
+
 class TicketStateTransition(Base):
 	"""
 	Describes a transition between two distinct ticket states.
