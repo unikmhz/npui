@@ -11,6 +11,7 @@ from __future__ import (
 from sqlalchemy import (
 	and_,
 	schema,
+	type_coerce,
 	types,
 	util
 )
@@ -209,6 +210,17 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
 			return processors.enum_to_boolean
 		else:
 			return None
+
+	class comparator_factory(types.Boolean.Comparator):
+		def __eq__(self, other):
+			if isinstance(other, bool):
+				other = type_coerce(other, NPBoolean)
+			return types.Boolean.Comparator.__eq__(self, other)
+
+		def __ne__(self, other):
+			if isinstance(other, bool):
+				other = type_coerce(other, NPBoolean)
+			return types.Boolean.Comparator.__ne__(self, other)
 
 class npbool(expression.FunctionElement):
 	"""

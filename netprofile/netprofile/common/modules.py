@@ -140,10 +140,7 @@ class ModuleManager(object):
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
 			if ep.name in self.modules:
 				continue
-			mod = ep.load()
-			if not issubclass(mod, ModuleBase):
-				continue
-			self.modules[ep.name] = mod
+			self.modules[ep.name] = ep
 
 	def _get_dist(self, moddef=None):
 		"""
@@ -163,18 +160,22 @@ class ModuleManager(object):
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
 		mstack.append(moddef)
-		for depmod in self.modules[moddef].get_deps():
+		modcls = self.modules[moddef].load()
+		if not issubclass(modcls, ModuleBase):
+			logger.error('Module \'%s\' is invalid. Verify installation and try again.', moddef)
+			return False
+		for depmod in modcls.get_deps():
 			if not self._load(depmod, mstack):
 				logger.error('Can\'t load module \'%s\', which is needed for module \'%s\'.', depmod, moddef)
 				return False
-		mod = self.loaded[moddef] = self.modules[moddef](self)
+		mod = self.loaded[moddef] = modcls(self)
 		self.cfg.include(
 			lambda conf: mod.add_routes(conf),
 			route_prefix='/' + moddef
 		)
 		self.cfg.add_static_view(
 			'static/' + moddef,
-			self.modules[moddef].__module__ + ':static',
+			self.modules[moddef].module_name + ':static',
 			cache_max_age=3600
 		)
 		self.models[moddef] = {}
