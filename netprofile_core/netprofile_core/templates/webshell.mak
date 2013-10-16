@@ -26,7 +26,8 @@ Ext.require([
 % for i_ajs in res_ajs:
 	'${i_ajs}',
 % endfor
-	'NetProfile.model.Basic'
+	'NetProfile.model.Basic',
+	'NetProfile.view.CapabilityGrid'
 ], function()
 {
 //	NetProfile.api.Descriptor.enableBuffer = 100;

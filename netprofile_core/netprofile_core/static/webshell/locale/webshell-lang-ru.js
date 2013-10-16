@@ -205,5 +205,16 @@ Ext.onReady(function()
 		gibText: 'Гбайт',
 		tibText: 'Тбайт'
 	});
+
+	Ext.define('Ext.locale.ru.NetProfile.view.CapabilityGrid', {
+		override: 'NetProfile.view.CapabilityGrid',
+
+		textName: 'Название',
+		textValue: 'Значение',
+		textAllowed: 'Разрешено',
+		textDenied: 'Запрещено',
+		textNotDefined: 'Не определено',
+		textTipACL: 'Редактирование ACL'
+	});
 });
 

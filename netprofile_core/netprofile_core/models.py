@@ -987,6 +987,14 @@ class User(Base):
 			uris.append('mailto:' + self.email)
 		return uris
 
+	@classmethod
+	def get_acls(cls):
+		sess = DBSession()
+		res = {}
+		for u in sess.query(User):
+			res[u.id] = str(u)
+		return res
+
 @implementer(IDAVFile, IDAVPrincipal)
 class Group(Base):
 	"""
@@ -1257,6 +1265,14 @@ class Group(Base):
 			xgrp = xgrp.parent
 		return False
 
+	@classmethod
+	def get_acls(cls):
+		sess = DBSession()
+		res = {}
+		for g in sess.query(Group):
+			res[g.id] = str(g)
+		return res
+
 class Privilege(Base):
 	"""
 	Generic privilege code, to be assigned to users or groups.
@@ -1403,6 +1419,19 @@ class Privilege(Base):
 
 	def __str__(self):
 		return '%s' % str(self.code)
+
+	def get_acls(self):
+		if (not self.has_acls) or (not self.resource_class):
+			return None
+		cls = self.resource_class
+		if cls[:2] == 'NP':
+			cls = cls[2:]
+		if cls not in Base._decl_class_registry:
+			return None
+		cls = Base._decl_class_registry[cls]
+		getter = getattr(cls, 'get_acls', None)
+		if callable(getter):
+			return getter()
 
 class Capability(object):
 	"""
