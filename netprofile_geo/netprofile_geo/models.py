@@ -107,7 +107,7 @@ class City(Base):
 	id = Column(
 		'cityid',
 		UInt32(),
-		Sequence('cityid_seq'),
+		Sequence('addr_cities_cityid_seq'),
 		Comment('City ID'),
 		primary_key=True,
 		nullable=False,
@@ -136,6 +136,13 @@ class City(Base):
 
 	districts = relationship(
 		'District',
+		backref=backref('city', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
+	streets = relationship(
+		'Street',
 		backref=backref('city', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
@@ -179,7 +186,7 @@ class District(Base):
 	id = Column(
 		'districtid',
 		UInt32(),
-		Sequence('districtid_seq'),
+		Sequence('addr_districts_districtid_seq'),
 		Comment('District ID'),
 		primary_key=True,
 		nullable=False,
@@ -219,7 +226,7 @@ class District(Base):
 
 	streets = relationship(
 		'Street',
-		backref=backref('district', innerjoin=True),
+		backref='district',
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
@@ -234,9 +241,9 @@ class Street(Base):
 	__tablename__ = 'addr_streets'
 	__table_args__ = (
 		Comment('Streets'),
-		Index('addr_streets_u_street', 'prefix', 'suffix', 'name', unique=True),
-		Index('addr_streets_u_name', 'name', unique=True),
+		Index('addr_streets_u_street', 'cityid', 'name', 'prefix', 'suffix', unique=True),
 		Index('addr_streets_i_districtid', 'districtid'),
+		Index('addr_streets_i_name', 'name'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -251,7 +258,7 @@ class Street(Base):
 				'menu_name'     : _('Streets'),
 				'menu_order'    : 60,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('district', 'name', 'prefix', 'suffix'),
+				'grid_view'     : ('city', 'district', 'name', 'prefix', 'suffix'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -263,7 +270,7 @@ class Street(Base):
 	id = Column(
 		'streetid',
 		UInt32(),
-		Sequence('streetid_seq'),
+		Sequence('addr_streets_streetid_seq'),
 		Comment('Street ID'),
 		primary_key=True,
 		nullable=False,
@@ -271,12 +278,25 @@ class Street(Base):
 			'header_string' : _('ID')
 		}
 	)
+	city_id = Column(
+		'cityid',
+		UInt32(),
+		ForeignKey('addr_cities.cityid', name='addr_streets_fk_cityid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('City ID'),
+		nullable=False,
+		info={
+			'header_string' : _('City'),
+			'filter_type'   : 'list'
+		}
+	)
 	district_id = Column(
 		'districtid',
 		UInt32(),
 		ForeignKey('addr_districts.districtid', name='addr_streets_fk_districtid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('District ID'),
-		nullable=False,
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('District'),
 			'filter_type'   : 'list'
@@ -318,19 +338,6 @@ class Street(Base):
 		passive_deletes=True
 	)
 
-	@classmethod
-	def __augment_query__(cls, sess, query, params):
-		flt = {}
-		if '__filter' in params:
-			flt.update(params['__filter'])
-		if '__ffilter' in params:
-			flt.update(params['__ffilter'])
-		if ('cityid' in flt) and ('eq' in flt['cityid']):
-			val = int(flt['cityid']['eq'])
-			if val > 0:
-				query = query.join(Street.district).options(contains_eager(Street.district)).filter(District.city_id == val)
-		return query
-
 	def __str__(self):
 		l = []
 		if self.prefix:
@@ -362,13 +369,7 @@ class House(Base):
 		elif 'cityid' in value:
 			val = int(value['cityid'])
 			if val > 0:
-				sess = DBSession()
-				sq = sess.query(District).filter(District.city_id == val)
-				val = [d.id for d in sq]
-				if len(val) > 0:
-					query = query.filter(Street.district_id.in_(val))
-				else:
-					query = query.filter(False)
+				query = query.filter(Street.city_id == val)
 		return query
 
 	__tablename__ = 'addr_houses'
@@ -417,7 +418,7 @@ class House(Base):
 	id = Column(
 		'houseid',
 		UInt32(),
-		Sequence('houseid_seq'),
+		Sequence('addr_houses_houseid_seq'),
 		Comment('House ID'),
 		primary_key=True,
 		nullable=False,
@@ -528,18 +529,14 @@ class House(Base):
 			flt.update(params['__filter'])
 		if '__ffilter' in params:
 			flt.update(params['__ffilter'])
-		if ('districtid' in flt) and ('eq' in flt['districtid']):
+		if ('districtid' in flt) and ('eq' in flt['districtid']) and flt['districtid']['eq']:
 			val = int(flt['districtid']['eq'])
 			if val > 0:
 				query = query.filter(Street.district_id == val)
-		elif ('cityid' in flt) and ('eq' in flt['cityid']):
+		elif ('cityid' in flt) and ('eq' in flt['cityid']) and flt['cityid']['eq']:
 			val = int(flt['cityid']['eq'])
-			sq = sess.query(District).filter(District.city_id == val)
-			val = [d.id for d in sq]
-			if len(val) > 0:
-				query = query.filter(Street.district_id.in_(val))
-			else:
-				query = query.filter(False)
+			if val > 0:
+				query = query.filter(Street.city_id == val)
 		return query
 
 	@classmethod
@@ -600,7 +597,7 @@ class Place(Base):
 	id = Column(
 		'placeid',
 		UInt32(),
-		Sequence('placeid_seq'),
+		Sequence('addr_places_placeid_seq'),
 		Comment('Place ID'),
 		primary_key=True,
 		nullable=False,
@@ -709,7 +706,7 @@ class HouseGroup(Base):
 	id = Column(
 		'ahgid',
 		UInt32(),
-		Sequence('ahgid_seq'),
+		Sequence('addr_hgroups_def_ahgid_seq'),
 		Comment('House group ID'),
 		primary_key=True,
 		nullable=False,
@@ -782,7 +779,7 @@ class HouseGroupMapping(Base):
 	id = Column(
 		'ahghid',
 		UInt32(),
-		Sequence('ahghid_seq'),
+		Sequence('addr_hgroups_houses_ahghid_seq'),
 		Comment('House group membership ID'),
 		primary_key=True,
 		nullable=False,

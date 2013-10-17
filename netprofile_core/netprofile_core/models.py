@@ -236,7 +236,7 @@ class NPModule(Base):
 	id = Column(
 		'npmodid',
 		UInt32(),
-		Sequence('npmodid_seq'),
+		Sequence('np_modules_npmodid_seq'),
 		Comment('NetProfile module ID'),
 		primary_key=True,
 		nullable=False,
@@ -387,7 +387,7 @@ class User(Base):
 	id = Column(
 		'uid',
 		UInt32(),
-		Sequence('uid_seq'),
+		Sequence('users_uid_seq'),
 		Comment('User ID'),
 		primary_key=True,
 		nullable=False,
@@ -1051,7 +1051,7 @@ class Group(Base):
 	id = Column(
 		'gid',
 		UInt32(),
-		Sequence('gid_seq'),
+		Sequence('groups_gid_seq'),
 		Comment('Group ID'),
 		primary_key=True,
 		nullable=False,
@@ -1332,7 +1332,7 @@ class Privilege(Base):
 	id = Column(
 		'privid',
 		UInt32(),
-		Sequence('privid_seq'),
+		Sequence('privileges_privid_seq'),
 		Comment('Privilege ID'),
 		primary_key=True,
 		nullable=False,
@@ -1463,7 +1463,7 @@ class Capability(object):
 		return Column(
 			'capid',
 			UInt32(),
-			Sequence('capid_seq'),
+			Sequence('capid_seq'), # FIXME: needs different names
 			Comment('Capability ID'),
 			primary_key=True,
 			nullable=False,
@@ -1592,7 +1592,7 @@ class ACL(object):
 		return Column(
 			'aclid',
 			UInt32(),
-			Sequence('aclid_seq'),
+			Sequence('aclid_seq'), # FIXME: needs different names
 			Comment('ACL ID'),
 			primary_key=True,
 			nullable=False,
@@ -1727,7 +1727,7 @@ class UserGroup(Base):
 	id = Column(
 		'ugid',
 		UInt32(),
-		Sequence('ugid_seq'),
+		Sequence('users_groups_ugid_seq'),
 		Comment('User group mapping ID'),
 		primary_key=True,
 		nullable=False,
@@ -1807,7 +1807,7 @@ class SecurityPolicy(Base):
 	id = Column(
 		'secpolid',
 		UInt32(),
-		Sequence('secpolid_seq'),
+		Sequence('secpol_def_secpolid_seq'),
 		Comment('Security policy ID'),
 		primary_key=True,
 		nullable=False,
@@ -2119,7 +2119,7 @@ class DAVLock(Base):
 	id = Column(
 		'dlid',
 		UInt32(),
-		Sequence('dlid_seq'),
+		Sequence('dav_locks_dlid_seq'),
 		Comment('DAV lock ID'),
 		primary_key=True,
 		nullable=False,
@@ -2339,7 +2339,7 @@ class FileFolder(Base):
 	id = Column(
 		'ffid',
 		UInt32(),
-		Sequence('ffid_seq'),
+		Sequence('files_folders_ffid_seq'),
 		Comment('File folder ID'),
 		primary_key=True,
 		nullable=False,
@@ -2983,7 +2983,7 @@ class File(Base):
 	id = Column(
 		'fileid',
 		UInt32(),
-		Sequence('fileid_seq'),
+		Sequence('files_def_fileid_seq'),
 		Comment('File ID'),
 		primary_key=True,
 		nullable=False,
@@ -4022,7 +4022,7 @@ class Tag(Base):
 	id = Column(
 		'tagid',
 		UInt32(),
-		Sequence('tagid_seq'),
+		Sequence('tags_def_tagid_seq'),
 		Comment('Tag ID'),
 		primary_key=True,
 		nullable=False,
@@ -4085,7 +4085,7 @@ class LogType(Base):
 	id = Column(
 		'ltid',
 		UInt32(),
-		Sequence('ltid_seq'),
+		Sequence('logs_types_ltid_seq'),
 		Comment('Log entry type ID'),
 		primary_key=True,
 		nullable=False,
@@ -4137,7 +4137,7 @@ class LogAction(Base):
 	id = Column(
 		'laid',
 		UInt32(),
-		Sequence('laid_seq'),
+		Sequence('logs_actions_laid_seq'),
 		Comment('Log action ID'),
 		primary_key=True,
 		nullable=False,
@@ -4188,7 +4188,7 @@ class LogData(Base):
 	id = Column(
 		'logid',
 		UInt32(),
-		Sequence('logid_seq'),
+		Sequence('logs_data_logid_seq'),
 		Comment('Log entry ID'),
 		primary_key=True,
 		nullable=False,
@@ -4300,7 +4300,7 @@ class NPSession(Base):
 	id = Column(
 		'npsid',
 		UInt32(),
-		Sequence('npsid_seq'),
+		Sequence('np_sessions_npsid_seq'),
 		Comment('NP session ID'),
 		primary_key=True,
 		nullable=False,
@@ -4422,7 +4422,7 @@ class PasswordHistory(Base):
 	id = Column(
 		'pwhid',
 		UInt32(),
-		Sequence('pwhid_seq'),
+		Sequence('users_pwhistory_pwhid_seq'),
 		Comment('Password history entry ID'),
 		primary_key=True,
 		nullable=False,
@@ -4495,7 +4495,7 @@ class GlobalSettingSection(Base):
 	id = Column(
 		'npgssid',
 		UInt32(),
-		Sequence('npgssid_seq'),
+		Sequence('np_globalsettings_sections_npgssid_seq'),
 		Comment('Global parameter section ID'),
 		primary_key=True,
 		nullable=False,
@@ -4578,7 +4578,7 @@ class UserSettingSection(Base):
 	id = Column(
 		'npussid',
 		UInt32(),
-		Sequence('npussid_seq'),
+		Sequence('np_usersettings_sections_npussid_seq'),
 		Comment('User parameter section ID'),
 		primary_key=True,
 		nullable=False,
@@ -4777,7 +4777,7 @@ class GlobalSetting(Base, DynamicSetting):
 	id = Column(
 		'npglobid',
 		UInt32(),
-		Sequence('npglobid_seq'),
+		Sequence('np_globalsettings_def_npglobid_seq'),
 		Comment('Global parameter ID'),
 		primary_key=True,
 		nullable=False,
@@ -4968,7 +4968,7 @@ class UserSettingType(Base, DynamicSetting):
 	id = Column(
 		'npustid',
 		UInt32(),
-		Sequence('npustid_seq'),
+		Sequence('np_usersettings_types_npustid_seq'),
 		Comment('User parameter type ID'),
 		primary_key=True,
 		nullable=False,
@@ -5148,7 +5148,7 @@ class UserSetting(Base):
 	id = Column(
 		'npusid',
 		UInt32(),
-		Sequence('npusid_seq'),
+		Sequence('np_usersettings_def_npusid_seq'),
 		Comment('User parameter ID'),
 		primary_key=True,
 		nullable=False,
@@ -5238,7 +5238,7 @@ class DataCache(Base):
 	id = Column(
 		'dcid',
 		UInt32(),
-		Sequence('dcid_seq'),
+		Sequence('datacache_dcid_seq'),
 		Comment('Data cache ID'),
 		primary_key=True,
 		nullable=False,

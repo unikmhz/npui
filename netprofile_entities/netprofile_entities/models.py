@@ -163,22 +163,22 @@ class Entity(Base):
 	def _filter_address(cls, query, value):
 		if not isinstance(value, dict):
 			return query
-		if 'houseid' in value:
+		if value.get('houseid'):
 			val = int(value['houseid'])
 			if val > 0:
 				query = query.join(Address).filter(Address.house_id == val)
-		elif 'streetid' in value:
+		elif value.get('streetid'):
 			val = int(value['streetid'])
 			if val > 0:
 				query = query.join(Address).join(House).filter(House.street_id == val)
-		elif 'districtid' in value:
+		elif value.get('districtid'):
 			val = int(value['districtid'])
 			if val > 0:
 				query = query.join(Address).join(House).join(Street).filter(Street.district_id == val)
-		elif 'cityid' in value:
+		elif value.get('cityid'):
 			val = int(value['cityid'])
 			if val > 0:
-				query = query.join(Address).join(House).join(Street).join(District).filter(District.city_id == val)
+				query = query.join(Address).join(House).join(Street).filter(Street.city_id == val)
 		return query
 
 	@classmethod
@@ -262,18 +262,8 @@ class Entity(Base):
 						ExternalWizardField('PhysicalEntity', 'name_family'),
 						ExternalWizardField('PhysicalEntity', 'name_given'),
 						ExternalWizardField('PhysicalEntity', 'name_middle'),
-#						ExternalWizardField('PhysicalEntity', 'phone_home'),
-#						ExternalWizardField('PhysicalEntity', 'phone_work'),
-#						ExternalWizardField('PhysicalEntity', 'phone_cell'),
 						id='ent_physical1', title=_('Physical entity properties'),
 						on_prev='generic'
-					),
-					Step(
-#						ExternalWizardField('PhysicalEntity', 'house'),
-#						ExternalWizardField('PhysicalEntity', 'entrance'),
-#						ExternalWizardField('PhysicalEntity', 'floor'),
-#						ExternalWizardField('PhysicalEntity', 'flat'),
-						id='ent_physical2', title=_('Physical entity properties')
 					),
 					Step(
 						ExternalWizardField('PhysicalEntity', 'pass_series'),
@@ -284,18 +274,12 @@ class Entity(Base):
 						ExternalWizardField('PhysicalEntity', 'icq'),
 						ExternalWizardField('PhysicalEntity', 'homepage'),
 						ExternalWizardField('PhysicalEntity', 'birthdate'),
-						id='ent_physical3', title=_('Physical entity properties'),
+						id='ent_physical2', title=_('Physical entity properties'),
 						on_submit=_wizcb_ent_submit('PhysicalEntity')
 					),
 					Step(
 						ExternalWizardField('LegalEntity', 'contractid'),
 						ExternalWizardField('LegalEntity', 'name'),
-#						ExternalWizardField('LegalEntity', 'phone_rec'),
-#						ExternalWizardField('LegalEntity', 'phone_fax'),
-#						ExternalWizardField('LegalEntity', 'house'),
-#						ExternalWizardField('LegalEntity', 'entrance'),
-#						ExternalWizardField('LegalEntity', 'floor'),
-#						ExternalWizardField('LegalEntity', 'flat'),
 						ExternalWizardField('LegalEntity', 'homepage'),
 						id='ent_legal1', title=_('Legal entity properties'),
 						on_prev='generic'
@@ -305,8 +289,6 @@ class Entity(Base):
 						ExternalWizardField('LegalEntity', 'cp_name_given'),
 						ExternalWizardField('LegalEntity', 'cp_name_middle'),
 						ExternalWizardField('LegalEntity', 'cp_title'),
-#						ExternalWizardField('LegalEntity', 'cp_phone_work'),
-#						ExternalWizardField('LegalEntity', 'cp_phone_cell'),
 						ExternalWizardField('LegalEntity', 'cp_email'),
 						ExternalWizardField('LegalEntity', 'cp_icq'),
 						id='ent_legal2', title=_('Legal entity contact person')
@@ -323,7 +305,7 @@ class Entity(Base):
 						on_submit=_wizcb_ent_submit('LegalEntity')
 					),
 					Step(
-#						ExternalWizardField('StructuralEntity', 'house'),
+						# FIXME?
 						id='ent_structural1', title=_('Structural entity properties'),
 						on_prev='generic',
 						on_submit=_wizcb_ent_submit('StructuralEntity')
@@ -343,7 +325,7 @@ class Entity(Base):
 	id = Column(
 		'entityid',
 		UInt32(),
-		Sequence('entityid_seq'),
+		Sequence('entities_def_entityid_seq'),
 		Comment('Entity ID'),
 		primary_key=True,
 		nullable=False,
@@ -618,7 +600,7 @@ class EntityState(Base):
 	id = Column(
 		'esid',
 		UInt32(),
-		Sequence('esid_seq'),
+		Sequence('entities_states_esid_seq'),
 		Comment('Entity state ID'),
 		primary_key=True,
 		nullable=False,
@@ -680,7 +662,7 @@ class EntityFlagType(Base):
 	id = Column(
 		'flagid',
 		UInt32(),
-		Sequence('flagid_seq'),
+		Sequence('entities_flags_types_flagid_seq'),
 		Comment('Entity flag type ID'),
 		primary_key=True,
 		nullable=False,
@@ -750,7 +732,7 @@ class EntityFlag(Base):
 	id = Column(
 		'efid',
 		UInt32(),
-		Sequence('efid_seq'),
+		Sequence('entities_flags_def_efid_seq'),
 		Comment('Entity flag ID'),
 		primary_key=True,
 		nullable=False,
@@ -817,7 +799,7 @@ class Address(Base):
 	id = Column(
 		'addrid',
 		UInt32(),
-		Sequence('addrid_seq'),
+		Sequence('addr_def_addrid_seq'),
 		Comment('Address ID'),
 		primary_key=True,
 		nullable=False,
@@ -990,7 +972,7 @@ class Phone(Base):
 	id = Column(
 		'phoneid',
 		UInt32(),
-		Sequence('phoneid_seq'),
+		Sequence('addr_phones_phoneid_seq'),
 		Comment('Phone ID'),
 		primary_key=True,
 		nullable=False,
@@ -1111,7 +1093,7 @@ class EntityFile(Base):
 	id = Column(
 		'efid',
 		UInt32(),
-		Sequence('file_efid_seq'),
+		Sequence('entities_files_efid_seq'),
 		Comment('Entity-file mapping ID'),
 		primary_key=True,
 		nullable=False,
@@ -1179,7 +1161,7 @@ class EntityComment(Base):
 	id = Column(
 		'ecid',
 		UInt32(),
-		Sequence('ecid_seq'),
+		Sequence('entities_comments_ecid_seq'),
 		Comment('Entity comment ID'),
 		primary_key=True,
 		nullable=False,
@@ -1251,46 +1233,6 @@ class PhysicalEntity(Entity):
 	"""
 	Physical entity. Describes single individual.
 	"""
-
-#	@classmethod
-#	def _filter_address(cls, query, value):
-#		if not isinstance(value, dict):
-#			return query
-#		if 'houseid' in value:
-#			val = int(value['houseid'])
-#			if val > 0:
-#				query = query.filter(PhysicalEntity.house_id == val)
-#		elif 'streetid' in value:
-#			val = int(value['streetid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).filter(House.street_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(PhysicalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'districtid' in value:
-#			val = int(value['districtid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(PhysicalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'cityid' in value:
-#			val = int(value['cityid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(PhysicalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		return query
 
 	__tablename__ = 'entities_physical'
 	__table_args__ = (
@@ -1567,46 +1509,6 @@ class LegalEntity(Entity):
 	"""
 	Legal entity. Describes a company.
 	"""
-
-#	@classmethod
-#	def _filter_address(cls, query, value):
-#		if not isinstance(value, dict):
-#			return query
-#		if 'houseid' in value:
-#			val = int(value['houseid'])
-#			if val > 0:
-#				query = query.filter(LegalEntity.house_id == val)
-#		elif 'streetid' in value:
-#			val = int(value['streetid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).filter(House.street_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(LegalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'districtid' in value:
-#			val = int(value['districtid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(LegalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'cityid' in value:
-#			val = int(value['cityid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(LegalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		return query
 
 	__tablename__ = 'entities_legal'
 	__table_args__ = (
@@ -1917,46 +1819,6 @@ class StructuralEntity(Entity):
 	"""
 	Structural entity. Describes a building.
 	"""
-
-#	@classmethod
-#	def _filter_address(cls, query, value):
-#		if not isinstance(value, dict):
-#			return query
-#		if 'houseid' in value:
-#			val = int(value['houseid'])
-#			if val > 0:
-#				query = query.filter(StructuralEntity.house_id == val)
-#		elif 'streetid' in value:
-#			val = int(value['streetid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).filter(House.street_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(StructuralEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'districtid' in value:
-#			val = int(value['districtid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(StructuralEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'cityid' in value:
-#			val = int(value['cityid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(StructuralEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		return query
 
 	__tablename__ = 'entities_structural'
 	__table_args__ = (

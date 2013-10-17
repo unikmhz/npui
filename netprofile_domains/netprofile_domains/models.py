@@ -126,7 +126,7 @@ class Domain(Base):
 	id = Column(
 		'domainid',
 		UInt32(),
-		Sequence('domainid_seq'),
+		Sequence('domains_def_domainid_seq'),
 		Comment('Domain ID'),
 		primary_key=True,
 		nullable=False,
@@ -326,7 +326,7 @@ class DomainAlias(Base):
 	id = Column(
 		'daid',
 		UInt32(),
-		Sequence('daid_seq'),
+		Sequence('domains_aliases_daid_seq'),
 		Comment('Domain alias ID'),
 		primary_key=True,
 		nullable=False,
@@ -426,7 +426,7 @@ class DomainTXTRecord(Base):
 	id = Column(
 		'txtrrid',
 		UInt32(),
-		Sequence('txtrrid_seq'),
+		Sequence('domains_txtrr_txtrrid_seq'),
 		Comment('Text record ID'),
 		primary_key=True,
 		nullable=False,
@@ -532,7 +532,7 @@ class DomainServiceType(Base):
 	id = Column(
 		'hltypeid',
 		UInt32(),
-		Sequence('hltypeid_seq'),
+		Sequence('domains_hltypes_hltypeid_seq'),
 		Comment('Domains-hosts linkage type ID'),
 		primary_key=True,
 		nullable=False,

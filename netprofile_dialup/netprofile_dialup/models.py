@@ -83,7 +83,7 @@ class NAS(Base):
 	id = Column(
 		'nasid',
 		UInt32(),
-		Sequence('nasid_seq'),
+		Sequence('nas_def_nasid_seq'),
 		Comment('Network access server ID'),
 		primary_key=True,
 		nullable=False,
@@ -162,7 +162,7 @@ class IPPool(Base):
 	id = Column(
 		'poolid',
 		UInt32(),
-		Sequence('poolid_seq'),
+		Sequence('ippool_def_poolid_seq'),
 		Comment('IP address pool ID'),
 		primary_key=True,
 		nullable=False,
@@ -258,7 +258,7 @@ class NASPool(Base):
 	id = Column(
 		'npid',
 		UInt32(),
-		Sequence('npid_seq'),
+		Sequence('nas_pools_npid_seq'),
 		Comment('NAS IP pool ID'),
 		primary_key=True,
 		nullable=False,
