@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_entities 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-28 09:24+0400\n"
+"POT-Creation-Date: 2013-10-17 07:00+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -178,7 +178,7 @@ msgstr ""
 msgid "Entity"
 msgstr ""
 
-#: netprofile_entities/models.py:802 netprofile_entities/views.py:29
+#: netprofile_entities/models.py:802 netprofile_entities/views.py:30
 msgid "Addresses"
 msgstr ""
 
@@ -246,7 +246,7 @@ msgstr ""
 msgid "Receptionist"
 msgstr ""
 
-#: netprofile_entities/models.py:976 netprofile_entities/views.py:38
+#: netprofile_entities/models.py:976 netprofile_entities/views.py:39
 msgid "Phones"
 msgstr ""
 
@@ -286,7 +286,7 @@ msgstr ""
 msgid "tel."
 msgstr ""
 
-#: netprofile_entities/models.py:1104 netprofile_entities/views.py:56
+#: netprofile_entities/models.py:1104 netprofile_entities/views.py:57
 msgid "Files"
 msgstr ""
 
@@ -498,11 +498,11 @@ msgstr ""
 msgid "Check Services"
 msgstr ""
 
-#: netprofile_entities/views.py:47
+#: netprofile_entities/views.py:48
 msgid "Children"
 msgstr ""
 
-#: netprofile_entities/views.py:76
+#: netprofile_entities/views.py:77
 msgid "History"
 msgstr ""
 

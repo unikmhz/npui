@@ -55,6 +55,11 @@ class Module(ModuleBase):
 			'netprofile_tickets:static/webshell/locale/webshell-lang-' + lang + '.js',
 		)
 
+	def get_autoload_js(self, request):
+		return (
+			'Ext.ux.form.WeekDayField',
+		)
+
 	def get_controllers(self, request):
 		return (
 			'NetProfile.tickets.controller.TicketGrid',

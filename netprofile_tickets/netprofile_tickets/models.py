@@ -1905,7 +1905,8 @@ class TicketScheduler(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Weekdays')
+			'header_string' : _('Weekdays'),
+			'editor_xtype'  : 'weekdays'
 		}
 	)
 	spacing = Column(
