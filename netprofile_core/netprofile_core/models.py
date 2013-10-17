@@ -995,6 +995,17 @@ class User(Base):
 			res[u.id] = str(u)
 		return res
 
+def _del_user(mapper, conn, tgt):
+	sess = DBSession()
+	sess.query(UserACL)\
+		.filter(
+			UserACL.privilege_id.in_(sess.query(Privilege.id).filter(Privilege.resource_class == 'NPUser')),
+			UserACL.resource == tgt.id
+		)\
+		.delete(synchronize_session=False)
+
+event.listen(User, 'after_delete', _del_user)
+
 @implementer(IDAVFile, IDAVPrincipal)
 class Group(Base):
 	"""
@@ -1272,6 +1283,17 @@ class Group(Base):
 		for g in sess.query(Group):
 			res[g.id] = str(g)
 		return res
+
+def _del_group(mapper, conn, tgt):
+	sess = DBSession()
+	sess.query(GroupACL)\
+		.filter(
+			GroupACL.privilege_id.in_(sess.query(Privilege.id).filter(Privilege.resource_class == 'NPGroup')),
+			GroupACL.resource == tgt.id
+		)\
+		.delete(synchronize_session=False)
+
+event.listen(Group, 'after_delete', _del_group)
 
 class Privilege(Base):
 	"""
