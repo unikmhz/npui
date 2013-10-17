@@ -770,13 +770,12 @@ class User(Base):
 
 	@property
 	def flat_privileges(self):
-		upriv = self.privileges
 		gpriv = self.group.flat_privileges
 		for sg in self.secondary_groups:
 			if sg == self.group:
 				continue
 			gpriv.update(sg.flat_privileges)
-		gpriv.update(upriv)
+		gpriv.update(self.privileges)
 		return gpriv
 
 	@property
@@ -1190,7 +1189,7 @@ class Group(Base):
 	def flat_privileges(self):
 		ppriv = {}
 		if self.parent is None:
-			return self.privileges
+			return self.privileges.copy()
 		ppriv = self.parent.flat_privileges
 		ppriv.update(self.privileges)
 		return ppriv
