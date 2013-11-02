@@ -1,112 +1,110 @@
-# Russian translations for netprofile_rates.
+# Translations template for netprofile_rates.
 # Copyright (C) 2013 ORGANIZATION
 # This file is distributed under the same license as the netprofile_rates
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
 #
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_rates 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2013-11-02 10:41+0400\n"
-"PO-Revision-Date: 2013-11-02 10:44+0300\n"
-"Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
-"Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
-"X-Generator: Poedit 1.5.5\n"
 
 #: netprofile_rates/__init__.py:69
 msgid "Rates"
-msgstr "Тарифы"
+msgstr ""
 
 #: netprofile_rates/models.py:94
 msgid "Prepaid"
-msgstr "Предоплатный"
+msgstr ""
 
 #: netprofile_rates/models.py:95
 msgid "Continuous Prepaid"
-msgstr "Предоплатный с вхождением"
+msgstr ""
 
 #: netprofile_rates/models.py:96
 msgid "Postpaid"
-msgstr "Постоплатный"
+msgstr ""
 
 #: netprofile_rates/models.py:97
 msgid "Free"
-msgstr "Свободный"
+msgstr ""
 
 #: netprofile_rates/models.py:103
 msgid "Hour (abs.)"
-msgstr "час (абс.)"
+msgstr ""
 
 #: netprofile_rates/models.py:104
 msgid "Day (abs.)"
-msgstr "день (абс.)"
+msgstr ""
 
 #: netprofile_rates/models.py:105
 msgid "Week (abs.)"
-msgstr "неделя (абс.)"
+msgstr ""
 
 #: netprofile_rates/models.py:106
 msgid "Month (abs.)"
-msgstr "месяц (абс.)"
+msgstr ""
 
 #: netprofile_rates/models.py:107
 msgid "Hour (cal.)"
-msgstr "час (кал.)"
+msgstr ""
 
 #: netprofile_rates/models.py:108
 msgid "Day (cal.)"
-msgstr "день (кал.)"
+msgstr ""
 
 #: netprofile_rates/models.py:109
 msgid "Month (cal.)"
-msgstr "месяц (кал.)"
+msgstr ""
 
 #: netprofile_rates/models.py:115
 msgid "Normal"
-msgstr "Обычный"
+msgstr ""
 
 #: netprofile_rates/models.py:116
 msgid "No Quota"
-msgstr "Без квоты"
+msgstr ""
 
 #: netprofile_rates/models.py:117
 msgid "Only Quota"
-msgstr "Только квота"
+msgstr ""
 
 #: netprofile_rates/models.py:118
 msgid "Reject"
-msgstr "Отклонить"
+msgstr ""
 
 #: netprofile_rates/models.py:124
 msgid "Exact Match"
-msgstr "Точное совпадение"
+msgstr ""
 
 #: netprofile_rates/models.py:125
 msgid "Prefix Match"
-msgstr "Совпадение в начале"
+msgstr ""
 
 #: netprofile_rates/models.py:126
 msgid "Suffix Match"
-msgstr "Совпадение в конце"
+msgstr ""
 
 #: netprofile_rates/models.py:127
 msgid "Regular Expression"
-msgstr "Регулярное выражение"
+msgstr ""
 
 #: netprofile_rates/models.py:151
 msgid "Billing Periods"
-msgstr "Периоды"
+msgstr ""
 
 #: netprofile_rates/models.py:165
 msgid "Add new billing period"
-msgstr "Добавить новый период"
+msgstr ""
 
 #: netprofile_rates/models.py:177 netprofile_rates/models.py:333
 #: netprofile_rates/models.py:399 netprofile_rates/models.py:546
@@ -115,330 +113,331 @@ msgstr "Добавить новый период"
 #: netprofile_rates/models.py:1289 netprofile_rates/models.py:1467
 #: netprofile_rates/models.py:1561
 msgid "ID"
-msgstr "ID"
+msgstr ""
 
 #: netprofile_rates/models.py:185 netprofile_rates/models.py:341
 #: netprofile_rates/models.py:439 netprofile_rates/models.py:554
 #: netprofile_rates/models.py:750 netprofile_rates/models.py:1151
 #: netprofile_rates/models.py:1297
 msgid "Name"
-msgstr "Название"
+msgstr ""
 
 #: netprofile_rates/models.py:196
 msgid "Start Month"
-msgstr "Начальный месяц"
+msgstr ""
 
 #: netprofile_rates/models.py:207
 msgid "Start Day of Month"
-msgstr "Начальный день месяца"
+msgstr ""
 
 #: netprofile_rates/models.py:218
 msgid "Start Day of Week"
-msgstr "Начальный день недели"
+msgstr ""
 
 #: netprofile_rates/models.py:228
 msgid "Start Hour"
-msgstr "Начальный час"
+msgstr ""
 
 #: netprofile_rates/models.py:238
 msgid "Start Minute"
-msgstr "Начальная минута"
+msgstr ""
 
 #: netprofile_rates/models.py:248
 msgid "End Month"
-msgstr "Конечный месяц"
+msgstr ""
 
 #: netprofile_rates/models.py:259
 msgid "End Day of Month"
-msgstr "Конечный день месяца"
+msgstr ""
 
 #: netprofile_rates/models.py:270
 msgid "End Day of Week"
-msgstr "Конечный день недели"
+msgstr ""
 
 #: netprofile_rates/models.py:280
 msgid "End Hour"
-msgstr "Конечный час"
+msgstr ""
 
 #: netprofile_rates/models.py:290
 msgid "End Minute"
-msgstr "Конечная минута"
+msgstr ""
 
 #: netprofile_rates/models.py:314
 msgid "Destination Sets"
-msgstr "Направления"
+msgstr ""
 
 #: netprofile_rates/models.py:321
 msgid "Add new accounting destination set"
-msgstr "Добавить новый набор направлений"
+msgstr ""
 
 #: netprofile_rates/models.py:375
 msgid "Destinations"
-msgstr "Направления"
+msgstr ""
 
 #: netprofile_rates/models.py:387
 msgid "Add new destination"
-msgstr "Добавить новое направление"
+msgstr ""
 
 #: netprofile_rates/models.py:409 netprofile_rates/models.py:742
 #: netprofile_rates/models.py:1477 netprofile_rates/models.py:1571
 msgid "Type"
-msgstr "Тип"
+msgstr ""
 
 #: netprofile_rates/models.py:420
 msgid "Match Type"
-msgstr "Тип совпадения"
+msgstr ""
 
 #: netprofile_rates/models.py:430 netprofile_rates/models.py:611
 msgid "Set"
-msgstr "Набор"
+msgstr ""
 
 #: netprofile_rates/models.py:449
 msgid "Active"
-msgstr "Активно"
+msgstr ""
 
 #: netprofile_rates/models.py:460 netprofile_rates/models.py:1522
 #: netprofile_rates/models.py:1629
 msgid "Lookup Order"
-msgstr "Порядок поиска"
+msgstr ""
 
 #: netprofile_rates/models.py:471
 msgid "Match String"
-msgstr "Строка совпадения"
+msgstr ""
 
 #: netprofile_rates/models.py:482
 msgid "O/Q per Second Override"
-msgstr "Замещение превышения за секунду"
+msgstr ""
 
 #: netprofile_rates/models.py:493
 msgid "O/Q per Second Multiplier"
-msgstr "Коэффициент превышения за секунду"
+msgstr ""
 
 #: netprofile_rates/models.py:503
 msgid "Accounting Callback"
-msgstr "Обратный вызов при расчёте"
+msgstr ""
 
 #: netprofile_rates/models.py:527
 msgid "Filter Sets"
-msgstr "Фильтры"
+msgstr ""
 
 #: netprofile_rates/models.py:534
 msgid "Add new accounting filter set"
-msgstr "Добавить новый набор фильтров"
+msgstr ""
 
 #: netprofile_rates/models.py:586
 msgid "Filters"
-msgstr "Фильтры"
+msgstr ""
 
 #: netprofile_rates/models.py:589
 msgid "Add new filter"
-msgstr "Добавить новый фильтр"
+msgstr ""
 
 #: netprofile_rates/models.py:674
 #, python-format
 msgid "Filter #%d"
-msgstr "Фильтр №%d"
+msgstr ""
 
 #: netprofile_rates/models.py:698
 msgid "Payment Rates"
-msgstr "Тарифы"
+msgstr ""
 
 #: netprofile_rates/models.py:720
 msgid "Add new payment rate"
-msgstr "Добавить новый тариф"
+msgstr ""
 
 #: netprofile_rates/models.py:761
 msgid "Periodically Polled"
-msgstr "Периодически опрашиваемый"
+msgstr ""
 
 #: netprofile_rates/models.py:772
 msgid "Advanced"
-msgstr "Доп. функционал"
+msgstr ""
 
 #: netprofile_rates/models.py:783
 msgid "User-selectable"
-msgstr "Виден клиентам"
+msgstr ""
 
 #: netprofile_rates/models.py:794
 msgid "Allow Ingress O/Q"
-msgstr "Разрешать превышение входящего"
+msgstr ""
 
 #: netprofile_rates/models.py:805
 msgid "Allow Egress O/Q"
-msgstr "Разрешать превышение исходящего"
+msgstr ""
 
 #: netprofile_rates/models.py:817 netprofile_rates/models.py:1232
 msgid "Class"
-msgstr "Класс"
+msgstr ""
 
 #: netprofile_rates/models.py:831
 msgid "IP Address Pool"
-msgstr "Пул IP адресов"
+msgstr ""
 
 #: netprofile_rates/models.py:844
 msgid "Destination Set"
-msgstr "Набор направлений"
+msgstr ""
 
 #: netprofile_rates/models.py:857
 msgid "Filter Set"
-msgstr "Набор фильтров"
+msgstr ""
 
 #: netprofile_rates/models.py:869
 msgid "Quota Period Amount"
-msgstr "Расчётный период"
+msgstr ""
 
 #: netprofile_rates/models.py:880
 msgid "Quota Period Unit"
-msgstr "Ед. измерения расчётного периода"
+msgstr ""
 
 #: netprofile_rates/models.py:891
 msgid "Quota Sum"
-msgstr "Абонентская плата"
+msgstr ""
 
 #: netprofile_rates/models.py:902
 msgid "Auxiliary Sum"
-msgstr "Вспомогательная сумма"
+msgstr ""
 
 #: netprofile_rates/models.py:913
 msgid "Ingress Traffic Quota"
-msgstr "Квота для входящего трафика"
+msgstr ""
 
 #: netprofile_rates/models.py:924
 msgid "Egress Traffic Quota"
-msgstr "Квота для исходящего трафика"
+msgstr ""
 
 #: netprofile_rates/models.py:935
 msgid "Time Quota"
-msgstr "Квота для времени"
+msgstr ""
 
 #: netprofile_rates/models.py:946
 msgid "Payment for Over Quota Ingress"
-msgstr "Цена за превышение входящего"
+msgstr ""
 
 #: netprofile_rates/models.py:957
 msgid "Payment for Over Quota Egress"
-msgstr "Цена за превышение исходящего"
+msgstr ""
 
 #: netprofile_rates/models.py:976
 msgid "Max. Simultaneous"
-msgstr "Макс. одновременный сессий"
+msgstr ""
 
 #: netprofile_rates/models.py:987 netprofile_rates/models.py:1387
 msgid "Ingress Traffic Policy"
-msgstr "Политика для входящего трафика"
+msgstr ""
 
 #: netprofile_rates/models.py:998 netprofile_rates/models.py:1398
 msgid "Egress Traffic Policy"
-msgstr "Политика для исходящего трафика"
+msgstr ""
 
 #: netprofile_rates/models.py:1008
 msgid "Max Continuous Blocking Time"
-msgstr "Макс. время непрерывной блокировки"
+msgstr ""
 
 #: netprofile_rates/models.py:1018
 msgid "Callback before quota payment"
-msgstr "Обратный вызов перед оплатой"
+msgstr ""
 
 #: netprofile_rates/models.py:1028
 msgid "Callback on successful quota payment"
-msgstr "Обратный вызов после успешной оплаты"
+msgstr ""
 
 #: netprofile_rates/models.py:1038
 msgid "Callback on failed quota payment"
-msgstr "Обратный вызов после неудачной оплаты"
+msgstr ""
 
 #: netprofile_rates/models.py:1048
 msgid "Callback after connecting"
-msgstr "Обратный вызов после соединения"
+msgstr ""
 
 #: netprofile_rates/models.py:1057
 msgid "Callback after disconnecting"
-msgstr "Обратный вызов после разрыва соединения"
+msgstr ""
 
 #: netprofile_rates/models.py:1068 netprofile_rates/models.py:1163
 #: netprofile_rates/models.py:1409
 msgid "Description"
-msgstr "Описание"
+msgstr ""
 
 #: netprofile_rates/models.py:1123
 msgid "Classes"
-msgstr "Классы"
+msgstr ""
 
 #: netprofile_rates/models.py:1131
 msgid "Add new rate class"
-msgstr "Добавить новый класс тарифов"
+msgstr ""
 
 #: netprofile_rates/models.py:1205
 msgid "Entity Type Mappings"
-msgstr "Сопоставления типов объектов"
+msgstr ""
 
 #: netprofile_rates/models.py:1210
 msgid "Add new mapping"
-msgstr "Добавить новое сопоставление"
+msgstr ""
 
 #: netprofile_rates/models.py:1241
 msgid "Entity Type"
-msgstr "Тип объекта"
+msgstr ""
 
 #: netprofile_rates/models.py:1263 netprofile_rates/models.py:1452
 #: netprofile_rates/models.py:1546 netprofile_rates/views.py:56
 msgid "Rate Modifiers"
-msgstr "Модификаторы тарифов"
+msgstr ""
 
 #: netprofile_rates/models.py:1277 netprofile_rates/models.py:1455
 #: netprofile_rates/models.py:1549
 msgid "Add new rate modifier"
-msgstr "Добавить новый модификатор тарифов"
+msgstr ""
 
 #: netprofile_rates/models.py:1308 netprofile_rates/models.py:1511
 #: netprofile_rates/models.py:1618
 msgid "Enabled"
-msgstr "Включено"
+msgstr ""
 
 #: netprofile_rates/models.py:1320
 msgid "Period"
-msgstr "Период"
+msgstr ""
 
 #: netprofile_rates/models.py:1332
 msgid "O/Q Sum Multiplier for Ingress"
-msgstr "Коэффициент для превышения входящего"
+msgstr ""
 
 #: netprofile_rates/models.py:1343
 msgid "O/Q Sum Multiplier for Egress"
-msgstr "Коэффициент для превышения исходящего"
+msgstr ""
 
 #: netprofile_rates/models.py:1354
 msgid "O/Q Sum Multiplier for Seconds"
-msgstr "Коэффициент для превышения времени"
+msgstr ""
 
 #: netprofile_rates/models.py:1365
 msgid "Overwrite Ingress Policy"
-msgstr "Перезаписывать входящую политику"
+msgstr ""
 
 #: netprofile_rates/models.py:1376
 msgid "Overwrite Egress Policy"
-msgstr "Перезаписывать исходящую политику"
+msgstr ""
 
 #: netprofile_rates/models.py:1488 netprofile_rates/models.py:1595
 msgid "Rate"
-msgstr "Тариф"
+msgstr ""
 
 #: netprofile_rates/models.py:1500 netprofile_rates/models.py:1607
 msgid "Created"
-msgstr "Создано"
+msgstr ""
 
 #: netprofile_rates/models.py:1582
 msgid "Account"
-msgstr "Учётная запись"
+msgstr ""
 
 #: netprofile_rates/views.py:42
 msgid "Modifiers"
-msgstr "Модификаторы"
+msgstr ""
 
 #: netprofile_rates/views.py:70
 msgid "Entity Types"
-msgstr "Типы объектов"
+msgstr ""
 
 #: netprofile_rates/views.py:84 netprofile_rates/views.py:98
 msgid "Contents"
-msgstr "Содержимое"
+msgstr ""
+
