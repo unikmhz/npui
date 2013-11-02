@@ -149,6 +149,7 @@ h2
 {
 	padding-top: 2px;
 	height: 16px;
+	position: relative;
 }
 
 .np-file-iview .x-view-empty, .np-file-lview .x-view-empty
