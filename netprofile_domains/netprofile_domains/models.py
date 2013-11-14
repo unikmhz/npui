@@ -427,9 +427,9 @@ class DomainTXTRecord(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_DOMAINS',
 				'cap_read'      : 'DOMAINS_LIST',
-				'cap_create'    : 'DOMAINS_CREATE',
+				'cap_create'    : 'DOMAINS_EDIT',
 				'cap_edit'      : 'DOMAINS_EDIT',
-				'cap_delete'    : 'DOMAINS_DELETE',
+				'cap_delete'    : 'DOMAINS_EDIT',
 				'menu_name'     : _('TXT Records'),
 				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
@@ -533,9 +533,9 @@ class DomainServiceType(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_DOMAINS',
 				'cap_read'      : 'DOMAINS_LIST',
-				'cap_create'    : 'DOMAINS_CREATE',
-				'cap_edit'      : 'DOMAINS_EDIT',
-				'cap_delete'    : 'DOMAINS_DELETE',
+				'cap_create'    : 'DOMAINS_SERVICETYPES_CREATE',
+				'cap_edit'      : 'DOMAINS_SERVICETYPES_EDIT',
+				'cap_delete'    : 'DOMAINS_SERVICETYPES_DELETE',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Domain Service Types'),
