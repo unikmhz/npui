@@ -1,0 +1,5 @@
+.ico-mod-host      { background-image: url(../img/host.png) !important; }
+.ico-mod-hostalias { background-image: url(../img/hostalias.png) !important; }
+.ico-mod-hostgroup { background-image: url(../img/hostgroup.png) !important; }
+.ico-mod-service, .ico-mod-servicetype { background-image: url(../img/service.png) !important; }
+

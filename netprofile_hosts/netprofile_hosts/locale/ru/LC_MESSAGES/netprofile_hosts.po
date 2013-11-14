@@ -1,4 +1,4 @@
-# Translations template for netprofile_hosts.
+# Russian translations for netprofile_hosts.
 # Copyright (C) 2013 ORGANIZATION
 # This file is distributed under the same license as the netprofile_hosts
 # project.
@@ -8,141 +8,205 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_hosts 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-08-22 18:15+0400\n"
-"PO-Revision-Date: 2013-08-22 18:23+0300\n"
-"Last-Translator: annndrey <gontchar@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2013-11-14 13:58+0400\n"
+"PO-Revision-Date: 2013-11-14 14:05+0300\n"
+"Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
+"X-Generator: Poedit 1.5.5\n"
 
-#: netprofile_hosts/__init__.py:39
-#: netprofile_hosts/models.py:170
+#: netprofile_hosts/__init__.py:62 netprofile_hosts/models.py:109
 msgid "Hosts"
 msgstr "Хосты"
 
-#: netprofile_hosts/models.py:179
+#: netprofile_hosts/models.py:117 netprofile_hosts/models.py:188
+#: netprofile_hosts/models.py:372 netprofile_hosts/models.py:527
+msgid "Name"
+msgstr "Название"
+
+#: netprofile_hosts/models.py:133
 msgid "Add new host"
 msgstr "Добавить новый хост"
 
-#: netprofile_hosts/models.py:191
-#: netprofile_hosts/models.py:357
-#: netprofile_hosts/models.py:492
-#: netprofile_hosts/models.py:648
+#: netprofile_hosts/models.py:145 netprofile_hosts/models.py:364
+#: netprofile_hosts/models.py:510 netprofile_hosts/models.py:622
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_hosts/models.py:202
-#: netprofile_hosts/models.py:502
-#: netprofile_hosts/models.py:658
-msgid "Host Group ID"
+#: netprofile_hosts/models.py:155
+msgid "Group"
 msgstr "Группа"
 
-#: netprofile_hosts/models.py:213
-#: netprofile_hosts/models.py:512
-#: netprofile_hosts/models.py:668
-msgid "Entity ID"
+#: netprofile_hosts/models.py:167
+#| msgid "Entity ID"
+msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_hosts/models.py:224
-#: netprofile_hosts/models.py:522
-#: netprofile_hosts/models.py:678
-msgid "Domain ID"
+#: netprofile_hosts/models.py:179
+#| msgid "Domain ID"
+msgid "Domain"
 msgstr "Домен"
 
-#: netprofile_hosts/models.py:233
-#: netprofile_hosts/models.py:531
-#: netprofile_hosts/models.py:687
-msgid "Host Name"
-msgstr "Имя хоста"
-
-#: netprofile_hosts/models.py:245
-#: netprofile_hosts/models.py:542
-msgid "Alias ID"
+#: netprofile_hosts/models.py:200
+msgid "Aliased"
 msgstr "Псевдоним"
 
-#: netprofile_hosts/models.py:256
-#: netprofile_hosts/models.py:282
-#: netprofile_hosts/models.py:553
-#: netprofile_hosts/models.py:578
-#: netprofile_hosts/models.py:698
-#: netprofile_hosts/models.py:723
+#: netprofile_hosts/models.py:212 netprofile_hosts/models.py:237
 msgid "Created"
 msgstr "Создан"
 
-#: netprofile_hosts/models.py:268
-#: netprofile_hosts/models.py:296
-#: netprofile_hosts/models.py:565
-#: netprofile_hosts/models.py:591
-#: netprofile_hosts/models.py:710
-#: netprofile_hosts/models.py:736
+#: netprofile_hosts/models.py:224 netprofile_hosts/models.py:250
 msgid "Modified"
 msgstr "Изменен"
 
-#: netprofile_hosts/models.py:309
-#: netprofile_hosts/models.py:604
-#: netprofile_hosts/models.py:749
+#: netprofile_hosts/models.py:262
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_hosts/models.py:336
-msgid "Hosts groups"
+#: netprofile_hosts/models.py:339
+#| msgid "Hosts groups"
+msgid "Host Groups"
 msgstr "Группы хостов"
 
-#: netprofile_hosts/models.py:345
+#: netprofile_hosts/models.py:352
 msgid "Add new host group"
 msgstr "Добавить новую группу"
 
-#: netprofile_hosts/models.py:366
-msgid "Host Group Name"
-msgstr "Имя группы"
-
-#: netprofile_hosts/models.py:376
-msgid "Is Public?"
+#: netprofile_hosts/models.py:383
+#| msgid "Is Public?"
+msgid "Public"
 msgstr "Публичная"
 
-#: netprofile_hosts/models.py:386
-msgid "Start Offset"
-msgstr "Начало смещения"
+#: netprofile_hosts/models.py:394
+#| msgid "IPv6 Start Offset"
+msgid "IPv4 Start Offset"
+msgstr "Начальное смещение IPv4"
 
-#: netprofile_hosts/models.py:396
-msgid "End Offset"
-msgstr "Конец смещения"
-
-#: netprofile_hosts/models.py:406
-msgid "IPv6 Start Offset"
-msgstr "Начало смещения IPv6"
+#: netprofile_hosts/models.py:405
+#| msgid "IPv6 End Offset"
+msgid "IPv4 End Offset"
+msgstr "Конечное смещение IPv4"
 
 #: netprofile_hosts/models.py:416
-msgid "IPv6 End Offset"
-msgstr "Конец смещения IPv6"
+msgid "IPv6 Start Offset"
+msgstr "Начальное смещение IPv6"
 
-#: netprofile_hosts/models.py:426
-msgid "Use Unique Hardware Check"
+#: netprofile_hosts/models.py:427
+msgid "IPv6 End Offset"
+msgstr "Конечное смещение IPv6"
+
+#: netprofile_hosts/models.py:437
+#| msgid "Use Unique Hardware Check"
+msgid "Unique Hardware Address"
 msgstr "Проверка уникальности оборудования"
 
-#: netprofile_hosts/models.py:436
+#: netprofile_hosts/models.py:447
 msgid "DHCP"
 msgstr "DHCP-сервер"
 
-#: netprofile_hosts/models.py:446
-msgid "Use Banning System"
-msgstr "Использовать болкировку"
+#: netprofile_hosts/models.py:457
+#| msgid "Use Banning System"
+msgid "Banning System"
+msgstr "Использовать болкировки"
 
-#: netprofile_hosts/models.py:472
-msgid "Hosts Aliases"
-msgstr "Псеводнимы хостов"
+#: netprofile_hosts/models.py:468
+msgid "All"
+msgstr "Все"
 
-#: netprofile_hosts/models.py:480
-msgid "Add new host alias"
-msgstr "Добавить новый псевдоним"
+#: netprofile_hosts/models.py:469
+msgid "TCP"
+msgstr "TCP"
 
-#: netprofile_hosts/models.py:628
-msgid "Hosts Real"
-msgstr "Настоящие хосты"
+#: netprofile_hosts/models.py:470
+msgid "UDP"
+msgstr "UDP"
 
-#: netprofile_hosts/models.py:636
-msgid "Add new real host"
-msgstr "Добавить новый"
+#: netprofile_hosts/models.py:490 netprofile_hosts/models.py:607
+msgid "Service Types"
+msgstr "Типы сервисов"
 
+#: netprofile_hosts/models.py:498
+msgid "Add new service type"
+msgstr "Добавить новый тип сервисов"
+
+#: netprofile_hosts/models.py:519
+msgid "Abbrev."
+msgstr "Сокр."
+
+#: netprofile_hosts/models.py:538
+msgid "Protocol"
+msgstr "Протокол"
+
+#: netprofile_hosts/models.py:547
+msgid "Start Port"
+msgstr "Начальный порт"
+
+#: netprofile_hosts/models.py:556
+msgid "End Port"
+msgstr "Конечный порт"
+
+#: netprofile_hosts/models.py:566 netprofile_hosts/views.py:51
+#| msgid "Hosts Aliases"
+msgid "Aliases"
+msgstr "Псеводнимы"
+
+#: netprofile_hosts/models.py:610
+msgid "Add new service"
+msgstr "Добавить новый сервис"
+
+#: netprofile_hosts/models.py:632
+#| msgid "Hosts"
+msgid "Host"
+msgstr "Хост"
+
+#: netprofile_hosts/models.py:643
+msgid "Type"
+msgstr "Тип"
+
+#: netprofile_hosts/models.py:655
+msgid "Priority"
+msgstr "Приоритет"
+
+#: netprofile_hosts/models.py:665
+msgid "Weight"
+msgstr "Вес"
+
+#: netprofile_hosts/models.py:676
+msgid "Visibility"
+msgstr "Видимость"
+
+#: netprofile_hosts/views.py:42
+msgid "Services"
+msgstr "Сервисы"
+
+#~ msgid "Host Group ID"
+#~ msgstr "Группа"
+
+#~ msgid "Host Name"
+#~ msgstr "Имя хоста"
+
+#~ msgid "Alias ID"
+#~ msgstr "Псевдоним"
+
+#~ msgid "Host Group Name"
+#~ msgstr "Имя группы"
+
+#~ msgid "Start Offset"
+#~ msgstr "Начало смещения"
+
+#~ msgid "End Offset"
+#~ msgstr "Конец смещения"
+
+#~ msgid "Add new host alias"
+#~ msgstr "Добавить новый псевдоним"
+
+#~ msgid "Hosts Real"
+#~ msgstr "Настоящие хосты"
+
+#~ msgid "Add new real host"
+#~ msgstr "Добавить новый"
