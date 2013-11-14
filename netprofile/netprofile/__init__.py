@@ -89,6 +89,21 @@ def get_csrf(request):
 			csrf = csrf.decode()
 		return csrf
 
+class VHostPredicate(object):
+	def __init__(self, val, config):
+		self.needed = val
+		self.current = config.registry.settings.get('netprofile.vhost')
+
+	def text(self):
+		return 'vhost = %s' % (self.needed,)
+
+	phash = text
+
+	def __call__(self, context, request):
+		if self.needed == 'MAIN':
+			return (self.current is None)
+		return self.needed == self.current
+
 def main(global_config, **settings):
 	"""
 	Pyramid WSGI application for main NetProfile vhost.
@@ -112,6 +127,7 @@ def main(global_config, **settings):
 		'netprofile.common.subscribers.on_new_request',
 		'pyramid.events.NewRequest'
 	)
+	config.add_route_predicate('vhost', VHostPredicate)
 	config.add_request_method(get_debug, str('debug_enabled'), reify=True)
 	config.add_request_method(get_csrf, str('get_csrf'))
 

@@ -164,6 +164,23 @@ class IPv6Address(types.TypeDecorator):
 			return None
 		return ipaddr.IPv6Address(value)
 
+class IPv6Offset(types.TypeDecorator):
+	"""
+	IPv6 address offset.
+	"""
+	impl = types.Numeric(39, 0)
+	MIN_VALUE = 0
+	MAX_VALUE = 340282366920938463463374607431768211456
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.DECIMAL(precision=39, scale=0, unsigned=True)
+		return self.impl
+
+	@property
+	def python_type(self):
+		return int
+
 class MACAddress(types.TypeDecorator):
 	"""
 	MAC address
@@ -417,7 +434,7 @@ class UInt64(types.TypeDecorator):
 	"""
 	64-bit unsigned integer field.
 	"""
-	impl = types.Integer
+	impl = types.BigInteger
 	MIN_VALUE = 0
 	MAX_VALUE = 18446744073709551615
 
