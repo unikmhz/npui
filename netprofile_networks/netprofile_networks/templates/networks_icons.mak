@@ -8,8 +8,3 @@
 <tpl else>
 	<img class="np-inline-img" src="${req.static_url('netprofile_core:static/img/private.png')}" />
 </tpl>
-<tpl if="signed">
-	<img class="np-inline-img" src="${req.static_url('netprofile_core:static/img/lock.png')}" />
-<tpl else>
-	<img class="np-inline-img" src="${req.static_url('netprofile_core:static/img/unlock.png')}" />
-</tpl>
