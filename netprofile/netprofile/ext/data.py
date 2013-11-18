@@ -68,6 +68,7 @@ from sqlalchemy.orm.interfaces import (
 	MANYTOONE,
 	MANYTOMANY
 )
+from sqlalchemy.sql.functions import Function
 
 from netprofile.db.fields import (
 	ASCIIFixedString,
@@ -725,6 +726,8 @@ class ExtColumn(object):
 		if ro:
 			conf['readOnly'] = True
 		val = self.default
+		if isinstance(val, Function):
+			val = None
 		if initval is not None:
 			conf['value'] = initval
 		elif (val is not None) or (self.nullable):
@@ -2293,6 +2296,8 @@ class ExtModuleBrowser(object):
 			if len(ext_children) > 0:
 				ret['external'] = ext_children
 			return ret
+		if len(ext_children) > 0:
+			return { 'external' : ext_children }
 
 class ExtBrowser(object):
 	def __init__(self, mmgr):
@@ -2318,10 +2323,41 @@ class ExtBrowser(object):
 		if name not in self.mmgr.menus:
 			raise KeyError('Can\'t find menu \'%s\'' % name)
 		menu = []
+		external = {}
 		for module in self:
 			em = self[module]
 			mt = em.get_menu_tree(req, name)
 			if mt:
-				menu.append(mt)
+				if 'external' in mt:
+					for mid, mitems in mt['external'].items():
+						if mid not in external:
+							external[mid] = []
+						external[mid].extend(mitems)
+					del mt['external']
+				if len(mt) > 0:
+					menu.append(mt)
+
+		def find_node_by_id(menu, mid):
+			for item in menu:
+				if 'id' not in item:
+					continue
+				if item['id'] == mid:
+					return item
+			for item in menu:
+				if 'children' not in item:
+					continue
+				recurse = find_node_by_id(item['children'], mid)
+				if recurse:
+					return recurse
+
+		for mid in external:
+			pnode = find_node_by_id(menu, mid)
+			if pnode:
+				pnode['leaf'] = False
+				pnode['expanded'] = True
+				if 'children' not in pnode:
+					pnode['children'] = []
+				pnode['children'].extend(sorted(external[mid], key=lambda v: v['order']))
+
 		return menu
 
