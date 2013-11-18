@@ -43,6 +43,7 @@ from pyramid.threadlocal import get_current_request
 from webob import Response
 from zope.interface import implementer
 from zope.interface import Interface
+from zope.interface.interfaces import ComponentLookupError
 import venusian
 
 from netprofile.ext.data import ExtModel
@@ -504,8 +505,11 @@ class extdirect_method(object):
 					permission = class_settings.get('default_permission')
 					settings['permission'] = permission
 
-		extdirect = scanner.config.registry.getUtility(IExtDirectRouter)
-		extdirect.add_action(name, callback=callback, **settings)
+		try:
+			extdirect = scanner.config.registry.getUtility(IExtDirectRouter)
+			extdirect.add_action(name, callback=callback, **settings)
+		except ComponentLookupError:
+			pass
 
 
 def is_form_submit(request):
