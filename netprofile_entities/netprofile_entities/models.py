@@ -41,8 +41,7 @@ __all__ = [
 	'PhysicalEntity',
 	'LegalEntity',
 	'StructuralEntity',
-	'ExternalEntity',
-	'AccessEntity'
+	'ExternalEntity'
 ]
 
 import datetime as dt
@@ -132,7 +131,6 @@ class EntityType(DeclEnum):
 	legal      = 'legal',      _('Legal'),      20
 	structural = 'structural', _('Structural'), 30
 	external   = 'external',   _('External'),   40
-	access     = 'access',     _('Access'),     50
 
 def _wizcb_ent_generic_next(wiz, step, act, val, req):
 	ret = {
@@ -1272,7 +1270,6 @@ class PhysicalEntity(Entity):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Physical entities'),
 				'menu_order'    : 10,
-				'menu_parent'   : 'entity',
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1547,7 +1544,6 @@ class LegalEntity(Entity):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Legal entities'),
 				'menu_order'    : 20,
-				'menu_parent'   : 'entity',
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1855,7 +1851,6 @@ class StructuralEntity(Entity):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Structural entities'),
 				'menu_order'    : 30,
-				'menu_parent'   : 'entity',
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1925,8 +1920,8 @@ class StructuralEntity(Entity):
 #			ret['house'] = str(self.house)
 		return ret
 
-	def __str__(self):
-		return ''
+#	def __str__(self):
+#		return ''
 #		return str(self.house)
 
 class ExternalEntity(Entity):
@@ -1950,7 +1945,6 @@ class ExternalEntity(Entity):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('External entities'),
 				'menu_order'    : 40,
-				'menu_parent'   : 'entity',
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -2028,227 +2022,6 @@ class ExternalEntity(Entity):
 
 	def __str__(self):
 		return str(self.name)
-
-# FIXME: needs own module
-class AccessEntity(Entity):
-
-	DN_ATTR = 'uid'
-
-	__tablename__ = 'entities_access'
-	__table_args__ = (
-		Comment('Access entities'),
-		{
-			'mysql_engine'  : 'InnoDB',
-			'mysql_charset' : 'utf8',
-			'info'          : {
-				'cap_menu'     : 'BASE_ENTITIES',
-				'cap_read'     : 'ENTITIES_LIST',
-				'cap_create'   : 'ENTITIES_CREATE',
-				'cap_edit'     : 'ENTITIES_EDIT',
-				'cap_delete'   : 'ENTITIES_DELETE',
-
-				'show_in_menu' : 'modules',
-				'menu_name'    : _('Access entities'),
-				'menu_order'   : 50,
-				'menu_parent'  : 'entity',
-				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
-#				'grid_view'    : ('SUXX',),
-#				'easy_search'  : ('SUXX',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
-			}
-		}
-	)
-	__mapper_args__ = {
-		'polymorphic_identity' : EntityType.access
-	}
-	id = Column(
-		'entityid',
-		UInt32(),
-		ForeignKey('entities_def.entityid', name='entities_access_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('Entity ID'),
-		primary_key=True,
-		nullable=False,
-		info={
-			'header_string' : _('ID')
-		}
-	)
-	password = Column(
-		Unicode(255),
-		Comment('Cleartext password'),
-		nullable=False,
-		info={
-			'header_string' : _('Password'),
-			'secret_value'  : True,
-			'editor_xtype'  : 'passwordfield'
-		}
-	)
-	stash_id = Column(
-		'stashid',
-		UInt32(),
-		# FKEY
-		Comment('Used stash ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Stash')
-		}
-	)
-	rate_id = Column(
-		'rateid',
-		UInt32(),
-		# FKEY
-		Comment('Used rate ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Rate')
-		}
-	)
-	alias_id = Column(
-		'aliasid',
-		UInt32(),
-		ForeignKey('entities_access.entityid', name='entities_access_fk_aliasid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('Aliased access entity ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Alias Of')
-		}
-	)
-	next_rate_id = Column(
-		'nextrateid',
-		UInt32(),
-		# FKEY
-		Comment('Next rate ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Next Rate')
-		}
-	)
-	ipv4_address_id = Column(
-		'ipaddrid',
-		UInt32(),
-		# FKEY
-		Comment('IPv4 address ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('IPv4 Address')
-		}
-	)
-	ipv6_address_id = Column(
-		'ip6addrid',
-		UInt64(),
-		# FKEY
-		Comment('IPv6 address ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('IPv6 Address')
-		}
-	)
-	used_traffic_ingress = Column(
-		'ut_ingress',
-		Numeric(16, 0),
-		Comment('Used ingress traffic'),
-		nullable=False,
-		default=0,
-		server_default=text('0'),
-		info={
-			'header_string' : _('Used Ingress')
-		}
-	)
-	used_traffic_egress = Column(
-		'ut_egress',
-		Numeric(16, 0),
-		Comment('Used egress traffic'),
-		nullable=False,
-		default=0,
-		server_default=text('0'),
-		info={
-			'header_string' : _('Used Egress')
-		}
-	)
-	used_seconds = Column(
-		'u_sec',
-		UInt32(),
-		Comment('Used seconds'),
-		nullable=False,
-		default=0,
-		server_default=text('0'),
-		info={
-			'header_string' : _('Used Seconds')
-		}
-	)
-	quota_period_end = Column(
-		'qpend',
-		TIMESTAMP(),
-		Comment('End of quota period'),
-		nullable=True,
-		default=None,
-		server_default=FetchedValue(),
-		info={
-			'header_string' : _('Ends')
-		}
-	)
-	access_state = Column(
-		'state',
-		UInt8(),
-		Comment('Access code'),
-		nullable=False,
-		default=0,
-		server_default=text('0'),
-		info={
-			'header_string' : _('Access Code')
-		}
-	)
-	policy_ingress = Column(
-		'pol_ingress',
-		ASCIIString(255),
-		Comment('Ingress traffic policy'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Ingress Policy')
-		}
-	)
-	policy_egress = Column(
-		'pol_egress',
-		ASCIIString(255),
-		Comment('Egress traffic policy'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Egress Policy')
-		}
-	)
-	check_block_state = Column(
-		'bcheck',
-		NPBoolean(),
-		Comment('Check block state'),
-		nullable=False,
-		default=False,
-		server_default=npbool(False),
-		info={
-			'header_string' : _('Check Blocks')
-		}
-	)
-	check_paid_services = Column(
-		'pcheck',
-		NPBoolean(),
-		Comment('Check paid services'),
-		nullable=False,
-		default=False,
-		server_default=npbool(False),
-		info={
-			'header_string' : _('Check Services')
-		}
-	)
 
 class EntityHistory(object):
 	def __init__(self, ent, title, time=None, author=None):

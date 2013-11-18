@@ -58,8 +58,7 @@ class Module(ModuleBase):
 			PhysicalEntity,
 			LegalEntity,
 			StructuralEntity,
-			ExternalEntity,
-			AccessEntity
+			ExternalEntity
 		)
 
 	def get_local_js(self, request, lang):
