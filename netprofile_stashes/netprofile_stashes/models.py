@@ -424,7 +424,7 @@ class StashIO(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('User'),
+			'header_string' : _('Operator'),
 			'filter_type'   : 'list'
 		}
 	)
