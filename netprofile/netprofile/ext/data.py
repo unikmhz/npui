@@ -69,6 +69,7 @@ from sqlalchemy.orm.interfaces import (
 	MANYTOMANY
 )
 from sqlalchemy.sql.functions import Function
+from sqlalchemy.orm.attributes import QueryableAttribute
 
 from netprofile.db.fields import (
 	ASCIIFixedString,
@@ -1402,17 +1403,24 @@ class ExtModel(object):
 			ret.alias = colname
 			ret.value_attr = o_prop.value_attr
 			return ret
+		if isinstance(o_prop, QueryableAttribute):
+			prop = o_prop.property
+			pdir = getattr(prop, 'direction', None)
+			if pdir == MANYTOONE:
+				return ExtManyToOneRelationshipColumn(prop, self.model)
+			if pdir == ONETOMANY:
+				return ExtOneToManyRelationshipColumn(prop, self.model)
+			if len(o_prop.property.columns) > 0:
+				ret = ExtColumn(o_prop.property.columns[0], self.model)
+				ret.alias = colname
+				return ret
+			raise ValueError('Unknown type of column %s' % colname)
 		if self.is_polymorphic:
 			for tbl in self.model.__mapper__.tables:
 				if colname in tbl.columns:
 					return ExtColumn(tbl.columns[colname], self.model)
 		elif colname in cols:
 			return ExtColumn(cols[colname], self.model)
-		prop = self.model.__mapper__.get_property(colname)
-		if prop.direction == MANYTOONE:
-			return ExtManyToOneRelationshipColumn(prop, self.model)
-		if prop.direction == ONETOMANY:
-			return ExtOneToManyRelationshipColumn(prop, self.model)
 		raise ValueError('Unknown type of column %s' % colname)
 
 	def get_columns(self):
@@ -1860,6 +1868,12 @@ class ExtModel(object):
 				if p not in cols:
 					if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
 						cols[p] = rcols[p]
+					elif p in self.model.__mapper__.attrs:
+						attr = self.model.__mapper__.attrs[p]
+						if len(attr.columns) > 0:
+							cols[p] = self.get_column(p)
+						else:
+							continue
 					else:
 						continue
 				if cols[p].get_read_only(request):
@@ -1951,9 +1965,17 @@ class ExtModel(object):
 			if callable(helper) and not helper(sess, obj, pt, request):
 				continue
 			for p in pt:
-				if (p not in cols) or (p == self.pk):
+				if p == self.pk:
+					continue
+				if p not in cols:
 					if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
 						cols[p] = rcols[p]
+					elif p in self.model.__mapper__.attrs:
+						attr = self.model.__mapper__.attrs[p]
+						if len(attr.columns) > 0:
+							cols[p] = self.get_column(p)
+						else:
+							continue
 					else:
 						continue
 				if cols[p].get_read_only(request):
