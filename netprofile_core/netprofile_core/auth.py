@@ -42,17 +42,11 @@ from pyramid.security import (
 	Authenticated,
 	unauthenticated_userid
 )
-from pyramid.events import (
-	ContextFound,
-	subscriber
-)
+from pyramid.events import ContextFound
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 
-from sqlalchemy import (
-	and_,
-	text
-)
+from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.common.auth import (
@@ -183,8 +177,7 @@ def find_princs_digest(param, request):
 		return groups
 	return None
 
-@subscriber(ContextFound)
-def auth_to_db(event):
+def _auth_to_db(event):
 	request = event.request
 
 	if not request.matched_route:
@@ -244,4 +237,6 @@ def includeme(config):
 
 	config.set_authorization_policy(authz_policy)
 	config.set_authentication_policy(authn_policy)
+
+	config.add_subscriber(_auth_to_db, ContextFound)
 

@@ -1,6 +1,6 @@
 ## -*- coding: utf-8 -*-
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="ru">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="${cur_loc}">
 <head>
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1" />

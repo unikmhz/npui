@@ -1,6 +1,6 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="netprofile_core:templates/base.mak"/>
-<%block name="title">Log In</%block>
+<%block name="title">${_('Log In')}</%block>
 <%block name="head">
 	<link rel="stylesheet" href="${req.static_url('netprofile_core:static/css/login.css')}" type="text/css" media="screen, projection" />
 </%block>

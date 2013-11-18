@@ -33,6 +33,7 @@ from pyramid.response import Response
 from pyramid.i18n import get_locale_name
 from pyramid.view import (
 	forbidden_view_config,
+	notfound_view_config,
 	view_config
 )
 from pyramid.security import (
@@ -43,13 +44,11 @@ from pyramid.security import (
 from pyramid.httpexceptions import (
 	HTTPForbidden,
 	HTTPFound,
-	HTTPNotFound,
 	HTTPSeeOther
 )
 
 from sqlalchemy import and_
 from sqlalchemy.orm import undefer
-from sqlalchemy.exc import DBAPIError
 
 from netprofile import (
 	LANGUAGES,
@@ -721,8 +720,6 @@ def dyn_acl_group_set(px, request):
 			group.acls[(code, aclid)] = value
 
 	return { 'success' : True }
-
-# ====================================================================
 
 @extdirect_method('Privilege', 'user_get', request_as_last_param=True, permission='USERS_GETCAP')
 def dyn_priv_user_get(params, request):

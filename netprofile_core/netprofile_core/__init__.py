@@ -27,6 +27,8 @@ from __future__ import (
 	division
 )
 
+from zope.interface.interfaces import ComponentLookupError
+
 from netprofile.common.modules import ModuleBase
 from netprofile.common.menus import Menu
 from netprofile.dav import (
@@ -54,23 +56,27 @@ class Module(ModuleBase):
 		self.mmgr = mmgr
 		cfg = mmgr.cfg
 		cfg.add_translation_dirs('netprofile_core:locale/')
-		cfg.add_route('core.home', '/')
-		cfg.add_route('core.login', '/login')
-		cfg.add_route('core.logout', '/logout')
+		cfg.add_route('core.home', '/', vhost='MAIN')
+		cfg.add_route('core.login', '/login', vhost='MAIN')
+		cfg.add_route('core.logout', '/logout', vhost='MAIN')
 		cfg.add_traverser(DAVTraverser, DAVRoot)
-		cfg.add_route('core.dav', '/dav*traverse', factory='netprofile.dav.DAVRoot')
+		cfg.add_route('core.dav', '/dav*traverse', factory='netprofile.dav.DAVRoot', vhost='MAIN')
 		cfg.scan()
 
-		dav = cfg.registry.getUtility(IDAVManager)
-		if dav:
-			dav.set_locks_backend(DAVLock)
+		try:
+			dav = cfg.registry.getUtility(IDAVManager)
+			if dav:
+				dav.set_locks_backend(DAVLock)
+		except ComponentLookupError:
+			pass
 
 	def add_routes(self, config):
-		config.add_route('core.noop', '/noop')
-		config.add_route('core.js.webshell', '/js/webshell')
+		config.add_route('core.noop', '/noop', vhost='MAIN')
+		config.add_route('core.js.webshell', '/js/webshell', vhost='MAIN')
 		config.add_route('core.file.download', '/file/dl/{fileid:\d+}*filename',
+				vhost='MAIN',
 				custom_predicates=(_int_fileid,))
-		config.add_route('core.file.upload', '/file/ul')
+		config.add_route('core.file.upload', '/file/ul', vhost='MAIN')
 
 	def get_models(self):
 		return (
