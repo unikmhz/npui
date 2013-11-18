@@ -240,23 +240,25 @@ class Entity(Base):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick',
 					MarkupColumn(
 						name='object',
 						header_string=_('Object'),
+						column_flex=4,
 						template=TemplateObject('netprofile_entities:templates/entity_nick.mak')
 					),
 					HybridColumn(
 						'data',
 						header_string=_('Information'),
+						column_flex=5,
 						template=TemplateObject('netprofile_entities:templates/entity_data.mak')
 					),
 					'state'
 				),
 				'easy_search'   : ('nick',),
-				'extra_data'    : ('data',),
+				'extra_data'    : ('data', 'grid_icon'),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					TextFilter('phone', _filter_phone,
@@ -368,7 +370,8 @@ class Entity(Base):
 		Comment('Entity nickname'),
 		nullable=False,
 		info={
-			'header_string' : _('Identifier')
+			'header_string' : _('Identifier'),
+			'column_flex'   : 2
 		}
 	)
 	state_id = Column(
@@ -552,6 +555,9 @@ class Entity(Base):
 		return {
 			'flags' : [(ft.id, ft.name) for ft in self.flags]
 		}
+
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/entity.png')
 
 	@validates('nick')
 	def _set_nick(self, k, v):
@@ -1125,7 +1131,8 @@ class EntityFile(Base):
 		Comment('Entity ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Entity')
+			'header_string' : _('Entity'),
+			'column_flex'   : 1
 		}
 	)
 	file_id = Column(
@@ -1135,7 +1142,8 @@ class EntityFile(Base):
 		Comment('File ID'),
 		nullable=False,
 		info={
-			'header_string' : _('File')
+			'header_string' : _('File'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -1279,7 +1287,7 @@ class PhysicalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick', 'name_family', 'name_given'
 				),
@@ -1292,6 +1300,7 @@ class PhysicalEntity(Entity):
 					'descr'
 				),
 				'easy_search'   : ('nick', 'name_family'),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					TextFilter('phone', Entity._filter_phone,
@@ -1356,7 +1365,8 @@ class PhysicalEntity(Entity):
 		Comment('Family name'),
 		nullable=False,
 		info={
-			'header_string' : _('Family Name')
+			'header_string' : _('Family Name'),
+			'column_flex'   : 3
 		}
 	)
 	name_given = Column(
@@ -1364,7 +1374,8 @@ class PhysicalEntity(Entity):
 		Comment('Given name'),
 		nullable=False,
 		info={
-			'header_string' : _('Given Name')
+			'header_string' : _('Given Name'),
+			'column_flex'   : 3
 		}
 	)
 	name_middle = Column(
@@ -1464,9 +1475,7 @@ class PhysicalEntity(Entity):
 		}
 	)
 
-	@property
-	def data(self):
-		req = get_current_request()
+	def data(self, req):
 		loc = get_localizer(req)
 
 		ret = super(PhysicalEntity, self).data
@@ -1477,39 +1486,10 @@ class PhysicalEntity(Entity):
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
 			ret['phones'].append(obj.data)
-#		if self.house:
-#			ret['house'] = str(self.house)
-#		if self.entrance:
-#			ret['entrance'] = '%s %s' % (
-#				loc.translate(_('entr.')),
-#				str(self.entrance)
-#			)
-#		if self.floor:
-#			ret['floor'] = '%s %s' % (
-#				loc.translate(_('fl.')),
-#				str(self.floor)
-#			)
-#		if self.flat:
-#			ret['flat'] = '%s %s' % (
-#				loc.translate(_('app.')),
-#				str(self.flat)
-#			)
-#		if self.phone_home:
-#			ret['phone_home'] = '%s %s' % (
-#				loc.translate(_('home:')),
-#				str(self.phone_home)
-#			)
-#		if self.phone_work:
-#			ret['phone_work'] = '%s %s' % (
-#				loc.translate(_('work:')),
-#				str(self.phone_work)
-#			)
-#		if self.phone_cell:
-#			ret['phone_cell'] = '%s %s' % (
-#				loc.translate(_('cell:')),
-#				str(self.phone_cell)
-#			)
 		return ret
+
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/physical.png')
 
 	def __str__(self):
 		strs = []
@@ -1553,7 +1533,7 @@ class LegalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick', 'name', 'cp_name_family', 'cp_name_given'
 				),
@@ -1566,6 +1546,7 @@ class LegalEntity(Entity):
 					'descr'
 				),
 				'easy_search'   : ('nick', 'name'),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					TextFilter('phone', Entity._filter_phone,
@@ -1633,7 +1614,8 @@ class LegalEntity(Entity):
 		Comment('Legal name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	contact_name_family = Column(
@@ -1644,7 +1626,8 @@ class LegalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Family Name')
+			'header_string' : _('Family Name'),
+			'column_flex'   : 3
 		}
 	)
 	contact_name_given = Column(
@@ -1655,7 +1638,8 @@ class LegalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Given Name')
+			'header_string' : _('Given Name'),
+			'column_flex'   : 3
 		}
 	)
 	contact_name_middle = Column(
@@ -1785,9 +1769,7 @@ class LegalEntity(Entity):
 		}
 	)
 
-	@property
-	def data(self):
-		req = get_current_request()
+	def data(self, req):
 		loc = get_localizer(req)
 
 		ret = super(LegalEntity, self).data
@@ -1798,34 +1780,10 @@ class LegalEntity(Entity):
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
 			ret['phones'].append(obj.data)
-#		if self.house:
-#			ret['house'] = str(self.house)
-#		if self.entrance:
-#			ret['entrance'] = '%s %s' % (
-#				loc.translate(_('entr.')),
-#				str(self.entrance)
-#			)
-#		if self.floor:
-#			ret['floor'] = '%s %s' % (
-#				loc.translate(_('fl.')),
-#				str(self.floor)
-#			)
-#		if self.flat:
-#			ret['flat'] = '%s %s' % (
-#				loc.translate(_('app.')),
-#				str(self.flat)
-#			)
-#		if self.contact_phone_work:
-#			ret['cp_phone_work'] = '%s %s' % (
-#				loc.translate(_('work:')),
-#				str(self.contact_phone_work)
-#			)
-#		if self.contact_phone_cell:
-#			ret['cp_phone_cell'] = '%s %s' % (
-#				loc.translate(_('cell:')),
-#				str(self.contact_phone_cell)
-#			)
 		return ret
+
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/legal.png')
 
 	def __str__(self):
 		return str(self.name)
@@ -1860,12 +1818,13 @@ class StructuralEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick'
 				),
 				'form_view'     : ('nick', 'parent', 'state', 'flags', 'descr'),
 				'easy_search'   : ('nick',),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					TextFilter('phone', Entity._filter_phone,
@@ -1916,9 +1875,10 @@ class StructuralEntity(Entity):
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
 			ret['phones'].append(obj.data)
-#		if self.house:
-#			ret['house'] = str(self.house)
 		return ret
+
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/structural.png')
 
 #	def __str__(self):
 #		return ''
@@ -1954,7 +1914,7 @@ class ExternalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick', 'name', 'address'
 				),
@@ -1963,6 +1923,7 @@ class ExternalEntity(Entity):
 					'name', 'address', 'descr'
 				),
 				'easy_search'   : ('nick', 'name'),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 
 				'create_wizard' : Wizard(
@@ -1999,7 +1960,8 @@ class ExternalEntity(Entity):
 		Comment('Entity name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	address = Column(
@@ -2009,7 +1971,8 @@ class ExternalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Address')
+			'header_string' : _('Address'),
+			'column_flex'   : 3
 		}
 	)
 
@@ -2019,6 +1982,9 @@ class ExternalEntity(Entity):
 		if self.address:
 			ret['address'] = str(self.address)
 		return ret
+
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/external.png')
 
 	def __str__(self):
 		return str(self.name)
