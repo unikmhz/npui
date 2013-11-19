@@ -125,7 +125,7 @@ def main(global_config, **settings):
 	)
 	config.add_subscriber(
 		'netprofile.common.subscribers.on_new_request',
-		'pyramid.events.NewRequest'
+		'pyramid.events.ContextFound'
 	)
 	config.add_route_predicate('vhost', VHostPredicate)
 	config.add_request_method(get_debug, str('debug_enabled'), reify=True)
