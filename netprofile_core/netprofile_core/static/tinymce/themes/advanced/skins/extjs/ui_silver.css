@@ -1,0 +1,5 @@
+/* Silver */
+.extjsSkinSilver .mceToolbar .mceToolbarStart span, .extjsSkinSilver .mceButton, .extjsSkinSilver .mceSplitButton, .extjsSkinSilver .mceSeparator, .extjsSkinSilver .mceSplitButton a.mceOpen, .extjsSkinSilver .mceListBox a.mceOpen {background-image:url(img/button_bg_silver.png)}
+.extjsSkinSilver td.mceToolbar, .extjsSkinSilver td.mceStatusbar, .extjsSkinSilver .mceMenuItemTitle a {background:#eee}
+.extjsSkinSilver .mceListBox .mceText {background:#FFF}
+.extjsSkinSilver .mceExternalToolbar, .extjsSkinSilver .mceListBox .mceText, .extjsSkinSilver div.mceMenu, .extjsSkinSilver table.mceLayout, .extjsSkinSilver .mceMenuItemTitle a, .extjsSkinSilver table.mceLayout tr.mceFirst td, .extjsSkinSilver table.mceLayout, .extjsSkinSilver .mceMenuItemTitle a, .extjsSkinSilver table.mceLayout tr.mceLast td, .extjsSkinSilver .mceIframeContainer {border-color: #bbb}

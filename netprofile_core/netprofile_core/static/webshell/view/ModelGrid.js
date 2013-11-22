@@ -26,6 +26,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.ux.form.field.IPv4',
 		'Ext.ux.form.field.Password',
 		'Ext.ux.form.DynamicCheckboxGroup',
+		'Ext.ux.form.TinyMCETextArea',
 		'Ext.ux.window.CenterWindow',
 		'Ext.ux.RowExpander',
 		'NetProfile.view.ModelSelect'
