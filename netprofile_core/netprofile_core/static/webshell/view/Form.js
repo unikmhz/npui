@@ -98,7 +98,7 @@ Ext.define('NetProfile.view.Form', {
 		var api;
 		if(!this.formCls)
 		{
-			var p = this.up('panel');
+			var p = this.up('panel[cls~=record-tab]');
 
 			this.formCls = p.apiClass;
 			this.record = p.record;

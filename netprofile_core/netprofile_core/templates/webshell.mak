@@ -414,6 +414,7 @@ Ext.require([
 		}
 	});
 	Ext.define('NetProfile.store.${module}.${model}', {
+		alias: 'store.${module}_${model}',
 		extend: 'Ext.data.Store',
 		requires: 'NetProfile.model.${module}.${model}',
 		model: 'NetProfile.model.${module}.${model}',

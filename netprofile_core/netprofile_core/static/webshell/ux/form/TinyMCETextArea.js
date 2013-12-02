@@ -543,6 +543,35 @@ Ext.define('Ext.ux.form.TinyMCETextArea', {
                 });
             });
 
+			// -- BEGIN NP --
+			ed.onGetContent.add(function(ed, o)
+			{
+				// FIXME: these expressions are buggy - properly handle escapes.
+				o.content = o.content.replace(new RegExp('<!--\\s*tpl\\s+(?:(for|foreach|if|elseif|switch|case)\\s*=\\s*"([^"]+?)"|(else|default))\\s*-->|<!-- /tpl -->', 'gi'), function(full, p0, p1, p2)
+				{
+					if(Ext.Array.contains(['else', 'default'], p2))
+						return '<tpl ' + p2 + '>';
+					else if(p0)
+						return '<tpl ' + p0 + '="' + p1 + '">';
+					else
+						return '</tpl>';
+				});
+			});
+			ed.onBeforeSetContent.add(function(ed, o)
+			{
+				// FIXME: these expressions are buggy - properly handle escapes.
+				o.content = o.content.replace(new RegExp('<tpl\\s+(?:(for|foreach|if|elseif|switch|case)\\s*=\\s*"([^"]+?)"|(else|default))\\s*>|</\\s*tpl>', 'gi'), function(full, p0, p1, p2)
+				{
+					if(Ext.Array.contains(['else', 'default'], p2))
+						return '<!-- tpl ' + p2 + ' -->';
+					else if(p0)
+						return '<!-- tpl ' + p0 + '="' + p1 + '" -->';
+					else
+						return '<!-- /tpl -->';
+				});
+			});
+			// -- END NP --
+
             if (user_setup) { user_setup(ed); }
         };
 
