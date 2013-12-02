@@ -92,6 +92,7 @@ from netprofile.db.fields import (
 	UInt32,
 	UInt64
 )
+from netprofile.db.colander import SQLAlchemySchemaNode
 
 # USE ME!
 #from sqlalchemy.orm import (
@@ -243,12 +244,6 @@ _DATE_FMT_MAP = {
 	DateTime  : 'c',
 	Time      : 'H:i:s',
 	TIMESTAMP : 'c'
-}
-
-_COLANDER_TYPE_MAP = {
-	NPBoolean   : colander.Boolean,
-	IPv4Address : colander.Integer,
-	IPv6Address : colander.String # ?
 }
 
 logger = logging.getLogger(__name__)
@@ -576,44 +571,6 @@ class ExtColumn(object):
 				return None
 			return int(param)
 		return param
-
-	def get_colander_schema(self, nullable=None):
-		ctype = self.colander_type
-		params = {}
-		children = []
-
-		default = self.default
-		if nullable is None:
-			nullable = self.nullable
-		elif nullable:
-			default = None
-
-		if default is None:
-			params['default'] = colander.null
-		else:
-			params['default'] = default
-
-		if not nullable:
-			params['missing'] = colander.required
-		elif 'default' in params:
-			params['missing'] = params['default']
-		elif self.default is None:
-			params['missing'] = None
-
-		# ADD CHILDREN HERE
-
-		valid = self.get_colander_validations()
-		if len(valid) > 1:
-			valid = colander.All(*valid)
-		elif valid:
-			valid = valid[0]
-		else:
-			valid = None
-		params['validator'] = valid
-
-		params['name'] = self.name
-
-		return colander.SchemaNode(ctype, *children, **params)
 
 	def get_colander_validations(self):
 		typecls = self.column.type.__class__
@@ -983,11 +940,6 @@ class ExtPseudoColumn(ExtColumn):
 	def js_type(self):
 		return self.column.js_type
 
-	@property
-	def colander_type(self):
-		# FIXME: add smth here
-		raise NotImplementedError('Colander support is missing for pseudo columns.')
-
 	def _set_min_max(self, conf):
 		# FIXME: add smth here
 		raise NotImplementedError('Validation support is missing for pseudo columns.')
@@ -1001,10 +953,6 @@ class ExtPseudoColumn(ExtColumn):
 		if not callable(self.column.parse):
 			return param
 		return self.column.parse(param)
-
-	def get_colander_schema(self, nullable=None):
-		# FIXME: add smth here
-		raise NotImplementedError('Colander support is missing for pseudo columns.')
 
 	def get_colander_validations(self):
 		# FIXME: add smth here
@@ -1536,6 +1484,9 @@ class ExtModel(object):
 				ret.extend(colrel)
 		return ret
 
+	def get_colander_schema(self):
+		return SQLAlchemySchemaNode(self.model)
+
 	def get_model_validations(self):
 		ret = []
 		for cname, col in self.get_read_columns().items():
@@ -1859,6 +1810,9 @@ class ExtModel(object):
 			p = self.pk
 			if p in pt:
 				del pt[p]
+			p = self.object_pk
+			if p in pt:
+				del pt[p]
 			obj = self.model()
 			apply_onetomany = []
 			helper = getattr(self.model, '__augment_create__', None)
@@ -1965,7 +1919,7 @@ class ExtModel(object):
 			if callable(helper) and not helper(sess, obj, pt, request):
 				continue
 			for p in pt:
-				if p == self.pk:
+				if p in (self.pk, self.object_pk):
 					continue
 				if p not in cols:
 					if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
@@ -2205,27 +2159,6 @@ class ExtModel(object):
 		dpview = getattr(mod, dpview[1])
 		if callable(dpview):
 			return dpview(self, req)
-
-	def get_colander_schema(self, excludes=(), includes=(), nullables={}, unknown='raise'):
-		params = {
-			'name' : self.name,
-			'description' : getattr(self.model.__table__, 'comment', '')
-		}
-		schema = colander.SchemaNode(colander.Mapping(unknown), **params)
-		for cname, col in self.get_read_columns().items():
-			if cname in excludes:
-				continue
-			if includes and (cname not in includes):
-				continue
-			is_null = False
-			if isinstance(nullables, bool):
-				is_null = nullables
-			else:
-				is_null = nullables.get(cname, False)
-			node = col.get_colander_schema(nullable=is_null)
-			if node is not None:
-				schema.add(node)
-		return schema
 
 class ExtModuleBrowser(object):
 	def __init__(self, mmgr, moddef):
