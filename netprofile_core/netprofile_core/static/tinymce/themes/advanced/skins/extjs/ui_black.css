@@ -1,0 +1,8 @@
+/* Black */
+.extjsSkinBlack .mceToolbar .mceToolbarStart span, .extjsSkinBlack .mceToolbar .mceToolbarEnd span, .extjsSkinBlack .mceButton, .extjsSkinBlack .mceSplitButton, .extjsSkinBlack .mceSeparator, .extjsSkinBlack .mceSplitButton a.mceOpen, .extjsSkinBlack .mceListBox a.mceOpen {background-image:url(img/button_bg_black.png)}
+.extjsSkinBlack td.mceToolbar, .extjsSkinBlack td.mceStatusbar, .extjsSkinBlack .mceMenuItemTitle a, .extjsSkinBlack .mceMenuItemTitle span.mceText, .extjsSkinBlack .mceStatusbar div, .extjsSkinBlack .mceStatusbar span, .extjsSkinBlack .mceStatusbar a {background:#535353; color:#FFF}
+.extjsSkinBlack table.mceListBoxEnabled .mceText, extjsSkinBlack .mceListBox .mceText {background:#FFF; border:1px solid #CBCFD4; border-bottom-color:#989FA9; border-right:0}
+.extjsSkinBlack table.mceListBoxEnabled:hover .mceText, .extjsSkinBlack .mceListBoxHover .mceText, .extjsSkinBlack .mceListBoxSelected .mceText {background:#FFF; border:1px solid #FFBD69; border-right:0}
+.extjsSkinBlack .mceExternalToolbar, .extjsSkinBlack .mceListBox .mceText, .extjsSkinBlack div.mceMenu, .extjsSkinBlack table.mceLayout, .extjsSkinBlack .mceMenuItemTitle a, .extjsSkinBlack table.mceLayout tr.mceFirst td, .extjsSkinBlack table.mceLayout, .extjsSkinBlack .mceMenuItemTitle a, .extjsSkinBlack table.mceLayout tr.mceLast td, .extjsSkinBlack .mceIframeContainer {border-color: #535353;}
+.extjsSkinBlack table.mceSplitButtonEnabled:hover a.mceAction, .extjsSkinBlack .mceSplitButtonHover a.mceAction, .extjsSkinBlack .mceSplitButtonSelected {background-image:url(img/button_bg_black.png)}
+.extjsSkinBlack .mceMenu .mceMenuItemEnabled a:hover, .extjsSkinBlack .mceMenu .mceMenuItemActive {background-color:#FFE7A1}

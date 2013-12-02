@@ -26,7 +26,8 @@ Ext.require([
 % for i_ajs in res_ajs:
 	'${i_ajs}',
 % endfor
-	'NetProfile.model.Basic'
+	'NetProfile.model.Basic',
+	'NetProfile.view.CapabilityGrid'
 ], function()
 {
 //	NetProfile.api.Descriptor.enableBuffer = 100;
@@ -413,6 +414,7 @@ Ext.require([
 		}
 	});
 	Ext.define('NetProfile.store.${module}.${model}', {
+		alias: 'store.${module}_${model}',
 		extend: 'Ext.data.Store',
 		requires: 'NetProfile.model.${module}.${model}',
 		model: 'NetProfile.model.${module}.${model}',

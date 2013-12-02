@@ -1,7 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-#netd_def.rtid references on non-existent table
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Networks module - Models
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -11,705 +28,710 @@ from __future__ import (
 )
 
 __all__ = [
-    "Network",
-    "NetworkGroup",
-    "NetworkHostLinkage",
-    "NetworkHostLinkageType",
-    "SNMPScheme",
-    "SNMPAuthProtocol",
-    "SNMPCryptProtocol",
-    "ManagementType",
-    "NetworkDevice"
-    ]
+	'Network',
+	'NetworkGroup',
+	'NetworkService',
+	'NetworkServiceType',
+	'RoutingTable',
+	'RoutingTableEntry'
+]
 
 from sqlalchemy import (
-    Column,
-    Date,
-    FetchedValue,
-    ForeignKey,
-    Index,
-    Numeric,
-    Sequence,
-    TIMESTAMP,
-    Unicode,
-    UnicodeText,
-    func,
-    text,
-    or_
-    )
+	Column,
+	ForeignKey,
+	Index,
+	Sequence,
+	Unicode,
+	UnicodeText,
+	text
+)
 
 from sqlalchemy.orm import (
-    backref,
-    contains_eager,
-    joinedload,
-    relationship,
-    validates,
-    )
+	backref,
+	relationship
+)
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from netprofile.db.connection import (
-    Base,
-    DBSession
-    )
+	Base,
+	DBSession
+)
 from netprofile.db.fields import (
-    ASCIIString,
-    DeclEnum,
-    NPBoolean,
-    UInt8,
-    UInt16,
-    UInt32,
-    UInt64,
-    npbool,
-    IPv4Address,
-    IPv6Address
-    )
+	ASCIIString,
+	NPBoolean,
+	UInt8,
+	UInt16,
+	UInt32,
+	npbool,
+	IPv4Address,
+	IPv6Address,
+	IPv6Offset
+)
 from netprofile.db.ddl import Comment
-from netprofile.db.util import (
-    populate_related,
-    populate_related_list
-    )
 from netprofile.tpl import TemplateObject
-from netprofile.ext.data import (
-    ExtModel,
-    _name_to_class
-    )
-from netprofile.ext.columns import (
-    HybridColumn,
-    MarkupColumn
-    )
+from netprofile.ext.columns import MarkupColumn
 
 from netprofile.ext.wizards import (
-    ExternalWizardField,
+	ExternalWizardField,
 	SimpleWizard,
 	Step,
 	Wizard
-        )
-from pyramid.threadlocal import get_current_request
+)
 from pyramid.i18n import (
-    TranslationStringFactory,
+	TranslationStringFactory,
 	get_localizer
-        )
-
-from mako.template import Template
+)
 
 _ = TranslationStringFactory('netprofile_networks')
 
-
 class Network(Base):
-    """
-    Netprofile Network Description definition
-    """
-    __tablename__ = 'nets_def'
-    __table_args__ = (
-        Comment('Networks'),
-        Index('nets_def_u_name', 'name', unique=True),
-        Index('nets_def_u_ipaddr', 'ipaddr', unique=True),
-        Index('nets_def_u_ip6addr', 'ip6addr', unique=True),
+	"""
+	Network object.
+	"""
+	__tablename__ = 'nets_def'
+	__table_args__ = (
+		Comment('Networks'),
+		Index('nets_def_u_name', 'name', unique=True),
+		Index('nets_def_u_ipaddr', 'ipaddr', unique=True),
+		Index('nets_def_u_ip6addr', 'ip6addr', unique=True),
 		Index('nets_def_i_domainid', 'domainid'),
-		Index('nets_def_i_mgmtdid', 'mgmtdid'),
+		Index('nets_def_i_netgid', 'netgid'),
 		Index('nets_def_i_rtid', 'rtid'),
-        {
-            'mysql_engine'  : 'InnoDB',
-            'mysql_charset' : 'utf8',
-            'info'          : {
-                #'cap_menu'      : 'BASE_NAS',
-                #'cap_read'      : 'NAS_LIST',
-                #'cap_create'    : 'NAS_CREATE',
-                #'cap_edit'      : 'NAS_EDIT',
-                #'cap_delete'    : 'NAS_DELETE',
-                'menu_name'    : _('Networks'),
-                'show_in_menu'  : 'modules',
-                'menu_order'    : 70,
-                'menu_main'     : True,
-                'default_sort' : ({ 'property': 'name', 'direction': 'ASC' },),
-                'grid_view' : ('name',
-                               'ipaddr',
-                               MarkupColumn(
-                               name='state',
-                               header_string=_('State'),
-                               template=TemplateObject('netprofile_networks:templates/networks_icons.mak'),
-                               column_width=60,
-                               column_resizable=False
-                               )
-                               ),
-                'form_view' : ('name', 'networkdomain', 'netgroup', 'networkdevice', 'enabled', 'public', 'ipaddr', 'ip6addr', 'cidr', 'cidr6', 'vlanid', 'rtid', 'gueststart', 'guestend', 'gueststart6', 'guestend6', 'descr'),
-                'easy_search' : ('name',),
-                'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard' : SimpleWizard(title=_('Add new network'))
-                }
-            }
-        )
-    id = Column(
-        'netid',
-        UInt32(),
-        Sequence('netid_seq'),
-        Comment('Network ID'),
-        primary_key=True,
-        nullable=False,
-        info={
-            'header_string' : _('ID')
-            }
-        )
-    name = Column(
-        'name',
-        ASCIIString(),
-        Comment('Network Name'),
-        nullable=False,
-        info={
-            'header_string' : _('Name')
-            }
-        )
-    domainid = Column(
-        'domainid',
-        UInt32(),
-        ForeignKey('domains_def.domainid', name='nets_def_fk_domainid', onupdate='CASCADE'),
-        nullable=False,
-        info={
-            'header_string' : _('Domain')
-            }
-        )
-    netgid = Column(
-        'netgid',
-        UInt32(),
-        ForeignKey('nets_groups.netgid', name='nets_def_fk_domainid', onupdate='CASCADE'),
-        nullable=False,
-        info={
-            'header_string' : _('Network Group')
-            }
-        )
-    mgmtdid = Column(
-        'mgmtdid',
-        UInt32(),
-        ForeignKey('devices_network.did', name='nets_def_fk_mgmtdid', onupdate='CASCADE'),
-        nullable=False,
-        info={
-            'header_string' : _('Management Device')
-            }
-        )
-    enabled = Column(
-        NPBoolean(),
-        Comment('Is network enabled?'),
-        nullable=False,
-        default=False,
-        server_default=npbool(False),
-        info={
-            'header_string' : _('Is Network Enabled?')
-            }
-        )
-    public = Column(
-        NPBoolean(),
-        Comment('Is network visible to outsiders?'),
-        nullable=False,
-        default=False,
-        server_default=npbool(False),
-        info={
-            'header_string' : _('Is Public?')
-            }
-        )
-    ipaddr = Column(
-        'ipaddr',
-        IPv4Address(10),
-        Comment('Network IP Address'),
-        nullable=False,
-        default=0,
-        info={
-            'header_string' : _('IP Address')
-            }
-        )
-    ip6addr = Column(
-        'ip6addr',
-        IPv6Address(39),
-        Comment('Network IPV6 Address'),
-        info={
-            'header_string' : _('IPV6 Address')
-            }
-        )
-    cidr = Column(
-        'cidr',
-        UInt8(2),
-        Comment('Network CIDR Number'),
-        nullable=False,
-        default=24,
-        info={
-            'header_string' : _('Netmask')
-            }
-        )
-    cidr6 = Column(
-        'cidr6',
-        UInt8(3),
-        Comment('Network CIDR6 Number'),
-        nullable=False,
-        default=64,
-        info={
-            'header_string' : _('IPv6 netmask')
-            }
-        )
-    vlanid = Column(
-        'vlanid',
-        UInt8(4),
-        Comment('Network VLAN ID'),
-        nullable=False,
-        default=0,
-        info={
-            'header_string' : _('VLAN')
-            }
-        )
-    rtid = Column(
-        'rtid',
-        #foreignkey to RoutingTables, this module isn't ready yet. 
-        UInt8(10),
-        Comment('Route Table ID'),
-        info={
-            'header_string' : _('Route Table')
-            }
-        )
-    gueststart = Column(
-        'gueststart',
-        UInt8(5),
-        Comment('Start of Guest Allocation Area'),
-        info={
-            'header_string' : _('Start of Guest Allocation Area')
-            }
-        )
-    guestend = Column(
-        'guestend',
-        UInt8(5),
-        Comment('End of Guest Allocation Area'),
-        info={
-            'header_string' : _('End of Guest Allocation Area')
-            }
-        )
-    gueststart6 = Column(
-        'gueststart6',
-        UInt8(5),
-        Comment('Start of Guest Allocation Area'),
-        info={
-            'header_string' : _('Start of Guest Allocation Area (IPV6)')
-            }
-        )
-    guestend6 = Column(
-        'guestend6',
-        UInt8(5),
-        Comment('End of Guest Allocation Area'),
-        info={
-            'header_string' : _('End of Guest Allocation Area (IPV6)')
-            }
-        )
-    descr = Column(
-        'descr',
-        UnicodeText(),
-        Comment('Network Description'),
-        info={
-            'header_string' : _('Description')
-            }
-        )
+		Index('nets_def_i_mgmtdid', 'mgmtdid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_NETS',
+				'cap_read'      : 'NETS_LIST',
+				'cap_create'    : 'NETS_CREATE',
+				'cap_edit'      : 'NETS_EDIT',
+				'cap_delete'    : 'NETS_DELETE',
+				'menu_name'     : _('Networks'),
+				'show_in_menu'  : 'modules',
+				'menu_order'    : 10,
+				'menu_main'     : True,
+				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
+				'grid_view'     : (
+					'name', 'ipaddr', 'ip6addr',
+					MarkupColumn(
+						name='state',
+						header_string=_('State'),
+						template=TemplateObject('netprofile_networks:templates/networks_icons.mak'),
+						column_width=40,
+						column_resizable=False
+					)
+				),
+				'form_view'     : (
+					'name', 'domain', 'group',
+					# 'management_device',
+					'enabled', 'public',
+					'ipaddr', 'cidr',
+					'ip6addr', 'cidr6',
+					'vlanid', 'routing_table',
+					'gueststart', 'guestend',
+					'gueststart6', 'guestend6',
+					'descr'
+				),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new network'))
+			}
+		}
+	)
+	id = Column(
+		'netid',
+		UInt32(),
+		Sequence('nets_def_netid_seq'),
+		Comment('Network ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Network name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 1
+		}
+	)
+	domain_id = Column(
+		'domainid',
+		UInt32(),
+		ForeignKey('domains_def.domainid', name='nets_def_fk_domainid', onupdate='CASCADE'),
+		Comment('Domain ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Domain'),
+			'filter_type'   : 'list',
+			'column_flex'   : 1
+		}
+	)
+	group_id = Column(
+		'netgid',
+		UInt32(),
+		ForeignKey('nets_groups.netgid', name='nets_def_fk_domainid', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Network group ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Group'),
+			'filter_type'   : 'list'
+		}
+	)
+	management_device_id = Column(
+		'mgmtdid',
+		UInt32(),
+#TODO:		ForeignKey('devices_network.did', name='nets_def_fk_mgmtdid', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Management device ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Management Device'),
+			'filter_type'   : 'none'
+		}
+	)
+	enabled = Column(
+		NPBoolean(),
+		Comment('Is network enabled?'),
+		nullable=False,
+		default=True,
+		server_default=npbool(True),
+		info={
+			'header_string' : _('Enabled')
+		}
+	)
+	public = Column(
+		NPBoolean(),
+		Comment('Is network visible to outsiders?'),
+		nullable=False,
+		default=True,
+		server_default=npbool(True),
+		info={
+			'header_string' : _('Public')
+		}
+	)
+	ipv4_address = Column(
+		'ipaddr',
+		IPv4Address(),
+		Comment('Network IPv4 address'),
+		nullable=False,
+		default=0,
+		info={
+			'header_string' : _('IPv4 Address')
+		}
+	)
+	ipv6_address = Column(
+		'ip6addr',
+		IPv6Address(),
+		Comment('Network IPv6 address'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('IPv6 Address')
+		}
+	)
+	ipv4_cidr = Column(
+		'cidr',
+		UInt8(),
+		Comment('Network CIDR number'),
+		nullable=False,
+		default=24,
+		server_default=text('24'),
+		info={
+			'header_string' : _('IPv4 Netmask')
+		}
+	)
+	ipv6_cidr = Column(
+		'cidr6',
+		UInt8(),
+		Comment('Network CIDRv6 number'),
+		nullable=False,
+		default=64,
+		server_default=text('64'),
+		info={
+			'header_string' : _('IPv6 Netmask')
+		}
+	)
+	vlan_id = Column(
+		'vlanid',
+		UInt16(),
+		Comment('Network VLAN ID'),
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('VLAN')
+		}
+	)
+	routing_table_id = Column(
+		'rtid',
+		UInt32(),
+		ForeignKey('rt_def.rtid', name='nets_def_fk_rtid', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Routing table ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Routing Table'),
+			'filter_type'   : 'list'
+		}
+	)
+	ipv4_guest_start = Column(
+		'gueststart',
+		UInt16(),
+		Comment('Start of IPv4 guest allocation area'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Start of IPv4 Guest Allocation Area')
+		}
+	)
+	ipv4_guest_end = Column(
+		'guestend',
+		UInt16(),
+		Comment('End of IPv4 guest allocation area'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('End of IPv4 Guest Allocation Area')
+		}
+	)
+	ipv6_guest_start = Column(
+		'gueststart6',
+		IPv6Offset(),
+		Comment('Start of IPv6 guest allocation area'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Start of IPv6 Guest Allocation Area')
+		}
+	)
+	ipv6_guest_end = Column(
+		'guestend6',
+		IPv6Offset(),
+		Comment('End of IPv6 guest allocation area'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('End of IPv6 Guest Allocation Area')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Network description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
 
-    network = relationship("NetworkHostLinkage", backref=backref('network', innerjoin=True))
-    networkdomain = relationship('Domain', backref=backref('networkdomain', innerjoin=True))
+	domain = relationship(
+		'Domain',
+		innerjoin=True,
+		backref='networks'
+	)
+	group = relationship(
+		'NetworkGroup',
+		backref='networks'
+	)
+	# TODO: management_device
+	routing_table = relationship(
+		'RoutingTable',
+		backref='networks'
+	)
+	services = relationship(
+		'NetworkService',
+		backref=backref('network', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
-    def __str__(self):
-        return self.name
-
+	def __str__(self):
+		return str(self.name)
 
 class NetworkGroup(Base):
-    """
-    Netprofile Network Description definition
-    """
-    __tablename__ = 'nets_groups'
-    __table_args__ = (
-        Comment('Network Groups definition'),
-        Index('nets_group_u_name', 'name', unique=True),
-        {
-            'mysql_engine'  : 'InnoDB',
-            'mysql_charset' : 'utf8',
-            'info'          : {
-                #'cap_menu'      : 'BASE_NAS',
-                #'cap_read'      : 'NAS_LIST',
-                #'cap_create'    : 'NAS_CREATE',
-                #'cap_edit'      : 'NAS_EDIT',
-                #'cap_delete'    : 'NAS_DELETE',
-                'menu_name'    : _('Network Groups'),
-                'show_in_menu'  : 'admin',
-                'menu_order'    : 70,
-                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-                'grid_view' : ('name', 'descr'),
-                'form_view' : ('name', 'descr'),
-                'easy_search' : ('name',),
-                'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard' : SimpleWizard(title=_('Add new network group'))
-                }
-            }
-        )    
-    id = Column(
-        'netgid',
-        UInt32(),
-        Sequence('netgid_seq'),
-        Comment('Network Group ID'),
-        primary_key=True,
-        nullable=False,
-        info={
-            'header_string' : _('ID')
-            }
-        )
-    name = Column(
-        'name',
-        Unicode(255),
-        Comment('Network Group Name'),
-        nullable=False,
-        info={
-            'header_string' : _('Name')
-            }
-        )
-    descr = Column(
-        'descr',
-        UnicodeText(),
-        Comment('Network Group Description'),
-        info={
-            'header_string' : _('Description')
-            }
-        )
-    netgroups = relationship("Network", backref=backref('netgroup', innerjoin=True))
+	"""
+	Network group object.
+	"""
+	__tablename__ = 'nets_groups'
+	__table_args__ = (
+		Comment('Network groups'),
+		Index('nets_groups_u_name', 'name', unique=True),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_NETGROUPS',
+				'cap_read'      : 'NETGROUPS_LIST',
+				'cap_create'    : 'NETGROUPS_CREATE',
+				'cap_edit'      : 'NETGROUPS_EDIT',
+				'cap_delete'    : 'NETGROUPS_DELETE',
+				'menu_name'     : _('Groups'),
+				'show_in_menu'  : 'modules',
+				'menu_order'    : 20,
+				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
+				'grid_view'     : ('name', 'descr'),
+				'form_view'     : ('name', 'descr'),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new network group'))
+			}
+		}
+	)
+	id = Column(
+		'netgid',
+		UInt32(),
+		Sequence('nets_groups_netgid_seq'),
+		Comment('Network group ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Network group name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 1
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Network group description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
 
-    def __str__(self):
-        return self.name
+	def __str__(self):
+		return str(self.name)
 
+class NetworkServiceType(Base):
+	"""
+	Network service type object.
+	"""
+	__tablename__ = 'nets_hltypes'
+	__table_args__ = (
+		Comment('Networks-hosts linkage types'),
+		Index('nets_hltypes_u_name', 'name', unique=True),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_NETS',
+				'cap_read'      : 'NETS_LIST',
+				'cap_create'    : 'NETS_SERVICETYPES_CREATE',
+				'cap_edit'      : 'NETS_SERVICETYPES_EDIT',
+				'cap_delete'    : 'NETS_SERVICETYPES_DELETE',
+				'menu_name'     : _('Services'),
+				'show_in_menu'  : 'admin',
+				'menu_order'    : 20,
+				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
+				'grid_view'     : ('name', 'unique'),
+				'form_view'     : ('name', 'unique'),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new network service type'))
+			}
+		}
+	)
+	id = Column(
+		'hltypeid',
+		UInt32(),
+		Sequence('nets_hltypes_hltypeid_seq'),
+		Comment('Networks-hosts linkage type ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Networks-hosts linkage type name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 1
+		}
+	)
+	unique = Column(
+		NPBoolean(),
+		Comment('Is unique per network?'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Unique')
+		}
+	)
 
-class NetworkHostLinkageType(Base):
-    """
-    Netprofile Network-Host Linkage Type definition
-    """
-    __tablename__ = 'nets_hltypes'
-    __table_args__ = (
-        Comment('Networks-Hosts Linkage Types'),
-        Index('nets_hltypes_u_name', 'name', unique=True),
-        {
-            'mysql_engine'  : 'InnoDB',
-            'mysql_charset' : 'utf8',
-            'info'          : {
-                #'cap_menu'      : 'BASE_NAS',
-                #'cap_read'      : 'NAS_LIST',
-                #'cap_create'    : 'NAS_CREATE',
-                #'cap_edit'      : 'NAS_EDIT',
-                #'cap_delete'    : 'NAS_DELETE',
-                'menu_name'    : _('Networks-Hosts Linkage Types'),
-                'show_in_menu'  : 'admin', 
-                'menu_order'    : 60,
-                'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-                'grid_view' : ('name', 'unique'),
-                'form_view' : ('name', 'unique'),
-                'easy_search' : ('name',),
-                'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard' : SimpleWizard(title=_('Add new network-host linkage type'))
-                }
-            }
-        )    
-    id = Column(
-        'hltypeid',
-        UInt32(),
-        Sequence('hltypeid_seq'),
-        Comment('Networks-Hosts Linkage Type ID'),
-        primary_key=True,
-        nullable=False,
-        info={
-            'header_string' : _('ID')
-            }
-        )
-    name = Column(
-        'name',
-        Unicode(255),
-        Comment('Networks-Hosts Linkage Type Name'),
-        nullable=False,
-        info={
-            'header_string' : _('Name')
-            }
-        )
-    unique = Column(
-        'unique',
-        NPBoolean(),
-        Comment('Is unique per network?'),
-        nullable=False,
-        default=False,
-        server_default=npbool(False),
-        info={
-            'header_string' : _('Is Unique?')
-            }
-        )
-        
-    linkage = relationship('NetworkHostLinkage', backref=backref('linkagetype', innerjoin=True))
+	services = relationship(
+		'NetworkService',
+		backref=backref('type', innerjoin=True)
+	)
 
-    def __str__(self):
-        return self.name
+	def __str__(self):
+		return str(self.name)
 
-
-class NetworkHostLinkage(Base):
-    """
-    Netprofile Network Host Linkage definition
-    """
-    __tablename__ = 'nets_hosts'
-    __table_args__ = (
-        Comment('Networks-Hosts Linkage'),
-        Index('nets_hosts_u_nhl', 'netid', 'hostid', 'hltypeid', unique=True),
+class NetworkService(Base):
+	"""
+	Network service object.
+	"""
+	__tablename__ = 'nets_hosts'
+	__table_args__ = (
+		Comment('Networks-hosts linkage'),
+		Index('nets_hosts_u_nhl', 'netid', 'hostid', 'hltypeid', unique=True),
 		Index('nets_hosts_i_hostid', 'hostid'),
 		Index('nets_hosts_i_hltypeid', 'hltypeid'),
-        {
-            'mysql_engine'  : 'InnoDB',
-            'mysql_charset' : 'utf8',
-            'info'          : {
-                #'cap_menu'      : 'BASE_NAS',
-                #'cap_read'      : 'NAS_LIST',
-				#'cap_create'    : 'NAS_CREATE',
-                #'cap_edit'      : 'NAS_EDIT',
-                #'cap_delete'    : 'NAS_DELETE',
-                'menu_name'    : _('Network-Host Linkage'),
-                'show_in_menu'  : 'admin', #modules
-                'menu_order'    : 60,
-                'default_sort' : ({ 'property': 'nhid' ,'direction': 'ASC' },),
-                'grid_view' : ('network', 'host', 'linkagetype'),
-                'form_view' : ('network', 'host', 'linkagetype'),
-                'easy_search' : ('network',),
-                'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard' : SimpleWizard(title=_('Add new network-host linkage'))
-                }
-            }
-        )
-    id = Column(
-        'nhid',
-        UInt32(),
-        Sequence('nhid_seq'),
-        Comment('Network-Host Linkage ID'),
-        primary_key=True,
-        nullable=False,
-        info={
-            'header_string' : _('ID')
-            }
-        )
-    netid = Column(
-        'netid',
-        UInt32(),
-        #network
-        ForeignKey('nets_def.netid', name='nets_hosts_fk_netid', ondelete='CASCADE', onupdate='CASCADE'),
-        Comment('Network ID'),
-        nullable=False,
-        info={
-            'header_string' : _('Network ID')
-            }
-        )
-    hostid = Column(
-        'hostid',
-        UInt32(),
-        Comment('Host ID'),
-        #networklinkagehost
-        ForeignKey('hosts_def.hostid', name='nets_hosts_fk_hostid', onupdate='CASCADE', ondelete='CASCADE'),
-        nullable=False,
-        info={
-            'header_string' : _('Host ID')
-            }
-        )
-    hltypeid = Column(
-        'hltypeid',
-        UInt32(),
-        #linkagetype
-        ForeignKey('nets_hltypes.hltypeid', name='nets_hosts_fk_hltypeid', onupdate='CASCADE'),
-        Comment('Network-Host Linkage Type'),
-        nullable=False,
-        info={
-            'header_string' : _('Type ID')
-            }
-        )
-    
-    host = relationship('Host', backref=backref('networklinkagehost', innerjoin=True))
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_NETS',
+				'cap_read'      : 'NETS_LIST',
+				'cap_create'    : 'NETS_EDIT',
+				'cap_edit'      : 'NETS_EDIT',
+				'cap_delete'    : 'NETS_EDIT',
+				'menu_name'     : _('Services'),
+				'grid_view'     : ('network', 'host', 'type'),
+				'form_view'     : ('network', 'host', 'type'),
+				'create_wizard' : SimpleWizard(title=_('Add new network service'))
+			}
+		}
+	)
+	id = Column(
+		'nhid',
+		UInt32(),
+		Sequence('nets_hosts_nhid_seq'),
+		Comment('Network-host linkage ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	network_id = Column(
+		'netid',
+		UInt32(),
+		ForeignKey('nets_def.netid', name='nets_hosts_fk_netid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Network ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Network'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
+		}
+	)
+	host_id = Column(
+		'hostid',
+		UInt32(),
+		ForeignKey('hosts_def.hostid', name='nets_hosts_fk_hostid', onupdate='CASCADE', ondelete='CASCADE'),
+		Comment('Host ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Host'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
+		}
+	)
+	type_id = Column(
+		'hltypeid',
+		UInt32(),
+		ForeignKey('nets_hltypes.hltypeid', name='nets_hosts_fk_hltypeid', onupdate='CASCADE'),
+		Comment('Network-host linkage type'),
+		nullable=False,
+		info={
+			'header_string' : _('Type'),
+			'filter_type'   : 'list',
+			'column_flex'   : 1
+		}
+	)
 
-    def __str__(self):
-        return "{0}-{1}".format(self.netid, self.hostid)
+	host = relationship(
+		'Host',
+		innerjoin=True,
+		backref=backref(
+			'network_services',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
 
+class RoutingTable(Base):
+	"""
+	Routing table object.
+	"""
+	__tablename__ = 'rt_def'
+	__table_args__ = (
+		Comment('Routing tables'),
+		Index('rt_def_u_name', 'name', unique=True),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_NETS',
+				'cap_read'      : 'NETS_LIST',
+				'cap_create'    : 'NETS_EDIT',
+				'cap_edit'      : 'NETS_EDIT',
+				'cap_delete'    : 'NETS_EDIT',
+				'menu_name'     : _('Routing Tables'),
+				'show_in_menu'  : 'admin',
+				'menu_order'    : 30,
+				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
+				'grid_view'     : ('name',),
+				'form_view'     : ('name',),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new routing table'))
+			}
+		}
+	)
+	id = Column(
+		'rtid',
+		UInt32(),
+		Sequence('rt_def_rtid_seq'),
+		Comment('Routing table ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Routing table name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 1
+		}
+	)
 
-class SNMPType(DeclEnum):
-    v1 = 'v1', _('Version 1'), 10
-    v2 = 'v2', _('Version 2'), 20
-    v3 = 'v3', _('Version 3'), 30
+	entries = relationship(
+		'RoutingTableEntry',
+		backref=backref('table', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
+	def __str__(self):
+		return str(self.name)
 
-class SNMPScheme(DeclEnum):
-    noAuthNoPriv = 'noAuthNoPriv', _('Not authorized, no privileges'), 10
-    authNoPriv = 'authNoPriv', _('Authorized, no privileges'), 20
-    authPriv = 'authPriv', _('Authorized, privileged'), 30
+class RoutingTableEntry(Base):
+	"""
+	Routing table entry object.
+	"""
+	__tablename__ = 'rt_bits'
+	__table_args__ = (
+		Comment('Routing table entries'),
+		Index('rt_bits_i_rtid', 'rtid'),
+		Index('rt_bits_i_rtr', 'rtr'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_NETS',
+				'cap_read'      : 'NETS_LIST',
+				'cap_create'    : 'NETS_EDIT',
+				'cap_edit'      : 'NETS_EDIT',
+				'cap_delete'    : 'NETS_EDIT',
+				'menu_name'     : _('Routing Table Entries'),
+				'grid_view'     : ('table', 'net', 'cidr', 'next_hop'),
+				'form_view'     : ('table', 'net', 'cidr', 'next_hop'),
+				'create_wizard' : SimpleWizard(title=_('Add new routing table entry'))
+			}
+		}
+	)
+	id = Column(
+		'rtbid',
+		UInt32(),
+		Sequence('rt_bits_rtbid_seq'),
+		Comment('Routing table bit ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	table_id = Column(
+		'rtid',
+		UInt32(),
+		ForeignKey('rt_def.rtid', name='rt_bits_fk_rtid', onupdate='CASCADE', ondelete='CASCADE'),
+		Comment('Routing table ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Table'),
+			'filter_type'   : 'list',
+			'column_flex'   : 1
+		}
+	)
+	network = Column(
+		'net',
+		IPv4Address(),
+		Comment('Network address'),
+		nullable=False,
+		info={
+			'header_string' : _('Network'),
+			'column_flex'   : 1
+		}
+	)
+	cidr = Column(
+		UInt8(),
+		Comment('Network CIDR'),
+		nullable=False,
+		default=24,
+		server_default=text('24'),
+		info={
+			'header_string' : _('Netmask')
+		}
+	)
+	next_hop_id = Column(
+		'rtr',
+		UInt32(),
+		ForeignKey('hosts_def.hostid', name='rt_bits_fk_hostid', onupdate='CASCADE', ondelete='CASCADE'),
+		Comment('Next hop host ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Next Hop'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
+		}
+	)
 
+	next_hop = relationship(
+		'Host',
+		backref=backref(
+			'next_hops',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
 
-class SNMPAuthProtocol(DeclEnum):
-    md5 = 'MD5', _('MD5'), 10
-    sha = 'SHA', _('SHA'), 20
-
-
-class SNMPCryptProtocol(DeclEnum):
-    des = 'DES', _('DES'), 10
-    aes128 = 'AES128', _('AES128'), 20
-    aes192 = 'AES192', _('AES192'), 30 
-    aes256 = 'AES256', _('AES256'), 40
-
-class ManagementType(DeclEnum):
-    ssh = 'ssh', _('ssh'), 10
-    telnet = 'telnet', _('telnet'), 20
-    vnc = 'vnc', _('vnc'), 30
-    rdp = 'rdp', _('rdp'), 40
-
-
-class NetworkDevice(Base):
-    """
-    Netprofile Network Device definition
-    """
-    __tablename__ = 'devices_network'
-    __table_args__ = (
-        Comment('Network Devices'),
-        Index('devices_network_u_hostid', 'hostid', unique=True),
-        {
-            'mysql_engine'  : 'InnoDB',
-            'mysql_charset' : 'utf8',
-            'info'          : {
-                'menu_name'    : _('Network Device'),
-                'show_in_menu'  : 'admin',
-                'menu_order'    : 70,
-                'default_sort' : ({ 'property': 'did' ,'direction': 'ASC' },),
-                'grid_view' : ('device', 'host'),
-                'form_view' : ('device', 'host', 'snmptype', 'cs_ro', 'cs_rw', 'v3user', 'v3scheme', 'v3authproto', 'v3authpass', 'v3privproto', 'v3privpass', 'mgmttype', 'mgmtuser', 'mgmtpass', 'mgmtepass'),
-                'easy_search' : ('did',),
-                'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard' : SimpleWizard(title=_('Add new network device'))
-                }
-            }
-        )
-    did = Column(
-        'did',
-        UInt32(),
-        Sequence('did_seq'),
-		Comment('Device ID'),
-		ForeignKey('devices_def.did', name='devices_network_fk_did', onupdate='CASCADE', ondelete='CASCADE'),
-        primary_key=True,
-        nullable=False,
-        info={
-            'header_string' : _('Device')
-            }
-        )
-    hostid = Column(
-        'hostid',
-        UInt32(),
-        Comment('Host ID'),
-        ForeignKey('hosts_def.hostid', name='devices_network_fk_hostid', ondelete='SET NULL', onupdate='CASCADE'),
-        nullable=False,
-        info={
-            'header_string' : _('Host')
-            }
-        )
-    snmptype = Column(
-        'snmptype',
-        SNMPType.db_type(),
-        Comment('SNMP Access Type'),
-        info={
-            'header_string' : _('SNMP type')
-            }
-        )
-    cs_ro = Column(
-        'cs_ro',
-        ASCIIString(255),
-        Comment('SNMPv2 Read-Only Community'),
-        info={
-            'header_string' : _('SNMPv2 Read Only')
-            }
-        )
-    cs_rw = Column(
-        'cs_rw',
-        ASCIIString(255),
-        Comment('SNMPv2 Read-Write Community'),
-        info={
-            'header_string' : _('SNMPv2 Read-Write')
-            }
-        )
-    v3user = Column(
-        'v3user',
-        ASCIIString(255),
-        Comment('SNMPv3 User Name'),
-        info={
-            'header_string' : _('SNMPv3 User Name')
-            }
-        )
-    v3scheme = Column(
-        'v3scheme',
-        SNMPScheme.db_type(),
-        Comment('SNMPv3 Connection Level'),
-        info={
-            'header_string' : 'Connection level'
-            }
-        )
-    v3authproto = Column(
-        'v3authproto',
-        SNMPAuthProtocol.db_type(),
-        Comment('SNMPv3 Auth Protocol'),
-        info={
-            'header_string' : 'Auth protocol'
-            }
-        )
-    v3authpass = Column(
-        'v3authpass',
-        ASCIIString(255),
-        Comment('SNMPv3 Auth Passphrase'),
-        info={
-            'header_string' : 'Passphrase'
-            }
-        )
-    v3privproto = Column(
-        'v3privproto',
-        SNMPCryptProtocol.db_type(),
-        Comment('SNMPv3 Crypt Protocol'),
-        info={
-            'header_string' : 'Crypt protocol'
-            }
-        )
-    v3privpass = Column(
-        'v3privpass',
-        ASCIIString(255),
-        Comment('SNMPv3 Crypt Passphrase'),
-        info={
-            'header_string' : 'Crypt Passphrase'
-            }
-        )
-    mgmttype = Column(
-        'mgmttype',
-        ManagementType.db_type(),
-        Comment('Management Access Type'),
-        info={
-            'header_string' : 'Management access type'
-            }
-        )
-    mgmtuser = Column(
-        'mgmtuser',
-        Unicode(255),
-        Comment('Management User Name'),
-        info={
-            'header_string' : 'Management User Name'
-            }
-        )
-    mgmtpass = Column(
-        'mgmtpass',
-        Unicode(255),
-        Comment('Management Password'),
-        info={
-            'header_string' : 'Management Password'
-            }
-        )
-    mgmtepass = Column(
-        'mgmtepass',
-        Unicode(255),
-        Comment('Management Enablement Password'),
-        info={
-            'header_string' : 'Enabled password'
-            }
-        )
-    networkdevice = relationship('Network', backref=backref('networkdevice', innerjoin=True))
-    host = relationship('Host', backref=backref('networkdevicehost'))
-    device = relationship('Device', backref=backref('netdevice', innerjoin=True))
-
-    def __str__(self):
-        return "{0}, {1}".format(self.host, self.device)
-    

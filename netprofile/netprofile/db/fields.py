@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Custom database fields
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -11,6 +30,7 @@ from __future__ import (
 from sqlalchemy import (
 	and_,
 	schema,
+	type_coerce,
 	types,
 	util
 )
@@ -44,6 +64,7 @@ else:
 	)
 
 import re
+import colander
 
 _D_MYSQL = frozenset([
 	mysql.mysqlconnector.dialect,
@@ -144,6 +165,23 @@ class IPv6Address(types.TypeDecorator):
 			return None
 		return ipaddr.IPv6Address(value)
 
+class IPv6Offset(types.TypeDecorator):
+	"""
+	IPv6 address offset.
+	"""
+	impl = types.Numeric(39, 0)
+	MIN_VALUE = 0
+	MAX_VALUE = 340282366920938463463374607431768211456
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.DECIMAL(precision=39, scale=0, unsigned=True)
+		return self.impl
+
+	@property
+	def python_type(self):
+		return int
+
 class MACAddress(types.TypeDecorator):
 	"""
 	MAC address
@@ -210,6 +248,17 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
 		else:
 			return None
 
+	class comparator_factory(types.Boolean.Comparator):
+		def __eq__(self, other):
+			if isinstance(other, bool):
+				other = type_coerce(other, NPBoolean)
+			return types.Boolean.Comparator.__eq__(self, other)
+
+		def __ne__(self, other):
+			if isinstance(other, bool):
+				other = type_coerce(other, NPBoolean)
+			return types.Boolean.Comparator.__ne__(self, other)
+
 class npbool(expression.FunctionElement):
 	"""
 	Constant NPBoolean element.
@@ -255,6 +304,9 @@ class ASCIIString(types.TypeDecorator):
 			value = value.decode('ascii')
 		return value
 
+	def colander_type(self):
+		return colander.String(encoding='ascii')
+
 class ASCIIFixedString(types.TypeDecorator):
 	"""
 	ASCII-only version of fixed-length string field.
@@ -272,6 +324,9 @@ class ASCIIFixedString(types.TypeDecorator):
 		if isinstance(value, bytes):
 			value = value.decode('ascii')
 		return value
+
+	def colander_type(self):
+		return colander.String(encoding='ascii')
 
 class ExactUnicode(types.TypeDecorator):
 	"""
@@ -386,7 +441,7 @@ class UInt64(types.TypeDecorator):
 	"""
 	64-bit unsigned integer field.
 	"""
-	impl = types.Integer
+	impl = types.BigInteger
 	MIN_VALUE = 0
 	MAX_VALUE = 18446744073709551615
 
@@ -413,6 +468,9 @@ class ASCIITinyText(types.TypeDecorator):
 			value = value.decode('ascii')
 		return value
 
+	def colander_type(self):
+		return colander.String(encoding='ascii')
+
 class ASCIIText(types.TypeDecorator):
 	"""
 	Large ASCII text field.
@@ -430,6 +488,9 @@ class ASCIIText(types.TypeDecorator):
 		if isinstance(value, bytes):
 			value = value.decode('ascii')
 		return value
+
+	def colander_type(self):
+		return colander.String(encoding='ascii')
 
 @compiles(EnumSymbol)
 def compile_enumsym(element, compiler, **kw):

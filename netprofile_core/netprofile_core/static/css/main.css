@@ -38,6 +38,17 @@ h2
 	height: 16px;
 }
 
+.np-cap-icon
+{
+	display: inline-block;
+	border: 0;
+	width: 16px;
+	height: 16px;
+	margin-top: -3px;
+	margin-bottom: -4px;
+	margin-right: 2px;
+}
+
 .np-object-frame
 {
 	margin-top: 1em;
@@ -138,6 +149,7 @@ h2
 {
 	padding-top: 2px;
 	height: 16px;
+	position: relative;
 }
 
 .np-file-iview .x-view-empty, .np-file-lview .x-view-empty
@@ -419,6 +431,7 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 .ico-undo         { background-image: url(../img/undo.png) !important; }
 .ico-view         { background-image: url(../img/view.png) !important; }
 
+.ico-mod-acl                  { background-image: url(../img/key_plus.png) !important; }
 .ico-mod-datacache            { background-image: url(../img/db.png) !important; }
 .ico-mod-globalsetting        { background-image: url(../img/item.png) !important; }
 .ico-mod-globalsettingsection { background-image: url(../img/item_group.png) !important; }

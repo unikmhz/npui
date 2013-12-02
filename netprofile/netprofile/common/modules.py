@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Module detection and loading
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -140,10 +159,7 @@ class ModuleManager(object):
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
 			if ep.name in self.modules:
 				continue
-			mod = ep.load()
-			if not issubclass(mod, ModuleBase):
-				continue
-			self.modules[ep.name] = mod
+			self.modules[ep.name] = ep
 
 	def _get_dist(self, moddef=None):
 		"""
@@ -163,18 +179,22 @@ class ModuleManager(object):
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
 		mstack.append(moddef)
-		for depmod in self.modules[moddef].get_deps():
+		modcls = self.modules[moddef].load()
+		if not issubclass(modcls, ModuleBase):
+			logger.error('Module \'%s\' is invalid. Verify installation and try again.', moddef)
+			return False
+		for depmod in modcls.get_deps():
 			if not self._load(depmod, mstack):
 				logger.error('Can\'t load module \'%s\', which is needed for module \'%s\'.', depmod, moddef)
 				return False
-		mod = self.loaded[moddef] = self.modules[moddef](self)
+		mod = self.loaded[moddef] = modcls(self)
 		self.cfg.include(
 			lambda conf: mod.add_routes(conf),
 			route_prefix='/' + moddef
 		)
 		self.cfg.add_static_view(
 			'static/' + moddef,
-			self.modules[moddef].__module__ + ':static',
+			self.modules[moddef].module_name + ':static',
 			cache_max_age=3600
 		)
 		self.models[moddef] = {}

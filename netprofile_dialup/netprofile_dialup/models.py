@@ -1,5 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Dial-Up module - Models
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -83,7 +102,7 @@ class NAS(Base):
 	id = Column(
 		'nasid',
 		UInt32(),
-		Sequence('nasid_seq'),
+		Sequence('nas_def_nasid_seq'),
 		Comment('Network access server ID'),
 		primary_key=True,
 		nullable=False,
@@ -162,7 +181,7 @@ class IPPool(Base):
 	id = Column(
 		'poolid',
 		UInt32(),
-		Sequence('poolid_seq'),
+		Sequence('ippool_def_poolid_seq'),
 		Comment('IP address pool ID'),
 		primary_key=True,
 		nullable=False,
@@ -258,7 +277,7 @@ class NASPool(Base):
 	id = Column(
 		'npid',
 		UInt32(),
-		Sequence('npid_seq'),
+		Sequence('nas_pools_npid_seq'),
 		Comment('NAS IP pool ID'),
 		primary_key=True,
 		nullable=False,

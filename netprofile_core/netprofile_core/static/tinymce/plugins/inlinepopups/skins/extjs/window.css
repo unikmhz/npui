@@ -1,0 +1,90 @@
+/* Clearlooks 2 */
+
+/* Reset */
+.extjs, .extjs div, .extjs span, .extjs a {vertical-align:baseline; text-align:left; position:absolute; border:0; padding:0; margin:0; background:transparent; font-family:Arial,Verdana; font-size:11px; color:#000; text-decoration:none; font-weight:normal; width:auto; height:auto; overflow:hidden; display:block}
+
+/* General */
+.extjs {position:absolute; direction:ltr}
+.extjs .mceWrapper {position:static}
+.mceEventBlocker {position:fixed; left:0; top:0; background:url(img/horizontal.gif) no-repeat 0 -75px; width:100%; height:100%}
+.extjs .mcePlaceHolder {border:1px solid #000; background:#888; top:0; left:0; opacity:0.5; -ms-filter:'alpha(opacity=50)'; filter:alpha(opacity=50)}
+.extjs_modalBlocker {position:fixed; left:0; top:0; width:100%; height:100%; background:#FFF; opacity:0.6; -ms-filter:'alpha(opacity=60)'; filter:alpha(opacity=60); display:none}
+
+/* Top */
+.extjs .mceTop, .extjs .mceTop div {top:0; width:100%; height:23px}
+.extjs .mceTop .mceLeft {width:6px; background:url(img/corners.gif)}
+.extjs .mceTop .mceCenter {right:6px; width:100%; height:23px; background:url(img/horizontal.gif) 12px 0; clip:rect(auto auto auto 12px)}
+.extjs .mceTop .mceRight {right:0; width:6px; height:23px; background:url(img/corners.gif) -12px 0}
+.extjs .mceTop span {width:100%; text-align:left; vertical-align:middle; line-height:23px; font-weight:bold; padding-left: 10px;}
+.extjs .mceFocus .mceTop .mceLeft {background:url(img/corners.gif) -6px 0}
+.extjs .mceFocus .mceTop .mceCenter {background:url(img/horizontal.gif) 0 -23px}
+.extjs .mceFocus .mceTop .mceRight {background:url(img/corners.gif) -18px 0}
+.extjs .mceFocus .mceTop span {color:#FFF}
+
+/* Middle */
+.extjs .mceMiddle, .extjs .mceMiddle div {top:0}
+.extjs .mceMiddle {width:100%; height:100%; clip:rect(23px auto auto auto)}
+.extjs .mceMiddle .mceLeft {left:0; width:5px; height:100%; background:url(img/vertical.gif) -5px 0}
+.extjs .mceMiddle span {top:23px; left:5px; width:100%; height:100%; background:#FFF}
+.extjs .mceMiddle .mceRight {right:0; width:5px; height:100%; background:url(img/vertical.gif)}
+
+/* Bottom */
+.extjs .mceBottom, .extjs .mceBottom div {height:6px}
+.extjs .mceBottom {left:0; bottom:0; width:100%}
+.extjs .mceBottom div {top:0}
+.extjs .mceBottom .mceLeft {left:0; width:5px; background:url(img/corners.gif) -34px -6px}
+.extjs .mceBottom .mceCenter {left:5px; width:100%; background:url(img/horizontal.gif) 0 -46px}
+.extjs .mceBottom .mceRight {right:0; width:5px; background: url(img/corners.gif) -34px 0}
+.extjs .mceBottom span {display:none}
+.extjs .mceStatusbar .mceBottom, .extjs .mceStatusbar .mceBottom div {height:23px}
+.extjs .mceStatusbar .mceBottom .mceLeft {background:url(img/corners.gif) -29px 0}
+.extjs .mceStatusbar .mceBottom .mceCenter {background:url(img/horizontal.gif) 0 -52px}
+.extjs .mceStatusbar .mceBottom .mceRight {background:url(img/corners.gif) -24px 0}
+.extjs .mceStatusbar .mceBottom span {display:block; left:7px; font-family:Arial, Verdana; font-size:11px; line-height:23px}
+
+/* Actions */
+.extjs a {width:29px; height:16px; top:3px;}
+.extjs .mceClose {right:6px; background:url(img/buttons.gif) -87px 0}
+.extjs .mceMin {display:none; right:68px; background:url(img/buttons.gif) 0 0}
+.extjs .mceMed {display:none; right:37px; background:url(img/buttons.gif) -29px 0}
+.extjs .mceMax {display:none; right:37px; background:url(img/buttons.gif) -58px 0}
+.extjs .mceMove {display:none;width:100%;cursor:move;background:url(img/corners.gif) no-repeat -100px -100px}
+.extjs .mceMovable .mceMove {display:block}
+.extjs .mceFocus .mceClose {right:6px; background:url(img/buttons.gif) -87px -16px}
+.extjs .mceFocus .mceMin {right:68px; background:url(img/buttons.gif) 0 -16px}
+.extjs .mceFocus .mceMed {right:37px; background:url(img/buttons.gif) -29px -16px}
+.extjs .mceFocus .mceMax {right:37px; background:url(img/buttons.gif) -58px -16px}
+.extjs .mceFocus .mceClose:hover {right:6px; background:url(img/buttons.gif) -87px -32px}
+.extjs .mceFocus .mceClose:hover {right:6px; background:url(img/buttons.gif) -87px -32px}
+.extjs .mceFocus .mceMin:hover {right:68px; background:url(img/buttons.gif) 0 -32px}
+.extjs .mceFocus .mceMed:hover {right:37px; background:url(img/buttons.gif) -29px -32px}
+.extjs .mceFocus .mceMax:hover {right:37px; background:url(img/buttons.gif) -58px -32px}
+
+/* Resize */
+.extjs .mceResize {top:auto; left:auto; display:none; width:5px; height:5px; background:url(img/horizontal.gif) no-repeat 0 -75px}
+.extjs .mceResizable .mceResize {display:block}
+.extjs .mceResizable .mceMin, .extjs .mceMax {display:none}
+.extjs .mceMinimizable .mceMin {display:block}
+.extjs .mceMaximizable .mceMax {display:block}
+.extjs .mceMaximized .mceMed {display:block}
+.extjs .mceMaximized .mceMax {display:none}
+.extjs a.mceResizeN {top:0; left:0; width:100%; cursor:n-resize}
+.extjs a.mceResizeNW {top:0; left:0; cursor:nw-resize}
+.extjs a.mceResizeNE {top:0; right:0; cursor:ne-resize}
+.extjs a.mceResizeW {top:0; left:0; height:100%; cursor:w-resize;}
+.extjs a.mceResizeE {top:0; right:0; height:100%; cursor:e-resize}
+.extjs a.mceResizeS {bottom:0; left:0; width:100%; cursor:s-resize}
+.extjs a.mceResizeSW {bottom:0; left:0; cursor:sw-resize}
+.extjs a.mceResizeSE {bottom:0; right:0; cursor:se-resize}
+
+/* Alert/Confirm */
+.extjs .mceButton {font-weight:bold; bottom:10px; width:80px; height:30px; background:url(img/button.gif); line-height:30px; vertical-align:middle; text-align:center; outline:0}
+.extjs .mceMiddle .mceIcon {left:15px; top:35px; width:32px; height:32px}
+.extjs .mceAlert .mceMiddle span, .extjs .mceConfirm .mceMiddle span {background:transparent;left:60px; top:35px; width:320px; height:50px; font-weight:bold; overflow:auto; white-space:normal}
+.extjs a:hover {font-weight:bold;}
+.extjs .mceAlert .mceMiddle, .extjs .mceConfirm .mceMiddle {background:#D6D7D5}
+.extjs .mceAlert .mceOk {left:50%; top:auto; margin-left: -40px}
+.extjs .mceAlert .mceIcon {background:url(img/alert.gif)}
+.extjs .mceConfirm .mceOk {left:50%; top:auto; margin-left: -90px}
+.extjs .mceConfirm .mceCancel {left:50%; top:auto}
+.extjs .mceConfirm .mceIcon {background:url(img/confirm.gif)}

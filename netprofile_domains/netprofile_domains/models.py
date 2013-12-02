@@ -1,5 +1,25 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Domains module - Models
+# © Copyright 2013 Nikita Andriyanov
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -126,7 +146,7 @@ class Domain(Base):
 	id = Column(
 		'domainid',
 		UInt32(),
-		Sequence('domainid_seq'),
+		Sequence('domains_def_domainid_seq'),
 		Comment('Domain ID'),
 		primary_key=True,
 		nullable=False,
@@ -326,7 +346,7 @@ class DomainAlias(Base):
 	id = Column(
 		'daid',
 		UInt32(),
-		Sequence('daid_seq'),
+		Sequence('domains_aliases_daid_seq'),
 		Comment('Domain alias ID'),
 		primary_key=True,
 		nullable=False,
@@ -407,9 +427,9 @@ class DomainTXTRecord(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_DOMAINS',
 				'cap_read'      : 'DOMAINS_LIST',
-				'cap_create'    : 'DOMAINS_CREATE',
+				'cap_create'    : 'DOMAINS_EDIT',
 				'cap_edit'      : 'DOMAINS_EDIT',
-				'cap_delete'    : 'DOMAINS_DELETE',
+				'cap_delete'    : 'DOMAINS_EDIT',
 				'menu_name'     : _('TXT Records'),
 				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
@@ -426,7 +446,7 @@ class DomainTXTRecord(Base):
 	id = Column(
 		'txtrrid',
 		UInt32(),
-		Sequence('txtrrid_seq'),
+		Sequence('domains_txtrr_txtrrid_seq'),
 		Comment('Text record ID'),
 		primary_key=True,
 		nullable=False,
@@ -513,9 +533,9 @@ class DomainServiceType(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_DOMAINS',
 				'cap_read'      : 'DOMAINS_LIST',
-				'cap_create'    : 'DOMAINS_CREATE',
-				'cap_edit'      : 'DOMAINS_EDIT',
-				'cap_delete'    : 'DOMAINS_DELETE',
+				'cap_create'    : 'DOMAINS_SERVICETYPES_CREATE',
+				'cap_edit'      : 'DOMAINS_SERVICETYPES_EDIT',
+				'cap_delete'    : 'DOMAINS_SERVICETYPES_DELETE',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Domain Service Types'),
@@ -532,7 +552,7 @@ class DomainServiceType(Base):
 	id = Column(
 		'hltypeid',
 		UInt32(),
-		Sequence('hltypeid_seq'),
+		Sequence('domains_hltypes_hltypeid_seq'),
 		Comment('Domains-hosts linkage type ID'),
 		primary_key=True,
 		nullable=False,

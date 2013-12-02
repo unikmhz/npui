@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Core module
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -7,6 +26,8 @@ from __future__ import (
 	absolute_import,
 	division
 )
+
+from zope.interface.interfaces import ComponentLookupError
 
 from netprofile.common.modules import ModuleBase
 from netprofile.common.menus import Menu
@@ -35,23 +56,27 @@ class Module(ModuleBase):
 		self.mmgr = mmgr
 		cfg = mmgr.cfg
 		cfg.add_translation_dirs('netprofile_core:locale/')
-		cfg.add_route('core.home', '/')
-		cfg.add_route('core.login', '/login')
-		cfg.add_route('core.logout', '/logout')
+		cfg.add_route('core.home', '/', vhost='MAIN')
+		cfg.add_route('core.login', '/login', vhost='MAIN')
+		cfg.add_route('core.logout', '/logout', vhost='MAIN')
 		cfg.add_traverser(DAVTraverser, DAVRoot)
-		cfg.add_route('core.dav', '/dav*traverse', factory='netprofile.dav.DAVRoot')
+		cfg.add_route('core.dav', '/dav*traverse', factory='netprofile.dav.DAVRoot', vhost='MAIN')
 		cfg.scan()
 
-		dav = cfg.registry.getUtility(IDAVManager)
-		if dav:
-			dav.set_locks_backend(DAVLock)
+		try:
+			dav = cfg.registry.getUtility(IDAVManager)
+			if dav:
+				dav.set_locks_backend(DAVLock)
+		except ComponentLookupError:
+			pass
 
 	def add_routes(self, config):
-		config.add_route('core.noop', '/noop')
-		config.add_route('core.js.webshell', '/js/webshell')
+		config.add_route('core.noop', '/noop', vhost='MAIN')
+		config.add_route('core.js.webshell', '/js/webshell', vhost='MAIN')
 		config.add_route('core.file.download', '/file/dl/{fileid:\d+}*filename',
+				vhost='MAIN',
 				custom_predicates=(_int_fileid,))
-		config.add_route('core.file.upload', '/file/ul')
+		config.add_route('core.file.upload', '/file/ul', vhost='MAIN')
 
 	def get_models(self):
 		return (
@@ -130,10 +155,12 @@ class Module(ModuleBase):
 		if request.debug_enabled:
 			return (
 				'netprofile_core:static/extjs/ext-all-dev.js',
+				'netprofile_core:static/tinymce/tiny_mce_src.js',
 				'netprofile_core:static/sockjs/sockjs.js'
 			)
 		return (
 			'netprofile_core:static/extjs/ext-all.js',
+			'netprofile_core:static/tinymce/tiny_mce.js',
 			'netprofile_core:static/sockjs/sockjs.min.js'
 		)
 

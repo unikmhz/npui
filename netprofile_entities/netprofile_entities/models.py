@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Entities module - Models
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -22,8 +41,7 @@ __all__ = [
 	'PhysicalEntity',
 	'LegalEntity',
 	'StructuralEntity',
-	'ExternalEntity',
-	'AccessEntity'
+	'ExternalEntity'
 ]
 
 import datetime as dt
@@ -113,7 +131,6 @@ class EntityType(DeclEnum):
 	legal      = 'legal',      _('Legal'),      20
 	structural = 'structural', _('Structural'), 30
 	external   = 'external',   _('External'),   40
-	access     = 'access',     _('Access'),     50
 
 def _wizcb_ent_generic_next(wiz, step, act, val, req):
 	ret = {
@@ -163,22 +180,22 @@ class Entity(Base):
 	def _filter_address(cls, query, value):
 		if not isinstance(value, dict):
 			return query
-		if 'houseid' in value:
+		if value.get('houseid'):
 			val = int(value['houseid'])
 			if val > 0:
 				query = query.join(Address).filter(Address.house_id == val)
-		elif 'streetid' in value:
+		elif value.get('streetid'):
 			val = int(value['streetid'])
 			if val > 0:
 				query = query.join(Address).join(House).filter(House.street_id == val)
-		elif 'districtid' in value:
+		elif value.get('districtid'):
 			val = int(value['districtid'])
 			if val > 0:
 				query = query.join(Address).join(House).join(Street).filter(Street.district_id == val)
-		elif 'cityid' in value:
+		elif value.get('cityid'):
 			val = int(value['cityid'])
 			if val > 0:
-				query = query.join(Address).join(House).join(Street).join(District).filter(District.city_id == val)
+				query = query.join(Address).join(House).join(Street).filter(Street.city_id == val)
 		return query
 
 	@classmethod
@@ -223,23 +240,25 @@ class Entity(Base):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick',
 					MarkupColumn(
 						name='object',
 						header_string=_('Object'),
+						column_flex=4,
 						template=TemplateObject('netprofile_entities:templates/entity_nick.mak')
 					),
 					HybridColumn(
 						'data',
 						header_string=_('Information'),
+						column_flex=5,
 						template=TemplateObject('netprofile_entities:templates/entity_data.mak')
 					),
 					'state'
 				),
 				'easy_search'   : ('nick',),
-				'extra_data'    : ('data',),
+				'extra_data'    : ('data', 'grid_icon'),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					TextFilter('phone', _filter_phone,
@@ -262,18 +281,8 @@ class Entity(Base):
 						ExternalWizardField('PhysicalEntity', 'name_family'),
 						ExternalWizardField('PhysicalEntity', 'name_given'),
 						ExternalWizardField('PhysicalEntity', 'name_middle'),
-#						ExternalWizardField('PhysicalEntity', 'phone_home'),
-#						ExternalWizardField('PhysicalEntity', 'phone_work'),
-#						ExternalWizardField('PhysicalEntity', 'phone_cell'),
 						id='ent_physical1', title=_('Physical entity properties'),
 						on_prev='generic'
-					),
-					Step(
-#						ExternalWizardField('PhysicalEntity', 'house'),
-#						ExternalWizardField('PhysicalEntity', 'entrance'),
-#						ExternalWizardField('PhysicalEntity', 'floor'),
-#						ExternalWizardField('PhysicalEntity', 'flat'),
-						id='ent_physical2', title=_('Physical entity properties')
 					),
 					Step(
 						ExternalWizardField('PhysicalEntity', 'pass_series'),
@@ -284,18 +293,12 @@ class Entity(Base):
 						ExternalWizardField('PhysicalEntity', 'icq'),
 						ExternalWizardField('PhysicalEntity', 'homepage'),
 						ExternalWizardField('PhysicalEntity', 'birthdate'),
-						id='ent_physical3', title=_('Physical entity properties'),
+						id='ent_physical2', title=_('Physical entity properties'),
 						on_submit=_wizcb_ent_submit('PhysicalEntity')
 					),
 					Step(
 						ExternalWizardField('LegalEntity', 'contractid'),
 						ExternalWizardField('LegalEntity', 'name'),
-#						ExternalWizardField('LegalEntity', 'phone_rec'),
-#						ExternalWizardField('LegalEntity', 'phone_fax'),
-#						ExternalWizardField('LegalEntity', 'house'),
-#						ExternalWizardField('LegalEntity', 'entrance'),
-#						ExternalWizardField('LegalEntity', 'floor'),
-#						ExternalWizardField('LegalEntity', 'flat'),
 						ExternalWizardField('LegalEntity', 'homepage'),
 						id='ent_legal1', title=_('Legal entity properties'),
 						on_prev='generic'
@@ -305,8 +308,6 @@ class Entity(Base):
 						ExternalWizardField('LegalEntity', 'cp_name_given'),
 						ExternalWizardField('LegalEntity', 'cp_name_middle'),
 						ExternalWizardField('LegalEntity', 'cp_title'),
-#						ExternalWizardField('LegalEntity', 'cp_phone_work'),
-#						ExternalWizardField('LegalEntity', 'cp_phone_cell'),
 						ExternalWizardField('LegalEntity', 'cp_email'),
 						ExternalWizardField('LegalEntity', 'cp_icq'),
 						id='ent_legal2', title=_('Legal entity contact person')
@@ -323,7 +324,7 @@ class Entity(Base):
 						on_submit=_wizcb_ent_submit('LegalEntity')
 					),
 					Step(
-#						ExternalWizardField('StructuralEntity', 'house'),
+						# FIXME?
 						id='ent_structural1', title=_('Structural entity properties'),
 						on_prev='generic',
 						on_submit=_wizcb_ent_submit('StructuralEntity')
@@ -343,7 +344,7 @@ class Entity(Base):
 	id = Column(
 		'entityid',
 		UInt32(),
-		Sequence('entityid_seq'),
+		Sequence('entities_def_entityid_seq'),
 		Comment('Entity ID'),
 		primary_key=True,
 		nullable=False,
@@ -369,7 +370,8 @@ class Entity(Base):
 		Comment('Entity nickname'),
 		nullable=False,
 		info={
-			'header_string' : _('Identifier')
+			'header_string' : _('Identifier'),
+			'column_flex'   : 2
 		}
 	)
 	state_id = Column(
@@ -554,6 +556,43 @@ class Entity(Base):
 			'flags' : [(ft.id, ft.name) for ft in self.flags]
 		}
 
+	def template_vars(self, req):
+		return {
+			'id'          : self.id,
+			'nick'        : self.nick,
+			'type'        : self.type,
+			'description' : self.description,
+			'state'       : {
+				'id'   : self.state_id,
+				'name' : str(self.state)
+			},
+			'flags'       : [(ft.id, ft.name) for ft in self.flags],
+			'addresses'   : [{
+				'id'          : a.id,
+				'str'         : str(a),
+				'primary'     : a.primary,
+				'house'       : {
+					'id'  : a.house_id,
+					'str' : str(a.house)
+				},
+				'entrance'    : a.entrance,
+				'floor'       : a.floor,
+				'flat'        : a.flat,
+				'entry_code'  : a.entry_code,
+				'description' : a.description
+			} for a in self.addresses],
+			'phones'          : [{
+				'id'          : p.id,
+				'primary'     : p.primary,
+				'type'        : p.type,
+				'number'      : p.number,
+				'description' : p.description
+			} for p in self.phones]
+		}
+
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/entity.png')
+
 	@validates('nick')
 	def _set_nick(self, k, v):
 		self.relative_dn = '%s=%s' % (self.DN_ATTR, str(v))
@@ -618,7 +657,7 @@ class EntityState(Base):
 	id = Column(
 		'esid',
 		UInt32(),
-		Sequence('esid_seq'),
+		Sequence('entities_states_esid_seq'),
 		Comment('Entity state ID'),
 		primary_key=True,
 		nullable=False,
@@ -680,7 +719,7 @@ class EntityFlagType(Base):
 	id = Column(
 		'flagid',
 		UInt32(),
-		Sequence('flagid_seq'),
+		Sequence('entities_flags_types_flagid_seq'),
 		Comment('Entity flag type ID'),
 		primary_key=True,
 		nullable=False,
@@ -750,7 +789,7 @@ class EntityFlag(Base):
 	id = Column(
 		'efid',
 		UInt32(),
-		Sequence('efid_seq'),
+		Sequence('entities_flags_def_efid_seq'),
 		Comment('Entity flag ID'),
 		primary_key=True,
 		nullable=False,
@@ -817,7 +856,7 @@ class Address(Base):
 	id = Column(
 		'addrid',
 		UInt32(),
-		Sequence('addrid_seq'),
+		Sequence('addr_def_addrid_seq'),
 		Comment('Address ID'),
 		primary_key=True,
 		nullable=False,
@@ -990,7 +1029,7 @@ class Phone(Base):
 	id = Column(
 		'phoneid',
 		UInt32(),
-		Sequence('phoneid_seq'),
+		Sequence('addr_phones_phoneid_seq'),
 		Comment('Phone ID'),
 		primary_key=True,
 		nullable=False,
@@ -1111,7 +1150,7 @@ class EntityFile(Base):
 	id = Column(
 		'efid',
 		UInt32(),
-		Sequence('file_efid_seq'),
+		Sequence('entities_files_efid_seq'),
 		Comment('Entity-file mapping ID'),
 		primary_key=True,
 		nullable=False,
@@ -1126,7 +1165,8 @@ class EntityFile(Base):
 		Comment('Entity ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Entity')
+			'header_string' : _('Entity'),
+			'column_flex'   : 1
 		}
 	)
 	file_id = Column(
@@ -1136,7 +1176,8 @@ class EntityFile(Base):
 		Comment('File ID'),
 		nullable=False,
 		info={
-			'header_string' : _('File')
+			'header_string' : _('File'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -1179,7 +1220,7 @@ class EntityComment(Base):
 	id = Column(
 		'ecid',
 		UInt32(),
-		Sequence('ecid_seq'),
+		Sequence('entities_comments_ecid_seq'),
 		Comment('Entity comment ID'),
 		primary_key=True,
 		nullable=False,
@@ -1252,46 +1293,6 @@ class PhysicalEntity(Entity):
 	Physical entity. Describes single individual.
 	"""
 
-#	@classmethod
-#	def _filter_address(cls, query, value):
-#		if not isinstance(value, dict):
-#			return query
-#		if 'houseid' in value:
-#			val = int(value['houseid'])
-#			if val > 0:
-#				query = query.filter(PhysicalEntity.house_id == val)
-#		elif 'streetid' in value:
-#			val = int(value['streetid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).filter(House.street_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(PhysicalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'districtid' in value:
-#			val = int(value['districtid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(PhysicalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'cityid' in value:
-#			val = int(value['cityid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(PhysicalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		return query
-
 	__tablename__ = 'entities_physical'
 	__table_args__ = (
 		Comment('Physical entities'),
@@ -1311,7 +1312,6 @@ class PhysicalEntity(Entity):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Physical entities'),
 				'menu_order'    : 10,
-				'menu_parent'   : 'entity',
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1321,7 +1321,7 @@ class PhysicalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick', 'name_family', 'name_given'
 				),
@@ -1334,6 +1334,7 @@ class PhysicalEntity(Entity):
 					'descr'
 				),
 				'easy_search'   : ('nick', 'name_family'),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					TextFilter('phone', Entity._filter_phone,
@@ -1398,7 +1399,8 @@ class PhysicalEntity(Entity):
 		Comment('Family name'),
 		nullable=False,
 		info={
-			'header_string' : _('Family Name')
+			'header_string' : _('Family Name'),
+			'column_flex'   : 3
 		}
 	)
 	name_given = Column(
@@ -1406,7 +1408,8 @@ class PhysicalEntity(Entity):
 		Comment('Given name'),
 		nullable=False,
 		info={
-			'header_string' : _('Given Name')
+			'header_string' : _('Given Name'),
+			'column_flex'   : 3
 		}
 	)
 	name_middle = Column(
@@ -1506,9 +1509,7 @@ class PhysicalEntity(Entity):
 		}
 	)
 
-	@property
-	def data(self):
-		req = get_current_request()
+	def data(self, req):
 		loc = get_localizer(req)
 
 		ret = super(PhysicalEntity, self).data
@@ -1519,39 +1520,27 @@ class PhysicalEntity(Entity):
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
 			ret['phones'].append(obj.data)
-#		if self.house:
-#			ret['house'] = str(self.house)
-#		if self.entrance:
-#			ret['entrance'] = '%s %s' % (
-#				loc.translate(_('entr.')),
-#				str(self.entrance)
-#			)
-#		if self.floor:
-#			ret['floor'] = '%s %s' % (
-#				loc.translate(_('fl.')),
-#				str(self.floor)
-#			)
-#		if self.flat:
-#			ret['flat'] = '%s %s' % (
-#				loc.translate(_('app.')),
-#				str(self.flat)
-#			)
-#		if self.phone_home:
-#			ret['phone_home'] = '%s %s' % (
-#				loc.translate(_('home:')),
-#				str(self.phone_home)
-#			)
-#		if self.phone_work:
-#			ret['phone_work'] = '%s %s' % (
-#				loc.translate(_('work:')),
-#				str(self.phone_work)
-#			)
-#		if self.phone_cell:
-#			ret['phone_cell'] = '%s %s' % (
-#				loc.translate(_('cell:')),
-#				str(self.phone_cell)
-#			)
 		return ret
+
+	def template_vars(self, req):
+		ret = super(PhysicalEntity, self).template_vars(req)
+		ret.update({
+			'contract_id'        : self.contract_id,
+			'name_family'        : self.name_family,
+			'name_given'         : self.name_given,
+			'name_middle'        : self.name_middle,
+			'email'              : self.email,
+			'icq'                : self.icq,
+			'homepage'           : self.homepage,
+			'passport_series'    : self.passport_series,
+			'passport_number'    : self.passport_number,
+			'passport_issued_by' : self.passport_issued_by
+		})
+		# TODO: add birthdate, pass_issuedate
+		return ret
+
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/physical.png')
 
 	def __str__(self):
 		strs = []
@@ -1567,46 +1556,6 @@ class LegalEntity(Entity):
 	"""
 	Legal entity. Describes a company.
 	"""
-
-#	@classmethod
-#	def _filter_address(cls, query, value):
-#		if not isinstance(value, dict):
-#			return query
-#		if 'houseid' in value:
-#			val = int(value['houseid'])
-#			if val > 0:
-#				query = query.filter(LegalEntity.house_id == val)
-#		elif 'streetid' in value:
-#			val = int(value['streetid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).filter(House.street_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(LegalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'districtid' in value:
-#			val = int(value['districtid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(LegalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'cityid' in value:
-#			val = int(value['cityid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(LegalEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		return query
 
 	__tablename__ = 'entities_legal'
 	__table_args__ = (
@@ -1626,7 +1575,6 @@ class LegalEntity(Entity):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Legal entities'),
 				'menu_order'    : 20,
-				'menu_parent'   : 'entity',
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1636,7 +1584,7 @@ class LegalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick', 'name', 'cp_name_family', 'cp_name_given'
 				),
@@ -1649,6 +1597,7 @@ class LegalEntity(Entity):
 					'descr'
 				),
 				'easy_search'   : ('nick', 'name'),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					TextFilter('phone', Entity._filter_phone,
@@ -1716,7 +1665,8 @@ class LegalEntity(Entity):
 		Comment('Legal name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	contact_name_family = Column(
@@ -1727,7 +1677,8 @@ class LegalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Family Name')
+			'header_string' : _('Family Name'),
+			'column_flex'   : 3
 		}
 	)
 	contact_name_given = Column(
@@ -1738,7 +1689,8 @@ class LegalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Given Name')
+			'header_string' : _('Given Name'),
+			'column_flex'   : 3
 		}
 	)
 	contact_name_middle = Column(
@@ -1868,9 +1820,7 @@ class LegalEntity(Entity):
 		}
 	)
 
-	@property
-	def data(self):
-		req = get_current_request()
+	def data(self, req):
 		loc = get_localizer(req)
 
 		ret = super(LegalEntity, self).data
@@ -1881,34 +1831,10 @@ class LegalEntity(Entity):
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
 			ret['phones'].append(obj.data)
-#		if self.house:
-#			ret['house'] = str(self.house)
-#		if self.entrance:
-#			ret['entrance'] = '%s %s' % (
-#				loc.translate(_('entr.')),
-#				str(self.entrance)
-#			)
-#		if self.floor:
-#			ret['floor'] = '%s %s' % (
-#				loc.translate(_('fl.')),
-#				str(self.floor)
-#			)
-#		if self.flat:
-#			ret['flat'] = '%s %s' % (
-#				loc.translate(_('app.')),
-#				str(self.flat)
-#			)
-#		if self.contact_phone_work:
-#			ret['cp_phone_work'] = '%s %s' % (
-#				loc.translate(_('work:')),
-#				str(self.contact_phone_work)
-#			)
-#		if self.contact_phone_cell:
-#			ret['cp_phone_cell'] = '%s %s' % (
-#				loc.translate(_('cell:')),
-#				str(self.contact_phone_cell)
-#			)
 		return ret
+
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/legal.png')
 
 	def __str__(self):
 		return str(self.name)
@@ -1917,46 +1843,6 @@ class StructuralEntity(Entity):
 	"""
 	Structural entity. Describes a building.
 	"""
-
-#	@classmethod
-#	def _filter_address(cls, query, value):
-#		if not isinstance(value, dict):
-#			return query
-#		if 'houseid' in value:
-#			val = int(value['houseid'])
-#			if val > 0:
-#				query = query.filter(StructuralEntity.house_id == val)
-#		elif 'streetid' in value:
-#			val = int(value['streetid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).filter(House.street_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(StructuralEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'districtid' in value:
-#			val = int(value['districtid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).filter(Street.district_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(StructuralEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		elif 'cityid' in value:
-#			val = int(value['cityid'])
-#			if val > 0:
-#				sess = DBSession()
-#				sq = sess.query(House).join(Street).join(District).filter(District.city_id == val)
-#				val = [h.id for h in sq]
-#				if len(val) > 0:
-#					query = query.filter(StructuralEntity.house_id.in_(val))
-#				else:
-#					query = query.filter(False)
-#		return query
 
 	__tablename__ = 'entities_structural'
 	__table_args__ = (
@@ -1974,7 +1860,6 @@ class StructuralEntity(Entity):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Structural entities'),
 				'menu_order'    : 30,
-				'menu_parent'   : 'entity',
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1984,12 +1869,13 @@ class StructuralEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick'
 				),
 				'form_view'     : ('nick', 'parent', 'state', 'flags', 'descr'),
 				'easy_search'   : ('nick',),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 				'extra_search'  : (
 					TextFilter('phone', Entity._filter_phone,
@@ -2040,12 +1926,13 @@ class StructuralEntity(Entity):
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
 			ret['phones'].append(obj.data)
-#		if self.house:
-#			ret['house'] = str(self.house)
 		return ret
 
-	def __str__(self):
-		return ''
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/structural.png')
+
+#	def __str__(self):
+#		return ''
 #		return str(self.house)
 
 class ExternalEntity(Entity):
@@ -2069,7 +1956,6 @@ class ExternalEntity(Entity):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('External entities'),
 				'menu_order'    : 40,
-				'menu_parent'   : 'entity',
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -2079,7 +1965,7 @@ class ExternalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template=TemplateObject('netprofile_entities:templates/entity_icon.mak')
+						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
 					'nick', 'name', 'address'
 				),
@@ -2088,6 +1974,7 @@ class ExternalEntity(Entity):
 					'name', 'address', 'descr'
 				),
 				'easy_search'   : ('nick', 'name'),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
 
 				'create_wizard' : Wizard(
@@ -2124,7 +2011,8 @@ class ExternalEntity(Entity):
 		Comment('Entity name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	address = Column(
@@ -2134,7 +2022,8 @@ class ExternalEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Address')
+			'header_string' : _('Address'),
+			'column_flex'   : 3
 		}
 	)
 
@@ -2145,229 +2034,11 @@ class ExternalEntity(Entity):
 			ret['address'] = str(self.address)
 		return ret
 
+	def grid_icon(self, req):
+		return req.static_url('netprofile_entities:static/img/external.png')
+
 	def __str__(self):
 		return str(self.name)
-
-# FIXME: needs own module
-class AccessEntity(Entity):
-
-	DN_ATTR = 'uid'
-
-	__tablename__ = 'entities_access'
-	__table_args__ = (
-		Comment('Access entities'),
-		{
-			'mysql_engine'  : 'InnoDB',
-			'mysql_charset' : 'utf8',
-			'info'          : {
-				'cap_menu'     : 'BASE_ENTITIES',
-				'cap_read'     : 'ENTITIES_LIST',
-				'cap_create'   : 'ENTITIES_CREATE',
-				'cap_edit'     : 'ENTITIES_EDIT',
-				'cap_delete'   : 'ENTITIES_DELETE',
-
-				'show_in_menu' : 'modules',
-				'menu_name'    : _('Access entities'),
-				'menu_order'   : 50,
-				'menu_parent'  : 'entity',
-				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
-#				'grid_view'    : ('SUXX',),
-#				'easy_search'  : ('SUXX',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
-			}
-		}
-	)
-	__mapper_args__ = {
-		'polymorphic_identity' : EntityType.access
-	}
-	id = Column(
-		'entityid',
-		UInt32(),
-		ForeignKey('entities_def.entityid', name='entities_access_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('Entity ID'),
-		primary_key=True,
-		nullable=False,
-		info={
-			'header_string' : _('ID')
-		}
-	)
-	password = Column(
-		Unicode(255),
-		Comment('Cleartext password'),
-		nullable=False,
-		info={
-			'header_string' : _('Password'),
-			'secret_value'  : True,
-			'editor_xtype'  : 'passwordfield'
-		}
-	)
-	stash_id = Column(
-		'stashid',
-		UInt32(),
-		# FKEY
-		Comment('Used stash ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Stash')
-		}
-	)
-	rate_id = Column(
-		'rateid',
-		UInt32(),
-		# FKEY
-		Comment('Used rate ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Rate')
-		}
-	)
-	alias_id = Column(
-		'aliasid',
-		UInt32(),
-		ForeignKey('entities_access.entityid', name='entities_access_fk_aliasid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('Aliased access entity ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Alias Of')
-		}
-	)
-	next_rate_id = Column(
-		'nextrateid',
-		UInt32(),
-		# FKEY
-		Comment('Next rate ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Next Rate')
-		}
-	)
-	ipv4_address_id = Column(
-		'ipaddrid',
-		UInt32(),
-		# FKEY
-		Comment('IPv4 address ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('IPv4 Address')
-		}
-	)
-	ipv6_address_id = Column(
-		'ip6addrid',
-		UInt64(),
-		# FKEY
-		Comment('IPv6 address ID'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('IPv6 Address')
-		}
-	)
-	used_traffic_ingress = Column(
-		'ut_ingress',
-		Numeric(16, 0),
-		Comment('Used ingress traffic'),
-		nullable=False,
-		default=0,
-		server_default=text('0'),
-		info={
-			'header_string' : _('Used Ingress')
-		}
-	)
-	used_traffic_egress = Column(
-		'ut_egress',
-		Numeric(16, 0),
-		Comment('Used egress traffic'),
-		nullable=False,
-		default=0,
-		server_default=text('0'),
-		info={
-			'header_string' : _('Used Egress')
-		}
-	)
-	used_seconds = Column(
-		'u_sec',
-		UInt32(),
-		Comment('Used seconds'),
-		nullable=False,
-		default=0,
-		server_default=text('0'),
-		info={
-			'header_string' : _('Used Seconds')
-		}
-	)
-	quota_period_end = Column(
-		'qpend',
-		TIMESTAMP(),
-		Comment('End of quota period'),
-		nullable=True,
-		default=None,
-		server_default=FetchedValue(),
-		info={
-			'header_string' : _('Ends')
-		}
-	)
-	access_state = Column(
-		'state',
-		UInt8(),
-		Comment('Access code'),
-		nullable=False,
-		default=0,
-		server_default=text('0'),
-		info={
-			'header_string' : _('Access Code')
-		}
-	)
-	policy_ingress = Column(
-		'pol_ingress',
-		ASCIIString(255),
-		Comment('Ingress traffic policy'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Ingress Policy')
-		}
-	)
-	policy_egress = Column(
-		'pol_egress',
-		ASCIIString(255),
-		Comment('Egress traffic policy'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Egress Policy')
-		}
-	)
-	check_block_state = Column(
-		'bcheck',
-		NPBoolean(),
-		Comment('Check block state'),
-		nullable=False,
-		default=False,
-		server_default=npbool(False),
-		info={
-			'header_string' : _('Check Blocks')
-		}
-	)
-	check_paid_services = Column(
-		'pcheck',
-		NPBoolean(),
-		Comment('Check paid services'),
-		nullable=False,
-		default=False,
-		server_default=npbool(False),
-		info={
-			'header_string' : _('Check Services')
-		}
-	)
 
 class EntityHistory(object):
 	def __init__(self, ent, title, time=None, author=None):

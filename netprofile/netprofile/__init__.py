@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Setup and entry points
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -70,6 +89,21 @@ def get_csrf(request):
 			csrf = csrf.decode()
 		return csrf
 
+class VHostPredicate(object):
+	def __init__(self, val, config):
+		self.needed = val
+		self.current = config.registry.settings.get('netprofile.vhost')
+
+	def text(self):
+		return 'vhost = %s' % (self.needed,)
+
+	phash = text
+
+	def __call__(self, context, request):
+		if self.needed == 'MAIN':
+			return (self.current is None)
+		return self.needed == self.current
+
 def main(global_config, **settings):
 	"""
 	Pyramid WSGI application for main NetProfile vhost.
@@ -91,8 +125,9 @@ def main(global_config, **settings):
 	)
 	config.add_subscriber(
 		'netprofile.common.subscribers.on_new_request',
-		'pyramid.events.NewRequest'
+		'pyramid.events.ContextFound'
 	)
+	config.add_route_predicate('vhost', VHostPredicate)
 	config.add_request_method(get_debug, str('debug_enabled'), reify=True)
 	config.add_request_method(get_csrf, str('get_csrf'))
 

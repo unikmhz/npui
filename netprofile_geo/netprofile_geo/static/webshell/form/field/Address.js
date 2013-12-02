@@ -161,7 +161,7 @@ Ext.define('NetProfile.geo.form.field.Address', {
 		for(cur = 0; cur < pos; cur++)
 		{
 			val = this.getSubValue(this._deps[cur]);
-			if(val !== null)
+			if(val)
 				ret[this._keys[this._deps[cur]]] = val;
 		}
 		return ret;

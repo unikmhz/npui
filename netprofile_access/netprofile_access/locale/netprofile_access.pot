@@ -1,0 +1,133 @@
+# Translations template for netprofile_access.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the netprofile_access
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_access 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-11-19 07:14+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: netprofile_access/__init__.py:62 netprofile_access/models.py:83
+msgid "Access"
+msgstr ""
+
+#: netprofile_access/models.py:111
+msgid "Access Entities"
+msgstr ""
+
+#: netprofile_access/models.py:119
+msgid "Entity icon"
+msgstr ""
+
+#: netprofile_access/models.py:121
+msgid "Icon"
+msgstr ""
+
+#: netprofile_access/models.py:155
+msgid "ID"
+msgstr ""
+
+#: netprofile_access/models.py:163 netprofile_access/templates/client_login.mak:16
+msgid "Password"
+msgstr ""
+
+#: netprofile_access/models.py:175
+msgid "Stash"
+msgstr ""
+
+#: netprofile_access/models.py:186
+msgid "Rate"
+msgstr ""
+
+#: netprofile_access/models.py:199
+msgid "Alias Of"
+msgstr ""
+
+#: netprofile_access/models.py:211
+msgid "Next Rate"
+msgstr ""
+
+#: netprofile_access/models.py:223
+msgid "IPv4 Address"
+msgstr ""
+
+#: netprofile_access/models.py:235
+msgid "IPv6 Address"
+msgstr ""
+
+#: netprofile_access/models.py:246
+msgid "Used Ingress"
+msgstr ""
+
+#: netprofile_access/models.py:257
+msgid "Used Egress"
+msgstr ""
+
+#: netprofile_access/models.py:268
+msgid "Used Seconds"
+msgstr ""
+
+#: netprofile_access/models.py:279
+msgid "Ends"
+msgstr ""
+
+#: netprofile_access/models.py:290
+msgid "Access Code"
+msgstr ""
+
+#: netprofile_access/models.py:301
+msgid "Ingress Policy"
+msgstr ""
+
+#: netprofile_access/models.py:312
+msgid "Egress Policy"
+msgstr ""
+
+#: netprofile_access/models.py:323
+msgid "Check Blocks"
+msgstr ""
+
+#: netprofile_access/models.py:334
+msgid "Check Services"
+msgstr ""
+
+#: netprofile_access/views.py:112
+msgid "Portal"
+msgstr ""
+
+#: netprofile_access/views.py:117
+msgid "Log Out"
+msgstr ""
+
+#: netprofile_access/templates/client_base.mak:9
+msgid "User Portal"
+msgstr ""
+
+#: netprofile_access/templates/client_login.mak:3
+#: netprofile_access/templates/client_login.mak:32
+msgid "Log In"
+msgstr ""
+
+#: netprofile_access/templates/client_login.mak:9
+msgid "Authentication failed."
+msgstr ""
+
+#: netprofile_access/templates/client_login.mak:12
+msgid "User Name"
+msgstr ""
+
+#: netprofile_access/templates/client_login.mak:20
+msgid "Language"
+msgstr ""
+

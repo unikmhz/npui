@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Tickets module - Models
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -157,7 +176,7 @@ class TicketOrigin(Base):
 	id = Column(
 		'toid',
 		UInt32(),
-		Sequence('toid_seq'),
+		Sequence('tickets_origins_toid_seq'),
 		Comment('Ticket origin ID'),
 		primary_key=True,
 		nullable=False,
@@ -236,7 +255,7 @@ class TicketState(Base):
 	id = Column(
 		'tstid',
 		UInt32(),
-		Sequence('tstid_seq'),
+		Sequence('tickets_states_types_tstid_seq'),
 		Comment('Ticket state ID'),
 		primary_key=True,
 		nullable=False,
@@ -346,6 +365,14 @@ class TicketState(Base):
 			j.append(self.subtitle)
 		return ': '.join(j)
 
+	@classmethod
+	def get_acls(cls):
+		sess = DBSession()
+		res = {}
+		for ts in sess.query(TicketState):
+			res[ts.id] = str(ts)
+		return res
+
 class TicketStateTransition(Base):
 	"""
 	Describes a transition between two distinct ticket states.
@@ -383,7 +410,7 @@ class TicketStateTransition(Base):
 	id = Column(
 		'ttrid',
 		UInt32(),
-		Sequence('ttrid_seq'),
+		Sequence('tickets_states_trans_ttrid_seq'),
 		Comment('Ticket transition ID'),
 		primary_key=True,
 		nullable=False,
@@ -495,7 +522,7 @@ class TicketFlagType(Base):
 	id = Column(
 		'tftid',
 		UInt32(),
-		Sequence('tftid_seq'),
+		Sequence('tickets_flags_types_tftid_seq'),
 		Comment('Ticket flag type ID'),
 		primary_key=True,
 		nullable=False,
@@ -571,7 +598,7 @@ class TicketFlag(Base):
 	id = Column(
 		'tfid',
 		UInt32(),
-		Sequence('tfid_seq'),
+		Sequence('tickets_flags_def_tfid_seq'),
 		Comment('Ticket flag ID'),
 		primary_key=True,
 		nullable=False,
@@ -629,7 +656,7 @@ class TicketFile(Base):
 	id = Column(
 		'tfid',
 		UInt32(),
-		Sequence('file_tfid_seq'),
+		Sequence('tickets_files_tfid_seq'),
 		Comment('Ticket-file mapping ID'),
 		primary_key=True,
 		nullable=False,
@@ -863,7 +890,7 @@ class Ticket(Base):
 	id = Column(
 		'ticketid',
 		UInt32(),
-		Sequence('ticketid_seq'),
+		Sequence('tickets_def_ticketid_seq'),
 		Comment('Ticket ID'),
 		primary_key=True,
 		nullable=False,
@@ -1247,7 +1274,7 @@ class TicketTemplate(Base):
 	id = Column(
 		'ttplid',
 		UInt32(),
-		Sequence('ttplid_seq'),
+		Sequence('tickets_templates_ttplid_seq'),
 		Comment('Ticket template ID'),
 		primary_key=True,
 		nullable=False,
@@ -1480,7 +1507,7 @@ class TicketChangeField(Base):
 	id = Column(
 		'tcfid',
 		UInt32(),
-		Sequence('tcfid_seq'),
+		Sequence('tickets_changes_fields_tcfid_seq'),
 		Comment('Ticket change field ID'),
 		primary_key=True,
 		nullable=False,
@@ -1536,7 +1563,7 @@ class TicketChange(Base):
 	id = Column(
 		'tcid',
 		UInt32(),
-		Sequence('tcid_seq'),
+		Sequence('tickets_changes_def_tcid_seq'),
 		Comment('Ticket change ID'),
 		primary_key=True,
 		nullable=False,
@@ -1685,7 +1712,7 @@ class TicketChangeBit(Base):
 	id = Column(
 		'tcbid',
 		UInt32(),
-		Sequence('tcbid_seq'),
+		Sequence('tickets_changes_bits_tcbid_seq'),
 		Comment('Ticket change bit ID'),
 		primary_key=True,
 		nullable=False,
@@ -1817,7 +1844,7 @@ class TicketScheduler(Base):
 	id = Column(
 		'tschedid',
 		UInt32(),
-		Sequence('tschedid_seq'),
+		Sequence('tickets_schedulers_tschedid_seq'),
 		Comment('Ticket scheduler ID'),
 		primary_key=True,
 		nullable=False,
@@ -1897,7 +1924,8 @@ class TicketScheduler(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Weekdays')
+			'header_string' : _('Weekdays'),
+			'editor_xtype'  : 'weekdays'
 		}
 	)
 	spacing = Column(
@@ -2072,7 +2100,7 @@ class TicketSchedulerUserAssignment(Base):
 	id = Column(
 		'tschedassid',
 		UInt32(),
-		Sequence('tschedassid_user_seq'),
+		Sequence('tickets_sched_assign_users_tschedassid_seq'),
 		Comment('Scheduler assignment ID'),
 		primary_key=True,
 		nullable=False,
@@ -2143,7 +2171,7 @@ class TicketSchedulerGroupAssignment(Base):
 	id = Column(
 		'tschedassid',
 		UInt32(),
-		Sequence('tschedassid_user_seq'),
+		Sequence('tickets_sched_assign_groups_tschedassid_seq'),
 		Comment('Scheduler assignment ID'),
 		primary_key=True,
 		nullable=False,
@@ -2215,7 +2243,7 @@ class TicketChangeFlagMod(Base):
 	id = Column(
 		'tcfmodid',
 		UInt32(),
-		Sequence('tcfmodid_seq'),
+		Sequence('tickets_changes_flagmod_tcfmodid_seq'),
 		Comment('Ticket change flag modification ID'),
 		primary_key=True,
 		nullable=False,

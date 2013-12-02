@@ -55,6 +55,7 @@ Ext.define('NetProfile.entities.view.HistoryGrid', {
 
 	initComponent: function()
 	{
+		this.tabConfig = { cls: 'record-tab-hdl' };
 		this.columns = [{
 			text: this.timeText,
 			tooltip: this.timeText,

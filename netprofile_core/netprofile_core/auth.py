@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Custom authentication plugin for Pyramid
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -23,17 +42,11 @@ from pyramid.security import (
 	Authenticated,
 	unauthenticated_userid
 )
-from pyramid.events import (
-	ContextFound,
-	subscriber
-)
+from pyramid.events import ContextFound
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 
-from sqlalchemy import (
-	and_,
-	text
-)
+from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.common.auth import (
@@ -164,8 +177,7 @@ def find_princs_digest(param, request):
 		return groups
 	return None
 
-@subscriber(ContextFound)
-def auth_to_db(event):
+def _auth_to_db(event):
 	request = event.request
 
 	if not request.matched_route:
@@ -225,4 +237,6 @@ def includeme(config):
 
 	config.set_authorization_policy(authz_policy)
 	config.set_authentication_policy(authn_policy)
+
+	config.add_subscriber(_auth_to_db, ContextFound)
 

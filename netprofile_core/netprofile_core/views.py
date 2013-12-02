@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Core module - Views
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -14,6 +33,7 @@ from pyramid.response import Response
 from pyramid.i18n import get_locale_name
 from pyramid.view import (
 	forbidden_view_config,
+	notfound_view_config,
 	view_config
 )
 from pyramid.security import (
@@ -24,13 +44,11 @@ from pyramid.security import (
 from pyramid.httpexceptions import (
 	HTTPForbidden,
 	HTTPFound,
-	HTTPNotFound,
 	HTTPSeeOther
 )
 
 from sqlalchemy import and_
 from sqlalchemy.orm import undefer
-from sqlalchemy.exc import DBAPIError
 
 from netprofile import (
 	LANGUAGES,
@@ -38,19 +56,31 @@ from netprofile import (
 )
 from netprofile import PY3
 from netprofile.common.modules import IModuleManager
+from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 from netprofile.ext.direct import extdirect_method
 
 from .models import (
 	File,
 	FileFolder,
+	Group,
+	GroupCapability,
 	NPModule,
+	Privilege,
 	User,
+	UserCapability,
 	UserSetting,
 	UserSettingSection,
 	UserSettingType,
 	UserState
 )
+
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
+
+_ = TranslationStringFactory('netprofile_core')
 
 if PY3:
 	from html import escape as html_escape
@@ -542,4 +572,326 @@ def dyn_usersettings_client(request):
 		'success'  : True,
 		'settings' : request.user.client_settings(request)
 	}
+
+@extdirect_method('Privilege', 'group_get', request_as_last_param=True, permission='GROUPS_GETCAP')
+def dyn_priv_group_get(params, request):
+	"""
+	ExtDirect method for getting group's capabilities.
+	"""
+
+	gid = int(params.get('owner'))
+	if gid <= 0:
+		raise KeyError('Invalid group ID')
+	recs = []
+	sess = DBSession()
+	group = sess.query(Group).get(gid)
+	if group is None:
+		raise KeyError('Invalid group ID')
+
+	for priv in sess.query(Privilege)\
+			.join(NPModule)\
+			.filter(NPModule.enabled == True, Privilege.can_be_set == True)\
+			.order_by(Privilege.name):
+		prx = {
+			'privid'  : priv.id,
+			'owner'   : group.id,
+			'code'    : priv.code,
+			'name'    : priv.name,
+			'hasacls' : priv.has_acls,
+			'value'   : None
+		}
+		if priv.code in group.caps:
+			prx['value'] = group.caps[priv.code].value
+		recs.append(prx)
+
+	return {
+		'records' : recs,
+		'total'   : len(recs),
+		'success' : True
+	}
+
+@extdirect_method('Privilege', 'group_set', request_as_last_param=True, permission='GROUPS_SETCAP')
+def dyn_priv_group_set(px, request):
+	"""
+	ExtDirect method for setting group's capabilities.
+	"""
+
+	if 'records' not in px:
+		raise ValueError('No records found')
+	sess = DBSession()
+	for params in px['records']:
+		gid = int(params.get('owner'))
+		privid = int(params.get('privid'))
+		value = params.get('value')
+		if gid <= 0:
+			raise KeyError('Invalid group ID')
+		group = sess.query(Group).get(gid)
+		if group is None:
+			raise KeyError('Invalid group ID')
+		if value not in {True, False, None}:
+			raise ValueError('Invalid capability value')
+		priv = sess.query(Privilege)\
+			.join(NPModule)\
+			.filter(Privilege.id == privid, NPModule.enabled == True, Privilege.can_be_set == True)\
+			.one()
+		code = priv.code
+
+		if value is None:
+			if code in group.privileges:
+				del group.privileges[code]
+		else:
+			group.privileges[code] = value
+
+	return { 'success' : True }
+
+@extdirect_method('ACL', 'group_get', request_as_last_param=True, permission='GROUPS_GETACL')
+def dyn_acl_group_get(params, request):
+	"""
+	ExtDirect method for getting group's ACLs.
+	"""
+
+	gid = int(params.get('owner'))
+	if gid <= 0:
+		raise KeyError('Invalid group ID')
+	code = params.get('code')
+	recs = []
+	sess = DBSession()
+	group = sess.query(Group).get(gid)
+	if group is None:
+		raise KeyError('Invalid group ID')
+	priv = sess.query(Privilege)\
+		.join(NPModule)\
+		.filter(Privilege.code == code, NPModule.enabled == True, Privilege.can_be_set == True)\
+		.one()
+	acls = priv.get_acls()
+	if acls is None:
+		raise ValueError('Invalid privilege type')
+
+	for aid, aname in acls.items():
+		prx = {
+			'privid'  : aid,
+			'owner'   : group.id,
+			'code'    : priv.code,
+			'name'    : aname,
+			'hasacls' : False,
+			'value'   : None
+		}
+		if (priv.code, aid) in group.acls:
+			prx['value'] = group.acls[(priv.code, aid)]
+		recs.append(prx)
+
+	return {
+		'records' : recs,
+		'total'   : len(recs),
+		'success' : True
+	}
+
+@extdirect_method('ACL', 'group_set', request_as_last_param=True, permission='GROUPS_SETACL')
+def dyn_acl_group_set(px, request):
+	"""
+	ExtDirect method for setting group's ACLs.
+	"""
+
+	if 'records' not in px:
+		raise ValueError('No records found')
+	sess = DBSession()
+	for params in px['records']:
+		gid = int(params.get('owner'))
+		aclid = int(params.get('privid'))
+		code = params.get('code')
+		value = params.get('value')
+		if gid <= 0:
+			raise KeyError('Invalid group ID')
+		group = sess.query(Group).get(gid)
+		if group is None:
+			raise KeyError('Invalid group ID')
+		if value not in {True, False, None}:
+			raise ValueError('Invalid capability value')
+		priv = sess.query(Privilege)\
+			.join(NPModule)\
+			.filter(Privilege.code == code, NPModule.enabled == True, Privilege.can_be_set == True)\
+			.one()
+		code = priv.code
+
+		if value is None:
+			if (code, aclid) in group.acls:
+				del group.acls[(code, aclid)]
+		else:
+			group.acls[(code, aclid)] = value
+
+	return { 'success' : True }
+
+@extdirect_method('Privilege', 'user_get', request_as_last_param=True, permission='USERS_GETCAP')
+def dyn_priv_user_get(params, request):
+	"""
+	ExtDirect method for getting user's capabilities.
+	"""
+
+	uid = int(params.get('owner'))
+	if uid <= 0:
+		raise KeyError('Invalid user ID')
+	recs = []
+	sess = DBSession()
+	user = sess.query(User).get(uid)
+	if user is None:
+		raise KeyError('Invalid user ID')
+
+	for priv in sess.query(Privilege)\
+			.join(NPModule)\
+			.filter(NPModule.enabled == True, Privilege.can_be_set == True)\
+			.order_by(Privilege.name):
+		prx = {
+			'privid'  : priv.id,
+			'owner'   : user.id,
+			'code'    : priv.code,
+			'name'    : priv.name,
+			'hasacls' : priv.has_acls,
+			'value'   : None
+		}
+		if priv.code in user.caps:
+			prx['value'] = user.caps[priv.code].value
+		recs.append(prx)
+
+	return {
+		'records' : recs,
+		'total'   : len(recs),
+		'success' : True
+	}
+
+@extdirect_method('Privilege', 'user_set', request_as_last_param=True, permission='USERS_SETCAP')
+def dyn_priv_user_set(px, request):
+	"""
+	ExtDirect method for setting user's capabilities.
+	"""
+
+	if 'records' not in px:
+		raise ValueError('No records found')
+	sess = DBSession()
+	for params in px['records']:
+		uid = int(params.get('owner'))
+		privid = int(params.get('privid'))
+		value = params.get('value')
+		if uid <= 0:
+			raise KeyError('Invalid user ID')
+		user = sess.query(User).get(uid)
+		if user is None:
+			raise KeyError('Invalid user ID')
+		if value not in {True, False, None}:
+			raise ValueError('Invalid capability value')
+		priv = sess.query(Privilege)\
+			.join(NPModule)\
+			.filter(Privilege.id == privid, NPModule.enabled == True, Privilege.can_be_set == True)\
+			.one()
+		code = priv.code
+
+		if value is None:
+			if code in user.privileges:
+				del user.privileges[code]
+		else:
+			user.privileges[code] = value
+
+	return { 'success' : True }
+
+@extdirect_method('ACL', 'user_get', request_as_last_param=True, permission='USERS_GETACL')
+def dyn_acl_user_get(params, request):
+	"""
+	ExtDirect method for getting user's ACLs.
+	"""
+
+	uid = int(params.get('owner'))
+	if uid <= 0:
+		raise KeyError('Invalid user ID')
+	code = params.get('code')
+	recs = []
+	sess = DBSession()
+	user = sess.query(User).get(uid)
+	if user is None:
+		raise KeyError('Invalid user ID')
+	priv = sess.query(Privilege)\
+		.join(NPModule)\
+		.filter(Privilege.code == code, NPModule.enabled == True, Privilege.can_be_set == True)\
+		.one()
+	acls = priv.get_acls()
+	if acls is None:
+		raise ValueError('Invalid privilege type')
+
+	for aid, aname in acls.items():
+		prx = {
+			'privid'  : aid,
+			'owner'   : user.id,
+			'code'    : priv.code,
+			'name'    : aname,
+			'hasacls' : False,
+			'value'   : None
+		}
+		if (priv.code, aid) in user.acls:
+			prx['value'] = user.acls[(priv.code, aid)]
+		recs.append(prx)
+
+	return {
+		'records' : recs,
+		'total'   : len(recs),
+		'success' : True
+	}
+
+@extdirect_method('ACL', 'user_set', request_as_last_param=True, permission='USERS_SETACL')
+def dyn_acl_user_set(px, request):
+	"""
+	ExtDirect method for setting user's ACLs.
+	"""
+
+	if 'records' not in px:
+		raise ValueError('No records found')
+	sess = DBSession()
+	for params in px['records']:
+		uid = int(params.get('owner'))
+		aclid = int(params.get('privid'))
+		code = params.get('code')
+		value = params.get('value')
+		if uid <= 0:
+			raise KeyError('Invalid user ID')
+		user = sess.query(User).get(uid)
+		if user is None:
+			raise KeyError('Invalid user ID')
+		if value not in {True, False, None}:
+			raise ValueError('Invalid capability value')
+		priv = sess.query(Privilege)\
+			.join(NPModule)\
+			.filter(Privilege.code == code, NPModule.enabled == True, Privilege.can_be_set == True)\
+			.one()
+		code = priv.code
+
+		if value is None:
+			if (code, aclid) in user.acls:
+				del user.acls[(code, aclid)]
+		else:
+			user.acls[(code, aclid)] = value
+
+	return { 'success' : True }
+
+@register_hook('core.dpanetabs.core.Group')
+def _dpane_group_caps(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Privileges')),
+		'iconCls'           : 'ico-mod-privilege',
+		'xtype'             : 'capgrid',
+		'stateId'           : None,
+		'stateful'          : False,
+		'apiGet'            : 'NetProfile.api.Privilege.group_get',
+		'apiSet'            : 'NetProfile.api.Privilege.group_set'
+	})
+
+@register_hook('core.dpanetabs.core.User')
+def _dpane_user_caps(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Privileges')),
+		'iconCls'           : 'ico-mod-privilege',
+		'xtype'             : 'capgrid',
+		'stateId'           : None,
+		'stateful'          : False,
+		'apiGet'            : 'NetProfile.api.Privilege.user_get',
+		'apiSet'            : 'NetProfile.api.Privilege.user_set'
+	})
 

@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: ExtJS schema and data generation
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -49,6 +68,8 @@ from sqlalchemy.orm.interfaces import (
 	MANYTOONE,
 	MANYTOMANY
 )
+from sqlalchemy.sql.functions import Function
+from sqlalchemy.orm.attributes import QueryableAttribute
 
 from netprofile.db.fields import (
 	ASCIIFixedString,
@@ -64,12 +85,14 @@ from netprofile.db.fields import (
 	Int64,
 	IPv4Address,
 	IPv6Address,
+	IPv6Offset,
 	NPBoolean,
 	UInt8,
 	UInt16,
 	UInt32,
 	UInt64
 )
+from netprofile.db.colander import SQLAlchemySchemaNode
 
 # USE ME!
 #from sqlalchemy.orm import (
@@ -101,6 +124,7 @@ _INTEGER_SET = (
 	Int32,
 	Int64,
 	Integer,
+	IPv6Offset,
 	UInt8,
 	UInt16,
 	UInt32,
@@ -150,6 +174,7 @@ _COLUMN_XTYPE_MAP = {
 	Integer      : 'numbercolumn',
 	IPv4Address  : 'ipaddrcolumn',
 	IPv6Address  : 'ipaddrcolumn',
+	IPv6Offset   : 'numbercolumn',
 	NPBoolean    : 'checkcolumn',
 	Numeric      : 'numbercolumn',
 	SmallInteger : 'numbercolumn',
@@ -176,6 +201,7 @@ _EDITOR_XTYPE_MAP = {
 	Int64         : 'numberfield',
 	Integer       : 'numberfield',
 	IPv4Address   : 'ipv4field',
+	IPv6Offset    : 'numberfield',
 	NPBoolean     : 'checkbox',
 	Numeric       : 'numberfield',
 	SmallInteger  : 'numberfield',
@@ -203,6 +229,7 @@ _JS_TYPE_MAP = {
 	Integer      : 'int',
 	IPv4Address  : 'ipv4',
 	IPv6Address  : 'ipv6',
+	IPv6Offset   : 'int', # ?
 	PickleType   : 'auto',
 	SmallInteger : 'int',
 	TIMESTAMP    : 'date',
@@ -217,12 +244,6 @@ _DATE_FMT_MAP = {
 	DateTime  : 'c',
 	Time      : 'H:i:s',
 	TIMESTAMP : 'c'
-}
-
-_COLANDER_TYPE_MAP = {
-	NPBoolean   : colander.Boolean,
-	IPv4Address : colander.Integer,
-	IPv6Address : colander.String # ?
 }
 
 logger = logging.getLogger(__name__)
@@ -546,46 +567,10 @@ class ExtColumn(object):
 				return ipaddr.IPv6Address(param)
 			return None
 		if issubclass(typecls, _INTEGER_SET):
+			if param == '':
+				return None
 			return int(param)
 		return param
-
-	def get_colander_schema(self, nullable=None):
-		ctype = self.colander_type
-		params = {}
-		children = []
-
-		default = self.default
-		if nullable is None:
-			nullable = self.nullable
-		elif nullable:
-			default = None
-
-		if default is None:
-			params['default'] = colander.null
-		else:
-			params['default'] = default
-
-		if not nullable:
-			params['missing'] = colander.required
-		elif 'default' in params:
-			params['missing'] = params['default']
-		elif self.default is None:
-			params['missing'] = None
-
-		# ADD CHILDREN HERE
-
-		valid = self.get_colander_validations()
-		if len(valid) > 1:
-			valid = colander.All(*valid)
-		elif valid:
-			valid = valid[0]
-		else:
-			valid = None
-		params['validator'] = valid
-
-		params['name'] = self.name
-
-		return colander.SchemaNode(ctype, *children, **params)
 
 	def get_colander_validations(self):
 		typecls = self.column.type.__class__
@@ -699,6 +684,8 @@ class ExtColumn(object):
 		if ro:
 			conf['readOnly'] = True
 		val = self.default
+		if isinstance(val, Function):
+			val = None
 		if initval is not None:
 			conf['value'] = initval
 		elif (val is not None) or (self.nullable):
@@ -953,11 +940,6 @@ class ExtPseudoColumn(ExtColumn):
 	def js_type(self):
 		return self.column.js_type
 
-	@property
-	def colander_type(self):
-		# FIXME: add smth here
-		raise NotImplementedError('Colander support is missing for pseudo columns.')
-
 	def _set_min_max(self, conf):
 		# FIXME: add smth here
 		raise NotImplementedError('Validation support is missing for pseudo columns.')
@@ -971,10 +953,6 @@ class ExtPseudoColumn(ExtColumn):
 		if not callable(self.column.parse):
 			return param
 		return self.column.parse(param)
-
-	def get_colander_schema(self, nullable=None):
-		# FIXME: add smth here
-		raise NotImplementedError('Colander support is missing for pseudo columns.')
 
 	def get_colander_validations(self):
 		# FIXME: add smth here
@@ -1373,17 +1351,24 @@ class ExtModel(object):
 			ret.alias = colname
 			ret.value_attr = o_prop.value_attr
 			return ret
+		if isinstance(o_prop, QueryableAttribute):
+			prop = o_prop.property
+			pdir = getattr(prop, 'direction', None)
+			if pdir == MANYTOONE:
+				return ExtManyToOneRelationshipColumn(prop, self.model)
+			if pdir == ONETOMANY:
+				return ExtOneToManyRelationshipColumn(prop, self.model)
+			if len(o_prop.property.columns) > 0:
+				ret = ExtColumn(o_prop.property.columns[0], self.model)
+				ret.alias = colname
+				return ret
+			raise ValueError('Unknown type of column %s' % colname)
 		if self.is_polymorphic:
 			for tbl in self.model.__mapper__.tables:
 				if colname in tbl.columns:
 					return ExtColumn(tbl.columns[colname], self.model)
 		elif colname in cols:
 			return ExtColumn(cols[colname], self.model)
-		prop = self.model.__mapper__.get_property(colname)
-		if prop.direction == MANYTOONE:
-			return ExtManyToOneRelationshipColumn(prop, self.model)
-		if prop.direction == ONETOMANY:
-			return ExtOneToManyRelationshipColumn(prop, self.model)
 		raise ValueError('Unknown type of column %s' % colname)
 
 	def get_columns(self):
@@ -1498,6 +1483,9 @@ class ExtModel(object):
 			if colrel is not None:
 				ret.extend(colrel)
 		return ret
+
+	def get_colander_schema(self):
+		return SQLAlchemySchemaNode(self.model)
 
 	def get_model_validations(self):
 		ret = []
@@ -1822,6 +1810,9 @@ class ExtModel(object):
 			p = self.pk
 			if p in pt:
 				del pt[p]
+			p = self.object_pk
+			if p in pt:
+				del pt[p]
 			obj = self.model()
 			apply_onetomany = []
 			helper = getattr(self.model, '__augment_create__', None)
@@ -1831,6 +1822,12 @@ class ExtModel(object):
 				if p not in cols:
 					if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
 						cols[p] = rcols[p]
+					elif p in self.model.__mapper__.attrs:
+						attr = self.model.__mapper__.attrs[p]
+						if len(attr.columns) > 0:
+							cols[p] = self.get_column(p)
+						else:
+							continue
 					else:
 						continue
 				if cols[p].get_read_only(request):
@@ -1922,9 +1919,17 @@ class ExtModel(object):
 			if callable(helper) and not helper(sess, obj, pt, request):
 				continue
 			for p in pt:
-				if (p not in cols) or (p == self.pk):
+				if p in (self.pk, self.object_pk):
+					continue
+				if p not in cols:
 					if (p in rcols) and (isinstance(rcols[p], ExtOneToManyRelationshipColumn)):
 						cols[p] = rcols[p]
+					elif p in self.model.__mapper__.attrs:
+						attr = self.model.__mapper__.attrs[p]
+						if len(attr.columns) > 0:
+							cols[p] = self.get_column(p)
+						else:
+							continue
 					else:
 						continue
 				if cols[p].get_read_only(request):
@@ -2155,27 +2160,6 @@ class ExtModel(object):
 		if callable(dpview):
 			return dpview(self, req)
 
-	def get_colander_schema(self, excludes=(), includes=(), nullables={}, unknown='raise'):
-		params = {
-			'name' : self.name,
-			'description' : getattr(self.model.__table__, 'comment', '')
-		}
-		schema = colander.SchemaNode(colander.Mapping(unknown), **params)
-		for cname, col in self.get_read_columns().items():
-			if cname in excludes:
-				continue
-			if includes and (cname not in includes):
-				continue
-			is_null = False
-			if isinstance(nullables, bool):
-				is_null = nullables
-			else:
-				is_null = nullables.get(cname, False)
-			node = col.get_colander_schema(nullable=is_null)
-			if node is not None:
-				schema.add(node)
-		return schema
-
 class ExtModuleBrowser(object):
 	def __init__(self, mmgr, moddef):
 		if moddef not in mmgr.modules:
@@ -2267,6 +2251,8 @@ class ExtModuleBrowser(object):
 			if len(ext_children) > 0:
 				ret['external'] = ext_children
 			return ret
+		if len(ext_children) > 0:
+			return { 'external' : ext_children }
 
 class ExtBrowser(object):
 	def __init__(self, mmgr):
@@ -2292,10 +2278,41 @@ class ExtBrowser(object):
 		if name not in self.mmgr.menus:
 			raise KeyError('Can\'t find menu \'%s\'' % name)
 		menu = []
+		external = {}
 		for module in self:
 			em = self[module]
 			mt = em.get_menu_tree(req, name)
 			if mt:
-				menu.append(mt)
+				if 'external' in mt:
+					for mid, mitems in mt['external'].items():
+						if mid not in external:
+							external[mid] = []
+						external[mid].extend(mitems)
+					del mt['external']
+				if len(mt) > 0:
+					menu.append(mt)
+
+		def find_node_by_id(menu, mid):
+			for item in menu:
+				if 'id' not in item:
+					continue
+				if item['id'] == mid:
+					return item
+			for item in menu:
+				if 'children' not in item:
+					continue
+				recurse = find_node_by_id(item['children'], mid)
+				if recurse:
+					return recurse
+
+		for mid in external:
+			pnode = find_node_by_id(menu, mid)
+			if pnode:
+				pnode['leaf'] = False
+				pnode['expanded'] = True
+				if 'children' not in pnode:
+					pnode['children'] = []
+				pnode['children'].extend(sorted(external[mid], key=lambda v: v['order']))
+
 		return menu
 

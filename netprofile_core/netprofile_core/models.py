@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Core module - Modules
+# © Copyright 2013 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -236,7 +255,7 @@ class NPModule(Base):
 	id = Column(
 		'npmodid',
 		UInt32(),
-		Sequence('npmodid_seq'),
+		Sequence('np_modules_npmodid_seq'),
 		Comment('NetProfile module ID'),
 		primary_key=True,
 		nullable=False,
@@ -387,7 +406,7 @@ class User(Base):
 	id = Column(
 		'uid',
 		UInt32(),
-		Sequence('uid_seq'),
+		Sequence('users_uid_seq'),
 		Comment('User ID'),
 		primary_key=True,
 		nullable=False,
@@ -770,13 +789,12 @@ class User(Base):
 
 	@property
 	def flat_privileges(self):
-		upriv = self.privileges
 		gpriv = self.group.flat_privileges
 		for sg in self.secondary_groups:
 			if sg == self.group:
 				continue
 			gpriv.update(sg.flat_privileges)
-		gpriv.update(upriv)
+		gpriv.update(self.privileges)
 		return gpriv
 
 	@property
@@ -987,6 +1005,25 @@ class User(Base):
 			uris.append('mailto:' + self.email)
 		return uris
 
+	@classmethod
+	def get_acls(cls):
+		sess = DBSession()
+		res = {}
+		for u in sess.query(User):
+			res[u.id] = str(u)
+		return res
+
+def _del_user(mapper, conn, tgt):
+	sess = DBSession()
+	sess.query(UserACL)\
+		.filter(
+			UserACL.privilege_id.in_(sess.query(Privilege.id).filter(Privilege.resource_class == 'NPUser')),
+			UserACL.resource == tgt.id
+		)\
+		.delete(synchronize_session=False)
+
+event.listen(User, 'after_delete', _del_user)
+
 @implementer(IDAVFile, IDAVPrincipal)
 class Group(Base):
 	"""
@@ -1033,7 +1070,7 @@ class Group(Base):
 	id = Column(
 		'gid',
 		UInt32(),
-		Sequence('gid_seq'),
+		Sequence('groups_gid_seq'),
 		Comment('Group ID'),
 		primary_key=True,
 		nullable=False,
@@ -1171,7 +1208,7 @@ class Group(Base):
 	def flat_privileges(self):
 		ppriv = {}
 		if self.parent is None:
-			return self.privileges
+			return self.privileges.copy()
 		ppriv = self.parent.flat_privileges
 		ppriv.update(self.privileges)
 		return ppriv
@@ -1257,6 +1294,25 @@ class Group(Base):
 			xgrp = xgrp.parent
 		return False
 
+	@classmethod
+	def get_acls(cls):
+		sess = DBSession()
+		res = {}
+		for g in sess.query(Group):
+			res[g.id] = str(g)
+		return res
+
+def _del_group(mapper, conn, tgt):
+	sess = DBSession()
+	sess.query(GroupACL)\
+		.filter(
+			GroupACL.privilege_id.in_(sess.query(Privilege.id).filter(Privilege.resource_class == 'NPGroup')),
+			GroupACL.resource == tgt.id
+		)\
+		.delete(synchronize_session=False)
+
+event.listen(Group, 'after_delete', _del_group)
+
 class Privilege(Base):
 	"""
 	Generic privilege code, to be assigned to users or groups.
@@ -1295,7 +1351,7 @@ class Privilege(Base):
 	id = Column(
 		'privid',
 		UInt32(),
-		Sequence('privid_seq'),
+		Sequence('privileges_privid_seq'),
 		Comment('Privilege ID'),
 		primary_key=True,
 		nullable=False,
@@ -1404,6 +1460,19 @@ class Privilege(Base):
 	def __str__(self):
 		return '%s' % str(self.code)
 
+	def get_acls(self):
+		if (not self.has_acls) or (not self.resource_class):
+			return None
+		cls = self.resource_class
+		if cls[:2] == 'NP':
+			cls = cls[2:]
+		if cls not in Base._decl_class_registry:
+			return None
+		cls = Base._decl_class_registry[cls]
+		getter = getattr(cls, 'get_acls', None)
+		if callable(getter):
+			return getter()
+
 class Capability(object):
 	"""
 	Abstract prototype for privilege assignment object.
@@ -1413,7 +1482,7 @@ class Capability(object):
 		return Column(
 			'capid',
 			UInt32(),
-			Sequence('capid_seq'),
+			Sequence('capid_seq'), # FIXME: needs different names
 			Comment('Capability ID'),
 			primary_key=True,
 			nullable=False,
@@ -1542,7 +1611,7 @@ class ACL(object):
 		return Column(
 			'aclid',
 			UInt32(),
-			Sequence('aclid_seq'),
+			Sequence('aclid_seq'), # FIXME: needs different names
 			Comment('ACL ID'),
 			primary_key=True,
 			nullable=False,
@@ -1677,7 +1746,7 @@ class UserGroup(Base):
 	id = Column(
 		'ugid',
 		UInt32(),
-		Sequence('ugid_seq'),
+		Sequence('users_groups_ugid_seq'),
 		Comment('User group mapping ID'),
 		primary_key=True,
 		nullable=False,
@@ -1757,7 +1826,7 @@ class SecurityPolicy(Base):
 	id = Column(
 		'secpolid',
 		UInt32(),
-		Sequence('secpolid_seq'),
+		Sequence('secpol_def_secpolid_seq'),
 		Comment('Security policy ID'),
 		primary_key=True,
 		nullable=False,
@@ -2069,7 +2138,7 @@ class DAVLock(Base):
 	id = Column(
 		'dlid',
 		UInt32(),
-		Sequence('dlid_seq'),
+		Sequence('dav_locks_dlid_seq'),
 		Comment('DAV lock ID'),
 		primary_key=True,
 		nullable=False,
@@ -2289,7 +2358,7 @@ class FileFolder(Base):
 	id = Column(
 		'ffid',
 		UInt32(),
-		Sequence('ffid_seq'),
+		Sequence('files_folders_ffid_seq'),
 		Comment('File folder ID'),
 		primary_key=True,
 		nullable=False,
@@ -2933,7 +3002,7 @@ class File(Base):
 	id = Column(
 		'fileid',
 		UInt32(),
-		Sequence('fileid_seq'),
+		Sequence('files_def_fileid_seq'),
 		Comment('File ID'),
 		primary_key=True,
 		nullable=False,
@@ -3972,7 +4041,7 @@ class Tag(Base):
 	id = Column(
 		'tagid',
 		UInt32(),
-		Sequence('tagid_seq'),
+		Sequence('tags_def_tagid_seq'),
 		Comment('Tag ID'),
 		primary_key=True,
 		nullable=False,
@@ -4035,7 +4104,7 @@ class LogType(Base):
 	id = Column(
 		'ltid',
 		UInt32(),
-		Sequence('ltid_seq'),
+		Sequence('logs_types_ltid_seq'),
 		Comment('Log entry type ID'),
 		primary_key=True,
 		nullable=False,
@@ -4087,7 +4156,7 @@ class LogAction(Base):
 	id = Column(
 		'laid',
 		UInt32(),
-		Sequence('laid_seq'),
+		Sequence('logs_actions_laid_seq'),
 		Comment('Log action ID'),
 		primary_key=True,
 		nullable=False,
@@ -4138,7 +4207,7 @@ class LogData(Base):
 	id = Column(
 		'logid',
 		UInt32(),
-		Sequence('logid_seq'),
+		Sequence('logs_data_logid_seq'),
 		Comment('Log entry ID'),
 		primary_key=True,
 		nullable=False,
@@ -4250,7 +4319,7 @@ class NPSession(Base):
 	id = Column(
 		'npsid',
 		UInt32(),
-		Sequence('npsid_seq'),
+		Sequence('np_sessions_npsid_seq'),
 		Comment('NP session ID'),
 		primary_key=True,
 		nullable=False,
@@ -4372,7 +4441,7 @@ class PasswordHistory(Base):
 	id = Column(
 		'pwhid',
 		UInt32(),
-		Sequence('pwhid_seq'),
+		Sequence('users_pwhistory_pwhid_seq'),
 		Comment('Password history entry ID'),
 		primary_key=True,
 		nullable=False,
@@ -4445,7 +4514,7 @@ class GlobalSettingSection(Base):
 	id = Column(
 		'npgssid',
 		UInt32(),
-		Sequence('npgssid_seq'),
+		Sequence('np_globalsettings_sections_npgssid_seq'),
 		Comment('Global parameter section ID'),
 		primary_key=True,
 		nullable=False,
@@ -4528,7 +4597,7 @@ class UserSettingSection(Base):
 	id = Column(
 		'npussid',
 		UInt32(),
-		Sequence('npussid_seq'),
+		Sequence('np_usersettings_sections_npussid_seq'),
 		Comment('User parameter section ID'),
 		primary_key=True,
 		nullable=False,
@@ -4727,7 +4796,7 @@ class GlobalSetting(Base, DynamicSetting):
 	id = Column(
 		'npglobid',
 		UInt32(),
-		Sequence('npglobid_seq'),
+		Sequence('np_globalsettings_def_npglobid_seq'),
 		Comment('Global parameter ID'),
 		primary_key=True,
 		nullable=False,
@@ -4918,7 +4987,7 @@ class UserSettingType(Base, DynamicSetting):
 	id = Column(
 		'npustid',
 		UInt32(),
-		Sequence('npustid_seq'),
+		Sequence('np_usersettings_types_npustid_seq'),
 		Comment('User parameter type ID'),
 		primary_key=True,
 		nullable=False,
@@ -5098,7 +5167,7 @@ class UserSetting(Base):
 	id = Column(
 		'npusid',
 		UInt32(),
-		Sequence('npusid_seq'),
+		Sequence('np_usersettings_def_npusid_seq'),
 		Comment('User parameter ID'),
 		primary_key=True,
 		nullable=False,
@@ -5188,7 +5257,7 @@ class DataCache(Base):
 	id = Column(
 		'dcid',
 		UInt32(),
-		Sequence('dcid_seq'),
+		Sequence('datacache_dcid_seq'),
 		Comment('Data cache ID'),
 		primary_key=True,
 		nullable=False,

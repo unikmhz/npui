@@ -14,8 +14,11 @@ div.np-xradiolabel div.title
 .ico-schedule { background-image: url(../img/calendar_task.png) !important; }
 
 .ico-mod-ticket { background-image: url(../img/ticket.png) !important; }
+.ico-mod-ticketchangefield { background-image: url(../img/ticket_chfield.png) !important; }
 .ico-mod-ticketflagtype { background-image: url(../img/ticket_flag.png) !important; }
 .ico-mod-ticketorigin { background-image: url(../img/ticket_origin.png) !important; }
+.ico-mod-ticketscheduler { background-image: url(../img/schedule.png) !important; }
 .ico-mod-ticketstate { background-image: url(../img/ticket_state.png) !important; }
 .ico-mod-ticketstatetransition { background-image: url(../img/ticket_transition.png) !important; }
+.ico-mod-tickettemplate { background-image: url(../img/ticket_template.png) !important; }
 

@@ -1,0 +1,197 @@
+# Russian translations for netprofile_stashes.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the netprofile_stashes
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_stashes 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2013-11-18 12:20+0400\n"
+"PO-Revision-Date: 2013-11-18 12:22+0300\n"
+"Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+"X-Generator: Poedit 1.5.5\n"
+
+#: netprofile_stashes/__init__.py:63 netprofile_stashes/models.py:130
+#: netprofile_stashes/views.py:46
+msgid "Stashes"
+msgstr "Счета"
+
+#: netprofile_stashes/models.py:84
+msgid "System"
+msgstr "Системный"
+
+#: netprofile_stashes/models.py:85 netprofile_stashes/models.py:427
+msgid "User"
+msgstr "Пользовательский"
+
+#: netprofile_stashes/models.py:91
+msgid "Bidirectional"
+msgstr "Двухсторонний"
+
+#: netprofile_stashes/models.py:92
+msgid "Incoming"
+msgstr "Пополнение"
+
+#: netprofile_stashes/models.py:93
+msgid "Outgoing"
+msgstr "Списание"
+
+#: netprofile_stashes/models.py:99
+msgid "Subtract (under quota ingress / under quota egress)"
+msgstr "Списание (вход. ниже квоты/исход. ниже квоты)"
+
+#: netprofile_stashes/models.py:100
+msgid "Subtract (mixed ingress / under quota egress)"
+msgstr "Списание (вход. смешанный/исход. ниже квоты)"
+
+#: netprofile_stashes/models.py:101
+msgid "Subtract (over quota ingress / under quota egress)"
+msgstr "Списание (вход. выше квоты/исход. ниже квоты)"
+
+#: netprofile_stashes/models.py:102
+msgid "Subtract (under quota ingress / mixed egress)"
+msgstr "Списание (вход. ниже квоты/исход. смешанный)"
+
+#: netprofile_stashes/models.py:103
+msgid "Subtract (under quota ingress / over quota egress)"
+msgstr "Списание (вход. ниже квоты/исход. выше квоты)"
+
+#: netprofile_stashes/models.py:104
+msgid "Subtract (mixed ingress / mixed egress)"
+msgstr "Списание (вход. смешанный/исход. смешанный)"
+
+#: netprofile_stashes/models.py:105
+#| msgid "Subtract (overquota ingress / mixed egress)"
+msgid "Subtract (over quota ingress / mixed egress)"
+msgstr "Списание (вход. выше квоты/исход. смешанный)"
+
+#: netprofile_stashes/models.py:106
+#| msgid "Subtract (mixed ingress / overquota egress)"
+msgid "Subtract (mixed ingress / over quota egress)"
+msgstr "Списание (вход. смешанный/исход. выше квоты)"
+
+#: netprofile_stashes/models.py:107
+#| msgid "Subtract (overquota ingress / overquota egress)"
+msgid "Subtract (over quota ingress / over quota egress)"
+msgstr "Списание (вход. выше квоты/исход. выше квоты)"
+
+#: netprofile_stashes/models.py:108
+msgid "Add cash"
+msgstr "Пополнение наличными"
+
+#: netprofile_stashes/models.py:109
+msgid "Automatic add"
+msgstr "Автоматическое пополнение"
+
+#: netprofile_stashes/models.py:110 netprofile_stashes/models.py:591
+msgid "Operator"
+msgstr "Оператор"
+
+#: netprofile_stashes/models.py:111
+msgid "Rollback"
+msgstr "Компенсация"
+
+#: netprofile_stashes/models.py:139
+msgid "Add new stash"
+msgstr "Добавить новый счёт"
+
+#: netprofile_stashes/models.py:151 netprofile_stashes/models.py:276
+#: netprofile_stashes/models.py:391 netprofile_stashes/models.py:547
+msgid "ID"
+msgstr "ID"
+
+#: netprofile_stashes/models.py:161 netprofile_stashes/models.py:440
+#: netprofile_stashes/models.py:604
+msgid "Entity"
+msgstr "Объект"
+
+#: netprofile_stashes/models.py:171 netprofile_stashes/models.py:284
+msgid "Name"
+msgstr "Название"
+
+#: netprofile_stashes/models.py:182
+msgid "Balance"
+msgstr "Баланс"
+
+#: netprofile_stashes/models.py:193
+msgid "Credit"
+msgstr "Кредит"
+
+#: netprofile_stashes/models.py:204
+msgid "Max. Balance"
+msgstr "Макс. баланс"
+
+#: netprofile_stashes/models.py:215
+msgid "Min. Balance"
+msgstr "Мин. баланс"
+
+#: netprofile_stashes/models.py:256
+msgid "Operation Types"
+msgstr "Типы операций"
+
+#: netprofile_stashes/models.py:264
+msgid "Add new operation type"
+msgstr "Добавить новый тип операций"
+
+#: netprofile_stashes/models.py:296
+msgid "Class"
+msgstr "Класс"
+
+#: netprofile_stashes/models.py:306 netprofile_stashes/models.py:401
+#: netprofile_stashes/models.py:568
+msgid "Type"
+msgstr "Тип"
+
+#: netprofile_stashes/models.py:316
+msgid "Visible to Operator"
+msgstr "Видимый оператору"
+
+#: netprofile_stashes/models.py:326
+msgid "Visible to User"
+msgstr "Видимый клиенту"
+
+#: netprofile_stashes/models.py:338
+msgid "Required Operator Capability"
+msgstr "Требуемая привилегия оператора"
+
+#: netprofile_stashes/models.py:371 netprofile_stashes/models.py:532
+#: netprofile_stashes/views.py:60
+msgid "Operations"
+msgstr "Операции"
+
+#: netprofile_stashes/models.py:413 netprofile_stashes/models.py:557
+msgid "Stash"
+msgstr "Счёт"
+
+#: netprofile_stashes/models.py:453 netprofile_stashes/models.py:579
+msgid "Date"
+msgstr "Дата"
+
+#: netprofile_stashes/models.py:463 netprofile_stashes/models.py:616
+msgid "Change"
+msgstr "Изменение"
+
+#: netprofile_stashes/models.py:474
+msgid "Description"
+msgstr "Описание"
+
+#: netprofile_stashes/models.py:627
+msgid "Ingress Traffic"
+msgstr "Входящий трафик"
+
+#: netprofile_stashes/models.py:638
+msgid "Egress Traffic"
+msgstr "Исходящий трафик"
+
+#: netprofile_stashes/models.py:648
+msgid "Comments"
+msgstr "Комментарии"
