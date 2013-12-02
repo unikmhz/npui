@@ -556,6 +556,40 @@ class Entity(Base):
 			'flags' : [(ft.id, ft.name) for ft in self.flags]
 		}
 
+	def template_vars(self, req):
+		return {
+			'id'          : self.id,
+			'nick'        : self.nick,
+			'type'        : self.type,
+			'description' : self.description,
+			'state'       : {
+				'id'   : self.state_id,
+				'name' : str(self.state)
+			},
+			'flags'       : [(ft.id, ft.name) for ft in self.flags],
+			'addresses'   : [{
+				'id'          : a.id,
+				'str'         : str(a),
+				'primary'     : a.primary,
+				'house'       : {
+					'id'  : a.house_id,
+					'str' : str(a.house)
+				},
+				'entrance'    : a.entrance,
+				'floor'       : a.floor,
+				'flat'        : a.flat,
+				'entry_code'  : a.entry_code,
+				'description' : a.description
+			} for a in self.addresses],
+			'phones'          : [{
+				'id'          : p.id,
+				'primary'     : p.primary,
+				'type'        : p.type,
+				'number'      : p.number,
+				'description' : p.description
+			} for p in self.phones]
+		}
+
 	def grid_icon(self, req):
 		return req.static_url('netprofile_entities:static/img/entity.png')
 
@@ -1486,6 +1520,23 @@ class PhysicalEntity(Entity):
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
 			ret['phones'].append(obj.data)
+		return ret
+
+	def template_vars(self, req):
+		ret = super(PhysicalEntity, self).template_vars(req)
+		ret.update({
+			'contract_id'        : self.contract_id,
+			'name_family'        : self.name_family,
+			'name_given'         : self.name_given,
+			'name_middle'        : self.name_middle,
+			'email'              : self.email,
+			'icq'                : self.icq,
+			'homepage'           : self.homepage,
+			'passport_series'    : self.passport_series,
+			'passport_number'    : self.passport_number,
+			'passport_issued_by' : self.passport_issued_by
+		})
+		# TODO: add birthdate, pass_issuedate
 		return ret
 
 	def grid_icon(self, req):

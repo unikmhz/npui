@@ -109,8 +109,18 @@ def dpane_entities(model, request):
 			'padding' : 4
 		},
 		'items' : [{
-			'xtype' : 'npform',
-			'flex'  : 2
+			'xtype'  : 'panel',
+			'autoScroll' : True,
+			'border' : 1,
+			'flex'   : 2,
+			'layout' : {
+				'type'  : 'vbox',
+				'align' : 'stretch'
+			},
+			'items'  : [{
+				'xtype'  : 'npform',
+				'border' : 0
+			}]
 		}, {
 			'xtype' : 'splitter'
 		}, {
@@ -146,6 +156,18 @@ def new_entity_validator(ret, values, request):
 	xret = em.validate_fields(values, request)
 	if 'errors' in xret:
 		ret['errors'].update(xret['errors'])
+
+@register_hook('documents.gen.object')
+def _doc_gen_obj(tpl_vars, objid, objtype, req):
+	if objtype != 'entity':
+		return
+	sess = DBSession()
+	obj = sess.query(Entity).get(objid)
+	if not obj:
+		return
+	v = obj.template_vars(req)
+	if v:
+		tpl_vars.update({ 'entity' : v })
 
 @extdirect_method('Entity', 'get_history', request_as_last_param=True, permission='ENTITIES_LIST')
 def dyn_entity_history(params, request):
