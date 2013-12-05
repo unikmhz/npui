@@ -26,7 +26,7 @@
 
           <ul>
             % for person in users:
-                  <li>${person.id} ${person.acc_entity} ${person.password}</li>
+                  <li>${person.id} ${person} ${person.password}</li>
             % endfor
           </ul>
 

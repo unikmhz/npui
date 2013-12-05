@@ -20,7 +20,7 @@
             <input type="password" name="userpass">Password</input><br>
             <input type="submit" value='Login'>
           </form>
-
+          <a href='/newuser'>Register new user</a>|<a href='/forgotpassword'>Forgot password?</a>
     </div>
 </body>
 </html>
