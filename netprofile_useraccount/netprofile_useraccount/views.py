@@ -11,7 +11,6 @@ from .models import (
     )
 from netprofile.common.cache import cache
 
-
 @view_config(route_name='home', renderer='main.mak')
 def main_view(request):
     try:
@@ -20,7 +19,6 @@ def main_view(request):
 
     except DBAPIError:
         return Response("Error connecting to database", content_type='text/plain', status_int=500)
-
     
     if not authenticated_userid(request):
         return  HTTPFound(request.route_url("login"))
@@ -93,9 +91,28 @@ def newuser_view(request):
             return {'request':request, 'message':"There's already a user with same login {0}".format(sameuser.nick), 'login':login, 'passwd':passwd}
         
         return {'request':request, 'message':'Registration form'}
-
+    
     return {'request':request, 'message':'Registration form'}
 
 
 #forgotpassword
-#@view_config(route_name='forgotpassword')
+@view_config(route_name='forgotpassword', renderer='forgot.mak')
+def forgotpassword_view(request):
+    if request.POST:
+        #проверяем совпадение паролей, добавляем пользователея в базу, выводим сообщение об успешной регистрации. 
+        login = request.POST.get('username', None)
+        sameuser = DBSession.query(AccessEntity).filter(AccessEntity.nick==login).first()
+        if sameuser is None:
+            return {'request':request, 'message':"It looks like we haven't a user with this login, try to register a new one", 'login':login, 'back':'<a href="/newuser">New user registration</a>'}
+        else:
+            password = [i for i in sameuser.password]
+            for i, j in enumerate(sameuser.password):
+                if i not in (0, len(sameuser.password)-1):
+                    password[i] = "*"
+
+            return {'request':request, 'message':"Your password is {0}".format("".join(password)), 'back':'<a href="/">Back</a>'}
+        
+    
+    return {'request':request, 'message':'Remind me my password!'}
+    
+    
