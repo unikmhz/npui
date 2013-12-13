@@ -130,7 +130,12 @@ class Host(Base):
 				),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				'create_wizard' : SimpleWizard(title=_('Add new host'))
+				'create_wizard' : 
+					Wizard(
+						Step('name', 'domain', 'entity', title=_('New host data')),
+						Step('group', 'original', 'descr', title=_('New host details')),
+						title=_('Add new host')
+					)
 			}
 		}
 	)
