@@ -397,6 +397,12 @@ class User(Base):
 					'email', 'manager', 'photo'
 				),
 				'easy_search'  : ('login', 'name_family'),
+				'create_wizard' : 
+					Wizard(
+						Step('login', 'pass', 'group', 'email', title=_('New user login')),
+						Step('name_family', 'name_given', 'name_middle', 'ipaddr', 'enabled','state',title=_('New user details')),
+						title=_('Add new user')
+					),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 				'ldap_classes' : ('npUser', 'posixAccount', 'shadowAccount'),
 				'ldap_rdn'     : 'login'
@@ -758,6 +764,7 @@ class User(Base):
 		return ctx.hexdigest() == orig
 
 	def change_login(self, newlogin, opts, request):
+		reg = request.registry
 		self.login = newlogin
 		if getattr(self, 'mod_pw', False):
 			realm = reg.settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
