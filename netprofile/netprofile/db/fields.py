@@ -49,6 +49,8 @@ from netprofile.db import processors
 from netprofile.common import ipaddr
 
 import sys
+import binascii
+
 
 if sys.version < '3':
 	from netprofile.db.enum2 import (
@@ -195,7 +197,7 @@ class MACAddress(types.TypeDecorator):
 	def process_bind_param(self, value, dialect):
 		if value is None:
 			return None
-		return binascii.unhexlify(value.replace(b':', b''))
+		return binascii.unhexlify(bytes(value.replace(':', ''), 'utf-8'))
 
 	def process_result_value(self, value, dialect):
 		if value is None:
