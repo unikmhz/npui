@@ -25,6 +25,8 @@ from netprofile_ipaddresses import IPv6Address
 from netprofile_hosts import Host
 from netprofile_networks import Network
 from netprofile_devices import Device
+from netprofile_stashes import Stash
+from netprofile_entities import PhysicalEntity, Entity, EntityFlag, EntityFlagType, EntityType
 AccessEntity = models.AccessEntity
 from netprofile.common.cache import cache
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))

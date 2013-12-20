@@ -25,5 +25,6 @@ def main(global_config, **settings):
     config.add_route('logout', '/logout')
     config.add_route('newuser', '/newuser')
     config.add_route('forgotpassword', '/forgotpassword')
+    config.add_route('activate', '/activate')
     config.scan()
     return config.make_wsgi_app()

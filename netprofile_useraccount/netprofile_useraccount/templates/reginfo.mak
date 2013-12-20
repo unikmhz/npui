@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" xmlns:tal="http://xml.zope.org/namespaces/tal">
 <head>
-  <title>Login page</title>
+  <title>${message}</title>
   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
   <meta name="keywords" content="python web application" />
   <meta name="description" content="pyramid web application" />
@@ -14,15 +14,9 @@
   <div id="wrap">
     <div id="middle">
       <div class="middle align-center">
-          ${message|n}
-
-          <form action="/login" method="POST"><br>
-            <input type="text" name="username">Username</input><br>
-            <input type="password" name="userpass">Password</input><br>
-            <input type="submit" value='Login'>
-          </form>
-          <a href='/newuser'>Register new user</a>|<a href='/forgotpassword'>Forgot password?</a>
-
+          ${message}
+          ${login}
+          ${passwd}
     </div>
 </body>
 </html>
