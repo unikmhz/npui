@@ -137,7 +137,10 @@ class ModuleManager(object):
 		modules. Might be handy for various utility tasks.
 		"""
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
-			ep.load()
+			modcls = ep.load()
+			modprep = getattr(modcls, 'prepare', None)
+			if callable(modprep):
+				modprep()
 
 	def __init__(self, cfg, vhost=None):
 		self.cfg = cfg
