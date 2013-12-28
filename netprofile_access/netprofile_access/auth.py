@@ -34,7 +34,10 @@ from pyramid.security import (
 	Authenticated,
 	unauthenticated_userid
 )
-from pyramid.events import ContextFound
+from pyramid.events import (
+	NewRequest,
+	ContextFound
+)
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from sqlalchemy.orm.exc import NoResultFound
@@ -77,6 +80,14 @@ def _auth_to_db(event):
 	else:
 		sess.execute(SetVariable('accesslogin', '[ACCESS:GUEST]'))
 
+def _new_request_csp(event):
+	request = event.request
+	# TODO: add static URL if set
+	request.response.headerlist.append((
+		'Content-Security-Policy',
+		'default-src \'self\' www.google.com; style-src \'self\' www.google.com \'unsafe-inline\''
+	))
+
 def includeme(config):
 	"""
 	For inclusion by Pyramid.
@@ -92,5 +103,6 @@ def includeme(config):
 	config.set_authorization_policy(authz_policy)
 	config.set_authentication_policy(authn_policy)
 
+	config.add_subscriber(_new_request_csp, NewRequest)
 	config.add_subscriber(_auth_to_db, ContextFound)
 

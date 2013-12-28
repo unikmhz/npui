@@ -23,18 +23,41 @@ body
 	background: #fff;
 }
 
+input, select, button
+{
+	background: #fff;
+	border: 1px solid #9acde6;
+	border-radius: 3px;
+}
+
+input:hover, select:hover, button:hover
+{
+	border: 1px solid #0383be;
+}
+
+input:focus, select:focus, button:focus
+{
+	outline: 0;
+	box-shadow: 0px 0px 0.2em 0.2em #9acde6;
+}
+
+button
+{
+	color: #0383be;
+}
+
 div#wrapper
 {
 	position: relative;
 	min-height: 100%;
-	margin-bottom: -1.6em;
+	margin-bottom: -2.4em;
 }
 
 div#wrapper:after
 {
 	content: '';
 	display: block;
-	height: 1.6em;
+	height: 2.4em;
 }
 
 div#header, div#footer
@@ -54,8 +77,16 @@ div#header
 
 div#footer
 {
+	margin-top: 0.8em;
+	position: relative;
 	height: 1em;
 	text-align: right;
+	z-index: 100;
+}
+
+div#footer a
+{
+	color: #fff;
 }
 
 div#body
@@ -108,10 +139,36 @@ ul#menu li a
 	text-decoration: none;
 }
 
+ul#menu li form
+{
+	display: block;
+}
+
+ul#menu li div.elem div.wrap
+{
+	padding: 0.3em;
+}
+
+ul#menu li div.elem input, ul#menu li div.elem select, ul#menu li div.elem button
+{
+	display: block;
+	width: 100%;
+	margin-top: 0.2em;
+}
+
+ul#menu li div.elem label
+{
+	display: block;
+	color: #fff;
+	background: #33a3de;
+	font-weight: bold;
+	padding: 0.1em 0.3em;
+}
+
 div#body div#contents
 {
-	padding-top: 0.3em;
-	margin-left: 16.4em;
+	margin-left: 17em;
+	margin-right: 1em;
 }
 
 div#login_outer
@@ -129,12 +186,21 @@ div#login
 	top: 50%;
 	left: 50%;
 	display: block;
-	width: 20em;
+	width: 24em;
 	height: 16em;
-	margin: -10.1em 0 0 -8.1em;
+	margin: -8.1em 0 0 -12.1em;
 	border: 1px solid #0383be;
 	background: #9acde6;
 	border-radius: 5px;
+}
+
+div#login div.errmsg, span.error
+{
+	color: #d73600;
+	background-color: #f6f5ac;
+	font-weight: bold;
+	border: 2px solid #d73600;
+	border-radius: 3px;
 }
 
 div#login div.errmsg
@@ -144,13 +210,23 @@ div#login div.errmsg
 	top: -3em;
 	left: 0;
 	right: 0;
+	margin: 0.3em;
+	padding: 0.4em;
+}
+
+span.error
+{
+	display: inline-block;
+	float: right;
+	padding: 0.1em 0.2em;
+	font-size: 85%;
+}
+
+p.error
+{
 	color: #d73600;
 	background-color: #f6f5ac;
 	font-weight: bold;
-	margin: 0.3em;
-	padding: 0.4em;
-	border: 2px solid #d73600;
-	border-radius: 3px;
 }
 
 div#login div.elem
@@ -199,7 +275,18 @@ div#login div.elem input, div#login div.elem select
 	margin: 0;
 	padding: 0;
 	width: 100%;
-	border: 0;
+	border: 1px solid #fff;
+	border-radius: 2px;
+}
+
+div#login div.elem input:hover, div#login div.elem select:hover
+{
+	border: 1px solid #0383be;
+}
+
+div#login div.elem input
+{
+	padding: 0.1em 0;
 }
 
 div#login div#buttons
@@ -217,10 +304,112 @@ div#login div#buttons
 div#login div#buttons button
 {
 	display: inline-block;
-	color: #0383be;
-	background: #fff;
-	border: 1px solid #9acde6;
 	border-radius: 2px;
-	margin: 0.3em;
+	margin: 0.3em 0.3em 0.3em 0;
+}
+
+div#login div#buttons button:focus
+{
+	outline: 0;
+	box-shadow: 0px 0px 0.3em 0.2em #9acde6;
+}
+
+div#login div#buttons button.side
+{
+	float: left;
+	margin: 0.3em 0 0.3em 0.3em;
+}
+
+div.block
+{
+	border: 1px solid #9acde6;
+	border-radius: 5px;
+	background: #cce7f3;
+	box-shadow: 0px 0px 0.2em 0.2em #aaddf6;
+	margin-top: 1.2em;
+}
+
+div.block h1, div.block h2
+{
+	color: #fff;
+	background: #33a3de;
+	padding: 0.2em 0.4em;
+}
+
+div.block h1
+{
+	border: 1px solid #fff;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+	font-size: 120%;
+}
+
+div.block h2
+{
+	border-style: solid;
+	border-color: #fff;
+	border-width: 0px 1px 1px 1px;
+	font-size: 108%;
+	text-align: right;
+}
+
+div.block p
+{
+	border-left: 1px solid #fff;
+	border-right: 1px solid #fff;
+	border-bottom: 1px solid #fff;
+	padding: 0.2em 0.4em;
+}
+
+div.block p.field
+{
+	position: relative;
+	padding-left: 16em;
+	overflow: hidden;
+}
+
+div#recaptcha_widget_div
+{
+	border-left: 1px solid #fff;
+	border-right: 1px solid #fff;
+	border-bottom: 1px solid #fff;
+	padding: 1em 1em 1em 16em;
+}
+
+div.block p.field label
+{
+	color: #fff;
+	background: #33a3de;
+	display: block;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	padding: 0.4em;
+	width: 15em;
+	position: absolute;
+	text-align: right;
+}
+
+div.block p:last-child
+{
+	border-bottom-width: 0;
+	border-bottom-left-radius: 3px;
+	border-bottom-right-radius: 3px;
+}
+
+div.block p.form_footer
+{
+	padding: 0.6em 0.8em;
+	text-align: right;
+}
+
+div#contents input.text
+{
+	padding: 0.1em 0.2em;
+}
+
+span.req
+{
+	color: #e13;
 }
 

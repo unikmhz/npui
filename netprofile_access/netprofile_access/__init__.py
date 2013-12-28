@@ -40,16 +40,30 @@ class Module(ModuleBase):
 		mmgr.cfg.add_route('access.cl.home', '/', vhost='client')
 		mmgr.cfg.add_route('access.cl.login', '/login', vhost='client')
 		mmgr.cfg.add_route('access.cl.logout', '/logout', vhost='client')
+		mmgr.cfg.add_route('access.cl.register', '/register', vhost='client')
+		mmgr.cfg.add_route('access.cl.regsent', '/regsent', vhost='client')
+		mmgr.cfg.add_route('access.cl.activate', '/activate', vhost='client')
+		mmgr.cfg.add_route('access.cl.restorepass', '/restorepass', vhost='client')
+		mmgr.cfg.add_route('access.cl.restoresent', '/restoresent', vhost='client')
+		mmgr.cfg.add_route('access.cl.robots', '/robots.txt', vhost='client')
+		mmgr.cfg.add_route('access.cl.favicon', '/favicon.ico', vhost='client')
 		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):
 		return ('entities', 'stashes', 'rates', 'ipaddresses')
 
+	@classmethod
+	def prepare(cls):
+		from netprofile_access import models
+
 	def get_models(self):
 		from netprofile_access import models
 		return (
 			models.AccessEntity,
+			models.AccessEntityLink,
+			models.AccessEntityLinkType,
+			models.PerUserRateModifier
 		)
 
 	def get_css(self, request):
