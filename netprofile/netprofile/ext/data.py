@@ -1484,8 +1484,8 @@ class ExtModel(object):
 				ret.extend(colrel)
 		return ret
 
-	def get_colander_schema(self):
-		return SQLAlchemySchemaNode(self.model)
+	def get_colander_schema(self, **kwargs):
+		return SQLAlchemySchemaNode(self.model, **kwargs)
 
 	def get_model_validations(self):
 		ret = []

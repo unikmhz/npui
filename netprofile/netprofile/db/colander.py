@@ -190,6 +190,8 @@ class SQLAlchemySchemaNode(colander.SchemaNode):
         name = prop.key
         column = prop.columns[0]
         declarative_overrides = column.info.get(self.sqla_info_key, {}).copy()
+        if 'header_string' in column.info:
+            declarative_overrides['title'] = column.info['header_string']
         self.declarative_overrides[name] = declarative_overrides.copy()
 
         key = 'exclude'
