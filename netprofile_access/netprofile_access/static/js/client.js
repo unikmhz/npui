@@ -11,7 +11,7 @@ $(function()
 	$.ajaxSetup({
 		headers: { 'X-CSRFToken': csrf_token }
 	});
-	$('input,select,textarea').not('[type=submit]').jqBootstrapValidation({
+	$('input,select,textarea').not('[type=submit],#__locale').jqBootstrapValidation({
 		preventSubmit: true
 	});
 	$('.chosen-select').chosen();
