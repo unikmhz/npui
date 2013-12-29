@@ -62,6 +62,7 @@ def _dpane_host_services(tabs, model, req):
 @register_hook('core.dpanetabs.entities.PhysicalEntity')
 @register_hook('core.dpanetabs.entities.LegalEntity')
 @register_hook('core.dpanetabs.entities.StructuralEntity')
+@register_hook('core.dpanetabs.entities.ExternalEntity')
 def _dpane_entity_hosts(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
