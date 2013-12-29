@@ -27,13 +27,14 @@ div#wrap:after
 
 div#footer
 {
+	color: #5e5e5e;
 	background-color: #f8f8f8;
 	background-image: linear-gradient(to top, #ffffff 0%, #f8f8f8 100%);
 	border-top: 1px solid #e7e7e7;
-	padding: 0.3em 0.8em;
+	padding: 1em 0.8em;
 	margin-top: 0.6em;
 	height: 2.8em;
-	line-height: 2.8em;
+	line-height: 1.4em;
 	text-align: right;
 	bottom: 0;
 	z-index: 100;
@@ -45,6 +46,7 @@ div#footer
 div#wrap > .container
 {
 	padding-top: 5em;
+	padding-bottom: 1em;
 }
 
 body > iframe
@@ -69,5 +71,29 @@ div.controls span.req
 	display: inline-block;
 	top: 0;
 	right: 0.2em;
+}
+
+.legend span.req
+{
+	display: block;
+	float: left;
+	vertical-align: middle;
+	padding: 0.2em;
+}
+
+#recaptcha_widget_div
+{
+	position: relative;
+	left: -3px;
+}
+
+#recaptcha_table
+{
+	line-height: 1.2 !important;
+}
+
+.single-line
+{
+	white-space: nowrap;
 }
 

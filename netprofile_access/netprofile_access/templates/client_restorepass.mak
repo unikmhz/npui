@@ -97,7 +97,7 @@
 </fieldset>
 % endif
 <div class="form-actions row">
-	<p class="col-sm-4"><span class="req">*</span> ${_('Fields marked with this symbol are required.')}</p>
+	<p class="col-sm-4 legend"><span class="req">*</span> ${_('Fields marked with this symbol are required.')}</p>
 	<div class="controls col-sm-8">
 		<input type="hidden" id="csrf" name="csrf" value="${req.get_csrf()}" />
 		<button type="submit" class="btn btn-primary btn-large" id="submit" name="submit" title="${_('Recover your password')}" tabindex="10">${_('Recover Password')}</button>

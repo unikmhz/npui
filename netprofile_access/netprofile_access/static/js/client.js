@@ -1,6 +1,6 @@
 var RecaptchaOptions = {
 	tabindex: 9,
-	theme:    'clean'
+	theme:    'white'
 };
 
 $(function()

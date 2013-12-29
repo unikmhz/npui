@@ -60,7 +60,7 @@
 </div>
 
 <div id="footer">
-	Copyright © 2013 <a href="http://netprofile.ru">${_('NetProfile.ru Team')}</a>.
-	${_('License:')} <a href="http://www.gnu.org/licenses/agpl-3.0.html">AGPLv3</a>+
+	<span class="single-line">Copyright © 2013 <a href="http://netprofile.ru">${_('NetProfile.ru Team')}</a>.</span>
+	<span class="single-line">${_('License:')} <a href="http://www.gnu.org/licenses/agpl-3.0.html">AGPLv3</a>+</span>
 </div>
 
