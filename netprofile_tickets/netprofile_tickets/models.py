@@ -52,11 +52,9 @@ from dateutil.parser import parse as dparse
 
 from sqlalchemy import (
 	Column,
-	Date,
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -68,8 +66,6 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import (
 	backref,
-	contains_eager,
-	joinedload,
 	lazyload,
 	relationship
 )
@@ -82,7 +78,6 @@ from netprofile.db.connection import (
 )
 from netprofile.db.fields import (
 	ASCIIString,
-	DeclEnum,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -189,7 +184,8 @@ class TicketOrigin(Base):
 		Comment('Ticket origin name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	description = Column(
@@ -268,7 +264,8 @@ class TicketState(Base):
 		Comment('Ticket state title'),
 		nullable=False,
 		info={
-			'header_string' : _('Title')
+			'header_string' : _('Title'),
+			'column_flex'   : 1
 		}
 	)
 	subtitle = Column(
@@ -278,7 +275,8 @@ class TicketState(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Subtitle')
+			'header_string' : _('Subtitle'),
+			'column_flex'   : 1
 		}
 	)
 	flow = Column(
@@ -423,7 +421,8 @@ class TicketStateTransition(Base):
 		Comment('Ticket transition name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	from_state_id = Column(
@@ -433,7 +432,8 @@ class TicketStateTransition(Base):
 		Comment('From state'),
 		nullable=False,
 		info={
-			'header_string' : _('From')
+			'header_string' : _('From'),
+			'column_flex'   : 1
 		}
 	)
 	to_state_id = Column(
@@ -443,7 +443,8 @@ class TicketStateTransition(Base):
 		Comment('To state'),
 		nullable=False,
 		info={
-			'header_string' : _('To')
+			'header_string' : _('To'),
+			'column_flex'   : 1
 		}
 	)
 	reassign_to_id = Column(
@@ -535,7 +536,8 @@ class TicketFlagType(Base):
 		Comment('Ticket flag type name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	description = Column(
@@ -1287,7 +1289,8 @@ class TicketTemplate(Base):
 		Comment('Ticket template name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	name_template = Column(
@@ -1520,7 +1523,8 @@ class TicketChangeField(Base):
 		Comment('Ticket change field name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -1857,7 +1861,8 @@ class TicketScheduler(Base):
 		Comment('Ticket scheduler name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	sim_user = Column(
