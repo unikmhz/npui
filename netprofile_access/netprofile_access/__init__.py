@@ -45,6 +45,7 @@ class Module(ModuleBase):
 		mmgr.cfg.add_route('access.cl.activate', '/activate', vhost='client')
 		mmgr.cfg.add_route('access.cl.restorepass', '/restorepass', vhost='client')
 		mmgr.cfg.add_route('access.cl.restoresent', '/restoresent', vhost='client')
+		mmgr.cfg.add_route('access.cl.check.nick', '/check/nick', vhost='client')
 		mmgr.cfg.add_route('access.cl.robots', '/robots.txt', vhost='client')
 		mmgr.cfg.add_route('access.cl.favicon', '/favicon.ico', vhost='client')
 		mmgr.cfg.scan()

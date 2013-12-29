@@ -2,26 +2,19 @@
 <%inherit file="netprofile_access:templates/client_base.mak"/>
 <%block name="title">${_('Log In')}</%block>
 <%block name="head">\
-	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/login.js')}"></script>\
+	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/login.css')}" type="text/css" />
 </%block>
 
-<form method="post" action="${req.route_url('access.cl.login')}">
-<div id="login_outer"><div id="login">
+<div class="container">
+<form class="form-signin" role="form" method="post" action="${req.route_url('access.cl.login')}">
+	<h2 class="form-signin-heading">${_('Log In')}</h2>
 	<input type="hidden" id="csrf" name="csrf" value="${req.get_csrf()}" />
-% if failed:
-	<div class="errmsg">${_('Authentication failed.')}</div>
-% endif
-	<div class="elem">
-		<label for="user">${_('User Name')}</label>
-		<div class="wrap"><input class="text" type="text" id="user" name="user" title="${_('Enter your user name here')}" value="" size="28" maxlength="254" tabindex="1" autocomplete="off" /></div>
-	</div>
-	<div class="elem">
-		<label for="pass">${_('Password')}</label>
-		<div class="wrap"><input class="text" type="password" id="pass" name="pass" title="${_('Enter your password here')}" value="" size="28" maxlength="254" tabindex="2" autocomplete="off" /></div>
-	</div>
-	<div class="elem">
-		<label for="__locale">${_('Language')}</label>
-		<div class="wrap"><select class="text" id="__locale" name="__locale" tabindex="3" autocomplete="off">
+	<input type="text" class="form-control" placeholder="${_('User Name')}" required="required" autofocus="autofocus" id="user" name="user" title="${_('Enter your user name here')}" value="" maxlength="254" tabindex="1" autocomplete="off" />
+	<input type="password" class="form-control" placeholder="${_('Password')}" required="required" id="pass" name="pass" title="${_('Enter your password here')}" value="" maxlength="254" tabindex="2" autocomplete="off" />
+	<button type="submit" class="btn btn-lg btn-primary btn-block" id="submit" name="submit" title="${_('Log in to your account')}" tabindex="3">${_('Log In')}</button>
+	<div class="input-group">
+		<label class="input-group-addon" for="__locale">${_('Language')}</label>
+		<select class="form-control chosen-select" id="__locale" name="__locale" tabindex="4">
 % for lang in langs:
 			<option label="${lang[1]}" value="${lang[0]}"\
 % if lang[0] == cur_loc:
@@ -29,17 +22,19 @@
 % endif
 >${lang[1]}</option>
 % endfor
-		</select></div>
+		</select>
+		<span class="input-group-btn">
+			<button type="submit" class="btn btn-default" id="lang_submit" name="chlang" title="${_('Change your current language')}">${_('Change')}</button>
+		</span>
 	</div>
-	<div id="buttons">
-		<button type="submit" id="submit" name="submit" title="${_('Log in to your account')}" tabindex="4">${_('Log In')}</button>
+	<div>
 % if can_reg:
-		<button type="submit" id="register" name="register" class="side" title="${_('Register new account')}" tabindex="5">${_('Register')}</button>
+		<a href="${req.route_url('access.cl.register')}" id="register" class="btn btn-default" title="${_('Register new account')}" tabindex="5">${_('Register')}</a>
 % endif
 % if can_recover:
-		<button type="submit" id="recover" name="recover" class="side" title="${_('Recover lost password via e-mail')}" tabindex="6">${_('Lost Password?')}</button>
+		<a href="${req.route_url('access.cl.restorepass')}" id="restorepass" class="btn btn-info pull-right" title="${_('Recover lost password via e-mail')}" tabindex="6">${_('Lost Password?')}</a>
 % endif
 	</div>
-</div></div>
 </form>
+</div>
 

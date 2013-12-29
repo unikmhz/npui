@@ -105,17 +105,9 @@ def client_login(request):
 	cfg = request.registry.settings
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	can_recover = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
-	csrf = request.POST.get('csrf', '')
 
-	if 'register' in request.POST:
-		if can_reg and (csrf == request.get_csrf()):
-			return HTTPSeeOther(location=request.route_url('access.cl.register'))
-		did_fail = True
-	elif 'recover' in request.POST:
-		if can_recover and (csrf == request.get_csrf()):
-			return HTTPSeeOther(location=request.route_url('access.cl.restorepass'))
-		did_fail = True
-	elif request.method == 'POST':
+	if 'submit' in request.POST:
+		csrf = request.POST.get('csrf', '')
 		login = request.POST.get('user', '')
 		passwd = request.POST.get('pass', '')
 
@@ -301,12 +293,38 @@ def client_register(request):
 		'cur_loc'        : cur_locale,
 		'must_verify'    : must_verify,
 		'must_recaptcha' : must_recaptcha,
+		'min_pwd_len'    : min_pwd_len,
 		'errors'         : {err: loc.translate(errors[err]) for err in errors}
 	}
 	if must_recaptcha:
 		tpldef['rc_public'] = rc_public
 	request.run_hook('access.cl.tpldef.register', tpldef, request)
 	return tpldef
+
+@view_config(route_name='access.cl.check.nick', xhr=True, renderer='json')
+def client_check_nick(request):
+	login = request.GET.get('value')
+	ret = {'value' : login, 'valid' : False}
+	if 'X-CSRFToken' not in request.headers:
+		return ret
+	if request.headers['X-CSRFToken'] != request.get_csrf():
+		return ret
+	if authenticated_userid(request):
+		return ret
+	cfg = request.registry.settings
+	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
+	if not can_reg:
+		return ret
+	sess = DBSession()
+	# XXX: currently we check across all entity types.
+	login_clash = sess.query(func.count('*'))\
+		.select_from(Entity)\
+		.filter(Entity.nick == str(login))\
+		.scalar()
+	if login_clash == 0:
+		loc = get_localizer(request)
+		ret['valid'] = True
+	return ret
 
 @view_config(route_name='access.cl.regsent', renderer='netprofile_access:templates/client_regsent.mak')
 def client_regsent(request):
@@ -530,11 +548,11 @@ def _cl_tpldef(tpldef, req):
 		'text'  : _('Portal')
 	}]
 	req.run_hook('access.cl.menu', menu, req)
-	menu.extend(({
-		'route' : 'access.cl.logout',
-		'text'  : _('Log Out'),
-		'cls'   : 'bottom'
-	},))
+#	menu.extend(({
+#		'route' : 'access.cl.logout',
+#		'text'  : _('Log Out'),
+#		'cls'   : 'navbar-right'
+#	},))
 	tpldef.update({
 		'menu'    : menu,
 		'cur_loc' : cur_locale,

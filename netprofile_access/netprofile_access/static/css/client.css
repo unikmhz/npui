@@ -6,410 +6,67 @@
 html, body
 {
 	height: 100%;
-}
-
-body, td
-{
-	font-family: "Droid Sans", Helvetica, sans-serif;
-	font-size: 10pt;
-	vertical-align: top;
 	margin: 0;
 	padding: 0;
 }
 
-body
+div#wrap
 {
-	color: #000;
-	background: #fff;
-}
-
-input, select, button
-{
-	background: #fff;
-	border: 1px solid #9acde6;
-	border-radius: 3px;
-}
-
-input:hover, select:hover, button:hover
-{
-	border: 1px solid #0383be;
-}
-
-input:focus, select:focus, button:focus
-{
-	outline: 0;
-	box-shadow: 0px 0px 0.2em 0.2em #9acde6;
-}
-
-button
-{
-	color: #0383be;
-}
-
-div#wrapper
-{
-	position: relative;
 	min-height: 100%;
-	margin-bottom: -2.4em;
+	height: auto;
+	position: relative;
+	margin: 0 auto -4em;
 }
 
-div#wrapper:after
+div#wrap:after
 {
 	content: '';
 	display: block;
-	height: 2.4em;
-}
-
-div#header, div#footer
-{
-	color: #fff;
-	background: #0383be;
-	padding: 0.3em 0.4em;
-}
-
-div#header
-{
-	text-transform: uppercase;
-	line-height: 2em;
-	height: 2em;
-	font-weight: bold;
+	height: 4em;
 }
 
 div#footer
 {
-	margin-top: 0.8em;
-	position: relative;
-	height: 1em;
+	background-color: #f8f8f8;
+	background-image: linear-gradient(to top, #ffffff 0%, #f8f8f8 100%);
+	border-top: 1px solid #e7e7e7;
+	padding: 0.3em 0.8em;
+	margin-top: 0.6em;
+	height: 2.8em;
+	line-height: 2.8em;
 	text-align: right;
+	bottom: 0;
 	z-index: 100;
+	-webkit-box-shadow: 0 -5px 5px rgba(0, 0, 0, 0.075);
+	box-shadow: 0 -5px 5px rgba(0, 0, 0, 0.075);
 }
 
-div#footer a
+div#wrap > .container
 {
-	color: #fff;
+	padding-top: 5em;
 }
 
-div#body
+body > iframe
 {
+	display: none !important;
 }
 
-ul#menu
-{
-	display: block;
-	background: #cce7f3;
-	position: absolute;
-	top: 2.6em;
-	left: 0;
-	bottom: 1.6em;
-	width: 16em;
-	margin: 0;
-	padding: 0;
-}
-
-ul#menu li
-{
-	display: block;
-	margin: 0;
-	padding: 0;
-	border-bottom: 1px solid #9acde6;
-}
-
-ul#menu li.active
-{
-	padding: 0.3em 0.4em;
-	font-weight: bold;
-}
-
-ul#menu li.bottom
-{
-	border-bottom: 0;
-	border-top: 1px solid #9acde6;
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	right: 0;
-}
-
-ul#menu li a
-{
-	display: block;
-	padding: 0.3em 0.4em;
-	color: #00639e;
-	font-weight: bold;
-	text-decoration: none;
-}
-
-ul#menu li form
-{
-	display: block;
-}
-
-ul#menu li div.elem div.wrap
-{
-	padding: 0.3em;
-}
-
-ul#menu li div.elem input, ul#menu li div.elem select, ul#menu li div.elem button
-{
-	display: block;
-	width: 100%;
-	margin-top: 0.2em;
-}
-
-ul#menu li div.elem label
-{
-	display: block;
-	color: #fff;
-	background: #33a3de;
-	font-weight: bold;
-	padding: 0.1em 0.3em;
-}
-
-div#body div#contents
-{
-	margin-left: 17em;
-	margin-right: 1em;
-}
-
-div#login_outer
-{
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-}
-
-div#login
-{
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	display: block;
-	width: 24em;
-	height: 16em;
-	margin: -8.1em 0 0 -12.1em;
-	border: 1px solid #0383be;
-	background: #9acde6;
-	border-radius: 5px;
-}
-
-div#login div.errmsg, span.error
-{
-	color: #d73600;
-	background-color: #f6f5ac;
-	font-weight: bold;
-	border: 2px solid #d73600;
-	border-radius: 3px;
-}
-
-div#login div.errmsg
-{
-	position: absolute;
-	z-index: 100;
-	top: -3em;
-	left: 0;
-	right: 0;
-	margin: 0.3em;
-	padding: 0.4em;
-}
-
-span.error
-{
-	display: inline-block;
-	float: right;
-	padding: 0.1em 0.2em;
-	font-size: 85%;
-}
-
-p.error
-{
-	color: #d73600;
-	background-color: #f6f5ac;
-	font-weight: bold;
-}
-
-div#login div.elem
+div.controls
 {
 	position: relative;
-	margin: 0.3em;
-	padding-left: 0.3em;
-	padding-right: 0.3em;
-	border: 1px solid #0383be;
-	background: #cce7f3;
-	border-radius: 3px;
-}
-
-div#login div.elem label
-{
-	display: block;
-	background: #fff;
-	margin: 0.3em 0 0 0;
-	padding: 0.1em 0.2em;
-	border-top: 1px solid #9acde6;
-	border-left: 1px solid #9acde6;
-	border-right: 1px solid #9acde6;
-	border-top-left-radius: 2px;
-	border-top-right-radius: 2px;
-	font-size: 9pt;
-}
-
-div#login div.elem div.wrap
-{
-	display: block;
-	background: #fff;
-	margin: 0 0 0.3em 0;
-	padding: 0.1em 0.2em;
-	border-top-width: 0;
-	border-bottom: 1px solid #9acde6;
-	border-left: 1px solid #9acde6;
-	border-right: 1px solid #9acde6;
-	border-bottom-left-radius: 2px;
-	border-bottom-right-radius: 2px;
-}
-
-div#login div.elem input, div#login div.elem select
-{
-	display: block;
-	background: transparent;
-	margin: 0;
-	padding: 0;
-	width: 100%;
-	border: 1px solid #fff;
-	border-radius: 2px;
-}
-
-div#login div.elem input:hover, div#login div.elem select:hover
-{
-	border: 1px solid #0383be;
-}
-
-div#login div.elem input
-{
-	padding: 0.1em 0;
-}
-
-div#login div#buttons
-{
-	position: absolute;
-	bottom: 0.3em;
-	left: 0.3em;
-	right: 0.3em;
-	border: 1px solid #0383be;
-	background: #cce7f3;
-	border-radius: 3px;
-	text-align: right;
-}
-
-div#login div#buttons button
-{
-	display: inline-block;
-	border-radius: 2px;
-	margin: 0.3em 0.3em 0.3em 0;
-}
-
-div#login div#buttons button:focus
-{
-	outline: 0;
-	box-shadow: 0px 0px 0.3em 0.2em #9acde6;
-}
-
-div#login div#buttons button.side
-{
-	float: left;
-	margin: 0.3em 0 0.3em 0.3em;
-}
-
-div.block
-{
-	border: 1px solid #9acde6;
-	border-radius: 5px;
-	background: #cce7f3;
-	box-shadow: 0px 0px 0.2em 0.2em #aaddf6;
-	margin-top: 1.2em;
-}
-
-div.block h1, div.block h2
-{
-	color: #fff;
-	background: #33a3de;
-	padding: 0.2em 0.4em;
-}
-
-div.block h1
-{
-	border: 1px solid #fff;
-	border-top-left-radius: 3px;
-	border-top-right-radius: 3px;
-	font-size: 120%;
-}
-
-div.block h2
-{
-	border-style: solid;
-	border-color: #fff;
-	border-width: 0px 1px 1px 1px;
-	font-size: 108%;
-	text-align: right;
-}
-
-div.block p
-{
-	border-left: 1px solid #fff;
-	border-right: 1px solid #fff;
-	border-bottom: 1px solid #fff;
-	padding: 0.2em 0.4em;
-}
-
-div.block p.field
-{
-	position: relative;
-	padding-left: 16em;
-	overflow: hidden;
-}
-
-div#recaptcha_widget_div
-{
-	border-left: 1px solid #fff;
-	border-right: 1px solid #fff;
-	border-bottom: 1px solid #fff;
-	padding: 1em 1em 1em 16em;
-}
-
-div.block p.field label
-{
-	color: #fff;
-	background: #33a3de;
-	display: block;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	padding: 0.4em;
-	width: 15em;
-	position: absolute;
-	text-align: right;
-}
-
-div.block p:last-child
-{
-	border-bottom-width: 0;
-	border-bottom-left-radius: 3px;
-	border-bottom-right-radius: 3px;
-}
-
-div.block p.form_footer
-{
-	padding: 0.6em 0.8em;
-	text-align: right;
-}
-
-div#contents input.text
-{
-	padding: 0.1em 0.2em;
 }
 
 span.req
 {
 	color: #e13;
+	font-size: 120%;
+}
+
+div.controls span.req
+{
+	position: absolute;
+	display: inline-block;
+	top: 0;
+	right: 0.2em;
 }
 

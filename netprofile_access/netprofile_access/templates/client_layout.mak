@@ -1,22 +1,27 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="netprofile_access:templates/client_base.mak"/>
-<%block name="head">\
-	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/client.js')}"></script>\
-</%block>
 
-<div id="wrapper">
-	<div id="header">
-	${self.title()}
-	</div>
-	<div id="body">
-<%block name="sidebar">\
-	<ul id="menu">
+<div id="wrap">
+	<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#main-navbar">
+					<span class="sr-only">${_('Toggle navigation')}</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<span class="navbar-brand" href="#">${self.title()}</span>
+			</div>
+			<div class="collapse navbar-collapse" id="main-navbar">
+<%block name="menubar">\
+				<ul class="nav navbar-nav">
 % for item in menu:
 % if item.get('route') and req.matched_route and (item.get('route') == req.matched_route.name):
-		<li class="active">
-			${loc.translate(item['text'])}
+					<li class="active">
+						<a href="#">${loc.translate(item['text'])}</a>
 % elif item.get('route'):
-		<li\
+					<li\
 % if item.get('cls'):
  class="${item['cls']}"\
 % endif
@@ -24,36 +29,36 @@
  title="${loc.translate(item['title'])}"\
 % endif
 >
-			<a href="${req.route_url(item['route'])}">${loc.translate(item['text'])}</a>
+						<a href="${req.route_url(item['route'])}">${loc.translate(item['text'])}</a>
 % endif
-		</li>
+					</li>
 % endfor
-		<li class="flexblock">
-		<form method="get" action="${req.route_url('access.cl.register')}">
-		<div class="elem">
-			<label for="__locale">${_('Language')}</label>
-			<div class="wrap">
-			<select class="text" id="__locale" name="__locale">
+				</ul>
+</%block>
+				<ul class="nav navbar-nav navbar-right">
+					<li><a href="${req.route_url('access.cl.logout')}">${_('Log Out')}</a></li>
+				</ul>
+				<form class="navbar-form navbar-right" role="form" method="get" action="">
+				<div class="form-group">
+					<label for="__locale" class="sr-only">${_('Language')}</label>
+					<select class="form-control chosen-select" id="__locale" name="__locale" title="${_('Language')}">
 % for lang in langs:
-				<option label="${lang[1]}" value="${lang[0]}"\
+						<option label="${lang[1]}" value="${lang[0]}"\
 % if lang[0] == cur_loc:
  selected="selected"\
 % endif
 >${lang[1]}</option>
 % endfor
-			</select>
-			<button type="submit" id="lang_submit" name="submit" title="${_('Change your current language')}">${_('Change')}</button>
+					</select>
+				</div>
+				</form>
 			</div>
 		</div>
-		</form>
-		</li>
-	</ul>\
-</%block>
-	<div id="contents">
-${next.body()}
 	</div>
-	</div>
+
+	<div class="container">${next.body()}</div>
 </div>
+
 <div id="footer">
 	Copyright © 2013 <a href="http://netprofile.ru">${_('NetProfile.ru Team')}</a>.
 	${_('License:')} <a href="http://www.gnu.org/licenses/agpl-3.0.html">AGPLv3</a>+
