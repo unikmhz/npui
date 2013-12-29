@@ -12,6 +12,8 @@
 	<input type="text" class="form-control" placeholder="${_('User Name')}" required="required" autofocus="autofocus" id="user" name="user" title="${_('Enter your user name here')}" value="" maxlength="254" tabindex="1" autocomplete="off" />
 	<input type="password" class="form-control" placeholder="${_('Password')}" required="required" id="pass" name="pass" title="${_('Enter your password here')}" value="" maxlength="254" tabindex="2" autocomplete="off" />
 	<button type="submit" class="btn btn-lg btn-primary btn-block" id="submit" name="submit" title="${_('Log in to your account')}" tabindex="3">${_('Log In')}</button>
+</form>
+<form class="form-signin" role="form" method="get" action="${req.route_url('access.cl.login')}">
 	<div class="input-group">
 		<label class="input-group-addon" for="__locale">${_('Language')}</label>
 		<select class="form-control chosen-select" id="__locale" name="__locale" tabindex="4">
@@ -24,7 +26,7 @@
 % endfor
 		</select>
 		<span class="input-group-btn">
-			<button type="submit" class="btn btn-default" id="lang_submit" name="chlang" title="${_('Change your current language')}">${_('Change')}</button>
+			<button type="submit" class="btn btn-default" id="lang_submit" title="${_('Change your current language')}">${_('Change')}</button>
 		</span>
 	</div>
 	<div>
