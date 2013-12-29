@@ -53,7 +53,6 @@ class Module(ModuleBase):
 			Filter,
 			FilterSet,
 			GlobalRateModifier,
-			PerUserRateModifier,
 			Rate,
 			RateClass,
 			RateModifierType

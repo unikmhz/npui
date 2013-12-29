@@ -35,7 +35,6 @@ __all__ = [
 	'Filter',
 	'FilterSet',
 	'GlobalRateModifier',
-	'PerUserRateModifier',
 	'Rate',
 	'RateClass',
 	'RateModifierType'
@@ -1087,12 +1086,6 @@ class Rate(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
-	per_user_modifiers = relationship(
-		'PerUserRateModifier',
-		backref='rate',
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
 
 	global_modifiers = association_proxy(
 		'global_modmap',
@@ -1420,12 +1413,6 @@ class RateModifierType(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
-	per_user_modifiers = relationship(
-		'PerUserRateModifier',
-		backref=backref('type', innerjoin=True),
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
 
 	def __str__(self):
 		return '%s' % str(self.name)
@@ -1521,122 +1508,5 @@ class GlobalRateModifier(Base):
 		info={
 			'header_string' : _('Lookup Order')
 		}
-	)
-
-class PerUserRateModifier(Base):
-	"""
-	Per-user rate modifier definition
-	"""
-	__tablename__ = 'rates_mods_peruser'
-	__table_args__ = (
-		Comment('Per-user rate modifiers'),
-		Index('rates_mods_peruser_u_mapping', 'rmtid', 'entityid', 'rateid', unique=True),
-		Index('rates_mods_peruser_i_entityid', 'entityid'),
-		Index('rates_mods_peruser_i_rateid', 'rateid'),
-		Index('rates_mods_peruser_i_l_ord', 'l_ord'),
-		{
-			'mysql_engine'  : 'InnoDB',
-			'mysql_charset' : 'utf8',
-			'info'          : {
-				'cap_menu'      : 'BASE_RATES', # FIXME
-				'cap_read'      : 'RATES_LIST', # FIXME
-				'cap_create'    : 'RATES_EDIT', # FIXME
-				'cap_edit'      : 'RATES_EDIT', # FIXME
-				'cap_delete'    : 'RATES_EDIT', # FIXME
-				'menu_name'     : _('Rate Modifiers'),
-				'default_sort'  : ({ 'property': 'l_ord', 'direction': 'ASC' },),
-				'grid_view'     : ('entity', 'rate', 'type', 'enabled', 'l_ord'),
-				'create_wizard' : SimpleWizard(title=_('Add new rate modifier'))
-			}
-		}
-	)
-	id = Column(
-		'rmid',
-		UInt32(),
-		Sequence('rates_mods_peruser_rmid_seq'),
-		Comment('Rate modifier ID'),
-		primary_key=True,
-		nullable=False,
-		info={
-			'header_string' : _('ID')
-		}
-	)
-	type_id = Column(
-		'rmtid',
-		UInt32(),
-		Comment('Rate modifier type ID'),
-		ForeignKey('rates_mods_types.rmtid', name='rates_mods_peruser_fk_rmtid', ondelete='CASCADE', onupdate='CASCADE'),
-		nullable=False,
-		info={
-			'header_string' : _('Type'),
-			'filter_type'   : 'list'
-		}
-	)
-	entity_id = Column(
-		'entityid',
-		UInt32(),
-		Comment('Access entity ID'),
-		ForeignKey('entities_access.entityid', name='rates_mods_peruser_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
-		nullable=False,
-		info={
-			'header_string' : _('Account'),
-			'filter_type'   : 'none'
-		}
-	)
-	rate_id = Column(
-		'rateid',
-		UInt32(),
-		Comment('Rate ID'),
-		ForeignKey('rates_def.rateid', name='rates_mods_peruser_fk_rateid', ondelete='CASCADE', onupdate='CASCADE'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Rate'),
-			'filter_type'   : 'list'
-		}
-	)
-	creation_time = Column(
-		'ctime',
-		TIMESTAMP(),
-		Comment('Creation timestamp'),
-		nullable=True,
-		default=None,
-		server_default=FetchedValue(),
-		info={
-			'header_string' : _('Created'),
-			'read_only'     : True
-		}
-	)
-	enabled = Column(
-		NPBoolean(),
-		Comment('Is modifier enabled?'),
-		nullable=False,
-		default=False,
-		server_default=npbool(False),
-		info={
-			'header_string' : _('Enabled')
-		}
-	)
-	lookup_order = Column(
-		'l_ord',
-		UInt16(),
-		Comment('Lookup order'),
-		nullable=False,
-		default=1000,
-		server_default=text('1000'),
-		info={
-			'header_string' : _('Lookup Order')
-		}
-	)
-
-	entity = relationship(
-		'AccessEntity',
-		innerjoin=True,
-		backref=backref(
-			'rate_modifiers',
-			cascade='all, delete-orphan',
-			passive_deletes=True
-		)
 	)
 
