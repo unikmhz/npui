@@ -1,3 +1,7 @@
+/**
+ * @class NetProfile.view.ModelSelect
+ * @extends Ext.form.field.Trigger
+ */
 Ext.define('NetProfile.view.ModelSelect', {
 	extend: 'Ext.form.field.Trigger',
 	alias: 'widget.modelselect',

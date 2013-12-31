@@ -29,7 +29,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.ux.form.TinyMCETextArea',
 		'Ext.ux.window.CenterWindow',
 		'Ext.ux.RowExpander',
-		'NetProfile.view.ModelSelect'
+		'NetProfile.view.ModelSelect',
+		'NetProfile.view.SimpleModelSelect'
 	],
 	rowEditing: true,
 	simpleSearch: false,
