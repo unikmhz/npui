@@ -67,9 +67,14 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
+from netprofile.ext.data import ExtModel
 from netprofile.db.ddl import Comment
 
-from netprofile.ext.wizards import SimpleWizard
+from netprofile.ext.wizards import (
+	SimpleWizard,
+	Step,
+	Wizard
+)
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
@@ -347,6 +352,21 @@ class StashIOType(Base):
 	def __str__(self):
 		return str(self.name)
 
+def _wizcb_stashio_submit(wiz, step, act, val, req):
+	sess = DBSession()
+	em = ExtModel(StashIO)
+	obj = StashIO()
+	em.set_values(obj, val, req, True)
+	sess.add(obj)
+	if obj.difference:
+		stash = sess.query(Stash).get(obj.stash_id)
+		if stash:
+			stash.amount += obj.difference
+	return {
+		'do'     : 'close',
+		'reload' : True
+	}
+
 class StashIO(Base):
 	"""
 	Stash I/O operation object.
@@ -368,15 +388,22 @@ class StashIO(Base):
 				'cap_create'    : 'STASHES_IO',
 				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : '__NOPRIV__',
-				'menu_name'    : _('Operations'),
+				'menu_name'     : _('Operations'),
 				'show_in_menu'  : 'modules',
 				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'ts', 'direction': 'DESC' },),
 				'grid_view' : ('type', 'stash', 'entity', 'user', 'ts', 'diff'),
 				'form_view' : ('type', 'stash', 'entity', 'user', 'ts', 'diff', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				# TODO: Add IO wizard to create_wizard
-				#'create_wizard' : SimpleWizard(title=_('Add new operation'))
+
+				'create_wizard' : Wizard(
+					Step(
+						'stash', 'type', 'diff', 'descr',
+						id='generic',
+						on_submit=_wizcb_stashio_submit
+					),
+					title=_('Add new operation')
+				)
 			}
 		}
 	)
@@ -400,6 +427,7 @@ class StashIO(Base):
 		info={
 			'header_string' : _('Type'),
 			'filter_type'   : 'list',
+			'editor_xtype'  : 'simplemodelselect',
 			'column_flex'   : 2
 		}
 	)
