@@ -30,6 +30,7 @@ from __future__ import (
 import importlib
 import logging
 import colander
+import decimal
 
 import datetime as dt
 from dateutil.tz import tzlocal
@@ -131,7 +132,8 @@ _INTEGER_SET = (
 	UInt64
 )
 
-_FLOAT_SET = (
+_DECIMAL_SET = (
+	IPv6Offset,
 	Numeric
 )
 
@@ -542,8 +544,8 @@ class ExtColumn(object):
 					return True
 				return False
 			return bool(param)
-		if issubclass(typecls, _FLOAT_SET):
-			return float(param)
+		if issubclass(typecls, _DECIMAL_SET):
+			return decimal.Decimal(param)
 		if typecls is DeclEnumType:
 			if isinstance(param, EnumSymbol):
 				return param
@@ -713,7 +715,7 @@ class ExtColumn(object):
 				'allowDecimals' : False
 			})
 			self._set_min_max(conf)
-		elif issubclass(typecls, _FLOAT_SET):
+		elif issubclass(typecls, _DECIMAL_SET):
 			conf.update({
 				'allowDecimals' : True
 			})
@@ -840,7 +842,7 @@ class ExtColumn(object):
 		cw = self.cell_class
 		if cw is not None:
 			conf['tdCls'] = cw
-		if issubclass(typecls, _FLOAT_SET):
+		if issubclass(typecls, _DECIMAL_SET):
 			conf.update({
 				'align'  : 'right',
 				'format' : '0.00'
@@ -1092,8 +1094,11 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 		if len(self.column.foreign_keys) > 0:
 			fk = self.column.foreign_keys.copy().pop()
 			cls = _table_to_class(fk.column.table.name)
+			xtype = 'modelselect'
+			if 'editor_xtype' in self.column.info:
+				xtype = self.column.info['editor_xtype']
 			conf.update({
-				'xtype'       : 'modelselect',
+				'xtype'       : xtype,
 				'apiModule'   : cls.__moddef__,
 				'apiClass'    : cls.__name__,
 				'disabled'    : False,
@@ -1599,7 +1604,7 @@ class ExtModel(object):
 						if fkey == 'le':
 							query = query.filter(col <= fval)
 						continue
-					if issubclass(colcls, _INTEGER_SET) or issubclass(colcls, _FLOAT_SET) or issubclass(colcls, _IPADDR_SET):
+					if issubclass(colcls, _INTEGER_SET) or issubclass(colcls, _DECIMAL_SET) or issubclass(colcls, _IPADDR_SET):
 						if fval is None:
 							continue
 						if fkey == 'gt':
