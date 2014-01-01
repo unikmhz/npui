@@ -28,12 +28,13 @@ Ext.define('NetProfile.controller.DataStores', {
 			}
 		}
 	},
-	getStore: function(module, model, grid, nocache, noautoload)
+	getStore: function(module, model, grid, nocache, noautoload, static_extra)
 	{
 		var me = this,
 			store,
 			store_cfg;
 
+		static_extra = static_extra || {};
 		if(!(module in this.stores))
 			this.stores[module] = {};
 		if((model in this.stores[module]) && !nocache)
@@ -44,7 +45,8 @@ Ext.define('NetProfile.controller.DataStores', {
 			{
 				store.on('beforeload', this.onBeforeLoad, grid);
 				if(grid.extraParams)
-					store.proxy.extraParams = grid.extraParams;
+					Ext.apply(static_extra, grid.extraParams);
+				store.proxy.extraParams = static_extra;
 			}
 		}
 		else
@@ -65,8 +67,9 @@ Ext.define('NetProfile.controller.DataStores', {
 					scope: grid
 				};
 				if(grid.extraParams)
-					store_cfg['proxy']['extraParams'] = grid.extraParams;
+					Ext.apply(static_extra, grid.extraParams);
 			}
+			store_cfg['proxy']['extraParams'] = static_extra;
 
 			var store = Ext.create(
 				'NetProfile.store.' + module + '.' + model,

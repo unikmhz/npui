@@ -10,6 +10,7 @@ Ext.define('NetProfile.view.SimpleModelSelect', {
 	apiModule: null,
 	apiClass: null,
 	hiddenField: null,
+	extraParams: null,
 
 	editable: false,
 	valueField: '__str__',
@@ -22,7 +23,8 @@ Ext.define('NetProfile.view.SimpleModelSelect', {
 			this.store = NetProfile.StoreManager.getStore(
 				this.apiModule,
 				this.apiClass,
-				null, true, true
+				null, true, true,
+				this.extraParams
 			);
 		}
 		this.callParent(arguments);
