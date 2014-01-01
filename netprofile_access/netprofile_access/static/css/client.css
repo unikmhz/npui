@@ -33,7 +33,7 @@ div#footer
 	border-top: 1px solid #e7e7e7;
 	padding: 1em 0.8em;
 	margin-top: 0.6em;
-	height: 2.8em;
+	min-height: 2.8em;
 	line-height: 1.4em;
 	text-align: right;
 	bottom: 0;
@@ -52,6 +52,29 @@ div#wrap > .container
 body > iframe
 {
 	display: none !important;
+}
+
+@media (max-width: 767px)
+{
+	.userbar
+	{
+	}
+
+	.userbar > .btn-group
+	{
+		display: table;
+		width: 100%;
+		table-layout: fixed;
+		border-collapse: separate;
+		margin-bottom: 0.4em;
+	}
+
+	.userbar > .btn-group .btn
+	{
+		float: none;
+		display: table-cell;
+		width: 1%;
+	}
 }
 
 div.controls
@@ -95,5 +118,28 @@ div.controls span.req
 .single-line
 {
 	white-space: nowrap;
+}
+
+.navbar .chosen-container, .navbar .chosen-drop, .navbar .chosen-drop .chosen-search, .navbar .chosen-drop .chosen-search input
+{
+	width: 100% !important;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.navbar .chosen-container
+{
+	min-width: 10em !important;
+}
+
+.navbar-brand
+{
+  padding: 5px 15px;
+}
+
+.navbar-brand > .large, .navbar-brand > .small
+{
+	display: block;
 }
 

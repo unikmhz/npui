@@ -94,6 +94,43 @@ def client_home(request):
 	request.run_hook('access.cl.tpldef.home', tpldef, request)
 	return tpldef
 
+@view_config(route_name='access.cl.chpass', renderer='netprofile_access:templates/client_chpass.mak', permission='USAGE')
+def client_chpass(request):
+	cfg = request.registry.settings
+	loc = get_localizer(request)
+	min_pwd_len = int(cfg.get('netprofile.client.registration.min_password_length', 8))
+	errors = {}
+	if 'submit' in request.POST:
+		csrf = request.POST.get('csrf', '')
+		oldpass = request.POST.get('oldpass', '')
+		passwd = request.POST.get('pass', '')
+		passwd2 = request.POST.get('pass2', '')
+		if csrf != request.get_csrf():
+			errors['csrf'] = _('Error submitting form')
+		else:
+			l = len(passwd)
+			if l < min_pwd_len:
+				errors['pass'] = _('Password is too short')
+			elif l > 254:
+				errors['pass'] = _('Password is too long')
+			if passwd != passwd2:
+				errors['pass2'] = _('Passwords do not match')
+			if request.user.password != oldpass:
+				errors['oldpass'] = _('Wrong password')
+		if len(errors) == 0:
+			request.user.password = passwd
+			request.session.flash({
+				'text' : loc.translate(_('Password successfully changed'))
+			})
+			return HTTPSeeOther(location=request.route_url('access.cl.home'))
+	tpldef = {
+		'errors'      : {err: loc.translate(errors[err]) for err in errors},
+		'min_pwd_len' : min_pwd_len
+	}
+	request.run_hook('access.cl.tpldef', tpldef, request)
+	request.run_hook('access.cl.tpldef.chpass', tpldef, request)
+	return tpldef
+
 @view_config(route_name='access.cl.login', renderer='netprofile_access:templates/client_login.mak')
 def client_login(request):
 	nxt = request.route_url('access.cl.home')

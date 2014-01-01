@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${cur_loc}">
 <head>
-	<meta charset="UTF-8">
+	<meta charset="UTF-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta name="keywords" content="netprofile" />
@@ -37,6 +37,5 @@
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/client.js')}"></script>
 <%block name="head"/>
 </head>
-<body>${next.body()}
-</body>
+<body>${next.body()}</body>
 </html>
