@@ -346,7 +346,8 @@ class StashIOType(Base):
 
 	oper_capability = relationship(
 		'Privilege',
-		backref='stash_io_types'
+		backref='stash_io_types',
+		lazy='joined'
 	)
 
 	def __str__(self):
@@ -428,6 +429,9 @@ class StashIO(Base):
 			'header_string' : _('Type'),
 			'filter_type'   : 'list',
 			'editor_xtype'  : 'simplemodelselect',
+			'editor_config' : {
+				'extraParams' : { '__ffilter' : { 'oper_visible' : { 'eq' : True } } }
+			},
 			'column_flex'   : 2
 		}
 	)
