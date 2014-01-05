@@ -52,3 +52,10 @@ body
 	margin-bottom: 0.6em;
 }
 
+.input-group .chosen-select
+{
+	padding-top: 6px;
+	padding-right:12px;
+	padding-bottom:6px;
+	padding-left:12px;
+}
