@@ -143,3 +143,9 @@ div.controls span.req
 	display: block;
 }
 
+.tab-content  > .list-group-item { display: none; }
+
+.hide-no-js { display: none; }
+.no-js ul > li:hover > ul.dropdown-menu { display: block; }
+.no-js > .tab-pane, .no-js > .pill-pane, .no-js > .list-group-item { display: block; }
+

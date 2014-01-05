@@ -15,6 +15,8 @@ $(function()
 		preventSubmit: true
 	});
 	$('.chosen-select').chosen();
+	$(".no-js").removeClass("no-js");
+	$(".hide-no-js").removeClass("hide-no-js");
 	$('#__locale').change(function()
 	{
 		var lang = $(this).val(),

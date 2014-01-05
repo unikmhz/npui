@@ -38,6 +38,24 @@
 % endfor
 				</ul>
 </%block>
+% if req.user:
+
+			<div class="no-js">
+				<ul class="nav navbar-nav navbar-right">
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> ${req.user.nick} <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="#">Messages</a></li>
+							<li><a href="#">Settings</a></li>
+							<li><a href="${req.route_url('access.cl.chpass')}">${_('Change Password')}</a></li>
+							<li class="divider"></li>
+							<li><a href="${req.route_url('access.cl.logout')}"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out')}</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+
+% endif
 				<form class="navbar-form navbar-right" role="form" method="get" action="">
 				<div class="form-group">
 					<label for="__locale" class="sr-only">${_('Language')}</label>
@@ -58,22 +76,13 @@
 
 	<div class="container">
 % for msg in req.session.pop_flash():
+
 	<div class="alert alert-${msg['class'] if 'class' in msg else 'success'} alert-dismissable">
 		<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
 		${msg['text']}
 	</div>
+
 % endfor
-% if req.user:
-	<div class="btn-toolbar userbar" role="toolbar" style="float: right;">
-		<div class="btn-group">
-			<span class="form-control">${_('Logged in as')} <strong>${req.user.nick}</strong></span>
-		</div>
-		<div class="btn-group">
-			<a href="${req.route_url('access.cl.chpass')}" class="btn btn-default">${_('Change Password')}</a>
-			<a href="${req.route_url('access.cl.logout')}" class="btn btn-danger"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out')}</a>
-		</div>
-	</div>
-% endif
 ${next.body()}
 	</div>
 </div>
