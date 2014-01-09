@@ -47,6 +47,7 @@ class Module(ModuleBase):
 
 	def get_models(self):
 		return (
+			FuturePayment,
 			Stash,
 			StashIO,
 			StashIOType,
