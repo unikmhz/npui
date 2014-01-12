@@ -2136,7 +2136,7 @@ class DAVLock(Base):
 		Index('dav_locks_i_token', 'token'),
 		Index('dav_locks_i_timeout', 'timeout'),
 		Index('dav_locks_i_fileid', 'fileid'),
-		Index('dav_locks_i_uri', 'uri'),
+		Index('dav_locks_i_uri', 'uri', mysql_length=767),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8'
