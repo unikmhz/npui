@@ -27,6 +27,8 @@ requires = [
 	'pyramid_redis_sessions >= 0.9b5',
 	'pyramid_mailer >= 0.13',
 
+	'Babel',
+	'lingua',
 	'lxml',
 	'cdecimal',
 ]

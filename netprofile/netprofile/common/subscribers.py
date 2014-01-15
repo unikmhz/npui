@@ -45,7 +45,8 @@ def on_new_request(event):
 		mr = 'netprofile_' + mr.name.split('.')[0]
 
 	def auto_translate(*args, **kwargs):
-		kwargs['domain'] = mr
+		if 'domain' not in kwargs:
+			kwargs['domain'] = mr
 		return get_localizer(request).translate(TranslationString(*args, **kwargs))
 
 	request.translate = auto_translate

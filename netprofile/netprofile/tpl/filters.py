@@ -27,9 +27,31 @@ from __future__ import (
 	division
 )
 
-import json
+import datetime, json
+from babel.dates import format_date, format_datetime, format_time
 from netprofile.ext.direct import JsonReprEncoder
 
 def jsone(data):
 	return json.dumps(data, cls=JsonReprEncoder, indent=3)
+
+def date_fmt(ctx, obj, fmt='medium'):
+	loc = ctx.get('i18n', None)
+	if loc:
+		loc = ctx['i18n']
+		if isinstance(obj, datetime.datetime):
+			return format_datetime(obj, fmt, locale=loc)
+		if isinstance(obj, datetime.time):
+			return format_time(obj, fmt, locale=loc)
+		if isinstance(obj, datetime.date):
+			return format_date(obj, fmt, locale=loc)
+	return str(obj)
+
+def date_fmt_short(ctx, obj):
+	return date_fmt(ctx, obj, 'short')
+
+def date_fmt_long(ctx, obj):
+	return date_fmt(ctx, obj, 'long')
+
+def date_fmt_full(ctx, obj):
+	return date_fmt(ctx, obj, 'full')
 
