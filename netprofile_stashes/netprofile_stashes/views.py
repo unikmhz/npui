@@ -27,11 +27,33 @@ from __future__ import (
 	division
 )
 
+from pyramid.security import authenticated_userid
+
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
+
+from pyramid.view import (
+	view_config
+)
+from netprofile import (
+        LANGUAGES,
+        locale_neg
+)
+
+from pyramid.httpexceptions import (
+    HTTPForbidden,
+    HTTPFound,
+    HTTPNotFound,
+    HTTPSeeOther
+)
+
 from netprofile.common.hooks import register_hook
+from netprofile.db.connection import DBSession
+
+from .models import FuturePayment
+from netprofile_rates.models import Rate
 
 _ = TranslationStringFactory('netprofile_stashes')
 
@@ -54,6 +76,20 @@ def _dpane_entity_stashes(tabs, model, req):
 	})
 
 @register_hook('core.dpanetabs.stashes.Stash')
+def _dpane_stash_futures(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Futures')),
+		'iconCls'           : 'ico-mod-stashio',
+		'xtype'             : 'grid_stashes_FuturePayment',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('stash',),
+		'extraParamProp'    : 'stashid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
+@register_hook('core.dpanetabs.stashes.Stash')
 def _dpane_stash_ios(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
@@ -67,3 +103,122 @@ def _dpane_stash_ios(tabs, model, req):
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
+@view_config(route_name='access.cl.stashes', renderer='netprofile_stashes:templates/client_stashes.mak')
+def client_stashes(request):
+
+	if authenticated_userid(request) is None:
+		return HTTPSeeOther(location=request.route_url('access.cl.login'))
+
+	sess = DBSession()
+
+	q = sess.query(Rate).filter(Rate.user_selectable == True)
+
+	tpldef = {}
+	cur_locale = locale_neg(request)
+
+	tpldef = {
+		'cur_loc' : cur_locale,
+		'rates'	: q
+	}
+
+	request.run_hook('access.cl.tpldef', tpldef, request)
+	request.run_hook('access.cl.tpldef.home', tpldef, request)
+
+	return tpldef
+
+@view_config(route_name='access.cl.chrate', renderer='netprofile_stashes:templates/client_stashes.mak')
+def client_chrate(request):
+
+	cur_locale = locale_neg(request)
+	loc = get_localizer(request)
+	csrf = request.POST.get('csrf', '')
+	rateid = int(request.POST.get('rate', 1))
+
+	if 'submit' in request.POST:
+		sess = DBSession()
+		if csrf != request.get_csrf():
+			request.session.flash({
+				'text' : loc.translate(_('Error submitting form')),
+				'class' : 'danger'
+			})
+			return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
+
+		request.user.next_rate_id = rateid
+	
+		request.session.flash({
+			'text' : loc.translate(_('Future paments done.'))
+		})
+		return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
+
+	request.session.flash({
+		'text' : loc.translate(_('Error')),
+		'class' : 'danger'
+	})
+
+@view_config(route_name='access.cl.dofuture', renderer='netprofile_stashes:templates/client_stashes.mak')
+def client_futures(request):
+
+	if authenticated_userid(request) is None:
+		return HTTPSeeOther(location=request.route_url('access.cl.login'))
+
+	cur_locale = locale_neg(request)
+	loc = get_localizer(request)
+	csrf = request.POST.get('csrf', '')
+	stashid = int(request.POST.get('stashid', 1))
+	diff = request.POST.get('diff', '')
+
+	if 'submit' in request.POST:
+		sess = DBSession()
+		#FIXME add stash id checking
+		if csrf != request.get_csrf():
+			request.session.flash({
+				'text' : loc.translate(_('Error submitting form')),
+				'class' : 'danger'
+			})
+			return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
+	
+		fp = FuturePayment()
+		fp.stash_id = stashid
+		fp.entity_id = authenticated_userid(request)
+		fp.origin = 'user' 
+		fp.difference = diff
+		sess.add(fp)
+		request.session.flash({
+			'text' : loc.translate(_('Future paments done.'))
+		})
+		return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
+
+	request.session.flash({
+		'text' : loc.translate(_('Error')),
+		'class' : 'danger'
+	})
+
+	return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
+
+@view_config(route_name='access.cl.stats', renderer='netprofile_stashes:templates/client_stats.mak')
+@view_config(route_name='access.cl.statsid', renderer='netprofile_stashes:templates/client_stats.mak')
+def client_stats(request):
+
+	if authenticated_userid(request) is None:
+		return HTTPSeeOther(location=request.route_url('access.cl.login'))
+	stash_id = request.matchdict.get('stash_id', 0)
+
+	tpldef = {}
+	cur_locale = locale_neg(request)
+
+	tpldef = {
+		'stash_id': stash_id,
+		'cur_loc' : cur_locale
+	}
+
+	request.run_hook('access.cl.tpldef', tpldef, request)
+	request.run_hook('access.cl.tpldef.home', tpldef, request)
+
+	return tpldef
+
+@register_hook('access.cl.menu')
+def _gen_menu(menu, req):
+	menu.extend(({
+		'route' : 'access.cl.stashes',
+		'text'  : _('Stashes')
+	},))

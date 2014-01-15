@@ -933,4 +933,23 @@ class FuturePayment(Base):
 			'header_string' : _('Description')
 		}
 	)
+	stash = relationship(
+		'Stash',
+		innerjoin=True,
+		backref=backref(
+			'futures',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+	entity = relationship(
+		'AccessEntity',
+		backref='stash_futures'
+	)
+
+	def __str__(self):
+		return '%s: %s' % (
+			str(self.stash),
+			str(self.difference)
+		)
 
