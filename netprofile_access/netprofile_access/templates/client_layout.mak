@@ -6,7 +6,7 @@
 		<div class="container">
 			<div class="navbar-header">
 				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#main-navbar">
-					<span class="sr-only">${_('Toggle navigation')}</span>
+					<span class="sr-only">${_('Toggle navigation', domain='netprofile_access')}</span>
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
@@ -32,34 +32,30 @@
  title="${loc.translate(item['title'])}"\
 % endif
 >
-						<a href="${req.route_url(item['route'])}">${loc.translate(item['text'])}</a>
+						<a href="${req.route_url(item['route'], traverse=())}">${loc.translate(item['text'])}</a>
 % endif
 					</li>
 % endfor
 				</ul>
 </%block>
 % if req.user:
-
-			<div class="no-js">
-				<ul class="nav navbar-nav navbar-right">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> ${req.user.nick} <b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="#">Messages</a></li>
-							<li><a href="#">Settings</a></li>
-							<li><a href="${req.route_url('access.cl.chpass')}">${_('Change Password')}</a></li>
-							<li class="divider"></li>
-							<li><a href="${req.route_url('access.cl.logout')}"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out')}</a></li>
-						</ul>
-					</li>
-				</ul>
-			</div>
-
+				<div class="no-js">
+					<ul class="nav navbar-nav navbar-right">
+						<li class="dropdown">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> ${req.user.nick} <b class="caret"></b></a>
+							<ul class="dropdown-menu">
+								<li><a href="${req.route_url('access.cl.chpass')}">${_('Change Password', domain='netprofile_access')}</a></li>
+								<li class="divider"></li>
+								<li><a href="${req.route_url('access.cl.logout')}"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out', domain='netprofile_access')}</a></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
 % endif
 				<form class="navbar-form navbar-right" role="form" method="get" action="">
 				<div class="form-group">
-					<label for="__locale" class="sr-only">${_('Language')}</label>
-					<select class="form-control chosen-select" id="__locale" name="__locale" title="${_('Language')}">
+					<label for="__locale" class="sr-only">${_('Language', domain='netprofile_access')}</label>
+					<select class="form-control chosen-select" id="__locale" name="__locale" title="${_('Language', domain='netprofile_access')}">
 % for lang in langs:
 						<option label="${lang[1]}" value="${lang[0]}"\
 % if lang[0] == cur_loc:
@@ -88,7 +84,7 @@ ${next.body()}
 </div>
 
 <div id="footer">
-	<span class="single-line">Copyright © 2013-2014 <a href="http://netprofile.ru">${_('NetProfile.ru Team')}</a>.</span>
-	<span class="single-line">${_('License:')} <a href="http://www.gnu.org/licenses/agpl-3.0.html">AGPLv3</a>+</span>
+	<span class="single-line">Copyright © 2013-2014 <a href="http://netprofile.ru">${_('NetProfile.ru Team', domain='netprofile_access')}</a>.</span>
+	<span class="single-line">${_('License:', domain='netprofile_access')} <a href="http://www.gnu.org/licenses/agpl-3.0.html">AGPLv3</a>+</span>
 </div>
 

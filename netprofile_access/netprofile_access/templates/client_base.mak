@@ -8,7 +8,7 @@
 	<meta name="keywords" content="netprofile" />
 	<meta name="description" content="NetProfile client UI" />
 	<meta name="csrf-token" content="${req.get_csrf()}" />
-	<title>NetProfile :: <%block name="title">${_('User Portal')}</%block></title>
+	<title>NetProfile :: <%block name="title">${_('User Portal', domain='netprofile_access')}</%block></title>
 	<link rel="shortcut icon" href="${req.static_url('netprofile_access:static/favicon.ico')}" />
 % if req.debug_enabled:
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap.css')}" type="text/css" />

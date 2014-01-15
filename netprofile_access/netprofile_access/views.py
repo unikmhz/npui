@@ -61,6 +61,7 @@ from pyramid_mailer.message import (
 	Attachment,
 	Message
 )
+from babel.core import Locale
 from netprofile import (
 	LANGUAGES,
 	locale_neg
@@ -585,16 +586,12 @@ def _cl_tpldef(tpldef, req):
 		'text'  : _('Portal')
 	}]
 	req.run_hook('access.cl.menu', menu, req)
-#	menu.extend(({
-#		'route' : 'access.cl.logout',
-#		'text'  : _('Log Out'),
-#		'cls'   : 'navbar-right'
-#	},))
 	tpldef.update({
 		'menu'    : menu,
 		'cur_loc' : cur_locale,
 		'langs'   : LANGUAGES,
-		'loc'     : loc
+		'loc'     : loc,
+		'i18n'    : Locale(cur_locale)
 	})
 
 @register_hook('core.dpanetabs.access.AccessEntity')
