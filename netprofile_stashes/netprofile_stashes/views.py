@@ -34,14 +34,7 @@ from pyramid.i18n import (
 	get_localizer
 )
 
-from pyramid.view import (
-	view_config
-)
-from netprofile import (
-        LANGUAGES,
-        locale_neg
-)
-
+from pyramid.view import view_config
 from pyramid.httpexceptions import (
     HTTPForbidden,
     HTTPFound,
@@ -114,10 +107,7 @@ def client_stashes(request):
 	q = sess.query(Rate).filter(Rate.user_selectable == True)
 
 	tpldef = {}
-	cur_locale = locale_neg(request)
-
 	tpldef = {
-		'cur_loc' : cur_locale,
 		'rates'	: q
 	}
 
@@ -129,7 +119,6 @@ def client_stashes(request):
 @view_config(route_name='access.cl.chrate', renderer='netprofile_stashes:templates/client_stashes.mak')
 def client_chrate(request):
 
-	cur_locale = locale_neg(request)
 	loc = get_localizer(request)
 	csrf = request.POST.get('csrf', '')
 	rateid = int(request.POST.get('rate', 1))
@@ -161,7 +150,6 @@ def client_futures(request):
 	if authenticated_userid(request) is None:
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 
-	cur_locale = locale_neg(request)
 	loc = get_localizer(request)
 	csrf = request.POST.get('csrf', '')
 	stashid = int(request.POST.get('stashid', 1))
@@ -204,11 +192,8 @@ def client_stats(request):
 	stash_id = request.matchdict.get('stash_id', 0)
 
 	tpldef = {}
-	cur_locale = locale_neg(request)
-
 	tpldef = {
 		'stash_id': stash_id,
-		'cur_loc' : cur_locale
 	}
 
 	request.run_hook('access.cl.tpldef', tpldef, request)
@@ -222,3 +207,4 @@ def _gen_menu(menu, req):
 		'route' : 'access.cl.stashes',
 		'text'  : _('Stashes')
 	},))
+

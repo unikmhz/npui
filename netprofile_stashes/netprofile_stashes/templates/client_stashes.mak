@@ -2,7 +2,7 @@
 <%inherit file="netprofile_access:templates/client_layout.mak"/>
 % for stash in req.user.parent.stashes:
 <div class="panel panel-default">
- 	<div class="panel-heading">${stash.name}<a href="${req.route_url('access.cl.stats')}/${req.user.stash.id}" class="btn btn-default pull-right btn-xs">${_('Statistics')}</a></div>
+ 	<div class="panel-heading">${stash.name}<a href="${req.route_url('access.cl.stats', stash_id=req.user.stash.id)}" class="btn btn-default pull-right btn-xs">${_('Statistics')}</a></div>
     <div class="panel-body" style="line-height: 50%;">
 		<div class="input-group">
 			% if stash.amount > 0:
