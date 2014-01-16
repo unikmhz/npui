@@ -26,12 +26,12 @@
 	<div class="elem">
 		<label for="__locale">${_('Language')}</label><br />
 		<select class="text" id="__locale" name="__locale" tabindex="3" style="width: 100%;" autocomplete="off">
-% for lang in langs:
-			<option label="${lang[1]}" value="${lang[0]}"\
-% if lang[0] == cur_loc:
+% for lang in req.locales:
+			<option label="${'%s [%s]' % (req.locales[lang].english_name, req.locales[lang].display_name)}" value="${lang}"\
+% if lang == cur_loc:
  selected="selected"\
 % endif
->${lang[1]}</option>
+>${'%s [%s]' % (req.locales[lang].english_name, req.locales[lang].display_name)}</option>
 % endfor
 		</select>
 	</div>

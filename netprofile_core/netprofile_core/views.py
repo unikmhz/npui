@@ -50,10 +50,7 @@ from pyramid.httpexceptions import (
 from sqlalchemy import and_
 from sqlalchemy.orm import undefer
 
-from netprofile import (
-	LANGUAGES,
-	locale_neg
-)
+from netprofile import locale_neg
 from netprofile import PY3
 from netprofile.common.modules import IModuleManager
 from netprofile.common.hooks import register_hook
@@ -146,7 +143,6 @@ def do_login(request):
 		'res_css' : mmgr.get_css(request),
 		'res_js'  : mmgr.get_js(request),
 		'res_ljs' : mmgr.get_local_js(request, cur_locale),
-		'langs'   : LANGUAGES,
 		'cur_loc' : cur_locale
 	}
 
@@ -174,7 +170,6 @@ def js_webshell(request):
 	request.response.charset = 'UTF-8'
 	mmgr = request.registry.getUtility(IModuleManager)
 	return {
-		'langs'   : LANGUAGES,
 		'cur_loc' : get_locale_name(request),
 		'res_ajs' : mmgr.get_autoload_js(request),
 		'res_ctl' : mmgr.get_controllers(request),

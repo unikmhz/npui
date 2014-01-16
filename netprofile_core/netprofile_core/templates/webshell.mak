@@ -266,7 +266,7 @@ Ext.require([
 		extend: 'Ext.data.ArrayStore',
 		requires: 'NetProfile.model.Language',
 		model: 'NetProfile.model.Language',
-		data: ${langs | n,jsone},
+		data: ${{str(l): '%s [%s]' % (l.english_name, l.display_name) for l in req.locales.values()} | n,jsone},
 		storeId: 'npstore_lang'
 	});
 
