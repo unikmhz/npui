@@ -83,10 +83,10 @@ def _auth_to_db(event):
 def _new_request_csp(event):
 	request = event.request
 	# TODO: add static URL if set
-	request.response.headerlist.append((
-		'Content-Security-Policy',
-		'default-src \'self\' www.google.com; style-src \'self\' www.google.com \'unsafe-inline\''
-	))
+	csp = 'default-src \'self\' www.google.com; style-src \'self\' www.google.com \'unsafe-inline\''
+	if request.debug_enabled:
+		csp += '; script-src \'self\' www.google.com \'unsafe-inline\''
+	request.response.headerlist.append(('Content-Security-Policy', csp))
 
 def includeme(config):
 	"""
