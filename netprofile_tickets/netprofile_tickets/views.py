@@ -37,6 +37,7 @@ import datetime as dt
 from dateutil.parser import parse as dparse
 
 from sqlalchemy.orm import joinedload
+from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.ext.wizards import (
 	CompositeWizardField,
@@ -65,14 +66,17 @@ from .models import (
 	TicketTemplate
 )
 
+from pyramid.view import view_config
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
 from netprofile.common.hooks import register_hook
 from pyramid.security import has_permission
+from pyramid.httpexceptions import HTTPSeeOther
 
 _ = TranslationStringFactory('netprofile_tickets')
+_a = TranslationStringFactory('netprofile_access')
 
 def dpane_tickets(model, request):
 	loc = get_localizer(request)
@@ -444,4 +448,190 @@ def dyn_ticket_sched_find(params, request):
 		'success' : True,
 		'dates'   : dates
 	}
+
+class ClientRootFactory(object):
+	__parent__ = None
+	__name__ = None
+
+	@property
+	def __acl__(self):
+		return getattr(self.req, 'acls', ())
+
+	def __init__(self, req):
+		self.req = req
+
+	def __getitem__(self, name):
+		try:
+			name = int(name, base=10)
+			ent = self.req.user.parent
+			sess = DBSession()
+			try:
+				tkt = sess.query(Ticket).filter(
+					Ticket.entity == ent,
+					Ticket.id == name,
+					Ticket.show_client == True
+				).one()
+				tkt.__parent__ = self
+				tkt.__name__ = str(name)
+				return tkt
+			except NoResultFound:
+				raise KeyError('Invalid ticket ID')
+		except ValueError:
+			pass
+		raise KeyError('Invalid URL')
+
+@register_hook('access.cl.menu')
+def _tickets_menu(menu, req):
+	menu.append({
+		'route' : 'tickets.cl.issues',
+		'text'  : _('Issues')
+	})
+
+@view_config(
+	route_name='tickets.cl.issues',
+	name='',
+	context=ClientRootFactory,
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_list.mak'
+)
+def client_issue_list(ctx, req):
+	sess = DBSession()
+	ent = req.user.parent
+	q = sess.query(Ticket)\
+		.filter(Ticket.entity == ent, Ticket.show_client == True)\
+		.order_by(Ticket.creation_time.desc())
+	tpldef = {
+		'sess'    : DBSession(),
+		'tickets' : q.all()
+	}
+	req.run_hook('access.cl.tpldef', tpldef, req)
+	req.run_hook('access.cl.tpldef.issue.list', tpldef, req)
+	return tpldef
+
+@view_config(
+	route_name='tickets.cl.issues',
+	name='new',
+	context=ClientRootFactory,
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_create.mak'
+)
+def client_issue_new(ctx, req):
+	loc = get_localizer(req)
+	cfg = req.registry.settings
+	origin_id = int(cfg.get('netprofile.client.ticket.origin_id', 0))
+	user_id = int(cfg.get('netprofile.client.ticket.assign_uid', 0))
+	group_id = int(cfg.get('netprofile.client.ticket.assign_gid', 0))
+	errors = {}
+	sess = DBSession()
+	ent = req.user.parent
+	states = sess.query(TicketState)\
+		.filter(TicketState.is_start == True, TicketState.allow_client == True)
+	if 'submit' in req.POST:
+		csrf = req.POST.get('csrf', '')
+		name = req.POST.get('name', '')
+		descr = req.POST.get('descr', '')
+		state = int(req.POST.get('state', 0))
+		if csrf != req.get_csrf():
+			errors['csrf'] = _a('Error submitting form')
+		else:
+			l = len(name)
+			if (l == 0) or (l > 254):
+				errors['name'] = _a('Invalid field length')
+			for s in states:
+				if s.id == state:
+					state = s
+					break
+			else:
+				errors['state'] = _('Invalid issue type')
+		if len(errors) == 0:
+			tkt = Ticket()
+			tkt.name = name
+			tkt.state = state
+			tkt.entity = ent
+			tkt.show_client = True
+			if descr:
+				tkt.description = descr
+			if origin_id:
+				tkt.origin_id = origin_id
+			if user_id:
+				tkt.assigned_user_id = user_id
+			if group_id:
+				tkt.assigned_group_id = group_id
+			sess.add(tkt)
+			sess.flush()
+
+			req.session.flash({
+				'text' : loc.translate(_('New issue successfully created'))
+			})
+			return HTTPSeeOther(location=req.route_url('tickets.cl.issues', traverse=(tkt.id, 'view')))
+	tpldef = {
+		'states' : states,
+		'errors' : {err: loc.translate(errors[err]) for err in errors}
+	}
+	req.run_hook('access.cl.tpldef', tpldef, req)
+	req.run_hook('access.cl.tpldef.issue.new', tpldef, req)
+	return tpldef
+
+@view_config(
+	route_name='tickets.cl.issues',
+	name='append',
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_append.mak'
+)
+def client_issue_append(ctx, req):
+	loc = get_localizer(req)
+	cfg = req.registry.settings
+	errors = {}
+	if ctx.archived:
+		req.session.flash({
+			'class' : 'danger',
+			'text'  : loc.translate(_('This ticket is archived. You can\'t append to it.'))
+		})
+		return HTTPSeeOther(location=req.route_url('tickets.cl.issues', traverse=(ctx.id, 'view')))
+	if 'submit' in req.POST:
+		csrf = req.POST.get('csrf', '')
+		comments = req.POST.get('comments', '')
+		if csrf != req.get_csrf():
+			errors['csrf'] = _a('Error submitting form')
+		elif not comments:
+			errors['comments'] = _a('Invalid field length')
+		if len(errors) == 0:
+			sess = DBSession()
+			ch = TicketChange()
+			ch.ticket = ctx
+			ch.show_client = True
+			ch.comments = comments
+			sess.add(ch)
+
+			req.session.flash({
+				'text' : loc.translate(_('Your comment was successfully appended to the issue'))
+			})
+			return HTTPSeeOther(location=req.route_url('tickets.cl.issues', traverse=(ctx.id, 'view')))
+	tpldef = {
+		'ticket' : ctx,
+		'errors' : {err: loc.translate(errors[err]) for err in errors}
+	}
+	req.run_hook('access.cl.tpldef', tpldef, req)
+	req.run_hook('access.cl.tpldef.issue.append', tpldef, req)
+	return tpldef
+
+@view_config(
+	route_name='tickets.cl.issues',
+	name='',
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_view.mak'
+)
+@view_config(
+	route_name='tickets.cl.issues',
+	name='view',
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_view.mak'
+)
+def client_issue_view(ctx, req):
+	tpldef = {
+		'ticket' : ctx
+	}
+	req.run_hook('access.cl.tpldef', tpldef, req)
+	req.run_hook('access.cl.tpldef.issue.view', tpldef, req)
+	return tpldef
 

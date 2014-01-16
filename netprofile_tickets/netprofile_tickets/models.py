@@ -238,7 +238,7 @@ class TicketState(Base):
 				),
 				'form_view'     : (
 					'title', 'subtitle',
-					'flow', 'is_start', 'is_end',
+					'flow', 'is_start', 'is_end', 'allow_client',
 					'dur', 'style', 'image', 'descr'
 				),
 				'easy_search'   : ('title', 'subtitle'),
@@ -307,6 +307,16 @@ class TicketState(Base):
 		server_default=npbool(False),
 		info={
 			'header_string' : _('End')
+		}
+	)
+	allow_client = Column(
+		NPBoolean(),
+		Comment('Can be created by clients'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Show to Clients')
 		}
 	)
 	duration = Column(
@@ -833,7 +843,7 @@ class Ticket(Base):
 				'form_view'     : (
 					'entity', 'name', 'state', 'flags', 'origin',
 					'assigned_user', 'assigned_group', 'assigned_time', 'dur',
-					'archived', 'descr', 'ctime', 'created_by',
+					'archived', 'show_client', 'descr', 'ctime', 'created_by',
 					'mtime', 'modified_by', 'ttime', 'transition_by'
 				),
 				'easy_search'   : ('name',),
@@ -843,6 +853,7 @@ class Ticket(Base):
 					Step(
 						'entity', 'name',
 						ExtJSWizardField(_wizfld_ticket_state),
+						'show_client',
 						'flags', 'descr',
 						id='generic'
 					),
@@ -994,6 +1005,16 @@ class Ticket(Base):
 		info={
 			'header_string' : _('Archived'),
 			'write_cap'     : 'TICKETS_ARCHIVAL'
+		}
+	)
+	show_client = Column(
+		NPBoolean(),
+		Comment('Show ticket to client'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Show to Client')
 		}
 	)
 	name = Column(
@@ -1631,6 +1652,16 @@ class TicketChange(Base):
 		server_default=npbool(False),
 		info={
 			'header_string' : _('Show to Client')
+		}
+	)
+	from_client = Column(
+		NPBoolean(),
+		Comment('This change is from client'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('From Client')
 		}
 	)
 	comments = Column(
