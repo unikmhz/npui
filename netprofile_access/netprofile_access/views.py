@@ -64,10 +64,7 @@ from pyramid_mailer.message import (
 	Message
 )
 from babel.core import Locale
-from netprofile import (
-	LANGUAGES,
-	locale_neg
-)
+from netprofile import locale_neg
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 
@@ -185,7 +182,6 @@ def client_login(request):
 	tpldef = {
 		'login'       : login,
 		'failed'      : did_fail,
-		'langs'       : LANGUAGES,
 		'can_reg'     : can_reg,
 		'can_recover' : can_recover,
 		'cur_loc'     : cur_locale
@@ -351,7 +347,6 @@ def client_register(request):
 					mailer.send(msg)
 			return HTTPSeeOther(location=request.route_url('access.cl.regsent'))
 	tpldef = {
-		'langs'          : LANGUAGES,
 		'cur_loc'        : cur_locale,
 		'must_verify'    : must_verify,
 		'must_recaptcha' : must_recaptcha,
@@ -399,7 +394,6 @@ def client_regsent(request):
 	if not can_reg:
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 	tpldef = {
-		'langs'          : LANGUAGES,
 		'cur_loc'        : cur_locale,
 		'must_verify'    : must_verify
 	}
@@ -435,7 +429,6 @@ def client_activate(request):
 				break
 	tpldef = {
 		'failed'         : did_fail,
-		'langs'          : LANGUAGES,
 		'cur_loc'        : cur_locale
 	}
 	request.run_hook('access.cl.tpldef.activate', tpldef, request)
@@ -549,7 +542,6 @@ def client_restorepass(request):
 			else:
 				errors['csrf'] = _('Username and/or e-mail are unknown to us')
 	tpldef = {
-		'langs'          : LANGUAGES,
 		'cur_loc'        : cur_locale,
 		'change_pass'    : change_pass,
 		'must_recaptcha' : must_recaptcha,
@@ -571,7 +563,6 @@ def client_restoresent(request):
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 	change_pass = asbool(cfg.get('netprofile.client.password_recovery.change_password', True))
 	tpldef = {
-		'langs'       : LANGUAGES,
 		'cur_loc'     : cur_locale,
 		'change_pass' : change_pass
 	}
@@ -613,7 +604,6 @@ def _cl_tpldef(tpldef, req):
 	tpldef.update({
 		'menu'    : menu,
 		'cur_loc' : cur_locale,
-		'langs'   : LANGUAGES,
 		'loc'     : loc,
 		'i18n'    : Locale(cur_locale)
 	})

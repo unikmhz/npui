@@ -17,12 +17,12 @@
 	<div class="input-group">
 		<label class="input-group-addon" for="__locale">${_('Language')}</label>
 		<select class="form-control chosen-select" id="__locale" name="__locale" tabindex="4">
-% for lang in langs:
-			<option label="${lang[1]}" value="${lang[0]}"\
-% if lang[0] == cur_loc:
+% for lang in req.locales:
+			<option label="${'%s [%s]' % (req.locales[lang].english_name, req.locales[lang].display_name)}" value="${lang}"\
+% if lang == cur_loc:
  selected="selected"\
 % endif
->${lang[1]}</option>
+>${'%s [%s]' % (req.locales[lang].english_name, req.locales[lang].display_name)}</option>
 % endfor
 		</select>
 		<span class="input-group-btn">

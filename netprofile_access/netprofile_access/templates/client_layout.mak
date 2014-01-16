@@ -17,20 +17,8 @@
 				</span>
 			</div>
 			<div class="collapse navbar-collapse" id="main-navbar">
-% if req.user:
 				<ul class="no-js nav navbar-nav navbar-right">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> ${req.user.nick} <b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="${req.route_url('access.cl.chpass')}">${_('Change Password', domain='netprofile_access')}</a></li>
-							<li class="divider"></li>
-							<li><a href="${req.route_url('access.cl.logout')}"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out', domain='netprofile_access')}</a></li>
-						</ul>
-					</li>
-				</ul>
-% endif
 <%block name="menubar">\
-				<ul class="nav navbar-nav navbar-right">
 % for item in menu:
 % if item.get('route') and req.matched_route and (item.get('route') == req.matched_route.name):
 					<li class="active">
@@ -48,22 +36,32 @@
 % endif
 					</li>
 % endfor
-				</ul>
 </%block>
-				<form class="navbar-form navbar-right langform" role="form" method="get" action="">
-				<div class="form-group">
-					<label for="__locale" class="sr-only">${_('Language', domain='netprofile_access')}</label>
-					<select class="form-control chosen-select" id="__locale" name="__locale" title="${_('Language', domain='netprofile_access')}">
-% for lang in langs:
-						<option label="${lang[1]}" value="${lang[0]}"\
-% if lang[0] == cur_loc:
- selected="selected"\
-% endif
->${lang[1]}</option>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle flag-toggle" data-toggle="dropdown">
+							<img src="${req.static_url('netprofile_access:static/img/flags/%s.png' % req.locale_name)}" alt="${_('Currently Selected Language')}" />
+							<b class="caret"></b>
+						</a>
+						<ul class="dropdown-menu">
+% for lang in req.locales:
+							<li><a class="lang-select" href="${req.current_route_url(_query={'__locale' : lang})}">
+								<img src="${req.static_url('netprofile_access:static/img/flags/%s.png' % lang)}" />
+								${req.locales[lang].english_name} [${req.locales[lang].display_name}]
+							</a></li>
 % endfor
-					</select>
-				</div>
-				</form>
+						</ul>
+					</li>
+% if req.user:
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> ${req.user.nick} <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="${req.route_url('access.cl.chpass')}">${_('Change Password', domain='netprofile_access')}</a></li>
+							<li class="divider"></li>
+							<li><a href="${req.route_url('access.cl.logout')}"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out', domain='netprofile_access')}</a></li>
+						</ul>
+					</li>
+% endif
+				</ul>
 			</div>
 		</div>
 	</nav>

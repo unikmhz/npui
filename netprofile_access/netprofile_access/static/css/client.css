@@ -108,6 +108,14 @@ div.controls span.req
 	padding: 0.2em;
 }
 
+@media (min-width: 768px) {
+	.navbar-nav > li > a.flag-toggle
+	{
+	    padding-top: 9px;
+	    padding-bottom: 9px;
+	}
+}
+
 #recaptcha_widget_div
 {
 	position: relative;
