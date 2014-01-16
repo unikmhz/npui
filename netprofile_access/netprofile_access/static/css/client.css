@@ -95,6 +95,11 @@ div.controls span.req
 	right: 0.2em;
 }
 
+#main-navbar .langform
+{
+	margin-right: 0.1em;
+}
+
 .legend span.req
 {
 	display: block;
@@ -145,6 +150,6 @@ div.controls span.req
 .tab-content  > .list-group-item { display: none; }
 
 .hide-no-js { display: none; }
-.no-js ul > li:hover > ul.dropdown-menu { display: block; }
-.no-js > .tab-pane, .no-js > .pill-pane, .no-js > .list-group-item { display: block; }
+ul.no-js > li:hover > ul.dropdown-menu { display: block; }
+ul.no-js > .tab-pane, ul.no-js > .pill-pane, ul.no-js > .list-group-item { display: block; }
 

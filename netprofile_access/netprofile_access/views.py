@@ -32,6 +32,8 @@ import datetime, os, random, re, string
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from pyramid.view import (
+	notfound_view_config,
+	forbidden_view_config,
 	view_config
 )
 from pyramid.security import (
@@ -93,6 +95,28 @@ def client_home(request):
 	tpldef = {}
 	request.run_hook('access.cl.tpldef', tpldef, request)
 	request.run_hook('access.cl.tpldef.home', tpldef, request)
+	return tpldef
+
+@notfound_view_config(vhost='client', renderer='netprofile_access:templates/client_error.mak')
+def client_notfound(request):
+	loc = get_localizer(request)
+	request.response.status_code = 404
+	tpldef = {
+		'error' : loc.translate(_('Page Not Found'))
+	}
+	request.run_hook('access.cl.tpldef', tpldef, request)
+	request.run_hook('access.cl.tpldef.error', tpldef, request)
+	return tpldef
+
+@forbidden_view_config(vhost='client', renderer='netprofile_access:templates/client_error.mak')
+def client_forbidden(request):
+	loc = get_localizer(request)
+	request.response.status_code = 403
+	tpldef = {
+		'error' : loc.translate(_('Access Denied'))
+	}
+	request.run_hook('access.cl.tpldef', tpldef, request)
+	request.run_hook('access.cl.tpldef.error', tpldef, request)
 	return tpldef
 
 @view_config(route_name='access.cl.chpass', renderer='netprofile_access:templates/client_chpass.mak', permission='USAGE')

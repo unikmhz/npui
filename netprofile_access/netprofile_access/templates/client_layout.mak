@@ -17,8 +17,20 @@
 				</span>
 			</div>
 			<div class="collapse navbar-collapse" id="main-navbar">
+% if req.user:
+				<ul class="no-js nav navbar-nav navbar-right">
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> ${req.user.nick} <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="${req.route_url('access.cl.chpass')}">${_('Change Password', domain='netprofile_access')}</a></li>
+							<li class="divider"></li>
+							<li><a href="${req.route_url('access.cl.logout')}"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out', domain='netprofile_access')}</a></li>
+						</ul>
+					</li>
+				</ul>
+% endif
 <%block name="menubar">\
-				<ul class="nav navbar-nav">
+				<ul class="nav navbar-nav navbar-right">
 % for item in menu:
 % if item.get('route') and req.matched_route and (item.get('route') == req.matched_route.name):
 					<li class="active">
@@ -38,21 +50,7 @@
 % endfor
 				</ul>
 </%block>
-% if req.user:
-				<div class="no-js">
-					<ul class="nav navbar-nav navbar-right">
-						<li class="dropdown">
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> ${req.user.nick} <b class="caret"></b></a>
-							<ul class="dropdown-menu">
-								<li><a href="${req.route_url('access.cl.chpass')}">${_('Change Password', domain='netprofile_access')}</a></li>
-								<li class="divider"></li>
-								<li><a href="${req.route_url('access.cl.logout')}"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out', domain='netprofile_access')}</a></li>
-							</ul>
-						</li>
-					</ul>
-				</div>
-% endif
-				<form class="navbar-form navbar-right" role="form" method="get" action="">
+				<form class="navbar-form navbar-right langform" role="form" method="get" action="">
 				<div class="form-group">
 					<label for="__locale" class="sr-only">${_('Language', domain='netprofile_access')}</label>
 					<select class="form-control chosen-select" id="__locale" name="__locale" title="${_('Language', domain='netprofile_access')}">
