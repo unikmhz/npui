@@ -48,6 +48,8 @@
 % endif
 % if ch.user:
 		<h4 class="list-group-item-heading">${_('Change by %s') % str(ch.user)}</h4>
+% elif ch.from_client:
+		<h4 class="list-group-item-heading">${_('My Comment')}</h4>
 % endif
 % if ch.comments:
 		<p class="list-group-item-text" style="clear: right;">${ch.comments}</p>

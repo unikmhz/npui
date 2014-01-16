@@ -67,13 +67,17 @@ from .models import (
 )
 
 from pyramid.view import view_config
+from pyramid.settings import asbool
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
 from netprofile.common.hooks import register_hook
 from pyramid.security import has_permission
-from pyramid.httpexceptions import HTTPSeeOther
+from pyramid.httpexceptions import (
+	HTTPForbidden,
+	HTTPSeeOther
+)
 
 _ = TranslationStringFactory('netprofile_tickets')
 _a = TranslationStringFactory('netprofile_access')
@@ -482,10 +486,12 @@ class ClientRootFactory(object):
 
 @register_hook('access.cl.menu')
 def _tickets_menu(menu, req):
-	menu.append({
-		'route' : 'tickets.cl.issues',
-		'text'  : _('Issues')
-	})
+	cfg = req.registry.settings
+	if asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		menu.append({
+			'route' : 'tickets.cl.issues',
+			'text'  : _('Issues')
+		})
 
 @view_config(
 	route_name='tickets.cl.issues',
@@ -495,6 +501,9 @@ def _tickets_menu(menu, req):
 	renderer='netprofile_tickets:templates/client_list.mak'
 )
 def client_issue_list(ctx, req):
+	cfg = req.registry.settings
+	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		raise HTTPForbidden(detail=_('Issues view is disabled'))
 	sess = DBSession()
 	ent = req.user.parent
 	q = sess.query(Ticket)\
@@ -518,6 +527,8 @@ def client_issue_list(ctx, req):
 def client_issue_new(ctx, req):
 	loc = get_localizer(req)
 	cfg = req.registry.settings
+	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		raise HTTPForbidden(detail=_('Issues view is disabled'))
 	origin_id = int(cfg.get('netprofile.client.ticket.origin_id', 0))
 	user_id = int(cfg.get('netprofile.client.ticket.assign_uid', 0))
 	group_id = int(cfg.get('netprofile.client.ticket.assign_gid', 0))
@@ -581,6 +592,8 @@ def client_issue_new(ctx, req):
 def client_issue_append(ctx, req):
 	loc = get_localizer(req)
 	cfg = req.registry.settings
+	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		raise HTTPForbidden(detail=_('Issues view is disabled'))
 	errors = {}
 	if ctx.archived:
 		req.session.flash({
@@ -599,6 +612,7 @@ def client_issue_append(ctx, req):
 			sess = DBSession()
 			ch = TicketChange()
 			ch.ticket = ctx
+			ch.from_client = True
 			ch.show_client = True
 			ch.comments = comments
 			sess.add(ch)
@@ -628,6 +642,9 @@ def client_issue_append(ctx, req):
 	renderer='netprofile_tickets:templates/client_view.mak'
 )
 def client_issue_view(ctx, req):
+	cfg = req.registry.settings
+	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		raise HTTPForbidden(detail=_('Issues view is disabled'))
 	tpldef = {
 		'ticket' : ctx
 	}
