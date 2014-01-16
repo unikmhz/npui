@@ -128,6 +128,7 @@ def main(global_config, **settings):
 		'pyramid.events.ContextFound'
 	)
 	config.add_route_predicate('vhost', VHostPredicate)
+	config.add_view_predicate('vhost', VHostPredicate)
 	config.add_request_method(get_debug, str('debug_enabled'), reify=True)
 	config.add_request_method(get_csrf, str('get_csrf'))
 
