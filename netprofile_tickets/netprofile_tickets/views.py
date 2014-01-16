@@ -465,6 +465,8 @@ class ClientRootFactory(object):
 		self.req = req
 
 	def __getitem__(self, name):
+		if not self.req.user:
+			raise KeyError('Not logged in')
 		try:
 			name = int(name, base=10)
 			ent = self.req.user.parent
