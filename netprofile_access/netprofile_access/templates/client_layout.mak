@@ -38,13 +38,17 @@
 % endfor
 </%block>
 					<li class="dropdown">
-						<a href="#" class="dropdown-toggle flag-toggle" data-toggle="dropdown">
+						<a href="#" class="dropdown-toggle flag-toggle" data-toggle="dropdown" id="flag-toggle" title="${_('Change Language')}">
 							<img src="${req.static_url('netprofile_access:static/img/flags/%s.png' % req.locale_name)}" alt="${_('Currently Selected Language')}" />
 							<b class="caret"></b>
 						</a>
-						<ul class="dropdown-menu">
+						<ul class="dropdown-menu" role="menu" aria-labelledby="flag-toggle">
 % for lang in req.locales:
-							<li><a class="lang-select" href="${req.current_route_url(_query={'__locale' : lang})}">
+							<li\
+% if lang == req.locale_name:
+ class="disabled"\
+% endif
+><a class="lang-select" href="${req.current_route_url(_query={'__locale' : lang})}" role="menuitem" tabindex="-1">
 								<img src="${req.static_url('netprofile_access:static/img/flags/%s.png' % lang)}" />
 								${req.locales[lang].english_name} [${req.locales[lang].display_name}]
 							</a></li>
@@ -53,11 +57,15 @@
 					</li>
 % if req.user:
 					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> ${req.user.nick} <b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li><a href="${req.route_url('access.cl.chpass')}">${_('Change Password', domain='netprofile_access')}</a></li>
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="user-toggle" title="${_('User Menu')}">
+							<span class="glyphicon glyphicon-user"></span>
+							${req.user.nick}
+							<b class="caret"></b>
+						</a>
+						<ul class="dropdown-menu" role="menu" aria-labelledby="user-toggle">
+							<li><a href="${req.route_url('access.cl.chpass')}" role="menuitem" tabindex="-1">${_('Change Password', domain='netprofile_access')}</a></li>
 							<li class="divider"></li>
-							<li><a href="${req.route_url('access.cl.logout')}"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out', domain='netprofile_access')}</a></li>
+							<li><a href="${req.route_url('access.cl.logout')}" role="menuitem" tabindex="-1"><span class="glyphicon glyphicon-log-out"></span> ${_('Log Out', domain='netprofile_access')}</a></li>
 						</ul>
 					</li>
 % endif
@@ -66,10 +74,10 @@
 		</div>
 	</nav>
 
-	<div class="container">
+	<div class="container" role="main">
 % for msg in req.session.pop_flash():
 
-	<div class="alert alert-${msg['class'] if 'class' in msg else 'success'} alert-dismissable">
+	<div class="alert alert-${msg['class'] if 'class' in msg else 'success'} alert-dismissable" role="alert">
 		<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
 		${msg['text']}
 	</div>
@@ -79,7 +87,7 @@ ${next.body()}
 	</div>
 </div>
 
-<div id="footer">
+<div id="footer" role="banner">
 	<span class="single-line">Copyright © 2013-2014 <a href="http://netprofile.ru">${_('NetProfile.ru Team', domain='netprofile_access')}</a>.</span>
 	<span class="single-line">${_('License:', domain='netprofile_access')} <a href="http://www.gnu.org/licenses/agpl-3.0.html">AGPLv3</a>+</span>
 </div>

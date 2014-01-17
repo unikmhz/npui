@@ -108,6 +108,12 @@ def client_notfound(request):
 @forbidden_view_config(vhost='client', renderer='netprofile_access:templates/client_error.mak')
 def client_forbidden(request):
 	loc = get_localizer(request)
+	if not authenticated_userid(request):
+		request.session.flash({
+			'class' : 'warning',
+			'text'  : loc.translate(_('You need to log in to access this page'))
+		})
+		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 	request.response.status_code = 403
 	tpldef = {
 		'error' : loc.translate(_('Access Denied'))

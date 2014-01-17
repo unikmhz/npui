@@ -8,6 +8,12 @@
 <div class="container">
 <form class="form-signin" role="form" method="post" action="${req.route_url('access.cl.login')}">
 	<h2 class="form-signin-heading">${_('Log In')}</h2>
+% for msg in req.session.pop_flash():
+	<div class="alert alert-${msg['class'] if 'class' in msg else 'success'} alert-dismissable" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+		${msg['text']}
+	</div>
+% endfor
 	<input type="hidden" id="csrf" name="csrf" value="${req.get_csrf()}" />
 	<input type="text" class="form-control" placeholder="${_('User Name')}" required="required" autofocus="autofocus" id="user" name="user" title="${_('Enter your user name here')}" value="" maxlength="254" tabindex="1" autocomplete="off" />
 	<input type="password" class="form-control" placeholder="${_('Password')}" required="required" id="pass" name="pass" title="${_('Enter your password here')}" value="" maxlength="254" tabindex="2" autocomplete="off" />
