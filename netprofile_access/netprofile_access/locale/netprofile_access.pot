@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-17 06:19+0400\n"
+"POT-Creation-Date: 2014-01-19 08:59+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: netprofile_access/__init__.py:78 netprofile_access/models.py:87
+#: netprofile_access/__init__.py:80 netprofile_access/models.py:87
 msgid "Access"
 msgstr ""
 
@@ -132,7 +132,7 @@ msgstr ""
 msgid "Check Services"
 msgstr ""
 
-#: netprofile_access/models.py:408 netprofile_access/views.py:621
+#: netprofile_access/models.py:408 netprofile_access/views.py:714
 msgid "Rate Modifiers"
 msgstr ""
 
@@ -176,7 +176,7 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#: netprofile_access/models.py:607 netprofile_access/views.py:630
+#: netprofile_access/models.py:607 netprofile_access/views.py:723
 msgid "Links"
 msgstr ""
 
@@ -220,84 +220,88 @@ msgstr ""
 msgid "reCAPTCHA service is not reachable"
 msgstr ""
 
-#: netprofile_access/views.py:102
+#: netprofile_access/views.py:103
 msgid "Page Not Found"
 msgstr ""
 
-#: netprofile_access/views.py:114
+#: netprofile_access/views.py:115
 msgid "You need to log in to access this page"
 msgstr ""
 
-#: netprofile_access/views.py:119
+#: netprofile_access/views.py:120
 msgid "Access Denied"
 msgstr ""
 
-#: netprofile_access/views.py:137 netprofile_access/views.py:224
-#: netprofile_access/views.py:466
+#: netprofile_access/views.py:138 netprofile_access/views.py:305
+#: netprofile_access/views.py:553
 msgid "Error submitting form"
 msgstr ""
 
-#: netprofile_access/views.py:141 netprofile_access/views.py:248
+#: netprofile_access/views.py:142 netprofile_access/views.py:329
 msgid "Password is too short"
 msgstr ""
 
-#: netprofile_access/views.py:143 netprofile_access/views.py:250
+#: netprofile_access/views.py:144 netprofile_access/views.py:331
 msgid "Password is too long"
 msgstr ""
 
-#: netprofile_access/views.py:145 netprofile_access/views.py:252
+#: netprofile_access/views.py:146 netprofile_access/views.py:333
 msgid "Passwords do not match"
 msgstr ""
 
-#: netprofile_access/views.py:147
+#: netprofile_access/views.py:148
 msgid "Wrong password"
 msgstr ""
 
-#: netprofile_access/views.py:151
+#: netprofile_access/views.py:152
 msgid "Password successfully changed"
 msgstr ""
 
-#: netprofile_access/views.py:243 netprofile_access/views.py:255
-#: netprofile_access/views.py:260 netprofile_access/views.py:263
-#: netprofile_access/views.py:266 netprofile_access/views.py:480
-#: netprofile_access/views.py:485
+#: netprofile_access/views.py:200
+msgid "Error uploading file"
+msgstr ""
+
+#: netprofile_access/views.py:324 netprofile_access/views.py:336
+#: netprofile_access/views.py:341 netprofile_access/views.py:344
+#: netprofile_access/views.py:347 netprofile_access/views.py:567
+#: netprofile_access/views.py:572
 msgid "Invalid field length"
 msgstr ""
 
-#: netprofile_access/views.py:245 netprofile_access/views.py:482
+#: netprofile_access/views.py:326 netprofile_access/views.py:569
 msgid "Invalid character used in username"
 msgstr ""
 
-#: netprofile_access/views.py:257 netprofile_access/views.py:487
+#: netprofile_access/views.py:338 netprofile_access/views.py:574
 #: netprofile_access/templates/client_register.mak:67
 #: netprofile_access/templates/client_restorepass.mak:69
 msgid "Invalid e-mail format"
 msgstr ""
 
-#: netprofile_access/views.py:274
+#: netprofile_access/views.py:355
 #: netprofile_access/templates/client_register.mak:40
 msgid "This username is already taken"
 msgstr ""
 
-#: netprofile_access/views.py:287
+#: netprofile_access/views.py:368
 msgid "Primary Account"
 msgstr ""
 
-#: netprofile_access/views.py:344
+#: netprofile_access/views.py:425
 #, python-format
 msgid "Activation required for user %s"
 msgstr ""
 
-#: netprofile_access/views.py:537
+#: netprofile_access/views.py:624
 #, python-format
 msgid "Password recovery for user %s"
 msgstr ""
 
-#: netprofile_access/views.py:549
+#: netprofile_access/views.py:636
 msgid "Username and/or e-mail are unknown to us"
 msgstr ""
 
-#: netprofile_access/views.py:607
+#: netprofile_access/views.py:699
 msgid "Portal"
 msgstr ""
 
@@ -517,11 +521,11 @@ msgstr ""
 msgid "Log Out"
 msgstr ""
 
-#: netprofile_access/templates/client_layout.mak:91
+#: netprofile_access/templates/client_layout.mak:104
 msgid "NetProfile.ru Team"
 msgstr ""
 
-#: netprofile_access/templates/client_layout.mak:92
+#: netprofile_access/templates/client_layout.mak:105
 msgid "License:"
 msgstr ""
 

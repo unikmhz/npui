@@ -40,6 +40,8 @@ class Module(ModuleBase):
 		mmgr.cfg.add_route('access.cl.home', '/', vhost='client')
 		mmgr.cfg.add_route('access.cl.login', '/login', vhost='client')
 		mmgr.cfg.add_route('access.cl.logout', '/logout', vhost='client')
+		mmgr.cfg.add_route('access.cl.upload', '/upload', vhost='client')
+		mmgr.cfg.add_route('access.cl.download', '/download/{mode}/{id:\d+}', vhost='client')
 		mmgr.cfg.add_route('access.cl.register', '/register', vhost='client')
 		mmgr.cfg.add_route('access.cl.regsent', '/regsent', vhost='client')
 		mmgr.cfg.add_route('access.cl.activate', '/activate', vhost='client')

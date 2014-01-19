@@ -38,8 +38,8 @@
 % endfor
 </%block>
 					<li class="dropdown">
-						<a href="#" class="dropdown-toggle flag-toggle" data-toggle="dropdown" id="flag-toggle" title="${_('Change Language')}">
-							<img src="${req.static_url('netprofile_access:static/img/flags/%s.png' % req.locale_name)}" alt="${_('Currently Selected Language')}" />
+						<a href="#" class="dropdown-toggle flag-toggle" data-toggle="dropdown" id="flag-toggle" title="${_('Change Language', domain='netprofile_access')}">
+							<img src="${req.static_url('netprofile_access:static/img/flags/%s.png' % req.locale_name)}" alt="${_('Currently Selected Language', domain='netprofile_access')}" />
 							<b class="caret"></b>
 						</a>
 						<ul class="dropdown-menu" role="menu" aria-labelledby="flag-toggle">
@@ -57,7 +57,7 @@
 					</li>
 % if req.user:
 					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="user-toggle" title="${_('User Menu')}">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="user-toggle" title="${_('User Menu', domain='netprofile_access')}">
 							<span class="glyphicon glyphicon-user"></span>
 							${req.user.nick}
 							<b class="caret"></b>
@@ -75,6 +75,19 @@
 	</nav>
 
 	<div class="container" role="main">
+% if context.get('crumbs'):
+	<ol class="breadcrumb">
+% for cr in crumbs:
+		<li${' class="active"' if ('url' not in cr) else ''}>
+% if 'url' in cr:
+			<a href="${cr['url']}">${cr['text']}</a>
+% else:
+			${cr['text']}
+% endif
+		</li>
+% endfor
+	</ol>
+% endif
 % for msg in req.session.pop_flash():
 
 	<div class="alert alert-${msg['class'] if 'class' in msg else 'success'} alert-dismissable" role="alert">

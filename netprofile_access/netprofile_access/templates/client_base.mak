@@ -13,28 +13,55 @@
 % if req.debug_enabled:
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap.css')}" type="text/css" />
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap-theme.css')}" type="text/css" />
+	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-noscript.css')}" type="text/css" /></noscript>
+	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-ui-noscript.css')}" type="text/css" /></noscript>
 	<!--[if lt IE 9]>
 		<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/html5shiv.js')}"></script>
 		<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/respond.src.js')}"></script>
 	<![endif]-->
+% if min_js:
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/all.min.js')}"></script>
+% else:
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.ui.widget.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/chosen.jquery.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/bootstrap.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jqBootstrapValidation.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.iframe-transport.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-process.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-validate.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-ui.js')}"></script>
+% endif
 % else:
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap.min.css')}" type="text/css" />
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap-theme.min.css')}" type="text/css" />
+	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-noscript.css')}" type="text/css" /></noscript>
+	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-ui-noscript.css')}" type="text/css" /></noscript>
 	<!--[if lt IE 9]>
 		<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/html5shiv.min.js')}"></script>
 		<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/respond.min.js')}"></script>
 	<![endif]-->
+% if min_js:
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/all.min.js')}"></script>
+% else:
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.min.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.ui.widget.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/chosen.jquery.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/bootstrap.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jqBootstrapValidation.min.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.iframe-transport.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-process.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-validate.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-ui.js')}"></script>
+% endif
 % endif
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/client.css')}" type="text/css" />
+	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/client-noscript.css')}" type="text/css" /></noscript>
+% if not min_js:
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/client.js')}"></script>
+% endif
 <%block name="head"/>
 </head>
 <body>${next.body()}</body>

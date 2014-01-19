@@ -8,19 +8,18 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-17 06:19+0400\n"
+"POT-Creation-Date: 2014-01-19 08:59+0400\n"
 "PO-Revision-Date: 2014-01-17 06:24+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
-"X-Generator: Poedit 1.5.5\n"
 
-#: netprofile_access/__init__.py:78 netprofile_access/models.py:87
+#: netprofile_access/__init__.py:80 netprofile_access/models.py:87
 msgid "Access"
 msgstr "Учётные записи"
 
@@ -135,7 +134,7 @@ msgstr "Проверять блокировки"
 msgid "Check Services"
 msgstr "Проверять услуги"
 
-#: netprofile_access/models.py:408 netprofile_access/views.py:621
+#: netprofile_access/models.py:408 netprofile_access/views.py:714
 msgid "Rate Modifiers"
 msgstr "Модификаторы тарифов"
 
@@ -179,7 +178,7 @@ msgstr "Название"
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_access/models.py:607 netprofile_access/views.py:630
+#: netprofile_access/models.py:607 netprofile_access/views.py:723
 msgid "Links"
 msgstr "Связи"
 
@@ -223,85 +222,88 @@ msgstr "Текущий запрос был просрочен"
 msgid "reCAPTCHA service is not reachable"
 msgstr "Сервис reCAPTCHA недоступен"
 
-#: netprofile_access/views.py:102
+#: netprofile_access/views.py:103
 msgid "Page Not Found"
 msgstr "Страница не найдена"
 
-#: netprofile_access/views.py:114
+#: netprofile_access/views.py:115
 msgid "You need to log in to access this page"
 msgstr "Вы должны войти в систему чтобы получить доступ к этой странице"
 
-#: netprofile_access/views.py:119
-#| msgid "Access Code"
+#: netprofile_access/views.py:120
 msgid "Access Denied"
 msgstr "Доступ запрещён"
 
-#: netprofile_access/views.py:137 netprofile_access/views.py:224
-#: netprofile_access/views.py:466
+#: netprofile_access/views.py:138 netprofile_access/views.py:305
+#: netprofile_access/views.py:553
 msgid "Error submitting form"
 msgstr "Ошибка при отправке формы"
 
-#: netprofile_access/views.py:141 netprofile_access/views.py:248
+#: netprofile_access/views.py:142 netprofile_access/views.py:329
 msgid "Password is too short"
 msgstr "Пароль слишком короткий"
 
-#: netprofile_access/views.py:143 netprofile_access/views.py:250
+#: netprofile_access/views.py:144 netprofile_access/views.py:331
 msgid "Password is too long"
 msgstr "Пароль слишком длинный"
 
-#: netprofile_access/views.py:145 netprofile_access/views.py:252
+#: netprofile_access/views.py:146 netprofile_access/views.py:333
 msgid "Passwords do not match"
 msgstr "Пароли не совпадают"
 
-#: netprofile_access/views.py:147
+#: netprofile_access/views.py:148
 msgid "Wrong password"
 msgstr "Некорректный пароль"
 
-#: netprofile_access/views.py:151
+#: netprofile_access/views.py:152
 msgid "Password successfully changed"
 msgstr "Ваш пароль был успешно изменён"
 
-#: netprofile_access/views.py:243 netprofile_access/views.py:255
-#: netprofile_access/views.py:260 netprofile_access/views.py:263
-#: netprofile_access/views.py:266 netprofile_access/views.py:480
-#: netprofile_access/views.py:485
+#: netprofile_access/views.py:200
+msgid "Error uploading file"
+msgstr ""
+
+#: netprofile_access/views.py:324 netprofile_access/views.py:336
+#: netprofile_access/views.py:341 netprofile_access/views.py:344
+#: netprofile_access/views.py:347 netprofile_access/views.py:567
+#: netprofile_access/views.py:572
 msgid "Invalid field length"
 msgstr "Некорректная длина поля"
 
-#: netprofile_access/views.py:245 netprofile_access/views.py:482
+#: netprofile_access/views.py:326 netprofile_access/views.py:569
 msgid "Invalid character used in username"
 msgstr "В имени пользователя находится запрещённый символ"
 
-#: netprofile_access/views.py:257 netprofile_access/views.py:487
+#: netprofile_access/views.py:338 netprofile_access/views.py:574
 #: netprofile_access/templates/client_register.mak:67
 #: netprofile_access/templates/client_restorepass.mak:69
 msgid "Invalid e-mail format"
 msgstr "Некорректный формат e-mail"
 
-#: netprofile_access/views.py:274
+#: netprofile_access/views.py:355
 #: netprofile_access/templates/client_register.mak:40
 msgid "This username is already taken"
 msgstr "Это имя пользователя уже используется"
 
-#: netprofile_access/views.py:287
+#: netprofile_access/views.py:368
 msgid "Primary Account"
 msgstr "Основная учётная запись"
 
-#: netprofile_access/views.py:344
+#: netprofile_access/views.py:425
 #, python-format
 msgid "Activation required for user %s"
 msgstr "Требуется подтверждение для пользователя %s"
 
-#: netprofile_access/views.py:537
+#: netprofile_access/views.py:624
 #, python-format
 msgid "Password recovery for user %s"
 msgstr "Восстановление пароля для пользователя %s"
 
-#: netprofile_access/views.py:549
+#: netprofile_access/views.py:636
 msgid "Username and/or e-mail are unknown to us"
 msgstr "Имя пользователя и/или адрес e-mail нам не известны"
 
-#: netprofile_access/views.py:607
+#: netprofile_access/views.py:699
 msgid "Portal"
 msgstr "Портал"
 
@@ -315,8 +317,7 @@ msgstr "Ошибка подтверждения"
 
 #: netprofile_access/templates/client_activate.mak:7
 msgid "Either your activation link was incomplete or it has timed out."
-msgstr ""
-"Либо вы некорректно ввели ссылку для активации, либо она уже просрочена."
+msgstr "Либо вы некорректно ввели ссылку для активации, либо она уже просрочена."
 
 #: netprofile_access/templates/client_activate.mak:9
 msgid "Account Activation Successful"
@@ -438,7 +439,6 @@ msgstr "Изменить ваш пароль"
 
 #: netprofile_access/templates/client_error.mak:5
 #, python-format
-#| msgid "Error"
 msgid "Error %d"
 msgstr "Ошибка %d"
 
@@ -472,7 +472,6 @@ msgid "Go Back"
 msgstr "Назад"
 
 #: netprofile_access/templates/client_error.mak:30
-#| msgid "Return to log in page"
 msgid "Return to home page"
 msgstr "Вернуться на начальную страницу"
 
@@ -481,7 +480,6 @@ msgid "Go Home"
 msgstr "На главную"
 
 #: netprofile_access/templates/client_error.mak:35
-#| msgid "Return to log in page"
 msgid "Return to sign in page"
 msgstr "Вернуться на страницу входа"
 
@@ -512,7 +510,6 @@ msgid "Toggle navigation"
 msgstr "Переключение навигации"
 
 #: netprofile_access/templates/client_layout.mak:41
-#| msgid "Change your current language"
 msgid "Change Language"
 msgstr "Изменить текущий язык"
 
@@ -521,7 +518,6 @@ msgid "Currently Selected Language"
 msgstr "Текущий выбранный язык"
 
 #: netprofile_access/templates/client_layout.mak:60
-#| msgid "User Name"
 msgid "User Menu"
 msgstr "Пользовательское меню"
 
@@ -529,11 +525,11 @@ msgstr "Пользовательское меню"
 msgid "Log Out"
 msgstr "Выйти"
 
-#: netprofile_access/templates/client_layout.mak:91
+#: netprofile_access/templates/client_layout.mak:104
 msgid "NetProfile.ru Team"
 msgstr "Команда NetProfile.ru"
 
-#: netprofile_access/templates/client_layout.mak:92
+#: netprofile_access/templates/client_layout.mak:105
 msgid "License:"
 msgstr "Лиценизия:"
 
@@ -600,8 +596,8 @@ msgstr "Внимание:"
 
 #: netprofile_access/templates/client_register.mak:8
 msgid ""
-"You will receive a confirmation e-mail with an activation link. Your account "
-"will be inactive until you click this link."
+"You will receive a confirmation e-mail with an activation link. Your "
+"account will be inactive until you click this link."
 msgstr ""
 "Вы получите e-mail с подтверждающей ссылкой. Ваша учётная запись будет "
 "оставаться неактивной до момента, когда вы перейдёте по этой ссылке."
@@ -677,17 +673,17 @@ msgstr "Спасибо что зарегистрировали учётную з
 
 #: netprofile_access/templates/client_regsent.mak:9
 msgid ""
-"A message containing an activation link was sent to the e-mail address you "
-"provided. You won't be able to log in until you follow this link."
+"A message containing an activation link was sent to the e-mail address "
+"you provided. You won't be able to log in until you follow this link."
 msgstr ""
-"Письмо, содержащее ссылку для активации, было отправлено на предоставленный "
-"вами адрес e-mail. Вы не сможете использовать вашу новую учётную запись до "
-"тех пор, пока не перейдёте по этой ссылке."
+"Письмо, содержащее ссылку для активации, было отправлено на "
+"предоставленный вами адрес e-mail. Вы не сможете использовать вашу новую "
+"учётную запись до тех пор, пока не перейдёте по этой ссылке."
 
 #: netprofile_access/templates/client_regsent.mak:11
 msgid ""
-"You can now log in with the user name and password that you provided during "
-"registration."
+"You can now log in with the user name and password that you provided "
+"during registration."
 msgstr ""
 "Теперь вы можете войти в систему при помощи имени пользователя и пароля, "
 "которые вы указали при регистрации."
@@ -709,7 +705,8 @@ msgstr ""
 #: netprofile_access/templates/client_restorepass.mak:9
 msgid "A new autogenerated password will be emailed to you after that."
 msgstr ""
-"После этого вам будет отправлен новый автоматически сгенерированный пароль."
+"После этого вам будет отправлен новый автоматически сгенерированный "
+"пароль."
 
 #: netprofile_access/templates/client_restorepass.mak:11
 msgid "Your password will be emailed to you after that."
@@ -730,8 +727,7 @@ msgstr "Восстановление пароля завершено"
 
 #: netprofile_access/templates/client_restoresent.mak:8
 msgid "New automatically generated password was sent to your e-mail."
-msgstr ""
-"Вам только что был отправлен новый автоматически сгенерированный пароль."
+msgstr "Вам только что был отправлен новый автоматически сгенерированный пароль."
 
 #: netprofile_access/templates/client_restoresent.mak:10
 msgid "Your current password was sent to your e-mail."
@@ -772,10 +768,11 @@ msgstr "Вот ваш пароль:"
 #: netprofile_access/templates/email_recover_html.mak:23
 #: netprofile_access/templates/email_recover_plain.mak:12
 msgid ""
-"If you didn't request a password recovery please contact support immediately."
+"If you didn't request a password recovery please contact support "
+"immediately."
 msgstr ""
-"Если вы не запрашивали восстановление пароля, то немедленно обращайтесь в "
-"службу поддержки."
+"Если вы не запрашивали восстановление пароля, то немедленно обращайтесь в"
+" службу поддержки."
 
 #: netprofile_access/templates/email_register_html.mak:9
 msgid "User Activation"
@@ -793,3 +790,4 @@ msgstr "Не забудьте перейти по ней прежде чем п�
 
 #~ msgid "Logged in as"
 #~ msgstr "Вы вошли как"
+

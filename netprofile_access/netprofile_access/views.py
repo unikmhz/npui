@@ -68,6 +68,7 @@ from netprofile import locale_neg
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 
+from netprofile_core.models import File
 from netprofile_entities.models import (
 	Entity,
 	LegalEntity,
@@ -159,6 +160,83 @@ def client_chpass(request):
 	request.run_hook('access.cl.tpldef.chpass', tpldef, request)
 	return tpldef
 
+@view_config(route_name='access.cl.upload', xhr=True, request_method='GET', renderer='json', permission='USAGE')
+def client_file_list(request):
+	csrf = request.GET.get('csrf', '')
+	mode = request.GET.get('mode', '')
+	if not mode:
+		raise HTTPForbidden('Invalid upload use')
+	if csrf != request.get_csrf():
+		raise HTTPForbidden('Error uploading file')
+	sess = DBSession()
+	tpldef = []
+	request.run_hook('access.cl.file_list', mode, request, sess, tpldef)
+	tpldef = { 'files' : tpldef }
+	request.run_hook('access.cl.tpldef.upload', tpldef, request)
+	return tpldef
+
+@view_config(route_name='access.cl.upload', xhr=True, request_method='POST', renderer='json', permission='USAGE')
+def client_upload(request):
+	csrf = request.POST.get('csrf', '')
+	mode = request.POST.get('mode', '')
+	if not mode:
+		raise HTTPForbidden('Invalid upload use')
+	if csrf != request.get_csrf():
+		raise HTTPForbidden('Error uploading file')
+	sess = DBSession()
+	# FIXME: add folder cfg
+	tpldef = []
+	for fo in request.POST.getall('files'):
+		obj = File()
+		if fo.filename:
+			obj.name = obj.filename = fo.filename
+		sess.add(obj)
+		obj.set_from_file(fo.file, None, sess)
+		signal = request.run_hook('access.cl.upload', obj, mode, request, sess, tpldef)
+		if True not in signal:
+			tpldef.append({
+				'name'  : obj.filename,
+				'size'  : obj.size,
+				'error' : _('Error uploading file')
+			})
+			sess.delete(obj)
+	tpldef = { 'files' : tpldef }
+	request.run_hook('access.cl.tpldef.upload', tpldef, request)
+	return tpldef
+
+@view_config(route_name='access.cl.download', request_method='GET', permission='USAGE')
+def client_download(request):
+	if ('mode' not in request.matchdict) or ('id' not in request.matchdict):
+		raise HTTPForbidden('Invalid download link')
+	mode = request.matchdict['mode']
+	try:
+		objid = int(request.matchdict['id'])
+	except ValueError:
+		raise HTTPForbidden('Invalid download link')
+	sess = DBSession()
+	ret = request.run_hook('access.cl.download', mode, objid, request, sess)
+	for r in ret:
+		if isinstance(r, File):
+			return r.get_response(request)
+	raise HTTPForbidden('Invalid download link')
+
+@view_config(route_name='access.cl.download', xhr=True, request_method='DELETE', renderer='json', permission='USAGE')
+def client_delete(request):
+	if ('mode' not in request.matchdict) or ('id' not in request.matchdict):
+		return False
+	mode = request.matchdict['mode']
+	try:
+		objid = int(request.matchdict['id'])
+	except ValueError:
+		return False
+	sess = DBSession()
+	ret = request.run_hook('access.cl.download', mode, objid, request, sess)
+	for r in ret:
+		if isinstance(r, File):
+			sess.delete(r)
+			return True
+	return False
+
 @view_config(route_name='access.cl.login', renderer='netprofile_access:templates/client_login.mak')
 def client_login(request):
 	nxt = request.route_url('access.cl.home')
@@ -168,6 +246,7 @@ def client_login(request):
 	did_fail = False
 	cur_locale = locale_neg(request)
 	cfg = request.registry.settings
+	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	can_recover = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
 
@@ -190,7 +269,8 @@ def client_login(request):
 		'failed'      : did_fail,
 		'can_reg'     : can_reg,
 		'can_recover' : can_recover,
-		'cur_loc'     : cur_locale
+		'cur_loc'     : cur_locale,
+		'min_js'      : min_js
 	}
 	request.run_hook('access.cl.tpldef.login', tpldef, request)
 	return tpldef
@@ -202,6 +282,7 @@ def client_register(request):
 	cur_locale = locale_neg(request)
 	loc = get_localizer(request)
 	cfg = request.registry.settings
+	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	must_verify = asbool(cfg.get('netprofile.client.registration.verify_email', True))
 	must_recaptcha = asbool(cfg.get('netprofile.client.registration.recaptcha.enabled', False))
@@ -354,6 +435,7 @@ def client_register(request):
 			return HTTPSeeOther(location=request.route_url('access.cl.regsent'))
 	tpldef = {
 		'cur_loc'        : cur_locale,
+		'min_js'         : min_js,
 		'must_verify'    : must_verify,
 		'must_recaptcha' : must_recaptcha,
 		'min_pwd_len'    : min_pwd_len,
@@ -395,12 +477,14 @@ def client_regsent(request):
 		return HTTPSeeOther(location=request.route_url('access.cl.home'))
 	cur_locale = locale_neg(request)
 	cfg = request.registry.settings
+	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	must_verify = asbool(cfg.get('netprofile.client.registration.verify_email', True))
 	if not can_reg:
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 	tpldef = {
 		'cur_loc'        : cur_locale,
+		'min_js'         : min_js,
 		'must_verify'    : must_verify
 	}
 	request.run_hook('access.cl.tpldef.regsent', tpldef, request)
@@ -413,6 +497,7 @@ def client_activate(request):
 	did_fail = True
 	cur_locale = locale_neg(request)
 	cfg = request.registry.settings
+	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	must_verify = asbool(cfg.get('netprofile.client.registration.verify_email', True))
 	link_id = int(cfg.get('netprofile.client.registration.link_id', 1))
@@ -435,6 +520,7 @@ def client_activate(request):
 				break
 	tpldef = {
 		'failed'         : did_fail,
+		'min_js'         : min_js,
 		'cur_loc'        : cur_locale
 	}
 	request.run_hook('access.cl.tpldef.activate', tpldef, request)
@@ -448,6 +534,7 @@ def client_restorepass(request):
 	cur_locale = locale_neg(request)
 	loc = get_localizer(request)
 	cfg = request.registry.settings
+	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
 	can_rp = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
 	change_pass = asbool(cfg.get('netprofile.client.password_recovery.change_password', True))
 	must_recaptcha = asbool(cfg.get('netprofile.client.password_recovery.recaptcha.enabled', False))
@@ -549,6 +636,7 @@ def client_restorepass(request):
 				errors['csrf'] = _('Username and/or e-mail are unknown to us')
 	tpldef = {
 		'cur_loc'        : cur_locale,
+		'min_js'         : min_js,
 		'change_pass'    : change_pass,
 		'must_recaptcha' : must_recaptcha,
 		'errors'         : {err: loc.translate(errors[err]) for err in errors}
@@ -564,12 +652,14 @@ def client_restoresent(request):
 		return HTTPSeeOther(location=request.route_url('access.cl.home'))
 	cur_locale = locale_neg(request)
 	cfg = request.registry.settings
+	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
 	can_rp = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
 	if not can_rp:
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 	change_pass = asbool(cfg.get('netprofile.client.password_recovery.change_password', True))
 	tpldef = {
 		'cur_loc'     : cur_locale,
+		'min_js'      : min_js,
 		'change_pass' : change_pass
 	}
 	request.run_hook('access.cl.tpldef.restoresent', tpldef, request)
@@ -600,6 +690,8 @@ def client_bogus_favicon(request):
 
 @register_hook('access.cl.tpldef')
 def _cl_tpldef(tpldef, req):
+	cfg = req.registry.settings
+	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
 	cur_locale = get_locale_name(req)
 	loc = get_localizer(req)
 	menu = [{
@@ -610,6 +702,7 @@ def _cl_tpldef(tpldef, req):
 	tpldef.update({
 		'menu'    : menu,
 		'cur_loc' : cur_locale,
+		'min_js'  : min_js,
 		'loc'     : loc,
 		'i18n'    : Locale(cur_locale)
 	})

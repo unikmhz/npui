@@ -1,0 +1,15 @@
+.tab-content > .tab-pane
+{
+	display: block;
+}
+
+ul.nav-tabs
+{
+	display: none;
+}
+
+.fade
+{
+	opacity: 1;
+}
+
