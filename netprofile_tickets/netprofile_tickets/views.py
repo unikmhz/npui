@@ -741,6 +741,13 @@ def client_issue_view(ctx, req):
 		}, {
 			'text' : loc.translate(_('View Issue #%d')) % ctx.id
 		}],
+		'trans'  : (
+			_('Begin'),
+			_('Cancel'),
+			_('Delete'),
+			_('Error'),
+			_('Processing…')
+		),
 		'ticket' : ctx
 	}
 	req.run_hook('access.cl.tpldef', tpldef, req)

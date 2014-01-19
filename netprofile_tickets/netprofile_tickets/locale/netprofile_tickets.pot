@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_tickets 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-19 09:00+0400\n"
+"POT-Creation-Date: 2014-01-19 10:00+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -437,6 +437,26 @@ msgstr ""
 msgid "Append Comment to Issue #%d"
 msgstr ""
 
+#: netprofile_tickets/views.py:745
+msgid "Begin"
+msgstr ""
+
+#: netprofile_tickets/views.py:746
+msgid "Cancel"
+msgstr ""
+
+#: netprofile_tickets/views.py:747 netprofile_tickets/templates/client_view.mak:104
+msgid "Delete"
+msgstr ""
+
+#: netprofile_tickets/views.py:748
+msgid "Error"
+msgstr ""
+
+#: netprofile_tickets/views.py:749
+msgid "Processing…"
+msgstr ""
+
 #: netprofile_tickets/templates/client_append.mak:6
 msgid "Add Comment to Issue"
 msgstr ""
@@ -583,9 +603,5 @@ msgstr ""
 
 #: netprofile_tickets/templates/client_view.mak:102
 msgid "Remove already added files"
-msgstr ""
-
-#: netprofile_tickets/templates/client_view.mak:104
-msgid "Delete"
 msgstr ""
 

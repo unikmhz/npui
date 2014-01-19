@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_tickets 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-19 09:00+0400\n"
-"PO-Revision-Date: 2014-01-19 09:02+0300\n"
+"POT-Creation-Date: 2014-01-19 10:00+0400\n"
+"PO-Revision-Date: 2014-01-19 10:00+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
@@ -442,6 +442,27 @@ msgstr "Просмотр задачи №%d"
 msgid "Append Comment to Issue #%d"
 msgstr "Комментарий к задаче №%d"
 
+#: netprofile_tickets/views.py:745
+msgid "Begin"
+msgstr "Начать"
+
+#: netprofile_tickets/views.py:746
+msgid "Cancel"
+msgstr "Отмена"
+
+#: netprofile_tickets/views.py:747
+#: netprofile_tickets/templates/client_view.mak:104
+msgid "Delete"
+msgstr "Удалить"
+
+#: netprofile_tickets/views.py:748
+msgid "Error"
+msgstr "Ошибка"
+
+#: netprofile_tickets/views.py:749
+msgid "Processing…"
+msgstr "Обработка…"
+
 #: netprofile_tickets/templates/client_append.mak:6
 msgid "Add Comment to Issue"
 msgstr "Добавить комментарий к задаче"
@@ -539,7 +560,6 @@ msgid "In Archive"
 msgstr "В архиве"
 
 #: netprofile_tickets/templates/client_view.mak:42
-#| msgid "Issue History"
 msgid "History"
 msgstr "История"
 
@@ -553,7 +573,6 @@ msgid "Change by %s"
 msgstr "Изменено %s"
 
 #: netprofile_tickets/templates/client_view.mak:60
-#| msgid "New Comment"
 msgid "My Comment"
 msgstr "Мой комментарий"
 
@@ -562,17 +581,14 @@ msgid "No additional comments."
 msgstr "Комментарии отсутствуют."
 
 #: netprofile_tickets/templates/client_view.mak:82
-#| msgid "Attach file"
 msgid "Attached Files"
 msgstr "Приложенные файлы"
 
 #: netprofile_tickets/templates/client_view.mak:89
-#| msgid "Attach file"
 msgid "Attach a file to issue"
 msgstr "Приложить файл к задаче"
 
 #: netprofile_tickets/templates/client_view.mak:91
-#| msgid "Attach file"
 msgid "Attach File"
 msgstr "Приложить файл"
 
@@ -595,7 +611,3 @@ msgstr "Отменить загрузку"
 #: netprofile_tickets/templates/client_view.mak:102
 msgid "Remove already added files"
 msgstr "Удалить уже загруженные файлы"
-
-#: netprofile_tickets/templates/client_view.mak:104
-msgid "Delete"
-msgstr "Удалить"
