@@ -34,6 +34,9 @@ from netprofile.ext.direct import JsonReprEncoder
 def jsone(data):
 	return json.dumps(data, cls=JsonReprEncoder, indent=3)
 
+def jsone_compact(data):
+	return json.dumps(data, cls=JsonReprEncoder, indent=None, separators=(',', ':'))
+
 def date_fmt(ctx, obj, fmt='medium'):
 	loc = ctx.get('i18n', None)
 	if loc:
