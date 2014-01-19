@@ -29,6 +29,7 @@ from __future__ import (
 
 import datetime, json
 from babel.dates import format_date, format_datetime, format_time
+from babel.numbers import format_currency
 from netprofile.ext.direct import JsonReprEncoder
 
 def jsone(data):
@@ -57,4 +58,11 @@ def date_fmt_long(ctx, obj):
 
 def date_fmt_full(ctx, obj):
 	return date_fmt(ctx, obj, 'full')
+
+def curr_fmt(ctx, obj):
+	loc = ctx.get('i18n', None)
+	# FIXME: RUB
+	if loc:
+		return format_currency(obj, '', locale=loc)
+	return format_currency(obj, '')
 
