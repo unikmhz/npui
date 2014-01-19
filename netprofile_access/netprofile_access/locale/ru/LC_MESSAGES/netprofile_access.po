@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-19 08:59+0400\n"
+"POT-Creation-Date: 2014-01-19 09:41+0400\n"
 "PO-Revision-Date: 2014-01-17 06:24+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -335,7 +335,7 @@ msgstr ""
 msgid "Return to log in page"
 msgstr "Вернуться на страницу входа"
 
-#: netprofile_access/templates/client_base.mak:11
+#: netprofile_access/templates/client_base.mak:19
 msgid "User Portal"
 msgstr "Пользовательский портал"
 

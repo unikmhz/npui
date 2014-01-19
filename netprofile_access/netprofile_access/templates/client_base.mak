@@ -1,4 +1,9 @@
 ## -*- coding: utf-8 -*-
+<%!
+
+from netprofile.tpl.filters import jsone_compact
+
+%>\
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="${cur_loc}">
 <head>
@@ -8,6 +13,10 @@
 	<meta name="keywords" content="netprofile" />
 	<meta name="description" content="NetProfile client UI" />
 	<meta name="csrf-token" content="${req.get_csrf()}" />
+% if context.get('trans'):
+	<!-- ${trans} -->
+	<meta name="js-translations" content="${trans | n,jsone_compact,h}" />
+% endif
 	<title>NetProfile :: <%block name="title">${_('User Portal', domain='netprofile_access')}</%block></title>
 	<link rel="shortcut icon" href="${req.static_url('netprofile_access:static/favicon.ico')}" />
 % if req.debug_enabled:
@@ -19,8 +28,8 @@
 		<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/html5shiv.js')}"></script>
 		<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/respond.src.js')}"></script>
 	<![endif]-->
-% if min_js:
-	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/all.min.js')}"></script>
+% if comb_js:
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/all.js')}"></script>
 % else:
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.ui.widget.js')}"></script>
@@ -42,24 +51,24 @@
 		<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/html5shiv.min.js')}"></script>
 		<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/respond.min.js')}"></script>
 	<![endif]-->
-% if min_js:
+% if comb_js:
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/all.min.js')}"></script>
 % else:
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.min.js')}"></script>
-	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.ui.widget.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.ui.widget.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/chosen.jquery.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/bootstrap.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jqBootstrapValidation.min.js')}"></script>
-	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.iframe-transport.js')}"></script>
-	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload.js')}"></script>
-	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-process.js')}"></script>
-	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-validate.js')}"></script>
-	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-ui.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.iframe-transport.min.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload.min.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-process.min.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-validate.min.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload-ui.min.js')}"></script>
 % endif
 % endif
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/client.css')}" type="text/css" />
 	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/client-noscript.css')}" type="text/css" /></noscript>
-% if not min_js:
+% if not comb_js:
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/client.js')}"></script>
 % endif
 <%block name="head"/>

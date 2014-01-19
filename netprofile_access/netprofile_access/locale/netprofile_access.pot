@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-19 08:59+0400\n"
+"POT-Creation-Date: 2014-01-19 09:41+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -331,7 +331,7 @@ msgstr ""
 msgid "Return to log in page"
 msgstr ""
 
-#: netprofile_access/templates/client_base.mak:11
+#: netprofile_access/templates/client_base.mak:19
 msgid "User Portal"
 msgstr ""
 

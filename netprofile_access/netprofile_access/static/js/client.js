@@ -3,15 +3,26 @@ var RecaptchaOptions = {
 	theme:    'white'
 };
 
+var _trans = {};
+var _ = function(text)
+{
+	if(text in _trans)
+		return _trans[text];
+	return text;
+};
+
 $(function()
 {
 	var locale_re = new RegExp('^(.*(?:\\?|&))__locale=([a-zA-Z0-9_.-]+)(.*)$'),
 		csrf_token = $('meta[name=csrf-token]').attr('content'),
+		trans = $('meta[name=js-translations]').attr('content'),
 		file_up = $('#fileupload');
 
 	$.ajaxSetup({
 		headers: { 'X-CSRFToken': csrf_token }
 	});
+	if(trans)
+		_trans = $.parseJSON(trans);
 	$('input,select,textarea').not('[type=submit],#__locale').jqBootstrapValidation({
 		preventSubmit: true
 	});
@@ -54,13 +65,12 @@ $(function()
 					var node, td;
 
 					node = $('<tr class="template-upload fade"/>')
-//						.append($('<td/>').append($('<span class="preview"/>')))
 						.append($('<td/>').append([
 							$('<p class="name"/>').text(file.name),
 							$('<strong class="error text-danger"/>')
 						]))
 						.append($('<td/>').append([
-							$('<p class="size"/>').text('Processing...'),
+							$('<p class="size"/>').text(_('Processing…')),
 							$('<div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"/>')
 								.append($('<div class="progress-bar progress-bar-success" style="width:0%;"/>'))
 						]));
@@ -68,13 +78,13 @@ $(function()
 					if(!i && !o.options.autoUpload)
 						td.append([
 							$('<button class="btn btn-primary start" disabled="disabled"/>')
-								.text(' Start')
+								.text(' ' + _('Begin'))
 								.prepend($('<span class="glyphicon glyphicon-upload"/>')),
 							'&nbsp;'
 						]);
 					if(!i)
 						td.append($('<button class="btn btn-warning cancel"/>')
-							.text(' Cancel')
+							.text(' ' + _('Cancel'))
 							.prepend($('<span class="glyphicon glyphicon-ban-circle"/>'))
 						);
 					node.append(td);
@@ -91,18 +101,6 @@ $(function()
 					var node, td, el, el2;
 
 					node = $('<tr class="template-download fade"/>');
-//					el = $('<span class="preview"/>');
-//					if(file.thumbnailUrl)
-//						el.append($('<a/>')
-//							.attr({
-//								'href'         : file.url,
-//								'title'        : file.name,
-//								'download'     : file.name,
-//								'data-gallery' : 'data-gallery'
-//							})
-//							.append($('<img/>').attr('src', file.thumbnailUrl))
-//						);
-//					node.append($('<td/>').append(el));
 					el = $('<p class="name"/>');
 					if(file.url)
 					{
@@ -122,7 +120,7 @@ $(function()
 					td = $('<td/>').append(el);
 					if(file.error)
 						td.append($('<div/>').text(file.error).prepend(
-							$('<span class="label label-danger"/>').text('Error')
+							$('<span class="label label-danger"/>').text(_('Error'))
 						));
 					node.append(td);
 					node.append($('<td/>').append(
@@ -136,7 +134,7 @@ $(function()
 								'data-type' : file.deleteType,
 								'data-url'  : file.deleteUrl
 							})
-							.text(' Delete')
+							.text(' ' + _('Delete'))
 							.prepend($('<span class="glyphicon glyphicon-trash"/>'))
 						);
 						if(file.deleteWithCredentials)
@@ -146,7 +144,7 @@ $(function()
 					else
 					{
 						td.append($('<button class="btn btn-warning cancel"/>')
-							.text(' Cancel')
+							.text(' ' + _('Cancel'))
 							.prepend($('<span class="glyphicon glyphicon-ban-circle"/>'))
 						);
 					}

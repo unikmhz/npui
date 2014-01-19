@@ -246,7 +246,7 @@ def client_login(request):
 	did_fail = False
 	cur_locale = locale_neg(request)
 	cfg = request.registry.settings
-	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
+	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	can_recover = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
 
@@ -270,7 +270,7 @@ def client_login(request):
 		'can_reg'     : can_reg,
 		'can_recover' : can_recover,
 		'cur_loc'     : cur_locale,
-		'min_js'      : min_js
+		'comb_js'     : comb_js
 	}
 	request.run_hook('access.cl.tpldef.login', tpldef, request)
 	return tpldef
@@ -282,7 +282,7 @@ def client_register(request):
 	cur_locale = locale_neg(request)
 	loc = get_localizer(request)
 	cfg = request.registry.settings
-	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
+	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	must_verify = asbool(cfg.get('netprofile.client.registration.verify_email', True))
 	must_recaptcha = asbool(cfg.get('netprofile.client.registration.recaptcha.enabled', False))
@@ -435,7 +435,7 @@ def client_register(request):
 			return HTTPSeeOther(location=request.route_url('access.cl.regsent'))
 	tpldef = {
 		'cur_loc'        : cur_locale,
-		'min_js'         : min_js,
+		'comb_js'        : comb_js,
 		'must_verify'    : must_verify,
 		'must_recaptcha' : must_recaptcha,
 		'min_pwd_len'    : min_pwd_len,
@@ -477,14 +477,14 @@ def client_regsent(request):
 		return HTTPSeeOther(location=request.route_url('access.cl.home'))
 	cur_locale = locale_neg(request)
 	cfg = request.registry.settings
-	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
+	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	must_verify = asbool(cfg.get('netprofile.client.registration.verify_email', True))
 	if not can_reg:
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 	tpldef = {
 		'cur_loc'        : cur_locale,
-		'min_js'         : min_js,
+		'comb_js'        : comb_js,
 		'must_verify'    : must_verify
 	}
 	request.run_hook('access.cl.tpldef.regsent', tpldef, request)
@@ -497,7 +497,7 @@ def client_activate(request):
 	did_fail = True
 	cur_locale = locale_neg(request)
 	cfg = request.registry.settings
-	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
+	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	must_verify = asbool(cfg.get('netprofile.client.registration.verify_email', True))
 	link_id = int(cfg.get('netprofile.client.registration.link_id', 1))
@@ -520,7 +520,7 @@ def client_activate(request):
 				break
 	tpldef = {
 		'failed'         : did_fail,
-		'min_js'         : min_js,
+		'comb_js'        : comb_js,
 		'cur_loc'        : cur_locale
 	}
 	request.run_hook('access.cl.tpldef.activate', tpldef, request)
@@ -534,7 +534,7 @@ def client_restorepass(request):
 	cur_locale = locale_neg(request)
 	loc = get_localizer(request)
 	cfg = request.registry.settings
-	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
+	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_rp = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
 	change_pass = asbool(cfg.get('netprofile.client.password_recovery.change_password', True))
 	must_recaptcha = asbool(cfg.get('netprofile.client.password_recovery.recaptcha.enabled', False))
@@ -636,7 +636,7 @@ def client_restorepass(request):
 				errors['csrf'] = _('Username and/or e-mail are unknown to us')
 	tpldef = {
 		'cur_loc'        : cur_locale,
-		'min_js'         : min_js,
+		'comb_js'        : comb_js,
 		'change_pass'    : change_pass,
 		'must_recaptcha' : must_recaptcha,
 		'errors'         : {err: loc.translate(errors[err]) for err in errors}
@@ -652,14 +652,14 @@ def client_restoresent(request):
 		return HTTPSeeOther(location=request.route_url('access.cl.home'))
 	cur_locale = locale_neg(request)
 	cfg = request.registry.settings
-	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
+	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_rp = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
 	if not can_rp:
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 	change_pass = asbool(cfg.get('netprofile.client.password_recovery.change_password', True))
 	tpldef = {
 		'cur_loc'     : cur_locale,
-		'min_js'      : min_js,
+		'comb_js'     : comb_js,
 		'change_pass' : change_pass
 	}
 	request.run_hook('access.cl.tpldef.restoresent', tpldef, request)
@@ -691,18 +691,20 @@ def client_bogus_favicon(request):
 @register_hook('access.cl.tpldef')
 def _cl_tpldef(tpldef, req):
 	cfg = req.registry.settings
-	min_js = asbool(cfg.get('netprofile.client.minify_js', False))
+	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	cur_locale = get_locale_name(req)
 	loc = get_localizer(req)
 	menu = [{
 		'route' : 'access.cl.home',
 		'text'  : _('Portal')
 	}]
+	if 'trans' in tpldef:
+		tpldef['trans'] = {txt: loc.translate(txt) for txt in tpldef['trans']}
 	req.run_hook('access.cl.menu', menu, req)
 	tpldef.update({
 		'menu'    : menu,
 		'cur_loc' : cur_locale,
-		'min_js'  : min_js,
+		'comb_js' : comb_js,
 		'loc'     : loc,
 		'i18n'    : Locale(cur_locale)
 	})
