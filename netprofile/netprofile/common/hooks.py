@@ -122,6 +122,12 @@ def _run_block(request, name, *args, **kwargs):
 	hm = request.registry.getUtility(IHookManager)
 	return hm.run_block(name, *args, request=request, **kwargs)
 
+def gen_block(ctx, name, *args, **kwargs):
+	req = ctx.get('req')
+	kwargs.update(ctx.kwargs)
+	hm = req.registry.getUtility(IHookManager)
+	return hm.run_block(name, *args, request=req, **kwargs)
+
 def includeme(config):
 	"""
 	For inclusion by Pyramid.
