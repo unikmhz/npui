@@ -57,7 +57,7 @@
 	</div>
 </fieldset>
 <div class="form-actions row">
-	<p class="col-sm-4 legend"><span class="req">*</span> ${_('Fields marked with this symbol are required.')}</p>
+	<p class="col-sm-4 legend"><span class="req">*</span> ${_('Fields marked with this symbol are required.', domain='netprofile_access')}</p>
 	<div class="controls col-sm-8">
 		<input type="hidden" id="csrf" name="csrf" value="${req.get_csrf()}" />
 		<button type="submit" class="btn btn-primary btn-large" id="submit" name="submit" title="${_('Add your comment to issue')}" tabindex="10">

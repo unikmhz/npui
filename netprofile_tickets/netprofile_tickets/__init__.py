@@ -39,7 +39,7 @@ class Module(ModuleBase):
 		self.mmgr = mmgr
 		mmgr.cfg.add_route(
 			'tickets.cl.issues',
-			'/issues*traverse',
+			'/issues/*traverse',
 			factory='netprofile_tickets.views.ClientRootFactory',
 			vhost='client'
 		)

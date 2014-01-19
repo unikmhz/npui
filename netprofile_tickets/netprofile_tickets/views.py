@@ -60,6 +60,7 @@ from netprofile_core.models import (
 from .models import (
 	Ticket,
 	TicketChange,
+	TicketFile,
 	TicketScheduler,
 	TicketState,
 	TicketStateTransition,
@@ -495,6 +496,73 @@ def _tickets_menu(menu, req):
 			'text'  : _('Issues')
 		})
 
+@register_hook('access.cl.upload')
+def _tickets_upload_file(obj, mode, req, sess, tpldef):
+	if mode != 'ticket':
+		return False
+	try:
+		ticket_id = int(req.POST.get('ticketid', ''))
+	except ValueError:
+		return False
+	tkt = sess.query(Ticket).get(ticket_id)
+	if not tkt:
+		return False
+	ent = req.user.parent
+	if tkt.archived or (tkt.entity != ent):
+		return False
+	link = TicketFile()
+	link.file = obj
+	link.ticket = tkt
+	sess.add(link)
+	sess.flush()
+	url = req.route_url('access.cl.download', mode='ticket', id=link.id)
+	tpldef.append({
+		'name'       : obj.filename,
+		'size'       : obj.size,
+		'url'        : url,
+		'deleteUrl'  : url,
+		'deleteType' : 'DELETE'
+	})
+	return True
+
+@register_hook('access.cl.file_list')
+def _tickets_list_files(mode, req, sess, tpldef):
+	if mode != 'ticket':
+		return False
+	try:
+		ticket_id = int(req.GET.get('ticketid', ''))
+	except ValueError:
+		return False
+	tkt = sess.query(Ticket).get(ticket_id)
+	if not tkt:
+		return False
+	ent = req.user.parent
+	if tkt.entity != ent:
+		return False
+	for link in tkt.filemap:
+		url = req.route_url('access.cl.download', mode='ticket', id=link.id)
+		tpldef.append({
+			'name'       : link.file.filename,
+			'size'       : link.file.size,
+			'url'        : url,
+			'deleteUrl'  : url,
+			'deleteType' : 'DELETE'
+		})
+
+@register_hook('access.cl.download')
+def _tickets_download_file(mode, objid, req, sess):
+	if mode != 'ticket':
+		return False
+	link = sess.query(TicketFile).get(objid)
+	if not link:
+		return False
+	if link.ticket.archived and (req.method == 'DELETE'):
+		return False
+	ent = req.user.parent
+	if link.ticket.entity != ent:
+		return False
+	return link.file
+
 @view_config(
 	route_name='tickets.cl.issues',
 	name='',
@@ -579,6 +647,12 @@ def client_issue_new(ctx, req):
 			return HTTPSeeOther(location=req.route_url('tickets.cl.issues', traverse=(tkt.id, 'view')))
 	tpldef = {
 		'states' : states,
+		'crumbs' : [{
+			'text' : loc.translate(_('My Issues')),
+			'url'  : req.route_url('tickets.cl.issues', traverse=())
+		}, {
+			'text' : loc.translate(_('New Issue'))
+		}],
 		'errors' : {err: loc.translate(errors[err]) for err in errors}
 	}
 	req.run_hook('access.cl.tpldef', tpldef, req)
@@ -588,6 +662,7 @@ def client_issue_new(ctx, req):
 @view_config(
 	route_name='tickets.cl.issues',
 	name='append',
+	context=Ticket,
 	permission='USAGE',
 	renderer='netprofile_tickets:templates/client_append.mak'
 )
@@ -624,6 +699,15 @@ def client_issue_append(ctx, req):
 			})
 			return HTTPSeeOther(location=req.route_url('tickets.cl.issues', traverse=(ctx.id, 'view')))
 	tpldef = {
+		'crumbs' : [{
+			'text' : loc.translate(_('My Issues')),
+			'url'  : req.route_url('tickets.cl.issues', traverse=())
+		}, {
+			'text' : loc.translate(_('View Issue #%d')) % ctx.id,
+			'url'  : req.route_url('tickets.cl.issues', traverse=(ctx.id, 'view'))
+		}, {
+			'text' : loc.translate(_('Append Comment to Issue #%d')) % ctx.id
+		}],
 		'ticket' : ctx,
 		'errors' : {err: loc.translate(errors[err]) for err in errors}
 	}
@@ -634,20 +718,29 @@ def client_issue_append(ctx, req):
 @view_config(
 	route_name='tickets.cl.issues',
 	name='',
+	context=Ticket,
 	permission='USAGE',
 	renderer='netprofile_tickets:templates/client_view.mak'
 )
 @view_config(
 	route_name='tickets.cl.issues',
 	name='view',
+	context=Ticket,
 	permission='USAGE',
 	renderer='netprofile_tickets:templates/client_view.mak'
 )
 def client_issue_view(ctx, req):
+	loc = get_localizer(req)
 	cfg = req.registry.settings
 	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
 		raise HTTPForbidden(detail=_('Issues view is disabled'))
 	tpldef = {
+		'crumbs' : [{
+			'text' : loc.translate(_('My Issues')),
+			'url'  : req.route_url('tickets.cl.issues', traverse=())
+		}, {
+			'text' : loc.translate(_('View Issue #%d')) % ctx.id
+		}],
 		'ticket' : ctx
 	}
 	req.run_hook('access.cl.tpldef', tpldef, req)

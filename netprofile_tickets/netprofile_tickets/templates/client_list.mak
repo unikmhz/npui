@@ -3,7 +3,7 @@
 <%namespace module="netprofile.tpl.filters" import="date_fmt" />\
 <%block name="title">${_('My Issues')}</%block>
 
-<a role="button" class="btn btn-primary pull-right" href="${req.route_url('tickets.cl.issues', traverse='/new')}">
+<a role="button" class="btn btn-primary pull-right" href="${req.route_url('tickets.cl.issues', traverse='new')}">
 	<span class="glyphicon glyphicon-plus"></span>
 	${_('New Issue')}
 </a>
@@ -23,7 +23,7 @@
 % endfor
 </div>
 
-<a role="button" class="btn btn-primary pull-right" href="${req.route_url('tickets.cl.issues', traverse='/new')}">
+<a role="button" class="btn btn-primary pull-right" href="${req.route_url('tickets.cl.issues', traverse='new')}">
 	<span class="glyphicon glyphicon-plus"></span>
 	${_('New Issue')}
 </a>

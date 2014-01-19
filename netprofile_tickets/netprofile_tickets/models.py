@@ -699,6 +699,7 @@ class TicketFile(Base):
 
 	file = relationship(
 		'File',
+		innerjoin=True,
 		backref=backref(
 			'linked_tickets',
 			cascade='all, delete-orphan',
