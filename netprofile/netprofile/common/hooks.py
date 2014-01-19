@@ -38,6 +38,7 @@ from zope.interface import (
 )
 import io
 import venusian
+from netprofile.tpl import TemplateObject
 
 class IHookManager(Interface):
 	pass
@@ -60,17 +61,19 @@ class HookManager(object):
 		if cb not in self.hooks[name]:
 			self.hooks[name].append(cb)
 
-	def run_block(self, name, *args, **kwargs):
+	def run_block(self, name, *args, request=None, **kwargs):
 		if name not in self.blocks:
 			return ''
 		with io.StringIO() as sio:
 			for cb in self.blocks[name]:
+				if isinstance(cb, TemplateObject):
+					sio.write(cb.render(request, argv=args, **kwargs))
 				if callable(cb):
 					sio.write(cb(*args, **kwargs))
 			retv = sio.getvalue()
 		return retv
 
-	def run_hook(self, name, *args, **kwargs):
+	def run_hook(self, name, *args, request=None, **kwargs):
 		if name not in self.hooks:
 			return False
 		retv = []
@@ -103,13 +106,21 @@ class register_hook(object):
 		venusian.attach(wrapped, self.register)
 		return wrapped
 
+def _reg_hook(cfg, name, cb):
+	hm = cfg.registry.getUtility(IHookManager)
+	hm.reg_hook(name, cb)
+
+def _reg_block(cfg, name, cb):
+	hm = cfg.registry.getUtility(IHookManager)
+	hm.reg_block(name, cb)
+
 def _run_hook(request, name, *args, **kwargs):
 	hm = request.registry.getUtility(IHookManager)
-	return hm.run_hook(name, *args, **kwargs)
+	return hm.run_hook(name, *args, request=request, **kwargs)
 
 def _run_block(request, name, *args, **kwargs):
 	hm = request.registry.getUtility(IHookManager)
-	return hm.run_block(name, *args, **kwargs)
+	return hm.run_block(name, *args, request=request, **kwargs)
 
 def includeme(config):
 	"""
@@ -117,6 +128,8 @@ def includeme(config):
 	"""
 	hm = HookManager()
 	config.registry.registerUtility(hm, IHookManager)
+	config.add_directive('register_hook', _reg_hook)
+	config.add_directive('register_block', _reg_block)
 	config.add_request_method(_run_hook, 'run_hook')
 	config.add_request_method(_run_block, 'run_block')
 
