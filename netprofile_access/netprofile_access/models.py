@@ -382,6 +382,12 @@ class AccessEntity(Entity):
 		backref='access_entities'
 	)
 
+	def access_state_string(self, req):
+		loc = get_localizer(req)
+		if self.access_state is None:
+			return None
+		return loc.translate(AccessState.from_string(self.access_state).description)
+
 	def grid_icon(self, req):
 		return req.static_url('netprofile_access:static/img/access.png')
 

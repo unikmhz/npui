@@ -26,7 +26,9 @@ $(function()
 	$('input,select,textarea').not('[type=submit],#__locale').jqBootstrapValidation({
 		preventSubmit: true
 	});
-	$('.chosen-select').chosen();
+	$('.chosen-select').chosen({
+		search_contains: true
+	});
 	$('.no-js').removeClass('no-js');
 	$('.hide-no-js').removeClass('hide-no-js');
 	$('#__locale').change(function()

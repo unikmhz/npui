@@ -22,6 +22,7 @@ from netprofile.tpl.filters import jsone_compact
 % if req.debug_enabled:
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap.css')}" type="text/css" />
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap-theme.css')}" type="text/css" />
+	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/font-awesome.css')}" type="text/css" />
 	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-noscript.css')}" type="text/css" /></noscript>
 	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-ui-noscript.css')}" type="text/css" /></noscript>
 	<!--[if lt IE 9]>
@@ -45,6 +46,7 @@ from netprofile.tpl.filters import jsone_compact
 % else:
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap.min.css')}" type="text/css" />
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap-theme.min.css')}" type="text/css" />
+	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/font-awesome.min.css')}" type="text/css" />
 	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-noscript.css')}" type="text/css" /></noscript>
 	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-ui-noscript.css')}" type="text/css" /></noscript>
 	<!--[if lt IE 9]>

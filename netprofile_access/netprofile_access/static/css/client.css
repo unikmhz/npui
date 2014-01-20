@@ -148,6 +148,11 @@ div.controls span.req
 	min-width: 10em !important;
 }
 
+.form-inline .chosen-container, .form-inline input, .form-inline select, .form-inline button
+{
+	margin-bottom: 0.3em;
+}
+
 .navbar-brand
 {
   padding: 5px 15px;
@@ -159,6 +164,9 @@ div.controls span.req
 }
 
 .tab-content  > .list-group-item { display: none; }
+
+.money { font-size: 2em; }
+.money .fa { font-size: 85%; }
 
 .hide-no-js { display: none; }
 ul.no-js > li:hover > ul.dropdown-menu { display: block; }

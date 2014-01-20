@@ -6,8 +6,15 @@ body
 .container
 {
 	position: absolute;
-	top: 30%;
 	width: 100%;
+}
+
+@media (min-width: 768px)
+{
+	.container
+	{
+		top: 25%;
+	}
 }
 
 .form-signin
