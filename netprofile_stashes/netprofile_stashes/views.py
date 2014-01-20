@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,25 +27,21 @@ from __future__ import (
 	division
 )
 
-from pyramid.security import authenticated_userid
-
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
 
 from pyramid.view import view_config
-from pyramid.httpexceptions import (
-    HTTPForbidden,
-    HTTPFound,
-    HTTPNotFound,
-    HTTPSeeOther
-)
+from pyramid.httpexceptions import HTTPSeeOther
 
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 
-from .models import FuturePayment
+from .models import (
+	FuturePayment,
+	FuturePaymentOrigin
+)
 from netprofile_rates.models import Rate
 
 _ = TranslationStringFactory('netprofile_stashes')
@@ -96,63 +92,68 @@ def _dpane_stash_ios(tabs, model, req):
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
-@view_config(route_name='access.cl.stashes', renderer='netprofile_stashes:templates/client_stashes.mak')
+@view_config(route_name='stashes.cl.stashes', renderer='netprofile_stashes:templates/client_stashes.mak', permission='USAGE')
 def client_stashes(request):
-
-	if authenticated_userid(request) is None:
-		return HTTPSeeOther(location=request.route_url('access.cl.login'))
-
 	sess = DBSession()
-
+	# FIXME: add classes etc.
 	q = sess.query(Rate).filter(Rate.user_selectable == True)
 
-	tpldef = {}
 	tpldef = {
 		'rates'	: q
 	}
-
 	request.run_hook('access.cl.tpldef', tpldef, request)
-	request.run_hook('access.cl.tpldef.home', tpldef, request)
-
+	request.run_hook('access.cl.tpldef.stashes', tpldef, request)
 	return tpldef
 
-@view_config(route_name='access.cl.chrate', renderer='netprofile_stashes:templates/client_stashes.mak')
+@view_config(
+	route_name='stashes.cl.chrate',
+	request_method='POST',
+	permission='USAGE'
+)
 def client_chrate(request):
-
+	from netprofile_access.models import AccessEntity
 	loc = get_localizer(request)
 	csrf = request.POST.get('csrf', '')
-	rateid = int(request.POST.get('rate', 1))
+	rate_id = int(request.POST.get('rateid'), 0)
+	aent_id = int(request.POST.get('entityid'))
+	ent = request.user.parent
+	err = True
 
-	if 'submit' in request.POST:
+	if csrf == request.get_csrf():
 		sess = DBSession()
-		if csrf != request.get_csrf():
-			request.session.flash({
-				'text' : loc.translate(_('Error submitting form')),
-				'class' : 'danger'
-			})
-			return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
+		aent = sess.query(AccessEntity).get(aent_id)
+		if ent and aent and (aent.parent == ent):
+			err = False
+			if 'clear' in request.POST:
+				rate_id = None
+				aent.next_rate_id = None
+			elif rate_id > 0:
+				aent.next_rate_id = rate_id
 
-		request.user.next_rate_id = rateid
-	
+	if err:
 		request.session.flash({
-			'text' : loc.translate(_('Future paments done.'))
+			'text' : loc.translate(_('Error scheduling rate change')),
+			'class' : 'danger'
 		})
-		return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
+	elif rate_id:
+		request.session.flash({
+			'text' : loc.translate(_('Rate change successfully scheduled'))
+		})
+	else:
+		request.session.flash({
+			'text' : loc.translate(_('Rate change successfully cancelled'))
+		})
+	return HTTPSeeOther(location=request.route_url('stashes.cl.stashes'))
 
-	request.session.flash({
-		'text' : loc.translate(_('Error')),
-		'class' : 'danger'
-	})
-
-@view_config(route_name='access.cl.dofuture', renderer='netprofile_stashes:templates/client_stashes.mak')
+@view_config(
+	route_name='stashes.cl.dofuture',
+	request_method='POST',
+	permission='USAGE'
+)
 def client_futures(request):
-
-	if authenticated_userid(request) is None:
-		return HTTPSeeOther(location=request.route_url('access.cl.login'))
-
 	loc = get_localizer(request)
 	csrf = request.POST.get('csrf', '')
-	stashid = int(request.POST.get('stashid', 1))
+	stashid = int(request.POST.get('stashid'))
 	diff = request.POST.get('diff', '')
 
 	if 'submit' in request.POST:
@@ -163,32 +164,28 @@ def client_futures(request):
 				'text' : loc.translate(_('Error submitting form')),
 				'class' : 'danger'
 			})
-			return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
-	
+			return HTTPSeeOther(location=request.route_url('stashes.cl.stashes'))
 		fp = FuturePayment()
 		fp.stash_id = stashid
-		fp.entity_id = authenticated_userid(request)
-		fp.origin = 'user' 
+		fp.entity = request.user.parent
+		fp.origin = FuturePaymentOrigin.user
 		fp.difference = diff
 		sess.add(fp)
 		request.session.flash({
-			'text' : loc.translate(_('Future paments done.'))
+			'text' : loc.translate(_('Successfully added new promised payment'))
 		})
-		return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
+		return HTTPSeeOther(location=request.route_url('stashes.cl.stashes'))
 
 	request.session.flash({
-		'text' : loc.translate(_('Error')),
+		'text' : loc.translate(_('Error submitting form')),
 		'class' : 'danger'
 	})
 
-	return HTTPSeeOther(location=request.route_url('access.cl.stashes'))
+	return HTTPSeeOther(location=request.route_url('stashes.cl.stashes'))
 
-@view_config(route_name='access.cl.stats', renderer='netprofile_stashes:templates/client_stats.mak')
-@view_config(route_name='access.cl.statsid', renderer='netprofile_stashes:templates/client_stats.mak')
+@view_config(route_name='stashes.cl.stats', renderer='netprofile_stashes:templates/client_stats.mak', permission='USAGE')
+@view_config(route_name='stashes.cl.statsid', renderer='netprofile_stashes:templates/client_stats.mak', permission='USAGE')
 def client_stats(request):
-
-	if authenticated_userid(request) is None:
-		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 	stash_id = request.matchdict.get('stash_id', 0)
 
 	tpldef = {}
@@ -197,14 +194,13 @@ def client_stats(request):
 	}
 
 	request.run_hook('access.cl.tpldef', tpldef, request)
-	request.run_hook('access.cl.tpldef.home', tpldef, request)
-
+	request.run_hook('access.cl.tpldef.stash.stats', tpldef, request)
 	return tpldef
 
 @register_hook('access.cl.menu')
 def _gen_menu(menu, req):
-	menu.extend(({
-		'route' : 'access.cl.stashes',
-		'text'  : _('Stashes')
-	},))
+	menu.append({
+		'route' : 'stashes.cl.stashes',
+		'text'  : _('Accounts')
+	})
 
