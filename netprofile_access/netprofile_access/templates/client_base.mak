@@ -22,6 +22,7 @@ from netprofile.tpl.filters import jsone_compact
 % if req.debug_enabled:
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap.css')}" type="text/css" />
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap-theme.css')}" type="text/css" />
+	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap-datetimepicker.css')}" type="text/css" />
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/font-awesome.css')}" type="text/css" />
 	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-noscript.css')}" type="text/css" /></noscript>
 	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-ui-noscript.css')}" type="text/css" /></noscript>
@@ -35,7 +36,9 @@ from netprofile.tpl.filters import jsone_compact
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.ui.widget.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/chosen.jquery.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/moment.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/bootstrap.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/bootstrap-datetimepicker.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jqBootstrapValidation.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.iframe-transport.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload.js')}"></script>
@@ -46,6 +49,7 @@ from netprofile.tpl.filters import jsone_compact
 % else:
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap.min.css')}" type="text/css" />
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap-theme.min.css')}" type="text/css" />
+	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/bootstrap-datetimepicker.min.css')}" type="text/css" />
 	<link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/font-awesome.min.css')}" type="text/css" />
 	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-noscript.css')}" type="text/css" /></noscript>
 	<noscript><link rel="stylesheet" href="${req.static_url('netprofile_access:static/css/jquery.fileupload-ui-noscript.css')}" type="text/css" /></noscript>
@@ -59,7 +63,9 @@ from netprofile.tpl.filters import jsone_compact
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.ui.widget.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/chosen.jquery.min.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/moment.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/bootstrap.min.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/bootstrap-datetimepicker.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jqBootstrapValidation.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.iframe-transport.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.fileupload.min.js')}"></script>

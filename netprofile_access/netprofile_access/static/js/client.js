@@ -16,7 +16,19 @@ $(function()
 	var locale_re = new RegExp('^(.*(?:\\?|&))__locale=([a-zA-Z0-9_.-]+)(.*)$'),
 		csrf_token = $('meta[name=csrf-token]').attr('content'),
 		trans = $('meta[name=js-translations]').attr('content'),
-		file_up = $('#fileupload');
+		file_up = $('#fileupload'),
+		dp_onchange = function(ev)
+		{
+			var me = $(this),
+				start_id, end_id;
+
+			start_id = me.data('dp-start');
+			end_id = me.data('dp-end');
+			if(start_id)
+				$('#' + start_id).data('DateTimePicker').setEndDate(ev.date);
+			else if(end_id)
+				$('#' + end_id).data('DateTimePicker').setStartDate(ev.date);
+		};
 
 	$.ajaxSetup({
 		headers: { 'X-CSRFToken': csrf_token }
@@ -29,6 +41,7 @@ $(function()
 	$('.chosen-select').chosen({
 		search_contains: true
 	});
+	$('.dt-picker').datetimepicker().on('change.dp', dp_onchange);
 	$('.no-js').removeClass('no-js');
 	$('.hide-no-js').removeClass('hide-no-js');
 	$('#__locale').change(function()
