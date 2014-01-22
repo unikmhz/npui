@@ -46,6 +46,7 @@ from netprofile.ext.wizards import (
 	Step,
 	Wizard
 )
+from netprofile.common.factory import RootFactory
 from netprofile.db.fields import npbool
 from netprofile.db.clauses import SetVariable
 from netprofile.db.connection import DBSession
@@ -454,17 +455,7 @@ def dyn_ticket_sched_find(params, request):
 		'dates'   : dates
 	}
 
-class ClientRootFactory(object):
-	__parent__ = None
-	__name__ = None
-
-	@property
-	def __acl__(self):
-		return getattr(self.req, 'acls', ())
-
-	def __init__(self, req):
-		self.req = req
-
+class ClientRootFactory(RootFactory):
 	def __getitem__(self, name):
 		if not self.req.user:
 			raise KeyError('Not logged in')

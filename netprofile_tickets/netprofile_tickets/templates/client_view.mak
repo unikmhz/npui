@@ -89,7 +89,7 @@
 			<span class="btn btn-success fileinput-button" title="${_('Attach a file to issue')}">
 				<span class="glyphicon glyphicon-plus"></span>
 				${_('Attach File')}
-				<input type="file" name="files" multiple="multiple" />
+				<input type="file" name="files" multiple="multiple" capture="capture" />
 			</span>
 			<button type="submit" class="btn btn-primary start" title="${_('Start file upload')}">
 				<span class="glyphicon glyphicon-upload"></span>
