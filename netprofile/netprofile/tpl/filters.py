@@ -28,7 +28,14 @@ from __future__ import (
 )
 
 import datetime, json
-from babel.dates import format_date, format_datetime, format_time
+from babel.dates import (
+	format_date,
+	format_datetime,
+	format_time,
+	get_date_format,
+	get_datetime_format,
+	get_time_format
+)
 from babel.numbers import format_currency
 from netprofile.ext.direct import JsonReprEncoder
 
@@ -41,7 +48,6 @@ def jsone_compact(data):
 def date_fmt(ctx, obj, fmt='medium'):
 	loc = ctx.get('i18n', None)
 	if loc:
-		loc = ctx['i18n']
 		if isinstance(obj, datetime.datetime):
 			return format_datetime(obj, fmt, locale=loc)
 		if isinstance(obj, datetime.time):
@@ -65,4 +71,16 @@ def curr_fmt(ctx, obj):
 	if loc:
 		return format_currency(obj, '', locale=loc)
 	return format_currency(obj, '')
+
+def datetime_fmt_tpl(ctx, fmt='medium'):
+	loc = ctx.get('i18n', None)
+	if loc:
+		return get_datetime_format(fmt, loc).format(
+			get_time_format(fmt, loc).pattern,
+			get_date_format(fmt, loc).pattern
+		)
+	return get_datetime_format(fmt).format(
+		get_time_format(fmt).pattern,
+		get_date_format(fmt).pattern
+	)
 
