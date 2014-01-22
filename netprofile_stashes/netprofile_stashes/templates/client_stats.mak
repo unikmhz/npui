@@ -5,7 +5,7 @@ from netprofile_stashes.models import IOOperationType
 
 %>\
 <%inherit file="netprofile_access:templates/client_layout.mak"/>\
-<%namespace module="netprofile.tpl.filters" import="date_fmt, date_fmt_short, curr_fmt, datetime_fmt_tpl" />\
+<%namespace module="netprofile.tpl.filters" import="date_fmt, date_fmt_short, curr_fmt" />\
 <%block name="title">${_('Account Operations')}</%block>
 
 <h1>
@@ -20,7 +20,7 @@ from netprofile_stashes.models import IOOperationType
 	<form method="post" novalidate="novalidate" action="" id="ops-form" class="form-inline" role="form">
 		<div class="form-group" style="max-width: 20em;">
 			<label class="sr-only" for="from">${_('From')}</label>
-			<div class="input-group date dt-picker" id="dp-from" data-dp-hidden="from-val" data-dp-start="dp-to" data-format="${datetime_fmt_tpl('short')}">
+			<div class="input-group date dt-picker" id="dp-from" data-dp-hidden="from-val" data-dp-start="dp-to">
 				<input
 					type="text"
 					class="form-control"
@@ -37,7 +37,7 @@ from netprofile_stashes.models import IOOperationType
 		</div>
 		<div class="form-group" style="max-width: 20em;">
 			<label class="sr-only" for="to">${_('Till')}</label>
-			<div class="input-group date dt-picker" id="dp-to" data-dp-hidden="to-val" data-dp-end="dp-from" data-format="${datetime_fmt_tpl('short')}">
+			<div class="input-group date dt-picker" id="dp-to" data-dp-hidden="to-val" data-dp-end="dp-from">
 				<input
 					type="text"
 					class="form-control"
