@@ -106,7 +106,11 @@ from netprofile_stashes.models import IOOperationType
 			<li><a href="${req.current_route_url(_query={'page' : pg})}">${pg}</a></li>
 % endif
 % endfor
+% if page == maxpage:
+			<li class="disabled"><span>&raquo;</span></li>
+% else:
 			<li><a href="${req.current_route_url(_query={'page' : (page + 1)})}">&raquo;</a></li>
+% endif
 		</ul>
 	</div>
 % endif
