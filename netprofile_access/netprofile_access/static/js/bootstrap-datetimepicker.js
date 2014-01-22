@@ -985,7 +985,6 @@
 
         picker.disable = function () {
             var input = picker.element.find('input');
-            if(!input.prop('disabled')) return;
 
             input.prop('disabled', true);
             detachDatePickerEvents();
@@ -993,7 +992,6 @@
 
         picker.enable = function () {
             var input = picker.element.find('input');
-            if(!input.prop('disabled')) return;
 
             input.prop('disabled', true);
             attachDatePickerEvents();

@@ -24669,7 +24669,6 @@ if (typeof jQuery === "undefined") { throw new Error("Bootstrap requires jQuery"
 
         picker.disable = function () {
             var input = picker.element.find('input');
-            if(!input.prop('disabled')) return;
 
             input.prop('disabled', true);
             detachDatePickerEvents();
@@ -24677,7 +24676,6 @@ if (typeof jQuery === "undefined") { throw new Error("Bootstrap requires jQuery"
 
         picker.enable = function () {
             var input = picker.element.find('input');
-            if(!input.prop('disabled')) return;
 
             input.prop('disabled', true);
             attachDatePickerEvents();
@@ -24788,14 +24786,25 @@ $(function()
 		dp_onchange = function(ev)
 		{
 			var me = $(this),
-				start_id, end_id;
+				val = me.find('input[type=text]').val(),
+				start_id, end_id, hidden_id;
 
+			if(!ev.date)
+				return;
 			start_id = me.data('dp-start');
 			end_id = me.data('dp-end');
+			hidden_id = me.data('dp-hidden');
 			if(start_id)
-				$('#' + start_id).data('DateTimePicker').setEndDate(ev.date);
-			else if(end_id)
-				$('#' + end_id).data('DateTimePicker').setStartDate(ev.date);
+				$('#' + start_id).data('DateTimePicker').setStartDate(ev.date);
+			if(end_id)
+				$('#' + end_id).data('DateTimePicker').setEndDate(ev.date);
+			if(hidden_id)
+			{
+				if(val)
+					$('#' + hidden_id).val(ev.date.format()); // defaults to ISO
+				else
+					$('#' + hidden_id).val('');
+			}
 		};
 
 	$.ajaxSetup({
@@ -24809,7 +24818,23 @@ $(function()
 	$('.chosen-select').chosen({
 		search_contains: true
 	});
-	$('.dt-picker').datetimepicker().on('change.dp', dp_onchange);
+	$('.dt-picker').datetimepicker({
+		language: $('html').attr('lang')
+	}).on('change.dp', dp_onchange).each(function(i, dp)
+	{
+		var dp = $(dp),
+			val = dp.find('input[type=text]').val(),
+			dpw = dp.data('DateTimePicker'),
+			start_id = dp.data('dp-start'),
+			end_id = dp.data('dp-end');
+
+		if(!val)
+			return;
+		if(start_id)
+			$('#' + start_id).data('DateTimePicker').setStartDate(dpw.getDate());
+		if(end_id)
+			$('#' + end_id).data('DateTimePicker').setEndDate(dpw.getDate());
+	});
 	$('.no-js').removeClass('no-js');
 	$('.hide-no-js').removeClass('hide-no-js');
 	$('#__locale').change(function()
