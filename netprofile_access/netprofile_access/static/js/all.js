@@ -24823,13 +24823,14 @@ $(function()
 	}).on('change.dp', dp_onchange).each(function(i, dp)
 	{
 		var dp = $(dp),
-			val = dp.find('input[type=text]').val(),
+			val = dp.find('input[type=hidden]').val(),
 			dpw = dp.data('DateTimePicker'),
 			start_id = dp.data('dp-start'),
 			end_id = dp.data('dp-end');
 
 		if(!val)
 			return;
+		dpw.setDate(val);
 		if(start_id)
 			$('#' + start_id).data('DateTimePicker').setStartDate(dpw.getDate());
 		if(end_id)
