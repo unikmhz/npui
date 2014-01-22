@@ -93,13 +93,13 @@ from netprofile_stashes.models import IOOperationType
 % endif
 % if maxpage > 1:
 	<div class="panel-footer">
-		<ul class="pagination" style="margin-top: 0.1em; margin-bottom: 0.1em;">
+		<ul class="pagination pagination-sm" style="margin-top: 0.1em; margin-bottom: 0.1em;">
 % if page == 1:
 			<li class="disabled"><span>&laquo;</span></li>
 % else:
 			<li><a href="${req.current_route_url(_query={'page' : (page - 1)})}">&laquo;</a></li>
 % endif
-% for pg in range(max(page - 3, 1), min(page + 3, maxpage) + 1):
+% for pg in range(min(max(page - 2, 1), maxpage - 4), max(min(page + 2, maxpage), 5) + 1):
 % if pg == page:
 			<li class="active"><span>${pg}<span class="sr-only"> ${_('(current)')}</span></span></li>
 % else:
