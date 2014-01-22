@@ -4,10 +4,16 @@
 <%namespace module="netprofile.tpl.filters" import="date_fmt, curr_fmt" />\
 <%block name="title">${_('My Accounts')}</%block>
 
+% if sname:
+<h1>${sname}</h1>
+% else:
 <h1>${_('My Accounts')}</h1>
+% endif
 
-% for stash in req.user.parent.stashes:
+% for stash in stashes:
+% if not sname:
 <h3 title="${_('Account name')}">${stash.name}</h3>
+% endif
 <div class="row">
 	<div class="col-sm-4">
 		<h4 class="money">
@@ -38,7 +44,7 @@
 				<li role="presentation"><a role="menuitem" tabindex="-1" href="#">${_('Create User')}</a></li>
 				<li role="presentation"><a role="menuitem" tabindex="-1" href="#">${_('Transfer Funds')}</a></li>
 				<li role="presentation" class="divider"></li>
-				<li role="presentation"><a role="menuitem" tabindex="-1" href="${req.route_url('stashes.cl.stats', stash_id=stash.id)}">${_('Operations Report')}</a></li>
+				<li role="presentation"><a role="menuitem" tabindex="-1" href="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'ops'))}">${_('Operations Report')}</a></li>
 				<li role="presentation"><a role="menuitem" tabindex="-1" href="#">${_('Promised Payments Report')}</a></li>
 			</ul>
 		</li>
@@ -72,7 +78,7 @@
 				<div id="fld-nextrate-${stash.id}" class="col-sm-8">${a.next_rate}</div>
 			</div>
 % endif
-			<form class="row" role="form" method="post" action="${req.route_url('stashes.cl.chrate')}">
+			<form class="row" role="form" method="post" action="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'chrate'))}">
 				<label for="fld-chrate-${a.id}" class="col-sm-4">${_('New Next Rate')}</label>
 				<div class="col-sm-8 form-inline">
 					<input type="hidden" name="csrf" value="${req.get_csrf()}" />
@@ -105,7 +111,7 @@ ${gen_block('stashes.cl.block.info')}
 	<ul class="list-group tab-pane fade" id="tab-replenish-${stash.id}">
 ${gen_block('stashes.cl.block.payment')}
 		<li class="list-group-item">
-			<form class="row" role="form" method="post" action="${req.route_url('stashes.cl.dofuture')}">
+			<form class="row" role="form" method="post" action="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'promise'))}">
 				<label for="" class="col-sm-4">${_('Promise Payment')}</label>
 				<div class="col-sm-8 form-inline">
 					<input type="hidden" name="csrf" value="${req.get_csrf()}" />

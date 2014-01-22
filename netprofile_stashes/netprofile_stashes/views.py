@@ -32,15 +32,28 @@ from pyramid.i18n import (
 	get_localizer
 )
 
-from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPSeeOther
+import math
+import datetime as dt
+from dateutil.parser import parse as dparse
+from dateutil.relativedelta import relativedelta
 
+from pyramid.view import view_config
+from pyramid.httpexceptions import (
+	HTTPForbidden,
+	HTTPSeeOther
+)
+from sqlalchemy import func
+from sqlalchemy.orm.exc import NoResultFound
+
+from netprofile.common.factory import RootFactory
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 
 from .models import (
 	FuturePayment,
-	FuturePaymentOrigin
+	FuturePaymentOrigin,
+	Stash,
+	StashIO
 )
 from netprofile_rates.models import Rate
 
@@ -92,25 +105,76 @@ def _dpane_stash_ios(tabs, model, req):
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
-@view_config(route_name='stashes.cl.stashes', renderer='netprofile_stashes:templates/client_stashes.mak', permission='USAGE')
-def client_stashes(request):
+class ClientRootFactory(RootFactory):
+	def __getitem__(self, name):
+		if not self.req.user:
+			raise KeyError('Not logged in')
+		try:
+			name = int(name, base=10)
+			ent = self.req.user.parent
+			sess = DBSession()
+			try:
+				st = sess.query(Stash).filter(
+					Stash.entity == ent,
+					Stash.id == name
+				).one()
+				st.__parent__ = self
+				st.__name__ = str(name)
+				return st
+			except NoResultFound:
+				raise KeyError('Invalid stash ID')
+		except ValueError:
+			pass
+		raise KeyError('Invalid URL')
+
+@view_config(
+	route_name='stashes.cl.accounts',
+	name='',
+	context=ClientRootFactory,
+	permission='USAGE',
+	renderer='netprofile_stashes:templates/client_stashes.mak'
+)
+@view_config(
+	route_name='stashes.cl.accounts',
+	name='',
+	context=Stash,
+	permission='USAGE',
+	renderer='netprofile_stashes:templates/client_stashes.mak'
+)
+def client_list(ctx, request):
+	loc = get_localizer(request)
 	sess = DBSession()
 	# FIXME: add classes etc.
 	q = sess.query(Rate).filter(Rate.user_selectable == True)
 
 	tpldef = {
-		'rates'	: q
+		'stashes' : None,
+		'rates'	  : q,
+		'sname'   : None
 	}
+	if isinstance(ctx, Stash):
+		tpldef['sname'] = ctx.name
+		tpldef['stashes'] = (ctx,)
+		tpldef['crumbs'] = [{
+			'text' : loc.translate(_('My Accounts')),
+			'url'  : request.route_url('stashes.cl.accounts', traverse=())
+		}, {
+			'text' : ctx.name
+		}]
+	else:
+		tpldef['stashes'] = request.user.parent.stashes
 	request.run_hook('access.cl.tpldef', tpldef, request)
-	request.run_hook('access.cl.tpldef.stashes', tpldef, request)
+	request.run_hook('access.cl.tpldef.accounts.list', tpldef, request)
 	return tpldef
 
 @view_config(
-	route_name='stashes.cl.chrate',
+	route_name='stashes.cl.accounts',
+	name='chrate',
+	context=Stash,
 	request_method='POST',
 	permission='USAGE'
 )
-def client_chrate(request):
+def client_chrate(ctx, request):
 	from netprofile_access.models import AccessEntity
 	loc = get_localizer(request)
 	csrf = request.POST.get('csrf', '')
@@ -122,7 +186,7 @@ def client_chrate(request):
 	if csrf == request.get_csrf():
 		sess = DBSession()
 		aent = sess.query(AccessEntity).get(aent_id)
-		if ent and aent and (aent.parent == ent):
+		if ent and aent and (aent.parent == ent) and (aent in ctx.access_entities):
 			err = False
 			if 'clear' in request.POST:
 				rate_id = None
@@ -143,30 +207,30 @@ def client_chrate(request):
 		request.session.flash({
 			'text' : loc.translate(_('Rate change successfully cancelled'))
 		})
-	return HTTPSeeOther(location=request.route_url('stashes.cl.stashes'))
+	return HTTPSeeOther(location=request.route_url('stashes.cl.accounts', traverse=()))
 
 @view_config(
-	route_name='stashes.cl.dofuture',
+	route_name='stashes.cl.accounts',
+	name='promise',
+	context=Stash,
 	request_method='POST',
 	permission='USAGE'
 )
-def client_futures(request):
+def client_promise(ctx, request):
 	loc = get_localizer(request)
 	csrf = request.POST.get('csrf', '')
-	stashid = int(request.POST.get('stashid'))
 	diff = request.POST.get('diff', '')
 
 	if 'submit' in request.POST:
 		sess = DBSession()
-		#FIXME add stash id checking
 		if csrf != request.get_csrf():
 			request.session.flash({
 				'text' : loc.translate(_('Error submitting form')),
 				'class' : 'danger'
 			})
-			return HTTPSeeOther(location=request.route_url('stashes.cl.stashes'))
+			return HTTPSeeOther(location=request.route_url('stashes.cl.accounts', traverse=()))
 		fp = FuturePayment()
-		fp.stash_id = stashid
+		fp.stash = ctx
 		fp.entity = request.user.parent
 		fp.origin = FuturePaymentOrigin.user
 		fp.difference = diff
@@ -174,33 +238,125 @@ def client_futures(request):
 		request.session.flash({
 			'text' : loc.translate(_('Successfully added new promised payment'))
 		})
-		return HTTPSeeOther(location=request.route_url('stashes.cl.stashes'))
+		return HTTPSeeOther(location=request.route_url('stashes.cl.accounts', traverse=()))
 
 	request.session.flash({
 		'text' : loc.translate(_('Error submitting form')),
 		'class' : 'danger'
 	})
 
-	return HTTPSeeOther(location=request.route_url('stashes.cl.stashes'))
+	return HTTPSeeOther(location=request.route_url('stashes.cl.accounts', traverse=()))
 
-@view_config(route_name='stashes.cl.stats', renderer='netprofile_stashes:templates/client_stats.mak', permission='USAGE')
-@view_config(route_name='stashes.cl.statsid', renderer='netprofile_stashes:templates/client_stats.mak', permission='USAGE')
-def client_stats(request):
-	stash_id = request.matchdict.get('stash_id', 0)
+@view_config(
+	route_name='stashes.cl.accounts',
+	name='ops',
+	context=ClientRootFactory,
+	renderer='netprofile_stashes:templates/client_stats.mak',
+	permission='USAGE'
+)
+@view_config(
+	route_name='stashes.cl.accounts',
+	name='ops',
+	context=Stash,
+	renderer='netprofile_stashes:templates/client_stats.mak',
+	permission='USAGE'
+)
+def client_ops(ctx, request):
+	loc = get_localizer(request)
+	page = int(request.params.get('page', 1))
+	# FIXME: make per_page configurable
+	per_page = 30
+	ts_from = request.params.get('from')
+	ts_to = request.params.get('to')
+	ts_now = dt.datetime.now()
+	sname = None
+	stash_ids = tuple()
+	if ts_from:
+		try:
+			ts_from = dparse(ts_from)
+		except ValueError:
+			ts_from = None
+	else:
+		ts_from = None
+	if ts_to:
+		try:
+			ts_to = dparse(ts_to)
+		except ValueError:
+			ts_to = None
+	else:
+		ts_to = None
+	if ts_from is None:
+		ts_from = request.session.get('ops_ts_from')
+	if ts_to is None:
+		ts_to = request.session.get('ops_ts_to')
+	if ts_from is None:
+		ts_from = ts_now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+	if ts_to is None:
+		ts_to = ts_from\
+			.replace(hour=23, minute=59, second=59, microsecond=999999)\
+			+ relativedelta(months=1, days=-1)
+	request.session['ops_ts_from'] = ts_from
+	request.session['ops_ts_to'] = ts_to
+	sess = DBSession()
+	ent = request.user.parent
+	if isinstance(ctx, Stash):
+		stash_ids = (ctx.id,)
+		sname = ctx.name
+	else:
+		stash_ids = [s.id for s in ent.stashes]
+	total = sess.query(func.count('*')).select_from(StashIO)\
+		.filter(
+			StashIO.stash_id.in_(stash_ids),
+			StashIO.timestamp.between(ts_from, ts_to)
+		)\
+		.scalar()
+	max_page = int(math.ceil(total / per_page))
+	if max_page <= 0:
+		max_page = 1
+	if page <= 0:
+		page = 1
+	elif page > max_page:
+		page = max_page
+	ios = sess.query(StashIO)\
+		.filter(
+			StashIO.stash_id.in_(stash_ids),
+			StashIO.timestamp.between(ts_from, ts_to)
+		)\
+		.order_by(StashIO.timestamp.desc())
+	if total > per_page:
+		ios = ios\
+		.offset((page - 1) * per_page)\
+		.limit(per_page)
 
-	tpldef = {}
+	crumbs = [{
+		'text' : loc.translate(_('My Accounts')),
+		'url'  : request.route_url('stashes.cl.accounts', traverse=())
+	}]
+	if sname:
+		crumbs.append({
+			'text' : sname,
+			'url'  : request.route_url('stashes.cl.accounts', traverse=(ctx.id,))
+		})
+	crumbs.append({ 'text' : loc.translate(_('Account Operations')) })
 	tpldef = {
-		'stash_id': stash_id,
+		'ts_from' : ts_from,
+		'ts_to'   : ts_to,
+		'sname'   : sname,
+		'page'    : page,
+		'perpage' : per_page,
+		'maxpage' : max_page,
+		'ios'     : ios.all(),
+		'crumbs'  : crumbs
 	}
 
 	request.run_hook('access.cl.tpldef', tpldef, request)
-	request.run_hook('access.cl.tpldef.stash.stats', tpldef, request)
+	request.run_hook('access.cl.tpldef.accounts.ops', tpldef, request)
 	return tpldef
 
 @register_hook('access.cl.menu')
 def _gen_menu(menu, req):
 	menu.append({
-		'route' : 'stashes.cl.stashes',
+		'route' : 'stashes.cl.accounts',
 		'text'  : _('Accounts')
 	})
 

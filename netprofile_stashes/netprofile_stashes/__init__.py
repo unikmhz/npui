@@ -37,12 +37,13 @@ _ = TranslationStringFactory('netprofile_stashes')
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
+		mmgr.cfg.add_route(
+			'stashes.cl.accounts',
+			'/accounts/*traverse',
+			factory='netprofile_stashes.views.ClientRootFactory',
+			vhost='client'
+		)
 		mmgr.cfg.add_translation_dirs('netprofile_stashes:locale/')
-		mmgr.cfg.add_route('stashes.cl.stashes', '/stashes', vhost='client')
-		mmgr.cfg.add_route('stashes.cl.stats', '/stashes/stats', vhost='client')
-		mmgr.cfg.add_route('stashes.cl.statsid', '/stashes/stats/{stash_id}', vhost='client')
-		mmgr.cfg.add_route('stashes.cl.dofuture', '/stashes/dofuture', vhost='client')
-		mmgr.cfg.add_route('stashes.cl.chrate', '/stashes/chrate', vhost='client')
 		mmgr.cfg.scan()
 		
 
@@ -56,8 +57,7 @@ class Module(ModuleBase):
 			Stash,
 			StashIO,
 			StashIOType,
-			StashOperation,
-			FuturePayment
+			StashOperation
 		)
 
 	def get_css(self, request):
