@@ -2319,5 +2319,7 @@ class ExtBrowser(object):
 					pnode['children'] = []
 				pnode['children'].extend(sorted(external[mid], key=lambda v: v['order']))
 
+		req.run_hook('np.menu', name, menu, req, self)
+
 		return menu
 

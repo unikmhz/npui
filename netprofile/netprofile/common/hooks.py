@@ -67,8 +67,11 @@ class HookManager(object):
 		with io.StringIO() as sio:
 			for cb in self.blocks[name]:
 				if isinstance(cb, TemplateObject):
+					for xa in ('req', 'request'):
+						if xa in kwargs:
+							del kwargs[xa]
 					sio.write(cb.render(request, argv=args, **kwargs))
-				if callable(cb):
+				elif callable(cb):
 					sio.write(cb(*args, **kwargs))
 			retv = sio.getvalue()
 		return retv
