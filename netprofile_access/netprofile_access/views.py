@@ -75,6 +75,7 @@ from netprofile_entities.models import (
 	PhysicalEntity
 )
 from netprofile_stashes.models import Stash
+from netprofile_rates.models import Rate
 
 from .models import (
 	AccessEntity,
@@ -708,6 +709,53 @@ def _cl_tpldef(tpldef, req):
 		'loc'     : loc,
 		'i18n'    : Locale(cur_locale)
 	})
+
+@view_config(
+	route_name='stashes.cl.accounts',
+	name='chrate',
+	context=Stash,
+	request_method='POST',
+	permission='USAGE'
+)
+def client_chrate(ctx, request):
+	loc = get_localizer(request)
+	csrf = request.POST.get('csrf', '')
+	rate_id = int(request.POST.get('rateid'), 0)
+	aent_id = int(request.POST.get('entityid'))
+	ent = request.user.parent
+	err = True
+
+	if csrf == request.get_csrf():
+		sess = DBSession()
+		aent = sess.query(AccessEntity).get(aent_id)
+		if ent and aent and (aent.parent == ent) and (aent in ctx.access_entities):
+			err = False
+			if 'clear' in request.POST:
+				rate_id = None
+				aent.next_rate_id = None
+			elif rate_id > 0:
+				aent.next_rate_id = rate_id
+
+	if err:
+		request.session.flash({
+			'text' : loc.translate(_('Error scheduling rate change')),
+			'class' : 'danger'
+		})
+	elif rate_id:
+		request.session.flash({
+			'text' : loc.translate(_('Rate change successfully scheduled'))
+		})
+	else:
+		request.session.flash({
+			'text' : loc.translate(_('Rate change successfully cancelled'))
+		})
+	return HTTPSeeOther(location=request.route_url('stashes.cl.accounts', traverse=()))
+
+@register_hook('access.cl.tpldef.accounts.list')
+def _tpldef_list_accounts(tpldef, req):
+	sess = DBSession()
+	# FIXME: add classes etc.
+	tpldef['rates'] = sess.query(Rate).filter(Rate.user_selectable == True)
 
 @register_hook('core.dpanetabs.access.AccessEntity')
 def _dpane_aent_mods(tabs, model, req):
