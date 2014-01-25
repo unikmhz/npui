@@ -78,29 +78,7 @@
 				<div id="fld-nextrate-${stash.id}" class="col-sm-8">${a.next_rate}</div>
 			</div>
 % endif
-			<form class="row" role="form" method="post" action="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'chrate'))}">
-				<label for="fld-chrate-${a.id}" class="col-sm-4">${_('New Next Rate')}</label>
-				<div class="col-sm-8 form-inline">
-					<input type="hidden" name="csrf" value="${req.get_csrf()}" />
-					<input type="hidden" name="entityid" value="${a.id}" />
-					<select class="form-control chosen-select padded-wrap" id="fld-chrate-${a.id}" name="rateid" title="${_('Next Rate')}">
-% for rate in rates:
-						<option label="${rate}" value="${rate.id}"\
-% if (a.next_rate_id and (rate.id == a.next_rate_id)) or ((not a.next_rate_id) and (rate.id == a.rate_id)):
- selected="selected"\
-% endif
->${rate}</option>
-% endfor
-					</select>
-					<span class="btn-group">
-						<button class="btn btn-default" type="submit" name="submit" title="${_('Select different next rate')}">${_('Set')}</button>
-% if a.next_rate_id:
-						<button class="btn btn-default" type="submit" name="clear" title="${_('Cancel scheduled rate change')}">${_('Clear')}</button>
-% endif
-					</span>
-				</div>
-			</form>
-${gen_block('stashes.cl.block.info')}
+${gen_block('stashes.cl.block.info', stash=stash, a=a) | n}
 		</li>
 % endif
 % endfor
@@ -109,7 +87,7 @@ ${gen_block('stashes.cl.block.info')}
 	<div class="well tab-pane fade in active" id="tab-users-${stash.id}">${_('This account has no users.')}</div>
 % endif
 	<ul class="list-group tab-pane fade" id="tab-replenish-${stash.id}">
-${gen_block('stashes.cl.block.payment')}
+${gen_block('stashes.cl.block.payment', stash=stash) | n}
 		<li class="list-group-item">
 			<form class="row" role="form" method="post" action="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'promise'))}">
 				<label for="" class="col-sm-4">${_('Promise Payment')}</label>
