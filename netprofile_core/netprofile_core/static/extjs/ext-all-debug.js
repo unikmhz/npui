@@ -14566,7 +14566,7 @@ var HIDDEN = 'hidden',
 
             
             if (sourceLen !== destLen) {
-                source.innerHTML = dest.innerHTML;
+                dest.innerHTML = source.innerHTML;
                 return;
             }
 
