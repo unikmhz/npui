@@ -54,7 +54,6 @@ class Module(ModuleBase):
 			EntityFlag,
 			EntityFlagType,
 			EntityState,
-
 			PhysicalEntity,
 			LegalEntity,
 			StructuralEntity,

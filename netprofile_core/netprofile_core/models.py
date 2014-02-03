@@ -4936,8 +4936,8 @@ class GlobalSetting(Base, DynamicSetting):
 
 	def __str__(self):
 		return '%s' % str(self.name)
-
-@cache.cache_on_arguments()
+#>>>>>>>>>>>>>>>>>> with this netprofile_useraccount does not work
+#@cache.cache_on_arguments()
 def global_setting(name):
 	sess = DBSession()
 	try:

@@ -76,7 +76,7 @@ class NAS(Base):
 	__tablename__ = 'nas_def'
 	__table_args__ = (
 		Comment('Network access servers'),
-		Index('nas_def_u_idstr', 'idstr', unique=True),
+		Index('nas_def_i_idstr', 'idstr'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -146,6 +146,7 @@ class NAS(Base):
 
 	def __str__(self):
 		return '%s' % str(self.id_string)
+
 
 class IPPool(Base):
 	"""

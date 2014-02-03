@@ -465,7 +465,7 @@ class Device(Base):
                 'menu_main'     : True,
                 'menu_order'    : 40,
                 'default_sort' : ({ 'property': 'serial' ,'direction': 'ASC' },),
-                'grid_view'    : ('devicetype', 'serial', 'entity', 'addr', 'descr'),
+                'grid_view'    : ('devicetype', 'serial', 'entity', 'descr'),
                 'form_view'    : ('devicetype',
                                   'serial',
                                   'dtype',
