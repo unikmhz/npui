@@ -57,5 +57,5 @@ class Module(ModuleBase):
 
 	@property
 	def name(self):
-		return _('AccessSessions')
+		return _('Sessions')
 
