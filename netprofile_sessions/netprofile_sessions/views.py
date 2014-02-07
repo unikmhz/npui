@@ -35,3 +35,24 @@ from netprofile.common.hooks import register_hook
 
 _ = TranslationStringFactory('netprofile_sessions')
 
+@register_hook('core.dpanetabs.access.AccessEntity')
+def _dpane_access_sessions(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.extend(({
+		'title'             : loc.translate(_('Active Sessions')),
+		'iconCls'           : 'ico-mod-accesssession',
+		'xtype'             : 'grid_sessions_AccessSession',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('entity',),
+		'extraParamProp'    : 'entityid'
+	}, {
+		'title'             : loc.translate(_('Past Sessions')),
+		'iconCls'           : 'ico-mod-accesssessionhistory',
+		'xtype'             : 'grid_sessions_AccessSessionHistory',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('entity',),
+		'extraParamProp'    : 'entityid'
+	}))
+

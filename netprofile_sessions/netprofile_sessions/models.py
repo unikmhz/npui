@@ -39,7 +39,6 @@ from sqlalchemy import (
 	Numeric,
 	Sequence,
 	TIMESTAMP,
-	Unicode,
 	text
 )
 
@@ -55,13 +54,12 @@ from netprofile.db.connection import (
 	DBSession
 )
 from netprofile.db.fields import (
+	ASCIIString,
 	UInt8,
 	UInt32,
 	UInt64
 )
 from netprofile.db.ddl import Comment
-
-from netprofile.ext.wizards import SimpleWizard
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -87,35 +85,35 @@ class AccessSession(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_SESSIONS',
 				'cap_read'      : 'SESSIONS_LIST',
-				#'cap_create'    : 'SESSIONS_EDIT',
-				#'cap_edit'      : 'SESSIONS_EDIT',
-				#'cap_delete'    : 'SESSIONS_EDIT',
+				'cap_create'    : '__NOPRIV__',
+				'cap_edit'      : '__NOPRIV__',
+				'cap_delete'    : 'SESSIONS_DISCONNECT',
 				'menu_name'     : _('Sessions'),
-				'show_in_menu'  : 'admin',
-				'menu_order'    : 4,
-				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'entity', 'ipaddr', 'destination', 'startts'),
-				'form_view'     : (
-					'name',
-					#'stationid',
-					#'entity',
-					#'ipaddr',
-					#'ip6addr',
-					#'destination',
-					#'csid',
-					#'called',
-					#'startts',
-					#'updatets',
-					#'ut_ingress',
-					#'ut_egress'
+				'show_in_menu'  : 'modules',
+				'menu_main'     : True,
+				'menu_order'    : 40,
+				'default_sort'  : ({ 'property': 'updatets', 'direction': 'DESC' },),
+				'grid_view'     : (
+					'nas', 'name',
+					'entity', 'csid',
+					'ut_ingress', 'ut_egress',
+					'startts', 'updatets'
 				),
-				'easy_search'   : ('name',),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				'create_wizard' : SimpleWizard(title=_('Add new session'))
+				'form_view'     : (
+					'stationid', 'nas', 'called', 'name',
+					'entity', 'csid',
+					'ipv4_address', 'ipv6_address',
+					'ut_ingress', 'ut_egress',
+					'destination',
+					'startts', 'updatets',
+					'pol_ingress', 'pol_egress'
+				),
+				'easy_search'   : ('name', 'csid'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
-	sessid = Column(
+	id = Column(
 		'sessid',
 		UInt64(),
 		Sequence('sessions_def_sessid_seq'),
@@ -127,76 +125,95 @@ class AccessSession(Base):
 		}
 	)
 	name = Column(
-		'name',
-		Unicode(255),
+		ASCIIString(255),
 		Comment('Session name'),
 		nullable=False,
 		info={
 			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
-	stationid = Column(
+	station_id = Column(
 		'stationid',
-		UInt8(),
+		UInt32(),
 		Comment('Station ID'),
 		nullable=False,
 		default=1,
+		server_default=text('1'),
 		info={
 			'header_string' : _('Station')
 		}
 	)
-	entityid = Column(
+	entity_id = Column(
 		'entityid',
-		UInt8(),
-		Comment('Access Entity ID'),
-		ForeignKey('entities_access.entityid', name='sessions_def_ibfk_1', ondelete='SET NULL', onupdate='CASCADE'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Access Entity')
-		}
-	)
-	ipaddrid = Column(
-		'ipaddrid',
-		UInt8(),
-		Comment('IP Address ID'),
-		ForeignKey('ipaddr_def.ipaddrid', name='sessions_def_ibfk_2', ondelete='SET NULL', onupdate='CASCADE'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('IP Address')
-		}
-	)
-	ip6addrid = Column(
-		'ip6addrid',
 		UInt32(),
-		Comment('IPv6 Address ID'),
-		ForeignKey('ip6addr_def.ip6addrid', name='sessions_def_ibfk_3', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Access entity ID'),
+		ForeignKey('entities_access.entityid', name='sessions_def_fk_entityid', ondelete='SET NULL', onupdate='CASCADE'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('IPv6 Address')
+			'header_string' : _('Entity'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
 		}
 	)
-	destid = Column(
+	ipv4_address_id = Column(
+		'ipaddrid',
+		UInt32(),
+		Comment('IPv4 address ID'),
+		ForeignKey('ipaddr_def.ipaddrid', name='sessions_def_fk_ipaddrid', ondelete='SET NULL', onupdate='CASCADE'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('IPv4 Address'),
+			'filter_type'   : 'none'
+		}
+	)
+	ipv6_address_id = Column(
+		'ip6addrid',
+		UInt64(),
+		Comment('IPv6 address ID'),
+		ForeignKey('ip6addr_def.ip6addrid', name='sessions_def_fk_ip6addrid', ondelete='SET NULL', onupdate='CASCADE'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('IPv6 Address'),
+			'filter_type'   : 'none'
+		}
+	)
+	destination_id = Column(
 		'destid',
-		UInt8(),
-		Comment('Accounting Destination ID'),
-		ForeignKey('dest_def.dsid', name='sessions_def_ibfk_4', ondelete='SET NULL', onupdate='CASCADE'),
+		UInt32(),
+		Comment('Accounting destination ID'),
+		ForeignKey('dest_def.destid', name='sessions_def_fk_destid', ondelete='SET NULL', onupdate='CASCADE'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Destination')
+			'header_string' : _('Destination'),
+			'filter_type'   : 'none'
 		}
 	)
-	calling = Column(
+	nas_id = Column(
+		'nasid',
+		UInt32(),
+		Comment('Network access server ID'),
+		ForeignKey('nas_def.nasid', name='sessions_def_fk_nasid', ondelete='SET NULL', onupdate='CASCADE'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('NAS'),
+			'filter_type'   : 'list'
+		}
+	)
+	calling_station_id = Column(
 		'csid',
-		Unicode(255),
-		Comment('Calling Station ID'),
+		ASCIIString(255),
+		Comment('Calling station ID'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -204,10 +221,10 @@ class AccessSession(Base):
 			'header_string' : _('Calling Station')
 		}
 	)
-	called = Column(
+	called_station_id = Column(
 		'called',
-		Unicode(255),
-		Comment('Called Station ID'),
+		ASCIIString(255),
+		Comment('Called station ID'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -215,69 +232,92 @@ class AccessSession(Base):
 			'header_string' : _('Called Station')
 		}
 	)
-	startts = Column(
+	start_timestamp = Column(
 		'startts',
 		TIMESTAMP(),
-		Comment('Session Start Time'),
+		Comment('Session start time'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Session Start Time')
+			'header_string' : _('Started')
 		}
 	)
-	updatets = Column(
+	update_timestamp = Column(
 		'updatets',
 		TIMESTAMP(),
-		Comment('Accounting Update Time'),
+		Comment('Accounting update time'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Accounting Update Time')
+			'header_string' : _('Updated')
 		}
 	)
-	ut_ingress = Column(
+	used_ingress_traffic = Column(
 		'ut_ingress',
 		Numeric(16, 0),
-		Comment('Used Ingress Traffic'),
+		Comment('Used ingress traffic'),
 		nullable=False,
 		default=0,
+		server_default=text('0'),
 		info={
-			'header_string' : _('Used Ingress Traffic')
+			'header_string' : _('Used Ingress')
 		}
 	)
-	ut_egress = Column(
+	used_egress_traffic = Column(
 		'ut_egress',
 		Numeric(16, 0),
-		Comment('Used Egress Traffic'),
+		Comment('Used egress traffic'),
 		nullable=False,
 		default=0,
+		server_default=text('0'),
 		info={
-			'header_string' : _('Used Egress Traffic')
+			'header_string' : _('Used Egress')
+		}
+	)
+	ingress_policy = Column(
+		'pol_ingress',
+		ASCIIString(255),
+		Comment('Ingress traffic policy'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Ingress Policy')
+		}
+	)
+	egress_policy = Column(
+		'pol_egress',
+		ASCIIString(255),
+		Comment('Egress traffic policy'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Egress Policy')
 		}
 	)
 
 	entity = relationship(
 		'AccessEntity',
-		backref='session',
-		innerjoin=True,
-		#primaryjoin='Session.entityid==AccessEntity.id'
+		backref='sessions'
 	)
-	ipaddr = relationship(
+	ipv4_address = relationship(
 		'IPv4Address',
-		innerjoin=True,
-		backref='ipaddr'
+		backref='sessions'
 	)
-	ip6addr = relationship(
+	ipv6_address = relationship(
 		'IPv6Address',
-		innerjoin=True,
-		backref='ip6addr'
+		backref='sessions'
 	)
 	destination = relationship(
 		'Destination',
-		innerjoin=True,
-		backref='destination'
+		backref='sessions'
+	)
+	nas = relationship(
+		'NAS',
+		backref='sessions'
 	)
 
 	def __str__(self):
@@ -285,54 +325,54 @@ class AccessSession(Base):
 
 class AccessSessionHistory(Base):
 	"""
-	Closed sessions log
+	Closed session definition
 	"""
 	__tablename__ = 'sessions_history'
 	__table_args__ = (
 		Comment('Log of closed sessions'),
-		Index('session_history_i_entityid', 'entityid'),
-		Index('session_history_i_ipaddrid', 'ipaddrid'),
-		Index('session_history_i_ip6addrid', 'ip6addrid'),
-		Index('session_history_i_destid', 'destid'),
-		Index('session_history_i_endts', 'endts'),
+		Index('sessions_history_i_entityid', 'entityid'),
+		Index('sessions_history_i_ipaddrid', 'ipaddrid'),
+		Index('sessions_history_i_ip6addrid', 'ip6addrid'),
+		Index('sessions_history_i_destid', 'destid'),
+		Index('sessions_history_i_endts', 'endts'),
+		Index('sessions_history_i_nasid', 'nasid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_SESSIONS',
-				'cap_read'      : 'SESSIONS_LIST',
-				#'cap_create'    : 'SESSIONS_HISTORY_CREATE',
-				#'cap_edit'      : 'SESSIONS_HISTORY_EDIT',
-				#'cap_delete'    : 'SESSIONS_HISTORY_DELETE',
-				'menu_name'    : _('Session History'),
-				'show_in_menu'  : 'admin',
-				'menu_order'    : 4,
-				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'entityid', 'ipaddrid', 'destid', 'startts', 'endts'),
-				'form_view'     : (
-					'name',
-					#'stationid',
-					#'entityid',
-					#'ipaddrid',
-					#'ip6addrid',
-					#'destid',
-					#'csid',
-					#'called',
-					#'startts',
-					#'endts',
-					#'ut_ingress',
-					#'ut_egress'
+				'cap_menu'      : 'SESSIONS_LIST_ARCHIVED',
+				'cap_read'      : 'SESSIONS_LIST_ARCHIVED',
+				'cap_create'    : '__NOPRIV__',
+				'cap_edit'      : '__NOPRIV__',
+				'cap_delete'    : '__NOPRIV__',
+				'menu_name'     : _('History'),
+				'show_in_menu'  : 'modules',
+				'menu_order'    : 40,
+				'default_sort'  : ({ 'property': 'endts', 'direction': 'DESC' },),
+				'grid_view'     : (
+					'nas', 'name',
+					'entity', 'csid',
+					'ut_ingress', 'ut_egress',
+					'startts', 'endts'
 				),
-				'easy_search'   : ('name',),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				'create_wizard' : SimpleWizard(title=_('Add new entry to sessions history'))
+				'form_view'     : (
+					'stationid', 'nas', 'called', 'name',
+					'entity', 'csid',
+					'ipv4_address', 'ipv6_address',
+					'ut_ingress', 'ut_egress',
+					'destination',
+					'startts', 'endts',
+					'pol_ingress', 'pol_egress'
+				),
+				'easy_search'   : ('name', 'csid'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
-	sessid = Column(
+	id = Column(
 		'sessid',
 		UInt64(),
-		Sequence('sessions_def_sessid_seq'),
+		Sequence('sessions_history_sessid_seq'),
 		Comment('Session ID'),
 		primary_key=True,
 		nullable=False,
@@ -341,76 +381,93 @@ class AccessSessionHistory(Base):
 		}
 	)
 	name = Column(
-		'name',
-		Unicode(255),
+		ASCIIString(255),
 		Comment('Session name'),
 		nullable=False,
 		info={
 			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
-	stationid = Column(
+	station_id = Column(
 		'stationid',
-		UInt8(),
+		UInt32(),
 		Comment('Station ID'),
 		nullable=False,
-		default=1,
 		info={
 			'header_string' : _('Station')
 		}
 	)
-	entityid = Column(
+	entity_id = Column(
 		'entityid',
-		UInt8(),
-		Comment('Access Entity ID'),
-		#ForeignKey('entities_access.entityid', name='sessions_def_ibfk_1', ondelete='SET NULL', onupdate='CASCADE'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Access Entity')
-		}
-	)
-	ipaddrid = Column(
-		'ipaddrid',
-		UInt8(),
-		Comment('IP Address ID'),
-		#ForeignKey('ipaddr_def.ipaddrid', name='sessions_def_ibfk_2', ondelete='SET NULL', onupdate='CASCADE'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('IP Address')
-		}
-	)
-	ip6addrid = Column(
-		'ip6addrid',
 		UInt32(),
-		Comment('IPv6 Address ID'),
-		#ForeignKey('ip6addr_def.ip6addrid', name='sessions_def_ibfk_3', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Access entity ID'),
+		ForeignKey('entities_access.entityid', name='sessions_history_fk_entityid', ondelete='SET NULL', onupdate='CASCADE'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('IPv6 Address')
+			'header_string' : _('Entity'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
 		}
 	)
-	destid = Column(
+	ipv4_address_id = Column(
+		'ipaddrid',
+		UInt32(),
+		Comment('IPv4 address ID'),
+		ForeignKey('ipaddr_def.ipaddrid', name='sessions_history_fk_ipaddrid', ondelete='SET NULL', onupdate='CASCADE'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('IPv4 Address'),
+			'filter_type'   : 'none'
+		}
+	)
+	ipv6_address_id = Column(
+		'ip6addrid',
+		UInt64(),
+		Comment('IPv6 address ID'),
+		ForeignKey('ip6addr_def.ip6addrid', name='sessions_history_fk_ip6addrid', ondelete='SET NULL', onupdate='CASCADE'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('IPv6 Address'),
+			'filter_type'   : 'none'
+		}
+	)
+	destination_id = Column(
 		'destid',
-		UInt8(),
-		Comment('Accounting Destination ID'),
-		ForeignKey('dest_sets.dsid', name='sessions_history_ibfk_1', ondelete='SET NULL', onupdate='CASCADE'),
+		UInt32(),
+		Comment('Accounting destination ID'),
+		ForeignKey('dest_def.destid', name='sessions_history_fk_destid', ondelete='SET NULL', onupdate='CASCADE'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Destination')
+			'header_string' : _('Destination'),
+			'filter_type'   : 'none'
 		}
 	)
-	calling = Column(
+	nas_id = Column(
+		'nasid',
+		UInt32(),
+		Comment('Network access server ID'),
+		ForeignKey('nas_def.nasid', name='sessions_history_fk_nasid', ondelete='SET NULL', onupdate='CASCADE'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('NAS'),
+			'filter_type'   : 'list'
+		}
+	)
+	calling_station_id = Column(
 		'csid',
-		Unicode(255),
-		Comment('Calling Station ID'),
+		ASCIIString(255),
+		Comment('Calling station ID'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -418,10 +475,10 @@ class AccessSessionHistory(Base):
 			'header_string' : _('Calling Station')
 		}
 	)
-	called = Column(
+	called_station_id = Column(
 		'called',
-		Unicode(255),
-		Comment('Called Station ID'),
+		ASCIIString(255),
+		Comment('Called station ID'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -429,69 +486,94 @@ class AccessSessionHistory(Base):
 			'header_string' : _('Called Station')
 		}
 	)
-	startts = Column(
+	start_timestamp = Column(
 		'startts',
 		TIMESTAMP(),
-		Comment('Session Start Time'),
+		Comment('Session start time'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Session Start Time')
+			'header_string' : _('Started')
 		}
 	)
-	endts = Column(
+	end_timestamp = Column(
 		'endts',
 		TIMESTAMP(),
-		Comment('Session End Time'),
+		Comment('Session end time'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Accounting Update Time')
+			'header_string' : _('Ended')
 		}
 	)
-	ut_ingress = Column(
+	used_ingress_traffic = Column(
 		'ut_ingress',
 		Numeric(16, 0),
-		Comment('Used Ingress Traffic'),
+		Comment('Used ingress traffic'),
 		nullable=False,
 		default=0,
+		server_default=text('0'),
 		info={
-			'header_string' : _('Used Ingress Traffic')
+			'header_string' : _('Used Ingress')
 		}
 	)
-	ut_egress = Column(
+	used_egress_traffic = Column(
 		'ut_egress',
 		Numeric(16, 0),
-		Comment('Used Egress Traffic'),
+		Comment('Used egress traffic'),
 		nullable=False,
 		default=0,
+		server_default=text('0'),
 		info={
-			'header_string' : _('Used Egress Traffic')
+			'header_string' : _('Used Egress')
 		}
 	)
-	#entity = relationship(
-	#    'AccessEntity',
-	#    innerjoin=True,
-	#    backref='entity'
-	#)
-	#ipaddr = relationship(
-	#    'IPv4Address',
-	#    innerjoin=True,
-	#    backref='ipaddr'
-	#)
-	#ip6addr = relationship(
-	#    'IPv6Address',
-	#    innerjoin=True,
-	#    backref='ip6addr'
-	#)
-	#destination = relationship(
-	#'Destination',
-	#    innerjoin=True,
-	#    backref='destination'
-	#)
-	#[1
+	ingress_policy = Column(
+		'pol_ingress',
+		ASCIIString(255),
+		Comment('Ingress traffic policy'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Ingress Policy')
+		}
+	)
+	egress_policy = Column(
+		'pol_egress',
+		ASCIIString(255),
+		Comment('Egress traffic policy'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Egress Policy')
+		}
+	)
+
+	entity = relationship(
+		'AccessEntity',
+		backref='closed_sessions'
+	)
+	ipv4_address = relationship(
+		'IPv4Address',
+		backref='closed_sessions'
+	)
+	ipv6_address = relationship(
+		'IPv6Address',
+		backref='closed_sessions'
+	)
+	destination = relationship(
+		'Destination',
+		backref='closed_sessions'
+	)
+	nas = relationship(
+		'NAS',
+		backref='closed_sessions'
+	)
+
 	def __str__(self):
 		return '%s' % str(self.name)
 

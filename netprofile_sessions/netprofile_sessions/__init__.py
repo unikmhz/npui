@@ -40,6 +40,10 @@ class Module(ModuleBase):
 		mmgr.cfg.add_translation_dirs('netprofile_sessions:locale/')
 		mmgr.cfg.scan()
 
+	@classmethod
+	def get_deps(cls):
+		return ('dialup', 'access', 'ipaddresses', 'rates')
+
 	def get_models(self):
 		return (
 			AccessSession,
