@@ -34,3 +34,4 @@ from pyramid.i18n import (
 from netprofile.common.hooks import register_hook
 
 _ = TranslationStringFactory('netprofile_sessions')
+

@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: Sessions module - Models
+# © Copyright 2014 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -9,80 +28,44 @@ from __future__ import (
 )
 
 __all__ = [
-		'AccessSession',
-		'AccessSessionHistory',
+	'AccessSession',
+	'AccessSessionHistory'
 ]
 
 from sqlalchemy import (
-    Column,
-    Date,
-    FetchedValue,
-    ForeignKey,
-    Index,
-    Numeric,
-    Sequence,
-    TIMESTAMP,
-    Unicode,
-    UnicodeText,
-    func,
-    text,
-    or_
-    )
+	Column,
+	ForeignKey,
+	Index,
+	Numeric,
+	Sequence,
+	TIMESTAMP,
+	Unicode,
+	text
+)
 
 from sqlalchemy.orm import (
-    backref,
-    contains_eager,
-    joinedload,
-    relationship,
-    validates
-    )
+	backref,
+	relationship
+)
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
 from netprofile.db.connection import (
-    Base,
-    DBSession
-    )
+	Base,
+	DBSession
+)
 from netprofile.db.fields import (
-    ASCIIString,
-    DeclEnum,
-    NPBoolean,
-    UInt8,
-    UInt16,
-    UInt32,
-    UInt64,
-    npbool
-    )
+	UInt8,
+	UInt32,
+	UInt64
+)
 from netprofile.db.ddl import Comment
-from netprofile.db.util import (
-    populate_related,
-    populate_related_list
-    )
-from netprofile.tpl import TemplateObject
-from netprofile.ext.data import (
-    ExtModel,
-    _name_to_class
-    )
-from netprofile.ext.columns import (
-    HybridColumn,
-    MarkupColumn
-    )
 
-from netprofile.ext.wizards import (
-    ExternalWizardField,
-	SimpleWizard,
-	Step,
-	Wizard
-        )
+from netprofile.ext.wizards import SimpleWizard
 
-from pyramid.threadlocal import get_current_request
-from pyramid.i18n import (
-    TranslationStringFactory,
-	get_localizer
-        )
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_sessions')
-
 
 class AccessSession(Base):
 	"""
@@ -97,6 +80,7 @@ class AccessSession(Base):
 		Index('sessions_def_i_destid', 'destid'),
 		Index('sessions_def_i_ipaddrid', 'ipaddrid'),
 		Index('sessions_def_i_ip6addrid', 'ip6addrid'),
+		Index('sessions_def_i_nasid', 'nasid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -133,7 +117,7 @@ class AccessSession(Base):
 	)
 	sessid = Column(
 		'sessid',
-		UInt32(),
+		UInt64(),
 		Sequence('sessions_def_sessid_seq'),
 		Comment('Session ID'),
 		primary_key=True,
@@ -143,7 +127,7 @@ class AccessSession(Base):
 		}
 	)
 	name = Column(
-		'name',	
+		'name',
 		Unicode(255),
 		Comment('Session name'),
 		nullable=False,
@@ -186,7 +170,7 @@ class AccessSession(Base):
 		}
 	)
 	ip6addrid = Column(
-		'ip6addrid',	
+		'ip6addrid',
 		UInt32(),
 		Comment('IPv6 Address ID'),
 		ForeignKey('ip6addr_def.ip6addrid', name='sessions_def_ibfk_3', ondelete='SET NULL', onupdate='CASCADE'),
@@ -210,7 +194,7 @@ class AccessSession(Base):
 		}
 	)
 	calling = Column(
-		'csid',	
+		'csid',
 		Unicode(255),
 		Comment('Calling Station ID'),
 		nullable=True,
@@ -243,7 +227,7 @@ class AccessSession(Base):
 		}
 	)
 	updatets = Column(
-		'updatets',	
+		'updatets',
 		TIMESTAMP(),
 		Comment('Accounting Update Time'),
 		nullable=True,
@@ -254,7 +238,7 @@ class AccessSession(Base):
 		}
 	)
 	ut_ingress = Column(
-		'ut_ingress',	
+		'ut_ingress',
 		Numeric(16, 0),
 		Comment('Used Ingress Traffic'),
 		nullable=False,
@@ -264,7 +248,7 @@ class AccessSession(Base):
 		}
 	)
 	ut_egress = Column(
-		'ut_egress',	
+		'ut_egress',
 		Numeric(16, 0),
 		Comment('Used Egress Traffic'),
 		nullable=False,
@@ -275,30 +259,29 @@ class AccessSession(Base):
 	)
 
 	entity = relationship(
-        'AccessEntity',
-        backref='session',
+		'AccessEntity',
+		backref='session',
 		innerjoin=True,
 		#primaryjoin='Session.entityid==AccessEntity.id'
-    )
+	)
 	ipaddr = relationship(
-        'IPv4Address',
-        innerjoin=True,
-        backref='ipaddr'
-    )
+		'IPv4Address',
+		innerjoin=True,
+		backref='ipaddr'
+	)
 	ip6addr = relationship(
-        'IPv6Address',
-        innerjoin=True,
-        backref='ip6addr'
-    )
+		'IPv6Address',
+		innerjoin=True,
+		backref='ip6addr'
+	)
 	destination = relationship(
-        'Destination',
-        innerjoin=True,
-        backref='destination'
-    )
+		'Destination',
+		innerjoin=True,
+		backref='destination'
+	)
 
 	def __str__(self):
 		return '%s' % str(self.name)
-
 
 class AccessSessionHistory(Base):
 	"""
@@ -306,7 +289,7 @@ class AccessSessionHistory(Base):
 	"""
 	__tablename__ = 'sessions_history'
 	__table_args__ = (
-		Comment('Log of Closed Sessions'),
+		Comment('Log of closed sessions'),
 		Index('session_history_i_entityid', 'entityid'),
 		Index('session_history_i_ipaddrid', 'ipaddrid'),
 		Index('session_history_i_ip6addrid', 'ip6addrid'),
@@ -348,7 +331,7 @@ class AccessSessionHistory(Base):
 	)
 	sessid = Column(
 		'sessid',
-		UInt32(),
+		UInt64(),
 		Sequence('sessions_def_sessid_seq'),
 		Comment('Session ID'),
 		primary_key=True,
@@ -358,7 +341,7 @@ class AccessSessionHistory(Base):
 		}
 	)
 	name = Column(
-		'name',	
+		'name',
 		Unicode(255),
 		Comment('Session name'),
 		nullable=False,
@@ -367,7 +350,7 @@ class AccessSessionHistory(Base):
 		}
 	)
 	stationid = Column(
-		'stationid',	
+		'stationid',
 		UInt8(),
 		Comment('Station ID'),
 		nullable=False,
@@ -401,7 +384,7 @@ class AccessSessionHistory(Base):
 		}
 	)
 	ip6addrid = Column(
-		'ip6addrid',	
+		'ip6addrid',
 		UInt32(),
 		Comment('IPv6 Address ID'),
 		#ForeignKey('ip6addr_def.ip6addrid', name='sessions_def_ibfk_3', ondelete='SET NULL', onupdate='CASCADE'),
@@ -425,7 +408,7 @@ class AccessSessionHistory(Base):
 		}
 	)
 	calling = Column(
-		'csid',	
+		'csid',
 		Unicode(255),
 		Comment('Calling Station ID'),
 		nullable=True,
@@ -458,7 +441,7 @@ class AccessSessionHistory(Base):
 		}
 	)
 	endts = Column(
-		'endts',	
+		'endts',
 		TIMESTAMP(),
 		Comment('Session End Time'),
 		nullable=True,
@@ -469,7 +452,7 @@ class AccessSessionHistory(Base):
 		}
 	)
 	ut_ingress = Column(
-		'ut_ingress',	
+		'ut_ingress',
 		Numeric(16, 0),
 		Comment('Used Ingress Traffic'),
 		nullable=False,
@@ -479,7 +462,7 @@ class AccessSessionHistory(Base):
 		}
 	)
 	ut_egress = Column(
-		'ut_egress',	
+		'ut_egress',
 		Numeric(16, 0),
 		Comment('Used Egress Traffic'),
 		nullable=False,
@@ -489,28 +472,26 @@ class AccessSessionHistory(Base):
 		}
 	)
 	#entity = relationship(
-    #    'AccessEntity',
-    #    innerjoin=True,
-    #    backref='entity'
-    #)
+	#    'AccessEntity',
+	#    innerjoin=True,
+	#    backref='entity'
+	#)
 	#ipaddr = relationship(
-    #    'IPv4Address',
-    #    innerjoin=True,
-    #    backref='ipaddr'
-    #)
+	#    'IPv4Address',
+	#    innerjoin=True,
+	#    backref='ipaddr'
+	#)
 	#ip6addr = relationship(
-    #    'IPv6Address',
-    #    innerjoin=True,
-    #    backref='ip6addr'
-    #)
+	#    'IPv6Address',
+	#    innerjoin=True,
+	#    backref='ip6addr'
+	#)
 	#destination = relationship(
 	#'Destination',
-    #    innerjoin=True,
-    #    backref='destination'
-    #)
+	#    innerjoin=True,
+	#    backref='destination'
+	#)
 	#[1
 	def __str__(self):
 		return '%s' % str(self.name)
-
-
 
