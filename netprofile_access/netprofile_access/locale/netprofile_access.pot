@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-19 09:41+0400\n"
+"POT-Creation-Date: 2014-02-07 11:11+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: netprofile_access/__init__.py:80 netprofile_access/models.py:87
+#: netprofile_access/__init__.py:82 netprofile_access/models.py:87
 msgid "Access"
 msgstr ""
 
@@ -62,8 +62,8 @@ msgstr ""
 msgid "Icon"
 msgstr ""
 
-#: netprofile_access/models.py:171 netprofile_access/models.py:423
-#: netprofile_access/models.py:560 netprofile_access/models.py:623
+#: netprofile_access/models.py:171 netprofile_access/models.py:429
+#: netprofile_access/models.py:566 netprofile_access/models.py:629
 msgid "ID"
 msgstr ""
 
@@ -76,7 +76,7 @@ msgstr ""
 msgid "Stash"
 msgstr ""
 
-#: netprofile_access/models.py:202 netprofile_access/models.py:457
+#: netprofile_access/models.py:202 netprofile_access/models.py:463
 msgid "Rate"
 msgstr ""
 
@@ -85,6 +85,7 @@ msgid "Alias Of"
 msgstr ""
 
 #: netprofile_access/models.py:227
+#: netprofile_access/templates/client_block_chrate.mak:7
 msgid "Next Rate"
 msgstr ""
 
@@ -132,67 +133,67 @@ msgstr ""
 msgid "Check Services"
 msgstr ""
 
-#: netprofile_access/models.py:408 netprofile_access/views.py:714
+#: netprofile_access/models.py:414 netprofile_access/views.py:764
 msgid "Rate Modifiers"
 msgstr ""
 
-#: netprofile_access/models.py:411
+#: netprofile_access/models.py:417
 msgid "Add new rate modifier"
 msgstr ""
 
-#: netprofile_access/models.py:433 netprofile_access/models.py:644
+#: netprofile_access/models.py:439 netprofile_access/models.py:650
 msgid "Type"
 msgstr ""
 
-#: netprofile_access/models.py:444
+#: netprofile_access/models.py:450
 msgid "Account"
 msgstr ""
 
-#: netprofile_access/models.py:469
+#: netprofile_access/models.py:475
 msgid "Created"
 msgstr ""
 
-#: netprofile_access/models.py:480
+#: netprofile_access/models.py:486
 msgid "Enabled"
 msgstr ""
 
-#: netprofile_access/models.py:491
+#: netprofile_access/models.py:497
 msgid "Lookup Order"
 msgstr ""
 
-#: netprofile_access/models.py:541
+#: netprofile_access/models.py:547
 msgid "Link Types"
 msgstr ""
 
-#: netprofile_access/models.py:548
+#: netprofile_access/models.py:554
 msgid "Add new link type"
 msgstr ""
 
-#: netprofile_access/models.py:568
+#: netprofile_access/models.py:574
 msgid "Name"
 msgstr ""
 
-#: netprofile_access/models.py:580
+#: netprofile_access/models.py:586
 msgid "Description"
 msgstr ""
 
-#: netprofile_access/models.py:607 netprofile_access/views.py:723
+#: netprofile_access/models.py:613 netprofile_access/views.py:773
 msgid "Links"
 msgstr ""
 
-#: netprofile_access/models.py:611
+#: netprofile_access/models.py:617
 msgid "Add new link"
 msgstr ""
 
-#: netprofile_access/models.py:633
+#: netprofile_access/models.py:639
 msgid "Entity"
 msgstr ""
 
-#: netprofile_access/models.py:656
+#: netprofile_access/models.py:662
 msgid "Timestamp"
 msgstr ""
 
-#: netprofile_access/models.py:665
+#: netprofile_access/models.py:671
 msgid "Value"
 msgstr ""
 
@@ -220,89 +221,101 @@ msgstr ""
 msgid "reCAPTCHA service is not reachable"
 msgstr ""
 
-#: netprofile_access/views.py:103
+#: netprofile_access/views.py:104
 msgid "Page Not Found"
 msgstr ""
 
-#: netprofile_access/views.py:115
+#: netprofile_access/views.py:116
 msgid "You need to log in to access this page"
 msgstr ""
 
-#: netprofile_access/views.py:120
+#: netprofile_access/views.py:121
 msgid "Access Denied"
 msgstr ""
 
-#: netprofile_access/views.py:138 netprofile_access/views.py:305
-#: netprofile_access/views.py:553
+#: netprofile_access/views.py:139 netprofile_access/views.py:306
+#: netprofile_access/views.py:554
 msgid "Error submitting form"
 msgstr ""
 
-#: netprofile_access/views.py:142 netprofile_access/views.py:329
+#: netprofile_access/views.py:143 netprofile_access/views.py:330
 msgid "Password is too short"
 msgstr ""
 
-#: netprofile_access/views.py:144 netprofile_access/views.py:331
+#: netprofile_access/views.py:145 netprofile_access/views.py:332
 msgid "Password is too long"
 msgstr ""
 
-#: netprofile_access/views.py:146 netprofile_access/views.py:333
+#: netprofile_access/views.py:147 netprofile_access/views.py:334
 msgid "Passwords do not match"
 msgstr ""
 
-#: netprofile_access/views.py:148
+#: netprofile_access/views.py:149
 msgid "Wrong password"
 msgstr ""
 
-#: netprofile_access/views.py:152
+#: netprofile_access/views.py:153
 msgid "Password successfully changed"
 msgstr ""
 
-#: netprofile_access/views.py:200
+#: netprofile_access/views.py:201
 msgid "Error uploading file"
 msgstr ""
 
-#: netprofile_access/views.py:324 netprofile_access/views.py:336
-#: netprofile_access/views.py:341 netprofile_access/views.py:344
-#: netprofile_access/views.py:347 netprofile_access/views.py:567
-#: netprofile_access/views.py:572
+#: netprofile_access/views.py:325 netprofile_access/views.py:337
+#: netprofile_access/views.py:342 netprofile_access/views.py:345
+#: netprofile_access/views.py:348 netprofile_access/views.py:568
+#: netprofile_access/views.py:573
 msgid "Invalid field length"
 msgstr ""
 
-#: netprofile_access/views.py:326 netprofile_access/views.py:569
+#: netprofile_access/views.py:327 netprofile_access/views.py:570
 msgid "Invalid character used in username"
 msgstr ""
 
-#: netprofile_access/views.py:338 netprofile_access/views.py:574
+#: netprofile_access/views.py:339 netprofile_access/views.py:575
 #: netprofile_access/templates/client_register.mak:67
 #: netprofile_access/templates/client_restorepass.mak:69
 msgid "Invalid e-mail format"
 msgstr ""
 
-#: netprofile_access/views.py:355
+#: netprofile_access/views.py:356
 #: netprofile_access/templates/client_register.mak:40
 msgid "This username is already taken"
 msgstr ""
 
-#: netprofile_access/views.py:368
+#: netprofile_access/views.py:369
 msgid "Primary Account"
 msgstr ""
 
-#: netprofile_access/views.py:425
+#: netprofile_access/views.py:426
 #, python-format
 msgid "Activation required for user %s"
 msgstr ""
 
-#: netprofile_access/views.py:624
+#: netprofile_access/views.py:625
 #, python-format
 msgid "Password recovery for user %s"
 msgstr ""
 
-#: netprofile_access/views.py:636
+#: netprofile_access/views.py:637
 msgid "Username and/or e-mail are unknown to us"
 msgstr ""
 
-#: netprofile_access/views.py:699
+#: netprofile_access/views.py:700
 msgid "Portal"
+msgstr ""
+
+#: netprofile_access/views.py:741
+msgid "Error scheduling rate change"
+msgstr ""
+
+#: netprofile_access/views.py:746
+msgid "Rate change successfully scheduled"
+msgstr ""
+
+#: netprofile_access/views.py:750
+msgid "Rate change successfully cancelled"
 msgstr ""
 
 #: netprofile_access/templates/client_activate.mak:3
@@ -331,8 +344,28 @@ msgstr ""
 msgid "Return to log in page"
 msgstr ""
 
-#: netprofile_access/templates/client_base.mak:19
+#: netprofile_access/templates/client_base.mak:20
 msgid "User Portal"
+msgstr ""
+
+#: netprofile_access/templates/client_block_chrate.mak:3
+msgid "New Next Rate"
+msgstr ""
+
+#: netprofile_access/templates/client_block_chrate.mak:17
+msgid "Select different next rate"
+msgstr ""
+
+#: netprofile_access/templates/client_block_chrate.mak:17
+msgid "Set"
+msgstr ""
+
+#: netprofile_access/templates/client_block_chrate.mak:19
+msgid "Cancel scheduled rate change"
+msgstr ""
+
+#: netprofile_access/templates/client_block_chrate.mak:19
+msgid "Clear"
 msgstr ""
 
 #: netprofile_access/templates/client_chpass.mak:3

@@ -8,18 +8,19 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-01-19 09:41+0400\n"
-"PO-Revision-Date: 2014-01-17 06:24+0300\n"
+"POT-Creation-Date: 2014-02-07 11:11+0400\n"
+"PO-Revision-Date: 2014-02-07 11:15+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
+"X-Generator: Poedit 1.5.5\n"
 
-#: netprofile_access/__init__.py:80 netprofile_access/models.py:87
+#: netprofile_access/__init__.py:82 netprofile_access/models.py:87
 msgid "Access"
 msgstr "Учётные записи"
 
@@ -63,8 +64,8 @@ msgstr "Иконка объекта"
 msgid "Icon"
 msgstr "Иконка"
 
-#: netprofile_access/models.py:171 netprofile_access/models.py:423
-#: netprofile_access/models.py:560 netprofile_access/models.py:623
+#: netprofile_access/models.py:171 netprofile_access/models.py:429
+#: netprofile_access/models.py:566 netprofile_access/models.py:629
 msgid "ID"
 msgstr "ID"
 
@@ -78,7 +79,7 @@ msgstr "Пароль"
 msgid "Stash"
 msgstr "Счёт"
 
-#: netprofile_access/models.py:202 netprofile_access/models.py:457
+#: netprofile_access/models.py:202 netprofile_access/models.py:463
 msgid "Rate"
 msgstr "Тариф"
 
@@ -87,6 +88,7 @@ msgid "Alias Of"
 msgstr "Псевдоним"
 
 #: netprofile_access/models.py:227
+#: netprofile_access/templates/client_block_chrate.mak:7
 msgid "Next Rate"
 msgstr "Следующий тариф"
 
@@ -134,67 +136,67 @@ msgstr "Проверять блокировки"
 msgid "Check Services"
 msgstr "Проверять услуги"
 
-#: netprofile_access/models.py:408 netprofile_access/views.py:714
+#: netprofile_access/models.py:414 netprofile_access/views.py:764
 msgid "Rate Modifiers"
 msgstr "Модификаторы тарифов"
 
-#: netprofile_access/models.py:411
+#: netprofile_access/models.py:417
 msgid "Add new rate modifier"
 msgstr "Добавить новый модификатор тарифов"
 
-#: netprofile_access/models.py:433 netprofile_access/models.py:644
+#: netprofile_access/models.py:439 netprofile_access/models.py:650
 msgid "Type"
 msgstr "Тип"
 
-#: netprofile_access/models.py:444
+#: netprofile_access/models.py:450
 msgid "Account"
 msgstr "Учётная запись"
 
-#: netprofile_access/models.py:469
+#: netprofile_access/models.py:475
 msgid "Created"
 msgstr "Создан"
 
-#: netprofile_access/models.py:480
+#: netprofile_access/models.py:486
 msgid "Enabled"
 msgstr "Включен"
 
-#: netprofile_access/models.py:491
+#: netprofile_access/models.py:497
 msgid "Lookup Order"
 msgstr "Порядок поиска"
 
-#: netprofile_access/models.py:541
+#: netprofile_access/models.py:547
 msgid "Link Types"
 msgstr "Типы связей"
 
-#: netprofile_access/models.py:548
+#: netprofile_access/models.py:554
 msgid "Add new link type"
 msgstr "Добавить новый тип связей"
 
-#: netprofile_access/models.py:568
+#: netprofile_access/models.py:574
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_access/models.py:580
+#: netprofile_access/models.py:586
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_access/models.py:607 netprofile_access/views.py:723
+#: netprofile_access/models.py:613 netprofile_access/views.py:773
 msgid "Links"
 msgstr "Связи"
 
-#: netprofile_access/models.py:611
+#: netprofile_access/models.py:617
 msgid "Add new link"
 msgstr "Добавить новую связь"
 
-#: netprofile_access/models.py:633
+#: netprofile_access/models.py:639
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_access/models.py:656
+#: netprofile_access/models.py:662
 msgid "Timestamp"
 msgstr "Время"
 
-#: netprofile_access/models.py:665
+#: netprofile_access/models.py:671
 msgid "Value"
 msgstr "Значение"
 
@@ -222,90 +224,104 @@ msgstr "Текущий запрос был просрочен"
 msgid "reCAPTCHA service is not reachable"
 msgstr "Сервис reCAPTCHA недоступен"
 
-#: netprofile_access/views.py:103
+#: netprofile_access/views.py:104
 msgid "Page Not Found"
 msgstr "Страница не найдена"
 
-#: netprofile_access/views.py:115
+#: netprofile_access/views.py:116
 msgid "You need to log in to access this page"
 msgstr "Вы должны войти в систему чтобы получить доступ к этой странице"
 
-#: netprofile_access/views.py:120
+#: netprofile_access/views.py:121
 msgid "Access Denied"
 msgstr "Доступ запрещён"
 
-#: netprofile_access/views.py:138 netprofile_access/views.py:305
-#: netprofile_access/views.py:553
+#: netprofile_access/views.py:139 netprofile_access/views.py:306
+#: netprofile_access/views.py:554
 msgid "Error submitting form"
 msgstr "Ошибка при отправке формы"
 
-#: netprofile_access/views.py:142 netprofile_access/views.py:329
+#: netprofile_access/views.py:143 netprofile_access/views.py:330
 msgid "Password is too short"
 msgstr "Пароль слишком короткий"
 
-#: netprofile_access/views.py:144 netprofile_access/views.py:331
+#: netprofile_access/views.py:145 netprofile_access/views.py:332
 msgid "Password is too long"
 msgstr "Пароль слишком длинный"
 
-#: netprofile_access/views.py:146 netprofile_access/views.py:333
+#: netprofile_access/views.py:147 netprofile_access/views.py:334
 msgid "Passwords do not match"
 msgstr "Пароли не совпадают"
 
-#: netprofile_access/views.py:148
+#: netprofile_access/views.py:149
 msgid "Wrong password"
 msgstr "Некорректный пароль"
 
-#: netprofile_access/views.py:152
+#: netprofile_access/views.py:153
 msgid "Password successfully changed"
 msgstr "Ваш пароль был успешно изменён"
 
-#: netprofile_access/views.py:200
+#: netprofile_access/views.py:201
 msgid "Error uploading file"
-msgstr ""
+msgstr "Ошибка при заливке файла"
 
-#: netprofile_access/views.py:324 netprofile_access/views.py:336
-#: netprofile_access/views.py:341 netprofile_access/views.py:344
-#: netprofile_access/views.py:347 netprofile_access/views.py:567
-#: netprofile_access/views.py:572
+#: netprofile_access/views.py:325 netprofile_access/views.py:337
+#: netprofile_access/views.py:342 netprofile_access/views.py:345
+#: netprofile_access/views.py:348 netprofile_access/views.py:568
+#: netprofile_access/views.py:573
 msgid "Invalid field length"
 msgstr "Некорректная длина поля"
 
-#: netprofile_access/views.py:326 netprofile_access/views.py:569
+#: netprofile_access/views.py:327 netprofile_access/views.py:570
 msgid "Invalid character used in username"
 msgstr "В имени пользователя находится запрещённый символ"
 
-#: netprofile_access/views.py:338 netprofile_access/views.py:574
+#: netprofile_access/views.py:339 netprofile_access/views.py:575
 #: netprofile_access/templates/client_register.mak:67
 #: netprofile_access/templates/client_restorepass.mak:69
 msgid "Invalid e-mail format"
 msgstr "Некорректный формат e-mail"
 
-#: netprofile_access/views.py:355
+#: netprofile_access/views.py:356
 #: netprofile_access/templates/client_register.mak:40
 msgid "This username is already taken"
 msgstr "Это имя пользователя уже используется"
 
-#: netprofile_access/views.py:368
+#: netprofile_access/views.py:369
 msgid "Primary Account"
 msgstr "Основная учётная запись"
 
-#: netprofile_access/views.py:425
+#: netprofile_access/views.py:426
 #, python-format
 msgid "Activation required for user %s"
 msgstr "Требуется подтверждение для пользователя %s"
 
-#: netprofile_access/views.py:624
+#: netprofile_access/views.py:625
 #, python-format
 msgid "Password recovery for user %s"
 msgstr "Восстановление пароля для пользователя %s"
 
-#: netprofile_access/views.py:636
+#: netprofile_access/views.py:637
 msgid "Username and/or e-mail are unknown to us"
 msgstr "Имя пользователя и/или адрес e-mail нам не известны"
 
-#: netprofile_access/views.py:699
+#: netprofile_access/views.py:700
 msgid "Portal"
 msgstr "Портал"
+
+#: netprofile_access/views.py:741
+msgid "Error scheduling rate change"
+msgstr "Ошибка при выборе следующего тарифа"
+
+#: netprofile_access/views.py:746
+#| msgid "Password successfully changed"
+msgid "Rate change successfully scheduled"
+msgstr "Запланировано изменение тарифа"
+
+#: netprofile_access/views.py:750
+#| msgid "Password successfully changed"
+msgid "Rate change successfully cancelled"
+msgstr "Запланированное изменение тарифа отменено"
 
 #: netprofile_access/templates/client_activate.mak:3
 msgid "Account Activation"
@@ -317,7 +333,8 @@ msgstr "Ошибка подтверждения"
 
 #: netprofile_access/templates/client_activate.mak:7
 msgid "Either your activation link was incomplete or it has timed out."
-msgstr "Либо вы некорректно ввели ссылку для активации, либо она уже просрочена."
+msgstr ""
+"Либо вы некорректно ввели ссылку для активации, либо она уже просрочена."
 
 #: netprofile_access/templates/client_activate.mak:9
 msgid "Account Activation Successful"
@@ -335,9 +352,30 @@ msgstr ""
 msgid "Return to log in page"
 msgstr "Вернуться на страницу входа"
 
-#: netprofile_access/templates/client_base.mak:19
+#: netprofile_access/templates/client_base.mak:20
 msgid "User Portal"
 msgstr "Пользовательский портал"
+
+#: netprofile_access/templates/client_block_chrate.mak:3
+#| msgid "Next Rate"
+msgid "New Next Rate"
+msgstr "Изменить на"
+
+#: netprofile_access/templates/client_block_chrate.mak:17
+msgid "Select different next rate"
+msgstr "Установить выбранный тариф"
+
+#: netprofile_access/templates/client_block_chrate.mak:17
+msgid "Set"
+msgstr "Установить"
+
+#: netprofile_access/templates/client_block_chrate.mak:19
+msgid "Cancel scheduled rate change"
+msgstr "Отменить запланированную смену тарифа"
+
+#: netprofile_access/templates/client_block_chrate.mak:19
+msgid "Clear"
+msgstr "Отменить"
 
 #: netprofile_access/templates/client_chpass.mak:3
 #: netprofile_access/templates/client_chpass.mak:108
@@ -596,8 +634,8 @@ msgstr "Внимание:"
 
 #: netprofile_access/templates/client_register.mak:8
 msgid ""
-"You will receive a confirmation e-mail with an activation link. Your "
-"account will be inactive until you click this link."
+"You will receive a confirmation e-mail with an activation link. Your account "
+"will be inactive until you click this link."
 msgstr ""
 "Вы получите e-mail с подтверждающей ссылкой. Ваша учётная запись будет "
 "оставаться неактивной до момента, когда вы перейдёте по этой ссылке."
@@ -673,17 +711,17 @@ msgstr "Спасибо что зарегистрировали учётную з
 
 #: netprofile_access/templates/client_regsent.mak:9
 msgid ""
-"A message containing an activation link was sent to the e-mail address "
-"you provided. You won't be able to log in until you follow this link."
+"A message containing an activation link was sent to the e-mail address you "
+"provided. You won't be able to log in until you follow this link."
 msgstr ""
-"Письмо, содержащее ссылку для активации, было отправлено на "
-"предоставленный вами адрес e-mail. Вы не сможете использовать вашу новую "
-"учётную запись до тех пор, пока не перейдёте по этой ссылке."
+"Письмо, содержащее ссылку для активации, было отправлено на предоставленный "
+"вами адрес e-mail. Вы не сможете использовать вашу новую учётную запись до "
+"тех пор, пока не перейдёте по этой ссылке."
 
 #: netprofile_access/templates/client_regsent.mak:11
 msgid ""
-"You can now log in with the user name and password that you provided "
-"during registration."
+"You can now log in with the user name and password that you provided during "
+"registration."
 msgstr ""
 "Теперь вы можете войти в систему при помощи имени пользователя и пароля, "
 "которые вы указали при регистрации."
@@ -705,8 +743,7 @@ msgstr ""
 #: netprofile_access/templates/client_restorepass.mak:9
 msgid "A new autogenerated password will be emailed to you after that."
 msgstr ""
-"После этого вам будет отправлен новый автоматически сгенерированный "
-"пароль."
+"После этого вам будет отправлен новый автоматически сгенерированный пароль."
 
 #: netprofile_access/templates/client_restorepass.mak:11
 msgid "Your password will be emailed to you after that."
@@ -727,7 +764,8 @@ msgstr "Восстановление пароля завершено"
 
 #: netprofile_access/templates/client_restoresent.mak:8
 msgid "New automatically generated password was sent to your e-mail."
-msgstr "Вам только что был отправлен новый автоматически сгенерированный пароль."
+msgstr ""
+"Вам только что был отправлен новый автоматически сгенерированный пароль."
 
 #: netprofile_access/templates/client_restoresent.mak:10
 msgid "Your current password was sent to your e-mail."
@@ -768,11 +806,10 @@ msgstr "Вот ваш пароль:"
 #: netprofile_access/templates/email_recover_html.mak:23
 #: netprofile_access/templates/email_recover_plain.mak:12
 msgid ""
-"If you didn't request a password recovery please contact support "
-"immediately."
+"If you didn't request a password recovery please contact support immediately."
 msgstr ""
-"Если вы не запрашивали восстановление пароля, то немедленно обращайтесь в"
-" службу поддержки."
+"Если вы не запрашивали восстановление пароля, то немедленно обращайтесь в "
+"службу поддержки."
 
 #: netprofile_access/templates/email_register_html.mak:9
 msgid "User Activation"
@@ -790,4 +827,3 @@ msgstr "Не забудьте перейти по ней прежде чем п�
 
 #~ msgid "Logged in as"
 #~ msgstr "Вы вошли как"
-
