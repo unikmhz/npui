@@ -69,16 +69,6 @@ ${gen_block('stashes.cl.block.menu', stash=stash) | n}
 				<div id="fld-qpend-${stash.id}" class="col-sm-8">${a.quota_period_end | n,date_fmt}</div>
 			</div>
 % endif
-			<div class="row">
-				<label for="fld-rate-${stash.id}" class="col-sm-4">${_('Current Rate')}</label>
-				<div id="fld-rate-${stash.id}" class="col-sm-8">${a.rate}</div>
-			</div>
-% if a.next_rate:
-			<div class="row">
-				<label for="fld-nextrate-${stash.id}" class="col-sm-4">${_('Next Rate')}</label>
-				<div id="fld-nextrate-${stash.id}" class="col-sm-8">${a.next_rate}</div>
-			</div>
-% endif
 ${gen_block('stashes.cl.block.info', stash=stash, a=a) | n}
 		</li>
 % endif
