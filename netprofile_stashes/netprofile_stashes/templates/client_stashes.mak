@@ -83,6 +83,7 @@ ${gen_block('stashes.cl.block.info', stash=stash, a=a) | n}
 		</li>
 % endif
 % endfor
+${gen_block('stashes.cl.block.users', stash=stash) | n}
 	</ul>
 % else:
 	<div class="well tab-pane fade in active" id="tab-users-${stash.id}">${_('This account has no users.')}</div>
