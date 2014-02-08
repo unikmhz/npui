@@ -4,7 +4,7 @@
 				<div id="fld-rate-${stash.id}" class="col-sm-8">
 					${a.rate}
 % if not a.next_rate:
-					<button type="button" class="btn btn-link" data-toggle="collapse" data-target="#form-chrate-${a.id}">${_('Change', domain='netprofile_access')}</button>
+					<button type="button" class="btn btn-link js-only" data-toggle="collapse" data-target="#form-chrate-${a.id}">${_('Change', domain='netprofile_access')}</button>
 % endif
 				</div>
 			</div>
@@ -13,7 +13,7 @@
 				<label for="fld-nextrate-${stash.id}" class="col-sm-4">${_('Next Rate')}</label>
 				<div id="fld-nextrate-${stash.id}" class="col-sm-8">
 					${a.next_rate}
-					<button type="button" class="btn btn-link" data-toggle="collapse" data-target="#form-chrate-${a.id}">${_('Change', domain='netprofile_access')}</button>
+					<button type="button" class="btn btn-link js-only" data-toggle="collapse" data-target="#form-chrate-${a.id}">${_('Change', domain='netprofile_access')}</button>
 				</div>
 			</div>
 % endif

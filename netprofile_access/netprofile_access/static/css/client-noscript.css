@@ -13,3 +13,13 @@ ul.nav-tabs
 	opacity: 1;
 }
 
+.collapse
+{
+	display: block;
+}
+
+.js-only
+{
+	display: none;
+}
+
