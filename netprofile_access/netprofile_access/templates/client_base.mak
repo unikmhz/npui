@@ -34,6 +34,7 @@ from netprofile.tpl.filters import jsone_compact
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/all.js')}"></script>
 % else:
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.actual.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.ui.widget.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/chosen.jquery.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/moment.js')}"></script>
@@ -61,6 +62,7 @@ from netprofile.tpl.filters import jsone_compact
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/all.min.js')}"></script>
 % else:
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.min.js')}"></script>
+	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.actual.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/jquery.ui.widget.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/chosen.jquery.min.js')}"></script>
 	<script type="text/javascript" src="${req.static_url('netprofile_access:static/js/moment.min.js')}"></script>

@@ -78,6 +78,19 @@ body > iframe
 	}
 }
 
+@media print
+{
+	html, body
+	{
+		height: auto;
+	}
+
+	div#wrap > .container
+	{
+		padding-top: 0;
+	}
+}
+
 div.controls
 {
 	position: relative;
