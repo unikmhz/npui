@@ -46,6 +46,7 @@
 				<li role="presentation" class="divider"></li>
 				<li role="presentation"><a role="menuitem" tabindex="-1" href="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'ops'))}">${_('Operations Report')}</a></li>
 				<li role="presentation"><a role="menuitem" tabindex="-1" href="#">${_('Promised Payments Report')}</a></li>
+${gen_block('stashes.cl.block.menu', stash=stash) | n}
 			</ul>
 		</li>
 	</ul></div>
