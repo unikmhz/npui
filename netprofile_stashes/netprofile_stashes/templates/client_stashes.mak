@@ -12,7 +12,7 @@
 
 % for stash in stashes:
 % if not sname:
-<h3 title="${_('Account name')}">${stash.name}</h3>
+<h3 title="${_('Account Name')}">${stash.name}</h3>
 % endif
 <div class="row">
 	<div class="col-sm-4">

@@ -80,7 +80,7 @@ def _dpane_entity_stashes(tabs, model, req):
 def _dpane_stash_futures(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
-		'title'             : loc.translate(_('Futures')),
+		'title'             : loc.translate(_('Promised Payments')),
 		'iconCls'           : 'ico-mod-stashio',
 		'xtype'             : 'grid_stashes_FuturePayment',
 		'stateId'           : None,
