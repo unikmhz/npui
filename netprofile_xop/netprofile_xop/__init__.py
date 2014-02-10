@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
+from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -47,17 +48,16 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return ('stashes', 'entities', 'access', 'rates', 'addresses', 'networks', 'hosts')
+		return ('stashes', 'entities', 'access', 'rates', 'networks', 'hosts', 'ipaddresses')
 
 	@classmethod
 	def prepare(cls):
 		from netprofile_xop import models
 
 	def get_models(self):
-		from netprofile_xop import models
 		return (
-			models.ExternalOperation,
-			models.ExternalOperationProvider
+			ExternalOperation,
+			ExternalOperationProvider
 		)
 
 	@property
