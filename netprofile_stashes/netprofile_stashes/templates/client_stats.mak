@@ -66,9 +66,9 @@ from netprofile_stashes.models import IOOperationType
 	<table class="table table-striped">
 	<thead>
 		<tr>
-			<th style>${_('Date')}</th>
-			<th style>${_('Sum')}</th>
-			<th style>${_('Type')}</th>
+			<th>${_('Date')}</th>
+			<th>${_('Sum')}</th>
+			<th>${_('Type')}</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -99,7 +99,7 @@ from netprofile_stashes.models import IOOperationType
 % else:
 			<li><a href="${req.current_route_url(_query={'page' : (page - 1)})}">&laquo;</a></li>
 % endif
-% for pg in range(min(max(page - 2, 1), maxpage - 4), max(min(page + 2, maxpage), 5) + 1):
+% for pg in range(min(max(page - 2, 1), 1 if maxpage < 5 else maxpage - 4), max(min(page + 2, maxpage), 5 if maxpage > 5 else maxpage) + 1):
 % if pg == page:
 			<li class="active"><span>${pg}<span class="sr-only"> ${_('(current)')}</span></span></li>
 % else:
