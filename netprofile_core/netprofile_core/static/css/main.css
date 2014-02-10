@@ -165,6 +165,28 @@ h2
 	white-space: nowrap;
 }
 
+a.np-file-wrap
+{
+	display: inline-block;
+	text-decoration: none;
+	color: #000;
+}
+
+a.np-file-wrap .np-file-icon
+{
+	display: block;
+	float: left;
+	padding: 0;
+	margin: 0 3px;
+	width: 16px;
+	height: 16px;
+}
+
+a.np-file-wrap span
+{
+	line-height: 16px;
+}
+
 .np-file-iview .np-file-wrap, .x-dd-drag-ghost .np-file-wrap
 {
 	float: left;
@@ -326,6 +348,11 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 	background-image: url(../img/folder_open.png);
 }
 
+.x-cons-data strong
+{
+	font-weight: bold;
+}
+
 .msg .x-box-mc
 {
 	font-size: 14px;
@@ -384,6 +411,7 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 .ico-clear        { background-image: url(../img/clear.png) !important; }
 .ico-cog          { background-image: url(../img/cog.png) !important; }
 .ico-collapse     { background-image: url(../img/collapse.png) !important; }
+.ico-conversation { background-image: url(../img/conversation.png) !important; }
 .ico-copy         { background-image: url(../img/copy.png) !important; }
 .ico-cut          { background-image: url(../img/cut.png) !important; }
 .ico-delete       { background-image: url(../img/delete.png) !important; }
@@ -431,7 +459,13 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 .ico-undo         { background-image: url(../img/undo.png) !important; }
 .ico-view         { background-image: url(../img/view.png) !important; }
 
+.ico-status-away    { background-image: url(../img/status_away.png) !important; }
+.ico-status-busy    { background-image: url(../img/status_busy.png) !important; }
+.ico-status-offline { background-image: url(../img/status_offline.png) !important; }
+.ico-status-online  { background-image: url(../img/status_online.png) !important; }
+
 .ico-mod-acl                  { background-image: url(../img/key_plus.png) !important; }
+.ico-mod-calendar             { background-image: url(../img/calendar.png) !important; }
 .ico-mod-datacache            { background-image: url(../img/db.png) !important; }
 .ico-mod-globalsetting        { background-image: url(../img/item.png) !important; }
 .ico-mod-globalsettingsection { background-image: url(../img/item_group.png) !important; }

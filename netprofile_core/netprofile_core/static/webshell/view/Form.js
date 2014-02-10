@@ -15,6 +15,7 @@ Ext.define('NetProfile.view.Form', {
 	},
 	autoScroll: true,
 	remoteValidation: false,
+	readOnly: false,
 	bodyPadding: 5,
 	layout: 'anchor',
 	defaults: {
@@ -167,6 +168,15 @@ Ext.define('NetProfile.view.Form', {
 		else
 			this.remoteValidation = false;
 		this.removeAll(true);
+		if(typeof(data.ro) === 'boolean')
+		{
+			this.readOnly = data.ro;
+			var tbar = this.down('toolbar');
+			if(this.readOnly)
+				tbar.hide();
+			else
+				tbar.show();
+		}
 		st.formdef[this.formCls] = data;
 		this.suspendLayouts();
 		Ext.Array.forEach(data.fields, function(fld)
@@ -180,6 +190,8 @@ Ext.define('NetProfile.view.Form', {
 					scope: me
 				}
 			});
+			if(me.readOnly)
+				fld.readOnly = true;
 		});
 		this.add(data.fields);
 		this.resumeLayouts(true);

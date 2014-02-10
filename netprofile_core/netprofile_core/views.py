@@ -52,6 +52,7 @@ from sqlalchemy.orm import undefer
 
 from netprofile import locale_neg
 from netprofile import PY3
+from netprofile.common.util import make_config_dict
 from netprofile.common.modules import IModuleManager
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
@@ -168,11 +169,14 @@ def do_logout(request):
 def js_webshell(request):
 	request.response.content_type = 'text/javascript'
 	request.response.charset = 'UTF-8'
+	rtcfg = make_config_dict(request.registry.settings, 'netprofile.rt.')
 	mmgr = request.registry.getUtility(IModuleManager)
 	return {
 		'cur_loc' : get_locale_name(request),
 		'res_ajs' : mmgr.get_autoload_js(request),
 		'res_ctl' : mmgr.get_controllers(request),
+		'rt_host' : rtcfg.get('host', 'localhost'),
+		'rt_port' : rtcfg.get('port', 8808),
 		'modules' : mmgr.get_module_browser()
 	}
 
@@ -475,6 +479,32 @@ def menu_settings(params, request):
 	for uss in sess.query(UserSettingSection).filter(UserSettingSection.module == mod):
 		mi = uss.get_tree_node(request)
 		mi['xhandler'] = 'NetProfile.controller.UserSettingsForm'
+		menu.append(mi)
+
+	return {
+		'success' : True,
+		'records' : menu,
+		'total'   : len(menu)
+	}
+
+@extdirect_method('MenuTree', 'users_read', request_as_last_param=True, permission='USAGE')
+def menu_users(params, request):
+	"""
+	ExtDirect method for users menu tree.
+	"""
+
+	menu = []
+	sess = DBSession()
+
+	for user in sess.query(User)\
+			.filter(User.enabled == True, User.state == UserState.active)\
+			.order_by(User.login):
+		mi = {
+			'id'      : 'user-%d' % user.id,
+			'text'    : user.login,
+			'leaf'    : True,
+			'iconCls' : 'ico-status-offline'
+		}
 		menu.append(mi)
 
 	return {
@@ -888,5 +918,65 @@ def _dpane_user_caps(tabs, model, req):
 		'stateful'          : False,
 		'apiGet'            : 'NetProfile.api.Privilege.user_get',
 		'apiSet'            : 'NetProfile.api.Privilege.user_set'
+	})
+
+_cal_serial = 1
+def generate_calendar(name, color):
+	global _cal_serial
+	cal = {
+		'id'    : _cal_serial,
+		'title' : name,
+		'color' : color
+	}
+	_cal_serial += 1
+	if _cal_serial >= 100:
+		raise ValueError('Too many system calendars')
+	return cal
+
+@extdirect_method('Calendar', 'cal_read', request_as_last_param=True, permission='USAGE')
+def cals_read(params, req):
+	cals = []
+	loc = get_localizer(req)
+	req.run_hook('core.calendar.calendars.read', cals, params, req)
+	for cal in cals:
+		if 'title' in cal:
+			cal['title'] = loc.translate(cal['title'])
+	return {
+		'success'   : True,
+		'calendars' : cals,
+		'total'     : len(cals)
+	}
+
+@extdirect_method('Calendar', 'evt_read', request_as_last_param=True, permission='USAGE')
+def evts_read(params, req):
+	evts = []
+	req.run_hook('core.calendar.events.read', evts, params, req)
+	return {
+		'success' : True,
+		'evts'    : evts,
+		'total'   : len(evts)
+	}
+
+@extdirect_method('Calendar', 'evt_update', request_as_last_param=True, permission='USAGE')
+def evts_update(params, req):
+	print('===============================================================================')
+	print('EVENT UPDATE')
+	print(repr(params))
+	print('===============================================================================')
+	req.run_hook('core.calendar.events.update', params, req)
+	return { 'success' : True }
+
+@register_hook('np.menu')
+def _menu_custom(name, menu, req, extb):
+	if name != 'modules':
+		return
+	loc = get_localizer(req)
+	menu.insert(0, {
+		'leaf'    : True,
+		'xview'   : 'calendar',
+		'order'   : 1,
+		'iconCls' : 'ico-mod-calendar',
+		'text'    : loc.translate(_('Events')),
+		'id'      : 'event'
 	})
 

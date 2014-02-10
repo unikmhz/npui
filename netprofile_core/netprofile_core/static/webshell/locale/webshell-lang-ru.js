@@ -105,7 +105,8 @@ Ext.onReady(function()
 
 	Ext.define('Ext.locale.ru.NetProfile.view.PropBar', {
 		override: 'NetProfile.view.PropBar',
-		recordText: 'Запись'
+		recordText: 'Запись',
+		submitText: 'Отправить'
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.view.TopBar', {

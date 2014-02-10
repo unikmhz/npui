@@ -27,15 +27,31 @@ Ext.require([
 	'${i_ajs}',
 % endfor
 	'NetProfile.model.Basic',
-	'NetProfile.view.CapabilityGrid'
+	'NetProfile.view.CapabilityGrid',
+	'NetProfile.view.Calendar'
 ], function()
 {
-//	NetProfile.api.Descriptor.enableBuffer = 100;
 	NetProfile.currentLocale = '${cur_loc}';
+	NetProfile.currentUser = '${req.user.login}';
+	NetProfile.currentUserId = ${req.user.id};
+	NetProfile.currentSession = '${str(req.np_session)}';
 	NetProfile.userSettings = ${req.user.client_settings(req) | n,jsone};
 	NetProfile.rootFolder = ${req.user.get_root_folder() | n,jsone};
 	NetProfile.baseURL = '${req.host_url}';
 	NetProfile.staticURL = '${req.host_url}';
+	//NetProfile.rtURL = '//${rt_host}:${rt_port}';
+	NetProfile.rtURL = '//' + window.location.hostname + ':${rt_port}';
+	NetProfile.rtSocket = null;
+	NetProfile.rtActiveUIDs = null;
+	NetProfile.rtMessageRenderers = {
+		file: function(val, meta, rec)
+		{
+			var fname = Ext.String.htmlEncode(val.fname),
+				surl = NetProfile.staticURL;
+
+			return '<a class="np-file-wrap" href="#" onclick="Ext.getCmp(\'npws_filedl\').loadFileById(' + Ext.String.htmlEncode(val.id) + '); return false;"><img class="np-file-icon" src="' + surl + '/static/core/img/mime/16/' + Ext.String.htmlEncode(val.mime) + '.png" title="' + fname + '" onerror=\'this.onerror = null; this.src="' + surl + '/static/core/img/mime/16/default.png"\' /><span title="' + fname + '">' + fname + '</span></a>';
+		}
+	};
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
 	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {
 		'X-CSRFToken': '${req.get_csrf()}'
@@ -270,6 +286,18 @@ Ext.require([
 		storeId: 'npstore_lang'
 	});
 
+	Ext.define('NetProfile.model.ConsoleMessage', {
+		extend: 'NetProfile.model.Basic',
+		fields: [
+			{ name: 'id',   type: 'auto' },
+			{ name: 'ts',   type: 'date', dateFormat: 'c' },
+			{ name: 'from', type: 'string' },
+			{ name: 'bodytype', type: 'string', defaultValue: 'text' },
+			{ name: 'data', type: 'auto' }
+		],
+		idProperty: 'id'
+	});
+
 	Ext.define('NetProfile.model.Menu', {
 		extend: 'Ext.data.Model',
 		fields: [
@@ -459,6 +487,7 @@ Ext.application({
 	stores: [],
 	controllers: [
 		'NetProfile.controller.DataStores',
+		'NetProfile.controller.Users',
 		'NetProfile.controller.FileAttachments',
 % for cont in res_ctl:
 		'${cont}',
@@ -469,7 +498,8 @@ Ext.application({
 	launch: function()
 	{
 		var state_prov = null,
-			state_loaded = false;
+			state_loaded = false,
+			rt_sock = null;
 
 		Ext.onReady(NetProfile.msg.init, NetProfile.msg);
 		if('localStorage' in window && window['localStorage'] !== null)
@@ -514,6 +544,76 @@ Ext.application({
 				}
 			}
 		});
+
+		if(NetProfile.rtURL)
+		{
+			rt_sock = SockJS(NetProfile.rtURL + '/sock');
+			rt_sock.onopen = function()
+			{
+% if req.debug_enabled:
+				Ext.log.info('SockJS connected');
+% endif
+				var msg = {
+					type:    'auth',
+					user:    NetProfile.currentUser,
+					uid:     NetProfile.currentUserId,
+					session: NetProfile.currentSession
+				};
+				rt_sock.send(Ext.JSON.encode(msg));
+			};
+			rt_sock.onmessage = function(ev)
+			{
+				ev.data = Ext.JSON.decode(ev.data);
+% if req.debug_enabled:
+				Ext.log.info({ dump: ev }, 'SockJS event received');
+% endif
+				if(typeof(ev.data.type) !== 'string')
+					return;
+				switch(ev.data.type)
+				{
+					case 'user_enters':
+					case 'user_leaves':
+						var uid = ev.data.uid,
+							obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
+						if(!obj)
+							return;
+						if(ev.data.type === 'user_enters')
+							obj.set('iconCls', 'ico-status-online');
+						else
+							obj.set('iconCls', 'ico-status-offline');
+						break;
+					case 'user_list':
+						var u, uid, obj;
+						NetProfile.rtActiveUIDs = ev.data.users;
+						for(u in ev.data.users)
+						{
+							uid = ev.data.users[u];
+							obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
+							if(!obj)
+								continue;
+							obj.set('iconCls', 'ico-status-online');
+						}
+						break;
+					case 'direct':
+						var store = NetProfile.StoreManager.getConsoleStore(ev.data.msgtype, ev.data.fromid),
+							rec;
+						if(store)
+						{
+							rec = Ext.create('NetProfile.model.ConsoleMessage');
+							rec.set('ts', new Date(ev.data.ts));
+							if(ev.data.fromstr)
+								rec.set('from', ev.data.fromstr);
+							if(ev.data.bodytype)
+								rec.set('bodytype', ev.data.bodytype);
+							if(ev.data.msg)
+								rec.set('data', ev.data.msg);
+							store.add(rec);
+						}
+						break;
+				}
+			}
+			NetProfile.rtSocket = rt_sock;
+		}
 
 		if(state_loaded !== 'OK')
 		{

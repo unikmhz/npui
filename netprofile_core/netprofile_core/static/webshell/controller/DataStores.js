@@ -3,6 +3,7 @@ Ext.define('NetProfile.controller.DataStores', {
 	init: function()
 	{
 		this.stores = {};
+		this.cons_stores = {};
 
 		NetProfile.StoreManager = this;
 	},
@@ -113,6 +114,46 @@ Ext.define('NetProfile.controller.DataStores', {
 			if((k == model) && v.getById(rid))
 				v.reload();
 		});
+	},
+	getConsoleStore: function(type, id)
+	{
+		var str_id = 'cons:' + type + ':' + id,
+			store = null;
+
+		if(str_id in this.cons_stores)
+			return this.cons_stores[str_id];
+		else
+			store = Ext.data.StoreManager.lookup(str_id);
+		if(!store)
+		{
+			store = Ext.create('Ext.data.Store', {
+				model: 'NetProfile.model.ConsoleMessage',
+				storeId: str_id,
+				autoLoad: true,
+				autoSync: true,
+				remoteFilter: false,
+				remoteGroup: false,
+				remoteSort: false,
+				sorters: [{
+					direction: 'ASC',
+					property: 'ts'
+				}],
+				proxy: {
+					type: 'sessionstorage',
+					id: str_id
+				}
+			});
+			store.on('datachanged', function(st)
+			{
+				var total = st.getCount(),
+					maxmsg = 50; // FIXME: make configurable
+
+				if(total > maxmsg)
+					st.removeAt(0, total - maxmsg);
+			});
+		}
+		this.cons_stores[str_id] = store;
+		return store;
 	}
 });
 

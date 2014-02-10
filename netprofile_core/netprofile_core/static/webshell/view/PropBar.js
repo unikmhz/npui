@@ -3,17 +3,14 @@ Ext.define('NetProfile.view.PropBar', {
 	alias: 'widget.propbar',
 	requires: [
 		'Ext.tab.Panel',
-		'Ext.util.KeyMap'
+		'Ext.util.KeyMap',
+		'Ext.form.field.Text',
+		'Ext.button.Button'
 	],
 	id: 'npws_propbar',
 	stateId: 'npws_propbar',
 	stateful: true,
 	collapsible: false,
-//	title: 'Properties',
-//	header: {
-//		iconCls: 'ico-props'
-//	},
-//	headerPosition: 'right',
 	hidden: true,
 	layout: 'fit',
 	split: false,
@@ -29,27 +26,11 @@ Ext.define('NetProfile.view.PropBar', {
 	tools: [],
 
 	recordText: 'Record',
+	submitText: 'Submit',
 
 	initComponent: function()
 	{
 		this.tabCache = {};
-//		this.tools = [{
-//			itemId: 'minimize',
-//			type: 'minimize',
-//			handler: function()
-//			{
-//				this.hide();
-//			},
-//			scope: this
-//		}, {
-//			itemId: 'close',
-//			type: 'close',
-//			handler: function()
-//			{
-//				this.clearAll();
-//			},
-//			scope: this
-//		}];
 		this.callParent(arguments);
 
 		this.on({
@@ -114,14 +95,13 @@ Ext.define('NetProfile.view.PropBar', {
 			tab = this.tabCache[tab_id];
 		else
 		{
+			tab_cfg = tab_cfg || {};
 			Ext.apply(tab_cfg, {
-				record: record,
 				closable: true,
-				cls: 'record-tab',
 				tabConfig: {
 					cls: 'record-tab-hdl'
 				},
-				listeners: {
+				listeners: Ext.apply(tab_cfg.listeners || {}, {
 					removed: function(comp, ct, opts)
 					{
 						if(ct.tabCache.hasOwnProperty(tab_id))
@@ -129,12 +109,57 @@ Ext.define('NetProfile.view.PropBar', {
 						return true;
 					},
 					scope: this
-				}
+				})
 			});
-			this.tabCache[tab_id] = tab = this.add(cfg);
+			this.tabCache[tab_id] = tab = this.add(tab_cfg);
 		}
 		this.setActiveTab(tab);
 		return tab;
+	},
+	addConsoleTab: function(tab_id, tab_cfg, submit_fn)
+	{
+		Ext.apply(tab_cfg, {
+			border: 0,
+			bbar: [{
+				xtype: 'textfield',
+				itemId: 'prompt',
+				shrinkWrap: 1,
+				flex: 1,
+				enableKeyEvents: true,
+				listeners: {
+					keydown: function(fld, ev)
+					{
+						if(ev.getKey() === ev.ENTER)
+						{
+							var me = this,
+								val = me.getValue();
+
+							ev.stopEvent();
+							me.setValue('');
+							if(submit_fn)
+								submit_fn(val);
+						}
+					}
+				}
+			}, {
+				xtype: 'button',
+				itemId: 'submit',
+				iconCls: 'ico-accept',
+				text: this.submitText,
+				handler: function()
+				{
+					var me = this,
+						tbar = me.up('toolbar'),
+						fld = tbar.getComponent('prompt'),
+						val = fld.getValue();
+
+					fld.setValue('');
+					if(submit_fn)
+						submit_fn(val);
+				}
+			}]
+		});
+		return this.addTab(tab_id, tab_cfg);
 	},
 	addRecordTab: function(module, model, cfg, record)
 	{

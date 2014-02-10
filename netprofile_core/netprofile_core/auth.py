@@ -208,6 +208,7 @@ def _auth_to_db(event):
 			except NoResultFound:
 				npsess = user.generate_session(request, sname)
 				sess.add(npsess)
+			request.np_session = npsess
 	else:
 		sess.execute(SetVariable('accessuid', 0))
 		sess.execute(SetVariable('accessgid', 0))

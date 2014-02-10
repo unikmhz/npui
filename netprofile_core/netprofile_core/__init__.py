@@ -109,7 +109,9 @@ class Module(ModuleBase):
 	def get_menus(self):
 		return (
 			Menu('modules', title=_('Modules'), order=10),
-			Menu('settings', title=_('Settings'), order=20, direct='settings'),
+			Menu('users', title=_('Users'), order=20, direct='users', options={ # FIXME: add permission= ?
+				'disableSelection' : True
+			}),
 			Menu('folders', title=_('Folders'), order=30, direct='folders', permission='FILES_LIST', options={
 				'root'        : {
 					'id'       : 'root',
@@ -148,18 +150,21 @@ class Module(ModuleBase):
 				{ 'name' : 'allow_traverse', 'type' : 'boolean' },
 				{ 'name' : 'parent_write',   'type' : 'boolean' }
 			)),
-			Menu('admin', title=_('Administration'), order=40, permission='BASE_ADMIN')
+			Menu('settings', title=_('Settings'), order=40, direct='settings'),
+			Menu('admin', title=_('Administration'), order=50, permission='BASE_ADMIN')
 		)
 
 	def get_js(self, request):
 		if request.debug_enabled:
 			return (
 				'netprofile_core:static/extjs/ext-all-dev.js',
+				'netprofile_core:static/extensible/lib/extensible-all-debug.js',
 				'netprofile_core:static/tinymce/tiny_mce_src.js',
 				'netprofile_core:static/sockjs/sockjs.js'
 			)
 		return (
 			'netprofile_core:static/extjs/ext-all.js',
+			'netprofile_core:static/extensible/lib/extensible-all.js',
 			'netprofile_core:static/tinymce/tiny_mce.js',
 			'netprofile_core:static/sockjs/sockjs.min.js'
 		)
@@ -167,12 +172,14 @@ class Module(ModuleBase):
 	def get_local_js(self, request, lang):
 		return (
 			'netprofile_core:static/extjs/locale/ext-lang-' + lang + '.js',
+			'netprofile_core:static/extensible/src/locale/extensible-lang-' + lang + '.js',
 			'netprofile_core:static/webshell/locale/webshell-lang-' + lang + '.js'
 		)
 
 	def get_css(self, request):
 		return (
 			'netprofile_core:static/extjs/resources/css/ext-all.css',
+			'netprofile_core:static/extensible/resources/css/extensible-all.css',
 			'netprofile_core:static/css/main.css'
 		)
 
