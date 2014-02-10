@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
+from netprofile.tpl import TemplateObject
 from .models import *
 
 from pyramid.i18n import TranslationStringFactory
@@ -38,6 +39,7 @@ class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_sessions:locale/')
+		mmgr.cfg.register_block('stashes.cl.block.entity_menu', TemplateObject('netprofile_sessions:templates/client_block_sessions.mak'))
 		mmgr.cfg.scan()
 
 	@classmethod
