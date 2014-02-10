@@ -324,7 +324,7 @@ class TicketState(Base):
 		UInt32(),
 		Comment('Default ticket duration (in sec)'),
 		nullable=True,
-		default=None,
+		default=0,
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Duration')

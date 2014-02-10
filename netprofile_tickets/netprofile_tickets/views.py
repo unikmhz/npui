@@ -48,7 +48,10 @@ from netprofile.ext.wizards import (
 )
 from netprofile.common.factory import RootFactory
 from netprofile.db.fields import npbool
-from netprofile.db.clauses import SetVariable
+from netprofile.db.clauses import (
+	IntervalSeconds,
+	SetVariable
+)
 from netprofile.db.connection import DBSession
 from netprofile.ext.data import ExtModel
 from netprofile.ext.direct import extdirect_method
@@ -57,6 +60,7 @@ from netprofile_core.models import (
 	Group,
 	User
 )
+from netprofile_core.views import generate_calendar
 
 from .models import (
 	Ticket,
@@ -454,6 +458,74 @@ def dyn_ticket_sched_find(params, request):
 		'success' : True,
 		'dates'   : dates
 	}
+
+_cal = generate_calendar(_('Tickets'), 22)
+_cal['cancreate'] = False
+
+@register_hook('core.calendar.calendars.read')
+def _cal_calendars(cals, params, req):
+	if not has_permission('TICKETS_LIST', req.context, req):
+		return
+	cals.append(_cal)
+
+@register_hook('core.calendar.events.read')
+def _cal_events(evts, params, req):
+	if not has_permission('TICKETS_LIST', req.context, req):
+		return
+	ts_from = params.get('startDate')
+	ts_to = params.get('endDate')
+	if (not ts_from) or (not ts_to):
+		return
+	ts_from = dparse(ts_from).replace(hour=0, minute=0, second=0, microsecond=0)
+	ts_to = dparse(ts_to).replace(hour=23, minute=59, second=59, microsecond=999999)
+	sess = DBSession()
+	q = sess.query(Ticket)\
+		.filter(
+			Ticket.assigned_time <= ts_to,
+			IntervalSeconds(Ticket.assigned_time, Ticket.duration) >= ts_from
+		)
+	for tkt in q:
+		ev = {
+			'id'       : 'ticket-%d' % tkt.id,
+			'cid'      : _cal['id'],
+			'title'    : tkt.name,
+			'start'    : tkt.assigned_time,
+			'end'      : tkt.end_time,
+			'notes'    : tkt.description,
+			'apim'     : 'tickets',
+			'apic'     : 'Ticket',
+			'apiid'    : tkt.id,
+			'caned'    : False
+		}
+		evts.append(ev)
+
+@register_hook('core.calendar.events.update')
+def _cal_events_update(params, req):
+	cal_id = int(params.get('CalendarId', 0))
+	if cal_id != _cal['id']:
+		return
+	if 'EventId' not in params:
+		return
+	evtype, evid = params['EventId'].split('-')
+	if evtype != 'ticket':
+		return
+	evid = int(evid)
+	if not has_permission('TICKETS_UPDATE', req.context, req):
+		return
+	sess = DBSession()
+	tkt = sess.query(Ticket).get(evid)
+	if tkt is None:
+		return
+	sess.execute(SetVariable('ticketid', tkt.id))
+	if 'StartDate' in params:
+		new_ts = dparse(params['StartDate']).replace(tzinfo=None, microsecond=0)
+		if new_ts:
+			tkt.assigned_time = new_ts
+	if ('EndDate' in params) and tkt.assigned_time:
+		new_ts = dparse(params['EndDate']).replace(tzinfo=None, microsecond=0)
+		if new_ts:
+			delta = new_ts - tkt.assigned_time
+			tkt.duration = delta.seconds
 
 class ClientRootFactory(RootFactory):
 	def __getitem__(self, name):
