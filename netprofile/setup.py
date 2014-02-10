@@ -31,6 +31,10 @@ requires = [
 	'lingua',
 	'lxml',
 	'cdecimal',
+
+	'tornado',
+	'sockjs-tornado',
+	'tornado-redis'
 ]
 
 setup(
@@ -74,6 +78,7 @@ setup(
 		[console_scripts]
 		np_createdb = netprofile.scripts.createdb:main
 		np_dropdb = netprofile.scripts.dropdb:main
+		np_rtd = netprofile.scripts.rtd:main
 		[netprofile.modules]
 	""",
 )

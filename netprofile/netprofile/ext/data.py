@@ -2011,10 +2011,14 @@ class ExtModel(object):
 			fdef = col.get_editor_cfg(request, in_form=True)
 			if fdef is not None:
 				fields.append(fdef)
+		is_ro = False
+		if self.cap_edit and (not has_permission(self.cap_edit, request.context, request)):
+			is_ro = True
 		return {
 			'success' : True,
 			'fields'  : fields,
-			'rvalid'  : (True if len(self.u_idx) > 0 else False)
+			'rvalid'  : (True if len(self.u_idx) > 0 else False),
+			'ro'      : is_ro
 		}
 
 	def validate_fields(self, values, request):

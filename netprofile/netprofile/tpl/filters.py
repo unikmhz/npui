@@ -36,8 +36,18 @@ from babel.dates import (
 	get_datetime_format,
 	get_time_format
 )
-from babel.numbers import format_currency
+from babel.numbers import (
+	format_currency,
+	format_decimal
+)
 from netprofile.ext.direct import JsonReprEncoder
+
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
+
+_ = TranslationStringFactory('netprofile')
 
 def jsone(data):
 	return json.dumps(data, cls=JsonReprEncoder, indent=3)
@@ -83,4 +93,29 @@ def datetime_fmt_tpl(ctx, fmt='medium'):
 		get_time_format(fmt).pattern,
 		get_date_format(fmt).pattern
 	)
+
+def bytes_fmt(ctx, obj):
+	req = ctx.get('req', None)
+	i18n = ctx.get('i18n', None)
+	loc = None
+	if req:
+		loc = get_localizer(req)
+	suffix = _('B')
+
+	if obj > 1073741824:
+		obj = obj / 1073741824
+		suffix = _('GiB')
+	elif obj > 1048576:
+		obj = obj / 1048576
+		suffix = _('MiB')
+	elif obj > 1024:
+		obj = obj / 1024
+		suffix = _('KiB')
+	if loc:
+		suffix = loc.translate(suffix)
+	if i18n:
+		obj = format_decimal(obj, '#,##0.###;-#', i18n)
+	else:
+		obj = format_decimal(obj, '#,##0.###;-#')
+	return '%s %s' % (obj, suffix)
 

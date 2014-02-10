@@ -35,12 +35,28 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.session import make_transient
 from sqlalchemy.ext.declarative import declarative_base
 from zope.sqlalchemy import ZopeTransactionExtension
-from sqlalchemy import event
+from sqlalchemy import (
+	Sequence,
+	event
+)
 
 class Versioned(object):
 	def new_version(self, sess):
 		make_transient(self)
 		self.id = None
+
+def _cb_after_create(table, conn, **kwargs):
+	for col in table.columns.values():
+		if isinstance(col.default, Sequence):
+			if (conn.dialect.name == 'mysql') and col.default.start:
+				conn.execute('ALTER TABLE %s AUTO_INCREMENT = %d' % (
+					table.name,
+					col.default.start
+				))
+
+def _cb_instrument_class(mapper, cls):
+	if mapper.local_table is not None:
+		event.listen(mapper.local_table, 'after_create', _cb_after_create)
 
 def _cb_before_flush(sess, flush_ctx, instances):
 	versioned_inst = []
@@ -64,5 +80,6 @@ DBSession = scoped_session(sessionmaker(
 ))
 Base = declarative_base()
 
+event.listen(Base, 'instrument_class', _cb_instrument_class, propagate=True)
 event.listen(DBSession, 'before_flush', _cb_before_flush)
 

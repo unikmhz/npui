@@ -116,3 +116,6 @@ def visit_set_table_comment_pgsql(element, compiler, *kw):
 def visit_set_table_comment(element, compiler, *kw):
 	pass
 
+def ddl_fmt(obj):
+	pass
+
