@@ -59,6 +59,14 @@ ${gen_block('stashes.cl.block.menu', stash=stash) | n}
 		<li class="list-group-item">
 			<h4 class="list-group-item-heading">
 				${a.nick}
+			<div class="btn-group">
+				<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" title="${_('Actions')}">
+					<span class="glyphicon glyphicon-cog"></span>
+				</button>
+				<ul class="dropdown-menu" role="menu">
+${gen_block('stashes.cl.block.entity_menu', stash=stash, a=a) | n}
+				</ul>
+			</div>
 % if a.access_state:
 				<span class="label label-danger pull-right">${a.access_state_string(req)}</span>
 % endif
