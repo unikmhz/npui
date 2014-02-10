@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<script type="text/javascript" src="../../Extensible-config.js"></script>
+
+<script type="text/javascript">
+
+Ext.Loader.setConfig({
+    enabled: true,
+    disableCaching: false,
+    paths: {
+        "Extensible": "../../src",
+        "Extensible.example": ".."
+    }
+});
+
+Ext.require('Extensible.calendar.CalendarPanel');
+
+Ext.onReady(function(){
+    var getStore = function() {
+        return Ext.create('Extensible.calendar.data.MemoryEventStore', {
+            data: Ext.create('Extensible.example.calendar.data.Events')
+        });
+    };
+    
+    var calendar;
+    
+    var createCalendar = function() {
+        if (calendar) {
+            calendar.destroy();
+        }
+        calendar = Ext.create('Ext.Panel', {
+            title: 'Destroy Test',
+            renderTo: document.body,
+            width: 700,
+            height: 500,
+            layout: 'border',
+            items: [{
+                region: 'center',
+                xtype: 'extensible.calendarpanel',
+                eventStore: getStore()
+            }]
+        });
+    }
+    
+    Ext.create('Ext.Button', {
+        renderTo: document.body,
+        text: 'Create New Calendar',
+        handler: function() {
+            createCalendar();
+        }
+    });
+    
+    createCalendar();
+});
+
+
+</script>
+
+</head>
+<body>
+
+</body>
+</html>
