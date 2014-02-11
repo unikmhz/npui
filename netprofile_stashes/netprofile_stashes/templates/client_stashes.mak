@@ -32,7 +32,24 @@
 % endif
 		</h4>
 	</div>
-	<div class="col-sm-8" style="padding-bottom: 0.6em;"><ul class="nav nav-tabs">
+	<div class="col-sm-8" style="padding-bottom: 0.6em;">
+	<noscript>
+		<div class="btn-group pull-right no-js">
+			<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" title="${_('Actions')}" id="menu-reports-nojs-${stash.id}">
+				${_('Actions')}
+				<span class="caret"></span>
+			</button>
+			<ul class="dropdown-menu pull-right" role="menu" aria-labelledby="menu-reports-${stash.id}" aria-expanded="false" aria-hidden="true">
+				<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">${_('Create User')}</a></li>
+				<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">${_('Transfer Funds')}</a></li>
+				<li role="presentation" class="divider"></li>
+				<li role="presentation"><a role="menuitem" tabindex="-1" href="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'ops'))}">${_('Operations Report')}</a></li>
+				<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">${_('Promised Payments Report')}</a></li>
+${gen_block('stashes.cl.block.menu', stash=stash) | n}
+			</ul>
+		</div>
+	</noscript>
+	<ul class="nav nav-tabs">
 		<li class="active"><a href="#tab-users-${stash.id}" data-toggle="tab">${_('Users')}</a></li>
   	    <li><a href="#tab-replenish-${stash.id}" data-toggle="tab">${_('Replenish')}</a></li>
 		<li class="dropdown pull-right">
@@ -41,15 +58,16 @@
 				<span class="caret"></span>
 			</a>
 			<ul class="dropdown-menu pull-right" role="menu" aria-labelledby="menu-reports-${stash.id}" aria-expanded="false" aria-hidden="true">
-				<li role="presentation"><a role="menuitem" tabindex="-1" href="#">${_('Create User')}</a></li>
-				<li role="presentation"><a role="menuitem" tabindex="-1" href="#">${_('Transfer Funds')}</a></li>
+				<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">${_('Create User')}</a></li>
+				<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">${_('Transfer Funds')}</a></li>
 				<li role="presentation" class="divider"></li>
 				<li role="presentation"><a role="menuitem" tabindex="-1" href="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'ops'))}">${_('Operations Report')}</a></li>
-				<li role="presentation"><a role="menuitem" tabindex="-1" href="#">${_('Promised Payments Report')}</a></li>
+				<li role="presentation" class="disabled"><a role="menuitem" tabindex="-1" href="#">${_('Promised Payments Report')}</a></li>
 ${gen_block('stashes.cl.block.menu', stash=stash) | n}
 			</ul>
 		</li>
-	</ul></div>
+	</ul>
+	</div>
 </div>
 <div class="tab-content">
 % if len(stash.access_entities):
@@ -59,11 +77,11 @@ ${gen_block('stashes.cl.block.menu', stash=stash) | n}
 		<li class="list-group-item">
 			<h4 class="list-group-item-heading">
 				${a.nick}
-			<div class="btn-group">
-				<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" title="${_('Actions')}">
+			<div class="btn-group no-js">
+				<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" title="${_('Actions')}" id="menubtn-user-${a.id}">
 					<span class="glyphicon glyphicon-cog"></span>
 				</button>
-				<ul class="dropdown-menu" role="menu">
+				<ul class="dropdown-menu" role="menu" aria-labelledby="menubtn-user-${a.id}">
 ${gen_block('stashes.cl.block.entity_menu', stash=stash, a=a) | n}
 				</ul>
 			</div>
