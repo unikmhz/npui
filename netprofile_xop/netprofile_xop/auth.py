@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
-# NetProfile: XOP module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# NetProfile: XOP module - Authentication
+# © Copyright 2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -34,11 +34,12 @@ from pyramid.security import (
 	Authenticated,
 	unauthenticated_userid
 )
-from pyramid.events import (
-	NewRequest,
-	ContextFound
+from pyramid.events import ContextFound
+from pyramid.authentication import (
+	BasicAuthAuthenticationPolicy,
+	CallbackAuthenticationPolicy,
+	SessionAuthenticationPolicy
 )
-from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.interfaces import IAuthenticationPolicy
 from sqlalchemy.orm.exc import NoResultFound
@@ -46,71 +47,19 @@ from sqlalchemy.orm.exc import NoResultFound
 from netprofile.db.connection import DBSession
 from netprofile.db.clauses import SetVariable
 
-from netprofile.common.auth import (
-	DigestAuthenticationPolicy,
-	PluginAuthenticationPolicy
-)
-from .models import ExternalOperationProvider
-
-from netprofile_core.models import User
-from netprofile_entities.models import Entity
-from netprofile_rates.models import RateModifierType
-from netprofile_dialup.models import IPPool
-from netprofile_hosts.models import Host
-from netprofile_networks.models import Network
-from netprofile_ipaddresses.models import IPv4Address
-from netprofile_access.models import AccessEntity
-from netprofile_stashes.models import (
-	StashIOType,
-	Stash
-)
+from netprofile.common.auth import PluginAuthenticationPolicy
 
 import binascii
 import hashlib
 
-#from zope.interface import implements
 from zope.interface import implementer
 
-from pyramid.security import Everyone
-from pyramid.security import Authenticated
+from pyramid.security import (
+	Authenticated,
+	Everyone
+)
 
-def _get_credentials(request):
-	if 'login' in request.POST and 'password' in request.POST:
-		return {'login':request.POST.get('login', ''), 'password':request.POST.get('password', '')}
-	return None
-
-def _parse_authorization(request, secret, realm):
-	authz = request.authorization
-	if (not authz) or (len(authz) != 2) or (authz[0] != 'Digest'):
-		_add_www_authenticate(request, secret, realm)
-		return None
-	params = authz[1]
-	if 'algorithm' not in params:
-		params['algorithm'] = 'MD5'
-	for required in ('username', 'realm', 'nonce', 'uri', 'response', 'cnonce', 'nc', 'opaque'):
-		if (required not in params) or ((required == 'opaque') and (params['opaque'] != 'NPDIGEST')):
-			_add_www_authenticate(request, secret, realm)
-			return None
-	return params
-
-def _get_basicauth_credentials(request):
-	authorization = request.authorization
-	try:
-		authmeth, auth = authorization.split(' ', 1)
-	except ValueError: # not enough values to unpack
-		return None
-	if authmeth.lower() == 'basic':
-		try:
-			auth = auth.strip().decode('base64')
-		except binascii.Error: # can't decode
-			return None
-		try:
-			login, password = auth.split(':', 1)
-		except ValueError: # not enough values to unpack
-			return None
-		return {'login':login, 'password':password}
-
-	return None
+from .models import ExternalOperationProvider
 
 def find_princs(userid, request):
 	sess = DBSession()
@@ -128,85 +77,59 @@ def find_princs(userid, request):
 	return []
 
 @implementer(IAuthenticationPolicy)
-class BasicAuthenticationXOPPolicy(object):
-
-	def __init__(self, login, password, realm='Realm'):
-		self.login = login
+class XOPBasicAuthenticationPolicy(BasicAuthAuthenticationPolicy):
+	def __init__(self, username, password, realm='Realm', debug=False):
+		super(XOPBasicAuthenticationPolicy, self).__init__(self._std_check, realm, debug)
+		self.username = username
 		self.password = password
-		self.realm = realm
 
-	def authenticated_userid(self, request):
-		credentials = _get_basicauth_credentials(request)
-		if credentials is None:
+	def _std_check(username, password, request):
+		if username != self.username:
 			return None
-		if credentials['user'] == self.user and credentials['password']  == self.password: 
-			return  credentials['user']
-
-	def effective_principals(self, request):
-		effective_principals = [Everyone]
-		credentials = _get_basicauth_credentials(request)
-		if credentials is None:
-			return effective_principals
-		userid = credentials['login']
-		groups = ['group']
-		effective_principals.append(Authenticated)
-		effective_principals.append(userid)
-		effective_principals.extend(groups)
-		return effective_principals
-
-	def unauthenticated_userid(self, request):
-		creds = _get_basicauth_credentials(request)
-		if creds is not None:
-			return creds['login']
-		return None
-
-	def remember(self, request, principal, **kw):
+		if password != self.password:
+			return None
 		return []
-
-	def forget(self, request):
-		return [('WWW-Authenticate: Basic realm="%s"' % self.realm)]
-
 
 @implementer(IAuthenticationPolicy)
-class HashAuthenticationXOPPolicy(object):
+class XOPHashAuthenticationPolicy(CallbackAuthenticationPolicy):
+	def __init__(self, username, password, htype):
+		self.username = username
+		self.password = password
+		self.hash_type = htype
 
-	def __init__(self, login, password, hash):
-		self.login = login
-		if(hash == 'md5'):
-			self.password = hashlib.md5(password).encode()
-		elif(hash == 'sha1'):
-			self.password = hashlib.sha1(password).encode()
-
-	def authenticated_userid(self, request):
-		credentials = _get_credentials(request)
-		if credentials is None:
-			return None
-		if credentials['user'] == self.user and credentials['password']  == self.password: 
-			return  credentials['user']
-
-	def effective_principals(self, request):
-		effective_principals = [Everyone]
-		credentials = _get_credentials(request)
-		if credentials is None:
-			return effective_principals
-		userid = credentials['login']
-		groups = ['group']
-		effective_principals.append(Authenticated)
-		effective_principals.append(userid)
-		effective_principals.extend(groups)
-		return effective_principals
+	def _get_credentials(request):
+		if 'user' in request.params and 'password' in request.params:
+			cred = {
+				'user' : request.params.get('user'),
+				'pass' : request.params.get('pass')
+			}
+			if 'salt' in request.params:
+				cred['salt'] = request.params.get('salt')
+			return cred
 
 	def unauthenticated_userid(self, request):
-		creds = _get_credentials(request)
-		if creds is not None:
-			return creds['login']
-		return None
+		creds = self._get_credentials(request)
+		if creds:
+			return creds['user']
 
 	def remember(self, request, principal, **kw):
 		return []
 
 	def forget(self, request):
 		return []
+
+	def callback(self, username, request):
+		creds = self._get_credentials(request)
+		if creds:
+			if username != creds['user']:
+				return None
+			password = creds.get('pass', '')
+			salt = creds.get('salt', '')
+			ctx = hashlib.new(self.hash_type)
+			ctx.update(salt.encode())
+			ctx.update(password.encode())
+			if ctx.hexdigest() == password:
+				return []
 
 def get_user(request):
 	sess = DBSession()
@@ -257,22 +180,17 @@ def includeme(config):
 	opts = dict()
 
 	for xopp in sess.query(ExternalOperationProvider):
+		uri = '/' + xopp.uri
 		if(xopp.authmethod == ExternalOperationProviderAuthMethod.http):
-			opts.update ({ 
-				'/' + xopp.uri : BasicAuthenticationXOPPolicy(
+			opts[uri] = XOPBasicAuthenticationPolicy(
 					xopp.authuser,
 					xopp.authpass,
-					settings.get('netprofile.auth.http_realm', 'NetProfile UI')
+					settings.get('netprofile.auth.http_realm', 'NetProfile XOP')
 				)
-			})
 		elif(xopp.authmethod == ExternalOperationProviderAuthMethod.md5):
-			opts.update ({ 
-				'/' + xopp.uri : HashAuthenticationXOPPolicy(xopp.authuser, xopp.authpass, 'md5')
-			})
+			opts[uri] = XOPHashAuthenticationPolicy(xopp.authuser, xopp.authpass, 'md5')
 		elif(xopp.authmethod == ExternalOperationProviderAuthMethod.sha1):
-			opts.update ({ 
-				'/' + xopp.uri : HashAuthenticationXOPPolicy(xopp.authuser, xopp.authpass, 'sha1')
-			})
+			opts[uri] = XOPHashAuthenticationPolicy(xopp.authuser, xopp.authpass, 'sha1')
 			
 	authn_policy = PluginAuthenticationPolicy(
 		SessionAuthenticationPolicy(callback=find_princs),

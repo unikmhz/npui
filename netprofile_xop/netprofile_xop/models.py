@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: XOP module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -104,10 +104,10 @@ class ExternalOperation(Base):
 	"""
 	External operation object.
 	"""
-	
+
 	__tablename__ = 'xop_def'
 	__table_args__ = (
-		Comment('External Operations'),
+		Comment('External operations'),
 		Index('xop_def_i_extid', 'extid'),
 		Index('xop_def_i_xoppid', 'xoppid'),
 		Index('xop_def_i_ts', 'ts'),
@@ -120,10 +120,10 @@ class ExternalOperation(Base):
 				'cap_menu'     : 'BASE_XOP',
 				'cap_read'     : 'STASHES_IO',
 				'cap_create'   : 'STASHES_IOTYPES_CREATE',
-				'cap_edit'     : 'STASHES_IOTYPES_EDIT',
-				'cap_delete'   : 'STASHES_IOTYPES_DELETE',
+				'cap_edit'     : '__NOPRIV__',
+				'cap_delete'   : '__NOPRIV__',
 
-				'menu_name'    : _('External operations'),
+				'menu_name'    : _('External Operations'),
 				'menu_main'	   : True,
 				'show_in_menu' : 'modules',
 				'menu_order'   : 50,
@@ -256,7 +256,7 @@ class ExternalOperationProvider(Base):
 	"""
 	__tablename__ = 'xop_providers'
 	__table_args__ = (
-		Comment('External Operation Providers'),
+		Comment('External operation providers'),
 		Index('xop_providers_u_name', 'name', unique=True),
 		Index('xop_providers_u_uri', 'uri', unique=True),
 		Index('xop_providers_u_sname', 'sname', unique=True),
