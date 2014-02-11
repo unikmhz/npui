@@ -23,3 +23,8 @@ ul.nav-tabs
 	display: none;
 }
 
+.no-js > li:hover > .dropdown-menu { display: block; }
+.no-js > .dropdown-toggle:hover + .dropdown-menu { display: block; }
+.no-js > .dropdown-menu { top: 32px; }
+.no-js > .dropdown-menu:hover { display: block; }
+

@@ -181,10 +181,6 @@ div.controls span.req
 .money { font-size: 2em; }
 .money .fa { font-size: 85%; }
 
-.hide-no-js { display: none; }
-ul.no-js > li:hover > ul.dropdown-menu { display: block; }
-ul.no-js > .tab-pane, ul.no-js > .pill-pane, ul.no-js > .list-group-item { display: block; }
-
 /*
  * jQuery File Upload Plugin CSS 1.3.0
  * https://github.com/blueimp/jQuery-File-Upload
