@@ -38,6 +38,7 @@ from sqlalchemy import (
 	ForeignKey,
 	Index,
 	Numeric,
+	PickleType,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -53,6 +54,7 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from netprofile.common.ipaddr import IPNetwork
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -142,7 +144,7 @@ class ExternalOperation(Base):
 		'xopid',
 		UInt32(),
 		Sequence('xop_def_xopid_seq'),
-		Comment('External Operation ID'),
+		Comment('External operation ID'),
 		primary_key=True,
 		nullable=False,
 		info={
@@ -152,28 +154,30 @@ class ExternalOperation(Base):
 	external_id = Column(
 		'extid',
 		ASCIIString(255),
-		Comment('Remote Provider Operation ID'),
+		Comment('Remote provider operation ID'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('External ID'),
+			'header_string' : _('External ID')
 		}
 	)
 	external_account = Column(
 		'eacct',
 		Unicode(255),
-		Comment('External Account Name'),
+		Comment('External account name'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('External account'),
+			'header_string' : _('External Account')
 		}
 	)
 	provider_id = Column(
 		'xoppid',
 		UInt32(),
 		ForeignKey('xop_providers.xoppid', name='xop_def_fk_xoppid', onupdate='CASCADE'),
-		Comment('External Operation Provider ID'),
+		Comment('External operation provider ID'),
 		nullable=False,
 		info={
 			'header_string' : _('Provider'),
@@ -183,50 +187,57 @@ class ExternalOperation(Base):
 	timestamp = Column(
 		'ts',
 		TIMESTAMP(),
-		Comment('Timestamp of Operation'),
+		Comment('Timestamp of operation'),
 		nullable=False,
 		default=None,
 		server_default=func.current_timestamp(),
+		server_onupdate=func.current_timestamp(),
 		info={
-			'header_string' : _('Ends')
+			'header_string' : _('Date')
 		}
 	)
 	entity_id = Column(
 		'entityid',
 		UInt32(),
-		ForeignKey('entities_def.entityid', name='xop_def_fk_entityid', onupdate='CASCADE', ondelete="SET NULL"),
-		Comment('Used entity ID'),
-		nullable=False,
+		ForeignKey('entities_def.entityid', name='xop_def_fk_entityid', onupdate='CASCADE', ondelete='SET NULL'),
+		Comment('Entity ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('Entity'),
+			'filter_type'   : 'none',
 			'column_flex'   : 3
 		}
 	)
 	stash_id = Column(
 		'stashid',
 		UInt32(),
-		ForeignKey('stashes_def.stashid', name='xop_def_fk_stashid', onupdate='CASCADE', ondelete="SET NULL"),
-		Comment('Used stash ID'),
-		nullable=False,
+		ForeignKey('stashes_def.stashid', name='xop_def_fk_stashid', onupdate='CASCADE', ondelete='SET NULL'),
+		Comment('Affected stash ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('Stash'),
+			'filter_type'   : 'none',
 			'column_flex'   : 3
 		}
 	)
 	difference = Column(
 		'diff',
 		Numeric(20, 8),
-		Comment('Stash Amount Changes'),
+		Comment('Stash amount changes'),
 		nullable=False,
 		default=0,
-		server_default=text('0.00000000'),
+		server_default=text('0.0'),
 		info={
 			'header_string' : _('Amount')
 		}
 	)
 	state = Column(
 		ExternalOperationState.db_type(),
-		Comment('Operation State'),
+		Comment('Operation state'),
 		nullable=False,
 		default=ExternalOperationState.new,
 		server_default=ExternalOperationState.new,
@@ -234,6 +245,7 @@ class ExternalOperation(Base):
 			'header_string': _('State')
 		}
 	)
+
 	provider = relationship(
 		'ExternalOperationProvider',
 		innerjoin=True,
@@ -241,14 +253,18 @@ class ExternalOperation(Base):
 	)
 	entity = relationship(
 		'Entity',
-		innerjoin=True,
 		backref='external_operations'
 	)
 	stash = relationship(
 		'Stash',
-		innerjoin=True,
 		backref='external_operations'
 	)
+
+	def __str__(self):
+		return '%s %s' % (
+			self.provider,
+			self.external_id
+		)
 
 class ExternalOperationProvider(Base):
 	"""
@@ -260,6 +276,7 @@ class ExternalOperationProvider(Base):
 		Index('xop_providers_u_name', 'name', unique=True),
 		Index('xop_providers_u_uri', 'uri', unique=True),
 		Index('xop_providers_u_sname', 'sname', unique=True),
+		Index('xop_providers_i_siotypeid', 'siotypeid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -269,17 +286,18 @@ class ExternalOperationProvider(Base):
 				'cap_create'   : 'STASHES_IOTYPES_CREATE',
 				'cap_edit'     : 'STASHES_IOTYPES_EDIT',
 				'cap_delete'   : 'STASHES_IOTYPES_DELETE',
-				'menu_name'     : _('XOP Providers'),
+				'menu_name'     : _('Providers'),
 				'show_in_menu' : 'admin',
 				'menu_order'   : 50,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'sname', 'gwclass', 'enabled'),
 				'form_view'    : (
 					'uri', 'name', 'sname', 'gwclass', 'enabled',
-					'accesslist', 'siotype', 'mindiff', 'maxdiff', 'authmethod',
-					'authopts', 'authuser', 'authpass', 'description'
+					'accesslist', 'io_type', 'mindiff', 'maxdiff', 'authmethod',
+					'authopts', 'authuser', 'authpass', 'descr'
 				),
-				'create_wizard' : SimpleWizard(title=_('Add new XOP Provider'))
+				'create_wizard' : SimpleWizard(title=_('Add new provider')),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
@@ -287,7 +305,7 @@ class ExternalOperationProvider(Base):
 		'xoppid',
 		UInt32(),
 		Sequence('xop_providers_xoppid_seq'),
-		Comment('External Operation Provider ID'),
+		Comment('External operation provider ID'),
 		primary_key=True,
 		nullable=False,
 		info={
@@ -295,37 +313,40 @@ class ExternalOperationProvider(Base):
 		}
 	)
 	uri = Column(
-		'uri',
 		ASCIIString(64),
 		Comment('URI used in XOP interface'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('URI'),
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
-		'name',
 		Unicode(255),
-		Comment('External Account Name'),
+		Comment('External operation provider name'),
 		nullable=False,
 		info={
 			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
-	sname = Column(
+	short_name = Column(
 		'sname',
 		Unicode(32),
-		Comment('External Account Short Name'),
+		Comment('External operation provider short name'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('Short name'),
+			'header_string' : _('Short Name'),
+			'column_flex'   : 1
 		}
 	)
 	enabled = Column(
 		NPBoolean(),
-		Comment('Is modifier enabled?'),
+		Comment('Is provider enabled?'),
 		nullable=False,
 		default=False,
 		server_default=npbool(False),
@@ -333,111 +354,121 @@ class ExternalOperationProvider(Base):
 			'header_string' : _('Enabled')
 		}
 	)
-	accesslist = Column(
+	access_list = Column(
 		'accesslist',
 		ASCIIString(255),
-		Comment('Allowed Access Rules'),
+		Comment('Allowed access rules'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('Access List'),
+			'header_string' : _('Access List')
 		}
 	)
-	gwclass = Column(
+	gateway_class = Column(
 		'gwclass',
-		ASCIIString(255),
-		Comment('Provider Gateway Class Name'),
+		ASCIIString(64),
+		Comment('Provider gateway class name'),
 		nullable=False,
 		info={
-			'header_string' : _('GW Class'),
+			'header_string' : _('Gateway')
 		}
 	)
-	siotype_id = Column(
+	io_type_id = Column(
 		'siotypeid',
 		UInt32(),
-		Comment('Stash I/O type generated in Transaction'),
+		Comment('Stash I/O type generated in transaction'),
 		ForeignKey('stashes_io_types.siotypeid', name='xop_providers_fk_soitypeid', onupdate='CASCADE'),
-		nullable=False,
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'header_string' : _('Operation Type'),
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
-	mindiff = Column(
+	min_difference = Column(
 		'mindiff',
 		Numeric(20, 8),
-		Comment('Minimum Operation Result'),
+		Comment('Minimum operation result'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('Minimum amount')
+			'header_string' : _('Minimum Amount')
 		}
 	)
-	maxdiff = Column(
+	max_difference = Column(
 		'maxdiff',
 		Numeric(20, 8),
-		Comment('Maxmum Operation Result'),
+		Comment('Maxmum operation result'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('Maximum amount')
+			'header_string' : _('Maximum Amount')
 		}
 	)
-	authmethod = Column(
+	authentication_method = Column(
 		'authmethod',
 		ExternalOperationProviderAuthMethod.db_type(),
-		Comment('Authentication Method'),
+		Comment('Authentication method'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string': _('Auth type')
+			'header_string': _('Auth Type')
 		}
 	)
-	authopts = Column(
+	authentication_options = Column(
 		'authopts',
-		Unicode(255),
-		Comment('Authentication Options'),
+		PickleType(),
+		Comment('Authentication options'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('Auth options'),
+			'header_string' : _('Auth Options')
 		}
 	)
-	authuser = Column(
+	authentication_username = Column(
 		'authuser',
 		Unicode(255),
-		Comment('Authentication User'),
+		Comment('Authentication user'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('Auth user'),
+			'header_string' : _('Auth User')
 		}
 	)
-	authpass= Column(
+	authentication_password = Column(
 		'authpass',
 		Unicode(255),
-		Comment('Authentication Password'),
+		Comment('Authentication password'),
 		nullable=True,
 		default=None,
+		server_default=text('NULL'),
 		info={
-			'header_string' : _('Auth password'),
+			'header_string' : _('Auth Password')
 		}
-	)
-	siotype = relationship(
-		'StashIOType',
-		innerjoin=True,
-		backref='xop_providers'
 	)
 	description = Column(
 		'descr',
 		UnicodeText(),
-		Comment('Link type description'),
+		Comment('External operation provider description'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Description')
 		}
+	)
+
+	io_type = relationship(
+		'StashIOType',
+		backref='external_operation_providers'
 	)
 
 	def __str__(self):

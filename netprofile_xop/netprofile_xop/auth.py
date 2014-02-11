@@ -65,12 +65,12 @@ def find_princs(userid, request):
 	sess = DBSession()
 
 	user = request.user
-	if user and (user.authuser == userid):
+	if user and (user.authentication_username == userid):
 		return []
 	try:
 		user = sess.query(ExternalOperationProvider).filter(
 			ExternalOperationProvider.enabled == True,
-			ExternalOperationProvider.auth == userid
+			ExternalOperationProvider.authentication_username == userid
 		).one()
 	except NoResultFound:
 		return None
@@ -138,7 +138,7 @@ def get_user(request):
 	if userid is not None:
 		try:
 			return sess.query(ExternalOperationProvider).filter(
-				ExternalOperationProvider.authuser == userid
+				ExternalOperationProvider.authentication_username == userid
 			).one()
 		except NoResultFound:
 			return None
@@ -175,22 +175,20 @@ def includeme(config):
 	settings = config.registry.settings
 
 	sess = DBSession()
-	sess.query(ExternalOperationProvider)
-
 	opts = dict()
 
 	for xopp in sess.query(ExternalOperationProvider):
 		uri = '/' + xopp.uri
-		if(xopp.authmethod == ExternalOperationProviderAuthMethod.http):
+		if(xopp.authentication_method == ExternalOperationProviderAuthMethod.http):
 			opts[uri] = XOPBasicAuthenticationPolicy(
-					xopp.authuser,
-					xopp.authpass,
+					xopp.authentication_username,
+					xopp.authentication_password,
 					settings.get('netprofile.auth.http_realm', 'NetProfile XOP')
 				)
-		elif(xopp.authmethod == ExternalOperationProviderAuthMethod.md5):
-			opts[uri] = XOPHashAuthenticationPolicy(xopp.authuser, xopp.authpass, 'md5')
-		elif(xopp.authmethod == ExternalOperationProviderAuthMethod.sha1):
-			opts[uri] = XOPHashAuthenticationPolicy(xopp.authuser, xopp.authpass, 'sha1')
+		elif(xopp.authentication_method == ExternalOperationProviderAuthMethod.md5):
+			opts[uri] = XOPHashAuthenticationPolicy(xopp.authentication_username, xopp.authentication_password, 'md5')
+		elif(xopp.authentication_method == ExternalOperationProviderAuthMethod.sha1):
+			opts[uri] = XOPHashAuthenticationPolicy(xopp.authentication_username, xopp.authentication_password, 'sha1')
 			
 	authn_policy = PluginAuthenticationPolicy(
 		SessionAuthenticationPolicy(callback=find_princs),

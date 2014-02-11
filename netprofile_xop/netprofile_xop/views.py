@@ -32,17 +32,7 @@ from pyramid.i18n import (
 	get_localizer
 )
 
-import math
-import datetime as dt
-from dateutil.parser import parse as dparse
-from dateutil.relativedelta import relativedelta
-
 from pyramid.view import view_config
-from pyramid.httpexceptions import (
-	HTTPForbidden,
-	HTTPSeeOther
-)
-from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.common.factory import RootFactory
@@ -61,7 +51,7 @@ def _dpane_stash_futures(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
 		'title'             : loc.translate(_('External Operations')),
-		'iconCls'           : 'ico-mod-stashio',
+		'iconCls'           : 'ico-mod-externaloperation',
 		'xtype'             : 'grid_stashes_ExternalOperation',
 		'stateId'           : None,
 		'stateful'          : False,
@@ -82,7 +72,7 @@ class ClientRootFactory(RootFactory):
 					ExternalOperationProvider.enabled == True
 				).one()
 				xopp.__parent__ = self
-				xopp.__name__ = xopp.sname #???
+				xopp.__name__ = xopp.uri
 				return xopp
 			except NoResultFound:
 				raise KeyError('Invalid URI')
@@ -103,6 +93,5 @@ def xop_magic(ctx, request):
 	cls = ctx.gwclass
 
 	tpldef['cls'] = cls
-	#return cls(request)
 	return tpldef
 
