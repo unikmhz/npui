@@ -32,6 +32,8 @@ __all__ = [
 	'ExternalOperationProvider'
 ]
 
+import pkg_resources
+
 from sqlalchemy import (
 	Column,
 	FetchedValue,
@@ -473,4 +475,13 @@ class ExternalOperationProvider(Base):
 
 	def __str__(self):
 		return '%s' % self.name
+
+	def get_gateway(self):
+		if not self.gateway_class:
+			return None
+		itp = list(pkg_resources.iter_entry_ponts('netprofile.xop.gateways', self.gateway_class))
+		if len(itp) == 0:
+			return None
+		cls = itp[0].load()
+		return cls(self)
 
