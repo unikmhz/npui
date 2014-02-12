@@ -540,7 +540,7 @@ class ExternalOperationProvider(Base):
 	def get_gateway(self):
 		if not self.gateway_class:
 			return None
-		itp = list(pkg_resources.iter_entry_ponts('netprofile.xop.gateways', self.gateway_class))
+		itp = list(pkg_resources.iter_entry_points('netprofile.xop.gateways', self.gateway_class))
 		if len(itp) == 0:
 			return None
 		cls = itp[0].load()
