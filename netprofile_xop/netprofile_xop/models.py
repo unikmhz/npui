@@ -139,7 +139,7 @@ class ExternalOperation(Base):
 				'grid_view'    : ( 'provider', 'ts', 'entity', 'diff', 'state'),
 				'form_view'    : (
 					'provider', 'ts', 'entity', 'diff', 'state',
-					'stash', 'extid', 'eacct', 'stash'
+					'stash', 'extid', 'eacct'
 				),
 				'easy_search'  : ('extid', 'eacct'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')

@@ -54,7 +54,7 @@ def _dpane_stash_futures(tabs, model, req):
 	tabs.append({
 		'title'             : loc.translate(_('External Operations')),
 		'iconCls'           : 'ico-mod-externaloperation',
-		'xtype'             : 'grid_stashes_ExternalOperation',
+		'xtype'             : 'grid_xop_ExternalOperation',
 		'stateId'           : None,
 		'stateful'          : False,
 		'hideColumns'       : ('stash',),
