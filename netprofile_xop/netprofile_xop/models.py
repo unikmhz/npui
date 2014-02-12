@@ -51,7 +51,8 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import (
 	backref,
-	relationship
+	relationship,
+	validates
 )
 
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -264,6 +265,36 @@ class ExternalOperation(Base):
 		'Stash',
 		backref='external_operations'
 	)
+
+	@validates('state')
+	def _valid_state(self, key, val):
+		if val not in ExternalOperationState:
+			raise ValueError('Invalid XOP state')
+		if (self.state is None) or (self.state == val):
+			return val
+		if self.state in (ExternalOperationState.new, ExternalOperationState.pending):
+			if val in (
+				ExternalOperationState.checked,
+				ExternalOperationState.confirmed,
+				ExternalOperationState.canceled
+					):
+				return val
+			raise ValueError('Invalid XOP state')
+		if self.state == ExternalOperationState.checked:
+			if val in (
+				ExternalOperationState.pending,
+				ExternalOperationState.canceled
+					):
+				return val
+			raise ValueError('Invalid XOP state')
+		if self.state == ExternalOperationState.confirmed:
+			if val in (
+				ExternalOperationState.cleared,
+				ExternalOperationState.canceled
+					):
+				return val
+			raise ValueError('Invalid XOP state')
+		raise ValueError('Invalid XOP state')
 
 	def __str__(self):
 		return '%s %s' % (
