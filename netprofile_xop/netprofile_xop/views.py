@@ -105,7 +105,7 @@ def xop_request(ctx, request):
 		raise HTTPForbidden('Access Denied')
 	sess = DBSession()
 	for xop in xoplist:
-		# TODO: sanity-check XOPs
+		ctx.check_operation(xop)
 		sess.add(xop)
 
 	if hasattr(gw, 'generate_response') and callable(gw.generate_response):

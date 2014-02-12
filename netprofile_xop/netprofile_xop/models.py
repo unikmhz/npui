@@ -546,3 +546,12 @@ class ExternalOperationProvider(Base):
 		cls = itp[0].load()
 		return cls(self)
 
+	def check_operation(self, xop):
+		is_ok = True
+		if (self.min_difference is not None) and (xop.difference < self.min_difference):
+			is_ok = False
+		if (self.max_difference is not None) and (xop.difference > self.max_difference):
+			is_ok = False
+		if not is_ok:
+			xop.state = ExternalOperationState.canceled
+
