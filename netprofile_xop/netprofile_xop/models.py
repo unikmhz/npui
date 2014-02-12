@@ -56,7 +56,10 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from netprofile.common.ipaddr import IPNetwork
+from netprofile.common.ipaddr import (
+	IPAddress,
+	IPNetwork
+)
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -473,8 +476,35 @@ class ExternalOperationProvider(Base):
 		backref='external_operation_providers'
 	)
 
+	@property
+	def access_nets(self):
+		if not self.access_list:
+			return ()
+		nets = []
+		for ace in self.access_list.split(';'):
+			try:
+				nets.append(IPNetwork(ace.strip()))
+			except ValueError:
+				pass
+		return nets
+
 	def __str__(self):
 		return '%s' % self.name
+
+	def can_access(self, req):
+		if not req.remote_addr:
+			return False
+		try:
+			addr = IPAddress(req.remote_addr)
+		except ValueError:
+			return False
+		nets = self.access_nets
+		if len(nets) == 0:
+			return True
+		for net in nets:
+			if addr in net:
+				return True
+		return False
 
 	def get_gateway(self):
 		if not self.gateway_class:

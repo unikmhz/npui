@@ -33,6 +33,8 @@ from pyramid.i18n import (
 )
 
 from pyramid.view import view_config
+from pyramid.response import Response
+from pyramid.httpexceptions import HTTPForbidden
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.common.factory import RootFactory
@@ -84,14 +86,31 @@ class ClientRootFactory(RootFactory):
 	route_name='xop.cl.home',
 	name='',
 	context=ExternalOperationProvider,
-	permission='USAGE',
-	renderer='netprofile_xop:templates/xop.mak'
+	permission='USAGE'
 )
-def xop_magic(ctx, request):
-	loc = get_localizer(request)
+def xop_request(ctx, request):
+	# TODO: add optional redirect-to-site?
+	if not ctx.can_access(request):
+		raise HTTPForbidden('Access Denied')
+	gw = ctx.get_gateway()
+	if (not gw) or (not hasattr(gw, 'process_request')):
+		raise HTTPForbidden('Access Denied')
+	if not callable(gw.process_request):
+		raise HTTPForbidden('Access Denied')
 
-	cls = ctx.gwclass
+	try:
+		xoplist = gw.process_request(request)
+	except Exception as e:
+		# TODO: cancel and log?
+		raise HTTPForbidden('Access Denied')
+	sess = DBSession()
+	for xop in xoplist:
+		# TODO: sanity-check XOPs
+		sess.add(xop)
 
-	tpldef['cls'] = cls
-	return tpldef
+	if hasattr(gw, 'generate_response') and callable(gw.generate_response):
+		return gw.generate_response(request, xoplist)
+
+	resp = Response(body='OK', content_type='text/plain', charset='UTF-8')
+	return resp
 
