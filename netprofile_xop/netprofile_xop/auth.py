@@ -59,7 +59,10 @@ from pyramid.security import (
 	Everyone
 )
 
-from .models import ExternalOperationProvider
+from .models import (
+	ExternalOperationProvider,
+	ExternalOperationProviderAuthMethod
+)
 
 def find_princs(userid, request):
 	sess = DBSession()

@@ -27,7 +27,10 @@ from __future__ import (
 	division
 )
 
-from netprofile.common.modules import ModuleBase
+from netprofile.common.modules import (
+	IModuleManager,
+	ModuleBase
+)
 from .models import *
 
 from pyramid.i18n import TranslationStringFactory
@@ -68,4 +71,10 @@ class Module(ModuleBase):
 	@property
 	def name(self):
 		return _('External Operations')
+
+def includeme(config):
+	mmgr = config.registry.getUtility(IModuleManager)
+	mmgr.load('core')
+	for mod in ('stashes', 'entities', 'access', 'rates', 'networks', 'hosts', 'ipaddresses'):
+		mmgr.load(mod)
 
