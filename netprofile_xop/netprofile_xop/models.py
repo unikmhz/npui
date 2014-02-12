@@ -104,7 +104,7 @@ class ExternalOperationProviderAuthMethod(DeclEnum):
 	"""
 	Enumeration of xop provider auth methods
 	"""
-	http		= 'http',		_('HTTP'),			10
+	http		= 'http',		_('HTTP Basic'),	10
 	md5			= 'req-md5',	_('Request MD5'),	20
 	sha1		= 'req-sha1',	_('Request SHA1'),	30
 

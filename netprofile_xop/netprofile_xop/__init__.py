@@ -60,6 +60,11 @@ class Module(ModuleBase):
 			ExternalOperationProvider
 		)
 
+	def get_css(self, request):
+		return (
+			'netprofile_xop:static/css/main.css',
+		)
+
 	@property
 	def name(self):
 		return _('External Operations')
