@@ -7,6 +7,7 @@ Ext.define('Ext.ux.form.DynamicCheckboxGroup', {
 	valueField: null,
 	displayField: null,
 	formCheckboxes: true,
+	readOnly: false,
 
 	initComponent: function()
 	{
@@ -66,7 +67,8 @@ Ext.define('Ext.ux.form.DynamicCheckboxGroup', {
 			boxLabel: v,
 			inputValue: k,
 			submitValue: this.formCheckboxes,
-			isFormField: this.formCheckboxes
+			isFormField: this.formCheckboxes,
+			readOnly: this.readOnly
 		});
 	},
 	onLoad: function(store, recs, ok)
