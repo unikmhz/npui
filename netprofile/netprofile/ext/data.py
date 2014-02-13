@@ -306,6 +306,10 @@ class ExtColumn(object):
 		return self.column.info.get('column_resizable', True)
 
 	@property
+	def multivalue(self):
+		return self.column.info.get('multivalue', False)
+
+	@property
 	def cell_class(self):
 		return self.column.info.get('cell_class', None)
 
@@ -432,6 +436,8 @@ class ExtColumn(object):
 
 	@property
 	def js_type(self):
+		if self.multivalue:
+			return 'auto'
 		cls = self.column.type.__class__
 		if cls in _JS_TYPE_MAP:
 			return _JS_TYPE_MAP[cls]
@@ -533,6 +539,8 @@ class ExtColumn(object):
 		return getattr(self.column, attr)
 
 	def parse_param(self, param):
+		if self.multivalue and isinstance(param, (list, tuple)):
+			return [self.parse_param(p) for p in param]
 		typecls = self.column.type.__class__
 		if param is None:
 			return None
@@ -649,6 +657,24 @@ class ExtColumn(object):
 		if typecls is DeclEnumType:
 			ret['inclusion'] = { 'list' : self.column.type.enum.values() }
 		return ret
+
+	def get_editor_multivalue(self, req, cfg):
+		mcfg = {
+			'xtype' : 'multifield'
+		}
+		if 'name' in cfg:
+			mcfg['name'] = cfg['name']
+			del cfg['name']
+		if 'fieldLabel' in cfg:
+			mcfg['fieldLabel'] = cfg['fieldLabel']
+			del cfg['fieldLabel']
+		if 'value' in cfg:
+			mcfg['value'] = cfg['value']
+			del cfg['value']
+			if not isinstance(mcfg['value'], (list, tuple)):
+				mcfg['value'] = [mcfg['value']]
+		mcfg['templateCfg'] = cfg
+		return mcfg
 
 	def get_editor_cfg(self, req, initval=None, in_form=False):
 		loc = get_localizer(req)
@@ -813,9 +839,12 @@ class ExtColumn(object):
 			'name'       : self.name,
 			'sortable'   : True,
 			'filterable' : True,
-			'dataIndex'  : self.name,
-			'editor'     : self.get_editor_cfg(req)
+			'dataIndex'  : self.name
 		}
+		editor = self.get_editor_cfg(req)
+		if self.multivalue:
+			editor = self.get_editor_multivalue(req, editor)
+		conf['editor'] = editor
 		typecls = self.column.type.__class__
 		xt = self.column_xtype
 		if xt is not None:
@@ -2010,6 +2039,8 @@ class ExtModel(object):
 		for cname, col in self.get_form_columns().items():
 			fdef = col.get_editor_cfg(request, in_form=True)
 			if fdef is not None:
+				if col.multivalue:
+					fdef = col.get_editor_multivalue(request, fdef)
 				fields.append(fdef)
 		is_ro = False
 		if self.cap_edit and (not has_permission(self.cap_edit, request.context, request)):
