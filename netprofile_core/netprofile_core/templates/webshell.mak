@@ -28,6 +28,7 @@ Ext.require([
 % endfor
 	'NetProfile.model.Basic',
 	'NetProfile.view.CapabilityGrid',
+	'Ext.ux.form.MultiField',
 	'NetProfile.view.Calendar'
 ], function()
 {
