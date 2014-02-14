@@ -1785,6 +1785,7 @@ class ExtModel(object):
 					row[extra] = edata(request)
 				else:
 					row[extra] = edata
+			request.run_hook('np.object.read', obj, row, params, request, self)
 			records.append(row)
 		res['records'] = records
 		res['total'] = tot
@@ -1825,6 +1826,7 @@ class ExtModel(object):
 				cols[p].apply_data(obj, cols[p].parse_param(val))
 			else:
 				setattr(obj, trans[p].key, cols[p].parse_param(val))
+		request.run_hook('np.object.set_values', obj, values, request, self)
 
 	def create(self, params, request):
 		logger.info('Running ExtDirect class:%s method:%s', self.name, 'create')
@@ -1880,6 +1882,7 @@ class ExtModel(object):
 					setattr(obj, trans[p].key, cols[p].parse_param(pt[p]))
 			sess.add(obj)
 			sess.flush()
+			request.run_hook('np.object.create', obj, pt, request, self)
 			for otm in apply_onetomany:
 				otm[0].apply_data(obj, otm[1])
 			p = {}
@@ -1927,6 +1930,7 @@ class ExtModel(object):
 					pt[extra] = edata(request)
 				else:
 					pt[extra] = edata
+			request.run_hook('np.object.read', obj, pt, None, request, self)
 			res['records'].append(pt)
 			res['total'] += 1
 		return res
@@ -1980,6 +1984,7 @@ class ExtModel(object):
 					cols[p].apply_data(obj, cols[p].parse_param(pt[p]))
 				else:
 					setattr(obj, trans[p].key, cols[p].parse_param(pt[p]))
+			request.run_hook('np.object.update', obj, pt, request, self)
 			pt = {}
 			for cname, col in rcols.items():
 				if isinstance(cname, PseudoColumn):
@@ -2010,6 +2015,7 @@ class ExtModel(object):
 					pt[extra] = edata(request)
 				else:
 					pt[extra] = edata
+			request.run_hook('np.object.read', obj, pt, None, request, self)
 			res['records'].append(pt)
 			res['total'] += 1
 		return res
@@ -2031,6 +2037,7 @@ class ExtModel(object):
 				continue
 			sess.delete(obj)
 			res['total'] += 1
+			request.run_hook('np.object.delete', res, obj, pt, request, self)
 		return res
 
 	def get_fields(self, request):
@@ -2045,6 +2052,7 @@ class ExtModel(object):
 		is_ro = False
 		if self.cap_edit and (not has_permission(self.cap_edit, request.context, request)):
 			is_ro = True
+		request.run_hook('np.fields.get', fields, request, self)
 		return {
 			'success' : True,
 			'fields'  : fields,
@@ -2090,6 +2098,7 @@ class ExtModel(object):
 					if ifld not in fields:
 						fields[ifld] = []
 					fields[ifld].append(loc.translate(_('This field must be unique.')))
+		request.run_hook('np.fields.validate', fields, values, request, self)
 		return {
 			'success' : True,
 			'errors'  : fields
@@ -2110,6 +2119,7 @@ class ExtModel(object):
 			}
 			if wiz.validator:
 				ret['validator'] = wiz.validator
+			request.run_hook('np.create_wizard.get', ret, wiz, request, self)
 			return ret
 		return {
 			'success' : False,
@@ -2132,6 +2142,7 @@ class ExtModel(object):
 			}
 			if wiz.validator:
 				ret['validator'] = wiz.validator
+			request.run_hook('np.wizard.get', ret, wiz, request, self)
 			return ret
 		return {
 			'success' : False,
@@ -2145,6 +2156,7 @@ class ExtModel(object):
 		if wiz:
 			ret = wiz.action(pane_id, act, values, request)
 			if ret:
+				request.run_hook('np.create_wizard.action', ret, wiz, pane_id, act, values, request, self)
 				return {
 					'success' : True,
 					'action'  : ret
@@ -2159,6 +2171,7 @@ class ExtModel(object):
 			wiz = wizdict[wname]
 			ret = wiz.action(pane_id, act, values, request)
 			if ret:
+				request.run_hook('np.wizard.action', ret, wiz, pane_id, act, values, request, self)
 				return {
 					'success' : True,
 					'action'  : ret
