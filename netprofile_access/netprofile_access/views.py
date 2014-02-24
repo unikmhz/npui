@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8
 #
 # NetProfile: Access module - Views
 # © Copyright 2013 Alex 'Unik' Unigovsky
@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 import datetime, os, random, re, string
+import pyproxmox
 
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -674,6 +675,76 @@ def client_logout(request):
 	loc = request.route_url('access.cl.login')
 	return HTTPSeeOther(location=loc, headers=headers)
 
+@view_config(route_name='access.cl.vm', renderer='netprofile_access:templates/client_vm.mak', permission='USAGE')
+def virtual_machines(request):
+	print(request.matchdict)
+	cfg = request.registry.settings
+	sess = DBSession()
+	tpldef = {}
+	request.run_hook('access.cl.tpldef', tpldef, request)
+	access_user = sess.query(AccessEntity).filter_by(nick=str(request.user)).first()
+	proxmox_host = cfg.get('netprofile.client.proxmox.host')
+	proxmox_auth = cfg.get('netprofile.client.proxmox.auth_method')
+	try:
+		vm = pyproxmox.pyproxmox(proxmox_host, "{0}@{1}".format(access_user.nick, proxmox_auth), access_user.password)
+	except TypeError:
+		vm = None
+
+	
+	vmachines = []
+	resp = False
+	if vm:
+		cluster_resources = vm.getClusterResources()
+		for el in cluster_resources['data']:
+			vmname = el.get('name', None)
+			if vmname and vmname.split('.')[0] == access_user.nick:
+				vmid = el.get('vmid', None)
+				node = el.get('node', None)
+				el['ip'] = vm.getContainerStatus(node, vmid)['data']['ip']
+				vmachines.append(el)
+
+
+		if request.GET.get('action', None):
+			action = request.GET.get('action', None)
+			vmid = request.GET.get('vmid', None)
+			node = request.GET.get('node', None)
+			vmtype = request.GET.get('type', None)
+			vmindex = [vmachines.index(x) for x in vmachines if x['vmid'] == int(vmid)][-1]
+			if vmtype == 'openvz':
+				if action == 'start':
+					resp = vm.startOpenvzContainer(node,vmid)
+				elif action == 'stop':
+					resp = vm.stopOpenvzContainer(node,vmid)
+				else:
+					pass
+		
+			elif vmtype == 'kvm':
+				if action == 'stop':
+					resp = vm.stopVirtualMachine(node,vmid)
+				elif action == 'start':
+					resp = vm.startVirtualMachine(node,vmid)
+				else:
+					pass
+			#обновляем статус машины
+			if action == 'start' and resp:
+				vmachines[vmindex]['status'] = 'running'
+			elif action == 'stop' and resp:
+				vmachines[vmindex]['status'] = 'stopped'
+			
+			tpldef.update({
+			'vmachines':vmachines,
+			})
+			return tpldef
+
+
+		
+	tpldef.update({
+			'vmachines':vmachines,
+			})
+		
+	return tpldef
+
+
 @view_config(route_name='access.cl.robots')
 def client_robots(request):
 	return Response("""User-agent: *
@@ -691,24 +762,27 @@ def client_bogus_favicon(request):
 
 @register_hook('access.cl.tpldef')
 def _cl_tpldef(tpldef, req):
-	cfg = req.registry.settings
-	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
-	cur_locale = get_locale_name(req)
-	loc = get_localizer(req)
-	menu = [{
-		'route' : 'access.cl.home',
-		'text'  : _('Portal')
-	}]
-	if 'trans' in tpldef:
-		tpldef['trans'] = {txt: loc.translate(txt) for txt in tpldef['trans']}
-	req.run_hook('access.cl.menu', menu, req)
-	tpldef.update({
-		'menu'    : menu,
-		'cur_loc' : cur_locale,
-		'comb_js' : comb_js,
-		'loc'     : loc,
-		'i18n'    : Locale(cur_locale)
-	})
+        cfg = req.registry.settings
+        comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
+        cur_locale = get_locale_name(req)
+        loc = get_localizer(req)
+        menu = [{
+                        'route' : 'access.cl.home',
+                        'text'  : _('Portal')
+                        }
+                ]
+        if 'trans' in tpldef:
+                tpldef['trans'] = {txt: loc.translate(txt) for txt in tpldef['trans']}
+                
+        req.run_hook('access.cl.menu', menu, req)
+        menu.append({'route' : 'access.cl.vm', 'text'  : _('Virtual Machines')})
+        tpldef.update({
+                        'menu'    : menu,
+                        'cur_loc' : cur_locale,
+                        'comb_js' : comb_js,
+                        'loc'     : loc,
+                        'i18n'    : Locale(cur_locale)
+                        })
 
 @view_config(
 	route_name='stashes.cl.accounts',

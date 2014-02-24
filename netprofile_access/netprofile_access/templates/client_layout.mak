@@ -18,6 +18,7 @@
 			</div>
 			<div class="collapse navbar-collapse" id="main-navbar">
 				<ul class="no-js nav navbar-nav navbar-right">
+
 <%block name="menubar">\
 % for item in menu:
 % if item.get('route') and req.matched_route and (item.get('route') == req.matched_route.name):
