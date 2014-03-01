@@ -50,7 +50,6 @@ class Module(ModuleBase):
 		mmgr.cfg.add_route('access.cl.restoresent', '/restoresent', vhost='client')
 		mmgr.cfg.add_route('access.cl.chpass', '/chpass', vhost='client')
 		mmgr.cfg.add_route('access.cl.check.nick', '/check/nick', vhost='client')
-		mmgr.cfg.add_route('access.cl.vm', '/vm', vhost='client')
 		mmgr.cfg.add_route('access.cl.robots', '/robots.txt', vhost='client')
 		mmgr.cfg.add_route('access.cl.favicon', '/favicon.ico', vhost='client')
 		mmgr.cfg.register_block('stashes.cl.block.info', TemplateObject('netprofile_access:templates/client_block_chrate.mak'))
