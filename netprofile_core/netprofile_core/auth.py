@@ -43,7 +43,10 @@ from pyramid.security import (
 	unauthenticated_userid
 )
 from pyramid.events import ContextFound
-from pyramid.authentication import SessionAuthenticationPolicy
+from pyramid.authentication import (
+	BasicAuthAuthenticationPolicy,
+	SessionAuthenticationPolicy
+)
 from pyramid.authorization import ACLAuthorizationPolicy
 
 from sqlalchemy import and_
@@ -145,6 +148,26 @@ def find_princs(userid, request):
 		return None
 	return []
 
+def find_princs_basic(username, pwd, request):
+	sess = DBSession()
+	cfg = request.registry.settings
+
+	try:
+		user = sess.query(User).filter(
+			User.state == UserState.active,
+			User.enabled == True,
+			User.login == username
+		).one()
+	except NoResultFound:
+		return None
+	if not user.check_password(
+		pwd,
+		cfg.get('netprofile.auth.hash', 'sha1'),
+		int(cfg.get('netprofile.auth.salt_length', 4))
+	):
+		return None
+	return []
+
 def find_princs_digest(param, request):
 	sess = DBSession()
 
@@ -231,6 +254,11 @@ def includeme(config):
 				settings.get('netprofile.auth.secret'),
 				find_princs_digest,
 				settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
+			),
+			'/api' : BasicAuthAuthenticationPolicy(
+				find_princs_basic,
+				settings.get('netprofile.auth.rpc_realm', 'NetProfile RPC'),
+				settings.get('netprofile.debug')
 			)
 		}
 	)
