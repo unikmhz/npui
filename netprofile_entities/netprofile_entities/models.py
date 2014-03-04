@@ -2051,12 +2051,12 @@ class EntityHistory(object):
 		self.author = author
 		self.parts = []
 
-	def json_repr(self):
+	def __json__(self, req=None):
 		return {
 			'title'  : self.title,
 			'author' : self.author,
 			'time'   : self.time,
-			'parts'  : [x.json_repr() for x in self.parts]
+			'parts'  : [x.__json__(req) for x in self.parts]
 		}
 
 class EntityHistoryPart(object):
@@ -2067,7 +2067,7 @@ class EntityHistoryPart(object):
 	def __str__(self):
 		return str(self.text)
 
-	def json_repr(self):
+	def __json__(self, req=None):
 		return {
 			'icon' : self.icon,
 			'text' : self.text
