@@ -22,7 +22,9 @@ requires = [
 	'colander >= 0.9.6',
 
 	'waitress >= 0.7',
-	'pyramid >= 1.4a1',
+	'pyramid >= 1.5a1',
+	'pyramid_mako >= 0.3',
+	'pyramid_rpc >= 0.5.2',
 	'pyramid_debugtoolbar >= 1.0',
 	'pyramid_redis_sessions >= 0.9b5',
 	'pyramid_mailer >= 0.13',

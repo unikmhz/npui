@@ -54,7 +54,7 @@ class EnumSymbol(expression.ClauseElement):
 	def __repr__(self):
 		return '<%s>' % self.name
 
-	def json_repr(self):
+	def __json__(self, req=None):
 		return self.value
 
 # FIXME: fix symbol order

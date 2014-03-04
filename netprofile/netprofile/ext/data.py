@@ -373,6 +373,8 @@ class ExtColumn(object):
 				if getattr(self.column.type, 'unsigned', False):
 					return 11
 				return 10
+			if issubclass(typecls, BigInteger):
+				return 20
 			return None
 
 	@property

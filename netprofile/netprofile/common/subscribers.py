@@ -34,7 +34,8 @@ from pyramid.i18n import (
 
 def add_renderer_globals(event):
 	request = event['request']
-	event['_'] = request.translate
+	if hasattr(request, 'translate'):
+		event['_'] = request.translate
 
 def on_new_request(event):
 	request = event.request

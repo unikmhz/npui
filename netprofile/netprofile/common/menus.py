@@ -72,6 +72,8 @@ class Menu(object):
 			ret['perm'] = self.perm
 		return ret
 
-	def json_repr(self):
-		return self.get_data(get_current_request())
+	def __json__(self, req=None):
+		if req is None:
+			req = get_current_request()
+		return self.get_data(req)
 

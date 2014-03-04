@@ -76,10 +76,10 @@ def _mk_cb_key(action_name, method_name):
 
 class JsonReprEncoder(json.JSONEncoder):
 	"""
-	A convenience wrapper for classes that support json_repr().
+	A convenience wrapper for classes that support __json__().
 	"""
 	def default(self, obj):
-		jr = getattr(obj, 'json_repr', None)
+		jr = getattr(obj, '__json__', None)
 		if jr is not None:
 			return jr()
 		if isinstance(obj, dt.datetime):
@@ -231,7 +231,8 @@ class ExtDirectRouter(object):
 			callback=model.get_fields,
 			numargs=0,
 			request_as_last_param=True,
-			accepts_files=False
+			accepts_files=False,
+			permission=model.cap_read
 		)
 		self.add_action(
 			name,
@@ -239,7 +240,8 @@ class ExtDirectRouter(object):
 			callback=model.validate_fields,
 			numargs=1,
 			request_as_last_param=True,
-			accepts_files=False
+			accepts_files=False,
+			permission=model.cap_read
 		)
 		if model.create_wizard:
 			self.add_action(
@@ -248,7 +250,8 @@ class ExtDirectRouter(object):
 				callback=model.get_create_wizard,
 				numargs=0,
 				request_as_last_param=True,
-				accepts_files=False
+				accepts_files=False,
+				permission=model.cap_read
 			)
 			self.add_action(
 				name,
@@ -256,7 +259,8 @@ class ExtDirectRouter(object):
 				callback=model.create_wizard_action,
 				numargs=3,
 				request_as_last_param=True,
-				accepts_files=False
+				accepts_files=False,
+				permission=model.cap_create
 			)
 		if model.wizards:
 			self.add_action(
@@ -265,7 +269,8 @@ class ExtDirectRouter(object):
 				callback=model.get_wizard,
 				numargs=1,
 				request_as_last_param=True,
-				accepts_files=False
+				accepts_files=False,
+				permission=model.cap_read
 			)
 			self.add_action(
 				name,
@@ -273,7 +278,8 @@ class ExtDirectRouter(object):
 				callback=model.wizard_action,
 				numargs=4,
 				request_as_last_param=True,
-				accepts_files=False
+				accepts_files=False,
+				permission=model.cap_create # FIXME!
 			)
 
 	def get_actions(self):
