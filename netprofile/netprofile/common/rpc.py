@@ -38,6 +38,7 @@ from pyramid_rpc.xmlrpc import (
 	XmlRpcError,
 	xmlrpclib
 )
+from pyramid_rpc.jsonrpc import JsonRpcError
 from pyramid.renderers import JSON
 
 from netprofile import PY3
@@ -57,6 +58,10 @@ class XmlRpcForbiddenError(XmlRpcError):
 	faultCode = -31403
 	faultString = 'client error; permission denied'
 
+class JsonRpcForbiddenError(JsonRpcError):
+	code = -31403
+	message = 'permission denied'
+
 xml_disp = xmlrpclib.Marshaller.dispatch
 
 # XXX: crude/awful workaround
@@ -72,56 +77,72 @@ def _dump_enum(self, value, write):
 	write('</string></value>\n')
 xml_disp[EnumSymbol] = _dump_enum
 
+def _gen_funcs(model, proto):
+	mod = model
+	name = mod.name
+	fault = XmlRpcForbiddenError
+	if proto == 'jsonrpc':
+		fault = JsonRpcForbiddenError
+
+	def _rpc_create(req, recs):
+		cap = mod.cap_create
+		if cap:
+			rf = RootFactory(req)
+			if not has_permission(cap, rf, req):
+				raise fault
+		return mod.create({ 'records' : recs }, req)
+
+	def _rpc_read(req, params):
+		cap = mod.cap_read
+		if cap:
+			rf = RootFactory(req)
+			if not has_permission(cap, rf, req):
+				raise fault
+		return mod.read(params, req)
+
+	def _rpc_update(req, recs):
+		cap = mod.cap_edit
+		if cap:
+			rf = RootFactory(req)
+			if not has_permission(cap, rf, req):
+				raise fault
+		return mod.update({ 'records' : recs }, req)
+
+	def _rpc_delete(req, recs):
+		cap = mod.cap_delete
+		if cap:
+			rf = RootFactory(req)
+			if not has_permission(cap, rf, req):
+				raise fault
+		return mod.delete({ 'records' : recs }, req)
+
+	return (
+		_rpc_create,
+		_rpc_read,
+		_rpc_update,
+		_rpc_delete
+	)
+
 @register_hook('np.model.load')
 def _proc_model(mmgr, model):
 	if (not _do_xmlrpc) and (not _do_jsonrpc):
 		return
 	name = model.name
 
-	def _rpc_create(req, params):
-		cap = model.cap_create
-		if cap:
-			rf = RootFactory(req)
-			if not has_permission(cap, rf, req):
-				raise XmlRpcForbiddenError
-		return model.create(params, req)
-
-	def _rpc_read(req, params):
-		cap = model.cap_read
-		if cap:
-			rf = RootFactory(req)
-			if not has_permission(cap, rf, req):
-				raise XmlRpcForbiddenError
-		return model.read(params, req)
-
-	def _rpc_update(req, recs):
-		cap = model.cap_edit
-		if cap:
-			rf = RootFactory(req)
-			if not has_permission(cap, rf, req):
-				raise XmlRpcForbiddenError
-		return model.update({ 'records' : recs }, req)
-
-	def _rpc_delete(req, recs):
-		cap = model.cap_delete
-		if cap:
-			rf = RootFactory(req)
-			if not has_permission(cap, rf, req):
-				raise XmlRpcForbiddenError
-		return model.delete({ 'records' : recs }, req)
-
 	# TODO: swap USAGE for RPC-specific privilege (maybe?)
 	if _do_xmlrpc:
-		mmgr.cfg.add_xmlrpc_method(_rpc_create, endpoint='api.xmlrpc', permission='USAGE', method=('create' + name))
-		mmgr.cfg.add_xmlrpc_method(_rpc_read,   endpoint='api.xmlrpc', permission='USAGE', method=('read' + name))
-		mmgr.cfg.add_xmlrpc_method(_rpc_update, endpoint='api.xmlrpc', permission='USAGE', method=('update' + name))
-		mmgr.cfg.add_xmlrpc_method(_rpc_delete, endpoint='api.xmlrpc', permission='USAGE', method=('delete' + name))
+		funcs = _gen_funcs(model, 'xmlrpc')
+		mmgr.cfg.add_xmlrpc_method(funcs[0], endpoint='api.xmlrpc', permission='USAGE', method=('create' + name))
+		mmgr.cfg.add_xmlrpc_method(funcs[1], endpoint='api.xmlrpc', permission='USAGE', method=('read' + name))
+		mmgr.cfg.add_xmlrpc_method(funcs[2], endpoint='api.xmlrpc', permission='USAGE', method=('update' + name))
+		mmgr.cfg.add_xmlrpc_method(funcs[3], endpoint='api.xmlrpc', permission='USAGE', method=('delete' + name))
 
 	if _do_jsonrpc:
-		mmgr.cfg.add_jsonrpc_method(_rpc_create, endpoint='api.jsonrpc', permission='USAGE', method=('create' + name))
-		mmgr.cfg.add_jsonrpc_method(_rpc_read,   endpoint='api.jsonrpc', permission='USAGE', method=('read' + name))
-		mmgr.cfg.add_jsonrpc_method(_rpc_update, endpoint='api.jsonrpc', permission='USAGE', method=('update' + name))
-		mmgr.cfg.add_jsonrpc_method(_rpc_delete, endpoint='api.jsonrpc', permission='USAGE', method=('delete' + name))
+		funcs = _gen_funcs(model, 'jsonrpc')
+		mmgr.cfg.add_jsonrpc_method(funcs[0], endpoint='api.jsonrpc', permission='USAGE', method=('create' + name))
+		mmgr.cfg.add_jsonrpc_method(funcs[1], endpoint='api.jsonrpc', permission='USAGE', method=('read' + name))
+		mmgr.cfg.add_jsonrpc_method(funcs[2], endpoint='api.jsonrpc', permission='USAGE', method=('update' + name))
+		mmgr.cfg.add_jsonrpc_method(funcs[3], endpoint='api.jsonrpc', permission='USAGE', method=('delete' + name))
 
 def includeme(config):
 	"""
