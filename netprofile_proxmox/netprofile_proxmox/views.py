@@ -55,7 +55,6 @@ _ = TranslationStringFactory('netprofile_proxmox')
 	renderer='netprofile_proxmox:templates/client_vm.mak'
 )
 def virtual_machines(request):
-	print(request.matchdict)
 	cfg = request.registry.settings
 	sess = DBSession()
 	errmess = None
