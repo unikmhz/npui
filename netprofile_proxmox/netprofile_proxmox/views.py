@@ -55,6 +55,7 @@ _ = TranslationStringFactory('netprofile_proxmox')
 	renderer='netprofile_proxmox:templates/client_vm.mak'
 )
 def virtual_machines(request):
+	loc = get_localizer(request)
 	cfg = request.registry.settings
 	sess = DBSession()
 	errmess = None
@@ -69,7 +70,7 @@ def virtual_machines(request):
 		vm = None
 	except requests.exceptions.ConnectionError as e:
 		vm = None
-		errmess = "Can't connect to server"
+		errmess = loc.translate(_("Can't connect to server"))
 	
 	vmachines = []
 	resp = False
@@ -126,8 +127,9 @@ def virtual_machines(request):
 
 @register_hook('access.cl.menu')
 def _gen_menu(menu, req):
+	loc = get_localizer(req)
 	menu.append({
 		'route' : 'proxmox.cl.vmachines',
-		'text'  : _('Virtual Machines')
+		'text'  : loc.translate(_('Virtual Machines'))
 	})
 
