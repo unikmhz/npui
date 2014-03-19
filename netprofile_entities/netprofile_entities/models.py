@@ -1288,6 +1288,15 @@ class EntityComment(Base):
 		)
 	)
 
+class Gender(DeclEnum):
+	"""
+	Basic gender ENUM.
+	"""
+	male           = 'M', _('Male'),           10
+	female         = 'F', _('Female'),         20
+	other          = 'O', _('Other'),          30
+	not_applicable = 'N', _('Not applicable'), 40
+
 class PhysicalEntity(Entity):
 	"""
 	Physical entity. Describes single individual.
@@ -1420,6 +1429,16 @@ class PhysicalEntity(Entity):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Middle Name')
+		}
+	)
+	gender = Column(
+		Gender.db_type(),
+		Comment('Gender'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Gender')
 		}
 	)
 	email = Column(
