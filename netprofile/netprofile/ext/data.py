@@ -1719,14 +1719,14 @@ class ExtModel(object):
 			q = self._apply_sorting(q, trans, params)
 		helper = getattr(self.model, '__augment_query__', None)
 		if callable(helper):
-			q = helper(sess, q, params)
+			q = helper(sess, q, params, request)
 		q = self._apply_pagination(q, trans, params)
 		helper = getattr(self.model, '__augment_pg_query__', None)
 		if callable(helper):
-			q = helper(sess, q, params)
+			q = helper(sess, q, params, request)
 		helper = getattr(self.model, '__augment_result__', None)
 		if callable(helper):
-			q = helper(sess, q.all(), params)
+			q = helper(sess, q.all(), params, request)
 		if params.get('__empty', False):
 			row = {}
 			for cname, col in cols.items():

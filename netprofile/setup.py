@@ -12,6 +12,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 requires = [
 	'setuptools',
 	'python-dateutil',
+	'icalendar',
 	'phpserialize',
 	'dogpile.cache >= 0.4.1',
 	'repoze.tm2',
