@@ -542,7 +542,7 @@ class House(Base):
 	)
 
 	@classmethod
-	def __augment_query__(cls, sess, query, params):
+	def __augment_query__(cls, sess, query, params, req):
 		query = query.join(House.street).options(contains_eager(House.street))
 		flt = {}
 		if '__filter' in params:
@@ -560,7 +560,7 @@ class House(Base):
 		return query
 
 	@classmethod
-	def __augment_result__(cls, sess, res, params):
+	def __augment_result__(cls, sess, res, params, req):
 		populate_related_list(
 			res, 'id', 'house_groupmap', HouseGroupMapping,
 			sess.query(HouseGroupMapping),

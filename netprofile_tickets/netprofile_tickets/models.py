@@ -1198,7 +1198,7 @@ class Ticket(Base):
 		return '%s' % self.name
 
 	@classmethod
-	def __augment_query__(cls, sess, query, params):
+	def __augment_query__(cls, sess, query, params, req):
 		flt = {}
 		if '__filter' in params:
 			flt.update(params['__filter'])
@@ -1215,7 +1215,7 @@ class Ticket(Base):
 		return query
 
 	@classmethod
-	def __augment_result__(cls, sess, res, params):
+	def __augment_result__(cls, sess, res, params, req):
 		populate_related_list(
 			res, 'id', 'flagmap', TicketFlag,
 			sess.query(TicketFlag),

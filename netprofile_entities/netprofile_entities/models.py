@@ -533,7 +533,7 @@ class Entity(Base):
 	)
 
 	@classmethod
-	def __augment_result__(cls, sess, res, params):
+	def __augment_result__(cls, sess, res, params, req):
 		populate_related(
 			res, 'state_id', 'state', EntityState,
 			sess.query(EntityState)
