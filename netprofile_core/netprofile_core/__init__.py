@@ -103,7 +103,8 @@ class Module(ModuleBase):
 			GlobalSetting,
 			UserSettingType,
 			UserSetting,
-			DataCache
+			DataCache,
+			Calendar
 		)
 
 	def get_menus(self):

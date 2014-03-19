@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module - Modules
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -58,6 +58,7 @@ __all__ = [
 	'UserSetting',
 	'DataCache',
 	'DAVLock',
+	'Calendar',
 
 	'global_setting'
 ]
@@ -72,6 +73,7 @@ import datetime as dt
 import urllib
 import itertools
 import base64
+import icalendar
 
 from sqlalchemy import (
 	Column,
@@ -116,6 +118,7 @@ from netprofile.common import ipaddr
 from netprofile.common.phps import HybridPickler
 from netprofile.common.threadlocal import magic
 from netprofile.common.cache import cache
+from netprofile.common.cal import Card
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -679,6 +682,12 @@ class User(Base):
 		'NPSession',
 		backref='user'
 	)
+	calendars = relationship(
+		'Calendar',
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	secondary_groups = association_proxy(
 		'secondary_groupmap',
@@ -1114,7 +1123,7 @@ class Group(Base):
 	)
 	name = Column(
 		Unicode(255),
-		Comment('Group Name'),
+		Comment('Group name'),
 		nullable=False,
 		info={
 			'header_string' : _('Name'),
@@ -1191,6 +1200,12 @@ class Group(Base):
 		'FileFolder',
 		backref='group',
 		primaryjoin='FileFolder.group_id == Group.id'
+	)
+	calendars = relationship(
+		'Calendar',
+		backref=backref('group', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
 
 	secondary_users = association_proxy(
@@ -4413,7 +4428,7 @@ class NPSession(Base):
 	)
 
 	@classmethod
-	def __augment_pg_query__(cls, sess, query, params):
+	def __augment_pg_query__(cls, sess, query, params, req):
 		lim = query._limit
 		if lim and (lim < 50):
 			return query.options(
@@ -5117,7 +5132,7 @@ class UserSettingType(Base, DynamicSetting):
 	)
 
 	@classmethod
-	def __augment_pg_query__(cls, sess, query, params):
+	def __augment_pg_query__(cls, sess, query, params, req):
 		lim = query._limit
 		if lim and (lim < 50):
 			return query.options(
@@ -5305,4 +5320,177 @@ class DataCache(Base):
 
 	def __str__(self):
 		return '%s' % str(self.name)
+
+_calendar_styles = {
+	1  : '#fa7166',
+	2  : '#cf2424',
+	3  : '#a01a1a',
+	4  : '#7e3838',
+	5  : '#ca7609',
+	6  : '#f88015',
+	7  : '#eda12a',
+	8  : '#d5b816',
+	9  : '#e281ca',
+	10 : '#bf53a4',
+	11 : '#9d3283',
+	12 : '#7a0f60',
+	13 : '#542382',
+	14 : '#7742a9',
+	15 : '#8763ca',
+	16 : '#b586e2',
+	17 : '#7399f9',
+	18 : '#4e79e6',
+	19 : '#2951b9',
+	20 : '#133897',
+	21 : '#1a5173',
+	22 : '#1a699c',
+	23 : '#3694b7',
+	24 : '#64b9d9',
+	25 : '#a8c67b',
+	26 : '#83ad47',
+	27 : '#2e8f0c',
+	28 : '#176413',
+	29 : '#0f4c30',
+	30 : '#386651',
+	31 : '#3ea987',
+	32 : '#7bc3b5'
+}
+
+class CalendarAccess(DeclEnum):
+	"""
+	Calendar access ENUM.
+	"""
+	none       = 'N',  _('None'),       10
+	read_only  = 'RO', _('Read-only'),  20
+	read_write = 'RW', _('Read-write'), 30
+
+class Calendar(Base):
+	"""
+	Event calendar owned by a user.
+	"""
+	__tablename__ = 'calendars_def'
+	__table_args__ = (
+		Comment('User calendars'),
+		Index('calendars_def_u_cal', 'uid', 'name', unique=True),
+		Index('calendars_def_i_gid', 'gid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'menu_name'     : _('Calendars'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('name', 'group', 'group_access', 'global_access'),
+				'form_view'     : ('name', 'group', 'group_access', 'global_access', 'style', 'descr'),
+				'easy_search'   : ('name', 'descr'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new calendar'))
+			}
+		}
+	)
+	id = Column(
+		'calid',
+		UInt32(),
+		Sequence('calendars_def_calid_seq', start=101, increment=1),
+		Comment('Calendar ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='calendars_def_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'read_only'     : True,
+			'filter_type'   : 'none'
+		}
+	)
+	group_id = Column(
+		'gid',
+		UInt32(),
+		ForeignKey('groups.gid', name='calendars_def_fk_gid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Group ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Group'),
+			'filter_type'   : 'none'
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Calendar name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name')
+		}
+	)
+	group_access = Column(
+		CalendarAccess.db_type(),
+		Comment('Calendar access rule for owner group'),
+		nullable=False,
+		default=CalendarAccess.none,
+		server_default=CalendarAccess.none,
+		info={
+			'header_string' : _('Group Access')
+		}
+	)
+	global_access = Column(
+		CalendarAccess.db_type(),
+		Comment('Calendar access rule for everyone not in group'),
+		nullable=False,
+		default=CalendarAccess.none,
+		server_default=CalendarAccess.none,
+		info={
+			'header_string' : _('Global Access')
+		}
+	)
+	style = Column(
+		UInt32(),
+		Comment('Calendar style code'),
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('Style'),
+			'min_value'     : 0,
+			'max_value'     : len(_calendar_styles)
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Calendar description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	def __str__(self):
+		return '%s' % str(self.name)
+
+	@classmethod
+	def __augment_query__(cls, sess, query, params, req):
+		query = query.filter(Calendar.user_id == req.user.id)
+		return query
+
+	@classmethod
+	def __augment_create__(cls, sess, obj, values, req):
+		obj.user_id = req.user.id
+		return True
+
+	@classmethod
+	def __augment_update__(cls, sess, obj, values, req):
+		if obj.user_id == req.user.id:
+			return True
+		return False
 

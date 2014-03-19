@@ -972,11 +972,19 @@ def _menu_custom(name, menu, req, extb):
 		return
 	loc = get_localizer(req)
 	menu.insert(0, {
-		'leaf'    : True,
-		'xview'   : 'calendar',
-		'order'   : 1,
-		'iconCls' : 'ico-mod-calendar',
-		'text'    : loc.translate(_('Events')),
-		'id'      : 'event'
+		'leaf'     : False,
+		'expanded' : True,
+		'xview'    : 'calendar',
+		'order'    : 1,
+		'iconCls'  : 'ico-mod-calendar',
+		'text'     : loc.translate(_('Events')),
+		'id'       : 'event',
+		'children' : ({
+			'leaf'    : True,
+			'xview'   : 'grid_core_Calendar',
+			'text'    : loc.translate(_('My Calendars')),
+			'id'      : 'calendars',
+			'iconCls' : 'ico-mod-calendars'
+		},)
 	})
 
