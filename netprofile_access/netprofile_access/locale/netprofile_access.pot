@@ -9,390 +9,495 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-02-07 11:11+0400\n"
+"POT-Creation-Date: 2014-03-12 12:25+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 1.3\n"
+"Generated-By: Babel 1.0dev\n"
 
-#: netprofile_access/__init__.py:82 netprofile_access/models.py:87
+#: build/lib/netprofile_access/__init__.py:82
+#: build/lib/netprofile_access/models.py:87 netprofile_access/__init__.py:82
+#: netprofile_access/models.py:87
 msgid "Access"
 msgstr ""
 
-#: netprofile_access/models.py:93
+#: build/lib/netprofile_access/models.py:93 netprofile_access/models.py:93
 msgid "OK"
 msgstr ""
 
-#: netprofile_access/models.py:94
+#: build/lib/netprofile_access/models.py:94 netprofile_access/models.py:94
 msgid "Blocked automatically"
 msgstr ""
 
-#: netprofile_access/models.py:95
+#: build/lib/netprofile_access/models.py:95 netprofile_access/models.py:95
 msgid "Blocked manually"
 msgstr ""
 
-#: netprofile_access/models.py:96
+#: build/lib/netprofile_access/models.py:96 netprofile_access/models.py:96
 msgid "Blocked after reaching max sessions"
 msgstr ""
 
-#: netprofile_access/models.py:97
+#: build/lib/netprofile_access/models.py:97 netprofile_access/models.py:97
 msgid "Rejected"
 msgstr ""
 
-#: netprofile_access/models.py:98
+#: build/lib/netprofile_access/models.py:98 netprofile_access/models.py:98
 msgid "Inactive"
 msgstr ""
 
+#: build/lib/netprofile_access/models.py:99
+#: data/tplc/netprofile_core$templates/webshell.mak.py:355
 #: netprofile_access/models.py:99
 msgid "Error"
 msgstr ""
 
-#: netprofile_access/models.py:127
+#: build/lib/netprofile_access/models.py:127 netprofile_access/models.py:127
 msgid "Access Entities"
 msgstr ""
 
-#: netprofile_access/models.py:135
+#: build/lib/netprofile_access/models.py:135 netprofile_access/models.py:135
 msgid "Entity icon"
 msgstr ""
 
-#: netprofile_access/models.py:137
+#: build/lib/netprofile_access/models.py:137 netprofile_access/models.py:137
 msgid "Icon"
 msgstr ""
 
-#: netprofile_access/models.py:171 netprofile_access/models.py:429
-#: netprofile_access/models.py:566 netprofile_access/models.py:629
+#: build/lib/netprofile_access/models.py:171
+#: build/lib/netprofile_access/models.py:429
+#: build/lib/netprofile_access/models.py:566
+#: build/lib/netprofile_access/models.py:629 netprofile_access/models.py:171
+#: netprofile_access/models.py:429 netprofile_access/models.py:566
+#: netprofile_access/models.py:629
 msgid "ID"
 msgstr ""
 
+#: build/lib/netprofile_access/models.py:179
+#: build/lib/netprofile_access/templates/client_login.mak:19
+#: build/lib/netprofile_access/templates/client_register.mak:78
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:79
+#: data/tplc/netprofile_core$templates/login.mak.py:79
 #: netprofile_access/models.py:179 netprofile_access/templates/client_login.mak:19
 #: netprofile_access/templates/client_register.mak:78
 msgid "Password"
 msgstr ""
 
-#: netprofile_access/models.py:191
+#: build/lib/netprofile_access/models.py:191 netprofile_access/models.py:191
 msgid "Stash"
 msgstr ""
 
-#: netprofile_access/models.py:202 netprofile_access/models.py:463
+#: build/lib/netprofile_access/models.py:202
+#: build/lib/netprofile_access/models.py:463 netprofile_access/models.py:202
+#: netprofile_access/models.py:463
 msgid "Rate"
 msgstr ""
 
-#: netprofile_access/models.py:215
+#: build/lib/netprofile_access/models.py:215 netprofile_access/models.py:215
 msgid "Alias Of"
 msgstr ""
 
+#: build/lib/netprofile_access/models.py:227
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:13
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:26
 #: netprofile_access/models.py:227
-#: netprofile_access/templates/client_block_chrate.mak:7
+#: netprofile_access/templates/client_block_chrate.mak:13
+#: netprofile_access/templates/client_block_chrate.mak:26
 msgid "Next Rate"
 msgstr ""
 
-#: netprofile_access/models.py:239
+#: build/lib/netprofile_access/models.py:239 netprofile_access/models.py:239
 msgid "IPv4 Address"
 msgstr ""
 
-#: netprofile_access/models.py:251
+#: build/lib/netprofile_access/models.py:251 netprofile_access/models.py:251
 msgid "IPv6 Address"
 msgstr ""
 
-#: netprofile_access/models.py:262
+#: build/lib/netprofile_access/models.py:262 netprofile_access/models.py:262
 msgid "Used Ingress"
 msgstr ""
 
-#: netprofile_access/models.py:273
+#: build/lib/netprofile_access/models.py:273 netprofile_access/models.py:273
 msgid "Used Egress"
 msgstr ""
 
-#: netprofile_access/models.py:284
+#: build/lib/netprofile_access/models.py:284 netprofile_access/models.py:284
 msgid "Used Seconds"
 msgstr ""
 
-#: netprofile_access/models.py:295
+#: build/lib/netprofile_access/models.py:295 netprofile_access/models.py:295
 msgid "Ends"
 msgstr ""
 
-#: netprofile_access/models.py:306
+#: build/lib/netprofile_access/models.py:306 netprofile_access/models.py:306
 msgid "Access Code"
 msgstr ""
 
-#: netprofile_access/models.py:317
+#: build/lib/netprofile_access/models.py:317 netprofile_access/models.py:317
 msgid "Ingress Policy"
 msgstr ""
 
-#: netprofile_access/models.py:328
+#: build/lib/netprofile_access/models.py:328 netprofile_access/models.py:328
 msgid "Egress Policy"
 msgstr ""
 
-#: netprofile_access/models.py:339
+#: build/lib/netprofile_access/models.py:339 netprofile_access/models.py:339
 msgid "Check Blocks"
 msgstr ""
 
-#: netprofile_access/models.py:350
+#: build/lib/netprofile_access/models.py:350 netprofile_access/models.py:350
 msgid "Check Services"
 msgstr ""
 
-#: netprofile_access/models.py:414 netprofile_access/views.py:764
+#: build/lib/netprofile_access/models.py:414
+#: build/lib/netprofile_access/views.py:764 netprofile_access/models.py:414
+#: netprofile_access/views.py:764
 msgid "Rate Modifiers"
 msgstr ""
 
-#: netprofile_access/models.py:417
+#: build/lib/netprofile_access/models.py:417 netprofile_access/models.py:417
 msgid "Add new rate modifier"
 msgstr ""
 
+#: build/lib/netprofile_access/models.py:439
+#: build/lib/netprofile_access/models.py:650
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:96
 #: netprofile_access/models.py:439 netprofile_access/models.py:650
 msgid "Type"
 msgstr ""
 
-#: netprofile_access/models.py:450
+#: build/lib/netprofile_access/models.py:450 netprofile_access/models.py:450
 msgid "Account"
 msgstr ""
 
-#: netprofile_access/models.py:475
+#: build/lib/netprofile_access/models.py:475 netprofile_access/models.py:475
 msgid "Created"
 msgstr ""
 
-#: netprofile_access/models.py:486
+#: build/lib/netprofile_access/models.py:486 netprofile_access/models.py:486
 msgid "Enabled"
 msgstr ""
 
-#: netprofile_access/models.py:497
+#: build/lib/netprofile_access/models.py:497 netprofile_access/models.py:497
 msgid "Lookup Order"
 msgstr ""
 
-#: netprofile_access/models.py:547
+#: build/lib/netprofile_access/models.py:547 netprofile_access/models.py:547
 msgid "Link Types"
 msgstr ""
 
-#: netprofile_access/models.py:554
+#: build/lib/netprofile_access/models.py:554 netprofile_access/models.py:554
 msgid "Add new link type"
 msgstr ""
 
-#: netprofile_access/models.py:574
+#: build/lib/netprofile_access/models.py:574 netprofile_access/models.py:574
 msgid "Name"
 msgstr ""
 
+#: build/lib/netprofile_access/models.py:586
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:149
 #: netprofile_access/models.py:586
 msgid "Description"
 msgstr ""
 
-#: netprofile_access/models.py:613 netprofile_access/views.py:773
+#: build/lib/netprofile_access/models.py:613
+#: build/lib/netprofile_access/views.py:773 netprofile_access/models.py:613
+#: netprofile_access/views.py:773
 msgid "Links"
 msgstr ""
 
-#: netprofile_access/models.py:617
+#: build/lib/netprofile_access/models.py:617 netprofile_access/models.py:617
 msgid "Add new link"
 msgstr ""
 
-#: netprofile_access/models.py:639
+#: build/lib/netprofile_access/models.py:639 netprofile_access/models.py:639
 msgid "Entity"
 msgstr ""
 
-#: netprofile_access/models.py:662
+#: build/lib/netprofile_access/models.py:662 netprofile_access/models.py:662
 msgid "Timestamp"
 msgstr ""
 
-#: netprofile_access/models.py:671
+#: build/lib/netprofile_access/models.py:671 netprofile_access/models.py:671
 msgid "Value"
 msgstr ""
 
-#: netprofile_access/recaptcha.py:44 netprofile_access/recaptcha.py:67
+#: build/lib/netprofile_access/recaptcha.py:44
+#: build/lib/netprofile_access/recaptcha.py:67 netprofile_access/recaptcha.py:44
+#: netprofile_access/recaptcha.py:67
 msgid "Unknown error"
 msgstr ""
 
-#: netprofile_access/recaptcha.py:45
+#: build/lib/netprofile_access/recaptcha.py:45 netprofile_access/recaptcha.py:45
 msgid "Internal site error"
 msgstr ""
 
-#: netprofile_access/recaptcha.py:46
+#: build/lib/netprofile_access/recaptcha.py:46 netprofile_access/recaptcha.py:46
 msgid "reCAPTCHA request error"
 msgstr ""
 
-#: netprofile_access/recaptcha.py:47
+#: build/lib/netprofile_access/recaptcha.py:47 netprofile_access/recaptcha.py:47
 msgid "Entered text was incorrect"
 msgstr ""
 
-#: netprofile_access/recaptcha.py:48
+#: build/lib/netprofile_access/recaptcha.py:48 netprofile_access/recaptcha.py:48
 msgid "Current CAPTCHA timed out"
 msgstr ""
 
-#: netprofile_access/recaptcha.py:49
+#: build/lib/netprofile_access/recaptcha.py:49 netprofile_access/recaptcha.py:49
 msgid "reCAPTCHA service is not reachable"
 msgstr ""
 
-#: netprofile_access/views.py:104
+#: build/lib/netprofile_access/views.py:104 netprofile_access/views.py:104
 msgid "Page Not Found"
 msgstr ""
 
-#: netprofile_access/views.py:116
+#: build/lib/netprofile_access/views.py:116 netprofile_access/views.py:116
 msgid "You need to log in to access this page"
 msgstr ""
 
-#: netprofile_access/views.py:121
+#: build/lib/netprofile_access/views.py:121 netprofile_access/views.py:121
 msgid "Access Denied"
 msgstr ""
 
-#: netprofile_access/views.py:139 netprofile_access/views.py:306
-#: netprofile_access/views.py:554
+#: build/lib/netprofile_access/views.py:139
+#: build/lib/netprofile_access/views.py:306
+#: build/lib/netprofile_access/views.py:554 netprofile_access/views.py:139
+#: netprofile_access/views.py:306 netprofile_access/views.py:554
 msgid "Error submitting form"
 msgstr ""
 
-#: netprofile_access/views.py:143 netprofile_access/views.py:330
+#: build/lib/netprofile_access/views.py:143
+#: build/lib/netprofile_access/views.py:330 netprofile_access/views.py:143
+#: netprofile_access/views.py:330
 msgid "Password is too short"
 msgstr ""
 
-#: netprofile_access/views.py:145 netprofile_access/views.py:332
+#: build/lib/netprofile_access/views.py:145
+#: build/lib/netprofile_access/views.py:332 netprofile_access/views.py:145
+#: netprofile_access/views.py:332
 msgid "Password is too long"
 msgstr ""
 
-#: netprofile_access/views.py:147 netprofile_access/views.py:334
+#: build/lib/netprofile_access/views.py:147
+#: build/lib/netprofile_access/views.py:334 netprofile_access/views.py:147
+#: netprofile_access/views.py:334
 msgid "Passwords do not match"
 msgstr ""
 
-#: netprofile_access/views.py:149
+#: build/lib/netprofile_access/views.py:149 netprofile_access/views.py:149
 msgid "Wrong password"
 msgstr ""
 
-#: netprofile_access/views.py:153
+#: build/lib/netprofile_access/views.py:153 netprofile_access/views.py:153
 msgid "Password successfully changed"
 msgstr ""
 
-#: netprofile_access/views.py:201
+#: build/lib/netprofile_access/views.py:201 netprofile_access/views.py:201
 msgid "Error uploading file"
 msgstr ""
 
-#: netprofile_access/views.py:325 netprofile_access/views.py:337
-#: netprofile_access/views.py:342 netprofile_access/views.py:345
-#: netprofile_access/views.py:348 netprofile_access/views.py:568
-#: netprofile_access/views.py:573
+#: build/lib/netprofile_access/views.py:325
+#: build/lib/netprofile_access/views.py:337
+#: build/lib/netprofile_access/views.py:342
+#: build/lib/netprofile_access/views.py:345
+#: build/lib/netprofile_access/views.py:348
+#: build/lib/netprofile_access/views.py:568
+#: build/lib/netprofile_access/views.py:573 netprofile_access/views.py:325
+#: netprofile_access/views.py:337 netprofile_access/views.py:342
+#: netprofile_access/views.py:345 netprofile_access/views.py:348
+#: netprofile_access/views.py:568 netprofile_access/views.py:573
 msgid "Invalid field length"
 msgstr ""
 
-#: netprofile_access/views.py:327 netprofile_access/views.py:570
+#: build/lib/netprofile_access/views.py:327
+#: build/lib/netprofile_access/views.py:570 netprofile_access/views.py:327
+#: netprofile_access/views.py:570
 msgid "Invalid character used in username"
 msgstr ""
 
+#: build/lib/netprofile_access/views.py:339
+#: build/lib/netprofile_access/views.py:575
+#: build/lib/netprofile_access/templates/client_register.mak:67
+#: build/lib/netprofile_access/templates/client_restorepass.mak:69
 #: netprofile_access/views.py:339 netprofile_access/views.py:575
 #: netprofile_access/templates/client_register.mak:67
 #: netprofile_access/templates/client_restorepass.mak:69
 msgid "Invalid e-mail format"
 msgstr ""
 
+#: build/lib/netprofile_access/views.py:356
+#: build/lib/netprofile_access/templates/client_register.mak:40
 #: netprofile_access/views.py:356
 #: netprofile_access/templates/client_register.mak:40
 msgid "This username is already taken"
 msgstr ""
 
-#: netprofile_access/views.py:369
+#: build/lib/netprofile_access/views.py:369 netprofile_access/views.py:369
 msgid "Primary Account"
 msgstr ""
 
-#: netprofile_access/views.py:426
+#: build/lib/netprofile_access/views.py:426 netprofile_access/views.py:426
 #, python-format
 msgid "Activation required for user %s"
 msgstr ""
 
-#: netprofile_access/views.py:625
+#: build/lib/netprofile_access/views.py:625 netprofile_access/views.py:625
 #, python-format
 msgid "Password recovery for user %s"
 msgstr ""
 
-#: netprofile_access/views.py:637
+#: build/lib/netprofile_access/views.py:637 netprofile_access/views.py:637
 msgid "Username and/or e-mail are unknown to us"
 msgstr ""
 
-#: netprofile_access/views.py:700
+#: build/lib/netprofile_access/views.py:700 netprofile_access/views.py:700
 msgid "Portal"
 msgstr ""
 
-#: netprofile_access/views.py:741
+#: build/lib/netprofile_access/views.py:741 netprofile_access/views.py:741
 msgid "Error scheduling rate change"
 msgstr ""
 
-#: netprofile_access/views.py:746
+#: build/lib/netprofile_access/views.py:746 netprofile_access/views.py:746
 msgid "Rate change successfully scheduled"
 msgstr ""
 
-#: netprofile_access/views.py:750
+#: build/lib/netprofile_access/views.py:750 netprofile_access/views.py:750
 msgid "Rate change successfully cancelled"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_activate.mak:3
 #: netprofile_access/templates/client_activate.mak:3
 msgid "Account Activation"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_activate.mak:6
 #: netprofile_access/templates/client_activate.mak:6
 msgid "Account Activation Failed"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_activate.mak:7
 #: netprofile_access/templates/client_activate.mak:7
 msgid "Either your activation link was incomplete or it has timed out."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_activate.mak:9
 #: netprofile_access/templates/client_activate.mak:9
 msgid "Account Activation Successful"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_activate.mak:10
 #: netprofile_access/templates/client_activate.mak:10
 msgid "You can now log in to your newly created account."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_activate.mak:12
+#: build/lib/netprofile_access/templates/client_regsent.mak:12
+#: build/lib/netprofile_access/templates/client_restoresent.mak:13
 #: netprofile_access/templates/client_activate.mak:12
 #: netprofile_access/templates/client_regsent.mak:12
 #: netprofile_access/templates/client_restoresent.mak:13
 msgid "Return to log in page"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_base.mak:20
+#: data/client_tplc/netprofile_access$templates/client_base.mak.py:260
 #: netprofile_access/templates/client_base.mak:20
 msgid "User Portal"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:3
 #: netprofile_access/templates/client_block_chrate.mak:3
+msgid "Current Rate"
+msgstr ""
+
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:7
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:16
+#: build/lib/netprofile_access/templates/client_login.mak:35
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:115
+#: netprofile_access/templates/client_block_chrate.mak:7
+#: netprofile_access/templates/client_block_chrate.mak:16
+#: netprofile_access/templates/client_login.mak:35
+msgid "Change"
+msgstr ""
+
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:22
+#: netprofile_access/templates/client_block_chrate.mak:22
 msgid "New Next Rate"
 msgstr ""
 
-#: netprofile_access/templates/client_block_chrate.mak:17
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:36
+#: netprofile_access/templates/client_block_chrate.mak:36
 msgid "Select different next rate"
 msgstr ""
 
-#: netprofile_access/templates/client_block_chrate.mak:17
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:36
+#: netprofile_access/templates/client_block_chrate.mak:36
 msgid "Set"
 msgstr ""
 
-#: netprofile_access/templates/client_block_chrate.mak:19
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:38
+#: netprofile_access/templates/client_block_chrate.mak:38
 msgid "Cancel scheduled rate change"
 msgstr ""
 
-#: netprofile_access/templates/client_block_chrate.mak:19
+#: build/lib/netprofile_access/templates/client_block_chrate.mak:38
+#: netprofile_access/templates/client_block_chrate.mak:38
 msgid "Clear"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:3
+#: build/lib/netprofile_access/templates/client_chpass.mak:108
+#: build/lib/netprofile_access/templates/client_layout.mak:66
+#: data/client_tplc/netprofile_access$templates/client_layout.mak.py:97
 #: netprofile_access/templates/client_chpass.mak:3
 #: netprofile_access/templates/client_chpass.mak:108
 #: netprofile_access/templates/client_layout.mak:66
 msgid "Change Password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:5
 #: netprofile_access/templates/client_chpass.mak:5
 msgid "Password Change Form"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:15
+#: build/lib/netprofile_access/templates/client_register.mak:19
+#: build/lib/netprofile_access/templates/client_restorepass.mak:23
 #: netprofile_access/templates/client_chpass.mak:15
 #: netprofile_access/templates/client_register.mak:19
 #: netprofile_access/templates/client_restorepass.mak:23
 msgid "Account Settings"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:17
 #: netprofile_access/templates/client_chpass.mak:17
 msgid "Old Password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:25
+#: build/lib/netprofile_access/templates/client_chpass.mak:26
 #: netprofile_access/templates/client_chpass.mak:25
 #: netprofile_access/templates/client_chpass.mak:26
 msgid "Enter your old password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:31
+#: build/lib/netprofile_access/templates/client_chpass.mak:61
+#: build/lib/netprofile_access/templates/client_chpass.mak:90
+#: build/lib/netprofile_access/templates/client_register.mak:37
+#: build/lib/netprofile_access/templates/client_register.mak:65
+#: build/lib/netprofile_access/templates/client_register.mak:93
+#: build/lib/netprofile_access/templates/client_register.mak:122
+#: build/lib/netprofile_access/templates/client_register.mak:153
+#: build/lib/netprofile_access/templates/client_register.mak:179
+#: build/lib/netprofile_access/templates/client_restorepass.mak:40
+#: build/lib/netprofile_access/templates/client_restorepass.mak:67
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:79
 #: netprofile_access/templates/client_chpass.mak:31
 #: netprofile_access/templates/client_chpass.mak:61
 #: netprofile_access/templates/client_chpass.mak:90
@@ -407,6 +512,19 @@ msgstr ""
 msgid "This field is required"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:32
+#: build/lib/netprofile_access/templates/client_chpass.mak:63
+#: build/lib/netprofile_access/templates/client_chpass.mak:92
+#: build/lib/netprofile_access/templates/client_register.mak:38
+#: build/lib/netprofile_access/templates/client_register.mak:66
+#: build/lib/netprofile_access/templates/client_register.mak:95
+#: build/lib/netprofile_access/templates/client_register.mak:124
+#: build/lib/netprofile_access/templates/client_register.mak:154
+#: build/lib/netprofile_access/templates/client_register.mak:180
+#: build/lib/netprofile_access/templates/client_register.mak:204
+#: build/lib/netprofile_access/templates/client_restorepass.mak:41
+#: build/lib/netprofile_access/templates/client_restorepass.mak:68
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:82
 #: netprofile_access/templates/client_chpass.mak:32
 #: netprofile_access/templates/client_chpass.mak:63
 #: netprofile_access/templates/client_chpass.mak:92
@@ -422,16 +540,24 @@ msgstr ""
 msgid "This field is too long"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:44
+#: build/lib/netprofile_access/templates/client_chpass.mak:46
 #: netprofile_access/templates/client_chpass.mak:44
 #: netprofile_access/templates/client_chpass.mak:46
 msgid "New Password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:54
+#: build/lib/netprofile_access/templates/client_chpass.mak:55
 #: netprofile_access/templates/client_chpass.mak:54
 #: netprofile_access/templates/client_chpass.mak:55
 msgid "Enter your new desired password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:62
+#: build/lib/netprofile_access/templates/client_chpass.mak:91
+#: build/lib/netprofile_access/templates/client_register.mak:94
+#: build/lib/netprofile_access/templates/client_register.mak:123
 #: netprofile_access/templates/client_chpass.mak:62
 #: netprofile_access/templates/client_chpass.mak:91
 #: netprofile_access/templates/client_register.mak:94
@@ -439,11 +565,17 @@ msgstr ""
 msgid "This field is too short"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:74
+#: build/lib/netprofile_access/templates/client_register.mak:106
 #: netprofile_access/templates/client_chpass.mak:74
 #: netprofile_access/templates/client_register.mak:106
 msgid "Repeat Password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:82
+#: build/lib/netprofile_access/templates/client_chpass.mak:83
+#: build/lib/netprofile_access/templates/client_register.mak:114
+#: build/lib/netprofile_access/templates/client_register.mak:115
 #: netprofile_access/templates/client_chpass.mak:82
 #: netprofile_access/templates/client_chpass.mak:83
 #: netprofile_access/templates/client_register.mak:114
@@ -451,67 +583,108 @@ msgstr ""
 msgid "Repeat previously entered password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:93
+#: build/lib/netprofile_access/templates/client_register.mak:125
 #: netprofile_access/templates/client_chpass.mak:93
 #: netprofile_access/templates/client_register.mak:125
 msgid "Passwords must match"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:105
+#: build/lib/netprofile_access/templates/client_register.mak:234
+#: build/lib/netprofile_access/templates/client_restorepass.mak:100
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:169
 #: netprofile_access/templates/client_chpass.mak:105
 #: netprofile_access/templates/client_register.mak:234
 #: netprofile_access/templates/client_restorepass.mak:100
 msgid "Fields marked with this symbol are required."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_chpass.mak:108
 #: netprofile_access/templates/client_chpass.mak:108
 msgid "Change your password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:5
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:39
 #: netprofile_access/templates/client_error.mak:5
 #, python-format
 msgid "Error %d"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:8
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:46
 #: netprofile_access/templates/client_error.mak:8
 msgid "There is no page with the address you provided."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:9
+#: build/lib/netprofile_access/templates/client_error.mak:17
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:49
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:68
 #: netprofile_access/templates/client_error.mak:9
 #: netprofile_access/templates/client_error.mak:17
 msgid "We're really sorry about that."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:13
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:56
 #: netprofile_access/templates/client_error.mak:13
 msgid "You don't have the credentials that are required to access this page."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:15
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:62
 #: netprofile_access/templates/client_error.mak:15
 msgid "Maybe you forgot to log in?"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:21
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:74
 #: netprofile_access/templates/client_error.mak:21
 msgid "You can contact support or try again."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:24
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:82
 #: netprofile_access/templates/client_error.mak:24
 msgid "Go back from where you came"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:26
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:85
 #: netprofile_access/templates/client_error.mak:26
 msgid "Go Back"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:30
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:93
 #: netprofile_access/templates/client_error.mak:30
 msgid "Return to home page"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:32
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:96
 #: netprofile_access/templates/client_error.mak:32
 msgid "Go Home"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:35
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:104
 #: netprofile_access/templates/client_error.mak:35
 msgid "Return to sign in page"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_error.mak:37
+#: build/lib/netprofile_access/templates/client_login.mak:3
+#: build/lib/netprofile_access/templates/client_login.mak:10
+#: build/lib/netprofile_access/templates/client_login.mak:20
+#: data/client_tplc/netprofile_access$templates/client_error.mak.py:107
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:58
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:86
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:168
+#: data/tplc/netprofile_core$templates/login.mak.py:103
+#: data/tplc/netprofile_core$templates/login.mak.py:135
 #: netprofile_access/templates/client_error.mak:37
 #: netprofile_access/templates/client_login.mak:3
 #: netprofile_access/templates/client_login.mak:10
@@ -519,6 +692,11 @@ msgstr ""
 msgid "Log In"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_guest.mak:3
+#: build/lib/netprofile_access/templates/client_login.mak:40
+#: build/lib/netprofile_access/templates/client_register.mak:3
+#: build/lib/netprofile_access/templates/client_register.mak:237
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:125
 #: netprofile_access/templates/client_guest.mak:3
 #: netprofile_access/templates/client_login.mak:40
 #: netprofile_access/templates/client_register.mak:3
@@ -526,48 +704,75 @@ msgstr ""
 msgid "Register"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_guest.mak:5
 #: netprofile_access/templates/client_guest.mak:5
 msgid "Go back to login page"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_guest.mak:5
 #: netprofile_access/templates/client_guest.mak:5
 msgid "Already Registered"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_layout.mak:9
+#: data/client_tplc/netprofile_access$templates/client_layout.mak.py:43
 #: netprofile_access/templates/client_layout.mak:9
 msgid "Toggle navigation"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_layout.mak:41
+#: data/client_tplc/netprofile_access$templates/client_layout.mak.py:55
 #: netprofile_access/templates/client_layout.mak:41
 msgid "Change Language"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_layout.mak:42
+#: data/client_tplc/netprofile_access$templates/client_layout.mak.py:60
 #: netprofile_access/templates/client_layout.mak:42
 msgid "Currently Selected Language"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_layout.mak:60
+#: data/client_tplc/netprofile_access$templates/client_layout.mak.py:89
 #: netprofile_access/templates/client_layout.mak:60
 msgid "User Menu"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_layout.mak:68
+#: data/client_tplc/netprofile_access$templates/client_layout.mak.py:102
 #: netprofile_access/templates/client_layout.mak:68
 msgid "Log Out"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_layout.mak:104
+#: data/client_tplc/netprofile_access$templates/client_layout.mak.py:148
 #: netprofile_access/templates/client_layout.mak:104
 msgid "NetProfile.ru Team"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_layout.mak:105
+#: data/client_tplc/netprofile_access$templates/client_layout.mak.py:151
 #: netprofile_access/templates/client_layout.mak:105
 msgid "License:"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_login.mak:18
+#: build/lib/netprofile_access/templates/client_register.mak:21
+#: build/lib/netprofile_access/templates/client_restorepass.mak:25
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:74
+#: data/tplc/netprofile_core$templates/login.mak.py:76
 #: netprofile_access/templates/client_login.mak:18
 #: netprofile_access/templates/client_register.mak:21
 #: netprofile_access/templates/client_restorepass.mak:25
 msgid "User Name"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_login.mak:18
+#: build/lib/netprofile_access/templates/client_register.mak:29
+#: build/lib/netprofile_access/templates/client_register.mak:30
+#: build/lib/netprofile_access/templates/client_restorepass.mak:33
+#: build/lib/netprofile_access/templates/client_restorepass.mak:34
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:76
 #: netprofile_access/templates/client_login.mak:18
 #: netprofile_access/templates/client_register.mak:29
 #: netprofile_access/templates/client_register.mak:30
@@ -576,67 +781,91 @@ msgstr ""
 msgid "Enter your user name here"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_login.mak:19
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:81
 #: netprofile_access/templates/client_login.mak:19
 msgid "Enter your password here"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_login.mak:20
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:84
 #: netprofile_access/templates/client_login.mak:20
 msgid "Log in to your account"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_login.mak:24
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:92
+#: data/tplc/netprofile_core$templates/login.mak.py:82
 #: netprofile_access/templates/client_login.mak:24
 msgid "Language"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_login.mak:35
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:113
 #: netprofile_access/templates/client_login.mak:35
 msgid "Change your current language"
 msgstr ""
 
-#: netprofile_access/templates/client_login.mak:35
-msgid "Change"
-msgstr ""
-
+#: build/lib/netprofile_access/templates/client_login.mak:40
+#: build/lib/netprofile_access/templates/client_register.mak:237
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:123
 #: netprofile_access/templates/client_login.mak:40
 #: netprofile_access/templates/client_register.mak:237
 msgid "Register new account"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_login.mak:43
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:133
 #: netprofile_access/templates/client_login.mak:43
 msgid "Recover lost password via e-mail"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_login.mak:43
+#: data/client_tplc/netprofile_access$templates/client_login.mak.py:135
 #: netprofile_access/templates/client_login.mak:43
 msgid "Lost Password?"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:5
 #: netprofile_access/templates/client_register.mak:5
 msgid "Registration Form"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:6
 #: netprofile_access/templates/client_register.mak:6
 msgid "Please fill in this form so we can properly set up your account."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:8
 #: netprofile_access/templates/client_register.mak:8
 msgid "Note:"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:8
 #: netprofile_access/templates/client_register.mak:8
 msgid ""
 "You will receive a confirmation e-mail with an activation link. Your account "
 "will be inactive until you click this link."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:39
+#: build/lib/netprofile_access/templates/client_restorepass.mak:42
 #: netprofile_access/templates/client_register.mak:39
 #: netprofile_access/templates/client_restorepass.mak:42
 msgid "Invalid character was used"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:51
+#: build/lib/netprofile_access/templates/client_restorepass.mak:53
 #: netprofile_access/templates/client_register.mak:51
 #: netprofile_access/templates/client_restorepass.mak:53
 msgid "E-mail"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:59
+#: build/lib/netprofile_access/templates/client_register.mak:60
+#: build/lib/netprofile_access/templates/client_restorepass.mak:61
+#: build/lib/netprofile_access/templates/client_restorepass.mak:62
 #: netprofile_access/templates/client_register.mak:59
 #: netprofile_access/templates/client_register.mak:60
 #: netprofile_access/templates/client_restorepass.mak:61
@@ -644,115 +873,152 @@ msgstr ""
 msgid "Enter your e-mail address"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:86
+#: build/lib/netprofile_access/templates/client_register.mak:87
 #: netprofile_access/templates/client_register.mak:86
 #: netprofile_access/templates/client_register.mak:87
 msgid "Enter your desired password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:137
 #: netprofile_access/templates/client_register.mak:137
 msgid "Personal Information"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:139
 #: netprofile_access/templates/client_register.mak:139
 msgid "Family Name"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:147
+#: build/lib/netprofile_access/templates/client_register.mak:148
 #: netprofile_access/templates/client_register.mak:147
 #: netprofile_access/templates/client_register.mak:148
 msgid "Enter your family name"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:165
 #: netprofile_access/templates/client_register.mak:165
 msgid "Given Name"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:173
+#: build/lib/netprofile_access/templates/client_register.mak:174
 #: netprofile_access/templates/client_register.mak:173
 #: netprofile_access/templates/client_register.mak:174
 msgid "Enter your given name"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:191
 #: netprofile_access/templates/client_register.mak:191
 msgid "Middle Name"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:198
+#: build/lib/netprofile_access/templates/client_register.mak:199
 #: netprofile_access/templates/client_register.mak:198
 #: netprofile_access/templates/client_register.mak:199
 msgid "Enter your middle name"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_register.mak:216
+#: build/lib/netprofile_access/templates/client_restorepass.mak:82
 #: netprofile_access/templates/client_register.mak:216
 #: netprofile_access/templates/client_restorepass.mak:82
 msgid "User Validation"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_regsent.mak:3
+#: build/lib/netprofile_access/templates/client_regsent.mak:5
 #: netprofile_access/templates/client_regsent.mak:3
 #: netprofile_access/templates/client_regsent.mak:5
 msgid "Registration Complete"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_regsent.mak:7
+#: build/lib/netprofile_access/templates/email_register_html.mak:15
+#: build/lib/netprofile_access/templates/email_register_plain.mak:4
 #: netprofile_access/templates/client_regsent.mak:7
 #: netprofile_access/templates/email_register_html.mak:15
 #: netprofile_access/templates/email_register_plain.mak:4
 msgid "Thank you for registering an account in our system."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_regsent.mak:9
 #: netprofile_access/templates/client_regsent.mak:9
 msgid ""
 "A message containing an activation link was sent to the e-mail address you "
 "provided. You won't be able to log in until you follow this link."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_regsent.mak:11
 #: netprofile_access/templates/client_regsent.mak:11
 msgid ""
 "You can now log in with the user name and password that you provided during "
 "registration."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restorepass.mak:3
 #: netprofile_access/templates/client_restorepass.mak:3
 msgid "Restore Password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restorepass.mak:5
 #: netprofile_access/templates/client_restorepass.mak:5
 msgid "Password Recovery Form"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restorepass.mak:7
 #: netprofile_access/templates/client_restorepass.mak:7
 msgid "Please enter your username and e-mail."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restorepass.mak:9
 #: netprofile_access/templates/client_restorepass.mak:9
 msgid "A new autogenerated password will be emailed to you after that."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restorepass.mak:11
 #: netprofile_access/templates/client_restorepass.mak:11
 msgid "Your password will be emailed to you after that."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restorepass.mak:103
 #: netprofile_access/templates/client_restorepass.mak:103
 msgid "Recover your password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restorepass.mak:103
 #: netprofile_access/templates/client_restorepass.mak:103
 msgid "Recover Password"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restoresent.mak:3
+#: build/lib/netprofile_access/templates/client_restoresent.mak:5
 #: netprofile_access/templates/client_restoresent.mak:3
 #: netprofile_access/templates/client_restoresent.mak:5
 msgid "Password Recovery Complete"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restoresent.mak:8
 #: netprofile_access/templates/client_restoresent.mak:8
 msgid "New automatically generated password was sent to your e-mail."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/client_restoresent.mak:10
 #: netprofile_access/templates/client_restoresent.mak:10
 msgid "Your current password was sent to your e-mail."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_recover_html.mak:9
 #: netprofile_access/templates/email_recover_html.mak:9
 msgid "Password Recovery"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_recover_html.mak:13
+#: build/lib/netprofile_access/templates/email_recover_plain.mak:2
+#: build/lib/netprofile_access/templates/email_register_html.mak:13
+#: build/lib/netprofile_access/templates/email_register_plain.mak:2
 #: netprofile_access/templates/email_recover_html.mak:13
 #: netprofile_access/templates/email_recover_plain.mak:2
 #: netprofile_access/templates/email_register_html.mak:13
@@ -761,42 +1027,192 @@ msgstr ""
 msgid "Hello %s!"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_recover_html.mak:15
+#: build/lib/netprofile_access/templates/email_recover_plain.mak:4
 #: netprofile_access/templates/email_recover_html.mak:15
 #: netprofile_access/templates/email_recover_plain.mak:4
 msgid "You have recently requested a password recovery."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_recover_html.mak:17
+#: build/lib/netprofile_access/templates/email_recover_plain.mak:6
 #: netprofile_access/templates/email_recover_html.mak:17
 #: netprofile_access/templates/email_recover_plain.mak:6
 msgid "Your password was automatically changed."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_recover_html.mak:18
+#: build/lib/netprofile_access/templates/email_recover_plain.mak:7
 #: netprofile_access/templates/email_recover_html.mak:18
 #: netprofile_access/templates/email_recover_plain.mak:7
 msgid "Here is your new password:"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_recover_html.mak:20
+#: build/lib/netprofile_access/templates/email_recover_plain.mak:9
 #: netprofile_access/templates/email_recover_html.mak:20
 #: netprofile_access/templates/email_recover_plain.mak:9
 msgid "Here is your password:"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_recover_html.mak:23
+#: build/lib/netprofile_access/templates/email_recover_plain.mak:12
 #: netprofile_access/templates/email_recover_html.mak:23
 #: netprofile_access/templates/email_recover_plain.mak:12
 msgid "If you didn't request a password recovery please contact support immediately."
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_register_html.mak:9
 #: netprofile_access/templates/email_register_html.mak:9
 msgid "User Activation"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_register_html.mak:16
+#: build/lib/netprofile_access/templates/email_register_plain.mak:5
 #: netprofile_access/templates/email_register_html.mak:16
 #: netprofile_access/templates/email_register_plain.mak:5
 msgid "Here is your activation link:"
 msgstr ""
 
+#: build/lib/netprofile_access/templates/email_register_html.mak:22
+#: build/lib/netprofile_access/templates/email_register_plain.mak:9
 #: netprofile_access/templates/email_register_html.mak:22
 #: netprofile_access/templates/email_register_plain.mak:9
 msgid "Be sure to follow it before trying to log in."
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:67
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:281
+msgid "My Accounts"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:77
+msgid "Account Name"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:86
+msgid "Current account balance"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:101
+msgid "Current credit limit for this account"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:109
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:114
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:150
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:188
+msgid "Actions"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:120
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:156
+msgid "Create User"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:123
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:159
+msgid "Transfer Funds"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:128
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:164
+msgid "Operations Report"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:131
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:167
+msgid "Promised Payments Report"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:139
+msgid "Users"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:144
+msgid "Replenish"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:213
+msgid "Paid Till"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:232
+msgid "This account has no users."
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:245
+msgid "Promise Payment"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:254
+msgid "Enter sum"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:256
+msgid "Enter the sum you promise to pay at a later date."
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:259
+msgid "Press to promise payment"
+msgstr ""
+
+#: data/client_tplc/netprofile_stashes$templates/client_stashes.mak.py:261
+msgid "Promise"
+msgstr ""
+
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:46
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:195
+#: data/client_tplc/netprofile_tickets$templates/client_list.mak.py:53
+#: data/client_tplc/netprofile_tickets$templates/client_list.mak.py:92
+msgid "New Issue"
+msgstr ""
+
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:49
+msgid "Please describe your issue in the form below."
+msgstr ""
+
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:64
+msgid "Issue Details"
+msgstr ""
+
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:70
+msgid "Title"
+msgstr ""
+
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:73
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:76
+msgid "Enter a short issue description"
+msgstr ""
+
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:122
+msgid "Choose your issue type"
+msgstr ""
+
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:152
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:155
+msgid "Enter an optional longer issue description"
+msgstr ""
+
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:175
+#: data/client_tplc/netprofile_tickets$templates/client_create.mak.py:180
+msgid "Add New Issue"
+msgstr ""
+
+#: data/client_tplc/netprofile_tickets$templates/client_list.mak.py:56
+#: data/client_tplc/netprofile_tickets$templates/client_list.mak.py:111
+msgid "My Issues"
+msgstr ""
+
+#: data/tplc/netprofile_core$templates/base.mak.py:98
+msgid "Home"
+msgstr ""
+
+#: data/tplc/netprofile_core$templates/login.mak.py:71
+msgid "Authentication failed."
+msgstr ""
+
+#: data/tplc/netprofile_core$templates/webshell.mak.py:363
+msgid "Warning"
 msgstr ""
 

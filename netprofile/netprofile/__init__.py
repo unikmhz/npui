@@ -123,6 +123,7 @@ def main(global_config, **settings):
 		'netprofile.common.subscribers.on_new_request',
 		'pyramid.events.ContextFound'
 	)
+	config.include('pyramid_mako')
 	config.add_route_predicate('vhost', VHostPredicate)
 	config.add_view_predicate('vhost', VHostPredicate)
 	config.add_request_method(get_locales, str('locales'), reify=True)
