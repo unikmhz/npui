@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-02-07 11:11+0400\n"
-"PO-Revision-Date: 2014-02-07 11:15+0300\n"
+"POT-Creation-Date: 2014-04-13 15:44+0400\n"
+"PO-Revision-Date: 2014-04-13 15:45+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
@@ -88,7 +88,8 @@ msgid "Alias Of"
 msgstr "Псевдоним"
 
 #: netprofile_access/models.py:227
-#: netprofile_access/templates/client_block_chrate.mak:7
+#: netprofile_access/templates/client_block_chrate.mak:13
+#: netprofile_access/templates/client_block_chrate.mak:26
 msgid "Next Rate"
 msgstr "Следующий тариф"
 
@@ -314,12 +315,10 @@ msgid "Error scheduling rate change"
 msgstr "Ошибка при выборе следующего тарифа"
 
 #: netprofile_access/views.py:746
-#| msgid "Password successfully changed"
 msgid "Rate change successfully scheduled"
 msgstr "Запланировано изменение тарифа"
 
 #: netprofile_access/views.py:750
-#| msgid "Password successfully changed"
 msgid "Rate change successfully cancelled"
 msgstr "Запланированное изменение тарифа отменено"
 
@@ -357,23 +356,32 @@ msgid "User Portal"
 msgstr "Пользовательский портал"
 
 #: netprofile_access/templates/client_block_chrate.mak:3
-#| msgid "Next Rate"
+msgid "Current Rate"
+msgstr "Текущий тариф"
+
+#: netprofile_access/templates/client_block_chrate.mak:7
+#: netprofile_access/templates/client_block_chrate.mak:16
+#: netprofile_access/templates/client_login.mak:35
+msgid "Change"
+msgstr "Изменить"
+
+#: netprofile_access/templates/client_block_chrate.mak:22
 msgid "New Next Rate"
 msgstr "Изменить на"
 
-#: netprofile_access/templates/client_block_chrate.mak:17
+#: netprofile_access/templates/client_block_chrate.mak:36
 msgid "Select different next rate"
 msgstr "Установить выбранный тариф"
 
-#: netprofile_access/templates/client_block_chrate.mak:17
+#: netprofile_access/templates/client_block_chrate.mak:36
 msgid "Set"
 msgstr "Установить"
 
-#: netprofile_access/templates/client_block_chrate.mak:19
+#: netprofile_access/templates/client_block_chrate.mak:38
 msgid "Cancel scheduled rate change"
 msgstr "Отменить запланированную смену тарифа"
 
-#: netprofile_access/templates/client_block_chrate.mak:19
+#: netprofile_access/templates/client_block_chrate.mak:38
 msgid "Clear"
 msgstr "Отменить"
 
@@ -600,10 +608,6 @@ msgstr "Язык"
 #: netprofile_access/templates/client_login.mak:35
 msgid "Change your current language"
 msgstr "Изменить текущий язык"
-
-#: netprofile_access/templates/client_login.mak:35
-msgid "Change"
-msgstr "Изменить"
 
 #: netprofile_access/templates/client_login.mak:40
 #: netprofile_access/templates/client_register.mak:237
