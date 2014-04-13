@@ -29,7 +29,6 @@ requires = [
 	'pyramid_debugtoolbar >= 1.0',
 	'pyramid_redis_sessions >= 0.9b5',
 	'pyramid_mailer >= 0.13',
-	'pyramid_mako',
 	'Babel',
 	'lingua',
 	'lxml',

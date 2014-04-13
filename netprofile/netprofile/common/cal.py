@@ -27,16 +27,52 @@ from __future__ import (
 	division
 )
 
+import icalendar
 from icalendar.cal import (
 	Component,
+	types_factory,
 	component_factory
 )
 
 class Card(Component):
 	name = 'VCARD'
-	canonical_order = ('VERSION',)
-	required = ('VERSION',)
-	singletons = ('VERSION',)
+	canonical_order = ('VERSION', 'FN', 'N', 'NICKNAME', 'EMAIL')
+	required = ('VERSION', 'FN')
+	singletons = ('VERSION', 'N')
+	multiple = ('FN', 'EMAIL', 'NICKNAME')
 
 component_factory['VCARD'] = Card
+
+class vUnicode(icalendar.vText):
+	def __new__(cls, value, encoding=icalendar.cal.DEFAULT_ENCODING):
+		self = super(vUnicode, cls).__new__(cls, value, encoding)
+		self.params['CHARSET'] = 'UTF-8'
+		return self
+
+	def __repr__(self):
+		return "vUnicode('%s')" % self.to_ical()
+
+class vEMail(icalendar.vText):
+	def __new__(cls, value, encoding=icalendar.cal.DEFAULT_ENCODING):
+		self = super(vUnicode, cls).__new__(cls, value, encoding)
+		self.params['TYPE'] = 'internet'
+		return self
+
+	def __repr__(self):
+		return "vUnicode('%s')" % self.to_ical()
+
+class vStructuredUnicode(object):
+	def __init__(self, *args):
+		self.struct = args
+		self.params = icalendar.Parameters()
+		self.params['CHARSET'] = 'UTF-8'
+
+	def to_ical(self):
+		return b';'.join(icalendar.vText(c).to_ical() for c in self.struct)
+
+types_factory.all_types += (
+	vEMail,
+	vUnicode,
+	vStructuredUnicode
+)
 
