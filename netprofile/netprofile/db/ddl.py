@@ -29,12 +29,43 @@ from __future__ import (
 
 from sqlalchemy.schema import (
 	Column,
+	DefaultClause,
 	DDLElement,
 	SchemaItem,
 	Table
 )
 from sqlalchemy import event
+from sqlalchemy.sql.expression import ClauseElement
 from sqlalchemy.ext.compiler import compiles
+
+class CurrentTimestampDefaultItem(ClauseElement):
+	def __init__(self, on_update=False):
+		self.on_update = on_update
+
+@compiles(CurrentTimestampDefaultItem, 'mysql')
+def visit_timestamp_default_mysql(element, compiler, *kw):
+	ddl = 'CURRENT_TIMESTAMP'
+	if element.on_update:
+		ddl += ' ON UPDATE CURRENT_TIMESTAMP'
+	return ddl
+
+@compiles(CurrentTimestampDefaultItem)
+def visit_timestamp_default(element, compiler, *kw):
+	pass
+
+class CurrentTimestampDefault(DefaultClause):
+	def __init__(self, on_update=False):
+		self.on_update = on_update
+		super(CurrentTimestampDefault, self).__init__(
+			CurrentTimestampDefaultItem(on_update),
+			for_update=on_update
+		)
+
+	def _set_parent(self, column):
+		self.column = column
+		self.column.server_default = self
+		if self.on_update:
+			self.column.server_onupdate = self
 
 class SetTableComment(DDLElement):
 	def __init__(self, table, comment):
