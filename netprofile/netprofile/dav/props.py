@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV property lists
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -38,9 +38,11 @@ NS_APACHE     = 'http://apache.org/dav/props/'
 NS_CALDAV     = 'urn:ietf:params:xml:ns:caldav'
 NS_MSXMLDATA  = 'urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/'
 NS_CS         = 'http://calendarserver.org/ns/'
+NS_DAVMOUNT   = 'http://purl.org/NET/webdav/mount'
 
 NS_MAP = {
 	'd'  : NS_DAV,
+	'dm' : NS_DAVMOUNT,
 	'cd' : NS_CALDAV,
 	'ap' : NS_APACHE,
 #	'dt' : NS_MSXMLDATA,
@@ -153,6 +155,13 @@ TIMEOUT                 = _TAG(NS_DAV, 'timeout')
 UNAUTHENTICATED         = _TAG(NS_DAV, 'unauthenticated')
 WRITE                   = _TAG(NS_DAV, 'write')
 
+# Sync tags
+LIMIT                   = _TAG(NS_DAV, 'limit')
+NUM_RESULTS             = _TAG(NS_DAV, 'nresults')
+SYNC_COLLECTION         = _TAG(NS_DAV, 'sync-collection')
+SYNC_LEVEL              = _TAG(NS_DAV, 'sync-level')
+SYNC_TOKEN              = _TAG(NS_DAV, 'sync-token')
+
 # Error tags
 LOCK_TOKEN_REQUEST_URI  = _TAG(NS_DAV, 'lock-token-matches-request-uri')
 LOCK_TOKEN_SUBMITTED    = _TAG(NS_DAV, 'lock-token-submitted')
@@ -163,6 +172,12 @@ NO_CONFLICTING_LOCK     = _TAG(NS_DAV, 'no-conflicting-lock')
 NOT_SUPPORTED_PRIVILEGE = _TAG(NS_DAV, 'not-supported-privilege')
 RECOGNIZED_PRINCIPAL    = _TAG(NS_DAV, 'recognized-principal')
 VALID_RESOURCETYPE      = _TAG(NS_DAV, 'valid-resourcetype')
+
+# Mount tags
+MOUNT                   = _TAG(NS_DAVMOUNT, 'mount')
+MOUNT_URL               = _TAG(NS_DAVMOUNT, 'url')
+MOUNT_OPEN              = _TAG(NS_DAVMOUNT, 'open')
+MOUNT_USERNAME          = _TAG(NS_DAVMOUNT, 'username')
 
 # ACL tags
 ACL_ALL                 = _ACL(NS_DAV, 'all')

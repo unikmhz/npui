@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Authentication routines
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -64,7 +64,11 @@ class PluginAuthenticationPolicy(object):
 			r_len = len(route)
 			if r_len <= cur_len:
 				continue
-			if route == request.path[:r_len]:
+			path = request.path
+			if route == path[:r_len]:
+				if len(path) > r_len:
+					if path[r_len:r_len + 1] != '/':
+						continue
 				cur = plug
 				cur_len = r_len
 		if cur:

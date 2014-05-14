@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Module detection and loading
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -282,12 +282,16 @@ class ModuleManager(object):
 		"""
 		Run module's installation hooks and register the module in DB.
 		"""
+		from netprofile_core.models import NPModule
+
 		pass
 
 	def uninstall(self, moddef, sess):
 		"""
 		Unregister the module from DB and run module's uninstallation hooks.
 		"""
+		from netprofile_core.models import NPModule
+
 		pass
 
 	def _import_model(self, moddef, model, mb, hm):

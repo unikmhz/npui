@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Setup and entry points
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -46,6 +46,8 @@ from netprofile.common import cache
 from netprofile.common.modules import IModuleManager
 from netprofile.common.factory import RootFactory
 from netprofile.db.connection import DBSession
+
+inst_id = 'ru.netprofile'
 
 def locale_neg(request):
 	avail = request.locales
@@ -102,9 +104,13 @@ class VHostPredicate(object):
 
 def main(global_config, **settings):
 	"""
-	Pyramid WSGI application for main NetProfile vhost.
+	Pyramid WSGI application for most of NetProfile vhosts.
 	"""
+	global inst_id
+
 	settings['netprofile.debug'] = asbool(settings.get('netprofile.debug'))
+	if 'netprofile.instance_id' in settings:
+		inst_id = settings.get('netprofile.instance_id')
 	engine = engine_from_config(settings, 'sqlalchemy.')
 	DBSession.configure(bind=engine)
 	cache.cache = cache.configure_cache(settings)

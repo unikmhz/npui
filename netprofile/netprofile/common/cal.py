@@ -54,7 +54,7 @@ class vUnicode(icalendar.vText):
 
 class vEMail(icalendar.vText):
 	def __new__(cls, value, encoding=icalendar.cal.DEFAULT_ENCODING):
-		self = super(vUnicode, cls).__new__(cls, value, encoding)
+		self = super(vEMail, cls).__new__(cls, value, encoding)
 		self.params['TYPE'] = 'internet'
 		return self
 

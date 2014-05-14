@@ -71,6 +71,16 @@ class DAVPropFindRequest(DAVRequest):
 		else:
 			self.xml = None
 
+	def is_allprop_request(self):
+		if (len(self.xml) >= 1) and (self.xml[0].tag == dprops.ALL_PROPS):
+			return True
+		return False
+
+	def is_propname_request(self):
+		if (len(self.xml) >= 1) and (self.xml[0].tag == dprops.PROPNAME):
+			return True
+		return False
+
 	def get_props(self):
 		return self.req.dav.parse_propnames(self.req, self.xml)
 
