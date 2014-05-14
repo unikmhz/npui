@@ -61,6 +61,7 @@ class Module(ModuleBase):
 		cfg.add_route('core.logout', '/logout', vhost='MAIN')
 		cfg.add_traverser(DAVTraverser, DAVRoot)
 		cfg.add_route('core.dav', '/dav*traverse', factory='netprofile.dav.DAVRoot', vhost='MAIN')
+		cfg.add_route('core.wellknown', '/.well-known/*service', vhost='MAIN')
 		cfg.scan()
 
 		try:
@@ -77,6 +78,7 @@ class Module(ModuleBase):
 				vhost='MAIN',
 				custom_predicates=(_int_fileid,))
 		config.add_route('core.file.upload', '/file/ul', vhost='MAIN')
+		config.add_route('core.file.mount', '/file/mount/{ffid:\d+}*filename', vhost='MAIN')
 
 	def get_models(self):
 		return (
@@ -104,7 +106,9 @@ class Module(ModuleBase):
 			UserSettingType,
 			UserSetting,
 			DataCache,
-			Calendar
+			Calendar,
+			CalendarImport,
+			Event
 		)
 
 	def get_menus(self):

@@ -59,6 +59,8 @@ __all__ = [
 	'DataCache',
 	'DAVLock',
 	'Calendar',
+	'CalendarImport',
+	'Event',
 
 	'global_setting'
 ]
@@ -113,12 +115,17 @@ from sqlalchemy.orm.exc import NoResultFound
 #	relationship
 #)
 
-from netprofile import PY3
-from netprofile.common import ipaddr
+from netprofile import (
+	PY3,
+	inst_id
+)
+from netprofile.common import (
+	ipaddr,
+	cal
+)
 from netprofile.common.phps import HybridPickler
 from netprofile.common.threadlocal import magic
 from netprofile.common.cache import cache
-from netprofile.common.cal import Card
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -138,15 +145,18 @@ from netprofile.db.fields import (
 	npbool
 )
 from netprofile.ext.wizards import (
+	ExtJSWizardField,
 	SimpleWizard,
 	Step,
 	Wizard
 )
+from netprofile.ext.columns import MarkupColumn
 from netprofile.dav import (
 	IDAVFile,
 	IDAVCollection,
 	IDAVPrincipal,
 
+	DAVAllPropsSet,
 	DAVACEValue,
 	DAVACLValue,
 	DAVPrincipalValue,
@@ -688,6 +698,18 @@ class User(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	calendar_imports = relationship(
+		'CalendarImport',
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	events = relationship(
+		'Event',
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	secondary_groups = association_proxy(
 		'secondary_groupmap',
@@ -717,6 +739,7 @@ class User(Base):
 
 	def __init__(self, **kwargs):
 		super(User, self).__init__(**kwargs)
+		self.vcard = None
 		self.mod_pw = False
 
 	def __str__(self):
@@ -996,13 +1019,21 @@ class User(Base):
 		return [ '', 'users', self.login ]
 
 	def dav_props(self, pset):
+		vcard = getattr(self, 'vcard', None)
+		if vcard is None:
+			self.vcard = self._get_vcard()
+
 		ret = {}
 		if dprops.RESOURCE_TYPE in pset:
 			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.PRINCIPAL)
+		if dprops.CONTENT_LENGTH in pset:
+			ret[dprops.CONTENT_LENGTH] = self.vcard.content_length
 		if dprops.CONTENT_TYPE in pset:
-			ret[dprops.CONTENT_TYPE] = 'text/x-vcard; charset=utf-8'
+			ret[dprops.CONTENT_TYPE] = 'text/x-vcard'
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.login
+		if dprops.ETAG in pset:
+			ret[dprops.ETAG] = '"%s"' % self.vcard.etag
 		return ret
 
 	def dav_group_members(self, req):
@@ -1020,6 +1051,58 @@ class User(Base):
 		if self.email:
 			uris.append('mailto:' + self.email)
 		return uris
+
+	def _get_vcard(self):
+		card = cal.Card()
+		card.add('VERSION', '3.0')
+
+		fname = []
+		if self.name_family:
+			fname.append(self.name_family)
+		if self.name_given:
+			fname.append(self.name_given)
+		if self.name_middle:
+			fname.append(self.name_middle)
+		if len(fname) == 0:
+			fname = (self.login,)
+		if self.id:
+			card.add('UID', icalendar.vUri('urn:npobj:user:%s:%u' % (
+				inst_id,
+				self.id
+			)))
+		card.add('N', cal.vStructuredUnicode(*fname))
+		card.add('FN', cal.vUnicode(' '.join(fname)))
+		card.add('NICKNAME', cal.vUnicode(self.login))
+		if self.email:
+			card.add('EMAIL', cal.vEMail(self.email))
+
+		ical = card.to_ical()
+		resp = Response(ical, content_type='text/x-vcard', charset='utf-8')
+		if PY3:
+			resp.content_disposition = \
+				'attachment; filename*=UTF-8\'\'%s.vcf' % (
+					urllib.parse.quote(self.login, '')
+				)
+		else:
+			resp.content_disposition = \
+				'attachment; filename*=UTF-8\'\'%s.vcf' % (
+					urllib.quote(self.login.encode(), '')
+				)
+		ctx = hashlib.md5()
+		ctx.update(ical)
+		resp.etag = ctx.hexdigest()
+		return resp
+
+	def dav_get(self, req):
+		vcard = getattr(self, 'vcard', None)
+		if vcard is None:
+			self.vcard = self._get_vcard()
+		return self.vcard
+
+	@validates('name_family', 'name_given', 'name_middle', 'login', 'email')
+	def _reset_vcard(self, k, v):
+		self.vcard = None
+		return v
 
 	@classmethod
 	def get_acls(cls):
@@ -1288,7 +1371,7 @@ class Group(Base):
 		if dprops.RESOURCE_TYPE in pset:
 			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.PRINCIPAL)
 		if dprops.CONTENT_TYPE in pset:
-			ret[dprops.CONTENT_TYPE] = 'text/x-vcard; charset=utf-8'
+			ret[dprops.CONTENT_TYPE] = 'text/x-vcard'
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.name
 		return ret
@@ -2330,6 +2413,11 @@ class FileMeta(Mutable, dict):
 	def get_prop(self, name):
 		return self['p'][name]
 
+	def get_props(self):
+		if 'p' not in self:
+			return dict()
+		return self['p']
+
 	def set_prop(self, name, value):
 		if 'p' not in self:
 			self['p'] = {}
@@ -2371,8 +2459,10 @@ class FileFolder(Base):
 
 				'menu_name'    : _('Folders'),
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-#				'grid_view'    : ()
+				'grid_view'    : ('name', 'ctime', 'mtime'),
+				'form_view'    : ('name', 'user', 'group', 'rights', 'ctime', 'mtime', 'descr'),
 				'easy_search'  : ('name',),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 				'extra_data'   : ('allow_read', 'allow_write', 'allow_traverse')
 			}
 		}
@@ -2431,7 +2521,9 @@ class FileFolder(Base):
 		default=F_DEFAULT_DIRS,
 		server_default=text(str(F_DEFAULT_DIRS)),
 		info={
-			'header_string' : _('Rights')
+			'header_string' : _('Rights'),
+			'editor_xtype'  : 'filerights',
+			'editor_config' : { 'isDirectory' : True }
 		}
 	)
 	access = Column(
@@ -2574,8 +2666,13 @@ class FileFolder(Base):
 		root_ff = u.group.effective_root_folder
 		if root_ff and (not obj.is_inside(root_ff)):
 			return False
-		if (not root_ff) and (not u.root_writeable):
+		if (not parent) and (not u.root_writable):
 			return False
+
+		# Extra precaution
+		if obj.user != u:
+			return False
+
 		return True
 
 	@property
@@ -2745,12 +2842,15 @@ class FileFolder(Base):
 			ret[dprops.IS_FOLDER] = 't'
 		if dprops.IS_HIDDEN in pset:
 			ret[dprops.IS_HIDDEN] = '0'
-		custom = pset.difference(dprops.RO_PROPS)
-		for cprop in custom:
-			try:
-				ret[cprop] = self.get_prop(cprop)
-			except KeyError:
-				pass
+		if isinstance(pset, DAVAllPropsSet):
+			ret.update(self.get_props())
+		else:
+			custom = pset.difference(dprops.RO_PROPS)
+			for cprop in custom:
+				try:
+					ret[cprop] = self.get_prop(cprop)
+				except KeyError:
+					pass
 		return ret
 
 	def dav_props_set(self, pdict):
@@ -2767,6 +2867,11 @@ class FileFolder(Base):
 		if not self.meta:
 			self.meta = FileMeta()
 		return self.meta.get_prop(name)
+
+	def get_props(self):
+		if not self.meta:
+			self.meta = FileMeta()
+		return self.meta.get_props()
 
 	def set_prop(self, name, value):
 		if not self.meta:
@@ -2941,7 +3046,7 @@ class FileResponse(Response):
 		self.etag = obj.etag
 		self.content_encoding = content_encoding
 		cr = None
-		if request.range and (self in request.if_range):
+		if request.range and (self in request.if_range) and (',' not in request.headers.get('Range')):
 			cr = request.range.content_range(length=obj.size)
 		if cr:
 			self.status = 206
@@ -2950,6 +3055,7 @@ class FileResponse(Response):
 			self.content_range = (0, obj.size, obj.size)
 			if request.range and ('If-Range' not in request.headers):
 				self.status = 416
+				self.content_range = 'bytes */%d' % obj.size
 
 		if request.method != 'HEAD':
 			bio = None
@@ -3271,7 +3377,7 @@ class File(Base):
 		root_ff = u.group.effective_root_folder
 		if root_ff and (not obj.is_inside(root_ff)):
 			return False
-		if (not root_ff) and (not u.root_writeable):
+		if (not parent) and (not u.root_writable):
 			return False
 		return True
 
@@ -3438,12 +3544,15 @@ class File(Base):
 				ret[dprops.EXECUTABLE] = 'T' if self.can_execute(req.user) else 'F'
 		if dprops.LAST_MODIFIED in pset:
 			ret[dprops.LAST_MODIFIED] = self.modification_time
-		custom = pset.difference(dprops.RO_PROPS)
-		for cprop in custom:
-			try:
-				ret[cprop] = self.get_prop(cprop)
-			except KeyError:
-				pass
+		if isinstance(pset, DAVAllPropsSet):
+			ret.update(self.get_props())
+		else:
+			custom = pset.difference(dprops.RO_PROPS)
+			for cprop in custom:
+				try:
+					ret[cprop] = self.get_prop(cprop)
+				except KeyError:
+					pass
 		return ret
 
 	def dav_props_set(self, pdict):
@@ -3461,6 +3570,11 @@ class File(Base):
 			self.meta = FileMeta()
 		return self.meta.get_prop(name)
 
+	def get_props(self):
+		if not self.meta:
+			self.meta = FileMeta()
+		return self.meta.get_props()
+
 	def set_prop(self, name, value):
 		if not self.meta:
 			self.meta = FileMeta()
@@ -3474,9 +3588,12 @@ class File(Base):
 	def dav_get(self, req):
 		return self.get_response(req)
 
-	def dav_put(self, req, data):
+	def dav_put(self, req, data, start=None, length=None):
 		self.etag = None
-		self.set_from_file(data, req.user)
+		if isinstance(start, int) and isinstance(length, int):
+			self.set_region_from_file(data, start, length, req.user)
+		else:
+			self.set_from_file(data, req.user)
 
 	def dav_clone(self, req):
 		# TODO: clone meta
@@ -3608,6 +3725,29 @@ class File(Base):
 		if guessed_mime:
 			self.mime_type = guessed_mime
 
+	def set_region_from_file(self, infile, start, length, user=None, sess=None):
+		if sess is None:
+			sess = DBSession()
+		fd = -1
+		buf = bytearray(_BLOCK_SIZE)
+		mv = memoryview(buf)
+		ctx = hashlib.md5()
+		with self.open('w+', user, sess) as fd:
+			fd.seek(start)
+			while 1:
+				rsz = infile.readinto(buf)
+				if not rsz:
+					break
+				if rsz > length:
+					ctx.update(mv[:length])
+					fd.write(mv[:length])
+					break
+				ctx.update(mv[:rsz])
+				fd.write(mv[:rsz])
+				length -= rsz
+		self.etag = ctx.hexdigest()
+		self.data = None
+
 	def set_from_object(self, infile, user=None, sess=None):
 		if sess is None:
 			sess = DBSession()
@@ -3625,6 +3765,12 @@ class File(Base):
 		self.etag = infile.etag
 		self.data = None
 		self.mime_type = infile.mime_type
+
+	def get_data(self):
+		if self.data:
+			return self.data
+		with self.open('r') as fd:
+			return fd.read()
 
 	def __str__(self):
 		return '%s' % str(self.filename)
@@ -5377,7 +5523,7 @@ class Calendar(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'menu_name'     : _('Calendars'),
+				'menu_name'     : _('My Calendars'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name', 'group', 'group_access', 'global_access'),
 				'form_view'     : ('name', 'group', 'group_access', 'global_access', 'style', 'descr'),
@@ -5420,7 +5566,8 @@ class Calendar(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'none'
+			'filter_type'   : 'none',
+			'column_flex'   : 2
 		}
 	)
 	name = Column(
@@ -5428,7 +5575,8 @@ class Calendar(Base):
 		Comment('Calendar name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	group_access = Column(
@@ -5438,7 +5586,8 @@ class Calendar(Base):
 		default=CalendarAccess.none,
 		server_default=CalendarAccess.none,
 		info={
-			'header_string' : _('Group Access')
+			'header_string' : _('Group Access'),
+			'column_flex'   : 2
 		}
 	)
 	global_access = Column(
@@ -5448,7 +5597,8 @@ class Calendar(Base):
 		default=CalendarAccess.none,
 		server_default=CalendarAccess.none,
 		info={
-			'header_string' : _('Global Access')
+			'header_string' : _('Global Access'),
+			'column_flex'   : 2
 		}
 	)
 	style = Column(
@@ -5460,7 +5610,8 @@ class Calendar(Base):
 		info={
 			'header_string' : _('Style'),
 			'min_value'     : 0,
-			'max_value'     : len(_calendar_styles)
+			'max_value'     : len(_calendar_styles),
+			'editor_xtype'  : 'calendarcolor'
 		}
 	)
 	description = Column(
@@ -5474,6 +5625,33 @@ class Calendar(Base):
 			'header_string' : _('Description')
 		}
 	)
+
+	events = relationship(
+		'Event',
+		backref=backref('calendar', innerjoin=True, lazy='joined'),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	imports = relationship(
+		'CalendarImport',
+		backref=backref('calendar', innerjoin=True, lazy='joined'),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
+	def can_read(self, user):
+		if self.user_id == user.id:
+			return True
+		if (self.group_id is not None) and (self.group_id == user.group.id):
+			return (self.group_access != CalendarAccess.none)
+		return (self.global_access != CalendarAccess.none)
+
+	def can_write(self, user):
+		if self.user_id == user.id:
+			return True
+		if (self.group_id is not None) and (self.group_id == user.group.id):
+			return (self.group_access == CalendarAccess.read_write)
+		return (self.global_access == CalendarAccess.read_write)
 
 	def __str__(self):
 		return '%s' % str(self.name)
@@ -5491,6 +5669,413 @@ class Calendar(Base):
 	@classmethod
 	def __augment_update__(cls, sess, obj, values, req):
 		if obj.user_id == req.user.id:
+			return True
+		return False
+
+	@classmethod
+	def __augment_delete__(cls, sess, obj, values, req):
+		if obj.user_id == req.user.id:
+			return True
+		return False
+
+def _wizfld_import_cal(fld, model, req, **kwargs):
+	return {
+		'xtype'          : 'combobox',
+		'allowBlank'     : False,
+		'name'           : 'calid',
+		'format'         : 'string',
+		'displayField'   : 'Title',
+		'valueField'     : 'CalendarId',
+		'hiddenName'     : 'calid',
+		'editable'       : False,
+		'forceSelection' : True,
+		'store'          : {
+			'type'          : 'direct',
+			'model'         : 'Extensible.calendar.data.CalendarModel',
+			'directFn'      : 'NetProfile.api.Calendar.cal_avail',
+			'totalProperty' : 'total',
+			'root'          : 'calendars'
+		},
+		'fieldLabel'     : _('Calendar'),
+		'tpl'            : '<tpl for="."><div class="x-boundlist-item">{Owner}: {Title}</div></tpl>'
+	}
+
+def _wizcb_import_cal_submit(wiz, step, act, val, req):
+	if ('calid' not in val) or (val['calid'][:5] != 'user-'):
+		raise ValueError
+	cal_id = int(val['calid'][5:])
+	sess = DBSession()
+	cal = sess.query(Calendar).get(cal_id)
+	if (not cal) or (not cal.can_read(req.user)):
+		raise ValueError
+	imp = CalendarImport()
+	imp.user = req.user
+	imp.calendar = cal
+	name = val.get('name')
+	if name:
+		imp.name = name
+	try:
+		style = int(val.get('style'))
+		if 0 < style <= len(_calendar_styles):
+			imp.style = style
+	except ValueError:
+		pass
+	sess.add(imp)
+	return {
+		'do'     : 'close',
+		'reload' : True
+	}
+
+class CalendarImport(Base):
+	"""
+	Represents a shared calendar which is imported to other user's namespace.
+	"""
+	__tablename__ = 'calendars_imports'
+	__table_args__ = (
+		Comment('User calendar imports'),
+		Index('calendars_imports_u_import', 'uid', 'calid', unique=True),
+		Index('calendars_imports_i_calid', 'calid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'menu_name'     : _('Other Calendars'),
+				'default_sort'  : ({ 'property': 'calid' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					'calendar',
+					MarkupColumn(
+						name='real_name',
+						header_string=_('Name'),
+						column_flex=3,
+						template='{real_name}'
+					)
+				),
+				'form_view'     : ('calendar', 'name', 'style'),
+				'easy_search'   : ('name',),
+				'extra_data'    : ('real_name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : Wizard(
+					Step(
+						ExtJSWizardField(_wizfld_import_cal),
+						'name', 'style',
+						id='generic',
+						on_submit=_wizcb_import_cal_submit
+					),
+					title=_('Import a calendar')
+				)
+			}
+		}
+	)
+	id = Column(
+		'calimpid',
+		UInt32(),
+		Sequence('calendars_imports_calimpid_seq'),
+		Comment('Calendar import ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='calendars_imports_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'read_only'     : True,
+			'filter_type'   : 'none'
+		}
+	)
+	calendar_id = Column(
+		'calid',
+		UInt32(),
+		ForeignKey('calendars_def.calid', name='calendars_imports_fk_calid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Calendar ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Calendar'),
+			'read_only'     : True,
+			'filter_type'   : 'list',
+			'column_flex'   : 2
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Calendar name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	style = Column(
+		UInt32(),
+		Comment('Calendar style code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Style'),
+			'min_value'     : 0,
+			'max_value'     : len(_calendar_styles),
+			'editor_xtype'  : 'calendarcolor'
+		}
+	)
+
+	@property
+	def real_name(self):
+		if self.name:
+			return self.name
+		return self.calendar.name
+
+	def __str__(self):
+		return '%s' % self.real_name
+
+	@classmethod
+	def __augment_query__(cls, sess, query, params, req):
+		query = query.filter(CalendarImport.user_id == req.user.id)
+		return query
+
+	@classmethod
+	def __augment_create__(cls, sess, obj, values, req):
+		obj.user_id = req.user.id
+		return True
+
+	@classmethod
+	def __augment_update__(cls, sess, obj, values, req):
+		if obj.user_id == req.user.id:
+			return True
+		return False
+
+	@classmethod
+	def __augment_delete__(cls, sess, obj, values, req):
+		if obj.user_id == req.user.id:
+			return True
+		return False
+
+class Event(Base):
+	"""
+	User-defined event. Stored in user calendar.
+	"""
+	__tablename__ = 'calendars_events'
+	__table_args__ = (
+		Comment('User calendar events'),
+		Index('calendars_events_i_calid', 'calid'),
+		Index('calendars_events_i_uid', 'uid'), # XXX: add gid?
+		Index('calendars_events_i_icaluid', 'icaluid'),
+		Index('calendars_events_i_dtstart', 'dtstart'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'menu_name'     : _('Events'),
+				'default_sort'  : ({ 'property': 'dtstart' ,'direction': 'DESC' },),
+				'grid_view'     : ('user', 'calendar', 'summary', 'dtstart', 'dtend'),
+				'form_view'     : (
+					'user', 'calendar', 'summary',
+					'dtstart', 'dtend', 'allday',
+					'loc', 'url', 'descr',
+					'ctime', 'mtime'
+				),
+				'easy_search'   : ('summary',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+			}
+		}
+	)
+	id = Column(
+		'evid',
+		UInt32(),
+		Sequence('calendars_events_evid_seq'),
+		Comment('Event ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	calendar_id = Column(
+		'calid',
+		UInt32(),
+		ForeignKey('calendars_def.calid', name='calendars_events_fk_calid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Calendar ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Calendar'),
+			'read_only'     : True,
+			'filter_type'   : 'list'
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='calendars_events_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Creator'),
+			'read_only'     : True,
+			'filter_type'   : 'none'
+		}
+	)
+	summary = Column(
+		Unicode(255),
+		Comment('Event summary'),
+		nullable=False,
+		info={
+			'header_string' : _('Summary')
+		}
+	)
+	creation_time = Column(
+		'ctime',
+		TIMESTAMP(),
+		Comment('Creation timestamp'),
+		nullable=True,
+		default=None,
+		server_default=FetchedValue(),
+		info={
+			'header_string' : _('Created')
+		}
+	)
+	modification_time = Column(
+		'mtime',
+		TIMESTAMP(),
+		Comment('Last modification timestamp'),
+		nullable=False,
+#		default=zzz,
+		server_default=func.current_timestamp(),
+		server_onupdate=func.current_timestamp(),
+		info={
+			'header_string' : _('Modified')
+		}
+	)
+	event_start = Column(
+		'dtstart',
+		TIMESTAMP(),
+		Comment('Event start timestamp'),
+		nullable=True,
+		default=None,
+#		server_default=text('NULL'),
+		info={
+			'header_string' : _('Start')
+		}
+	)
+	event_end = Column(
+		'dtend',
+		TIMESTAMP(),
+		Comment('Event end timestamp'),
+		nullable=True,
+		default=None,
+#		server_default=text('NULL'),
+		info={
+			'header_string' : _('End')
+		}
+	)
+	all_day = Column(
+		'allday',
+		NPBoolean(),
+		Comment('Is event all-day?'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('All Day')
+		}
+	)
+	icalendar_uid = Column(
+		'icaluid',
+		Unicode(255),
+		Comment('iCalendar UID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('iCal UID')
+		}
+	)
+	location = Column(
+		'loc',
+		Unicode(255),
+		Comment('Event location'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Location')
+		}
+	)
+	url = Column(
+		Unicode(255),
+		Comment('Event-related URL'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('URL')
+		}
+	)
+	icalendar_data = Column(
+		'icaldata',
+		LargeBinary(),
+		Comment('Original iCalendar data'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('iCal Data')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Event description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	@hybrid_property
+	def duration(self):
+		return self.event_end - self.event_start
+
+	def __str__(self):
+		return '%s' % str(self.summary)
+
+	@classmethod
+	def __augment_query__(cls, sess, query, params, req):
+		query = query.filter(Event.user_id == req.user.id)
+		return query
+
+	@classmethod
+	def __augment_create__(cls, sess, obj, values, req):
+		obj.user_id = req.user.id
+		cal = sess.query(Calendar).get(obj.calendar_id)
+		if (not cal) or (not cal.can_write(req.user)):
+			return False
+		return True
+
+	@classmethod
+	def __augment_update__(cls, sess, obj, values, req):
+		if obj.user_id == req.user.id:
+			return True
+		cal = sess.query(Calendar).get(obj.calendar_id)
+		if cal and cal.can_write(req.user):
+			return True
+		return False
+
+	@classmethod
+	def __augment_delete__(cls, sess, obj, values, req):
+		if obj.user_id == req.user.id:
+			return True
+		cal = sess.query(Calendar).get(obj.calendar_id)
+		if cal and cal.can_write(req.user):
 			return True
 		return False
 

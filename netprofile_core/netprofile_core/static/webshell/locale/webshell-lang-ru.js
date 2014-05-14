@@ -152,7 +152,22 @@ Ext.onReady(function()
 		createText: 'Создать подпапку',
 		propText: 'Свойства',
 		renameText: 'Переименовать',
-		deleteText: 'Удалить'
+		deleteText: 'Удалить',
+		mountText: 'Подключить',
+		newFolderText: 'Новая папка',
+		deleteFolderText: 'Удаление папки',
+		deleteFolderVerboseText: 'Вы уверены что хотите удалить эту папку?'
+	});
+
+	Ext.define('Ext.locale.ru.ux.form.RightsBitmaskField', {
+		override: 'Ext.ux.form.RightsBitmaskField',
+		ownerText: 'Владелец',
+		groupText: 'Группа',
+		otherText: 'Прочие',
+		readText: 'Чтение',
+		writeText: 'Запись',
+		executeText: 'Выполнение',
+		traverseText: 'Переход'
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.view.FileBrowser', {

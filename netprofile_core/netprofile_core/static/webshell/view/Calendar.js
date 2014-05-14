@@ -19,6 +19,11 @@ Extensible.calendar.data.CalendarMappings = {
         mapping: 'desc',
         type:    'string'
     },
+    Owner: {
+        name:    'Owner',
+        mapping: 'owner',
+        type:    'string'
+    },
     ColorId: {
         name:    'ColorId',
         mapping: 'color',
@@ -161,30 +166,17 @@ Ext.define('NetProfile.override.Extensible.calendar.form.field.CalendarCombo', {
 	showAllCalendars: false,
 	initComponent: function()
 	{
-		this.valueField = Extensible.calendar.data.CalendarMappings.CalendarId.name;
-		this.displayField = Extensible.calendar.data.CalendarMappings.Title.name;
-
-		this.listConfig = Ext.apply(this.listConfig || {}, {
-			getInnerTpl: this.getListItemTpl
-		});
-
-		if(!this.showAllCalendars)
+		if(this.showAllCalendars)
+			this.store.clearFilter();
+		else
 		{
-			var old_store = this.store,
-				new_store = this.calendarStore = Ext.create('Extensible.calendar.data.MemoryCalendarStore');
-
-			Ext.each(old_store.getRange(), function(rec)
+			this.store.filter({ filterFn: function(rec)
 			{
-				var new_data = Ext.clone(rec.copy().data),
-					new_rec = new Extensible.calendar.data.EventModel(new_data, new_data.id);
-				console.log('NEW_DATA', new_data);
-				new_store.add(new_rec);
-			});
-			this.store = new_store;
+				return rec.get('AllowCreation');
+			}});
 		}
-		this.store.on('update', this.refreshColorCls, this);
 
-		return Ext.form.field.ComboBox.prototype.initComponent.apply(this, arguments);
+		return this.callParent(arguments);
 	}
 });
 
@@ -255,6 +247,8 @@ Ext.define('NetProfile.view.Calendar', {
 	border: 0,
 	initComponent: function()
 	{
+		var tbar;
+
 		if(!this.calendarStore)
 			this.calendarStore = Ext.create('Extensible.calendar.data.MemoryCalendarStore', {
 				proxy: {
@@ -280,10 +274,10 @@ Ext.define('NetProfile.view.Calendar', {
 				proxy: {
 					type: 'direct',
 					api: {
-						create:  Ext.emptyFn,
+						create:  NetProfile.api.Calendar.evt_create,
 						read:    NetProfile.api.Calendar.evt_read,
 						update:  NetProfile.api.Calendar.evt_update,
-						destroy: Ext.emptyFn
+						destroy: NetProfile.api.Calendar.evt_delete
 					},
 					reader: {
 						type: 'json',
@@ -295,6 +289,97 @@ Ext.define('NetProfile.view.Calendar', {
 				}
 			});
 		this.callParent();
+
+		tbar = this.getDockedItems('toolbar[dock="top"]');
+		if(tbar && tbar.length)
+		{
+			tbar = tbar[0];
+			tbar.insert(0, {
+				xtype: 'extensible.calendarcombo',
+				multiSelect: true,
+				fieldLabel: null,
+				showAllCalendars: true,
+				store: Ext.create('Extensible.calendar.data.MemoryCalendarStore', {
+					proxy: {
+						type: 'direct',
+						api: {
+							create:  Ext.emptyFn,
+							read:    NetProfile.api.Calendar.cal_read,
+							update:  Ext.emptyFn,
+							destroy: Ext.emptyFn
+						},
+						reader: {
+							type: 'json',
+							root: 'calendars',
+							messageProperty: 'message',
+							successProperty: 'success',
+							totalProperty: 'total'
+						}
+					}
+				}),
+				getListItemTpl: function(displayField) {
+					return '<div class="x-combo-list-item x-cal-{' + Extensible.calendar.data.CalendarMappings.ColorId.name +
+						'}"><div class="x-combo-check" style="float: left; width: 20px; margin: 1px 0;">&nbsp;</div><div class="ext-cal-picker-icon">&#160;</div>{' + displayField + '}</div>';
+				}
+			});
+		}
+	}
+});
+
+/**
+ * @class Ext.ux.form.field.CalendarColor
+ * @extends Ext.form.FieldContainer
+ */
+Ext.define('Ext.ux.form.field.CalendarColor', {
+	extend: 'Ext.form.FieldContainer',
+	mixins: {
+		field: 'Ext.form.field.Field'
+	},
+	requires: [
+		'Extensible.calendar.util.ColorPicker'
+	],
+	alias: 'widget.calendarcolor',
+
+	readOnly: false,
+	value: null,
+
+//	layout: 'fit',
+
+	initComponent: function()
+	{
+		var me = this;
+
+		if(me.readOnly)
+			me.items = []; // TODO: implement read-only view
+		else
+			me.items = [{
+				xtype: 'extensible.calendarcolorpicker',
+				itemId: 'picker',
+				value: me.value,
+//				style: {
+//					height: 'auto'
+//				},
+				listeners: {
+					select: function(fld, newval)
+					{
+						this.fireEvent('change', me, me.getValue());
+					},
+					scope: me
+				}
+			}];
+		me.callParent(arguments);
+	},
+	getValue: function()
+	{
+		return this.getComponent('picker').getValue();
+	},
+	setValue: function(val)
+	{
+		return this.getComponent('picker').select(val);
+	},
+	isValid: function()
+	{
+		return true;
 	}
 });
 

@@ -146,6 +146,7 @@ Ext.define('NetProfile.controller.FileFolders', {
 
 		ev.stopEvent();
 		menu = Ext.create('NetProfile.view.FileFolderContextMenu', {
+			allowProperties: !is_root,
 			allowRename: rec.get('parent_write') && !is_root,
 			allowDelete: rec.get('parent_write') && !is_root
 		});
@@ -165,7 +166,7 @@ Ext.define('NetProfile.controller.FileFolders', {
 					subrec = new NetProfile.model.customMenu.folders({
 						parentId: rec.getId(),
 						parent_write: rec.get('allow_write'),
-						text: 'New Folder' // BUGS HORRIBLY ON EMPTY
+						text: menu.newFolderText // BUGS HORRIBLY ON EMPTY
 					});
 					rec.appendChild(subrec);
 					// XXX: RACE CONDITION!
@@ -192,6 +193,70 @@ Ext.define('NetProfile.controller.FileFolders', {
 
 				if(plug && rec)
 					plug.startEdit(rec, el.getHeaderAtIndex(0));
+			},
+			'delete': function(ev)
+			{
+				Ext.MessageBox.confirm(
+					menu.deleteFolderText,
+					menu.deleteFolderVerboseText,
+					function(btn)
+					{
+						if(btn === 'yes')
+							rec.remove(true);
+						return true;
+					},
+					this
+				);
+			},
+			properties: function(ev)
+			{
+				var pb = Ext.getCmp('npws_propbar'),
+					dp = NetProfile.view.grid.core.FileFolder.prototype.detailPane,
+					store = NetProfile.StoreManager.getStore(
+						'core',
+						'FileFolder',
+						null, true, true
+					),
+					can_wr = true,
+					ff = { __ffilter: {} },
+					xrec;
+
+				if(!pb || !rec || !dp || !store)
+					return false;
+				ff.__ffilter[store.model.prototype.idProperty] = { eq: parseInt(rec.getId()) };
+				if(is_root || !rec.get('parent_write'))
+					can_wr = false;
+				store.load({
+					params: ff,
+					callback: function(recs, op, success)
+					{
+						if(!success || !recs.length)
+							return;
+						var xrec = recs[0];
+						xrec.readOnly = !can_wr || !rec.get('allow_write');
+						pb.addRecordTab('core', 'FileFolder', dp, xrec);
+						pb.show();
+					},
+					scope: this,
+					synchronous: false
+				});
+			},
+			mount: function(ev)
+			{
+				// TODO: maybe signal permission denied somehow?
+				if(!rec.get('allow_read'))
+					return false;
+				var dl = Ext.getCmp('npws_filedl');
+				if(!dl)
+					return false;
+				dl.load({
+					url: Ext.String.format(
+						'{0}/core/file/mount/{1}/{2}.davmount',
+						NetProfile.baseURL,
+						rec.getId(), rec.get('text')
+					)
+				});
+				return true;
 			},
 			scope: this
 		});

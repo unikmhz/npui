@@ -12,11 +12,16 @@ Ext.define('NetProfile.view.FileFolderContextMenu', {
 	propText: 'Properties',
 	renameText: 'Rename',
 	deleteText: 'Delete',
+	mountText: 'Mount',
+	newFolderText: 'New Folder',
+	deleteFolderText: 'Delete Folder',
+	deleteFolderVerboseText: 'Are you sure you want to delete this folder?',
 
 	allowCreate: true,
 	allowRename: true,
 	allowProperties: true,
 	allowDelete: true,
+	allowMount: true,
 
 	listeners: {
 		hide: function(menu)
@@ -54,6 +59,15 @@ Ext.define('NetProfile.view.FileFolderContextMenu', {
 			},
 			scope: this,
 			disabled: !this.allowProperties
+		}, {
+			text: this.mountText,
+			iconCls: 'ico-folder-mount',
+			handler: function(btn, ev)
+			{
+				this.fireEvent('mount', ev);
+			},
+			scope: this,
+			disabled: !this.allowMount
 		}, '-', {
 			text: this.deleteText,
 			iconCls: 'ico-folder-del',

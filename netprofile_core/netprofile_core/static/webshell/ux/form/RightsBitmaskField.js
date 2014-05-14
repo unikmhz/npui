@@ -41,6 +41,7 @@ Ext.define('Ext.ux.form.RightsBitmaskField', {
 		xtype: 'checkbox',
 		width: '100%'
 	},
+	isDirectory: false,
 
 	value: 0,
 
@@ -63,7 +64,7 @@ Ext.define('Ext.ux.form.RightsBitmaskField', {
 			Ext.apply({ itemId: 'u_w' }, me.checkBoxCfg),
 			Ext.apply({ itemId: 'g_w' }, me.checkBoxCfg),
 			Ext.apply({ itemId: 'o_w' }, me.checkBoxCfg),
-			Ext.apply({ text: me.executeText }, me.hLabelCfg),
+			Ext.apply({ text: (me.isDirectory ? me.traverseText : me.executeText) }, me.hLabelCfg),
 			Ext.apply({ itemId: 'u_x' }, me.checkBoxCfg),
 			Ext.apply({ itemId: 'g_x' }, me.checkBoxCfg),
 			Ext.apply({ itemId: 'o_x' }, me.checkBoxCfg)

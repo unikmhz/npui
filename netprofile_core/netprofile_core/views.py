@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,6 +28,9 @@ from __future__ import (
 )
 
 import json
+import logging
+import datetime as dt
+from dateutil.parser import parse as dparse
 
 from pyramid.response import Response
 from pyramid.i18n import get_locale_name
@@ -44,10 +47,14 @@ from pyramid.security import (
 from pyramid.httpexceptions import (
 	HTTPForbidden,
 	HTTPFound,
+	HTTPNotFound,
 	HTTPSeeOther
 )
 
-from sqlalchemy import and_
+from sqlalchemy import (
+	and_,
+	or_
+)
 from sqlalchemy.orm import undefer
 
 from netprofile import locale_neg
@@ -57,8 +64,13 @@ from netprofile.common.modules import IModuleManager
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 from netprofile.ext.direct import extdirect_method
+from netprofile.dav import DAVMountResponse
 
 from .models import (
+	Calendar,
+	CalendarAccess,
+	CalendarImport,
+	Event,
 	File,
 	FileFolder,
 	Group,
@@ -84,6 +96,8 @@ if PY3:
 	from html import escape as html_escape
 else:
 	from cgi import escape as html_escape
+
+logger = logging.getLogger(__name__)
 
 @view_config(route_name='core.home', renderer='netprofile_core:templates/home.mak', permission='USAGE')
 def home_screen(request):
@@ -180,6 +194,18 @@ def js_webshell(request):
 		'modules' : mmgr.get_module_browser()
 	}
 
+# No authentication!
+@view_config(route_name='core.wellknown')
+def wellknown_redirect(request):
+	svc = request.matchdict.get('service')
+	if svc and len(svc):
+		svc = str(svc[0]).lower().strip(' /')
+	else:
+		return HTTPNotFound()
+	if svc in ('dav', 'webdav', 'caldav', 'carddav'):
+		return HTTPFound(location=request.route_url('core.dav', traverse=()))
+	return HTTPNotFound()
+
 @view_config(route_name='core.file.download', permission='FILES_LIST')
 def file_dl(request):
 	file_id = request.matchdict.get('fileid', 0)
@@ -217,6 +243,26 @@ def file_ul(request):
 		'success' : True,
 		'msg'     : 'File(s) uploaded'
 	}), False))
+
+@view_config(route_name='core.file.mount', permission='FILES_LIST')
+def file_mnt(request):
+	ff_id = 0
+	try:
+		ff_id = int(request.matchdict.get('ffid', 0))
+	except ValueError:
+		pass
+	sess = DBSession()
+	ff = sess.query(FileFolder).get(ff_id)
+	if not ff.allow_traverse(request):
+		raise HTTPForbidden()
+	path = '/'.join(ff.get_uri()[1:] + [''])
+	resp = DAVMountResponse(
+		request=request,
+		path=path,
+		username=request.user.login
+	)
+	resp.make_body()
+	return resp
 
 def dpane_simple(model, request):
 	tabs = []
@@ -348,6 +394,7 @@ def ff_tree(params, request):
 def ff_tree_update(params, request):
 	sess = DBSession()
 	user = request.user
+	root_ff = user.group.effective_root_folder
 	for rec in params.get('records', ()):
 		ff_id = rec.get('id')
 		if ff_id == 'root':
@@ -367,7 +414,6 @@ def ff_tree_update(params, request):
 		if ff is None:
 			raise KeyError('Unknown folder ID %d' % ff_id)
 
-		root_ff = user.group.effective_root_folder
 		if root_ff and (not ff.is_inside(root_ff)):
 			raise ValueError('Folder access denied')
 		cur_parent = ff.parent
@@ -387,6 +433,8 @@ def ff_tree_update(params, request):
 			if new_parent.is_inside(ff):
 				raise ValueError('Folder loop detected')
 			ff.parent = new_parent
+		elif not user.root_writable:
+			raise ValueError('Folder access denied')
 		else:
 			ff.parent = None
 
@@ -425,6 +473,8 @@ def ff_tree_create(params, request):
 			if root_ff and (not ffp.is_inside(root_ff)):
 				raise ValueError('Folder access denied')
 			ff.parent = ffp
+		elif not user.root_writable:
+			raise ValueError('Folder access denied')
 
 		sess.add(ff)
 		sess.flush()
@@ -442,6 +492,39 @@ def ff_tree_create(params, request):
 	return {
 		'success' : True,
 		'records' : recs,
+		'total'   : total
+	}
+
+@extdirect_method('MenuTree', 'folders_delete', request_as_last_param=True, permission='FILES_DELETE')
+def ff_tree_delete(params, request):
+	sess = DBSession()
+	user = request.user
+	root_ff = user.group.effective_root_folder
+	total = 0
+	for rec in params.get('records', ()):
+		ff_id = rec.get('id')
+		if ff_id == 'root':
+			continue
+		ff = sess.query(FileFolder).get(ff_id)
+		if ff is None:
+			raise KeyError('Unknown folder ID %d' % ff_id)
+
+		if root_ff and (not ff.is_inside(root_ff)):
+			raise ValueError('Folder access denied')
+		cur_parent = ff.parent
+		if cur_parent and ((not cur_parent.can_write(user)) or (not cur_parent.can_traverse_path(user))):
+			raise ValueError('Folder access denied')
+		if (not cur_parent) and (not user.root_writable):
+			raise ValueError('Folder access denied')
+
+		# Extra precaution
+		if ff.user != user:
+			raise ValueError('Folder access denied')
+
+		sess.delete(ff)
+		total += 1
+	return {
+		'success' : True,
 		'total'   : total
 	}
 
@@ -924,8 +1007,9 @@ _cal_serial = 1
 def generate_calendar(name, color):
 	global _cal_serial
 	cal = {
-		'id'    : _cal_serial,
+		'id'    : 'system-%u' % _cal_serial,
 		'title' : name,
+		'owner' : 'SYSTEM',
 		'color' : color
 	}
 	_cal_serial += 1
@@ -941,6 +1025,58 @@ def cals_read(params, req):
 	for cal in cals:
 		if 'title' in cal:
 			cal['title'] = loc.translate(cal['title'])
+	sess = DBSession()
+	my_login = str(req.user)
+	for cal in sess.query(Calendar).filter(Calendar.user_id == req.user.id):
+		cals.append({
+			'id'        : 'user-%u' % cal.id,
+			'title'     : cal.name,
+			'desc'      : cal.description,
+			'owner'     : my_login,
+			'color'     : cal.style,
+			'hidden'    : False,
+			'cancreate' : True
+		})
+	for cali in sess.query(CalendarImport).filter(CalendarImport.user_id == req.user.id):
+		cal = cali.calendar
+		if not cal.can_read(req.user):
+			continue
+		cals.append({
+			'id'        : 'user-%u' % cal.id,
+			'title'     : cali.real_name,
+			'desc'      : cal.description,
+			'owner'     : str(cal.user),
+			'color'     : cali.style or cal.style,
+			'hidden'    : False,
+			'cancreate' : cal.can_write(req.user)
+		})
+	return {
+		'success'   : True,
+		'calendars' : cals,
+		'total'     : len(cals)
+	}
+
+@extdirect_method('Calendar', 'cal_avail', request_as_last_param=True, permission='USAGE')
+def cals_avail(params, req):
+	cals = []
+	sess = DBSession()
+	q = sess.query(Calendar).filter(
+		Calendar.user_id != req.user.id,
+		or_(
+			and_(Calendar.group_access != CalendarAccess.none, Calendar.group == req.user.group),
+			Calendar.global_access != CalendarAccess.none
+		)
+	)
+	for cal in q:
+		cals.append({
+			'id'        : 'user-%u' % cal.id,
+			'title'     : cal.name,
+			'desc'      : cal.description,
+			'owner'     : str(cal.user),
+			'color'     : cal.style,
+			'hidden'    : False,
+			'cancreate' : cal.can_write(req.user)
+		})
 	return {
 		'success'   : True,
 		'calendars' : cals,
@@ -949,6 +1085,7 @@ def cals_read(params, req):
 
 @extdirect_method('Calendar', 'evt_read', request_as_last_param=True, permission='USAGE')
 def evts_read(params, req):
+	logger.debug('Running calendar read op: %r' % (params,))
 	evts = []
 	req.run_hook('core.calendar.events.read', evts, params, req)
 	return {
@@ -959,12 +1096,149 @@ def evts_read(params, req):
 
 @extdirect_method('Calendar', 'evt_update', request_as_last_param=True, permission='USAGE')
 def evts_update(params, req):
-	print('===============================================================================')
-	print('EVENT UPDATE')
-	print(repr(params))
-	print('===============================================================================')
+	logger.debug('Running calendar update op: %r' % (params,))
 	req.run_hook('core.calendar.events.update', params, req)
 	return { 'success' : True }
+
+@extdirect_method('Calendar', 'evt_create', request_as_last_param=True, permission='USAGE')
+def evts_create(params, req):
+	logger.debug('Running calendar create op: %r' % (params,))
+	req.run_hook('core.calendar.events.create', params, req)
+	return { 'success' : True }
+
+@extdirect_method('Calendar', 'evt_delete', request_as_last_param=True, permission='USAGE')
+def evts_delete(params, req):
+	logger.debug('Running calendar delete op: %r' % (params,))
+	req.run_hook('core.calendar.events.delete', params, req)
+	return { 'success' : True }
+
+@register_hook('core.calendar.events.read')
+def _cal_events(evts, params, req):
+	ts_from = params.get('startDate')
+	ts_to = params.get('endDate')
+	if (not ts_from) or (not ts_to):
+		return
+	ts_from = dparse(ts_from).replace(hour=0, minute=0, second=0, microsecond=0)
+	ts_to = dparse(ts_to).replace(hour=23, minute=59, second=59, microsecond=999999)
+	sess = DBSession()
+	# FIXME: Add calendar-based filters
+	cal_ids = [cal.id for cal in sess.query(Calendar).filter(Calendar.user == req.user)]
+	for cali in sess.query(CalendarImport).filter(CalendarImport.user_id == req.user.id):
+		cal = cali.calendar
+		if cal.user == req.user:
+			continue
+		if not cal.can_read(req.user):
+			continue
+		if cal.id in cal_ids:
+			continue
+		cal_ids.append(cal.id)
+	q = sess.query(Event)\
+		.filter(
+			Event.calendar_id.in_(cal_ids),
+			Event.event_start <= ts_to,
+			Event.event_end >= ts_from
+		)
+	for e in q:
+		ev = {
+			'id'       : 'event-%u' % e.id,
+			'cid'      : 'user-%u' % e.calendar_id,
+			'title'    : e.summary,
+			'start'    : e.event_start,
+			'end'      : e.event_end,
+			'ad'       : e.all_day,
+			'notes'    : e.description,
+			'loc'      : e.location,
+			'url'      : e.url,
+			'caned'    : e.calendar.can_write(req.user)
+		}
+		evts.append(ev)
+
+def _ev_set(sess, ev, params, req):
+	cal_id = params.get('CalendarId', '')
+	if (not cal_id) or (cal_id[:5] != 'user-'):
+		return False
+	try:
+		cal_id = int(cal_id[5:])
+	except ValueError:
+		return False
+	cal = sess.query(Calendar).get(cal_id)
+	if (cal is None) or (not cal.can_write(req.user)):
+		return False
+	if ev.calendar and (ev.calendar is not cal):
+		if not ev.calendar.can_write(req.user):
+			return False
+	val = params.get('Title', False)
+	if val:
+		ev.summary = val
+	val = params.get('Url', False)
+	if val:
+		ev.url = val
+	val = params.get('Notes', False)
+	if val:
+		ev.description = val
+	if ev.calendar is not cal:
+		ev.calendar = cal
+	val = params.get('Location', False)
+	if val:
+		ev.location = val
+	if 'StartDate' in params:
+		new_ts = dparse(params['StartDate']).replace(tzinfo=None, microsecond=0)
+		if new_ts:
+			ev.event_start = new_ts
+	if 'EndDate' in params:
+		new_ts = dparse(params['EndDate']).replace(tzinfo=None, microsecond=0)
+		if new_ts:
+			ev.event_end = new_ts
+	val = params.get('IsAllDay', None)
+	if isinstance(val, bool):
+		ev.all_day = val
+		# FIXME: enforce proper times for all-day events
+	return True
+
+@register_hook('core.calendar.events.update')
+def _cal_events_update(params, req):
+	if 'EventId' not in params:
+		return
+	evtype, evid = params['EventId'].split('-')
+	if evtype != 'event':
+		return
+	evid = int(evid)
+	sess = DBSession()
+	ev = sess.query(Event).get(evid)
+	if ev is None:
+		return False
+	if not _ev_set(sess, ev, params, req):
+		return False
+	return True
+
+@register_hook('core.calendar.events.create')
+def _cal_events_create(params, req):
+	sess = DBSession()
+	ev = Event()
+	ev.creation_time = dt.datetime.now()
+	if not _ev_set(sess, ev, params, req):
+		del ev
+		return False
+	ev.user = req.user
+	sess.add(ev)
+	return True
+
+@register_hook('core.calendar.events.delete')
+def _cal_events_delete(params, req):
+	if 'EventId' not in params:
+		return
+	evtype, evid = params['EventId'].split('-')
+	if evtype != 'event':
+		return
+	evid = int(evid)
+	sess = DBSession()
+	ev = sess.query(Event).get(evid)
+	if ev is None:
+		return False
+	if (not ev.calendar) or (not ev.calendar.can_write(req.user)):
+		return False
+	sess.delete(ev)
+	return True
 
 @register_hook('np.menu')
 def _menu_custom(name, menu, req, extb):
@@ -985,6 +1259,12 @@ def _menu_custom(name, menu, req, extb):
 			'text'    : loc.translate(_('My Calendars')),
 			'id'      : 'calendars',
 			'iconCls' : 'ico-mod-calendars'
-		},)
+		}, {
+			'leaf'    : True,
+			'xview'   : 'grid_core_CalendarImport',
+			'text'    : loc.translate(_('Other Calendars')),
+			'id'      : 'calendarimports',
+			'iconCls' : 'ico-mod-calendarimport'
+		})
 	})
 

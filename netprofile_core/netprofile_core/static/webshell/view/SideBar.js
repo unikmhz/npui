@@ -81,6 +81,9 @@ Ext.define('NetProfile.view.SideBar', {
 			}, menu.get('options') || {});
 			tree = Ext.create('Ext.tree.Panel', cfg);
 
+			if(NetProfile.model.customMenu && (mname in NetProfile.model.customMenu))
+				NetProfile.model.customMenu[mname].setProxy(cfg.store.getProxy());
+
 			this.menus[mname] = tree;
 
 			this.items.push({

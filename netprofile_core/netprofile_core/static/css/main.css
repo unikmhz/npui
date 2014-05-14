@@ -79,7 +79,7 @@ h2
 	vertical-align: bottom;
 }
 
-.x-grid-checkheader
+.x-grid-checkheader, .x-boundlist-item .x-combo-check
 {
 	height: 14px;
 	background-image: url('../img/unchecked.gif');
@@ -88,7 +88,7 @@ h2
 	background-color: transparent;
 }
 
-.x-grid-checkheader-checked
+.x-grid-checkheader-checked, .x-boundlist-selected .x-combo-check
 {
 	background-image: url('../img/checked.gif');
 }
@@ -422,6 +422,7 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 .ico-exit         { background-image: url(../img/exit.png) !important; }
 .ico-expand       { background-image: url(../img/expand.png) !important; }
 .ico-folder-del   { background-image: url(../img/folder_delete.png) !important; }
+.ico-folder-mount  { background-image: url(../img/folder_mount.png) !important; }
 .ico-folder-ren   { background-image: url(../img/folder_rename.png) !important; }
 .ico-folder-tree  { background-image: url(../img/folder_tree.png) !important; }
 .ico-find         { background-image: url(../img/find.png) !important; }
@@ -470,11 +471,13 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 
 .ico-mod-acl                  { background-image: url(../img/key_plus.png) !important; }
 .ico-mod-calendar             { background-image: url(../img/calendar.png) !important; }
+.ico-mod-calendarimport       { background-image: url(../img/calendar_import.png) !important; }
 .ico-mod-calendars            { background-image: url(../img/calendars.png) !important; }
 .ico-mod-datacache            { background-image: url(../img/db.png) !important; }
 .ico-mod-globalsetting        { background-image: url(../img/item.png) !important; }
 .ico-mod-globalsettingsection { background-image: url(../img/item_group.png) !important; }
 .ico-mod-file                 { background-image: url(../img/file.png) !important; }
+.ico-mod-filefolder           { background-image: url(../img/folder.png) !important; }
 .ico-mod-folder               { background-image: url(../img/folder.png) !important; }
 .ico-mod-group                { background-image: url(../img/group.png) !important; }
 .ico-mod-logaction            { background-image: url(../img/script_arrow.png) !important; }
