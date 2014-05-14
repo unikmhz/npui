@@ -819,6 +819,16 @@ class EntityFlag(Base):
 		}
 	)
 
+class AddressType(DeclEnum):
+	"""
+	Address type ENUM.
+	"""
+	home    = 'home', _('Home Address'),    10
+	work    = 'work', _('Work Address'),    20
+	postal  = 'post', _('Postal Address'),  30
+	parcel  = 'parc', _('Parcel Address'),  40
+	billing = 'bill', _('Billing Address'), 50
+
 class Address(Base):
 	"""
 	Entity address.
@@ -843,8 +853,8 @@ class Address(Base):
 					{ 'property': 'houseid' ,'direction': 'ASC' },
 					{ 'property': 'flat' ,'direction': 'ASC' }
 				),
-				'grid_view'     : ('entity', 'primary', 'house', 'entrance', 'floor', 'flat', 'descr'),
-				'form_view'     : ('entity', 'primary', 'house', 'entrance', 'floor', 'flat', 'entrycode', 'descr'),
+				'grid_view'     : ('entity', 'primary', 'atype', 'house', 'entrance', 'floor', 'flat', 'descr'),
+				'form_view'     : ('entity', 'primary', 'atype', 'house', 'entrance', 'floor', 'flat', 'entrycode', 'postindex', 'descr'),
 #				'easy_search'   : (),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -874,6 +884,14 @@ class Address(Base):
 			'header_string' : _('Entity'),
 			'filter_type'   : 'none'
 		}
+	)
+	type = Column(
+		'atype',
+		AddressType.db_type(),
+		Comment('Address type'),
+		nullable=False,
+		default=AddressType.home,
+		server_default=AddressType.home
 	)
 	primary = Column(
 		NPBoolean(),
@@ -939,6 +957,17 @@ class Address(Base):
 			'header_string' : _('Entry Code')
 		}
 	)
+	postal_code = Column(
+		'postindex',
+		Unicode(8),
+		Comment('Postal code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Postal Code')
+		}
+	)
 	description = Column(
 		'descr',
 		UnicodeText(),
@@ -986,12 +1015,12 @@ class PhoneType(DeclEnum):
 	"""
 	Phone type ENUM.
 	"""
-	home = 'home', _('Home Phone'), 10
-	cell = 'cell', _('Cell Phone'), 20
-	work = 'work', _('Work Phone'), 30
+	home  = 'home',  _('Home Phone'),   10
+	cell  = 'cell',  _('Cell Phone'),   20
+	work  = 'work',  _('Work Phone'),   30
 	pager = 'pager', _('Pager Number'), 40
-	fax = 'fax', _('Fax Number'), 50
-	rec = 'rec', _('Receptionist'), 60
+	fax   = 'fax',   _('Fax Number'),   50
+	rec   = 'rec',   _('Receptionist'), 60
 
 class Phone(Base):
 	"""
