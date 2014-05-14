@@ -501,7 +501,7 @@ def _cal_events(evts, params, req):
 
 @register_hook('core.calendar.events.update')
 def _cal_events_update(params, req):
-	cal_id = int(params.get('CalendarId', 0))
+	cal_id = params.get('CalendarId', '')
 	if cal_id != _cal['id']:
 		return
 	if 'EventId' not in params:
