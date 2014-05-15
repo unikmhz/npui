@@ -33,6 +33,7 @@ from sqlalchemy.sql.expression import (
 	Executable,
 	FunctionElement
 )
+from sqlalchemy.sql import sqltypes
 from sqlalchemy.ext.compiler import compiles
 
 class SetVariable(Executable, ClauseElement):
@@ -45,23 +46,23 @@ def visit_set_variable_mysql(element, compiler, *kw):
 	if isinstance(element.value, ClauseElement):
 		rvalue = compiler.process(element.value)
 	else:
-		rvalue = compiler.render_literal_value(element.value, None)
+		rvalue = compiler.render_literal_value(str(element.value), sqltypes.STRINGTYPE)
 	return 'SET @%s := %s' % (element.name, rvalue)
 
-@compiles(SetVariable, 'pgsql')
+@compiles(SetVariable, 'postgresql')
 def visit_set_variable_pgsql(element, compiler, *kw):
 	if isinstance(element.value, ClauseElement):
 		rvalue = compiler.process(element.value)
 	else:
-		rvalue = compiler.render_literal_value(element.value, None)
+		rvalue = compiler.render_literal_value(str(element.value), sqltypes.STRINGTYPE)
 	return 'SET npvar.%s = %s' % (element.name, rvalue)
 
 @compiles(SetVariable)
-def visit_set_variable_pgsql(element, compiler, *kw):
+def visit_set_variable(element, compiler, *kw):
 	if isinstance(element.value, ClauseElement):
 		rvalue = compiler.process(element.value)
 	else:
-		rvalue = compiler.render_literal_value(element.value, None)
+		rvalue = compiler.render_literal_value(str(element.value), sqltypes.STRINGTYPE)
 	return 'SET %s = %s' % (element.name, rvalue)
 
 class IntervalSeconds(FunctionElement):

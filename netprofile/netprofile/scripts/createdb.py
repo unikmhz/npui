@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Initial database creation script
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -35,10 +35,14 @@ import transaction
 
 from sqlalchemy import engine_from_config
 
+from pyramid import threadlocal
 from pyramid.paster import (
 	get_appsettings,
 	setup_logging
 )
+from pyramid.interfaces import IRendererFactory
+from pyramid.path import DottedNameResolver
+import pyramid_mako
 
 from netprofile.db.connection import (
 	DBSession,
@@ -63,6 +67,19 @@ def main(argv=sys.argv):
 	cache.cache = cache.configure_cache(settings)
 	engine = engine_from_config(settings, 'sqlalchemy.')
 	DBSession.configure(bind=engine)
+
+	reg = threadlocal.get_current_registry()
+	factory = pyramid_mako.MakoRendererFactory()
+
+	name_resolver = DottedNameResolver()
+	lookup_opts = pyramid_mako.parse_options_from_settings(settings, 'mako.', name_resolver.maybe_resolve)
+	lookup_opts.update({
+		'default_filters' : ['context[\'self\'].ddl.ddl_fmt']
+	})
+	factory.lookup = pyramid_mako.PkgResourceTemplateLookup(**lookup_opts)
+
+	reg.registerUtility(factory, IRendererFactory, name='.mak')
+
 	ModuleManager.prepare()
 	Base.metadata.create_all(engine)
 

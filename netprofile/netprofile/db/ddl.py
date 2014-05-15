@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Custom DDL constructs for SQLAlchemy
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,6 +27,8 @@ from __future__ import (
 	division
 )
 
+import sys
+
 from sqlalchemy.schema import (
 	Column,
 	DefaultClause,
@@ -35,8 +37,16 @@ from sqlalchemy.schema import (
 	Table
 )
 from sqlalchemy import event
+from sqlalchemy.sql import sqltypes
 from sqlalchemy.sql.expression import ClauseElement
+from sqlalchemy.sql.functions import FunctionElement
 from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.ext.declarative import DeclarativeMeta
+
+from pyramid.renderers import render
+
+from netprofile.ext.data import _table_to_class
+from .connection import Base
 
 class CurrentTimestampDefaultItem(ClauseElement):
 	def __init__(self, on_update=False):
@@ -51,7 +61,7 @@ def visit_timestamp_default_mysql(element, compiler, *kw):
 
 @compiles(CurrentTimestampDefaultItem)
 def visit_timestamp_default(element, compiler, *kw):
-	pass
+	return 'CURRENT_TIMESTAMP'
 
 class CurrentTimestampDefault(DefaultClause):
 	def __init__(self, on_update=False):
@@ -113,7 +123,7 @@ def visit_set_column_comment_mysql(element, compiler, *kw):
 	return 'ALTER TABLE %s MODIFY COLUMN %s COMMENT %s' % (
 		compiler.sql_compiler.preparer.format_table(element.column.table),
 		spec,
-		compiler.sql_compiler.render_literal_value(element.text, None)
+		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
 @compiles(SetColumnComment, 'postgresql')
@@ -121,7 +131,7 @@ def visit_set_column_comment_mysql(element, compiler, *kw):
 def visit_set_column_comment_pgsql(element, compiler, *kw):
 	return 'COMMENT ON COLUMN %s IS %s' % (
 		compiler.sql_compiler.process(element.column),
-		compiler.sql_compiler.render_literal_value(element.text, None)
+		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
 @compiles(SetColumnComment)
@@ -132,7 +142,7 @@ def visit_set_column_comment(element, compiler, *kw):
 def visit_set_table_comment_mysql(element, compiler, *kw):
 	return 'ALTER TABLE %s COMMENT=%s' % (
 		compiler.sql_compiler.preparer.format_table(element.table),
-		compiler.sql_compiler.render_literal_value(element.text, None)
+		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
 @compiles(SetTableComment, 'postgresql')
@@ -140,13 +150,85 @@ def visit_set_table_comment_mysql(element, compiler, *kw):
 def visit_set_table_comment_pgsql(element, compiler, *kw):
 	return 'COMMENT ON TABLE %s IS %s' % (
 		compiler.sql_compiler.preparer.format_table(element.table),
-		compiler.sql_compiler.render_literal_value(element.text, None)
+		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
 @compiles(SetTableComment)
 def visit_set_table_comment(element, compiler, *kw):
 	pass
 
-def ddl_fmt(obj):
-	pass
+def ddl_fmt(ctx, obj):
+	compiler = ctx['compiler']
+	if isinstance(obj, Trigger):
+		return compiler.sql_compiler.preparer.quote(obj.name)
+	if isinstance(obj, Table):
+		return compiler.sql_compiler.preparer.format_table(obj)
+	if isinstance(obj, DeclarativeMeta):
+		return compiler.sql_compiler.preparer.format_table(obj.__table__)
+	if isinstance(obj, DDLElement):
+		return compiler.process(obj)
+	if isinstance(obj, (FunctionElement, ClauseElement)):
+		return compiler.sql_compiler.process(obj)
+	return str(obj)
+
+class CreateTrigger(DDLElement):
+	def __init__(self, table, trigger):
+		self.table = table
+		self.trigger = trigger
+
+class DropTrigger(DDLElement):
+	def __init__(self, table, trigger):
+		self.table = table
+		self.trigger = trigger
+
+@compiles(CreateTrigger)
+def visit_create_trigger(element, compiler, *kw):
+	table = element.table
+	cls = _table_to_class(table.name)
+	module = cls.__module__.split('.')[0]
+	trigger = element.trigger
+	tpldef = {
+		'table'    : table,
+		'class'    : cls,
+		'module'   : module,
+		'compiler' : compiler,
+		'dialect'  : compiler.dialect,
+		'trigger'  : trigger
+	}
+	tpldef.update(Base._decl_class_registry.items())
+
+	tplname = '%s:templates/sql/%s/triggers/%s.mak' % (
+		module,
+		compiler.dialect.name,
+		trigger.name
+	)
+	return render(tplname, tpldef, package=sys.modules[module])
+
+@compiles(DropTrigger, 'mysql')
+def visit_drop_trigger_mysql(element, compiler, *kw):
+	return 'DROP TRIGGER %s' % (
+		compiler.sql_compiler.preparer.quote(element.trigger.name),
+	)
+
+@compiles(DropTrigger, 'postgresql')
+def visit_drop_trigger_mysql(element, compiler, *kw):
+	return 'DROP TRIGGER %s ON %s' % (
+		compiler.sql_compiler.preparer.quote(element.trigger.name),
+		compiler.sql_compiler.preparer.format_table(element.parent)
+	)
+
+class Trigger(SchemaItem):
+	"""
+	Schema element that attaches a trigger template to an object.
+	"""
+	def __init__(self, when='before', event='insert', name=None):
+		self.when = when
+		self.event = event
+		self.name = name
+
+	def _set_parent(self, parent):
+		if isinstance(parent, Table):
+			self.parent = parent
+			CreateTrigger(parent, self).execute_at('after_create', parent)
+			DropTrigger(parent, self).execute_at('before_drop', parent)
 

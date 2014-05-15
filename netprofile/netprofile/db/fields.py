@@ -42,7 +42,10 @@ from sqlalchemy.dialects import (
 	postgresql
 )
 
-from sqlalchemy.sql import expression
+from sqlalchemy.sql import (
+	expression,
+	sqltypes
+)
 from sqlalchemy.ext.compiler import compiles
 
 from netprofile.db import processors
@@ -496,7 +499,7 @@ class ASCIIText(types.TypeDecorator):
 
 @compiles(EnumSymbol)
 def compile_enumsym(element, compiler, **kw):
-	return compiler.sql_compiler.render_literal_value(element.value, None)
+	return compiler.sql_compiler.render_literal_value(element.value, sqltypes.STRINGTYPE)
 
 class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	"""
