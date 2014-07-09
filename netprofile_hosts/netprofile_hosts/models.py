@@ -66,7 +66,10 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault
+)
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import (
@@ -222,9 +225,8 @@ class Host(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Time of last modification'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified'),
 			'read_only'     : True
@@ -655,7 +657,7 @@ class Service(Base):
 		Comment('Service priority'),
 		nullable=False,
 		default=0,
-		server_default=text('NULL'),
+		server_default=text('0'),
 		info={
 			'header_string' : _('Priority')
 		}
@@ -665,7 +667,7 @@ class Service(Base):
 		Comment('Service weight'),
 		nullable=False,
 		default=0,
-		server_default=text('NULL'),
+		server_default=text('0'),
 		info={
 			'header_string' : _('Weight')
 		}
