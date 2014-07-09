@@ -53,14 +53,14 @@ class CurrentTimestampDefaultItem(ClauseElement):
 		self.on_update = on_update
 
 @compiles(CurrentTimestampDefaultItem, 'mysql')
-def visit_timestamp_default_mysql(element, compiler, *kw):
+def visit_timestamp_default_mysql(element, compiler, **kw):
 	ddl = 'CURRENT_TIMESTAMP'
 	if element.on_update:
 		ddl += ' ON UPDATE CURRENT_TIMESTAMP'
 	return ddl
 
 @compiles(CurrentTimestampDefaultItem)
-def visit_timestamp_default(element, compiler, *kw):
+def visit_timestamp_default(element, compiler, **kw):
 	return 'CURRENT_TIMESTAMP'
 
 class CurrentTimestampDefault(DefaultClause):
@@ -113,7 +113,7 @@ class Comment(SchemaItem):
 			)
 
 @compiles(SetColumnComment, 'mysql')
-def visit_set_column_comment_mysql(element, compiler, *kw):
+def visit_set_column_comment_mysql(element, compiler, **kw):
 	spec = compiler.get_column_specification(element.column, first_pk=element.column.primary_key)
 	const = " ".join(compiler.process(constraint) \
 			for constraint in element.column.constraints)
@@ -128,18 +128,18 @@ def visit_set_column_comment_mysql(element, compiler, *kw):
 
 @compiles(SetColumnComment, 'postgresql')
 @compiles(SetColumnComment, 'oracle')
-def visit_set_column_comment_pgsql(element, compiler, *kw):
+def visit_set_column_comment_pgsql(element, compiler, **kw):
 	return 'COMMENT ON COLUMN %s IS %s' % (
 		compiler.sql_compiler.process(element.column),
 		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
 @compiles(SetColumnComment)
-def visit_set_column_comment(element, compiler, *kw):
+def visit_set_column_comment(element, compiler, **kw):
 	pass
 
 @compiles(SetTableComment, 'mysql')
-def visit_set_table_comment_mysql(element, compiler, *kw):
+def visit_set_table_comment_mysql(element, compiler, **kw):
 	return 'ALTER TABLE %s COMMENT=%s' % (
 		compiler.sql_compiler.preparer.format_table(element.table),
 		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
@@ -147,14 +147,14 @@ def visit_set_table_comment_mysql(element, compiler, *kw):
 
 @compiles(SetTableComment, 'postgresql')
 @compiles(SetTableComment, 'oracle')
-def visit_set_table_comment_pgsql(element, compiler, *kw):
+def visit_set_table_comment_pgsql(element, compiler, **kw):
 	return 'COMMENT ON TABLE %s IS %s' % (
 		compiler.sql_compiler.preparer.format_table(element.table),
 		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
 @compiles(SetTableComment)
-def visit_set_table_comment(element, compiler, *kw):
+def visit_set_table_comment(element, compiler, **kw):
 	pass
 
 def ddl_fmt(ctx, obj):
@@ -182,7 +182,7 @@ class DropTrigger(DDLElement):
 		self.trigger = trigger
 
 @compiles(CreateTrigger)
-def visit_create_trigger(element, compiler, *kw):
+def visit_create_trigger(element, compiler, **kw):
 	table = element.table
 	cls = _table_to_class(table.name)
 	module = cls.__module__.split('.')[0]
@@ -204,17 +204,17 @@ def visit_create_trigger(element, compiler, *kw):
 	)
 	return render(tplname, tpldef, package=sys.modules[module])
 
-@compiles(DropTrigger, 'mysql')
-def visit_drop_trigger_mysql(element, compiler, *kw):
-	return 'DROP TRIGGER %s' % (
-		compiler.sql_compiler.preparer.quote(element.trigger.name),
-	)
-
 @compiles(DropTrigger, 'postgresql')
-def visit_drop_trigger_mysql(element, compiler, *kw):
+def visit_drop_trigger_mysql(element, compiler, **kw):
 	return 'DROP TRIGGER %s ON %s' % (
 		compiler.sql_compiler.preparer.quote(element.trigger.name),
 		compiler.sql_compiler.preparer.format_table(element.parent)
+	)
+
+@compiles(DropTrigger)
+def visit_drop_trigger(element, compiler, **kw):
+	return 'DROP TRIGGER %s' % (
+		compiler.sql_compiler.preparer.quote(element.trigger.name),
 	)
 
 class Trigger(SchemaItem):
@@ -231,4 +231,67 @@ class Trigger(SchemaItem):
 			self.parent = parent
 			CreateTrigger(parent, self).execute_at('after_create', parent)
 			DropTrigger(parent, self).execute_at('before_drop', parent)
+
+class CreateFunction(DDLElement):
+	"""
+	SQL function template DDL object.
+	"""
+	def __init__(self, name, args=(), comment=None, reads_sql=True, writes_sql=True):
+		self.name = name
+		self.args = args
+		self.comment = comment
+		self.reads_sql = reads_sql
+		self.writes_sql = writes_sql
+
+@compiles(CreateFunction)
+def visit_create_function(element, compiler, **kw):
+	pass
+
+class SQLFunction(object):
+	"""
+	Schema element that defines an SQL function or procedure.
+	"""
+	pass
+
+class CreateView(DDLElement):
+	"""
+	SQL create view DDL object.
+	"""
+	def __init__(self, name, select):
+		self.name = name
+		self.select = select
+
+class DropView(DDLElement):
+	"""
+	SQL drop view DDL object.
+	"""
+	def __init__(self, name):
+		self.name = name
+
+@compiles(CreateView)
+def visit_create_view(element, compiler, **kw):
+	return 'CREATE VIEW %s AS %s' % (
+		compiler.sql_compiler.preparer.quote(element.name),
+		compiler.sql_compiler.process(element.select, literal_binds=True)
+	)
+
+@compiles(DropView)
+def visit_drop_view(element, compiler, **kw):
+	return 'DROP VIEW %s' % (
+		compiler.sql_compiler.preparer.quote(element.name),
+	)
+
+class View(SchemaItem):
+	"""
+	Schema element that attaches a view with a predefined query to an object.
+	"""
+	def __init__(self, name, select):
+		self.name = name
+		self.select = select
+
+	def _set_parent(self, parent):
+		if isinstance(parent, Table):
+			self.parent = parent
+			CreateView(parent, self).execute_at('after_create', parent)
+			DropView(parent, self).execute_at('before_drop', parent)
 

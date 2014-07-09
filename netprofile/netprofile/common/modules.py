@@ -80,6 +80,12 @@ class ModuleBase(object):
 	def get_models(self):
 		return ()
 
+	def get_sql_functions(self):
+		return ()
+
+	def get_sql_events(self):
+		return ()
+
 	def get_menus(self):
 		return ()
 
