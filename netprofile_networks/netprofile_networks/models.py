@@ -177,7 +177,7 @@ class Network(Base):
 	group_id = Column(
 		'netgid',
 		UInt32(),
-		ForeignKey('nets_groups.netgid', name='nets_def_fk_domainid', ondelete='SET NULL', onupdate='CASCADE'),
+		ForeignKey('nets_groups.netgid', name='nets_def_fk_netgid', ondelete='SET NULL', onupdate='CASCADE'),
 		Comment('Network group ID'),
 		nullable=True,
 		default=None,

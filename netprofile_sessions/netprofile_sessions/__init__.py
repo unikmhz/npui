@@ -44,7 +44,7 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return ('dialup', 'access', 'ipaddresses', 'rates')
+		return ('access',)
 
 	def get_models(self):
 		return (

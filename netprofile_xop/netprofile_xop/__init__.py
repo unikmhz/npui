@@ -51,7 +51,7 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return ('stashes', 'entities', 'access', 'rates', 'networks', 'hosts', 'ipaddresses')
+		return ('stashes',)
 
 	@classmethod
 	def prepare(cls):

@@ -8,7 +8,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
 	'setuptools',
-	'netprofile >= 0.3',
+	'netprofile_hosts >= 0.3'
 ]
 
 setup(
@@ -23,6 +23,7 @@ setup(
 		'Programming Language :: Python :: 2.7',
 		'Programming Language :: Python :: 3',
 		'Programming Language :: Python :: 3.2',
+		'Programming Language :: Python :: 3.4',
 		'Programming Language :: Python :: Implementation :: CPython',
 		'Framework :: Pyramid',
 		'Topic :: Internet :: WWW/HTTP',

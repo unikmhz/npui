@@ -42,7 +42,7 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return ('networks', 'hosts', 'dialup')
+		return ('networks', 'dialup')
 
 	def get_models(self):
 		return (

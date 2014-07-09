@@ -238,7 +238,6 @@ class AccessSession(Base):
 		Comment('Session start time'),
 		nullable=True,
 		default=None,
-		server_default=text('NULL'),
 		info={
 			'header_string' : _('Started')
 		}
@@ -249,7 +248,6 @@ class AccessSession(Base):
 		Comment('Accounting update time'),
 		nullable=True,
 		default=None,
-		server_default=text('NULL'),
 		info={
 			'header_string' : _('Updated')
 		}
@@ -492,7 +490,6 @@ class AccessSessionHistory(Base):
 		Comment('Session start time'),
 		nullable=True,
 		default=None,
-		server_default=text('NULL'),
 		info={
 			'header_string' : _('Started')
 		}
@@ -503,7 +500,6 @@ class AccessSessionHistory(Base):
 		Comment('Session end time'),
 		nullable=True,
 		default=None,
-		server_default=text('NULL'),
 		info={
 			'header_string' : _('Ended')
 		}
