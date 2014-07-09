@@ -28,14 +28,18 @@ from __future__ import (
 )
 
 import sys
-import cdecimal
+
+try:
+	import cdecimal
+	sys.modules['decimal'] = cdecimal
+except ImportError:
+	pass
 
 PY3 = True
 if sys.version < '3':
 	PY3 = False
 	reload(sys)
 	sys.setdefaultencoding('utf-8')
-sys.modules['decimal'] = cdecimal
 
 from babel import Locale
 from pyramid.config import Configurator

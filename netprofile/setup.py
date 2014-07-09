@@ -32,7 +32,6 @@ requires = [
 	'Babel',
 	'lingua',
 	'lxml',
-	'cdecimal',
 
 	'tornado',
 	'sockjs-tornado',
