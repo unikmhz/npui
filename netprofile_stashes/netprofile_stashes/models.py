@@ -943,7 +943,7 @@ class FuturePayment(Base):
 		)
 	)
 	entity = relationship(
-		'AccessEntity',
+		'Entity',
 		backref='stash_futures'
 	)
 

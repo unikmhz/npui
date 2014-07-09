@@ -49,7 +49,7 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return ('entities', 'stashes')
+		return ('access',)
 
 	def get_models(self):
 		return (
