@@ -87,7 +87,10 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault
+)
 from netprofile.db.util import (
 	populate_related,
 	populate_related_list
@@ -422,10 +425,9 @@ class Entity(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified')
 		}
@@ -1271,9 +1273,9 @@ class EntityComment(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Time stamp'),
+		CurrentTimestampDefault(),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Time')
 		}
