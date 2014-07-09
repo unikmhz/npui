@@ -167,7 +167,11 @@ from netprofile.dav import (
 from netprofile.ext.filters import (
 	SelectFilter
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault,
+	Trigger
+)
 
 from pyramid.response import (
 	FileIter,
@@ -2234,7 +2238,7 @@ class DAVLock(Base):
 		Index('dav_locks_i_token', 'token'),
 		Index('dav_locks_i_timeout', 'timeout'),
 		Index('dav_locks_i_fileid', 'fileid'),
-		Index('dav_locks_i_uri', 'uri', mysql_length=767),
+		Index('dav_locks_i_uri', 'uri', mysql_length=255),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8'
@@ -2551,10 +2555,9 @@ class FileFolder(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified')
 		}
@@ -3239,10 +3242,9 @@ class File(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified'),
 			'read_only'     : True
@@ -4387,9 +4389,9 @@ class LogData(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Log entry timestamp'),
+		CurrentTimestampDefault(),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Time')
 		}
@@ -4542,10 +4544,9 @@ class NPSession(Base):
 		'lastts',
 		TIMESTAMP(),
 		Comment('Last seen time'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=True,
 #		default=None,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Last Update')
 		}
@@ -4631,9 +4632,9 @@ class PasswordHistory(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Time of change'),
+		CurrentTimestampDefault(),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Time')
 		}
@@ -5869,6 +5870,8 @@ class Event(Base):
 		Index('calendars_events_i_uid', 'uid'), # XXX: add gid?
 		Index('calendars_events_i_icaluid', 'icaluid'),
 		Index('calendars_events_i_dtstart', 'dtstart'),
+		Trigger('before', 'insert', 't_calendars_events_bi'),
+		Trigger('before', 'update', 't_calendars_events_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -5945,10 +5948,9 @@ class Event(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified')
 		}
@@ -5959,7 +5961,6 @@ class Event(Base):
 		Comment('Event start timestamp'),
 		nullable=True,
 		default=None,
-#		server_default=text('NULL'),
 		info={
 			'header_string' : _('Start')
 		}
@@ -5970,7 +5971,6 @@ class Event(Base):
 		Comment('Event end timestamp'),
 		nullable=True,
 		default=None,
-#		server_default=text('NULL'),
 		info={
 			'header_string' : _('End')
 		}
