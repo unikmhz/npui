@@ -75,7 +75,10 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault
+)
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import SimpleWizard
 from pyramid.i18n import (
@@ -194,10 +197,8 @@ class ExternalOperation(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Timestamp of operation'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
-		default=None,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Date')
 		}
