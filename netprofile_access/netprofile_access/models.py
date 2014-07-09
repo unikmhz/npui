@@ -69,7 +69,10 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault
+)
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import SimpleWizard
 from pyramid.i18n import (
@@ -655,9 +658,9 @@ class AccessEntityLink(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Service timestamp'),
+		CurrentTimestampDefault(),
 		nullable=True,
 		default=None,
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Timestamp'),
 			'column_flex'   : 1
