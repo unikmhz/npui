@@ -69,7 +69,10 @@ from netprofile.db.fields import (
 	npbool
 )
 from netprofile.ext.data import ExtModel
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault
+)
 
 from netprofile.ext.wizards import (
 	SimpleWizard,
@@ -505,9 +508,8 @@ class StashIO(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Time stamp of operation'),
+		CurrentTimestampDefault(),
 		nullable=False,
-		default=func.current_timestamp(),
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Date'),
 			'column_flex'   : 1
@@ -632,9 +634,8 @@ class StashOperation(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Time stamp of operation'),
+		CurrentTimestampDefault(),
 		nullable=False,
-		default=func.current_timestamp(),
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Date')
 		}
@@ -862,10 +863,9 @@ class FuturePayment(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified'),
 			'read_only'     : True
