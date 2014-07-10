@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -35,7 +35,14 @@ __all__ = [
 	'House',
 	'Place',
 	'HouseGroup',
-	'HouseGroupMapping'
+	'HouseGroupMapping',
+
+	'AddrFormatCompactFunction',
+	'AddrFormatFunction',
+	'AddrGetFullFunction',
+	'AddrListDistrictProcedure',
+	'AddrListEntrProcedure',
+	'AddrListStreetProcedure'
 ]
 
 from sqlalchemy import (
@@ -80,7 +87,12 @@ from netprofile.ext.wizards import (
 	Step,
 	Wizard
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	InArgument,
+	SQLFunction,
+	SQLFunctionArgument
+)
 from netprofile.db.util import populate_related_list
 
 from netprofile_geo.filters import AddressFilter
@@ -827,4 +839,78 @@ class HouseGroupMapping(Base):
 			'header_string' : _('House')
 		}
 	)
+
+AddrFormatCompactFunction = SQLFunction(
+	'addr_format_compact',
+	args=(
+		SQLFunctionArgument('streetname', Unicode(255)),
+		SQLFunctionArgument('num', UInt16()),
+		SQLFunctionArgument('num_slash', UInt16()),
+		SQLFunctionArgument('num_suffix', Unicode(32)),
+		SQLFunctionArgument('bld', UInt16()),
+		SQLFunctionArgument('fl', UInt16())
+	),
+	returns=Unicode(255),
+	comment='Format compact address',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AddrFormatFunction = SQLFunction(
+	'addr_format',
+	args=(
+		SQLFunctionArgument('streetname', Unicode(255)),
+		SQLFunctionArgument('prefix', Unicode(8)),
+		SQLFunctionArgument('suffix', Unicode(8)),
+		SQLFunctionArgument('num', UInt16()),
+		SQLFunctionArgument('num_slash', UInt16()),
+		SQLFunctionArgument('num_suffix', Unicode(32)),
+		SQLFunctionArgument('bld', UInt16()),
+		SQLFunctionArgument('fl', UInt16())
+	),
+	returns=Unicode(255),
+	comment='Format full address',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AddrGetFullFunction = SQLFunction(
+	'addr_get_full',
+	args=(
+		SQLFunctionArgument('hid', UInt32()),
+	),
+	returns=Unicode(255),
+	comment='Get full address of a house by its ID',
+	writes_sql=False
+)
+
+AddrListDistrictProcedure = SQLFunction(
+	'addr_list_district',
+	args=(
+		InArgument('did', UInt32()),
+	),
+	comment='List all houses in a given district',
+	writes_sql=False,
+	is_procedure=True
+)
+
+AddrListEntrProcedure = SQLFunction(
+	'addr_list_entr',
+	args=(
+		InArgument('minentr', UInt8()),
+	),
+	comment='List all houses which have at least given number of entries',
+	writes_sql=False,
+	is_procedure=True
+)
+
+AddrListStreetProcedure = SQLFunction(
+	'addr_list_street',
+	args=(
+		InArgument('sid', UInt32()),
+	),
+	comment='List all houses on a given street',
+	writes_sql=False,
+	is_procedure=True
+)
 

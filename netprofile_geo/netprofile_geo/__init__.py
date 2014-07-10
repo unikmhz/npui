@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -50,6 +50,17 @@ class Module(ModuleBase):
 			Place,
 			HouseGroup,
 			HouseGroupMapping
+		)
+
+	@classmethod
+	def get_sql_functions(cls):
+		return (
+			AddrFormatCompactFunction,
+			AddrFormatFunction,
+			AddrGetFullFunction,
+			AddrListDistrictProcedure,
+			AddrListEntrProcedure,
+			AddrListStreetProcedure
 		)
 
 	def get_local_js(self, request, lang):
