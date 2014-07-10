@@ -77,6 +77,32 @@ class CurrentTimestampDefault(DefaultClause):
 		if self.on_update:
 			self.column.server_onupdate = self
 
+class SQLFunctionArgument(DDLElement):
+	def __init__(self, name, arg_type, arg_dir=None):
+		self.name = name
+		self.type = arg_type
+		self.dir = arg_dir
+
+class InArgument(SQLFunctionArgument):
+	def __init__(self, name, arg_type):
+		super(InArgument, self).__init__(name, arg_type, 'IN')
+
+class OutArgument(SQLFunctionArgument):
+	def __init__(self, name, arg_type):
+		super(OutArgument, self).__init__(name, arg_type, 'OUT')
+
+class InOutArgument(SQLFunctionArgument):
+	def __init__(self, name, arg_type):
+		super(InOutArgument, self).__init__(name, arg_type, 'INOUT')
+
+@compiles(SQLFunctionArgument, 'mysql')
+def visit_sql_function_arg(element, compiler, **kw):
+	return '%s %s %s' % (
+		element.dir if element.dir else '',
+		compiler.sql_compiler.preparer.quote(element.name),
+		compiler.dialect.type_compiler.process(element.type)
+	)
+
 class SetTableComment(DDLElement):
 	def __init__(self, table, comment):
 		self.table = table
@@ -159,7 +185,7 @@ def visit_set_table_comment(element, compiler, **kw):
 
 def ddl_fmt(ctx, obj):
 	compiler = ctx['compiler']
-	if isinstance(obj, Trigger):
+	if isinstance(obj, (Trigger, SQLFunction)):
 		return compiler.sql_compiler.preparer.quote(obj.name)
 	if isinstance(obj, Table):
 		return compiler.sql_compiler.preparer.format_table(obj)
@@ -167,6 +193,8 @@ def ddl_fmt(ctx, obj):
 		return compiler.sql_compiler.preparer.format_table(obj.__table__)
 	if isinstance(obj, DDLElement):
 		return compiler.process(obj)
+	if isinstance(obj, sqltypes.TypeEngine):
+		return compiler.dialect.type_compiler.process(obj)
 	if isinstance(obj, (FunctionElement, ClauseElement)):
 		return compiler.sql_compiler.process(obj)
 	return str(obj)
@@ -236,22 +264,47 @@ class CreateFunction(DDLElement):
 	"""
 	SQL function template DDL object.
 	"""
-	def __init__(self, name, args=(), comment=None, reads_sql=True, writes_sql=True):
-		self.name = name
-		self.args = args
-		self.comment = comment
-		self.reads_sql = reads_sql
-		self.writes_sql = writes_sql
+	def __init__(self, func, module):
+		self.func = func
+		self.module = module
 
 @compiles(CreateFunction)
 def visit_create_function(element, compiler, **kw):
-	pass
+	func = element.func
+	name = func.name
+	module = 'netprofile_' + element.module
+	tpldef = {
+		'function' : func,
+		'name'     : name,
+		'module'   : module,
+		'compiler' : compiler,
+		'dialect'  : compiler.dialect
+	}
+	tpldef.update(Base._decl_class_registry.items())
+
+	tplname = '%s:templates/sql/%s/functions/%s.mak' % (
+		module,
+		compiler.dialect.name,
+		name
+	)
+	return render(tplname, tpldef, package=sys.modules[module])
 
 class SQLFunction(object):
 	"""
 	Schema element that defines an SQL function or procedure.
 	"""
-	pass
+	def __init__(self, name, args=(), returns=None, comment=None, reads_sql=True, writes_sql=True, is_procedure=False, label=None):
+		self.name = name
+		self.args = args
+		self.returns = returns
+		self.comment = comment
+		self.reads_sql = reads_sql
+		self.writes_sql = writes_sql
+		self.is_procedure = is_procedure
+		self.label = label
+
+	def create(self, modname):
+		return CreateFunction(self, modname)
 
 class CreateView(DDLElement):
 	"""

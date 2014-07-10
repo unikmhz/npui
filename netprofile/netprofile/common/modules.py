@@ -80,10 +80,12 @@ class ModuleBase(object):
 	def get_models(self):
 		return ()
 
-	def get_sql_functions(self):
+	@classmethod
+	def get_sql_functions(cls):
 		return ()
 
-	def get_sql_events(self):
+	@classmethod
+	def get_sql_events(cls):
 		return ()
 
 	def get_menus(self):
@@ -142,11 +144,28 @@ class ModuleManager(object):
 		Perform module discovery without loading all the discovered
 		modules. Might be handy for various utility tasks.
 		"""
+		ret = {}
+
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
+			sql_funcs = []
+			sql_events = []
+			sql_data = []
+
 			modcls = ep.load()
 			modprep = getattr(modcls, 'prepare', None)
 			if callable(modprep):
 				modprep()
+
+			func = getattr(modcls, 'get_sql_functions', None)
+			if callable(func):
+				sql_funcs.extend(func())
+			func = getattr(modcls, 'get_sql_events', None)
+			if callable(func):
+				sql_events.extend(func())
+
+			ret[ep.name] = (sql_funcs, sql_events, sql_data)
+
+		return ret
 
 	def __init__(self, cfg, vhost=None):
 		self.cfg = cfg
@@ -154,6 +173,8 @@ class ModuleManager(object):
 		self.loaded = {}
 		self.models = {}
 		self.menus = {}
+		self.sql_functions = {}
+		self.sql_events = {}
 		if vhost is None:
 			sett = cfg.get_settings()
 			self.vhost = sett.get('netprofile.vhost', None)
@@ -213,6 +234,8 @@ class ModuleManager(object):
 			self._import_model(moddef, model, mb, hm)
 		for menu in mod.get_menus():
 			self.menus[menu.name] = menu
+		self.sql_functions[moddef] = modcls.get_sql_functions()
+		self.sql_events[moddef] = modcls.get_sql_events()
 		return True
 
 	def load(self, moddef):

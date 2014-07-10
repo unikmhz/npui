@@ -80,6 +80,10 @@ def main(argv=sys.argv):
 
 	reg.registerUtility(factory, IRendererFactory, name='.mak')
 
-	ModuleManager.prepare()
+	mod_data = ModuleManager.prepare()
 	Base.metadata.create_all(engine)
+
+	for modname, data in mod_data.items():
+		for func in data[0]:
+			engine.execute(func.create(modname))
 
