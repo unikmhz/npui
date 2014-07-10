@@ -72,6 +72,10 @@ class Module(ModuleBase):
 			models.PerUserRateModifier
 		)
 
+	@classmethod
+	def get_sql_functions(self):
+		return (models.CheckAuthFunction,)
+
 	def get_css(self, request):
 		return (
 			'netprofile_access:static/css/main.css',

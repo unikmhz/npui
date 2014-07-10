@@ -31,10 +31,12 @@ __all__ = [
 	'AccessEntity',
 	'AccessEntityLink',
 	'AccessEntityLinkType',
+	'CheckAuthFunction',
 	'PerUserRateModifier'
 ]
 
 from sqlalchemy import (
+	Boolean,
 	Column,
 	FetchedValue,
 	ForeignKey,
@@ -71,7 +73,10 @@ from netprofile.db.fields import (
 )
 from netprofile.db.ddl import (
 	Comment,
-	CurrentTimestampDefault
+	CurrentTimestampDefault,
+	SQLFunction,
+	SQLFunctionArgument,
+	Trigger
 )
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import SimpleWizard
@@ -116,6 +121,10 @@ class AccessEntity(Entity):
 		Index('entities_access_i_ipaddrid', 'ipaddrid'),
 		Index('entities_access_i_ip6addrid', 'ip6addrid'),
 		Index('entities_access_i_nextrateid', 'nextrateid'),
+		Trigger('before', 'insert', 't_entities_access_bi'),
+		Trigger('before', 'update', 't_entities_access_bu'),
+		Trigger('after', 'update', 't_entities_access_au'),
+		Trigger('after', 'delete', 't_entities_access_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -694,4 +703,15 @@ class AccessEntityLink(Base):
 			passive_deletes=True
 		)
 	)
+
+CheckAuthFunction = SQLFunction(
+	'check_auth',
+	args=(
+		SQLFunctionArgument('name', Unicode(255)),
+		SQLFunctionArgument('pass', Unicode(255)),
+	),
+	returns=Boolean(),
+	comment='Check auth information',
+	writes_sql=False
+)
 
