@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Hosts module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -31,7 +31,9 @@ __all__ = [
 	'Host',
 	'HostGroup',
 	'Service',
-	'ServiceType'
+	'ServiceType',
+
+	'HostCreateAliasProcedure'
 ]
 
 from sqlalchemy import (
@@ -68,7 +70,10 @@ from netprofile.db.fields import (
 )
 from netprofile.db.ddl import (
 	Comment,
-	CurrentTimestampDefault
+	CurrentTimestampDefault,
+	InArgument,
+	SQLFunction,
+	Trigger
 )
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
@@ -100,6 +105,11 @@ class Host(Base):
 		Index('hosts_def_i_aliasid', 'aliasid'),
 		Index('hosts_def_i_cby', 'cby'),
 		Index('hosts_def_i_mby', 'mby'),
+		Trigger('before', 'insert', 't_hosts_def_bi'),
+		Trigger('before', 'update', 't_hosts_def_bu'),
+		Trigger('after', 'insert', 't_hosts_def_ai'),
+		Trigger('after', 'update', 't_hosts_def_au'),
+		Trigger('after', 'delete', 't_hosts_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -683,4 +693,15 @@ class Service(Base):
 			'header_string' : _('Visibility')
 		}
 	)
+
+HostCreateAliasProcedure = SQLFunction(
+	'host_create_alias',
+	args=(
+		InArgument('hid', UInt32()),
+		InArgument('did', UInt32()),
+		InArgument('aname', Unicode(255))
+	),
+	comment='Make a host alias (CNAME in DNS-speak)',
+	is_procedure=True
+)
 
