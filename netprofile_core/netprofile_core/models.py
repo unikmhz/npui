@@ -392,6 +392,9 @@ class User(Base):
 		Index('users_i_enabled', 'enabled'),
 		Index('users_i_managerid', 'managerid'),
 		Index('users_i_photo', 'photo'),
+		Trigger('after', 'insert', 't_users_ai'),
+		Trigger('after', 'update', 't_users_au'),
+		Trigger('after', 'delete', 't_users_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1139,6 +1142,9 @@ class Group(Base):
 		Index('groups_i_parentid', 'parentid'),
 		Index('groups_i_secpolid', 'secpolid'),
 		Index('groups_i_rootffid', 'rootffid'),
+		Trigger('after', 'insert', 't_groups_ai'),
+		Trigger('after', 'update', 't_groups_au'),
+		Trigger('after', 'delete', 't_groups_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -2452,6 +2458,11 @@ class FileFolder(Base):
 		Index('files_folders_u_folder', 'parentid', 'name', unique=True),
 		Index('files_folders_i_uid', 'uid'),
 		Index('files_folders_i_gid', 'gid'),
+		Trigger('before', 'insert', 't_files_folders_bi'),
+		Trigger('before', 'update', 't_files_folders_bu'),
+		Trigger('after', 'insert', 't_files_folders_ai'),
+		Trigger('after', 'update', 't_files_folders_au'),
+		Trigger('after', 'delete', 't_files_folders_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -3111,6 +3122,11 @@ class File(Base):
 		Index('files_def_i_uid', 'uid'),
 		Index('files_def_i_gid', 'gid'),
 		Index('files_def_i_ffid', 'ffid'),
+		Trigger('before', 'insert', 't_files_def_bi'),
+		Trigger('before', 'update', 't_files_def_bu'),
+		Trigger('after', 'insert', 't_files_def_ai'),
+		Trigger('after', 'update', 't_files_def_au'),
+		Trigger('after', 'delete', 't_files_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
