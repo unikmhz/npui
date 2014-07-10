@@ -62,6 +62,11 @@ __all__ = [
 	'CalendarImport',
 	'Event',
 
+	'HWAddrHexIEEEFunction',
+	'HWAddrHexLinuxFunction',
+	'HWAddrHexWindowsFunction',
+	'HWAddrUnhexFunction',
+
 	'global_setting'
 ]
 
@@ -78,6 +83,7 @@ import base64
 import icalendar
 
 from sqlalchemy import (
+	BINARY,
 	Column,
 	FetchedValue,
 	ForeignKey,
@@ -170,6 +176,8 @@ from netprofile.ext.filters import (
 from netprofile.db.ddl import (
 	Comment,
 	CurrentTimestampDefault,
+	SQLFunction,
+	SQLFunctionArgument,
 	Trigger
 )
 
@@ -6094,4 +6102,40 @@ class Event(Base):
 		if cal and cal.can_write(req.user):
 			return True
 		return False
+
+HWAddrHexIEEEFunction = SQLFunction(
+	'hwaddr_hex_i',
+	args=(SQLFunctionArgument('hwbin', BINARY(6)),),
+	returns=Unicode(15),
+	comment='Convert binary hardware address to IEEE-style string',
+	reads_sql=False,
+	writes_sql=False
+)
+
+HWAddrHexLinuxFunction = SQLFunction(
+	'hwaddr_hex_l',
+	args=(SQLFunctionArgument('hwbin', BINARY(6)),),
+	returns=Unicode(18),
+	comment='Convert binary hardware address to Linux-style string',
+	reads_sql=False,
+	writes_sql=False
+)
+
+HWAddrHexWindowsFunction = SQLFunction(
+	'hwaddr_hex_w',
+	args=(SQLFunctionArgument('hwbin', BINARY(6)),),
+	returns=Unicode(18),
+	comment='Convert binary hardware address to Windows-style string',
+	reads_sql=False,
+	writes_sql=False
+)
+
+HWAddrUnhexFunction = SQLFunction(
+	'hwaddr_unhex',
+	args=(SQLFunctionArgument('hwstr', Unicode(255)),),
+	returns=BINARY(6),
+	comment='Convert various hardware address formats to binary',
+	reads_sql=False,
+	writes_sql=False
+)
 

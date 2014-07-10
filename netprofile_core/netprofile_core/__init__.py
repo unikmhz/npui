@@ -111,6 +111,15 @@ class Module(ModuleBase):
 			Event
 		)
 
+	@classmethod
+	def get_sql_functions(cls):
+		return (
+			HWAddrHexIEEEFunction,
+			HWAddrHexLinuxFunction,
+			HWAddrHexWindowsFunction,
+			HWAddrUnhexFunction
+		)
+
 	def get_menus(self):
 		return (
 			Menu('modules', title=_('Modules'), order=10),
