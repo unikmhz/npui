@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -89,7 +89,8 @@ from netprofile.db.fields import (
 )
 from netprofile.db.ddl import (
 	Comment,
-	CurrentTimestampDefault
+	CurrentTimestampDefault,
+	Trigger
 )
 from netprofile.db.util import (
 	populate_related,
@@ -217,6 +218,9 @@ class Entity(Base):
 		Index('entities_def_i_esid', 'esid'),
 		Index('entities_def_i_nick', 'nick'),
 		Index('entities_def_u_nt', 'etype', 'nick', unique=True),
+		Trigger('after', 'insert', 't_entities_def_ai'),
+		Trigger('after', 'update', 't_entities_def_au'),
+		Trigger('after', 'delete', 't_entities_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1339,6 +1343,8 @@ class PhysicalEntity(Entity):
 		Index('entities_physical_u_contractid', 'contractid', unique=True),
 		Index('entities_physical_i_name_family', 'name_family'),
 		Index('entities_physical_i_name_given', 'name_given'),
+		Trigger('before', 'insert', 't_entities_physical_bi'),
+		Trigger('after', 'delete', 't_entities_physical_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1612,6 +1618,8 @@ class LegalEntity(Entity):
 		Comment('Legal entities'),
 		Index('entities_legal_u_name', 'name', unique=True),
 		Index('entities_legal_u_contractid', 'contractid', unique=True),
+		Trigger('before', 'insert', 't_entities_legal_bi'),
+		Trigger('after', 'delete', 't_entities_legal_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1897,6 +1905,7 @@ class StructuralEntity(Entity):
 	__tablename__ = 'entities_structural'
 	__table_args__ = (
 		Comment('Structural entities'),
+		Trigger('after', 'delete', 't_entities_structural_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1993,6 +2002,7 @@ class ExternalEntity(Entity):
 	__tablename__ = 'entities_external'
 	__table_args__ = (
 		Comment('External entities'),
+		Trigger('after', 'delete', 't_entities_external_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
