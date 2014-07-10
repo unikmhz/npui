@@ -3,7 +3,7 @@
 #
 # NetProfile: Domains module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -32,7 +32,9 @@ __all__ = [
 	'Domain',
 	'DomainAlias',
 	'DomainTXTRecord',
-	'DomainServiceType'
+	'DomainServiceType',
+
+	'DomainGetFullFunction'
 ]
 
 from sqlalchemy import (
@@ -66,7 +68,12 @@ from netprofile.db.fields import (
 	UInt32,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	SQLFunction,
+	SQLFunctionArgument,
+	Trigger
+)
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import (
@@ -92,6 +99,9 @@ class Domain(Base):
 	__table_args__ = (
 		Comment('Domains'),
 		Index('domains_def_u_domain', 'parentid', 'name', unique=True),
+		Trigger('after', 'insert', 't_domains_def_ai'),
+		Trigger('after', 'update', 't_domains_def_au'),
+		Trigger('after', 'delete', 't_domains_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -421,6 +431,8 @@ class DomainTXTRecord(Base):
 	__table_args__ = (
 		Comment('Domain TXT records'),
 		Index('domains_txtrr_u_txtrr', 'domainid', 'name', unique=True),
+		Trigger('before', 'insert', 't_domains_txtrr_bi'),
+		Trigger('before', 'update', 't_domains_txtrr_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -581,4 +593,12 @@ class DomainServiceType(Base):
 
 	def __str__(self):
 		return '%s' % str(self.name)
+
+DomainGetFullFunction = SQLFunction(
+	'domain_get_full',
+	args=(SQLFunctionArgument('did', UInt32()),),
+	returns=Unicode(255),
+	comment='Get fully qualified name of a domain',
+	writes_sql=False
+)
 
