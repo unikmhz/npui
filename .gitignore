@@ -52,7 +52,12 @@ docs/_build/
 # PyBuilder
 target/
 
+# Editor backup files
+*.swp
+*~
+
 # Test deployments
 *-local.ini
 debug-shell.py
+/netprofile/data/
 
