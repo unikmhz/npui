@@ -27,6 +27,7 @@ from __future__ import (
 	division
 )
 
+import sys
 import pkg_resources
 import logging
 
@@ -164,6 +165,29 @@ class ModuleManager(object):
 				continue
 			self.modules[ep.name] = ep
 
+	def rescan(self):
+		"""
+		Perform discovery of new modules at runtime. Does not reload modified
+		modules or detect deleted ones.
+		"""
+		new_mods = []
+		cur_env = pkg_resources.Environment(sys.path)
+		dists, errors = pkg_resources.working_set.find_plugins(cur_env)
+		for dist in dists:
+			pname = dist.project_name
+			if pname[:11] != 'netprofile-':
+				continue
+			moddef = pname[11:]
+			if moddef in self.modules:
+				continue
+			new_mods.append(moddef)
+			pkg_resources.working_set.add(dist)
+
+		if len(new_mods) > 0:
+			self.scan()
+
+		return new_mods
+
 	def _get_dist(self, moddef=None):
 		"""
 		Get distribution object for a module.
@@ -181,6 +205,7 @@ class ModuleManager(object):
 		if moddef not in self.modules:
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
+		# TODO: maybe check if the module is installed
 		mstack.append(moddef)
 		modcls = self.modules[moddef].load()
 		if not issubclass(modcls, ModuleBase):
