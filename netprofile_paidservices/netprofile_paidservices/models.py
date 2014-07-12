@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Paid Service module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -60,6 +60,7 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Money,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -144,7 +145,7 @@ class PaidServiceType(Base):
 		}
 	)
 	isum = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('Initial Payment Sum'),
 		nullable=False,
 		default=0,
@@ -155,7 +156,7 @@ class PaidServiceType(Base):
 		}
 	)
 	qsum = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('Quota Sum'),
 		nullable=False,
 		default=0,

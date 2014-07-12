@@ -68,6 +68,7 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Money,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -233,7 +234,7 @@ class ExternalOperation(Base):
 	)
 	difference = Column(
 		'diff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Stash amount changes'),
 		nullable=False,
 		default=0,
@@ -427,7 +428,7 @@ class ExternalOperationProvider(Base):
 	)
 	min_difference = Column(
 		'mindiff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Minimum operation result'),
 		nullable=True,
 		default=None,
@@ -438,7 +439,7 @@ class ExternalOperationProvider(Base):
 	)
 	max_difference = Column(
 		'maxdiff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Maxmum operation result'),
 		nullable=True,
 		default=None,

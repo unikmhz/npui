@@ -63,6 +63,7 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Money,
 	NPBoolean,
 	UInt32,
 	UInt64,
@@ -197,7 +198,7 @@ class Stash(Base):
 		}
 	)
 	amount = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('Stash balance'),
 		nullable=False,
 		default=0,
@@ -208,7 +209,7 @@ class Stash(Base):
 		}
 	)
 	credit = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('Stash credit'),
 		nullable=False,
 		default=0,
@@ -219,7 +220,7 @@ class Stash(Base):
 		}
 	)
 	alltime_max = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('All-time maximum balance'),
 		nullable=False,
 		default=0,
@@ -230,7 +231,7 @@ class Stash(Base):
 		}
 	)
 	alltime_min = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('All-time minimum balance'),
 		nullable=False,
 		default=0,
@@ -517,7 +518,7 @@ class StashIO(Base):
 	)
 	difference = Column(
 		'diff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Operation result'),
 		nullable=False,
 		info={
@@ -668,7 +669,7 @@ class StashOperation(Base):
 	)
 	difference = Column(
 		'diff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Changes made to stash'),
 		nullable=False,
 		default=0,
@@ -818,7 +819,7 @@ class FuturePayment(Base):
 	)
 	difference = Column(
 		'diff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Payment result'),
 		nullable=False,
 		default=0.0,
