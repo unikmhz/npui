@@ -31,13 +31,16 @@ __all__ = [
 	'AccessEntity',
 	'AccessEntityLink',
 	'AccessEntityLinkType',
-	'CheckAuthFunction',
-	'PerUserRateModifier'
+	'PerUserRateModifier',
+
+	'AcctRateModsProcedure',
+	'CheckAuthFunction'
 ]
 
 from sqlalchemy import (
 	Boolean,
 	Column,
+	DateTime,
 	FetchedValue,
 	ForeignKey,
 	Index,
@@ -64,6 +67,7 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Money,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -74,6 +78,8 @@ from netprofile.db.fields import (
 from netprofile.db.ddl import (
 	Comment,
 	CurrentTimestampDefault,
+	InArgument,
+	InOutArgument,
 	SQLFunction,
 	SQLFunctionArgument,
 	Trigger
@@ -414,6 +420,7 @@ class PerUserRateModifier(Base):
 		Index('rates_mods_peruser_i_entityid', 'entityid'),
 		Index('rates_mods_peruser_i_rateid', 'rateid'),
 		Index('rates_mods_peruser_i_l_ord', 'l_ord'),
+		Trigger('before', 'insert', 't_rates_mods_peruser_bi'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -713,5 +720,23 @@ CheckAuthFunction = SQLFunction(
 	returns=Boolean(),
 	comment='Check auth information',
 	writes_sql=False
+)
+
+AcctRateModsProcedure = SQLFunction(
+	'acct_rate_mods',
+	args=(
+		InArgument('ts', DateTime()),
+		InArgument('rateid', UInt32()),
+		InArgument('entityid', UInt32()),
+		InOutArgument('oqsum_in', Money()),
+		InOutArgument('oqsum_eg', Money()),
+		InOutArgument('oqsum_sec', Money()),
+		InOutArgument('pol_in', ASCIIString(255)),
+		InOutArgument('pol_eg', ASCIIString(255))
+	),
+	comment='Apply rate modifiers',
+	writes_sql=False,
+	label='armfunc',
+	is_procedure=True
 )
 

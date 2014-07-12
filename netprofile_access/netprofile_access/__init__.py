@@ -74,7 +74,11 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_sql_functions(cls):
-		return (models.CheckAuthFunction,)
+		from netprofile_access import models
+		return (
+			models.AcctRateModsProcedure,
+			models.CheckAuthFunction
+		)
 
 	def get_css(self, request):
 		return (

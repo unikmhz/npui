@@ -1,7 +1,7 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="netprofile:templates/ddl_trigger.mak"/>\
 <%block name="sql">\
-	DECLARE xdiff DECIMAL(20,8) UNSIGNED DEFAULT 0.00000000;
+	DECLARE xdiff DECIMAL(20,8) DEFAULT 0.00000000;
 	DECLARE xowned ENUM('Y', 'N') DEFAULT 'N';
 	DECLARE curts DATETIME DEFAULT NULL;
 
