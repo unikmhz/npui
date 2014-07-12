@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Rates module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -56,6 +56,19 @@ class Module(ModuleBase):
 			Rate,
 			RateClass,
 			RateModifierType
+		)
+
+	@classmethod
+	def get_sql_functions(cls):
+		return (
+			AcctRateDestProcedure,
+			AcctRateFilterProcedure,
+			AcctRatePercentRemainingFunction,
+			AcctRatePercentSpentFunction,
+			AcctRateQPCountFunction,
+			AcctRateQPLengthFunction,
+			AcctRateQPNewFunction,
+			AcctRateQPSpentFunction
 		)
 
 	def get_css(self, request):
