@@ -196,6 +196,8 @@ class Traffic(types.TypeDecorator):
 	Amount of traffic in bytes.
 	"""
 	impl = types.Numeric(16, 0)
+	MIN_VALUE = 0
+	MAX_VALUE = 9999999999999999
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
