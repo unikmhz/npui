@@ -72,7 +72,8 @@ from netprofile.db.fields import (
 from netprofile.ext.data import ExtModel
 from netprofile.db.ddl import (
 	Comment,
-	CurrentTimestampDefault
+	CurrentTimestampDefault,
+	Trigger
 )
 
 from netprofile.ext.wizards import (
@@ -143,6 +144,8 @@ class Stash(Base):
 	__table_args__ = (
 		Comment('Stashes of money'),
 		Index('stashes_def_i_entityid', 'entityid'),
+		Trigger('before', 'insert', 't_stashes_def_bi'),
+		Trigger('before', 'update', 't_stashes_def_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -411,6 +414,8 @@ class StashIO(Base):
 		Index('stashes_io_i_uid', 'uid'),
 		Index('stashes_io_i_entityid', 'entityid'),
 		Index('stashes_io_i_ts', 'ts'),
+		Trigger('before', 'insert', 't_stashes_io_def_bi'),
+		Trigger('after', 'insert', 't_stashes_io_def_ai'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -748,6 +753,11 @@ class FuturePayment(Base):
 		Index('futures_def_i_cby', 'cby'),
 		Index('futures_def_i_mby', 'mby'),
 		Index('futures_def_i_pby', 'pby'),
+		Trigger('before', 'insert', 't_futures_def_bi'),
+		Trigger('before', 'update', 't_futures_def_bu'),
+		Trigger('after', 'insert', 't_futures_def_ai'),
+		Trigger('after', 'update', 't_futures_def_au'),
+		Trigger('after', 'delete', 't_futures_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
