@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 __all__ = [
+	'AccessBlock',
 	'AccessEntity',
 	'AccessEntityLink',
 	'AccessEntityLinkType',
@@ -116,6 +117,11 @@ class AccessState(DeclEnum):
 	block_rejected = 4,  _('Rejected'),                            50
 	block_inactive = 5,  _('Inactive'),                            60
 	error          = 99, _('Error'),                               70
+
+class AccessBlockState(DeclEnum):
+	planned = 'planned', _('Planned'), 10
+	active  = 'active',  _('Active'),  20
+	expired = 'expired', _('Expired'), 30
 
 class AccessEntity(Entity):
 	"""
@@ -229,13 +235,14 @@ class AccessEntity(Entity):
 	alias_of_id = Column(
 		'aliasid',
 		UInt32(),
-		#ForeignKey('entities_access.entityid', name='entities_access_fk_aliasid', ondelete='CASCADE', onupdate='CASCADE'),
+		ForeignKey('entities_access.entityid', name='entities_access_fk_aliasid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('Aliased access entity ID'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Alias Of')
+			'header_string' : _('Alias Of'),
+			'filter_type'   : 'none'
 		}
 	)
 	next_rate_id = Column(
@@ -390,12 +397,12 @@ class AccessEntity(Entity):
 		foreign_keys=next_rate_id,
 		backref='pending_access_entities'
 	)
-#	alias_of = relationship(
-#		'AccessEntity',
-#		foreign_keys=alias_of_id,
-#		remote_side=[id],
-#		backref='aliases'
-#	)
+	alias_of = relationship(
+		'AccessEntity',
+		foreign_keys=alias_of_id,
+		remote_side=[id],
+		backref='aliases'
+	)
 	ipv4_address = relationship(
 		'IPv4Address',
 		backref='access_entities'
@@ -403,6 +410,12 @@ class AccessEntity(Entity):
 	ipv6_address = relationship(
 		'IPv6Address',
 		backref='access_entities'
+	)
+	blocks = relationship(
+		'AccessBlock',
+		backref=backref('entity', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
 
 	def access_state_string(self, req):
@@ -430,11 +443,11 @@ class PerUserRateModifier(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_RATES', # FIXME
-				'cap_read'      : 'RATES_LIST', # FIXME
-				'cap_create'    : 'RATES_EDIT', # FIXME
-				'cap_edit'      : 'RATES_EDIT', # FIXME
-				'cap_delete'    : 'RATES_EDIT', # FIXME
+				'cap_menu'      : 'BASE_ENTITIES', # FIXME
+				'cap_read'      : 'ENTITIES_LIST', # FIXME
+				'cap_create'    : 'ENTITIES_EDIT', # FIXME
+				'cap_edit'      : 'ENTITIES_EDIT', # FIXME
+				'cap_delete'    : 'ENTITIES_EDIT', # FIXME
 				'menu_name'     : _('Rate Modifiers'),
 				'default_sort'  : ({ 'property': 'l_ord', 'direction': 'ASC' },),
 				'grid_view'     : ('entity', 'rate', 'type', 'enabled', 'l_ord'),
@@ -548,6 +561,110 @@ class PerUserRateModifier(Base):
 			passive_deletes=True
 		)
 	)
+
+class AccessBlock(Base):
+	"""
+	Access block entry object.
+	"""
+	__tablename__ = 'accessblock_def'
+	__table_args__ = (
+		Comment('Access entity blocks'),
+		Index('accessblock_def_i_entityid', 'entityid'),
+		Index('accessblock_def_i_bstate_start', 'bstate', 'startts'),
+		Index('accessblock_def_i_startts', 'startts'),
+		Trigger('before', 'insert', 't_accessblock_def_bi'),
+		Trigger('before', 'update', 't_accessblock_def_bu'),
+		Trigger('after', 'insert', 't_accessblock_def_ai'),
+		Trigger('after', 'update', 't_accessblock_def_au'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_ENTITIES', # FIXME
+				'cap_read'      : 'ENTITIES_LIST', # FIXME
+				'cap_create'    : 'ENTITIES_EDIT', # FIXME
+				'cap_edit'      : 'ENTITIES_EDIT', # FIXME
+				'cap_delete'    : 'ENTITIES_EDIT', # FIXME
+
+				'menu_name'     : _('Access Blocks'),
+				'default_sort'  : ({ 'property': 'startts' ,'direction': 'ASC' },),
+				'grid_view'     : ('entity', 'startts', 'endts', 'bstate'),
+				'form_view'     : ('entity', 'startts', 'endts', 'bstate', 'oldstate'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new access block'))
+			}
+		}
+	)
+	id = Column(
+		'abid',
+		UInt32(),
+		Sequence('accessblock_def_abid_seq'),
+		Comment('Access block ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	entity_id = Column(
+		'entityid',
+		UInt32(),
+		Comment('Access entity ID'),
+		ForeignKey('entities_access.entityid', name='accessblock_def_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
+		nullable=False,
+		info={
+			'header_string' : _('Account'),
+			'column_flex'   : 2,
+			'filter_type'   : 'none'
+		}
+	)
+	start = Column(
+		'startts',
+		TIMESTAMP(),
+		Comment('Start of block'),
+		CurrentTimestampDefault(),
+		nullable=False,
+		info={
+			'header_string' : _('Start'),
+			'column_flex'   : 1
+		}
+	)
+	end = Column(
+		'endts',
+		TIMESTAMP(),
+		Comment('End of block'),
+		nullable=False,
+		info={
+			'header_string' : _('End'),
+			'column_flex'   : 1
+		}
+	)
+	state = Column(
+		'bstate',
+		AccessBlockState.db_type(),
+		Comment('Block state'),
+		nullable=False,
+		default=AccessBlockState.expired,
+		server_default=AccessBlockState.expired,
+		info={
+			'header_string' : _('State')
+		}
+	)
+	old_entity_state = Column(
+		'oldstate',
+		UInt8(),
+		Comment('Old entity state'),
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('Access State')
+		}
+	)
+
+	def __str__(self):
+		# FIXME: use datetime range with formats
+		return '%s:' % str(self.entity)
 
 class AccessEntityLinkType(Base):
 	"""

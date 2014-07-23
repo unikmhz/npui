@@ -66,6 +66,7 @@ class Module(ModuleBase):
 	def get_models(self):
 		from netprofile_access import models
 		return (
+			models.AccessBlock,
 			models.AccessEntity,
 			models.AccessEntityLink,
 			models.AccessEntityLinkType,
