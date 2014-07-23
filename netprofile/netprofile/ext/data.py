@@ -683,6 +683,8 @@ class ExtColumn(object):
 		ed_xtype = self.editor_xtype
 		if ed_xtype is None:
 			return None
+		if ed_xtype == 'combobox' and self.column.nullable:
+			ed_xtype = 'nullablecombobox'
 		if (self.column.primary_key) or \
 				(len(self.column.foreign_keys) > 0): # add check for read-only non-pk fields
 			hret = {
