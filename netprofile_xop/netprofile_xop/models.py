@@ -78,7 +78,8 @@ from netprofile.db.fields import (
 )
 from netprofile.db.ddl import (
 	Comment,
-	CurrentTimestampDefault
+	CurrentTimestampDefault,
+	Trigger
 )
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import SimpleWizard
@@ -125,6 +126,7 @@ class ExternalOperation(Base):
 		Index('xop_def_i_ts', 'ts'),
 		Index('xop_def_i_entityid', 'entityid'),
 		Index('xop_def_i_stashid', 'stashid'),
+		Trigger('before', 'update', 't_xop_def_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
