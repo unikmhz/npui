@@ -800,7 +800,7 @@ class ExtColumn(object):
 			val = self.pixels
 			if val is not None:
 				conf['width'] = val + 125
-				if ('xtype' in conf) and (conf['xtype'] in ('numberfield', 'combobox')):
+				if ('xtype' in conf) and (conf['xtype'] in ('numberfield', 'combobox', 'nullablecombobox')):
 					conf['width'] += 25
 		val = self.editor_config
 		if val:
