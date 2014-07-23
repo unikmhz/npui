@@ -35,7 +35,9 @@ __all__ = [
 
 	'AcctAddProcedure',
 	'AcctAuthzProcedure',
+	'AcctPollProcedure',
 	'AcctRateModsProcedure',
+	'AcctRollbackProcedure',
 	'CheckAuthFunction'
 ]
 
@@ -82,6 +84,7 @@ from netprofile.db.ddl import (
 	CurrentTimestampDefault,
 	InArgument,
 	InOutArgument,
+	OutArgument,
 	SQLFunction,
 	SQLFunctionArgument,
 	Trigger
@@ -749,6 +752,15 @@ AcctAuthzProcedure = SQLFunction(
 	is_procedure=True
 )
 
+AcctPollProcedure = SQLFunction(
+	'acct_poll',
+	args=(
+		InArgument('ts', DateTime()),
+	),
+	comment='Poll accounts for time-based changes',
+	is_procedure=True
+)
+
 AcctRateModsProcedure = SQLFunction(
 	'acct_rate_mods',
 	args=(
@@ -764,6 +776,25 @@ AcctRateModsProcedure = SQLFunction(
 	comment='Apply rate modifiers',
 	writes_sql=False,
 	label='armfunc',
+	is_procedure=True
+)
+
+AcctRollbackProcedure = SQLFunction(
+	'acct_rollback',
+	args=(
+		InArgument('aeid', UInt32()),
+		InArgument('ts', DateTime()),
+		InOutArgument('xstashid', UInt32()),
+		InArgument('xrateid_old', UInt32()),
+		InOutArgument('xrateid_new', UInt32()),
+		InOutArgument('uti', Numeric(16, 0)),
+		InOutArgument('ute', Numeric(16, 0)),
+		InOutArgument('xqpend', DateTime()),
+		InOutArgument('xstate', UInt8()),
+		OutArgument('xdiff', Money())
+	),
+	comment='Rollback current period for an account',
+	label='rbfunc',
 	is_procedure=True
 )
 

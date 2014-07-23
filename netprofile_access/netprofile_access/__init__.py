@@ -78,7 +78,9 @@ class Module(ModuleBase):
 		return (
 			models.AcctAddProcedure,
 			models.AcctAuthzProcedure,
+			models.AcctPollProcedure,
 			models.AcctRateModsProcedure,
+			models.AcctRollbackProcedure,
 			models.CheckAuthFunction
 		)
 
