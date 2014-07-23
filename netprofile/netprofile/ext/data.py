@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: ExtJS schema and data generation
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -87,7 +87,9 @@ from netprofile.db.fields import (
 	IPv4Address,
 	IPv6Address,
 	IPv6Offset,
+	Money,
 	NPBoolean,
+	Traffic,
 	UInt8,
 	UInt16,
 	UInt32,
@@ -125,7 +127,8 @@ _INTEGER_SET = (
 	Int32,
 	Int64,
 	Integer,
-	IPv6Offset,
+	IPv6Offset, #?
+	Traffic, #?
 	UInt8,
 	UInt16,
 	UInt32,
@@ -134,6 +137,7 @@ _INTEGER_SET = (
 
 _DECIMAL_SET = (
 	IPv6Offset,
+	Money,
 	Numeric
 )
 
@@ -177,10 +181,12 @@ _COLUMN_XTYPE_MAP = {
 	IPv4Address  : 'ipaddrcolumn',
 	IPv6Address  : 'ipaddrcolumn',
 	IPv6Offset   : 'numbercolumn',
+	Money        : 'numbercolumn',
 	NPBoolean    : 'checkcolumn',
 	Numeric      : 'numbercolumn',
 	SmallInteger : 'numbercolumn',
 	TIMESTAMP    : 'datecolumn',
+	Traffic      : 'numbercolumn',
 	UInt8        : 'numbercolumn',
 	UInt16       : 'numbercolumn',
 	UInt32       : 'numbercolumn',
@@ -204,11 +210,13 @@ _EDITOR_XTYPE_MAP = {
 	Integer       : 'numberfield',
 	IPv4Address   : 'ipv4field',
 	IPv6Offset    : 'numberfield',
+	Money         : 'numberfield',
 	NPBoolean     : 'checkbox',
 	Numeric       : 'numberfield',
 	SmallInteger  : 'numberfield',
 	Time          : 'timefield',
 	TIMESTAMP     : 'datetimefield',
+	Traffic       : 'numberfield',
 	UInt8         : 'numberfield',
 	UInt16        : 'numberfield',
 	UInt32        : 'numberfield',
@@ -222,7 +230,9 @@ _JS_TYPE_MAP = {
 	Date         : 'date',
 	DateTime     : 'date',
 	Float        : 'float',
+	Money        : 'float', # ?
 	NPBoolean    : 'boolean',
+	Numeric      : 'float', # ?
 	Numeric      : 'float', # ?
 	Int8         : 'int',
 	Int16        : 'int',
@@ -235,6 +245,7 @@ _JS_TYPE_MAP = {
 	PickleType   : 'auto',
 	SmallInteger : 'int',
 	TIMESTAMP    : 'date',
+	Traffic      : 'int',
 	UInt8        : 'int',
 	UInt16       : 'int',
 	UInt32       : 'int',

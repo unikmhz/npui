@@ -55,7 +55,6 @@ from sqlalchemy import (
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -77,9 +76,11 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Int32,
 	Money,
 	NPBoolean,
 	PercentFraction,
+	Traffic,
 	UInt8,
 	UInt16,
 	UInt32,
@@ -930,7 +931,7 @@ class Rate(Base):
 	)
 	quota_ingress_traffic = Column(
 		'qt_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Ingress traffic included in quota (in bytes)'),
 		nullable=False,
 		default=0,
@@ -941,7 +942,7 @@ class Rate(Base):
 	)
 	quota_egress_traffic = Column(
 		'qt_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Egress traffic included in quota (in bytes)'),
 		nullable=False,
 		default=0,
@@ -1559,11 +1560,11 @@ AcctRateFilterProcedure = SQLFunction(
 	'acct_rate_filter',
 	args=(
 		InArgument('fsid', UInt32()),
-		InArgument('r_porttype', UInt32()),
-		InArgument('r_servicetype', UInt32()),
-		InArgument('r_frproto', UInt32()),
-		InArgument('r_tuntype', UInt32()),
-		InArgument('r_tunmedium', UInt32()),
+		InArgument('r_porttype', Int32()),
+		InArgument('r_servicetype', Int32()),
+		InArgument('r_frproto', Int32()),
+		InArgument('r_tuntype', Int32()),
+		InArgument('r_tunmedium', Int32()),
 		OutArgument('filterid', UInt32())
 	),
 	comment='Search filter sets for a match',

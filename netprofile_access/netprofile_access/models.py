@@ -48,7 +48,6 @@ from sqlalchemy import (
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -73,6 +72,7 @@ from netprofile.db.fields import (
 	DeclEnum,
 	Money,
 	NPBoolean,
+	Traffic,
 	UInt8,
 	UInt16,
 	UInt32,
@@ -276,7 +276,7 @@ class AccessEntity(Entity):
 	)
 	used_traffic_ingress = Column(
 		'ut_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used ingress traffic'),
 		nullable=False,
 		default=0,
@@ -287,7 +287,7 @@ class AccessEntity(Entity):
 	)
 	used_traffic_egress = Column(
 		'ut_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used egress traffic'),
 		nullable=False,
 		default=0,
@@ -732,8 +732,8 @@ AcctAddProcedure = SQLFunction(
 	args=(
 		InArgument('aeid', UInt32()),
 		InArgument('username', Unicode(255)),
-		InArgument('tin', Numeric(16, 0)),
-		InArgument('teg', Numeric(16, 0)),
+		InArgument('tin', Traffic()),
+		InArgument('teg', Traffic()),
 		InArgument('ts', DateTime())
 	),
 	comment='Add accounting information',
@@ -787,8 +787,8 @@ AcctRollbackProcedure = SQLFunction(
 		InOutArgument('xstashid', UInt32()),
 		InArgument('xrateid_old', UInt32()),
 		InOutArgument('xrateid_new', UInt32()),
-		InOutArgument('uti', Numeric(16, 0)),
-		InOutArgument('ute', Numeric(16, 0)),
+		InOutArgument('uti', Traffic()),
+		InOutArgument('ute', Traffic()),
 		InOutArgument('xqpend', DateTime()),
 		InOutArgument('xstate', UInt8()),
 		OutArgument('xdiff', Money())

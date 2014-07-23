@@ -44,7 +44,6 @@ from sqlalchemy import (
 	DateTime,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -65,6 +64,7 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	Int32,
+	Traffic,
 	UInt8,
 	UInt32,
 	UInt64
@@ -271,7 +271,7 @@ class AccessSession(Base):
 	)
 	used_ingress_traffic = Column(
 		'ut_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used ingress traffic'),
 		nullable=False,
 		default=0,
@@ -282,7 +282,7 @@ class AccessSession(Base):
 	)
 	used_egress_traffic = Column(
 		'ut_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used egress traffic'),
 		nullable=False,
 		default=0,
@@ -523,7 +523,7 @@ class AccessSessionHistory(Base):
 	)
 	used_ingress_traffic = Column(
 		'ut_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used ingress traffic'),
 		nullable=False,
 		default=0,
@@ -534,7 +534,7 @@ class AccessSessionHistory(Base):
 	)
 	used_egress_traffic = Column(
 		'ut_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used egress traffic'),
 		nullable=False,
 		default=0,
@@ -596,8 +596,8 @@ AcctAddSessionProcedure = SQLFunction(
 		InArgument('sid', Unicode(255)),
 		InArgument('stid', UInt32()),
 		InArgument('username', Unicode(255)),
-		InArgument('tin', Numeric(16, 0)),
-		InArgument('teg', Numeric(16, 0)),
+		InArgument('tin', Traffic()),
+		InArgument('teg', Traffic()),
 		InArgument('ts', DateTime())
 	),
 	comment='Add accounting information for opened session',

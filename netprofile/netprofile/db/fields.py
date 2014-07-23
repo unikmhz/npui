@@ -191,6 +191,21 @@ class Money(types.TypeDecorator):
 	"""
 	impl = types.Numeric(20, 8)
 
+class Traffic(types.TypeDecorator):
+	"""
+	Amount of traffic in bytes.
+	"""
+	impl = types.Numeric(16, 0)
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.DECIMAL(precision=16, scale=0, unsigned=True)
+		return self.impl
+
+	@property
+	def python_type(self):
+		return int
+
 class PercentFraction(types.TypeDecorator):
 	"""
 	Highly accurate percent fraction.

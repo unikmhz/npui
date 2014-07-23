@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -40,7 +40,6 @@ from sqlalchemy import (
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -65,6 +64,7 @@ from netprofile.db.fields import (
 	DeclEnum,
 	Money,
 	NPBoolean,
+	Traffic,
 	UInt32,
 	UInt64,
 	npbool
@@ -685,7 +685,7 @@ class StashOperation(Base):
 	)
 	accounted_ingress = Column(
 		'acct_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Accounted ingress traffic'),
 		nullable=True,
 		default=None,
@@ -696,7 +696,7 @@ class StashOperation(Base):
 	)
 	accounted_egress = Column(
 		'acct_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Accounted egress traffic'),
 		nullable=True,
 		default=None,
