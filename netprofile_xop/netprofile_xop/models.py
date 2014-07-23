@@ -454,7 +454,8 @@ class ExternalOperationProvider(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string': _('Auth Type')
+			'header_string': _('Auth Type'),
+			'editor_xtype' : 'nullablecombobox'
 		}
 	)
 	authentication_options = Column(

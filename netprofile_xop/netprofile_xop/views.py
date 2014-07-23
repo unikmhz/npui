@@ -99,11 +99,11 @@ def xop_request(ctx, request):
 		raise HTTPForbidden('Access Denied')
 
 	try:
-		xoplist = gw.process_request(request)
+		sess = DBSession()
+		xoplist = gw.process_request(request, sess)
 	except Exception as e:
 		# TODO: cancel and log?
 		raise HTTPForbidden('Access Denied')
-	sess = DBSession()
 	for xop in xoplist:
 		ctx.check_operation(xop)
 		sess.add(xop)
