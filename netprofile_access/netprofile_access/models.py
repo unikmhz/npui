@@ -33,6 +33,8 @@ __all__ = [
 	'AccessEntityLinkType',
 	'PerUserRateModifier',
 
+	'AcctAddProcedure',
+	'AcctAuthzProcedure',
 	'AcctRateModsProcedure',
 	'CheckAuthFunction'
 ]
@@ -720,6 +722,31 @@ CheckAuthFunction = SQLFunction(
 	returns=Boolean(),
 	comment='Check auth information',
 	writes_sql=False
+)
+
+AcctAddProcedure = SQLFunction(
+	'acct_add',
+	args=(
+		InArgument('aeid', UInt32()),
+		InArgument('username', Unicode(255)),
+		InArgument('tin', Numeric(16, 0)),
+		InArgument('teg', Numeric(16, 0)),
+		InArgument('ts', DateTime())
+	),
+	comment='Add accounting information',
+	label='aafunc',
+	is_procedure=True
+)
+
+AcctAuthzProcedure = SQLFunction(
+	'acct_authz',
+	args=(
+		InArgument('name', Unicode(255)),
+	),
+	comment='Get authorized account info',
+	writes_sql=False,
+	label='authzfunc',
+	is_procedure=True
 )
 
 AcctRateModsProcedure = SQLFunction(

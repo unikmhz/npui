@@ -76,6 +76,8 @@ class Module(ModuleBase):
 	def get_sql_functions(cls):
 		from netprofile_access import models
 		return (
+			models.AcctAddProcedure,
+			models.AcctAuthzProcedure,
 			models.AcctRateModsProcedure,
 			models.CheckAuthFunction
 		)
