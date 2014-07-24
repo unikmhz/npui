@@ -134,6 +134,24 @@ class XOPHashAuthenticationPolicy(CallbackAuthenticationPolicy):
 			if ctx.hexdigest() == password:
 				return []
 
+@implementer(IAuthenticationPolicy)
+class XOPNoneAuthenticationPolicy(CallbackAuthenticationPolicy):
+	def __init__(self, username):
+		self.username = username
+
+	def unauthenticated_userid(self, request):
+		return self.username
+
+	def remember(self, request, principal, **kw):
+		return []
+
+	def forget(self, request):
+		return []
+
+	def callback(self, username, request):
+		return []
+
+
 def get_user(request):
 	sess = DBSession()
 	userid = unauthenticated_userid(request)
@@ -192,6 +210,8 @@ def includeme(config):
 			opts[uri] = XOPHashAuthenticationPolicy(xopp.authentication_username, xopp.authentication_password, 'md5')
 		elif(xopp.authentication_method == ExternalOperationProviderAuthMethod.sha1):
 			opts[uri] = XOPHashAuthenticationPolicy(xopp.authentication_username, xopp.authentication_password, 'sha1')
+		elif(xopp.authentication_method is None):
+			opts[uri] = XOPNoneAuthenticationPolicy(xopp.short_name)
 			
 	authn_policy = PluginAuthenticationPolicy(
 		SessionAuthenticationPolicy(callback=find_princs),
