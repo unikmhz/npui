@@ -41,7 +41,9 @@ __all__ = [
 	'PhysicalEntity',
 	'LegalEntity',
 	'StructuralEntity',
-	'ExternalEntity'
+	'ExternalEntity',
+
+	'EntitiesBaseView'
 ]
 
 import datetime as dt
@@ -57,7 +59,9 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
+	literal_column,
 	func,
+	select,
 	text,
 	or_
 )
@@ -90,7 +94,8 @@ from netprofile.db.fields import (
 from netprofile.db.ddl import (
 	Comment,
 	CurrentTimestampDefault,
-	Trigger
+	Trigger,
+	View
 )
 from netprofile.db.util import (
 	populate_related,
@@ -2132,4 +2137,22 @@ class EntityHistoryPart(object):
 			'icon' : self.icon,
 			'text' : self.text
 		}
+
+EntitiesBaseView = View(
+	'entities_base',
+	DBSession.query(
+		Entity.id.label('entityid'),
+		literal_column('NULL').label('parentid'),
+		Entity.nick.label('nick'),
+		Entity.state_id.label('esid'),
+		Entity.relative_dn.label('rdn'),
+		Entity.type.label('etype'),
+		Entity.creation_time.label('ctime'),
+		Entity.modification_time.label('mtime'),
+		Entity.created_by_id.label('cby'),
+		Entity.modified_by_id.label('mby'),
+		Entity.description.label('descr')
+	).select_from(Entity.__table__).filter(Entity.parent_id == None),
+	check_option='CASCADED'
+)
 

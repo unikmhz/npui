@@ -61,6 +61,13 @@ class Module(ModuleBase):
 			models.ExternalEntity
 		)
 
+	@classmethod
+	def get_sql_views(cls):
+		from netprofile_entities import models
+		return (
+			models.EntitiesBaseView,
+		)
+
 	def get_local_js(self, request, lang):
 		return (
 			'netprofile_entities:static/webshell/locale/webshell-lang-' + lang + '.js',
