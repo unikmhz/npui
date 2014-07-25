@@ -29,7 +29,6 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -41,18 +40,21 @@ class Module(ModuleBase):
 		mmgr.cfg.add_translation_dirs('netprofile_domains:locale/')
 		mmgr.cfg.scan()
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_domains import models
 		return (
-			Domain,
-			DomainAlias,
-			DomainTXTRecord,
-			DomainServiceType
+			models.Domain,
+			models.DomainAlias,
+			models.DomainTXTRecord,
+			models.DomainServiceType
 		)
 
 	@classmethod
 	def get_sql_functions(cls):
+		from netprofile_domains import models
 		return (
-			DomainGetFullFunction,
+			models.DomainGetFullFunction,
 		)
 
 	def get_css(self, request):

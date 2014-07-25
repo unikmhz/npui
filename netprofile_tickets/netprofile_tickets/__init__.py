@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -50,24 +49,26 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('entities',)
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_tickets import models
 		return (
-			Ticket,
-			TicketChange,
-			TicketChangeBit,
-			TicketChangeField,
-			TicketChangeFlagMod,
-			TicketDependency,
-			TicketFile,
-			TicketFlag,
-			TicketFlagType,
-			TicketOrigin,
-			TicketState,
-			TicketStateTransition,
-			TicketTemplate,
-			TicketScheduler,
-			TicketSchedulerUserAssignment,
-			TicketSchedulerGroupAssignment
+			models.Ticket,
+			models.TicketChange,
+			models.TicketChangeBit,
+			models.TicketChangeField,
+			models.TicketChangeFlagMod,
+			models.TicketDependency,
+			models.TicketFile,
+			models.TicketFlag,
+			models.TicketFlagType,
+			models.TicketOrigin,
+			models.TicketState,
+			models.TicketStateTransition,
+			models.TicketTemplate,
+			models.TicketScheduler,
+			models.TicketSchedulerUserAssignment,
+			models.TicketSchedulerGroupAssignment
 		)
 
 	def get_css(self, request):

@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -44,31 +43,34 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('dialup',)
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_rates import models
 		return (
-			BillingPeriod,
-			Destination,
-			DestinationSet,
-			EntityTypeRateClass,
-			Filter,
-			FilterSet,
-			GlobalRateModifier,
-			Rate,
-			RateClass,
-			RateModifierType
+			models.BillingPeriod,
+			models.Destination,
+			models.DestinationSet,
+			models.EntityTypeRateClass,
+			models.Filter,
+			models.FilterSet,
+			models.GlobalRateModifier,
+			models.Rate,
+			models.RateClass,
+			models.RateModifierType
 		)
 
 	@classmethod
 	def get_sql_functions(cls):
+		from netprofile_rates import models
 		return (
-			AcctRateDestProcedure,
-			AcctRateFilterProcedure,
-			AcctRatePercentRemainingFunction,
-			AcctRatePercentSpentFunction,
-			AcctRateQPCountFunction,
-			AcctRateQPLengthFunction,
-			AcctRateQPNewFunction,
-			AcctRateQPSpentFunction
+			models.AcctRateDestProcedure,
+			models.AcctRateFilterProcedure,
+			models.AcctRatePercentRemainingFunction,
+			models.AcctRatePercentSpentFunction,
+			models.AcctRateQPCountFunction,
+			models.AcctRateQPLengthFunction,
+			models.AcctRateQPNewFunction,
+			models.AcctRateQPSpentFunction
 		)
 
 	def get_css(self, request):

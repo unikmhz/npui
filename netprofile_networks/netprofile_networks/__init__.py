@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Networks module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -44,14 +43,16 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('hosts',)
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_networks import models
 		return (
-			Network,
-			NetworkGroup,
-			NetworkService,
-			NetworkServiceType,
-			RoutingTable,
-			RoutingTableEntry
+			models.Network,
+			models.NetworkGroup,
+			models.NetworkService,
+			models.NetworkServiceType,
+			models.RoutingTable,
+			models.RoutingTableEntry
 		)
 	
 	def get_css(self, request):

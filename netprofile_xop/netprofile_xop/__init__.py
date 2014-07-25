@@ -31,7 +31,6 @@ from netprofile.common.modules import (
 	IModuleManager,
 	ModuleBase
 )
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -54,13 +53,11 @@ class Module(ModuleBase):
 		return ('stashes',)
 
 	@classmethod
-	def prepare(cls):
+	def get_models(cls):
 		from netprofile_xop import models
-
-	def get_models(self):
 		return (
-			ExternalOperation,
-			ExternalOperationProvider
+			models.ExternalOperation,
+			models.ExternalOperationProvider
 		)
 
 	def get_css(self, request):

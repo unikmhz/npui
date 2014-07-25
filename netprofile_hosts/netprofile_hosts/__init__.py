@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -44,18 +43,21 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('entities', 'domains')
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_hosts import models
 		return (
-			Host,
-			HostGroup,
-			Service,
-			ServiceType
+			models.Host,
+			models.HostGroup,
+			models.Service,
+			models.ServiceType
 		)
 
 	@classmethod
 	def get_sql_functions(cls):
+		from netprofile_hosts import models
 		return (
-			HostCreateAliasProcedure,
+			models.HostCreateAliasProcedure,
 		)
 
 	def get_css(self, request):

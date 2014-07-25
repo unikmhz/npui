@@ -29,7 +29,6 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 from netprofile.tpl import TemplateObject
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -46,21 +45,24 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('access',)
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_sessions import models
 		return (
-			AccessSession,
-			AccessSessionHistory
+			models.AccessSession,
+			models.AccessSessionHistory
 		)
 
 	@classmethod
 	def get_sql_functions(cls):
+		from netprofile_sessions import models
 		return (
-			AcctAddSessionProcedure,
-			AcctAllocIPProcedure,
-			AcctAllocIPv6Procedure,
-			AcctAuthzSessionProcedure,
-			AcctCloseSessionProcedure,
-			AcctOpenSessionProcedure
+			models.AcctAddSessionProcedure,
+			models.AcctAllocIPProcedure,
+			models.AcctAllocIPv6Procedure,
+			models.AcctAuthzSessionProcedure,
+			models.AcctCloseSessionProcedure,
+			models.AcctOpenSessionProcedure
 		)
 
 	def get_css(self, request):

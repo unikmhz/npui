@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -44,20 +43,22 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('geo',)
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_entities import models
 		return (
-			Address,
-			Phone,
-			Entity,
-			EntityComment,
-			EntityFile,
-			EntityFlag,
-			EntityFlagType,
-			EntityState,
-			PhysicalEntity,
-			LegalEntity,
-			StructuralEntity,
-			ExternalEntity
+			models.Address,
+			models.Phone,
+			models.Entity,
+			models.EntityComment,
+			models.EntityFile,
+			models.EntityFlag,
+			models.EntityFlagType,
+			models.EntityState,
+			models.PhysicalEntity,
+			models.LegalEntity,
+			models.StructuralEntity,
+			models.ExternalEntity
 		)
 
 	def get_local_js(self, request, lang):

@@ -63,7 +63,8 @@ class Module(ModuleBase):
 	def prepare(cls):
 		from netprofile_access import models
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
 		from netprofile_access import models
 		return (
 			models.AccessBlock,

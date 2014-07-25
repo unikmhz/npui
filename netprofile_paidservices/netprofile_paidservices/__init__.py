@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Paid Services module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -51,7 +50,9 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('access',)
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_paidservices.models import *
 		return (
 		    PaidService,
 		    PaidServiceType

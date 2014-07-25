@@ -29,7 +29,6 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -41,26 +40,29 @@ class Module(ModuleBase):
 		mmgr.cfg.add_translation_dirs('netprofile_geo:locale/')
 		mmgr.cfg.scan()
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_geo import models
 		return (
-			City,
-			District,
-			Street,
-			House,
-			Place,
-			HouseGroup,
-			HouseGroupMapping
+			models.City,
+			models.District,
+			models.Street,
+			models.House,
+			models.Place,
+			models.HouseGroup,
+			models.HouseGroupMapping
 		)
 
 	@classmethod
 	def get_sql_functions(cls):
+		from netprofile_geo import models
 		return (
-			AddrFormatCompactFunction,
-			AddrFormatFunction,
-			AddrGetFullFunction,
-			AddrListDistrictProcedure,
-			AddrListEntrProcedure,
-			AddrListStreetProcedure
+			models.AddrFormatCompactFunction,
+			models.AddrFormatFunction,
+			models.AddrGetFullFunction,
+			models.AddrListDistrictProcedure,
+			models.AddrListEntrProcedure,
+			models.AddrListStreetProcedure
 		)
 
 	def get_local_js(self, request, lang):
