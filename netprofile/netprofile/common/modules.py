@@ -30,6 +30,7 @@ from __future__ import (
 import sys
 import pkg_resources
 import logging
+import transaction
 
 from zope.interface import (
 	implementer,
@@ -39,7 +40,10 @@ from zope.interface import (
 from distutils import version
 from sqlalchemy.orm.exc import NoResultFound
 
-from netprofile.db.connection import DBSession
+from netprofile.db.connection import (
+	Base,
+	DBSession
+)
 from netprofile.ext.data import ExtBrowser
 from netprofile.common.hooks import IHookManager
 
@@ -78,7 +82,8 @@ class ModuleBase(object):
 	def add_routes(self, config):
 		pass
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
 		return ()
 
 	@classmethod
@@ -86,7 +91,15 @@ class ModuleBase(object):
 		return ()
 
 	@classmethod
+	def get_sql_views(cls):
+		return ()
+
+	@classmethod
 	def get_sql_events(cls):
+		return ()
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
 		return ()
 
 	def get_menus(self):
@@ -151,31 +164,28 @@ class ModuleManager(object):
 			sql_funcs = []
 			sql_events = []
 			sql_data = []
+			mod_name = ep.name
+			mod_version = '0.0.0'
 
 			modcls = ep.load()
 			modprep = getattr(modcls, 'prepare', None)
 			if callable(modprep):
 				modprep()
-
-			func = getattr(modcls, 'get_sql_functions', None)
+			func = getattr(modcls, 'version', None)
 			if callable(func):
-				sql_funcs.extend(func())
-			func = getattr(modcls, 'get_sql_events', None)
-			if callable(func):
-				sql_events.extend(func())
+				mod_version = str(func())
 
-			ret[ep.name] = (sql_funcs, sql_events, sql_data)
+			ret[ep.name] = (mod_name, mod_version)
 
 		return ret
 
 	def __init__(self, cfg, vhost=None):
 		self.cfg = cfg
 		self.modules = {}
+		self.installed = None
 		self.loaded = {}
 		self.models = {}
 		self.menus = {}
-		self.sql_functions = {}
-		self.sql_events = {}
 		if vhost is None:
 			sett = cfg.get_settings()
 			self.vhost = sett.get('netprofile.vhost', None)
@@ -187,10 +197,14 @@ class ModuleManager(object):
 		Perform module discovery. Individual modules can't be loaded
 		without this call.
 		"""
+		mods = []
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
 			if ep.name in self.modules:
 				continue
 			self.modules[ep.name] = ep
+			mods.append(ep.name)
+
+		return mods
 
 	def rescan(self):
 		"""
@@ -259,8 +273,6 @@ class ModuleManager(object):
 			self._import_model(moddef, model, mb, hm)
 		for menu in mod.get_menus():
 			self.menus[menu.name] = menu
-		self.sql_functions[moddef] = modcls.get_sql_functions()
-		self.sql_events[moddef] = modcls.get_sql_events()
 		return True
 
 	def load(self, moddef):
@@ -332,13 +344,109 @@ class ModuleManager(object):
 			if mod.name != 'core':
 				self.load(mod.name)
 
+	def is_installed(self, moddef, sess):
+		"""
+		Check if a module is installed.
+		"""
+		if 'core' not in self.loaded:
+			return False
+		if moddef in self.loaded:
+			return True
+
+		if self.installed is None:
+			from netprofile_core.models import NPModule
+			self.installed = set()
+
+			for mod in sess.query(NPModule):
+				self.installed.add(mod.name)
+
+		return moddef in self.installed
+
 	def install(self, moddef, sess):
 		"""
 		Run module's installation hooks and register the module in DB.
 		"""
 		from netprofile_core.models import NPModule
 
-		pass
+		if ('core' not in self.loaded) and (moddef != 'core'):
+			raise RuntimeError('Unable to install anything prior to loading core module.')
+		if self.is_installed(moddef, sess):
+			return
+
+		ep = None
+		if moddef in self.modules:
+			ep = self.modules[moddef]
+		else:
+			match = list(pkg_resources.iter_entry_points('netprofile.modules', moddef))
+			if len(match) == 0:
+				raise ValueError('Can\'t find module: \'%s\'.' % (moddef,))
+			if len(match) > 1:
+				raise ValueError('Can\'t resolve module to single distribution: \'%s\'.' % (moddef,))
+			ep = match[0]
+			if ep.name != moddef:
+				raise ValueError('Loaded module source \'%s\', but was asked to load \'%s\'.' % (
+					ep.name,
+					moddef
+				))
+			self.modules[moddef] = ep
+
+		modcls = ep.load()
+
+		get_deps = getattr(modcls, 'get_deps', None)
+		if callable(get_deps):
+			for dep in get_deps():
+				if not self.is_installed(dep, sess):
+					self.install(dep, sess)
+
+		modprep = getattr(modcls, 'prepare', None)
+		if callable(modprep):
+			modprep()
+		modversion = '0.0.0'
+		modv = getattr(modcls, 'version', None)
+		if callable(modv):
+			modversion = str(modv())
+
+		get_models = getattr(modcls, 'get_models', None)
+		if callable(get_models):
+			tables = [model.__table__ for model in get_models()]
+			Base.metadata.create_all(sess.bind, tables)
+
+		get_sql_functions = getattr(modcls, 'get_sql_functions', None)
+		if callable(get_sql_functions):
+			for func in get_sql_functions():
+				sess.execute(func.create(moddef))
+
+		get_sql_views = getattr(modcls, 'get_sql_views', None)
+		if callable(get_sql_views):
+			for view in get_sql_views():
+				pass # TODO: write this
+
+		get_sql_events = getattr(modcls, 'get_sql_events', None)
+		if callable(get_sql_events):
+			for evt in get_sql_events():
+				sess.execute(evt.create(moddef))
+
+		modobj = NPModule(id=None)
+		modobj.name = moddef
+		modobj.current_version = modversion
+		sess.add(modobj)
+		sess.flush()
+
+		get_sql_data = getattr(modcls, 'get_sql_data', None)
+		if callable(get_sql_data):
+			get_sql_data(modobj, sess)
+
+		mod_install = getattr(modcls, 'install', None)
+		if callable(mod_install):
+			mod_install(sess)
+
+		if self.installed is None:
+			self.installed = set()
+		self.installed.add(moddef)
+		transaction.commit()
+
+		if moddef == 'core':
+			self.load('core')
 
 	def uninstall(self, moddef, sess):
 		"""
@@ -346,7 +454,15 @@ class ModuleManager(object):
 		"""
 		from netprofile_core.models import NPModule
 
-		pass
+		if ('core' not in self.loaded) and (moddef != 'core'):
+			raise RuntimeError('Unable to uninstall anything prior to loading core module.')
+		if not self.is_installed(moddef, sess):
+			return
+
+		mod_uninstall = getattr(modcls, 'uninstall', None)
+		if callable(mod_uninstall):
+			mod_uninstall(sess)
+		# FIXME: write this
 
 	def _import_model(self, moddef, model, mb, hm):
 		mname = model.__name__
