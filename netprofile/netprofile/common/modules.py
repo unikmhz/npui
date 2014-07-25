@@ -100,7 +100,7 @@ class ModuleBase(object):
 
 	@classmethod
 	def get_sql_data(cls, modobj, sess):
-		return ()
+		pass
 
 	def get_menus(self):
 		return ()
@@ -419,7 +419,7 @@ class ModuleManager(object):
 		get_sql_views = getattr(modcls, 'get_sql_views', None)
 		if callable(get_sql_views):
 			for view in get_sql_views():
-				pass # TODO: write this
+				sess.execute(view.create())
 
 		get_sql_events = getattr(modcls, 'get_sql_events', None)
 		if callable(get_sql_events):
