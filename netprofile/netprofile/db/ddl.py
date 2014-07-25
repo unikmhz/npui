@@ -42,6 +42,7 @@ from sqlalchemy.sql.expression import ClauseElement
 from sqlalchemy.sql.functions import FunctionElement
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.orm import Query
 
 from pyramid.renderers import render
 
@@ -289,6 +290,31 @@ def visit_create_function(element, compiler, **kw):
 	)
 	return render(tplname, tpldef, package=sys.modules[module])
 
+class DropFunction(DDLElement):
+	"""
+	SQL DROP FUNCTION DDL object.
+	"""
+	def __init__(self, func):
+		self.func = func
+
+@compiles(DropFunction, 'postgresql')
+def visit_drop_function_pgsql(element, compiler, **kw):
+	func = element.func
+	name = func.name
+	return 'DROP FUNCTION %s' % (
+		compiler.sql_compiler.preparer.quote(name),
+	)
+
+@compiles(DropFunction)
+def visit_drop_function(element, compiler, **kw):
+	func = element.func
+	name = func.name
+	is_proc = func.is_procedure
+	return 'DROP %s %s' % (
+		'PROCEDURE' if is_proc else 'FUNCTION',
+		compiler.sql_compiler.preparer.quote(name)
+	)
+
 class SQLFunction(object):
 	"""
 	Schema element that defines an SQL function or procedure.
@@ -306,13 +332,17 @@ class SQLFunction(object):
 	def create(self, modname):
 		return CreateFunction(self, modname)
 
+	def drop(self):
+		return DropFunction(self)
+
 class CreateView(DDLElement):
 	"""
 	SQL create view DDL object.
 	"""
-	def __init__(self, name, select):
+	def __init__(self, name, select, check_option=None):
 		self.name = name
 		self.select = select
+		self.check = check_option
 
 class DropView(DDLElement):
 	"""
@@ -323,9 +353,25 @@ class DropView(DDLElement):
 
 @compiles(CreateView)
 def visit_create_view(element, compiler, **kw):
-	return 'CREATE VIEW %s AS %s' % (
+	sel = element.select
+	co = ''
+	if callable(sel):
+		sel = sel()
+	if isinstance(sel, Query):
+		ctx = sel._compile_context()
+		ctx.statement.use_labels = True
+		conn = sel.session.connection(mapper=sel._mapper_zero_or_none(), clause=ctx.statement)
+		sel = ctx.statement.compile(conn, compile_kwargs={ 'literal_binds': True })
+	else:
+		sel = compiler.sql_compiler.process(sel, literal_binds=True)
+	if element.check:
+		if isinstance(element.check, str):
+			co = ' WITH %s CHECK OPTION' % (element.check.upper(),)
+		else:
+			co = ' WITH CHECK OPTION'
+	return 'CREATE VIEW %s AS %s%s' % (
 		compiler.sql_compiler.preparer.quote(element.name),
-		compiler.sql_compiler.process(element.select, literal_binds=True)
+		sel, co
 	)
 
 @compiles(DropView)
@@ -338,13 +384,20 @@ class View(SchemaItem):
 	"""
 	Schema element that attaches a view with a predefined query to an object.
 	"""
-	def __init__(self, name, select):
+	def __init__(self, name, select, check_option=None):
 		self.name = name
 		self.select = select
+		self.check = check_option
 
 	def _set_parent(self, parent):
 		if isinstance(parent, Table):
 			self.parent = parent
-			CreateView(parent, self).execute_at('after_create', parent)
-			DropView(parent, self).execute_at('before_drop', parent)
+			CreateView(self.name, self.select, check_option=self.check).execute_at('after_create', parent)
+			DropView(self.name).execute_at('before_drop', parent)
+
+	def create(self):
+		return CreateView(self.name, self.select)
+
+	def drop(self):
+		return DropView(self.name)
 
