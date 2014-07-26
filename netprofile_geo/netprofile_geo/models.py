@@ -42,7 +42,12 @@ __all__ = [
 	'AddrGetFullFunction',
 	'AddrListDistrictProcedure',
 	'AddrListEntrProcedure',
-	'AddrListStreetProcedure'
+	'AddrListStreetProcedure',
+
+	'AddrCompactView',
+	'AddrExtraView',
+	'AddrFullView',
+	'AddrStreetNamesView'
 ]
 
 from sqlalchemy import (
@@ -52,6 +57,8 @@ from sqlalchemy import (
 	Sequence,
 	Unicode,
 	UnicodeText,
+	func,
+	literal_column,
 	text
 )
 
@@ -91,7 +98,8 @@ from netprofile.db.ddl import (
 	Comment,
 	InArgument,
 	SQLFunction,
-	SQLFunctionArgument
+	SQLFunctionArgument,
+	View
 )
 from netprofile.db.util import populate_related_list
 
@@ -175,7 +183,7 @@ class City(Base):
 
 	streets = relationship(
 		'Street',
-		backref=backref('city', innerjoin=True),
+#		backref=backref('city', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
@@ -363,6 +371,10 @@ class Street(Base):
 		}
 	)
 
+	city = relationship(
+		'City',
+		innerjoin=True
+	)
 	houses = relationship(
 		'House',
 		backref=backref('street', innerjoin=True),
@@ -913,4 +925,49 @@ AddrListStreetProcedure = SQLFunction(
 	writes_sql=False,
 	is_procedure=True
 )
+
+AddrCompactView = View('addr_compact', DBSession.query(
+	House.id.label('houseid'),
+	House.street_id.label('streetid'),
+	Street.district_id.label('districtid'),
+	City.id.label('cityid'),
+	City.name.label('city'),
+	func.addr_format_compact(Street.name, House.number, House.second_number, House.number_suffix, House.building, None).label('address'),
+	House.entrances.label('entrnum'),
+	House.postal_code.label('postindex')
+).select_from(House).join(Street).join(Street.city).order_by(City.name, Street.name, House.number, House.second_number, House.number_suffix, House.building))
+
+AddrExtraView = View('addr_extra', DBSession.query(
+	House.id.label('houseid'),
+	House.street_id.label('streetid'),
+	Street.district_id.label('districtid'),
+	City.id.label('cityid'),
+	func.concat_ws(' ',
+		func.concat(City.name, ','),
+		func.concat(District.name, ','),
+		func.addr_format(Street.name, Street.prefix, Street.suffix, House.number, House.second_number, House.number_suffix, House.building, None)
+	).label('address'),
+	House.entrances.label('entrnum'),
+	House.postal_code.label('postindex')
+).select_from(House).join(Street).outerjoin(District).join(Street.city).order_by(City.name, District.name, Street.name, House.number, House.second_number, House.number_suffix, House.building))
+
+AddrFullView = View('addr_full', DBSession.query(
+	House.id.label('houseid'),
+	House.street_id.label('streetid'),
+	Street.district_id.label('districtid'),
+	City.id.label('cityid'),
+	City.name.label('city'),
+	func.addr_format(Street.name, Street.prefix, Street.suffix, House.number, House.second_number, House.number_suffix, House.building, None).label('address'),
+	House.entrances.label('entrnum'),
+	House.postal_code.label('postindex')
+).select_from(House).join(Street).join(Street.city).order_by(City.name, Street.name, House.number, House.second_number, House.number_suffix, House.building))
+
+AddrStreetNamesView = View('addr_streetnames', DBSession.query(
+	Street.id.label('streetid'),
+	District.id.label('districtid'),
+	City.id.label('cityid'),
+	City.name.label('city'),
+	District.name.label('district'),
+	func.addr_format(Street.name, Street.prefix, Street.suffix, None, None, None, None, None).label('fullname')
+).select_from(Street).outerjoin(District).join(Street.city).order_by(City.name, District.name, Street.name))
 

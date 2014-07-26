@@ -65,6 +65,16 @@ class Module(ModuleBase):
 			models.AddrListStreetProcedure
 		)
 
+	@classmethod
+	def get_sql_views(cls):
+		from netprofile_geo import models
+		return (
+			models.AddrCompactView,
+			models.AddrExtraView,
+			models.AddrFullView,
+			models.AddrStreetNamesView
+		)
+
 	def get_local_js(self, request, lang):
 		return (
 			'netprofile_geo:static/webshell/locale/webshell-lang-' + lang + '.js',
