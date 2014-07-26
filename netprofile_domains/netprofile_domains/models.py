@@ -34,7 +34,12 @@ __all__ = [
 	'DomainTXTRecord',
 	'DomainServiceType',
 
-	'DomainGetFullFunction'
+	'DomainGetFullFunction',
+
+	'DomainsBaseView',
+	'DomainsEnabledView',
+	'DomainsPublicView',
+	'DomainsSignedView'
 ]
 
 from sqlalchemy import (
@@ -45,6 +50,7 @@ from sqlalchemy import (
 	Sequence,
 	Unicode,
 	UnicodeText,
+	literal_column,
 	text,
 	Text
 )
@@ -56,7 +62,10 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from netprofile.db.connection import Base
+from netprofile.db.connection import (
+	Base,
+	DBSession
+)
 from netprofile.db.fields import (
 	ASCIIString,
 	ASCIIText,
@@ -72,7 +81,8 @@ from netprofile.db.ddl import (
 	Comment,
 	SQLFunction,
 	SQLFunctionArgument,
-	Trigger
+	Trigger,
+	View
 )
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
@@ -600,5 +610,93 @@ DomainGetFullFunction = SQLFunction(
 	returns=Unicode(255),
 	comment='Get fully qualified name of a domain',
 	writes_sql=False
+)
+
+DomainsBaseView = View(
+	'domains_base',
+	DBSession.query(
+		Domain.id.label('domainid'),
+		literal_column('NULL').label('parentid'),
+		Domain.name.label('name'),
+		Domain.enabled.label('enabled'),
+		Domain.public.label('public'),
+		Domain.signed.label('signed'),
+		Domain.soa_refresh.label('soa_refresh'),
+		Domain.soa_retry.label('soa_retry'),
+		Domain.soa_expire.label('soa_expire'),
+		Domain.soa_minimum.label('soa_minimum'),
+		Domain.serial_date.label('serial_date'),
+		Domain.serial_revision.label('serial_rev'),
+		Domain.dkim_name.label('dkim_name'),
+		Domain.dkim_data.label('dkim_data'),
+		Domain.description.label('descr')
+	).select_from(Domain).filter(Domain.parent_id == None),
+	check_option='CASCADED'
+)
+
+DomainsEnabledView = View(
+	'domains_enabled',
+	DBSession.query(
+		Domain.id.label('domainid'),
+		Domain.parent_id.label('parentid'),
+		Domain.name.label('name'),
+		Domain.enabled.label('enabled'),
+		Domain.public.label('public'),
+		Domain.signed.label('signed'),
+		Domain.soa_refresh.label('soa_refresh'),
+		Domain.soa_retry.label('soa_retry'),
+		Domain.soa_expire.label('soa_expire'),
+		Domain.soa_minimum.label('soa_minimum'),
+		Domain.serial_date.label('serial_date'),
+		Domain.serial_revision.label('serial_rev'),
+		Domain.dkim_name.label('dkim_name'),
+		Domain.dkim_data.label('dkim_data'),
+		Domain.description.label('descr')
+	).select_from(Domain).filter(Domain.enabled == True),
+	check_option='CASCADED'
+)
+
+DomainsPublicView = View(
+	'domains_public',
+	DBSession.query(
+		Domain.id.label('domainid'),
+		Domain.parent_id.label('parentid'),
+		Domain.name.label('name'),
+		Domain.enabled.label('enabled'),
+		Domain.public.label('public'),
+		Domain.signed.label('signed'),
+		Domain.soa_refresh.label('soa_refresh'),
+		Domain.soa_retry.label('soa_retry'),
+		Domain.soa_expire.label('soa_expire'),
+		Domain.soa_minimum.label('soa_minimum'),
+		Domain.serial_date.label('serial_date'),
+		Domain.serial_revision.label('serial_rev'),
+		Domain.dkim_name.label('dkim_name'),
+		Domain.dkim_data.label('dkim_data'),
+		Domain.description.label('descr')
+	).select_from(Domain).filter(Domain.public == True),
+	check_option='CASCADED'
+)
+
+DomainsSignedView = View(
+	'domains_signed',
+	DBSession.query(
+		Domain.id.label('domainid'),
+		Domain.parent_id.label('parentid'),
+		Domain.name.label('name'),
+		Domain.enabled.label('enabled'),
+		Domain.public.label('public'),
+		Domain.signed.label('signed'),
+		Domain.soa_refresh.label('soa_refresh'),
+		Domain.soa_retry.label('soa_retry'),
+		Domain.soa_expire.label('soa_expire'),
+		Domain.soa_minimum.label('soa_minimum'),
+		Domain.serial_date.label('serial_date'),
+		Domain.serial_revision.label('serial_rev'),
+		Domain.dkim_name.label('dkim_name'),
+		Domain.dkim_data.label('dkim_data'),
+		Domain.description.label('descr')
+	).select_from(Domain).filter(Domain.signed == True),
+	check_option='CASCADED'
 )
 

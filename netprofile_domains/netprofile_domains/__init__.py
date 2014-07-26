@@ -57,6 +57,16 @@ class Module(ModuleBase):
 			models.DomainGetFullFunction,
 		)
 
+	@classmethod
+	def get_sql_views(cls):
+		from netprofile_domains import models
+		return (
+			models.DomainsBaseView,
+			models.DomainsEnabledView,
+			models.DomainsPublicView,
+			models.DomainsSignedView
+		)
+
 	def get_css(self, request):
 		return (
 			'netprofile_domains:static/css/main.css',
