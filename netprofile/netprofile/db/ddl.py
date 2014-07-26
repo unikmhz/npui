@@ -396,7 +396,7 @@ class View(SchemaItem):
 			DropView(self.name).execute_at('before_drop', parent)
 
 	def create(self):
-		return CreateView(self.name, self.select)
+		return CreateView(self.name, self.select, check_option=self.check)
 
 	def drop(self):
 		return DropView(self.name)
