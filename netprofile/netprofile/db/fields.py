@@ -300,6 +300,15 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
 				other = type_coerce(other, NPBoolean)
 			return types.Boolean.Comparator.__ne__(self, other)
 
+	def process_literal_param(self, value, dialect):
+		if isinstance(value, bool):
+			if _is_mysql(dialect):
+				if value:
+					return 'Y'
+				return 'N'
+			# FIXME: add SQLite check
+		return value
+
 class npbool(expression.FunctionElement):
 	"""
 	Constant NPBoolean element.
