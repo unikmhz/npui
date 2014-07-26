@@ -33,7 +33,10 @@ __all__ = [
 	'Service',
 	'ServiceType',
 
-	'HostCreateAliasProcedure'
+	'HostCreateAliasProcedure',
+
+	'HostsAliasesView',
+	'HostsRealView'
 ]
 
 from sqlalchemy import (
@@ -46,6 +49,7 @@ from sqlalchemy import (
 	Unicode,
 	UnicodeText,
 	func,
+	literal_column,
 	text
 )
 
@@ -56,7 +60,10 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from netprofile.db.connection import Base
+from netprofile.db.connection import (
+	Base,
+	DBSession
+)
 from netprofile.db.fields import (
 	ASCIIString,
 	ASCIIText,
@@ -73,7 +80,8 @@ from netprofile.db.ddl import (
 	CurrentTimestampDefault,
 	InArgument,
 	SQLFunction,
-	Trigger
+	Trigger,
+	View
 )
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
@@ -91,6 +99,13 @@ from pyramid.i18n import (
 from netprofile_domains.models import ObjectVisibility
 
 _ = TranslationStringFactory('netprofile_hosts')
+
+class HostAliasType(DeclEnum):
+	"""
+	Type of host alias enumeration.
+	"""
+	symbolic = 'SYM', _('Symbolic'), 10
+	numeric  = 'NUM', _('Numeric'),  20
 
 class Host(Base):
 	"""
@@ -137,7 +152,7 @@ class Host(Base):
 				'form_view'     : (
 					'name', 'domain',
 					'group', 'entity',
-					'original', 'descr',
+					'original', 'aliastype', 'descr',
 					'ctime', 'cby',
 					'mtime', 'mby'
 				),
@@ -146,7 +161,7 @@ class Host(Base):
 				'create_wizard' : 
 					Wizard(
 						Step('name', 'domain', 'entity', title=_('New host data')),
-						Step('group', 'original', 'descr', title=_('New host details')),
+						Step('group', 'original', 'aliastype', 'descr', title=_('New host details')),
 						title=_('Add new host')
 					)
 			}
@@ -217,6 +232,17 @@ class Host(Base):
 		info={
 			'header_string' : _('Aliased'),
 			'filter_type'   : 'list'
+		}
+	)
+	alias_type = Column(
+		'aliastype',
+		HostAliasType.db_type(),
+		Comment('Host alias type'),
+		nullable=False,
+		default=HostAliasType.symbolic,
+		server_default=HostAliasType.symbolic,
+		info={
+			'header_string' : _('Alias Type')
 		}
 	)
 	creation_time = Column(
@@ -703,5 +729,43 @@ HostCreateAliasProcedure = SQLFunction(
 	),
 	comment='Make a host alias (CNAME in DNS-speak)',
 	is_procedure=True
+)
+
+HostsAliasesView = View(
+	'hosts_aliases',
+	DBSession.query(
+		Host.id.label('hostid'),
+		Host.group_id.label('hgid'),
+		Host.entity_id.label('entityid'),
+		Host.domain_id.label('domainid'),
+		Host.name.label('name'),
+		Host.original_id.label('aliasid'),
+		Host.alias_type.label('aliastype'),
+		Host.creation_time.label('ctime'),
+		Host.modification_time.label('mtime'),
+		Host.created_by_id.label('cby'),
+		Host.modified_by_id.label('mby'),
+		Host.description.label('descr')
+	).select_from(Host).filter(Host.original_id != None),
+	check_option='CASCADED'
+)
+
+HostsRealView = View(
+	'hosts_real',
+	DBSession.query(
+		Host.id.label('hostid'),
+		Host.group_id.label('hgid'),
+		Host.entity_id.label('entityid'),
+		Host.domain_id.label('domainid'),
+		Host.name.label('name'),
+		literal_column('NULL').label('aliasid'),
+		Host.alias_type.label('aliastype'),
+		Host.creation_time.label('ctime'),
+		Host.modification_time.label('mtime'),
+		Host.created_by_id.label('cby'),
+		Host.modified_by_id.label('mby'),
+		Host.description.label('descr')
+	).select_from(Host).filter(Host.original_id == None),
+	check_option='CASCADED'
 )
 

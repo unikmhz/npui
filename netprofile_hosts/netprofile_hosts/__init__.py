@@ -60,6 +60,14 @@ class Module(ModuleBase):
 			models.HostCreateAliasProcedure,
 		)
 
+	@classmethod
+	def get_sql_views(cls):
+		from netprofile_hosts import models
+		return (
+			models.HostsAliasesView,
+			models.HostsRealView
+		)
+
 	def get_css(self, request):
 		return (
 			'netprofile_hosts:static/css/main.css',
