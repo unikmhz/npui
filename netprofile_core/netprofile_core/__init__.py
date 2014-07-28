@@ -101,11 +101,11 @@ class Module(ModuleBase):
 			LogData,
 			NPSession,
 			PasswordHistory,
-			GlobalSettingSection,
-			UserSettingSection,
 			GlobalSetting,
-			UserSettingType,
+			GlobalSettingSection,
 			UserSetting,
+			UserSettingSection,
+			UserSettingType,
 			DataCache,
 			Calendar,
 			CalendarImport,
@@ -311,6 +311,20 @@ class Module(ModuleBase):
 			cap.privilege = priv
 			sess.add(cap)
 
+		gss_admin = GlobalSettingSection( # no old id
+			module=modobj,
+			name='Administrative',
+			description='Administrative settings.'
+		)
+		gss_vfs = GlobalSettingSection( # old id 8
+			module=modobj,
+			name='File System',
+			description='Virtual File System setup.'
+		)
+
+		sess.add(gss_admin)
+		sess.add(gss_vfs)
+
 		uss_looknfeel = UserSettingSection( # old id 1
 			module=modobj,
 			name='Look and Feel',
@@ -367,12 +381,74 @@ class Module(ModuleBase):
 			title='CSV charset',
 			type='text',
 			default='UTF-8',
-			description='Character set used when generating CSV files. Be warned that specifying non-unicode character set here can corrupt the data in the CSV.'
+			description='Character set and encoding used when generating CSV files. Be warned that specifying non-unicode character set here can corrupt the data in the CSV.'
 		)
 
 		sess.add(ust_datagrid_perpage)
 		sess.add(ust_datagrid_showrange)
 		sess.add(ust_csv_charset)
+
+		gs_login_allowed = GlobalSetting(
+			section=gss_admin,
+			module=modobj,
+			name='login_allowed',
+			title='Allow logging in',
+			type='checkbox',
+			value='true',
+			default='true',
+			description='Allow logging in to the user interface for non-admin users.'
+		)
+		gs_vfs_root_uid = GlobalSetting(
+			section=gss_vfs,
+			module=modobj,
+			name='vfs_root_uid',
+			title='Root User ID',
+			type='text',
+			value='0',
+			default='0',
+			constraints={
+				'cast'   : 'int',
+				'nullok' : False,
+				'minval' : 0
+			},
+			description='User ID of the owner of the root folder.'
+		)
+		gs_vfs_root_gid = GlobalSetting(
+			section=gss_vfs,
+			module=modobj,
+			name='vfs_root_gid',
+			title='Root Group ID',
+			type='text',
+			value='0',
+			default='0',
+			constraints={
+				'cast'   : 'int',
+				'nullok' : False,
+				'minval' : 0
+			},
+			description='Group ID of the owning group of the root folder.'
+		)
+		gs_vfs_root_rights = GlobalSetting(
+			section=gss_vfs,
+			module=modobj,
+			name='vfs_root_rights',
+			title='Root Rights',
+			type='text',
+			value='509',
+			default='509',
+			constraints={
+				'cast'   : 'int',
+				'nullok' : False,
+				'minval' : 0,
+				'maxval' : 1023
+			},
+			description='Bitmask specifying access rights for the root folder.'
+		)
+
+		sess.add(gs_login_allowed)
+		sess.add(gs_vfs_root_uid)
+		sess.add(gs_vfs_root_gid)
+		sess.add(gs_vfs_root_rights)
 
 		admin = User(
 			group=grp_admins,
