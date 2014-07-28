@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Paid Services module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -36,15 +36,8 @@ _ = TranslationStringFactory('netprofile_paidservices')
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
-		mmgr.cfg.add_route(
-			'paidservices.cl.accounts',
-			'/paidservices/*traverse',
-			factory='netprofile_paidservices.views.ClientRootFactory',
-			vhost='client'
-		)
 		mmgr.cfg.add_translation_dirs('netprofile_paidservices:locale/')
 		mmgr.cfg.scan()
-		
 
 	@classmethod
 	def get_deps(cls):
@@ -52,10 +45,10 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_models(cls):
-		from netprofile_paidservices.models import *
+		from netprofile_paidservices import models
 		return (
-		    PaidService,
-		    PaidServiceType
+		    models.PaidService,
+		    models.PaidServiceType
 		)
 
 	def get_css(self, request):

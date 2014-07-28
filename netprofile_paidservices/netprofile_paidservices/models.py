@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Paid Service module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -69,7 +69,10 @@ from netprofile.db.fields import (
 	npbool
 )
 from netprofile.ext.data import ExtModel
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	SQLFunction
+)
 
 from netprofile.ext.wizards import (
 	SimpleWizard,
@@ -99,7 +102,7 @@ class PaidServiceType(Base):
 	"""
 	__tablename__ = 'paid_types'
 	__table_args__ = (
-		Comment('Paid services types'),
+		Comment('Paid service types'),
 		Index('paid_types_i_qp_type', 'qp_type'),
 		Index('paid_types_u_name', 'name', unique=True),
 		{
@@ -116,8 +119,13 @@ class PaidServiceType(Base):
 				'show_in_menu'  : 'modules',
 				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ( 'name', 'isum', 'qsum', 'qp_unit', 'qp_amount', 'qp_type'),
-#				'form_view'     : ('entity', 'name', 'amount', 'credit', 'alltime_min', 'alltime_max'),
+				'grid_view'     : ( 'name', 'isum', 'qsum', 'qp_amount', 'qp_unit', 'qp_type'),
+				'form_view'     : (
+					'name', 'isum', 'qsum',
+					'qp_amount', 'qp_unit', 'qp_type', 'qp_order', 'sp_amount',
+					'cb_before', 'cb_success', 'cb_failure', 'cb_ratemod',
+					'descr'
+				),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new type'))
@@ -127,7 +135,7 @@ class PaidServiceType(Base):
 	id = Column(
 		'paidid',
 		UInt32(),
-		Sequence('paid_types_seq'),
+		Sequence('paid_types_paidid_seq'),
 		Comment('Paid service ID'),
 		primary_key=True,
 		nullable=False,
@@ -144,30 +152,32 @@ class PaidServiceType(Base):
 			'column_flex'   : 3
 		}
 	)
-	isum = Column(
+	initial_sum = Column(
+		'isum',
 		Money(),
-		Comment('Initial Payment Sum'),
+		Comment('Initial payment sum'),
 		nullable=False,
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : _('Initial sum'),
+			'header_string' : _('Initial Payment'),
 			'column_flex'   : 1
 		}
 	)
-	qsum = Column(
+	quota_sum = Column(
+		'qsum',
 		Money(),
-		Comment('Quota Sum'),
+		Comment('Quota sum'),
 		nullable=False,
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : _('Quota sum'),
+			'header_string' : _('Quota Payment'),
 			'column_flex'   : 1
 		}
 	)
-
-	qp_type = Column(
+	quota_period_type = Column(
+		'qp_type',
 		PaidServiceQPType.db_type(),
 		Comment('Quota period type'),
 		nullable=False,
@@ -177,43 +187,39 @@ class PaidServiceType(Base):
 			'header_string' : _('Type')
 		}
 	)
-
-	qp_order = Column(
+	pay_order = Column(
 		'qp_order',
 		UInt8(),
-		Comment('Pay Order for Linked Services'),
+		Comment('Pay order for linked services'),
 		nullable=False,
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : _('Order')
+			'header_string' : _('Pay Order')
 		}
 	)
-
-	sp_amount = Column(
+	skipped_periods = Column(
 		'sp_amount',
 		UInt16(),
-		Comment('Skipped Periods Amount'),
+		Comment('Number of skipped periods'),
 		nullable=False,
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : _('Skipped period amount')
+			'header_string' : _('Skipped Periods')
 		}
 	)
-
-	qp_amount = Column(
+	quota_period_amount = Column(
 		'qp_amount',
 		UInt16(),
-		Comment('Quota Period Amount'),
+		Comment('Quota period amount'),
 		nullable=False,
 		default=1,
 		server_default=text('1'),
 		info={
-			'header_string' : _('Quota period amount')
+			'header_string' : _('Quota Period Amount')
 		}
 	)
-
 	quota_period_unit = Column(
 		'qp_unit',
 		QuotaPeriodUnit.db_type(),
@@ -225,11 +231,9 @@ class PaidServiceType(Base):
 			'header_string' : _('Quota Period Unit')
 		}
 	)
-
 	cb_before = Column(
-		'cb_before',
 		ASCIIString(255),
-		Comment('Callback Before Charging'),
+		Comment('Callback before charging'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -237,11 +241,9 @@ class PaidServiceType(Base):
 			'header_string' : _('Callback Before Charging')
 		}
 	)
-
 	cb_success= Column(
-		'cb_success',
 		ASCIIString(255),
-		Comment('Callback on Success'),
+		Comment('Callback on success'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -249,11 +251,9 @@ class PaidServiceType(Base):
 			'header_string' : _('Callback on Success')
 		}
 	)
-
 	cb_failure = Column(
-		'cb_failure',
 		ASCIIString(255),
-		Comment('Callback on Failure'),
+		Comment('Callback on failure'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -261,11 +261,9 @@ class PaidServiceType(Base):
 			'header_string' : _('Callback on Failure')
 		}
 	)
-
 	cb_ratemod = Column(
-		'cb_ratemod',
 		ASCIIString(255),
-		Comment('Callback on Linked Rate'),
+		Comment('Callback on linked rate'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -273,11 +271,10 @@ class PaidServiceType(Base):
 			'header_string' : _('Callback on Linked Rate')
 		}
 	)
-
 	description = Column(
 		'descr',
 		UnicodeText(),
-		Comment('Description'),
+		Comment('Paid service description'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -288,23 +285,23 @@ class PaidServiceType(Base):
 
 	def __str__(self):
 		return '%s' % (
-			str(self.name)
+			str(self.name),
 		)
 
 class PaidService(Base):
 	"""
-	Paid Service Mapping.
+	Paid service mapping object.
 	"""
 	__tablename__ = 'paid_def'
 	__table_args__ = (
-		Comment('Paid services types'),
-		Index('paid_def_entityid', 'entityid'),
-		Index('paid_def_aeid', 'aeid'),
-		Index('paid_def_hostid', 'hostid'),
-		Index('paid_def_stashid', 'stashid'),
-		Index('paid_def_paidid', 'paidid'),
-		Index('paid_def_active', 'active'),
-		Index('paid_def_qpend', 'qpend'),
+		Comment('Paid service mappings'),
+		Index('paid_def_i_entityid', 'entityid'),
+		Index('paid_def_i_aeid', 'aeid'),
+		Index('paid_def_i_hostid', 'hostid'),
+		Index('paid_def_i_stashid', 'stashid'),
+		Index('paid_def_i_paidid', 'paidid'),
+		Index('paid_def_i_active', 'active'),
+		Index('paid_def_i_qpend', 'qpend'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -315,25 +312,24 @@ class PaidService(Base):
 				'cap_edit'      : 'PAIDSERVICE_EDIT',
 				'cap_delete'    : 'PAIDSERVICE_DELETE',
 				'default_sort'  : ({ 'property': 'qpend', 'direction': 'DESC' },),
-				'grid_view'     : ( 'type', 'active', 'qpend'),
-#				'form_view'     : ('entity', 'name', 'amount', 'credit', 'alltime_min', 'alltime_max'),
-#				'easy_search'   : ('name', 'descr'),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'grid_view'     : ('entity', 'stash', 'type', 'active', 'qpend'),
+				'form_view'     : (
+				),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
 	id = Column(
 		'epid',
 		UInt32(),
-		Sequence('paid_def_seq'),
-		Comment('Paid Service Mapping ID'),
+		Sequence('paid_def_epid_seq'),
+		Comment('Paid service mapping ID'),
 		primary_key=True,
 		nullable=False,
 		info={
 			'header_string' : _('ID')
 		}
 	)
-
 	entity_id = Column(
 		'entityid',
 		UInt32(),
@@ -346,22 +342,20 @@ class PaidService(Base):
 			'column_flex'   : 2
 		}
 	)
-
-	accessentity_id = Column(
+	access_entity_id = Column(
 		'aeid',
 		UInt32(),
-		Comment('Access Entity ID'),
+		Comment('Access entity ID'),
 		ForeignKey('entities_access.entityid', name='paid_def_fk_aeid', onupdate='CASCADE', ondelete='CASCADE'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Access entity'),
+			'header_string' : _('Access Entity'),
 			'filter_type'   : 'none',
 			'column_flex'   : 2
 		}
 	)
-
 	host_id = Column(
 		'hostid',
 		UInt32(),
@@ -371,12 +365,11 @@ class PaidService(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('host'),
+			'header_string' : _('Host'),
 			'filter_type'   : 'none',
 			'column_flex'   : 2
 		}
 	)
-
 	stash_id = Column(
 		'stashid',
 		UInt32(),
@@ -388,7 +381,6 @@ class PaidService(Base):
 			'column_flex'   : 3
 		}
 	)
-
 	paid_id = Column(
 		'paidid',
 		UInt32(),
@@ -400,11 +392,9 @@ class PaidService(Base):
 			'column_flex'   : 3
 		}
 	)
-
 	active = Column(
-		'active',
 		NPBoolean(),
-		Comment('Use advanced billing features'),
+		Comment('FIXME'),
 		nullable=False,
 		default=True,
 		server_default=npbool(True),
@@ -412,7 +402,6 @@ class PaidService(Base):
 			'header_string' : _('Active')
 		}
 	)
-
 	quota_period_end = Column(
 		'qpend',
 		TIMESTAMP(),
@@ -424,7 +413,6 @@ class PaidService(Base):
 			'header_string' : _('Ends')
 		}
 	)
-
 	description = Column(
 		'descr',
 		UnicodeText(),
@@ -441,24 +429,21 @@ class PaidService(Base):
 		'PaidServiceType',
 		innerjoin=True,
 		lazy='joined',
-		backref=backref(
-			'paid_services',
-			cascade='all, delete-orphan',
-			passive_deletes=True
-		)
+		backref='paid_services'
 	)
 	entity = relationship(
 		'Entity',
 		foreign_keys=entity_id,
+		innerjoin=True,
 		backref=backref(
 			'paid_services',
 			cascade='all, delete-orphan',
 			passive_deletes=True
 		)
 	)
-	accessentity = relationship(
+	access_entity = relationship(
 		'AccessEntity',
-		foreign_keys=accessentity_id,
+		foreign_keys=access_entity_id,
 		backref=backref(
 			'paid_services_access',
 			cascade='all, delete-orphan',

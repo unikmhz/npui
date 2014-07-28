@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Paid Service module - Views
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -88,31 +88,4 @@ def _dpane_stash_futures(tabs, model, req):
 		'extraParamProp'    : 'stashid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
-
-class ClientRootFactory(RootFactory):
-	def __getitem__(self, name):
-		raise KeyError('Invalid URL')
-
-@view_config(
-	route_name='paidservices.cl.accounts',
-	name='',
-	context=ClientRootFactory,
-	permission='USAGE',
-	renderer='netprofile_paidservices:templates/client_paidservices.mak'
-)
-@view_config(
-	route_name='paidservices.cl.accounts',
-	name='',
-	context=PaidService,
-	permission='USAGE',
-	renderer='netprofile_paidservices:templates/client_paidservices.mak'
-)
-def client_list(ctx, request):
-	loc = get_localizer(request)
-	tpldef = {
-	}
-	request.run_hook('access.cl.tpldef', tpldef, request)
-	request.run_hook('access.cl.tpldef.accounts.list', tpldef, request)
-	return tpldef
-
 
