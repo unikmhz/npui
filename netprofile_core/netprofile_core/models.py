@@ -427,7 +427,7 @@ class User(Base):
 				'easy_search'  : ('login', 'name_family'),
 				'create_wizard' : 
 					Wizard(
-						Step('login', 'pass', 'group', 'email', title=_('New user login')),
+						Step('login', 'pass', 'group', 'email', title=_('New user')),
 						Step('name_family', 'name_given', 'name_middle', 'ipaddr', 'enabled','state',title=_('New user details')),
 						title=_('Add new user')
 					),
