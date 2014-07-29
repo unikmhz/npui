@@ -51,6 +51,15 @@ class Module(ModuleBase):
 		    models.PaidServiceType
 		)
 
+	@classmethod
+	def get_sql_functions(cls):
+		from netprofile_paidservices import models
+		return (
+			models.PSCallbackProcedure,
+			models.PSExecuteProcedure,
+			models.PSPollProcedure
+		)
+
 	def get_css(self, request):
 		return (
 			'netprofile_paidservices:static/css/main.css',

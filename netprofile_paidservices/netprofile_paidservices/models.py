@@ -29,11 +29,16 @@ from __future__ import (
 
 __all__ = [
 	'PaidService',
-	'PaidServiceType'
+	'PaidServiceType',
+
+	'PSCallbackProcedure',
+	'PSExecuteProcedure',
+	'PSPollProcedure'
 ]
 
 from sqlalchemy import (
 	Column,
+	DateTime,
 	FetchedValue,
 	ForeignKey,
 	Index,
@@ -71,7 +76,10 @@ from netprofile.db.fields import (
 from netprofile.ext.data import ExtModel
 from netprofile.db.ddl import (
 	Comment,
-	SQLFunction
+	InArgument,
+	InOutArgument,
+	SQLFunction,
+	Trigger
 )
 
 from netprofile.ext.wizards import (
@@ -302,6 +310,11 @@ class PaidService(Base):
 		Index('paid_def_i_paidid', 'paidid'),
 		Index('paid_def_i_active', 'active'),
 		Index('paid_def_i_qpend', 'qpend'),
+		Trigger('before', 'insert', 't_paid_def_bi'),
+		Trigger('before', 'update', 't_paid_def_bu'),
+		Trigger('after', 'insert', 't_paid_def_ai'),
+		Trigger('after', 'update', 't_paid_def_au'),
+		Trigger('after', 'delete', 't_paid_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -473,4 +486,42 @@ class PaidService(Base):
 			str(self.stash),
 			str(self.type)
 		)
+
+PSCallbackProcedure = SQLFunction(
+	'ps_callback',
+	args=(
+		InArgument('cbname', Unicode(255)),
+		InArgument('xepid', UInt32()),
+		InArgument('ts', DateTime()),
+		InArgument('ps_aeid', UInt32()),
+		InArgument('ps_hostid', UInt32()),
+		InArgument('ps_paidid', UInt32()),
+		InOutArgument('ps_entityid', UInt32()),
+		InOutArgument('ps_stashid', UInt32()),
+		InOutArgument('ps_qpend', DateTime()),
+		InOutArgument('pay', Money())
+	),
+	comment='Callback helper for paid services',
+	is_procedure=True
+)
+
+PSExecuteProcedure = SQLFunction(
+	'ps_execute',
+	args=(
+		InArgument('xepid', UInt32()),
+		InArgument('ts', DateTime())
+	),
+	comment='Execute paid service handler',
+	label='psefunc',
+	is_procedure=True
+)
+
+PSPollProcedure = SQLFunction(
+	'ps_poll',
+	args=(
+		InArgument('ts', DateTime()),
+	),
+	comment='Poll paid services',
+	is_procedure=True
+)
 
