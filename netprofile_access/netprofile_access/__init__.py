@@ -29,6 +29,7 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 from netprofile.tpl import TemplateObject
+from netprofile.db.ddl import AlterTableAlterColumn
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -85,6 +86,14 @@ class Module(ModuleBase):
 			models.AcctRollbackProcedure,
 			models.CheckAuthFunction
 		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_entities.models import Entity
+		from netprofile_access import models
+
+		etab = Entity.__table__
+		sess.execute(AlterTableAlterColumn(etab, etab.c['etype']))
 
 	def get_css(self, request):
 		return (

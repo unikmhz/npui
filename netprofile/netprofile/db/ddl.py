@@ -104,6 +104,28 @@ def visit_sql_function_arg(element, compiler, **kw):
 		compiler.dialect.type_compiler.process(element.type)
 	)
 
+class AlterTableAlterColumn(DDLElement):
+	def __init__(self, table, column):
+		self.table = table
+		self.column = column
+
+@compiles(AlterTableAlterColumn, 'mysql')
+def visit_alter_table_alter_column_mysql(element, compiler, **kw):
+	table = element.table
+	col = element.column
+	spec = compiler.get_column_specification(col, first_pk=col.primary_key)
+	const = " ".join(compiler.process(constraint) \
+			for constraint in col.constraints)
+	if const:
+		spec += " " + const
+	if col.comment:
+		spec += " COMMENT " + compiler.sql_compiler.render_literal_value(col.comment, sqltypes.STRINGTYPE)
+	return 'ALTER TABLE %s CHANGE COLUMN %s %s' % (
+		compiler.sql_compiler.preparer.format_table(table),
+		compiler.sql_compiler.preparer.format_column(col),
+		spec
+	)
+
 class SetTableComment(DDLElement):
 	def __init__(self, table, comment):
 		self.table = table
