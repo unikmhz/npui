@@ -61,11 +61,10 @@ _ = TranslationStringFactory('netprofile_paidservices')
 @register_hook('core.dpanetabs.entities.LegalEntity')
 @register_hook('core.dpanetabs.entities.StructuralEntity')
 @register_hook('core.dpanetabs.entities.ExternalEntity')
-@register_hook('core.dpanetabs.entities.AccessEntity')
 def _dpane_entity_paidservices(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
-		'title'             : loc.translate(_('Paid services')),
+		'title'             : loc.translate(_('Paid Services')),
 		'iconCls'           : 'ico-mod-stash',
 		'xtype'             : 'grid_paidservices_PaidService',
 		'stateId'           : None,
@@ -79,7 +78,7 @@ def _dpane_entity_paidservices(tabs, model, req):
 def _dpane_stash_futures(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
-		'title'             : loc.translate(_('Paid services')),
+		'title'             : loc.translate(_('Paid Services')),
 		'iconCls'           : 'ico-mod-stash',
 		'xtype'             : 'grid_paidservices_PaidService',
 		'stateId'           : None,
