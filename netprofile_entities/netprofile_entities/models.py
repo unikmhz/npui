@@ -1308,7 +1308,8 @@ class EntityComment(Base):
 		default=False,
 		server_default=npbool(False),
 		info={
-			'header_string' : _('Obsolete')
+			'header_string' : _('Obsolete'),
+			'write_cap'     : 'ENTITIES_COMMENTS_MARK'
 		}
 	)
 	text = Column(
