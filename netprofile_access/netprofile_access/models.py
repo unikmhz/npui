@@ -333,7 +333,8 @@ class AccessEntity(Entity):
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : _('Access Code')
+			'header_string' : _('Access Code'),
+			'write_cap'     : 'ENTITIES_ACCOUNTSTATE_EDIT'
 		}
 	)
 	policy_ingress = Column(

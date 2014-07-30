@@ -31,6 +31,7 @@ from netprofile.common.modules import ModuleBase
 from netprofile.tpl import TemplateObject
 from netprofile.db.ddl import AlterTableAlterColumn
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_access')
@@ -91,9 +92,32 @@ class Module(ModuleBase):
 	def get_sql_data(cls, modobj, sess):
 		from netprofile_entities.models import Entity
 		from netprofile_access import models
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			Privilege
+		)
 
 		etab = Entity.__table__
 		sess.execute(AlterTableAlterColumn(etab, etab.c['etype']))
+
+		privs = (
+			Privilege(
+				code='ENTITIES_ACCOUNTSTATE_EDIT',
+				name='Entities: Edit Account State'
+			),
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
 
 	def get_css(self, request):
 		return (
