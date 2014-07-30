@@ -29,6 +29,7 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_dialup')
@@ -47,6 +48,60 @@ class Module(ModuleBase):
 			models.NAS,
 			models.NASPool
 		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			Privilege
+		)
+
+		privs = (
+			Privilege(
+				code='NAS_LIST',
+				name='NASes: List'
+			),
+			Privilege(
+				code='NAS_CREATE',
+				name='NASes: Create'
+			),
+			Privilege(
+				code='NAS_EDIT',
+				name='NASes: Edit'
+			),
+			Privilege(
+				code='NAS_DELETE',
+				name='NASes: Delete'
+			),
+			Privilege(
+				code='IPPOOLS_LIST',
+				name='IP Pools: List'
+			),
+			Privilege(
+				code='IPPOOLS_CREATE',
+				name='IP Pools: Create'
+			),
+			Privilege(
+				code='IPPOOLS_EDIT',
+				name='IP Pools: Edit'
+			),
+			Privilege(
+				code='IPPOOLS_DELETE',
+				name='IP Pools: Delete'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
 
 	def get_css(self, request):
 		return (
