@@ -70,6 +70,7 @@ from netprofile.common.modules import (
 	ModuleManager
 )
 
+_loc = None
 _ = TranslationStringFactory('netprofile')
 
 def setup_app(ini_file, app_name):
@@ -94,6 +95,8 @@ def setup_mako_sql(cfg):
 	reg.registerUtility(factory, IRendererFactory, name='.mak')
 
 def get_loc(cfg):
+	global _loc
+
 	reg = cfg.registry
 	cur_locale = reg.settings.get('pyramid.default_locale_name', 'en')
 	sys_locale = locale.getlocale()[0]
@@ -109,7 +112,8 @@ def get_loc(cfg):
 		cur_locale = 'en'
 
 	tdirs = reg.queryUtility(ITranslationDirectories, default=[])
-	return make_localizer(cur_locale, tdirs)
+	_loc = make_localizer(cur_locale, tdirs)
+	return _loc
 
 def get_session():
 	sess = DBSession()
