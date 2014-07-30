@@ -385,8 +385,8 @@ class NetworkGroup(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_NETGROUPS',
-				'cap_read'      : 'NETGROUPS_LIST',
+				'cap_menu'      : 'BASE_NETS',
+				'cap_read'      : 'NETS_LIST',
 				'cap_create'    : 'NETGROUPS_CREATE',
 				'cap_edit'      : 'NETGROUPS_EDIT',
 				'cap_delete'    : 'NETGROUPS_DELETE',
@@ -469,7 +469,7 @@ class NetworkServiceType(Base):
 	id = Column(
 		'hltypeid',
 		UInt32(),
-		Sequence('nets_hltypes_hltypeid_seq'),
+		Sequence('nets_hltypes_hltypeid_seq', start=101, increment=1),
 		Comment('Networks-hosts linkage type ID'),
 		primary_key=True,
 		nullable=False,
