@@ -4298,7 +4298,7 @@ class LogType(Base):
 	id = Column(
 		'ltid',
 		UInt32(),
-		Sequence('logs_types_ltid_seq'),
+		Sequence('logs_types_ltid_seq', start=101, increment=1),
 		Comment('Log entry type ID'),
 		primary_key=True,
 		nullable=False,
@@ -4350,7 +4350,7 @@ class LogAction(Base):
 	id = Column(
 		'laid',
 		UInt32(),
-		Sequence('logs_actions_laid_seq'),
+		Sequence('logs_actions_laid_seq', start=101, increment=1),
 		Comment('Log action ID'),
 		primary_key=True,
 		nullable=False,
