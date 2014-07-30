@@ -153,7 +153,7 @@ class Stash(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				#'cap_menu'      : '',
+				'cap_menu'      : 'BASE_STASHES',
 				'cap_read'      : 'STASHES_LIST',
 				'cap_create'    : 'STASHES_CREATE',
 				'cap_edit'      : 'STASHES_EDIT',
@@ -279,7 +279,7 @@ class StashIOType(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_ADMIN', # FIXME
+				'cap_menu'      : 'BASE_STASHES',
 				'cap_read'      : 'STASHES_IO',
 				'cap_create'    : 'STASHES_IOTYPES_CREATE',
 				'cap_edit'      : 'STASHES_IOTYPES_EDIT',
@@ -289,7 +289,7 @@ class StashIOType(Base):
 				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'class', 'type'),
-				'form_view'     : ('name', 'class', 'type', 'user_visible', 'oper_visible', 'oper_capability'),
+				'form_view'     : ('name', 'class', 'type', 'user_visible', 'oper_visible', 'oper_capability', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new operation type'))
@@ -299,7 +299,7 @@ class StashIOType(Base):
 	id = Column(
 		'siotypeid',
 		UInt32(),
-		Sequence('stashes_io_types_siotypeid_seq'),
+		Sequence('stashes_io_types_siotypeid_seq', start=101, increment=1),
 		Comment('Stash I/O ID'),
 		primary_key=True,
 		nullable=False,
@@ -369,6 +369,17 @@ class StashIOType(Base):
 			'header_string' : _('Required Operator Capability')
 		}
 	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Stash I/O description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
 
 	oper_capability = relationship(
 		'Privilege',
@@ -423,7 +434,7 @@ class StashIO(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_ADMIN', # FIXME
+				'cap_menu'      : 'BASE_STASHES',
 				'cap_read'      : 'STASHES_IO',
 				'cap_create'    : 'STASHES_IO',
 				'cap_edit'      : '__NOPRIV__',
@@ -595,7 +606,7 @@ class StashOperation(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_ADMIN', # FIXME
+				'cap_menu'      : 'BASE_STASHES',
 				'cap_read'      : 'STASHES_IO',
 				'cap_create'    : '__NOPRIV__',
 				'cap_edit'      : '__NOPRIV__',
@@ -765,7 +776,7 @@ class FuturePayment(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_ADMIN', # FIXME
+				'cap_menu'      : 'BASE_FUTURES',
 				'cap_read'      : 'FUTURES_LIST',
 				'cap_create'    : 'FUTURES_CREATE',
 				'cap_edit'      : 'FUTURES_EDIT',
