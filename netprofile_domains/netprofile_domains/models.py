@@ -574,7 +574,7 @@ class DomainServiceType(Base):
 	id = Column(
 		'hltypeid',
 		UInt32(),
-		Sequence('domains_hltypes_hltypeid_seq'),
+		Sequence('domains_hltypes_hltypeid_seq', start=101, increment=1),
 		Comment('Domains-hosts linkage type ID'),
 		primary_key=True,
 		nullable=False,
