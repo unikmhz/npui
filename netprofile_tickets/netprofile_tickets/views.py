@@ -325,9 +325,10 @@ def dyn_ticket_uwiz(params, request):
 				'readOnly' : not bool(has_permission('TICKETS_ARCHIVAL', request.context, request))
 			}
 		),
-		ExternalWizardField(ch_model, 'show_client', value=False),
-		ExternalWizardField(ch_model, 'comments')
+		ExternalWizardField(ch_model, 'show_client', value=False)
 	))
+	if has_permission('TICKETS_COMMENT', request.context, request):
+		fields.append(ExternalWizardField(ch_model, 'comments'))
 	wiz = Wizard(Step(*fields), title=_('Update ticket'))
 	ret = {
 		'success' : True,
@@ -379,9 +380,11 @@ def dyn_ticket_uwiz_update(params, request):
 	else:
 		show_cl = False
 	sess.execute(SetVariable('show_client', npbool(show_cl)))
-	if 'comments' in params:
+	if ('comments' in params) and has_permission('TICKETS_COMMENT', request.context, request):
 		sess.execute(SetVariable('comments', params['comments']))
 		del params['comments']
+	else:
+		sess.execute(SetVariable('comments', None))
 	model.set_values(ticket, params, request)
 	sess.flush()
 	sess.execute(SetVariable('tcid', None))

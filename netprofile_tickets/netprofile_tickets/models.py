@@ -175,7 +175,7 @@ class TicketOrigin(Base):
 	id = Column(
 		'toid',
 		UInt32(),
-		Sequence('tickets_origins_toid_seq'),
+		Sequence('tickets_origins_toid_seq', start=101, increment=1),
 		Comment('Ticket origin ID'),
 		primary_key=True,
 		nullable=False,
@@ -1222,6 +1222,7 @@ class Ticket(Base):
 			val = int(flt['childid']['eq'])
 			if val > 0:
 				query = query.join(TicketDependency, Ticket.id == TicketDependency.parent_id).filter(TicketDependency.child_id == val)
+		# FIXME: check TICKETS_LIST_ARCHIVED, TICKETS_OWN_LIST, TICKETS_OWNGROUP_LIST and ACLs
 		return query
 
 	@classmethod
