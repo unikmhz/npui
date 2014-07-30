@@ -29,6 +29,7 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_rates')
@@ -72,6 +73,103 @@ class Module(ModuleBase):
 			models.AcctRateQPNewFunction,
 			models.AcctRateQPSpentFunction
 		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_rates.models import (
+			DestinationSet,
+			FilterSet,
+			RateClass
+		)
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			LogType,
+			Privilege
+		)
+
+		sess.add(LogType(
+			id=13,
+			name='Rates'
+		))
+
+		privs = (
+			Privilege(
+				code='BASE_RATES',
+				name='Access: Rates'
+			),
+			Privilege(
+				code='RATES_LIST',
+				name='Rates: List'
+			),
+			Privilege(
+				code='RATES_CREATE',
+				name='Rates: Create'
+			),
+			Privilege(
+				code='RATES_EDIT',
+				name='Rates: Edit'
+			),
+			Privilege(
+				code='RATES_DELETE',
+				name='Rates: Delete'
+			),
+			Privilege(
+				code='RATES_CLASSES_CREATE',
+				name='Rates: Create classes'
+			),
+			Privilege(
+				code='RATES_CLASSES_EDIT',
+				name='Rates: Edit classes'
+			),
+			Privilege(
+				code='RATES_CLASSES_DELETE',
+				name='Rates: Delete classes'
+			),
+			Privilege(
+				code='RATES_DS_CREATE',
+				name='Rates: Create destinations'
+			),
+			Privilege(
+				code='RATES_DS_EDIT',
+				name='Rates: Edit destinations'
+			),
+			Privilege(
+				code='RATES_DS_DELETE',
+				name='Rates: Delete destinations'
+			),
+			Privilege(
+				code='RATES_FS_CREATE',
+				name='Rates: Create filters'
+			),
+			Privilege(
+				code='RATES_FS_EDIT',
+				name='Rates: Edit filters'
+			),
+			Privilege(
+				code='RATES_FS_DELETE',
+				name='Rates: Delete filters'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
+
+		sess.add(RateClass(
+			name='Default Class',
+			description='This is a class added during module installation. You can safely remove it, provided you haven\'t specified any rates in this class yet.'
+		))
+
+		sess.add(DestinationSet(name='Default Set'))
+		sess.add(FilterSet(name='Default Set'))
 
 	def get_css(self, request):
 		return (
