@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: IP addresses module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,7 +29,13 @@ from __future__ import (
 
 __all__ = [
 	'IPv4Address',
-	'IPv6Address'
+	'IPv6Address',
+
+	'IPAddrGetDotStrFunction',
+	'IPAddrGetOffsetGenFunction',
+	'IPAddrGetOffsetHGFunction',
+	'IP6AddrGetOffsetGenFunction',
+	'IP6AddrGetOffsetHGFunction'
 ]
 
 from sqlalchemy import (
@@ -60,7 +66,12 @@ from netprofile.db.fields import (
 	npbool
 )
 
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	SQLFunction,
+	SQLFunctionArgument,
+	Trigger
+)
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import (
 	SimpleWizard,
@@ -88,10 +99,20 @@ class IPv4Address(Base):
 		Index('ipaddr_def_i_hostid', 'hostid'),
 		Index('ipaddr_def_i_poolid', 'poolid'),
 		Index('ipaddr_def_i_inuse', 'inuse'),
+		Trigger('before', 'insert', 't_ipaddr_def_bi'),
+		Trigger('before', 'update', 't_ipaddr_def_bu'),
+		Trigger('after', 'insert', 't_ipaddr_def_ai'),
+		Trigger('after', 'update', 't_ipaddr_def_au'),
+		Trigger('after', 'delete', 't_ipaddr_def_ad'),
 		{
 			'mysql_engine'      : 'InnoDB',
 			'mysql_charset'     : 'utf8',
 			'info'              : {
+				'cap_menu'      : 'BASE_IPADDR',
+				'cap_read'      : 'IPADDR_LIST',
+				'cap_create'    : 'IPADDR_CREATE',
+				'cap_edit'      : 'IPADDR_EDIT',
+				'cap_delete'    : 'IPADDR_DELETE',
 				'menu_name'     : _('IPv4 Addresses'),
 				'show_in_menu'  : 'modules',
 				'menu_order'    : 10,
@@ -262,10 +283,20 @@ class IPv6Address(Base):
 		Index('ip6addr_def_i_hostid', 'hostid'),
 		Index('ip6addr_def_i_poolid', 'poolid'),
 		Index('ip6addr_def_i_inuse', 'inuse'),
+		Trigger('before', 'insert', 't_ip6addr_def_bi'),
+		Trigger('before', 'update', 't_ip6addr_def_bu'),
+		Trigger('after', 'insert', 't_ip6addr_def_ai'),
+		Trigger('after', 'update', 't_ip6addr_def_au'),
+		Trigger('after', 'delete', 't_ip6addr_def_ad'),
 		{
 			'mysql_engine'      : 'InnoDB',
 			'mysql_charset'     : 'utf8',
 			'info'              : {
+				'cap_menu'      : 'BASE_IPADDR',
+				'cap_read'      : 'IPADDR_LIST',
+				'cap_create'    : 'IPADDR_CREATE',
+				'cap_edit'      : 'IPADDR_EDIT',
+				'cap_delete'    : 'IPADDR_DELETE',
 				'menu_name'     : _('IPv6 Addresses'),
 				'show_in_menu'  : 'modules',
 				'menu_order'    : 20,
@@ -424,4 +455,56 @@ class IPv6Address(Base):
 	def __str__(self):
 		if self.network and self.network.ipv6_address:
 			return str(self.network.ipv6_address + self.offset)
+
+IPAddrGetDotStrFunction = SQLFunction(
+	'ipaddr_get_dotstr',
+	args=(
+		SQLFunctionArgument('ip', UInt32()),
+	),
+	returns=Unicode(15),
+	comment='Get dotted-decimal format string of IPv4 address ID',
+	writes_sql=False
+)
+
+IPAddrGetOffsetGenFunction = SQLFunction(
+	'ipaddr_get_offset_gen',
+	args=(
+		SQLFunctionArgument('net', UInt32()),
+	),
+	returns=UInt32(),
+	comment='Get IPv4 offset for a new host (generic version)',
+	writes_sql=False
+)
+
+IPAddrGetOffsetHGFunction = SQLFunction(
+	'ipaddr_get_offset_hg',
+	args=(
+		SQLFunctionArgument('net', UInt32()),
+		SQLFunctionArgument('hg', UInt32())
+	),
+	returns=UInt32(),
+	comment='Get IPv4 offset for a new host (limits version)',
+	writes_sql=False
+)
+
+IP6AddrGetOffsetGenFunction = SQLFunction(
+	'ip6addr_get_offset_gen',
+	args=(
+		SQLFunctionArgument('net', UInt32()),
+	),
+	returns=IPv6Offset(),
+	comment='Get IPv6 offset for a new host (generic version)',
+	writes_sql=False
+)
+
+IP6AddrGetOffsetHGFunction = SQLFunction(
+	'ip6addr_get_offset_hg',
+	args=(
+		SQLFunctionArgument('net', UInt32()),
+		SQLFunctionArgument('hg', UInt32())
+	),
+	returns=IPv6Offset(),
+	comment='Get IPv6 offset for a new host (limits version)',
+	writes_sql=False
+)
 

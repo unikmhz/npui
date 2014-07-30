@@ -68,6 +68,7 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Money,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -75,7 +76,11 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault,
+	Trigger
+)
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import SimpleWizard
 from pyramid.i18n import (
@@ -121,6 +126,7 @@ class ExternalOperation(Base):
 		Index('xop_def_i_ts', 'ts'),
 		Index('xop_def_i_entityid', 'entityid'),
 		Index('xop_def_i_stashid', 'stashid'),
+		Trigger('before', 'update', 't_xop_def_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -194,10 +200,8 @@ class ExternalOperation(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Timestamp of operation'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
-		default=None,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Date')
 		}
@@ -232,7 +236,7 @@ class ExternalOperation(Base):
 	)
 	difference = Column(
 		'diff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Stash amount changes'),
 		nullable=False,
 		default=0,
@@ -426,7 +430,7 @@ class ExternalOperationProvider(Base):
 	)
 	min_difference = Column(
 		'mindiff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Minimum operation result'),
 		nullable=True,
 		default=None,
@@ -437,7 +441,7 @@ class ExternalOperationProvider(Base):
 	)
 	max_difference = Column(
 		'maxdiff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Maxmum operation result'),
 		nullable=True,
 		default=None,

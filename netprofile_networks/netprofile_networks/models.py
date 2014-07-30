@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Networks module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -70,7 +70,10 @@ from netprofile.db.fields import (
 	IPv6Address,
 	IPv6Offset
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	Trigger
+)
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
 
@@ -101,6 +104,9 @@ class Network(Base):
 		Index('nets_def_i_netgid', 'netgid'),
 		Index('nets_def_i_rtid', 'rtid'),
 		Index('nets_def_i_mgmtdid', 'mgmtdid'),
+		Trigger('after', 'insert', 't_nets_def_ai'),
+		Trigger('after', 'update', 't_nets_def_au'),
+		Trigger('after', 'delete', 't_nets_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -379,8 +385,8 @@ class NetworkGroup(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_NETGROUPS',
-				'cap_read'      : 'NETGROUPS_LIST',
+				'cap_menu'      : 'BASE_NETS',
+				'cap_read'      : 'NETS_LIST',
 				'cap_create'    : 'NETGROUPS_CREATE',
 				'cap_edit'      : 'NETGROUPS_EDIT',
 				'cap_delete'    : 'NETGROUPS_DELETE',
@@ -463,7 +469,7 @@ class NetworkServiceType(Base):
 	id = Column(
 		'hltypeid',
 		UInt32(),
-		Sequence('nets_hltypes_hltypeid_seq'),
+		Sequence('nets_hltypes_hltypeid_seq', start=101, increment=1),
 		Comment('Networks-hosts linkage type ID'),
 		primary_key=True,
 		nullable=False,

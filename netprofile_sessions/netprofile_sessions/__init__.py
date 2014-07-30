@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,8 +29,8 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 from netprofile.tpl import TemplateObject
-from .models import *
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_sessions')
@@ -46,11 +46,63 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('access',)
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_sessions import models
 		return (
-			AccessSession,
-			AccessSessionHistory
+			models.AccessSession,
+			models.AccessSessionHistory
 		)
+
+	@classmethod
+	def get_sql_functions(cls):
+		from netprofile_sessions import models
+		return (
+			models.AcctAddSessionProcedure,
+			models.AcctAllocIPProcedure,
+			models.AcctAllocIPv6Procedure,
+			models.AcctAuthzSessionProcedure,
+			models.AcctCloseSessionProcedure,
+			models.AcctOpenSessionProcedure
+		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			Privilege
+		)
+
+		privs = (
+			Privilege(
+				code='BASE_SESSIONS',
+				name='Access: Sessions'
+			),
+			Privilege(
+				code='SESSIONS_LIST',
+				name='Sessions: List'
+			),
+			Privilege(
+				code='SESSIONS_LIST_ARCHIVED',
+				name='Sessions: List archived'
+			),
+			Privilege(
+				code='SESSIONS_DISCONNECT',
+				name='Sessions: Disconnect'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
 
 	def get_css(self, request):
 		return (

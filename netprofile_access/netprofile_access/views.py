@@ -770,6 +770,15 @@ def _dpane_aent_mods(tabs, model, req):
 		'extraParamProp'    : 'entityid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	}, {
+		'title'             : loc.translate(_('Access Blocks')),
+		'iconCls'           : 'ico-mod-accessblock',
+		'xtype'             : 'grid_access_AccessBlock',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('entity',),
+		'extraParamProp'    : 'entityid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
 		'title'             : loc.translate(_('Links')),
 		'iconCls'           : 'ico-mod-accessentitylink',
 		'xtype'             : 'grid_access_AccessEntityLink',

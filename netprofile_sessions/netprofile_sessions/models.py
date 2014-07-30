@@ -29,16 +29,24 @@ from __future__ import (
 
 __all__ = [
 	'AccessSession',
-	'AccessSessionHistory'
+	'AccessSessionHistory',
+
+	'AcctAddSessionProcedure',
+	'AcctAllocIPProcedure',
+	'AcctAllocIPv6Procedure',
+	'AcctAuthzSessionProcedure',
+	'AcctCloseSessionProcedure',
+	'AcctOpenSessionProcedure'
 ]
 
 from sqlalchemy import (
 	Column,
+	DateTime,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
+	Unicode,
 	text
 )
 
@@ -55,11 +63,18 @@ from netprofile.db.connection import (
 )
 from netprofile.db.fields import (
 	ASCIIString,
+	Int32,
+	Traffic,
 	UInt8,
 	UInt32,
 	UInt64
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	InArgument,
+	SQLFunction,
+	Trigger
+)
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -79,6 +94,8 @@ class AccessSession(Base):
 		Index('sessions_def_i_ipaddrid', 'ipaddrid'),
 		Index('sessions_def_i_ip6addrid', 'ip6addrid'),
 		Index('sessions_def_i_nasid', 'nasid'),
+		Trigger('before', 'delete', 't_sessions_def_bd'),
+		Trigger('after', 'delete', 't_sessions_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -254,7 +271,7 @@ class AccessSession(Base):
 	)
 	used_ingress_traffic = Column(
 		'ut_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used ingress traffic'),
 		nullable=False,
 		default=0,
@@ -265,7 +282,7 @@ class AccessSession(Base):
 	)
 	used_egress_traffic = Column(
 		'ut_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used egress traffic'),
 		nullable=False,
 		default=0,
@@ -506,7 +523,7 @@ class AccessSessionHistory(Base):
 	)
 	used_ingress_traffic = Column(
 		'ut_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used ingress traffic'),
 		nullable=False,
 		default=0,
@@ -517,7 +534,7 @@ class AccessSessionHistory(Base):
 	)
 	used_egress_traffic = Column(
 		'ut_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Used egress traffic'),
 		nullable=False,
 		default=0,
@@ -572,4 +589,85 @@ class AccessSessionHistory(Base):
 
 	def __str__(self):
 		return '%s' % str(self.name)
+
+AcctAddSessionProcedure = SQLFunction(
+	'acct_add_session',
+	args=(
+		InArgument('sid', Unicode(255)),
+		InArgument('stid', UInt32()),
+		InArgument('username', Unicode(255)),
+		InArgument('tin', Traffic()),
+		InArgument('teg', Traffic()),
+		InArgument('ts', DateTime())
+	),
+	comment='Add accounting information for opened session',
+	label='aasfunc',
+	is_procedure=True
+)
+
+AcctAllocIPProcedure = SQLFunction(
+	'acct_alloc_ip',
+	args=(
+		InArgument('nid', Unicode(255)),
+		InArgument('ename', Unicode(255))
+	),
+	comment='Allocate session IPv4 address',
+	is_procedure=True
+)
+
+AcctAllocIPv6Procedure = SQLFunction(
+	'acct_alloc_ipv6',
+	args=(
+		InArgument('nid', Unicode(255)),
+		InArgument('ename', Unicode(255))
+	),
+	comment='Allocate session IPv6 address',
+	is_procedure=True
+)
+
+AcctAuthzSessionProcedure = SQLFunction(
+	'acct_authz_session',
+	args=(
+		InArgument('name', Unicode(255)),
+		InArgument('r_porttype', Int32()),
+		InArgument('r_servicetype', Int32()),
+		InArgument('r_frproto', Int32()),
+		InArgument('r_tuntype', Int32()),
+		InArgument('r_tunmedium', Int32())
+	),
+	comment='Get authorized account info with session estabilishment',
+	label='authzfunc',
+	is_procedure=True
+)
+
+AcctCloseSessionProcedure = SQLFunction(
+	'acct_close_session',
+	args=(
+		InArgument('sid', Unicode(255)),
+		InArgument('stid', UInt32()),
+		InArgument('ts', DateTime())
+	),
+	comment='Close specified session',
+	is_procedure=True
+)
+
+AcctOpenSessionProcedure = SQLFunction(
+	'acct_open_session',
+	args=(
+		InArgument('sid', Unicode(255)),
+		InArgument('stid', UInt32()),
+		InArgument('name', Unicode(255)),
+		InArgument('fip', UInt32()),
+		InArgument('fip6', UInt64()),
+		InArgument('xnasid', UInt32()),
+		InArgument('ts', DateTime()),
+		InArgument('csid', Unicode(255)),
+		InArgument('called', Unicode(255)),
+		InArgument('pol_in', ASCIIString(255)),
+		InArgument('pol_eg', ASCIIString(255))
+	),
+	comment='Open new session',
+	label='aosfunc',
+	is_procedure=True
+)
 

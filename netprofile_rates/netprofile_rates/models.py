@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Rates module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -37,15 +37,24 @@ __all__ = [
 	'GlobalRateModifier',
 	'Rate',
 	'RateClass',
-	'RateModifierType'
+	'RateModifierType',
+
+	'AcctRateDestProcedure',
+	'AcctRateFilterProcedure',
+	'AcctRatePercentRemainingFunction',
+	'AcctRatePercentSpentFunction',
+	'AcctRateQPCountFunction',
+	'AcctRateQPLengthFunction',
+	'AcctRateQPNewFunction',
+	'AcctRateQPSpentFunction'
 ]
 
 from sqlalchemy import (
 	Column,
+	DateTime,
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -67,14 +76,26 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Int32,
+	Money,
 	NPBoolean,
+	PercentFraction,
+	Traffic,
 	UInt8,
 	UInt16,
 	UInt32,
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	InArgument,
+	InOutArgument,
+	OutArgument,
+	SQLFunction,
+	SQLFunctionArgument,
+	Trigger
+)
 
 from netprofile.ext.wizards import SimpleWizard
 
@@ -106,6 +127,10 @@ class QuotaPeriodUnit(DeclEnum):
 	calendar_hour  = 'c_hour',  _('Hour (cal.)'),  50
 	calendar_day   = 'c_day',   _('Day (cal.)'),   60
 	calendar_month = 'c_month', _('Month (cal.)'), 70
+	fixed_hour     = 'f_hour',  _('Hour (fix.)'),  80
+	fixed_day      = 'f_day',   _('Day (fix.)'),   90
+	fixed_week     = 'f_week',  _('Week (fix.)'),  100
+	fixed_month    = 'f_month', _('Month (fix.)'), 110
 
 class DestinationType(DeclEnum):
 	"""
@@ -472,7 +497,7 @@ class Destination(Base):
 	)
 	overquota_sum_seconds = Column(
 		'oqsum_sec',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota per second override'),
 		nullable=True,
 		default=None,
@@ -483,7 +508,7 @@ class Destination(Base):
 	)
 	overquota_multiplier_seconds = Column(
 		'oqmul_sec',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota per second multiplier'),
 		nullable=True,
 		default=None,
@@ -685,6 +710,9 @@ class Rate(Base):
 		Index('rates_def_i_poolid', 'poolid'),
 		Index('rates_def_i_dsid', 'dsid'),
 		Index('rates_def_i_fsid', 'fsid'),
+		Trigger('after', 'insert', 't_rates_def_ai'),
+		Trigger('after', 'update', 't_rates_def_au'),
+		Trigger('after', 'delete', 't_rates_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -881,7 +909,7 @@ class Rate(Base):
 	)
 	quota_sum = Column(
 		'qsum',
-		Numeric(20, 8),
+		Money(),
 		Comment('Quota sum'),
 		nullable=False,
 		default=0.0,
@@ -892,7 +920,7 @@ class Rate(Base):
 	)
 	auxiliary_sum = Column(
 		'auxsum',
-		Numeric(20, 8),
+		Money(),
 		Comment('Auxiliary sum'),
 		nullable=True,
 		default=None,
@@ -903,7 +931,7 @@ class Rate(Base):
 	)
 	quota_ingress_traffic = Column(
 		'qt_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Ingress traffic included in quota (in bytes)'),
 		nullable=False,
 		default=0,
@@ -914,7 +942,7 @@ class Rate(Base):
 	)
 	quota_egress_traffic = Column(
 		'qt_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Egress traffic included in quota (in bytes)'),
 		nullable=False,
 		default=0,
@@ -936,7 +964,7 @@ class Rate(Base):
 	)
 	overquota_sum_ingress = Column(
 		'oqsum_ingress',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota payment for ingress traffic (per byte)'),
 		nullable=False,
 		default=0.0,
@@ -947,7 +975,7 @@ class Rate(Base):
 	)
 	overquota_sum_egress = Column(
 		'oqsum_egress',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota payment for egress traffic (per byte)'),
 		nullable=False,
 		default=0.0,
@@ -958,7 +986,7 @@ class Rate(Base):
 	)
 	overquota_sum_seconds = Column(
 		'oqsum_sec',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota payment for time (per second)'),
 		nullable=False,
 		default=0.0,
@@ -1316,7 +1344,7 @@ class RateModifierType(Base):
 	)
 	oq_sum_multiplier_ingress = Column(
 		'oqsum_ingress_mul',
-		Numeric(20, 8),
+		Money(),
 		Comment('Ingress overquota sum multiplier'),
 		nullable=True,
 		default=None,
@@ -1327,7 +1355,7 @@ class RateModifierType(Base):
 	)
 	oq_sum_multiplier_egress = Column(
 		'oqsum_egress_mul',
-		Numeric(20, 8),
+		Money(),
 		Comment('Egress overquota sum multiplier'),
 		nullable=True,
 		default=None,
@@ -1338,7 +1366,7 @@ class RateModifierType(Base):
 	)
 	oq_sum_multiplier_seconds = Column(
 		'oqsum_sec_mul',
-		Numeric(20, 8),
+		Money(),
 		Comment('Per-second overquota sum multiplier'),
 		nullable=True,
 		default=None,
@@ -1427,6 +1455,7 @@ class GlobalRateModifier(Base):
 		Index('rates_mods_global_u_mapping', 'rmtid', 'rateid', unique=True),
 		Index('rates_mods_global_i_rateid', 'rateid'),
 		Index('rates_mods_global_i_l_ord', 'l_ord'),
+		Trigger('before', 'insert', 't_rates_mods_global_bi'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1509,4 +1538,120 @@ class GlobalRateModifier(Base):
 			'header_string' : _('Lookup Order')
 		}
 	)
+
+AcctRateDestProcedure = SQLFunction(
+	'acct_rate_dest',
+	args=(
+		InArgument('ts', DateTime()),
+		InArgument('rateid', UInt32()),
+		InArgument('dsid', UInt32()),
+		InArgument('called', ASCIIString(255)),
+		InOutArgument('destid', UInt32()),
+		InOutArgument('dtype', DestinationType.db_type()),
+		InOutArgument('oqsum_sec', Money())
+	),
+	comment='Search destination sets for a match',
+	writes_sql=False,
+	label='ardfunc',
+	is_procedure=True
+)
+
+AcctRateFilterProcedure = SQLFunction(
+	'acct_rate_filter',
+	args=(
+		InArgument('fsid', UInt32()),
+		InArgument('r_porttype', Int32()),
+		InArgument('r_servicetype', Int32()),
+		InArgument('r_frproto', Int32()),
+		InArgument('r_tuntype', Int32()),
+		InArgument('r_tunmedium', Int32()),
+		OutArgument('filterid', UInt32())
+	),
+	comment='Search filter sets for a match',
+	writes_sql=False,
+	label='arffunc',
+	is_procedure=True
+)
+
+AcctRatePercentRemainingFunction = SQLFunction(
+	'acct_rate_percent_remaining',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('time', DateTime()),
+		SQLFunctionArgument('endtime', DateTime())
+	),
+	returns=PercentFraction(),
+	comment='Calculate remaining part of current quota period',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRatePercentSpentFunction = SQLFunction(
+	'acct_rate_percent_spent',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('time', DateTime()),
+		SQLFunctionArgument('endtime', DateTime())
+	),
+	returns=PercentFraction(),
+	comment='Calculate spent part of current quota period',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRateQPCountFunction = SQLFunction(
+	'acct_rate_qpcount',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('dfrom', DateTime()),
+		SQLFunctionArgument('dto', DateTime())
+	),
+	returns=UInt32(),
+	comment='Calculate number of periods between two dates',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRateQPLengthFunction = SQLFunction(
+	'acct_rate_qplength',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('endtime', DateTime())
+	),
+	returns=UInt32(),
+	comment='Calculate length of current quota period in seconds',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRateQPNewFunction = SQLFunction(
+	'acct_rate_qpnew',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('time', DateTime())
+	),
+	returns=UInt32(),
+	comment='Calculate new quota period to seconds',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRateQPSpentFunction = SQLFunction(
+	'acct_rate_qpspent',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('time', DateTime()),
+		SQLFunctionArgument('endtime', DateTime())
+	),
+	returns=UInt32(),
+	comment='Calculate spent part of current quota period in seconds',
+	reads_sql=False,
+	writes_sql=False
+)
 

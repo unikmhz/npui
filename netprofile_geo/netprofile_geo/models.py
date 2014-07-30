@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -35,7 +35,19 @@ __all__ = [
 	'House',
 	'Place',
 	'HouseGroup',
-	'HouseGroupMapping'
+	'HouseGroupMapping',
+
+	'AddrFormatCompactFunction',
+	'AddrFormatFunction',
+	'AddrGetFullFunction',
+	'AddrListDistrictProcedure',
+	'AddrListEntrProcedure',
+	'AddrListStreetProcedure',
+
+	'AddrCompactView',
+	'AddrExtraView',
+	'AddrFullView',
+	'AddrStreetNamesView'
 ]
 
 from sqlalchemy import (
@@ -45,6 +57,8 @@ from sqlalchemy import (
 	Sequence,
 	Unicode,
 	UnicodeText,
+	func,
+	literal_column,
 	text
 )
 
@@ -80,7 +94,13 @@ from netprofile.ext.wizards import (
 	Step,
 	Wizard
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	InArgument,
+	SQLFunction,
+	SQLFunctionArgument,
+	View
+)
 from netprofile.db.util import populate_related_list
 
 from netprofile_geo.filters import AddressFilter
@@ -163,7 +183,7 @@ class City(Base):
 
 	streets = relationship(
 		'Street',
-		backref=backref('city', innerjoin=True),
+#		backref=backref('city', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
@@ -351,6 +371,10 @@ class Street(Base):
 		}
 	)
 
+	city = relationship(
+		'City',
+		innerjoin=True
+	)
 	houses = relationship(
 		'House',
 		backref=backref('street', innerjoin=True),
@@ -827,4 +851,123 @@ class HouseGroupMapping(Base):
 			'header_string' : _('House')
 		}
 	)
+
+AddrFormatCompactFunction = SQLFunction(
+	'addr_format_compact',
+	args=(
+		SQLFunctionArgument('streetname', Unicode(255)),
+		SQLFunctionArgument('num', UInt16()),
+		SQLFunctionArgument('num_slash', UInt16()),
+		SQLFunctionArgument('num_suffix', Unicode(32)),
+		SQLFunctionArgument('bld', UInt16()),
+		SQLFunctionArgument('fl', UInt16())
+	),
+	returns=Unicode(255),
+	comment='Format compact address',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AddrFormatFunction = SQLFunction(
+	'addr_format',
+	args=(
+		SQLFunctionArgument('streetname', Unicode(255)),
+		SQLFunctionArgument('prefix', Unicode(8)),
+		SQLFunctionArgument('suffix', Unicode(8)),
+		SQLFunctionArgument('num', UInt16()),
+		SQLFunctionArgument('num_slash', UInt16()),
+		SQLFunctionArgument('num_suffix', Unicode(32)),
+		SQLFunctionArgument('bld', UInt16()),
+		SQLFunctionArgument('fl', UInt16())
+	),
+	returns=Unicode(255),
+	comment='Format full address',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AddrGetFullFunction = SQLFunction(
+	'addr_get_full',
+	args=(
+		SQLFunctionArgument('hid', UInt32()),
+	),
+	returns=Unicode(255),
+	comment='Get full address of a house by its ID',
+	writes_sql=False
+)
+
+AddrListDistrictProcedure = SQLFunction(
+	'addr_list_district',
+	args=(
+		InArgument('did', UInt32()),
+	),
+	comment='List all houses in a given district',
+	writes_sql=False,
+	is_procedure=True
+)
+
+AddrListEntrProcedure = SQLFunction(
+	'addr_list_entr',
+	args=(
+		InArgument('minentr', UInt8()),
+	),
+	comment='List all houses which have at least given number of entries',
+	writes_sql=False,
+	is_procedure=True
+)
+
+AddrListStreetProcedure = SQLFunction(
+	'addr_list_street',
+	args=(
+		InArgument('sid', UInt32()),
+	),
+	comment='List all houses on a given street',
+	writes_sql=False,
+	is_procedure=True
+)
+
+AddrCompactView = View('addr_compact', DBSession.query(
+	House.id.label('houseid'),
+	House.street_id.label('streetid'),
+	Street.district_id.label('districtid'),
+	City.id.label('cityid'),
+	City.name.label('city'),
+	func.addr_format_compact(Street.name, House.number, House.second_number, House.number_suffix, House.building, None).label('address'),
+	House.entrances.label('entrnum'),
+	House.postal_code.label('postindex')
+).select_from(House).join(Street).join(Street.city).order_by(City.name, Street.name, House.number, House.second_number, House.number_suffix, House.building))
+
+AddrExtraView = View('addr_extra', DBSession.query(
+	House.id.label('houseid'),
+	House.street_id.label('streetid'),
+	Street.district_id.label('districtid'),
+	City.id.label('cityid'),
+	func.concat_ws(' ',
+		func.concat(City.name, ','),
+		func.concat(District.name, ','),
+		func.addr_format(Street.name, Street.prefix, Street.suffix, House.number, House.second_number, House.number_suffix, House.building, None)
+	).label('address'),
+	House.entrances.label('entrnum'),
+	House.postal_code.label('postindex')
+).select_from(House).join(Street).outerjoin(District).join(Street.city).order_by(City.name, District.name, Street.name, House.number, House.second_number, House.number_suffix, House.building))
+
+AddrFullView = View('addr_full', DBSession.query(
+	House.id.label('houseid'),
+	House.street_id.label('streetid'),
+	Street.district_id.label('districtid'),
+	City.id.label('cityid'),
+	City.name.label('city'),
+	func.addr_format(Street.name, Street.prefix, Street.suffix, House.number, House.second_number, House.number_suffix, House.building, None).label('address'),
+	House.entrances.label('entrnum'),
+	House.postal_code.label('postindex')
+).select_from(House).join(Street).join(Street.city).order_by(City.name, Street.name, House.number, House.second_number, House.number_suffix, House.building))
+
+AddrStreetNamesView = View('addr_streetnames', DBSession.query(
+	Street.id.label('streetid'),
+	District.id.label('districtid'),
+	City.id.label('cityid'),
+	City.name.label('city'),
+	District.name.label('district'),
+	func.addr_format(Street.name, Street.prefix, Street.suffix, None, None, None, None, None).label('fullname')
+).select_from(Street).outerjoin(District).join(Street.city).order_by(City.name, District.name, Street.name))
 

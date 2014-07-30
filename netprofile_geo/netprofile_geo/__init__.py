@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,8 +29,8 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_geo')
@@ -41,16 +41,82 @@ class Module(ModuleBase):
 		mmgr.cfg.add_translation_dirs('netprofile_geo:locale/')
 		mmgr.cfg.scan()
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_geo import models
 		return (
-			City,
-			District,
-			Street,
-			House,
-			Place,
-			HouseGroup,
-			HouseGroupMapping
+			models.City,
+			models.District,
+			models.Street,
+			models.House,
+			models.Place,
+			models.HouseGroup,
+			models.HouseGroupMapping
 		)
+
+	@classmethod
+	def get_sql_functions(cls):
+		from netprofile_geo import models
+		return (
+			models.AddrFormatCompactFunction,
+			models.AddrFormatFunction,
+			models.AddrGetFullFunction,
+			models.AddrListDistrictProcedure,
+			models.AddrListEntrProcedure,
+			models.AddrListStreetProcedure
+		)
+
+	@classmethod
+	def get_sql_views(cls):
+		from netprofile_geo import models
+		return (
+			models.AddrCompactView,
+			models.AddrExtraView,
+			models.AddrFullView,
+			models.AddrStreetNamesView
+		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			Privilege
+		)
+
+		privs = (
+			Privilege(
+				code='BASE_GEO',
+				name='Access: Addresses'
+			),
+			Privilege(
+				code='GEO_LIST',
+				name='Addresses: List'
+			),
+			Privilege(
+				code='GEO_CREATE',
+				name='Addresses: Create'
+			),
+			Privilege(
+				code='GEO_EDIT',
+				name='Addresses: Edit'
+			),
+			Privilege(
+				code='GEO_DELETE',
+				name='Addresses: Delete'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
 
 	def get_local_js(self, request, lang):
 		return (

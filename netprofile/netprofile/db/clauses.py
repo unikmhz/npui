@@ -42,7 +42,7 @@ class SetVariable(Executable, ClauseElement):
 		self.value = value
 
 @compiles(SetVariable, 'mysql')
-def visit_set_variable_mysql(element, compiler, *kw):
+def visit_set_variable_mysql(element, compiler, **kw):
 	if isinstance(element.value, ClauseElement):
 		rvalue = compiler.process(element.value)
 	else:
@@ -50,7 +50,7 @@ def visit_set_variable_mysql(element, compiler, *kw):
 	return 'SET @%s := %s' % (element.name, rvalue)
 
 @compiles(SetVariable, 'postgresql')
-def visit_set_variable_pgsql(element, compiler, *kw):
+def visit_set_variable_pgsql(element, compiler, **kw):
 	if isinstance(element.value, ClauseElement):
 		rvalue = compiler.process(element.value)
 	else:
@@ -58,7 +58,7 @@ def visit_set_variable_pgsql(element, compiler, *kw):
 	return 'SET npvar.%s = %s' % (element.name, rvalue)
 
 @compiles(SetVariable)
-def visit_set_variable(element, compiler, *kw):
+def visit_set_variable(element, compiler, **kw):
 	if isinstance(element.value, ClauseElement):
 		rvalue = compiler.process(element.value)
 	else:

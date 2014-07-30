@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Hosts module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -31,7 +31,12 @@ __all__ = [
 	'Host',
 	'HostGroup',
 	'Service',
-	'ServiceType'
+	'ServiceType',
+
+	'HostCreateAliasProcedure',
+
+	'HostsAliasesView',
+	'HostsRealView'
 ]
 
 from sqlalchemy import (
@@ -44,6 +49,7 @@ from sqlalchemy import (
 	Unicode,
 	UnicodeText,
 	func,
+	literal_column,
 	text
 )
 
@@ -54,7 +60,10 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from netprofile.db.connection import Base
+from netprofile.db.connection import (
+	Base,
+	DBSession
+)
 from netprofile.db.fields import (
 	ASCIIString,
 	ASCIIText,
@@ -66,7 +75,14 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault,
+	InArgument,
+	SQLFunction,
+	Trigger,
+	View
+)
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import (
@@ -84,6 +100,13 @@ from netprofile_domains.models import ObjectVisibility
 
 _ = TranslationStringFactory('netprofile_hosts')
 
+class HostAliasType(DeclEnum):
+	"""
+	Type of host alias enumeration.
+	"""
+	symbolic = 'SYM', _('Symbolic'), 10
+	numeric  = 'NUM', _('Numeric'),  20
+
 class Host(Base):
 	"""
 	Host object.
@@ -97,6 +120,11 @@ class Host(Base):
 		Index('hosts_def_i_aliasid', 'aliasid'),
 		Index('hosts_def_i_cby', 'cby'),
 		Index('hosts_def_i_mby', 'mby'),
+		Trigger('before', 'insert', 't_hosts_def_bi'),
+		Trigger('before', 'update', 't_hosts_def_bu'),
+		Trigger('after', 'insert', 't_hosts_def_ai'),
+		Trigger('after', 'update', 't_hosts_def_au'),
+		Trigger('after', 'delete', 't_hosts_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -124,7 +152,7 @@ class Host(Base):
 				'form_view'     : (
 					'name', 'domain',
 					'group', 'entity',
-					'original', 'descr',
+					'original', 'aliastype', 'descr',
 					'ctime', 'cby',
 					'mtime', 'mby'
 				),
@@ -133,7 +161,7 @@ class Host(Base):
 				'create_wizard' : 
 					Wizard(
 						Step('name', 'domain', 'entity', title=_('New host data')),
-						Step('group', 'original', 'descr', title=_('New host details')),
+						Step('group', 'original', 'aliastype', 'descr', title=_('New host details')),
 						title=_('Add new host')
 					)
 			}
@@ -206,6 +234,17 @@ class Host(Base):
 			'filter_type'   : 'list'
 		}
 	)
+	alias_type = Column(
+		'aliastype',
+		HostAliasType.db_type(),
+		Comment('Host alias type'),
+		nullable=False,
+		default=HostAliasType.symbolic,
+		server_default=HostAliasType.symbolic,
+		info={
+			'header_string' : _('Alias Type')
+		}
+	)
 	creation_time = Column(
 		'ctime',
 		TIMESTAMP(),
@@ -222,9 +261,8 @@ class Host(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Time of last modification'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified'),
 			'read_only'     : True
@@ -470,9 +508,11 @@ class ServiceProtocol(DeclEnum):
 	"""
 	Service type protocol enumeration.
 	"""
-	all = 'all', _('All'), 10
-	tcp = 'tcp', _('TCP'), 20
-	udp = 'udp', _('UDP'), 30
+	none   = 'none',   _('None'),    10
+	tcp    = 'tcp',    _('TCP'),     20
+	udp    = 'udp',    _('UDP'),     30
+	sctp   = 'sctp',   _('SCTP'),    40
+	dccp   = 'dccp',   _('DCCP'),    50
 
 class ServiceType(Base):
 	"""
@@ -481,17 +521,17 @@ class ServiceType(Base):
 	__tablename__ = 'services_types'
 	__table_args__ = (
 		Comment('Service types'),
-		Index('services_types_u_abbrev', 'abbrev', unique=True),
-		Index('services_types_u_name', 'name', unique=True),
+		Index('services_types_u_service', 'proto', 'abbrev', unique=True),
+		Index('services_types_i_abbrev', 'abbrev'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_SERVICES',
 				'cap_read'      : 'SERVICES_LIST',
-				'cap_create'    : 'SERVICES_CREATE',
-				'cap_edit'      : 'SERVICES_EDIT',
-				'cap_delete'    : 'SERVICES_DELETE',
+				'cap_create'    : 'SERVICES_TYPES_CREATE',
+				'cap_edit'      : 'SERVICES_TYPES_EDIT',
+				'cap_delete'    : 'SERVICES_TYPES_DELETE',
 				'menu_name'     : _('Service Types'),
 				'show_in_menu'  : 'admin',
 				'menu_order'    : 20,
@@ -537,8 +577,8 @@ class ServiceType(Base):
 		ServiceProtocol.db_type(),
 		Comment('Used protocol(s)'),
 		nullable=False,
-		default=ServiceProtocol.all,
-		server_default=ServiceProtocol.all,
+		default=ServiceProtocol.tcp,
+		server_default=ServiceProtocol.tcp,
 		info={
 			'header_string' : _('Protocol')
 		}
@@ -581,15 +621,18 @@ class ServiceType(Base):
 	)
 
 	def __str__(self):
+		pfx = []
 		if self.abbreviation:
-			if self.name:
-				return '[%s] %s' % (
-					str(self.abbreviation),
-					str(self.name)
-				)
-			else:
-				return str(self.abbreviation)
-		return self.name
+			pfx.append(str(self.abbreviation))
+		if self.protocol != ServiceProtocol.none:
+			pfx.append(str(self.protocol.description))
+
+		if len(pfx) > 0:
+			return '[%s] %s' % (
+				'/'.join(pfx),
+				str(self.name)
+			)
+		return str(self.name)
 
 class Service(Base):
 	"""
@@ -655,7 +698,7 @@ class Service(Base):
 		Comment('Service priority'),
 		nullable=False,
 		default=0,
-		server_default=text('NULL'),
+		server_default=text('0'),
 		info={
 			'header_string' : _('Priority')
 		}
@@ -665,7 +708,7 @@ class Service(Base):
 		Comment('Service weight'),
 		nullable=False,
 		default=0,
-		server_default=text('NULL'),
+		server_default=text('0'),
 		info={
 			'header_string' : _('Weight')
 		}
@@ -681,4 +724,53 @@ class Service(Base):
 			'header_string' : _('Visibility')
 		}
 	)
+
+HostCreateAliasProcedure = SQLFunction(
+	'host_create_alias',
+	args=(
+		InArgument('hid', UInt32()),
+		InArgument('did', UInt32()),
+		InArgument('aname', Unicode(255))
+	),
+	comment='Make a host alias (CNAME in DNS-speak)',
+	is_procedure=True
+)
+
+HostsAliasesView = View(
+	'hosts_aliases',
+	DBSession.query(
+		Host.id.label('hostid'),
+		Host.group_id.label('hgid'),
+		Host.entity_id.label('entityid'),
+		Host.domain_id.label('domainid'),
+		Host.name.label('name'),
+		Host.original_id.label('aliasid'),
+		Host.alias_type.label('aliastype'),
+		Host.creation_time.label('ctime'),
+		Host.modification_time.label('mtime'),
+		Host.created_by_id.label('cby'),
+		Host.modified_by_id.label('mby'),
+		Host.description.label('descr')
+	).select_from(Host).filter(Host.original_id != None),
+	check_option='CASCADED'
+)
+
+HostsRealView = View(
+	'hosts_real',
+	DBSession.query(
+		Host.id.label('hostid'),
+		Host.group_id.label('hgid'),
+		Host.entity_id.label('entityid'),
+		Host.domain_id.label('domainid'),
+		Host.name.label('name'),
+		literal_column('NULL').label('aliasid'),
+		Host.alias_type.label('aliastype'),
+		Host.creation_time.label('ctime'),
+		Host.modification_time.label('mtime'),
+		Host.created_by_id.label('cby'),
+		Host.modified_by_id.label('mby'),
+		Host.description.label('descr')
+	).select_from(Host).filter(Host.original_id == None),
+	check_option='CASCADED'
+)
 

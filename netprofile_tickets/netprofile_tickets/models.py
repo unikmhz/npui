@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -85,7 +85,11 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault,
+	Trigger
+)
 from netprofile.db.clauses import IntervalSeconds
 from netprofile.db.util import (
 	populate_related,
@@ -171,7 +175,7 @@ class TicketOrigin(Base):
 	id = Column(
 		'toid',
 		UInt32(),
-		Sequence('tickets_origins_toid_seq'),
+		Sequence('tickets_origins_toid_seq', start=101, increment=1),
 		Comment('Ticket origin ID'),
 		primary_key=True,
 		nullable=False,
@@ -593,6 +597,8 @@ class TicketFlag(Base):
 		Comment('Ticket flag mappings'),
 		Index('tickets_flags_def_u_tf', 'ticketid', 'tftid', unique=True),
 		Index('tickets_flags_def_i_tftid', 'tftid'),
+		Trigger('after', 'insert', 't_tickets_flags_def_ai'),
+		Trigger('after', 'delete', 't_tickets_flags_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -822,6 +828,11 @@ class Ticket(Base):
 		Index('tickets_def_i_assigned_gid', 'assigned_gid'),
 		Index('tickets_def_i_toid', 'toid'),
 		Index('tickets_def_i_archived', 'archived'),
+		Trigger('before', 'insert', 't_tickets_def_bi'),
+		Trigger('before', 'update', 't_tickets_def_bu'),
+		Trigger('after', 'insert', 't_tickets_def_ai'),
+		Trigger('after', 'update', 't_tickets_def_au'),
+		Trigger('after', 'delete', 't_tickets_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1053,10 +1064,9 @@ class Ticket(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified'),
 			'read_only'     : True
@@ -1212,6 +1222,7 @@ class Ticket(Base):
 			val = int(flt['childid']['eq'])
 			if val > 0:
 				query = query.join(TicketDependency, Ticket.id == TicketDependency.parent_id).filter(TicketDependency.child_id == val)
+		# FIXME: check TICKETS_LIST_ARCHIVED, TICKETS_OWN_LIST, TICKETS_OWNGROUP_LIST and ACLs
 		return query
 
 	@classmethod
@@ -1638,9 +1649,9 @@ class TicketChange(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Ticket change timestamp'),
+		CurrentTimestampDefault(),
 		nullable=False,
 #		default=
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Time')
 		}
@@ -2326,6 +2337,8 @@ class TicketDependency(Base):
 	__table_args__ = (
 		Comment('Ticket resolution dependencies'),
 		Index('tickets_dependencies_i_ticketid_child', 'ticketid_child'),
+		Trigger('before', 'insert', 't_tickets_dependencies_bi'),
+		Trigger('before', 'update', 't_tickets_dependencies_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',

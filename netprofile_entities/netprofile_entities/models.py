@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -41,7 +41,9 @@ __all__ = [
 	'PhysicalEntity',
 	'LegalEntity',
 	'StructuralEntity',
-	'ExternalEntity'
+	'ExternalEntity',
+
+	'EntitiesBaseView'
 ]
 
 import datetime as dt
@@ -57,7 +59,9 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
+	literal_column,
 	func,
+	select,
 	text,
 	or_
 )
@@ -87,7 +91,12 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault,
+	Trigger,
+	View
+)
 from netprofile.db.util import (
 	populate_related,
 	populate_related_list
@@ -214,6 +223,9 @@ class Entity(Base):
 		Index('entities_def_i_esid', 'esid'),
 		Index('entities_def_i_nick', 'nick'),
 		Index('entities_def_u_nt', 'etype', 'nick', unique=True),
+		Trigger('after', 'insert', 't_entities_def_ai'),
+		Trigger('after', 'update', 't_entities_def_au'),
+		Trigger('after', 'delete', 't_entities_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -422,10 +434,9 @@ class Entity(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified')
 		}
@@ -1271,9 +1282,9 @@ class EntityComment(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Time stamp'),
+		CurrentTimestampDefault(),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Time')
 		}
@@ -1297,7 +1308,8 @@ class EntityComment(Base):
 		default=False,
 		server_default=npbool(False),
 		info={
-			'header_string' : _('Obsolete')
+			'header_string' : _('Obsolete'),
+			'write_cap'     : 'ENTITIES_COMMENTS_MARK'
 		}
 	)
 	text = Column(
@@ -1337,6 +1349,8 @@ class PhysicalEntity(Entity):
 		Index('entities_physical_u_contractid', 'contractid', unique=True),
 		Index('entities_physical_i_name_family', 'name_family'),
 		Index('entities_physical_i_name_given', 'name_given'),
+		Trigger('before', 'insert', 't_entities_physical_bi'),
+		Trigger('after', 'delete', 't_entities_physical_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1610,6 +1624,8 @@ class LegalEntity(Entity):
 		Comment('Legal entities'),
 		Index('entities_legal_u_name', 'name', unique=True),
 		Index('entities_legal_u_contractid', 'contractid', unique=True),
+		Trigger('before', 'insert', 't_entities_legal_bi'),
+		Trigger('after', 'delete', 't_entities_legal_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1895,6 +1911,7 @@ class StructuralEntity(Entity):
 	__tablename__ = 'entities_structural'
 	__table_args__ = (
 		Comment('Structural entities'),
+		Trigger('after', 'delete', 't_entities_structural_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1991,6 +2008,7 @@ class ExternalEntity(Entity):
 	__tablename__ = 'entities_external'
 	__table_args__ = (
 		Comment('External entities'),
+		Trigger('after', 'delete', 't_entities_external_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -2120,4 +2138,22 @@ class EntityHistoryPart(object):
 			'icon' : self.icon,
 			'text' : self.text
 		}
+
+EntitiesBaseView = View(
+	'entities_base',
+	DBSession.query(
+		Entity.id.label('entityid'),
+		literal_column('NULL').label('parentid'),
+		Entity.nick.label('nick'),
+		Entity.state_id.label('esid'),
+		Entity.relative_dn.label('rdn'),
+		Entity.type.label('etype'),
+		Entity.creation_time.label('ctime'),
+		Entity.modification_time.label('mtime'),
+		Entity.created_by_id.label('cby'),
+		Entity.modified_by_id.label('mby'),
+		Entity.description.label('descr')
+	).select_from(Entity.__table__).filter(Entity.parent_id == None),
+	check_option='CASCADED'
+)
 

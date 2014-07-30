@@ -8,155 +8,155 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_xop 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-02-12 07:58+0400\n"
+"POT-Creation-Date: 2014-07-30 12:59+0400\n"
 "PO-Revision-Date: 2014-02-12 07:58+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
-"X-Generator: Poedit 1.5.5\n"
 
-#: netprofile_xop/__init__.py:65 netprofile_xop/models.py:134
+#: netprofile_xop/__init__.py:97 netprofile_xop/models.py:140
 #: netprofile_xop/views.py:55
 msgid "External Operations"
 msgstr "Внешние операции"
 
-#: netprofile_xop/models.py:96
+#: netprofile_xop/models.py:101
 msgid "New"
 msgstr "Новая"
 
-#: netprofile_xop/models.py:97
+#: netprofile_xop/models.py:102
 msgid "Checked"
 msgstr "Проверена"
 
-#: netprofile_xop/models.py:98
+#: netprofile_xop/models.py:103
 msgid "Pending"
 msgstr "Ожидает"
 
-#: netprofile_xop/models.py:99
+#: netprofile_xop/models.py:104
 msgid "Confirmed"
 msgstr "Подверждена"
 
-#: netprofile_xop/models.py:100
+#: netprofile_xop/models.py:105
 msgid "Cleared"
 msgstr "Обработана"
 
-#: netprofile_xop/models.py:101
+#: netprofile_xop/models.py:106
 msgid "Canceled"
 msgstr "Отменена"
 
-#: netprofile_xop/models.py:107
+#: netprofile_xop/models.py:112
 msgid "HTTP Basic"
 msgstr "HTTP Basic"
 
-#: netprofile_xop/models.py:108
+#: netprofile_xop/models.py:113
 msgid "Request MD5"
 msgstr "MD5 в запросе"
 
-#: netprofile_xop/models.py:109
+#: netprofile_xop/models.py:114
 msgid "Request SHA1"
 msgstr "SHA1 в запросе"
 
-#: netprofile_xop/models.py:157 netprofile_xop/models.py:348
+#: netprofile_xop/models.py:163 netprofile_xop/models.py:352
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_xop/models.py:168
+#: netprofile_xop/models.py:174
 msgid "External ID"
 msgstr "Внешний ID"
 
-#: netprofile_xop/models.py:179
+#: netprofile_xop/models.py:185
 msgid "External Account"
 msgstr "Внешний счёт"
 
-#: netprofile_xop/models.py:189
+#: netprofile_xop/models.py:195
 msgid "Provider"
 msgstr "Провайдер"
 
-#: netprofile_xop/models.py:202
+#: netprofile_xop/models.py:206
 msgid "Date"
 msgstr "Дата"
 
-#: netprofile_xop/models.py:214
+#: netprofile_xop/models.py:218
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_xop/models.py:228
+#: netprofile_xop/models.py:232
 msgid "Stash"
 msgstr "Счёт"
 
-#: netprofile_xop/models.py:241
+#: netprofile_xop/models.py:245
 msgid "Amount"
 msgstr "Сумма"
 
-#: netprofile_xop/models.py:251
+#: netprofile_xop/models.py:255
 msgid "State"
 msgstr "Состояние"
 
-#: netprofile_xop/models.py:325
+#: netprofile_xop/models.py:329
 msgid "Providers"
 msgstr "Провайдеры"
 
-#: netprofile_xop/models.py:335
+#: netprofile_xop/models.py:339
 msgid "Add new provider"
 msgstr "Добавить нового провайдера"
 
-#: netprofile_xop/models.py:358
+#: netprofile_xop/models.py:362
 msgid "URI"
 msgstr "URI"
 
-#: netprofile_xop/models.py:367
+#: netprofile_xop/models.py:371
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_xop/models.py:379
+#: netprofile_xop/models.py:383
 msgid "Short Name"
 msgstr "Краткое название"
 
-#: netprofile_xop/models.py:390
+#: netprofile_xop/models.py:394
 msgid "Enabled"
 msgstr "Включен"
 
-#: netprofile_xop/models.py:401
+#: netprofile_xop/models.py:405
 msgid "Access List"
 msgstr "Список доступа"
 
-#: netprofile_xop/models.py:410
+#: netprofile_xop/models.py:414
 msgid "Gateway"
 msgstr "Шлюз"
 
-#: netprofile_xop/models.py:422
+#: netprofile_xop/models.py:426
 msgid "Operation Type"
 msgstr "Тип операции"
 
-#: netprofile_xop/models.py:435
+#: netprofile_xop/models.py:439
 msgid "Minimum Amount"
 msgstr "Мин. сумма"
 
-#: netprofile_xop/models.py:446
+#: netprofile_xop/models.py:450
 msgid "Maximum Amount"
 msgstr "Макс. сумма"
 
-#: netprofile_xop/models.py:457
+#: netprofile_xop/models.py:461
 msgid "Auth Type"
 msgstr "Тип авторизации"
 
-#: netprofile_xop/models.py:468
+#: netprofile_xop/models.py:472
 msgid "Auth Options"
 msgstr "Настройки авторизации"
 
-#: netprofile_xop/models.py:479
+#: netprofile_xop/models.py:483
 msgid "Auth User"
 msgstr "Пользователь для авторизации"
 
-#: netprofile_xop/models.py:490
+#: netprofile_xop/models.py:494
 msgid "Auth Password"
 msgstr "Пароль для авторизации"
 
-#: netprofile_xop/models.py:501
+#: netprofile_xop/models.py:505
 msgid "Description"
 msgstr "Описание"
+

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -80,7 +80,8 @@ class Module(ModuleBase):
 		config.add_route('core.file.upload', '/file/ul', vhost='MAIN')
 		config.add_route('core.file.mount', '/file/mount/{ffid:\d+}*filename', vhost='MAIN')
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
 		return (
 			NPModule,
 			User,
@@ -100,16 +101,368 @@ class Module(ModuleBase):
 			LogData,
 			NPSession,
 			PasswordHistory,
-			GlobalSettingSection,
-			UserSettingSection,
 			GlobalSetting,
-			UserSettingType,
+			GlobalSettingSection,
 			UserSetting,
+			UserSettingSection,
+			UserSettingType,
 			DataCache,
 			Calendar,
 			CalendarImport,
 			Event
 		)
+
+	@classmethod
+	def get_sql_functions(cls):
+		return (
+			HWAddrHexIEEEFunction,
+			HWAddrHexLinuxFunction,
+			HWAddrHexWindowsFunction,
+			HWAddrUnhexFunction
+		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_core.models import UserState
+		# FIXME: localization
+		log = (
+			LogAction(id=1, name='Created'),
+			LogAction(id=2, name='Edited'),
+			LogAction(id=3, name='Deleted'),
+			LogAction(id=4, name='Copied'),
+			LogAction(id=5, name='Moved'),
+			LogAction(id=6, name='Renamed'),
+			LogAction(id=7, name='Executed'),
+			LogAction(id=8, name='Backed up'),
+			LogAction(id=9, name='Restored from backup'),
+			LogAction(id=10, name='Logged in'),
+			LogAction(id=11, name='Logged out'),
+			LogAction(id=12, name='Failed login'),
+			LogType(id=1, name='Generic'),
+			LogType(id=7, name='Users'),
+			LogType(id=11, name='Groups'),
+			LogType(id=17, name='Files'),
+			LogType(id=20, name='Folders')
+		)
+		for obj in log:
+			sess.add(obj)
+		sess.flush()
+
+		grp_admins = Group(name='Administrators')
+		sess.add(grp_admins)
+
+		privs = (
+			Privilege(
+				code='BASE_ADMIN',
+				name='Access: Administrative Tasks'
+			),
+			Privilege(
+				code='BASE_USERS',
+				name='Access: Users'
+			),
+			Privilege(
+				code='BASE_GROUPS',
+				name='Access: Groups'
+			),
+			Privilege(
+				code='USERS_LIST',
+				name='Users: List'
+			),
+			Privilege(
+				code='USERS_CREATE',
+				name='Users: Create',
+				has_acls=True,
+				resource_class='NPGroup'
+			),
+			Privilege(
+				code='USERS_EDIT',
+				name='Users: Edit',
+				has_acls=True,
+				resource_class='NPGroup'
+			),
+			Privilege(
+				code='USERS_DELETE',
+				name='Users: Delete',
+				has_acls=True,
+				resource_class='NPGroup'
+			),
+			Privilege(
+				code='USERS_GETCAP',
+				name='Users: Display Capabilities'
+			),
+			Privilege(
+				code='USERS_SETCAP',
+				name='Users: Modify Capabilities',
+				has_acls=True,
+				resource_class='NPGroup'
+			),
+			Privilege(
+				code='USERS_GETACL',
+				name='Users: Display ACLs'
+			),
+			Privilege(
+				code='USERS_SETACL',
+				name='Users: Set ACLs',
+				has_acls=True,
+				resource_class='NPUser'
+			),
+			Privilege(
+				code='GROUPS_LIST',
+				name='Groups: List'
+			),
+			Privilege(
+				code='GROUPS_CREATE',
+				name='Groups: Create',
+				has_acls=True,
+				resource_class='NPGroup'
+			),
+			Privilege(
+				code='GROUPS_EDIT',
+				name='Groups: Edit',
+				has_acls=True,
+				resource_class='NPGroup'
+			),
+			Privilege(
+				code='GROUPS_DELETE',
+				name='Groups: Delete',
+				has_acls=True,
+				resource_class='NPGroup'
+			),
+			Privilege(
+				code='GROUPS_GETCAP',
+				name='Groups: Display Capabilities'
+			),
+			Privilege(
+				code='GROUPS_SETCAP',
+				name='Groups: Modify Capabilities',
+				has_acls=True,
+				resource_class='NPGroup'
+			),
+			Privilege(
+				code='GROUPS_GETACL',
+				name='Groups: Display ACLs'
+			),
+			Privilege(
+				code='GROUPS_SETACL',
+				name='Groups: Set ACLs',
+				has_acls=True,
+				resource_class='NPGroup'
+			),
+			Privilege(
+				code='FILES_LIST',
+				name='Files: List'
+			),
+			Privilege(
+				code='FILES_SHOWALL',
+				name='Files: Full Access'
+			),
+			Privilege(
+				code='FILES_UPLOAD',
+				name='Files: Upload'
+			),
+			Privilege(
+				code='FILES_DELETE',
+				name='Files: Delete'
+			),
+			Privilege(
+				code='FILES_EDIT',
+				name='Files: Edit'
+			),
+			Privilege(
+				code='PRIVILEGES_LIST',
+				name='Privileges: List'
+			),
+			Privilege(
+				code='PRIVILEGES_CREATE',
+				name='Privileges: Create'
+			),
+			Privilege(
+				code='PRIVILEGES_EDIT',
+				name='Privileges: Edit'
+			),
+			Privilege(
+				code='PRIVILEGES_DELETE',
+				name='Privileges: Delete'
+			),
+			Privilege(
+				code='SECPOL_LIST',
+				name='Security Policies: List'
+			),
+			Privilege(
+				code='SECPOL_CREATE',
+				name='Security Policies: Create'
+			),
+			Privilege(
+				code='SECPOL_EDIT',
+				name='Security Policies: Edit'
+			),
+			Privilege(
+				code='SECPOL_DELETE',
+				name='Security Policies: Delete'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		sess.flush()
+		for priv in privs:
+			cap = GroupCapability()
+			cap.group = grp_admins
+			cap.privilege = priv
+			sess.add(cap)
+
+		gss_admin = GlobalSettingSection( # no old id
+			module=modobj,
+			name='Administrative',
+			description='Administrative settings.'
+		)
+		gss_vfs = GlobalSettingSection( # old id 8
+			module=modobj,
+			name='File System',
+			description='Virtual File System setup.'
+		)
+
+		sess.add(gss_admin)
+		sess.add(gss_vfs)
+
+		uss_looknfeel = UserSettingSection( # old id 1
+			module=modobj,
+			name='Look and Feel',
+			description='Basic settings for customizing NetProfile user interface.'
+		)
+		uss_locale = UserSettingSection( # old id 5
+			module=modobj,
+			name='Localization',
+			description='Options related to language and regional settings.'
+		)
+		uss_outbox = UserSettingSection ( # old id 3
+			module=modobj,
+			name='Outgoing Messages',
+			description='Configuration of protocol and server for outgoing messages.'
+		)
+		uss_inbox = UserSettingSection ( # old id 4
+			module=modobj,
+			name='Incoming Messages',
+			description='Configuration of protocol and server for incoming messages.'
+		)
+
+		sess.add(uss_looknfeel)
+		sess.add(uss_locale)
+		sess.add(uss_outbox)
+		sess.add(uss_inbox)
+
+		ust_datagrid_perpage = UserSettingType(
+			section=uss_looknfeel,
+			module=modobj,
+			name='datagrid_perpage',
+			title='Number of elements per page',
+			type='text',
+			default='20',
+			constraints={
+				'cast'   : 'int',
+				'minval' : 1,
+				'maxval' : 200
+			},
+			description='Maximum number of rows to display on a single page of a table or grid.'
+		)
+		ust_datagrid_showrange = UserSettingType(
+			section=uss_looknfeel,
+			module=modobj,
+			name='datagrid_showrange',
+			title='Show result range',
+			type='checkbox',
+			default='true',
+			description='Show current range of displayed entries in grid footer.'
+		)
+		ust_csv_charset = UserSettingType(
+			section=uss_locale,
+			module=modobj,
+			name='csv_charset',
+			title='CSV charset',
+			type='text',
+			default='UTF-8',
+			description='Character set and encoding used when generating CSV files. Be warned that specifying non-unicode character set here can corrupt the data in the CSV.'
+		)
+
+		sess.add(ust_datagrid_perpage)
+		sess.add(ust_datagrid_showrange)
+		sess.add(ust_csv_charset)
+
+		gs_login_allowed = GlobalSetting(
+			section=gss_admin,
+			module=modobj,
+			name='login_allowed',
+			title='Allow logging in',
+			type='checkbox',
+			value='true',
+			default='true',
+			description='Allow logging in to the user interface for non-admin users.'
+		)
+		gs_vfs_root_uid = GlobalSetting(
+			section=gss_vfs,
+			module=modobj,
+			name='vfs_root_uid',
+			title='Root User ID',
+			type='text',
+			value='0',
+			default='0',
+			constraints={
+				'cast'   : 'int',
+				'nullok' : False,
+				'minval' : 0
+			},
+			description='User ID of the owner of the root folder.'
+		)
+		gs_vfs_root_gid = GlobalSetting(
+			section=gss_vfs,
+			module=modobj,
+			name='vfs_root_gid',
+			title='Root Group ID',
+			type='text',
+			value='0',
+			default='0',
+			constraints={
+				'cast'   : 'int',
+				'nullok' : False,
+				'minval' : 0
+			},
+			description='Group ID of the owning group of the root folder.'
+		)
+		gs_vfs_root_rights = GlobalSetting(
+			section=gss_vfs,
+			module=modobj,
+			name='vfs_root_rights',
+			title='Root Rights',
+			type='text',
+			value='509',
+			default='509',
+			constraints={
+				'cast'   : 'int',
+				'nullok' : False,
+				'minval' : 0,
+				'maxval' : 1023
+			},
+			description='Bitmask specifying access rights for the root folder.'
+		)
+
+		sess.add(gs_login_allowed)
+		sess.add(gs_vfs_root_uid)
+		sess.add(gs_vfs_root_gid)
+		sess.add(gs_vfs_root_rights)
+
+		admin = User(
+			group=grp_admins,
+			state=UserState.active,
+			login='admin',
+			password='16lG71d3e58569b3e8730ad79ae7bd12a277defbc158',
+			a1_hash='50c87497ceb6224572e2bce64611fcbc',
+			enabled=True,
+			name_given='Admin',
+			name_family='User',
+			title='Admin User'
+		)
+
+		sess.add(admin)
 
 	def get_menus(self):
 		return (

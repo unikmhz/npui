@@ -8,113 +8,112 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_sessions 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-02-10 16:51+0400\n"
-"PO-Revision-Date: 2014-02-10 16:52+0300\n"
+"POT-Creation-Date: 2014-07-30 12:59+0400\n"
+"PO-Revision-Date: 2014-07-29 06:55+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
-"X-Generator: Poedit 1.5.5\n"
 
-#: netprofile_sessions/__init__.py:62 netprofile_sessions/models.py:91
+#: netprofile_sessions/__init__.py:114 netprofile_sessions/models.py:108
 msgid "Sessions"
 msgstr "Сессии"
 
-#: netprofile_sessions/models.py:124 netprofile_sessions/models.py:380
+#: netprofile_sessions/models.py:141 netprofile_sessions/models.py:395
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_sessions/models.py:132 netprofile_sessions/models.py:388
+#: netprofile_sessions/models.py:149 netprofile_sessions/models.py:403
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_sessions/models.py:144 netprofile_sessions/models.py:398
+#: netprofile_sessions/models.py:161 netprofile_sessions/models.py:413
 msgid "Station"
 msgstr "Станция"
 
-#: netprofile_sessions/models.py:156 netprofile_sessions/models.py:410
+#: netprofile_sessions/models.py:173 netprofile_sessions/models.py:425
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_sessions/models.py:170 netprofile_sessions/models.py:424
+#: netprofile_sessions/models.py:187 netprofile_sessions/models.py:439
 msgid "IPv4 Address"
 msgstr "Адрес IPv4"
 
-#: netprofile_sessions/models.py:183 netprofile_sessions/models.py:437
+#: netprofile_sessions/models.py:200 netprofile_sessions/models.py:452
 msgid "IPv6 Address"
 msgstr "Адрес IPv6"
 
-#: netprofile_sessions/models.py:196 netprofile_sessions/models.py:450
+#: netprofile_sessions/models.py:213 netprofile_sessions/models.py:465
 msgid "Destination"
 msgstr "Направление"
 
-#: netprofile_sessions/models.py:209 netprofile_sessions/models.py:463
+#: netprofile_sessions/models.py:226 netprofile_sessions/models.py:478
 msgid "NAS"
 msgstr "NAS"
 
-#: netprofile_sessions/models.py:221 netprofile_sessions/models.py:475
+#: netprofile_sessions/models.py:238 netprofile_sessions/models.py:490
 msgid "Calling Station"
 msgstr "Вызывающая сторона"
 
-#: netprofile_sessions/models.py:232 netprofile_sessions/models.py:486
+#: netprofile_sessions/models.py:249 netprofile_sessions/models.py:501
 msgid "Called Station"
 msgstr "Вызываемая сторона"
 
-#: netprofile_sessions/models.py:243 netprofile_sessions/models.py:497
+#: netprofile_sessions/models.py:259 netprofile_sessions/models.py:511
 msgid "Started"
 msgstr "Начало"
 
-#: netprofile_sessions/models.py:254
+#: netprofile_sessions/models.py:269
 msgid "Updated"
 msgstr "Обновление"
 
-#: netprofile_sessions/models.py:265 netprofile_sessions/models.py:519
+#: netprofile_sessions/models.py:280 netprofile_sessions/models.py:532
 msgid "Used Ingress"
 msgstr "Исп. входящего"
 
-#: netprofile_sessions/models.py:276 netprofile_sessions/models.py:530
+#: netprofile_sessions/models.py:291 netprofile_sessions/models.py:543
 msgid "Used Egress"
 msgstr "Исп. исходящего"
 
-#: netprofile_sessions/models.py:287 netprofile_sessions/models.py:541
+#: netprofile_sessions/models.py:302 netprofile_sessions/models.py:554
 msgid "Ingress Policy"
 msgstr "Входящая политика"
 
-#: netprofile_sessions/models.py:298 netprofile_sessions/models.py:552
+#: netprofile_sessions/models.py:313 netprofile_sessions/models.py:565
 msgid "Egress Policy"
 msgstr "Исходящая полоитика"
 
-#: netprofile_sessions/models.py:348
+#: netprofile_sessions/models.py:363
 msgid "History"
 msgstr "История"
 
-#: netprofile_sessions/models.py:508
+#: netprofile_sessions/models.py:521
 msgid "Ended"
 msgstr "Конец"
 
-#: netprofile_sessions/views.py:60 netprofile_sessions/views.py:96
-#: netprofile_sessions/templates/client_block_sessions.mak:4
+#: netprofile_sessions/views.py:60 netprofile_sessions/views.py:95
+#: netprofile_sessions/templates/client_block_sessions.mak:3
 #: netprofile_sessions/templates/client_sessions.mak:6
 #: netprofile_sessions/templates/client_sessions.mak:14
 msgid "Active Sessions"
 msgstr "Активные сессии"
 
-#: netprofile_sessions/views.py:68 netprofile_sessions/views.py:111
-#: netprofile_sessions/templates/client_block_sessions.mak:5
+#: netprofile_sessions/views.py:68 netprofile_sessions/views.py:110
+#: netprofile_sessions/templates/client_block_sessions.mak:4
 #: netprofile_sessions/templates/client_sessions.mak:8
 #: netprofile_sessions/templates/client_sessions.mak:16
 msgid "Past Sessions"
 msgstr "Закрытые сессии"
 
-#: netprofile_sessions/templates/client_block_sessions.mak:4
+#: netprofile_sessions/templates/client_block_sessions.mak:3
 msgid "Show currently active sessions of this user"
 msgstr "Показать текущие сессии этой учётной записи"
 
-#: netprofile_sessions/templates/client_block_sessions.mak:5
+#: netprofile_sessions/templates/client_block_sessions.mak:4
 msgid "Show past sessions of this user"
 msgstr "Показать закрытые сессии этой учётной записи"
 
@@ -126,29 +125,29 @@ msgstr "Учётная запись"
 #: netprofile_sessions/templates/client_sessions.mak:34
 #: netprofile_sessions/templates/client_sessions.mak:74
 msgid "From"
-msgstr ""
+msgstr "С"
 
 #: netprofile_sessions/templates/client_sessions.mak:33
 msgid "Enter starting date of the range"
-msgstr ""
+msgstr "Укажите начальную дату"
 
 #: netprofile_sessions/templates/client_sessions.mak:44
 #: netprofile_sessions/templates/client_sessions.mak:51
 #: netprofile_sessions/templates/client_sessions.mak:75
 msgid "Till"
-msgstr ""
+msgstr "По"
 
 #: netprofile_sessions/templates/client_sessions.mak:50
 msgid "Enter ending date of the range"
-msgstr ""
+msgstr "Укажите конечную дату"
 
 #: netprofile_sessions/templates/client_sessions.mak:61
 msgid "Change filter"
-msgstr ""
+msgstr "Изменить фильтр"
 
 #: netprofile_sessions/templates/client_sessions.mak:63
 msgid "Filter"
-msgstr ""
+msgstr "Показать"
 
 #: netprofile_sessions/templates/client_sessions.mak:76
 msgid "Client"
@@ -172,4 +171,5 @@ msgstr "Сессии не найдены."
 
 #: netprofile_sessions/templates/client_sessions.mak:120
 msgid "(current)"
-msgstr ""
+msgstr "(текущая)"
+

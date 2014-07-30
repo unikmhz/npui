@@ -106,10 +106,7 @@ class VHostPredicate(object):
 			return (self.current is None)
 		return self.needed == self.current
 
-def main(global_config, **settings):
-	"""
-	Pyramid WSGI application for most of NetProfile vhosts.
-	"""
+def setup_config(settings):
 	global inst_id
 
 	settings['netprofile.debug'] = asbool(settings.get('netprofile.debug'))
@@ -119,11 +116,17 @@ def main(global_config, **settings):
 	DBSession.configure(bind=engine)
 	cache.cache = cache.configure_cache(settings)
 
-	config = Configurator(
+	return Configurator(
 		settings=settings,
 		root_factory=RootFactory,
 		locale_negotiator=locale_neg
 	)
+
+def main(global_config, **settings):
+	"""
+	Pyramid WSGI application for most of NetProfile vhosts.
+	"""
+	config = setup_config(settings)
 
 	config.add_subscriber(
 		'netprofile.common.subscribers.add_renderer_globals',

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,8 +28,8 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_stashes')
@@ -51,13 +51,194 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('entities',)
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_stashes import models
 		return (
-			FuturePayment,
-			Stash,
-			StashIO,
-			StashIOType,
-			StashOperation
+			models.FuturePayment,
+			models.Stash,
+			models.StashIO,
+			models.StashIOType,
+			models.StashOperation
+		)
+
+	@classmethod
+	def get_sql_functions(cls):
+		from netprofile_stashes import models
+		return (
+			models.FuturesPollProcedure,
+		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_stashes.models import (
+			IOOperationType,
+			OperationClass,
+			StashIOType
+		)
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			LogType,
+			Privilege
+		)
+
+		sess.add(LogType(
+			id=12,
+			name='Stashes'
+		))
+		sess.add(LogType(
+			id=16,
+			name='Promised Payments'
+		))
+
+		privs = (
+			Privilege(
+				code='BASE_STASHES',
+				name='Access: Stashes'
+			),
+			Privilege(
+				code='STASHES_LIST',
+				name='Stashes: List'
+			),
+			Privilege(
+				code='STASHES_CREATE',
+				name='Stashes: Create'
+			),
+			Privilege(
+				code='STASHES_EDIT',
+				name='Stashes: Edit'
+			),
+			Privilege(
+				code='STASHES_DELETE',
+				name='Stashes: Delete'
+			),
+			Privilege(
+				code='STASHES_IO',
+				name='Stashes: Operations'
+			),
+			Privilege(
+				code='STASHES_IOTYPES_CREATE',
+				name='Stashes: Create op. types'
+			),
+			Privilege(
+				code='STASHES_IOTYPES_EDIT',
+				name='Stashes: Edit op. types'
+			),
+			Privilege(
+				code='STASHES_IOTYPES_DELETE',
+				name='Stashes: Delete op. types'
+			),
+			Privilege(
+				code='BASE_FUTURES',
+				name='Access: Promised payments'
+			),
+			Privilege(
+				code='FUTURES_LIST',
+				name='Promised payments: List'
+			),
+			Privilege(
+				code='FUTURES_CREATE',
+				name='Promised payments: Create'
+			),
+			Privilege(
+				code='FUTURES_EDIT',
+				name='Promised payments: Edit'
+			),
+			Privilege(
+				code='FUTURES_APPROVE',
+				name='Promised payments: Approve'
+			),
+			Privilege(
+				code='FUTURES_CANCEL',
+				name='Promised payments: Cancel'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
+
+		siotypes = (
+			StashIOType(
+				id=1,
+				name='Subscription fee',
+				io_class=OperationClass.system,
+				type=IOOperationType.outgoing,
+				oper_visible=False,
+				user_visible=True,
+				description='Periodic withdrawal of funds for an active service.'
+			),
+			StashIOType(
+				id=2,
+				name='Postpaid service fee',
+				io_class=OperationClass.system,
+				type=IOOperationType.outgoing,
+				oper_visible=False,
+				user_visible=True,
+				description='Withdrawal of funds for used service.'
+			),
+			StashIOType(
+				id=3,
+				name='Reimbursement for unused subscription fee.',
+				io_class=OperationClass.system,
+				type=IOOperationType.incoming,
+				oper_visible=False,
+				user_visible=True,
+				description='Addition of funds that is a result of tariff recalculation or operator action.'
+			),
+			StashIOType(
+				id=4,
+				name='Confirmation of promised payment',
+				io_class=OperationClass.system,
+				type=IOOperationType.bidirectional,
+				oper_visible=False,
+				user_visible=True,
+				description='This operation is a result of a payment promise being fulfilled.'
+			),
+			StashIOType(
+				id=5,
+				name='Transfer from another stash',
+				io_class=OperationClass.system,
+				type=IOOperationType.incoming,
+				oper_visible=False,
+				user_visible=True,
+				description='Addition of funds that were transferred from another stash.'
+			),
+			StashIOType(
+				id=6,
+				name='Transfer to another stash',
+				io_class=OperationClass.system,
+				type=IOOperationType.outgoing,
+				oper_visible=False,
+				user_visible=True,
+				description='Withdrawal of funds that were transferred to another stash.'
+			),
+			StashIOType(
+				id=7,
+				name='Payment for service activation',
+				io_class=OperationClass.system,
+				type=IOOperationType.outgoing,
+				oper_visible=False,
+				user_visible=True,
+				description='Initial payment for activation of an auxiliary service.',
+			),
+			StashIOType(
+				id=8,
+				name='Payment for maintaining service',
+				io_class=OperationClass.system,
+				type=IOOperationType.outgoing,
+				oper_visible=False,
+				user_visible=True,
+				description='Periodic payment for maintaining an auxiliary service.'
+			)
 		)
 
 	def get_css(self, request):

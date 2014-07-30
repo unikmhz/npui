@@ -3,7 +3,7 @@
 #
 # NetProfile: Domains module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -32,7 +32,14 @@ __all__ = [
 	'Domain',
 	'DomainAlias',
 	'DomainTXTRecord',
-	'DomainServiceType'
+	'DomainServiceType',
+
+	'DomainGetFullFunction',
+
+	'DomainsBaseView',
+	'DomainsEnabledView',
+	'DomainsPublicView',
+	'DomainsSignedView'
 ]
 
 from sqlalchemy import (
@@ -43,6 +50,7 @@ from sqlalchemy import (
 	Sequence,
 	Unicode,
 	UnicodeText,
+	literal_column,
 	text,
 	Text
 )
@@ -54,7 +62,10 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from netprofile.db.connection import Base
+from netprofile.db.connection import (
+	Base,
+	DBSession
+)
 from netprofile.db.fields import (
 	ASCIIString,
 	ASCIIText,
@@ -66,7 +77,13 @@ from netprofile.db.fields import (
 	UInt32,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	SQLFunction,
+	SQLFunctionArgument,
+	Trigger,
+	View
+)
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import (
@@ -92,6 +109,9 @@ class Domain(Base):
 	__table_args__ = (
 		Comment('Domains'),
 		Index('domains_def_u_domain', 'parentid', 'name', unique=True),
+		Trigger('after', 'insert', 't_domains_def_ai'),
+		Trigger('after', 'update', 't_domains_def_au'),
+		Trigger('after', 'delete', 't_domains_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -421,6 +441,8 @@ class DomainTXTRecord(Base):
 	__table_args__ = (
 		Comment('Domain TXT records'),
 		Index('domains_txtrr_u_txtrr', 'domainid', 'name', unique=True),
+		Trigger('before', 'insert', 't_domains_txtrr_bi'),
+		Trigger('before', 'update', 't_domains_txtrr_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -552,7 +574,7 @@ class DomainServiceType(Base):
 	id = Column(
 		'hltypeid',
 		UInt32(),
-		Sequence('domains_hltypes_hltypeid_seq'),
+		Sequence('domains_hltypes_hltypeid_seq', start=101, increment=1),
 		Comment('Domains-hosts linkage type ID'),
 		primary_key=True,
 		nullable=False,
@@ -581,4 +603,100 @@ class DomainServiceType(Base):
 
 	def __str__(self):
 		return '%s' % str(self.name)
+
+DomainGetFullFunction = SQLFunction(
+	'domain_get_full',
+	args=(SQLFunctionArgument('did', UInt32()),),
+	returns=Unicode(255),
+	comment='Get fully qualified name of a domain',
+	writes_sql=False
+)
+
+DomainsBaseView = View(
+	'domains_base',
+	DBSession.query(
+		Domain.id.label('domainid'),
+		literal_column('NULL').label('parentid'),
+		Domain.name.label('name'),
+		Domain.enabled.label('enabled'),
+		Domain.public.label('public'),
+		Domain.signed.label('signed'),
+		Domain.soa_refresh.label('soa_refresh'),
+		Domain.soa_retry.label('soa_retry'),
+		Domain.soa_expire.label('soa_expire'),
+		Domain.soa_minimum.label('soa_minimum'),
+		Domain.serial_date.label('serial_date'),
+		Domain.serial_revision.label('serial_rev'),
+		Domain.dkim_name.label('dkim_name'),
+		Domain.dkim_data.label('dkim_data'),
+		Domain.description.label('descr')
+	).select_from(Domain).filter(Domain.parent_id == None),
+	check_option='CASCADED'
+)
+
+DomainsEnabledView = View(
+	'domains_enabled',
+	DBSession.query(
+		Domain.id.label('domainid'),
+		Domain.parent_id.label('parentid'),
+		Domain.name.label('name'),
+		Domain.enabled.label('enabled'),
+		Domain.public.label('public'),
+		Domain.signed.label('signed'),
+		Domain.soa_refresh.label('soa_refresh'),
+		Domain.soa_retry.label('soa_retry'),
+		Domain.soa_expire.label('soa_expire'),
+		Domain.soa_minimum.label('soa_minimum'),
+		Domain.serial_date.label('serial_date'),
+		Domain.serial_revision.label('serial_rev'),
+		Domain.dkim_name.label('dkim_name'),
+		Domain.dkim_data.label('dkim_data'),
+		Domain.description.label('descr')
+	).select_from(Domain).filter(Domain.enabled == True),
+	check_option='CASCADED'
+)
+
+DomainsPublicView = View(
+	'domains_public',
+	DBSession.query(
+		Domain.id.label('domainid'),
+		Domain.parent_id.label('parentid'),
+		Domain.name.label('name'),
+		Domain.enabled.label('enabled'),
+		Domain.public.label('public'),
+		Domain.signed.label('signed'),
+		Domain.soa_refresh.label('soa_refresh'),
+		Domain.soa_retry.label('soa_retry'),
+		Domain.soa_expire.label('soa_expire'),
+		Domain.soa_minimum.label('soa_minimum'),
+		Domain.serial_date.label('serial_date'),
+		Domain.serial_revision.label('serial_rev'),
+		Domain.dkim_name.label('dkim_name'),
+		Domain.dkim_data.label('dkim_data'),
+		Domain.description.label('descr')
+	).select_from(Domain).filter(Domain.public == True),
+	check_option='CASCADED'
+)
+
+DomainsSignedView = View(
+	'domains_signed',
+	DBSession.query(
+		Domain.id.label('domainid'),
+		Domain.parent_id.label('parentid'),
+		Domain.name.label('name'),
+		Domain.enabled.label('enabled'),
+		Domain.public.label('public'),
+		Domain.signed.label('signed'),
+		Domain.soa_refresh.label('soa_refresh'),
+		Domain.soa_retry.label('soa_retry'),
+		Domain.soa_expire.label('soa_expire'),
+		Domain.soa_minimum.label('soa_minimum'),
+		Domain.serial_date.label('serial_date'),
+		Domain.serial_revision.label('serial_rev'),
+		Domain.dkim_name.label('dkim_name'),
+		Domain.dkim_data.label('dkim_data'),
+		Domain.description.label('descr')
+	).select_from(Domain).filter(Domain.signed == True),
+	check_option='CASCADED'
+)
 

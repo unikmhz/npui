@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Documents module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,8 +28,8 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_documents')
@@ -40,10 +40,68 @@ class Module(ModuleBase):
 		mmgr.cfg.add_translation_dirs('netprofile_documents:locale/')
 		mmgr.cfg.scan()
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_documents import models
 		return (
-			Document,
+			models.Document,
+			models.DocumentBundle,
+			models.DocumentBundleMapping
 		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			Privilege
+		)
+
+		privs = (
+			Privilege(
+				code='DOCUMENTS_LIST',
+				name='Documents: List'
+			),
+			Privilege(
+				code='DOCUMENTS_CREATE',
+				name='Documents: Create'
+			),
+			Privilege(
+				code='DOCUMENTS_EDIT',
+				name='Documents: Edit'
+			),
+			Privilege(
+				code='DOCUMENTS_DELETE',
+				name='Documents: Delete'
+			),
+			Privilege(
+				code='DOCUMENTS_GENERATE',
+				name='Documents: Generate'
+			),
+			Privilege(
+				code='DOCUMENTS_BUNDLES_CREATE',
+				name='Documents: Create Bundles'
+			),
+			Privilege(
+				code='DOCUMENTS_BUNDLES_EDIT',
+				name='Documents: Edit Bundles'
+			),
+			Privilege(
+				code='DOCUMENTS_BUNDLES_DELETE',
+				name='Documents: Delete Bundles'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
 
 	def get_autoload_js(self, request):
 		return (

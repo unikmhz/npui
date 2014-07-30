@@ -17,7 +17,7 @@ requires = [
 	'dogpile.cache >= 0.4.1',
 	'repoze.tm2',
 
-	'SQLAlchemy >= 0.8',
+	'SQLAlchemy >= 0.9',
 	'zope.sqlalchemy',
 	'transaction',
 	'colander >= 0.9.6',
@@ -29,6 +29,8 @@ requires = [
 	'pyramid_debugtoolbar >= 1.0',
 	'pyramid_redis_sessions >= 0.9b5',
 	'pyramid_mailer >= 0.13',
+	'argh >= 0.25',
+	'prettytable >= 0.7',
 	'Babel',
 	'lingua',
 	'lxml',
@@ -78,6 +80,7 @@ setup(
 		[paste.app_factory]
 		main = netprofile:main
 		[console_scripts]
+		npctl = netprofile.scripts.ctl:main
 		np_createdb = netprofile.scripts.createdb:main
 		np_dropdb = netprofile.scripts.dropdb:main
 		np_rtd = netprofile.scripts.rtd:main

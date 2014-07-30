@@ -31,9 +31,6 @@ from __future__ import (
 
 import os
 import sys
-import transaction
-
-from sqlalchemy import engine_from_config
 
 from pyramid import threadlocal
 from pyramid.paster import (
@@ -44,12 +41,10 @@ from pyramid.interfaces import IRendererFactory
 from pyramid.path import DottedNameResolver
 import pyramid_mako
 
-from netprofile.db.connection import (
-	DBSession,
-	Base
-)
+from netprofile import setup_config
+from netprofile.db.connection import DBSession
+from netprofile.db.clauses import SetVariable
 
-from netprofile.common import cache
 from netprofile.common.modules import ModuleManager
 
 def usage(argv):
@@ -64,11 +59,10 @@ def main(argv=sys.argv):
 	config_uri = argv[1]
 	setup_logging(config_uri)
 	settings = get_appsettings(config_uri)
-	cache.cache = cache.configure_cache(settings)
-	engine = engine_from_config(settings, 'sqlalchemy.')
-	DBSession.configure(bind=engine)
+	config = setup_config(settings)
 
 	reg = threadlocal.get_current_registry()
+
 	factory = pyramid_mako.MakoRendererFactory()
 
 	name_resolver = DottedNameResolver()
@@ -80,6 +74,16 @@ def main(argv=sys.argv):
 
 	reg.registerUtility(factory, IRendererFactory, name='.mak')
 
-	ModuleManager.prepare()
-	Base.metadata.create_all(engine)
+	sess = DBSession()
+	mm = ModuleManager(config)
+
+	sess.execute(SetVariable('accessuid', 0))
+	sess.execute(SetVariable('accessgid', 0))
+	sess.execute(SetVariable('accesslogin', '[CREATEDB]'))
+
+	mm.scan()
+	mm.install('core', sess)
+	for moddef in mm.modules:
+		if moddef != 'core':
+			mm.install(moddef, sess)
 

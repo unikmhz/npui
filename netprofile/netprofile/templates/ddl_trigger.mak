@@ -6,7 +6,7 @@ ${trigger.when.upper()} ${trigger.event.upper()}
 ON ${table}
 FOR EACH ROW
 BEGIN
-% elif dialect.name == 'pgsql':
+% elif dialect.name == 'postgresql':
 CREATE FUNCTION ${trigger.name + '_func()'}
 RETURNS TRIGGER AS $$
 BEGIN
@@ -14,7 +14,7 @@ BEGIN
 <%block name="sql"/>\
 % if dialect.name == 'mysql':
 END
-% elif dialect.name == 'pgsql':
+% elif dialect.name == 'postgresql':
 END;
 $$ LANGUAGE 'plpgsql';
 
@@ -25,4 +25,3 @@ FOR EACH ROW
 EXECUTE PROCEDURE
 ${trigger.name + '_func()'};
 % endif
-

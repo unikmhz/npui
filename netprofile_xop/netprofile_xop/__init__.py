@@ -31,8 +31,8 @@ from netprofile.common.modules import (
 	IModuleManager,
 	ModuleBase
 )
-from .models import *
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_xop')
@@ -54,14 +54,38 @@ class Module(ModuleBase):
 		return ('stashes',)
 
 	@classmethod
-	def prepare(cls):
+	def get_models(cls):
 		from netprofile_xop import models
-
-	def get_models(self):
 		return (
-			ExternalOperation,
-			ExternalOperationProvider
+			models.ExternalOperation,
+			models.ExternalOperationProvider
 		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			Privilege
+		)
+
+		privs = (
+			Privilege(
+				code='BASE_XOP',
+				name='Access: External Operations'
+			),
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
 
 	def get_css(self, request):
 		return (

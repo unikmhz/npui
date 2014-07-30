@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,8 +28,8 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_entities')
@@ -44,21 +44,129 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('geo',)
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
+		from netprofile_entities import models
 		return (
-			Address,
-			Phone,
-			Entity,
-			EntityComment,
-			EntityFile,
-			EntityFlag,
-			EntityFlagType,
-			EntityState,
-			PhysicalEntity,
-			LegalEntity,
-			StructuralEntity,
-			ExternalEntity
+			models.Address,
+			models.Phone,
+			models.Entity,
+			models.EntityComment,
+			models.EntityFile,
+			models.EntityFlag,
+			models.EntityFlagType,
+			models.EntityState,
+			models.PhysicalEntity,
+			models.LegalEntity,
+			models.StructuralEntity,
+			models.ExternalEntity
 		)
+
+	@classmethod
+	def get_sql_views(cls):
+		from netprofile_entities import models
+		return (
+			models.EntitiesBaseView,
+		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_entities import models
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			LogType,
+			Privilege
+		)
+
+		sess.add(LogType(
+			id=2,
+			name='Entities'
+		))
+		sess.flush()
+
+		privs = (
+			Privilege(
+				code='BASE_ENTITIES',
+				name='Access: Entities'
+			),
+			Privilege(
+				code='ENTITIES_LIST',
+				name='Entities: List'
+			),
+			Privilege(
+				code='ENTITIES_CREATE',
+				name='Entities: Create'
+			),
+			Privilege(
+				code='ENTITIES_EDIT',
+				name='Entities: Edit'
+			),
+			Privilege(
+				code='ENTITIES_DELETE',
+				name='Entities: Delete'
+			),
+			Privilege(
+				code='FILES_ATTACH_2ENTITIES',
+				name='Files: Attach to entities'
+			),
+			Privilege(
+				code='ENTITIES_STATES_CREATE',
+				name='Entities: Create states'
+			),
+			Privilege(
+				code='ENTITIES_STATES_EDIT',
+				name='Entities: Edit states'
+			),
+			Privilege(
+				code='ENTITIES_STATES_DELETE',
+				name='Entities: Delete states'
+			),
+			Privilege(
+				code='ENTITIES_FLAGTYPES_CREATE',
+				name='Entities: Create flag types'
+			),
+			Privilege(
+				code='ENTITIES_FLAGTYPES_EDIT',
+				name='Entities: Edit flag types'
+			),
+			Privilege(
+				code='ENTITIES_FLAGTYPES_DELETE',
+				name='Entities: Delete flag types'
+			),
+			Privilege(
+				code='ENTITIES_COMMENT',
+				name='Entities: Add comments'
+			),
+			Privilege(
+				code='ENTITIES_COMMENTS_EDIT',
+				name='Entities: Edit comments'
+			),
+			Privilege(
+				code='ENTITIES_COMMENTS_DELETE',
+				name='Entities: Delete comments'
+			),
+			Privilege(
+				code='ENTITIES_COMMENTS_MARK',
+				name='Entities: Mark comments as obsolete'
+			),
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
+
+		sess.add(models.EntityState(
+			name='Default',
+			description='Default entity state. You can safely rename and/or delete it if you wish.'
+		))
 
 	def get_local_js(self, request, lang):
 		return (

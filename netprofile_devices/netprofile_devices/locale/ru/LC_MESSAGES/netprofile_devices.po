@@ -1,4 +1,4 @@
-# Translations template for netprofile_devices.
+# Russian translations for netprofile_devices.
 # Copyright (C) 2013 ORGANIZATION
 # This file is distributed under the same license as the netprofile_devices
 # project.
@@ -8,162 +8,162 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_devices 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-06-14 11:14+0400\n"
+"POT-Creation-Date: 2014-07-30 12:59+0400\n"
 "PO-Revision-Date: 2013-06-14 13:47+0400\n"
 "Last-Translator: annndrey <gontchar@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 0.9.6\n"
+"Generated-By: Babel 1.3\n"
 
-#: netprofile_devices/__init__.py:41
-#: netprofile_devices/models.py:468
+#: netprofile_devices/__init__.py:62 netprofile_devices/models.py:463
 msgid "Devices"
 msgstr "Устройства"
 
 #: netprofile_devices/models.py:96
-msgid "Yes"
-msgstr "Да"
-
-#: netprofile_devices/models.py:97
-msgid "No"
-msgstr "Нет"
-
-#: netprofile_devices/models.py:103
 msgid "Simple"
 msgstr "Простое"
 
-#: netprofile_devices/models.py:104
+#: netprofile_devices/models.py:97
 msgid "Network"
 msgstr "Сетевое"
 
-#: netprofile_devices/models.py:123
+#: netprofile_devices/models.py:117
 msgid "Device categories"
 msgstr "Категории оборудования"
 
-#: netprofile_devices/models.py:131
+#: netprofile_devices/models.py:125
 msgid "Add new device category"
 msgstr "Добавить новую категорию оборудования"
 
-#: netprofile_devices/models.py:143
-#: netprofile_devices/models.py:199
-#: netprofile_devices/models.py:275
-#: netprofile_devices/models.py:362
-#: netprofile_devices/models.py:427
+#: netprofile_devices/models.py:137 netprofile_devices/models.py:192
+#: netprofile_devices/models.py:268 netprofile_devices/models.py:353
+#: netprofile_devices/models.py:417 netprofile_devices/models.py:496
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_devices/models.py:153
-#: netprofile_devices/models.py:218
+#: netprofile_devices/models.py:146 netprofile_devices/models.py:210
+#: netprofile_devices/models.py:362 netprofile_devices/models.py:426
 msgid "Name"
 msgstr "Названия"
 
-#: netprofile_devices/models.py:178
-msgid "Device manufacturers"
+#: netprofile_devices/models.py:172
+#, fuzzy
+msgid "Device Manufacturers"
 msgstr "Производители оборудования"
 
-#: netprofile_devices/models.py:186
+#: netprofile_devices/models.py:180
 msgid "Add new device manufacturer"
 msgstr "Добавить нового производителя оборудования"
 
-#: netprofile_devices/models.py:208
-msgid "Short name"
+#: netprofile_devices/models.py:201
+#, fuzzy
+msgid "Short Name"
 msgstr "Краткое названия"
 
-#: netprofile_devices/models.py:227
+#: netprofile_devices/models.py:219
 msgid "URL"
 msgstr "URL"
 
-#: netprofile_devices/models.py:254
+#: netprofile_devices/models.py:247
 msgid "Device types"
 msgstr "Типы оборудования"
 
-#: netprofile_devices/models.py:262
+#: netprofile_devices/models.py:255
 msgid "Add new device type"
 msgstr "Добавить новый тип оборудования"
 
-#: netprofile_devices/models.py:286
+#: netprofile_devices/models.py:279
 msgid "Device Manufacturer"
 msgstr "Производитель оборудования"
 
-#: netprofile_devices/models.py:297
+#: netprofile_devices/models.py:290
 msgid "Device Category"
 msgstr "Категория оборудования"
 
-#: netprofile_devices/models.py:306
-#: netprofile_devices/models.py:517
-#: netprofile_devices/models.py:529
+#: netprofile_devices/models.py:299
 msgid "Device Type"
 msgstr "Тип оборудования"
 
-#: netprofile_devices/models.py:314
-#: netprofile_devices/models.py:379
-#: netprofile_devices/models.py:444
-#: netprofile_devices/models.py:652
+#: netprofile_devices/models.py:307 netprofile_devices/models.py:370
+#: netprofile_devices/models.py:434 netprofile_devices/models.py:638
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_devices/models.py:341
+#: netprofile_devices/models.py:332
 msgid "Device flag types"
 msgstr "Флаги устройств"
 
-#: netprofile_devices/models.py:349
+#: netprofile_devices/models.py:340
 msgid "Add new device flag type"
 msgstr "Добавить новый флаг устройств"
 
-#: netprofile_devices/models.py:371
-msgid "Device Flag Type"
-msgstr "Флаг устройств"
-
-#: netprofile_devices/models.py:405
+#: netprofile_devices/models.py:395
 msgid "Device type flag types"
 msgstr "Флаги типов устройств"
 
-#: netprofile_devices/models.py:413
+#: netprofile_devices/models.py:403
 msgid "Add new device type flag type"
 msgstr "Добавить новый флаг типов устройств"
 
-#: netprofile_devices/models.py:436
-msgid "Device Type Flag Type"
-msgstr "Флаг типов устройств"
-
-#: netprofile_devices/models.py:481
+#: netprofile_devices/models.py:484
 msgid "Add new device"
 msgstr "Добавить новое устройство"
 
-#: netprofile_devices/models.py:494
-msgid "Device ID"
-msgstr "ID"
+#: netprofile_devices/models.py:506
+msgid "Serial"
+msgstr ""
 
-#: netprofile_devices/models.py:505
-msgid "Device Serial"
-msgstr "Серийный номер"
+#: netprofile_devices/models.py:517
+msgid "Type"
+msgstr ""
 
-#: netprofile_devices/models.py:540
+#: netprofile_devices/models.py:528
+msgid "Metatype"
+msgstr ""
+
+#: netprofile_devices/models.py:538
 msgid "Is Operational?"
 msgstr "Управляемое"
 
-#: netprofile_devices/models.py:552
+#: netprofile_devices/models.py:548
 msgid "Place"
 msgstr "Место"
 
-#: netprofile_devices/models.py:562
+#: netprofile_devices/models.py:558
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_devices/models.py:574
-#: netprofile_devices/models.py:613
+#: netprofile_devices/models.py:569 netprofile_devices/models.py:606
 msgid "Created"
 msgstr "Создано"
 
-#: netprofile_devices/models.py:586
-#: netprofile_devices/models.py:627
+#: netprofile_devices/models.py:581 netprofile_devices/models.py:618
 msgid "Modified"
 msgstr "Изменено"
 
-#: netprofile_devices/models.py:599
-#: netprofile_devices/models.py:643
+#: netprofile_devices/models.py:593 netprofile_devices/models.py:630
 msgid "Installed"
 msgstr "Установлено"
+
+#~ msgid "Yes"
+#~ msgstr "Да"
+
+#~ msgid "No"
+#~ msgstr "Нет"
+
+#~ msgid "Device Flag Type"
+#~ msgstr "Флаг устройств"
+
+#~ msgid "Device Type Flag Type"
+#~ msgstr "Флаг типов устройств"
+
+#~ msgid "Device ID"
+#~ msgstr "ID"
+
+#~ msgid "Device Serial"
+#~ msgstr "Серийный номер"
 
