@@ -118,7 +118,7 @@ class PaidServiceType(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_PAIDSERVICES',
-				'cap_read'      : 'PAIDSERVICETYPES_LIST',
+				'cap_read'      : 'PAIDSERVICES_LIST',
 				'cap_create'    : 'PAIDSERVICETYPES_CREATE',
 				'cap_edit'      : 'PAIDSERVICETYPES_EDIT',
 				'cap_delete'    : 'PAIDSERVICETYPES_DELETE',
@@ -320,10 +320,10 @@ class PaidService(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_PAIDSERVICES',
-				'cap_read'      : 'PAIDSERVICE_LIST',
-				'cap_create'    : 'PAIDSERVICE_CREATE',
-				'cap_edit'      : 'PAIDSERVICE_EDIT',
-				'cap_delete'    : 'PAIDSERVICE_DELETE',
+				'cap_read'      : 'PAIDSERVICES_LIST',
+				'cap_create'    : 'PAIDSERVICES_CREATE',
+				'cap_edit'      : 'PAIDSERVICES_EDIT',
+				'cap_delete'    : 'PAIDSERVICES_DELETE',
 				'default_sort'  : ({ 'property': 'qpend', 'direction': 'DESC' },),
 				'grid_view'     : ('entity', 'stash', 'type', 'active', 'qpend'),
 				'form_view'     : (
@@ -407,7 +407,7 @@ class PaidService(Base):
 	)
 	active = Column(
 		NPBoolean(),
-		Comment('FIXME'),
+		Comment('Is service active'),
 		nullable=False,
 		default=True,
 		server_default=npbool(True),

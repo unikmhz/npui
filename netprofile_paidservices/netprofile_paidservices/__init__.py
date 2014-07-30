@@ -29,6 +29,7 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_paidservices')
@@ -59,6 +60,66 @@ class Module(ModuleBase):
 			models.PSExecuteProcedure,
 			models.PSPollProcedure
 		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			LogType,
+			Privilege
+		)
+
+		sess.add(LogType(
+			id=14,
+			name='Paid Services'
+		))
+
+		privs = (
+			Privilege(
+				code='BASE_PAIDSERVICES',
+				name='Access: Paid Services'
+			),
+			Privilege(
+				code='PAIDSERVICES_LIST',
+				name='Paid Services: List'
+			),
+			Privilege(
+				code='PAIDSERVICES_CREATE',
+				name='Paid Services: Create'
+			),
+			Privilege(
+				code='PAIDSERVICES_EDIT',
+				name='Paid Services: Edit'
+			),
+			Privilege(
+				code='PAIDSERVICES_DELETE',
+				name='Paid Services: Delete'
+			),
+			Privilege(
+				code='PAIDSERVICETYPES_CREATE',
+				name='Paid Services: Create types'
+			),
+			Privilege(
+				code='PAIDSERVICETYPES_EDIT',
+				name='Paid Services: Edit types'
+			),
+			Privilege(
+				code='PAIDSERVICETYPES_DELETE',
+				name='Paid Services: Delete types'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
 
 	def get_css(self, request):
 		return (
