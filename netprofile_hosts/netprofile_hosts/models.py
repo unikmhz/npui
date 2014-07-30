@@ -508,9 +508,11 @@ class ServiceProtocol(DeclEnum):
 	"""
 	Service type protocol enumeration.
 	"""
-	all = 'all', _('All'), 10
-	tcp = 'tcp', _('TCP'), 20
-	udp = 'udp', _('UDP'), 30
+	none   = 'none',   _('None'),    10
+	tcp    = 'tcp',    _('TCP'),     20
+	udp    = 'udp',    _('UDP'),     30
+	sctp   = 'sctp',   _('SCTP'),    40
+	dccp   = 'dccp',   _('DCCP'),    50
 
 class ServiceType(Base):
 	"""
@@ -519,17 +521,17 @@ class ServiceType(Base):
 	__tablename__ = 'services_types'
 	__table_args__ = (
 		Comment('Service types'),
-		Index('services_types_u_abbrev', 'abbrev', unique=True),
-		Index('services_types_u_name', 'name', unique=True),
+		Index('services_types_u_service', 'proto', 'abbrev', unique=True),
+		Index('services_types_i_abbrev', 'abbrev'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_SERVICES',
 				'cap_read'      : 'SERVICES_LIST',
-				'cap_create'    : 'SERVICES_CREATE',
-				'cap_edit'      : 'SERVICES_EDIT',
-				'cap_delete'    : 'SERVICES_DELETE',
+				'cap_create'    : 'SERVICES_TYPES_CREATE',
+				'cap_edit'      : 'SERVICES_TYPES_EDIT',
+				'cap_delete'    : 'SERVICES_TYPES_DELETE',
 				'menu_name'     : _('Service Types'),
 				'show_in_menu'  : 'admin',
 				'menu_order'    : 20,
@@ -575,8 +577,8 @@ class ServiceType(Base):
 		ServiceProtocol.db_type(),
 		Comment('Used protocol(s)'),
 		nullable=False,
-		default=ServiceProtocol.all,
-		server_default=ServiceProtocol.all,
+		default=ServiceProtocol.tcp,
+		server_default=ServiceProtocol.tcp,
 		info={
 			'header_string' : _('Protocol')
 		}
@@ -619,15 +621,18 @@ class ServiceType(Base):
 	)
 
 	def __str__(self):
+		pfx = []
 		if self.abbreviation:
-			if self.name:
-				return '[%s] %s' % (
-					str(self.abbreviation),
-					str(self.name)
-				)
-			else:
-				return str(self.abbreviation)
-		return self.name
+			pfx.append(str(self.abbreviation))
+		if self.protocol != ServiceProtocol.none:
+			pfx.append(str(self.protocol.description))
+
+		if len(pfx) > 0:
+			return '[%s] %s' % (
+				'/'.join(pfx),
+				str(self.name)
+			)
+		return str(self.name)
 
 class Service(Base):
 	"""
