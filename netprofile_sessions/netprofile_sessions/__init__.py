@@ -30,6 +30,7 @@ from __future__ import (
 from netprofile.common.modules import ModuleBase
 from netprofile.tpl import TemplateObject
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_sessions')
@@ -64,6 +65,44 @@ class Module(ModuleBase):
 			models.AcctCloseSessionProcedure,
 			models.AcctOpenSessionProcedure
 		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			Privilege
+		)
+
+		privs = (
+			Privilege(
+				code='BASE_SESSIONS',
+				name='Access: Sessions'
+			),
+			Privilege(
+				code='SESSIONS_LIST',
+				name='Sessions: List'
+			),
+			Privilege(
+				code='SESSIONS_LIST_ARCHIVED',
+				name='Sessions: List archived'
+			),
+			Privilege(
+				code='SESSIONS_DISCONNECT',
+				name='Sessions: Disconnect'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
 
 	def get_css(self, request):
 		return (
