@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_networks 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-29 06:56+0400\n"
+"POT-Creation-Date: 2014-07-30 13:00+0400\n"
 "PO-Revision-Date: 2013-11-14 21:20+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: netprofile_networks/__init__.py:65 netprofile_networks/models.py:119
+#: netprofile_networks/__init__.py:169 netprofile_networks/models.py:119
 #: netprofile_networks/views.py:56
 msgid "Networks"
 msgstr "Сети"

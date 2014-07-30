@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_entities 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-29 06:56+0400\n"
+"POT-Creation-Date: 2014-07-30 12:59+0400\n"
 "PO-Revision-Date: 2014-07-29 06:47+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: netprofile_entities/__init__.py:88 netprofile_entities/models.py:242
+#: netprofile_entities/__init__.py:188 netprofile_entities/models.py:242
 msgid "Entities"
 msgstr "Объекты"
 
@@ -43,9 +43,9 @@ msgstr "Внешние"
 msgid "Entity icon"
 msgstr "Иконка объекта"
 
-#: netprofile_entities/models.py:252 netprofile_entities/models.py:1372
-#: netprofile_entities/models.py:1647 netprofile_entities/models.py:1933
-#: netprofile_entities/models.py:2030
+#: netprofile_entities/models.py:252 netprofile_entities/models.py:1373
+#: netprofile_entities/models.py:1648 netprofile_entities/models.py:1934
+#: netprofile_entities/models.py:2031
 msgid "Icon"
 msgstr "Иконка"
 
@@ -57,45 +57,45 @@ msgstr "Объект"
 msgid "Information"
 msgstr "Информация"
 
-#: netprofile_entities/models.py:277 netprofile_entities/models.py:1392
-#: netprofile_entities/models.py:1667 netprofile_entities/models.py:1946
+#: netprofile_entities/models.py:277 netprofile_entities/models.py:1393
+#: netprofile_entities/models.py:1668 netprofile_entities/models.py:1947
 msgid "Phone"
 msgstr "Телефон"
 
-#: netprofile_entities/models.py:280 netprofile_entities/models.py:1395
-#: netprofile_entities/models.py:1670 netprofile_entities/models.py:1949
-#: netprofile_entities/models.py:2090
+#: netprofile_entities/models.py:280 netprofile_entities/models.py:1396
+#: netprofile_entities/models.py:1671 netprofile_entities/models.py:1950
+#: netprofile_entities/models.py:2091
 msgid "Address"
 msgstr "Адрес"
 
-#: netprofile_entities/models.py:288 netprofile_entities/models.py:1403
-#: netprofile_entities/models.py:1678 netprofile_entities/models.py:1957
-#: netprofile_entities/models.py:2049
+#: netprofile_entities/models.py:288 netprofile_entities/models.py:1404
+#: netprofile_entities/models.py:1679 netprofile_entities/models.py:1958
+#: netprofile_entities/models.py:2050
 msgid "Generic entity properties"
 msgstr "Общие свойства объекта"
 
 #: netprofile_entities/models.py:296 netprofile_entities/models.py:308
-#: netprofile_entities/models.py:1408 netprofile_entities/models.py:1417
+#: netprofile_entities/models.py:1409 netprofile_entities/models.py:1418
 msgid "Physical entity properties"
 msgstr "Свойства физ. лиц"
 
-#: netprofile_entities/models.py:315 netprofile_entities/models.py:1683
+#: netprofile_entities/models.py:315 netprofile_entities/models.py:1684
 msgid "Legal entity properties"
 msgstr "Свойства юр. лиц"
 
-#: netprofile_entities/models.py:325 netprofile_entities/models.py:1689
+#: netprofile_entities/models.py:325 netprofile_entities/models.py:1690
 msgid "Legal entity contact person"
 msgstr "Контакное лицо"
 
-#: netprofile_entities/models.py:335 netprofile_entities/models.py:1695
+#: netprofile_entities/models.py:335 netprofile_entities/models.py:1696
 msgid "Legal entity details"
 msgstr "Реквизиты юр. лиц"
 
-#: netprofile_entities/models.py:340 netprofile_entities/models.py:1961
+#: netprofile_entities/models.py:340 netprofile_entities/models.py:1962
 msgid "Structural entity properties"
 msgstr "Свойства зданий"
 
-#: netprofile_entities/models.py:347 netprofile_entities/models.py:2053
+#: netprofile_entities/models.py:347 netprofile_entities/models.py:2054
 msgid "External entity properties"
 msgstr "Свойства внешних объектов"
 
@@ -107,8 +107,8 @@ msgstr "Добавить новый объект"
 #: netprofile_entities/models.py:738 netprofile_entities/models.py:808
 #: netprofile_entities/models.py:885 netprofile_entities/models.py:1077
 #: netprofile_entities/models.py:1198 netprofile_entities/models.py:1268
-#: netprofile_entities/models.py:1435 netprofile_entities/models.py:1713
-#: netprofile_entities/models.py:1979 netprofile_entities/models.py:2071
+#: netprofile_entities/models.py:1436 netprofile_entities/models.py:1714
+#: netprofile_entities/models.py:1980 netprofile_entities/models.py:2072
 msgid "ID"
 msgstr "ID"
 
@@ -155,7 +155,7 @@ msgid "Add new entity state"
 msgstr "Добавить новое состояние объектов"
 
 #: netprofile_entities/models.py:684 netprofile_entities/models.py:746
-#: netprofile_entities/models.py:1731 netprofile_entities/models.py:2079
+#: netprofile_entities/models.py:1732 netprofile_entities/models.py:2080
 msgid "Name"
 msgstr "Название"
 
@@ -333,139 +333,139 @@ msgstr "Сотрудник"
 msgid "Obsolete"
 msgstr "Устар."
 
-#: netprofile_entities/models.py:1319
+#: netprofile_entities/models.py:1320
 msgid "Text"
 msgstr "Текст"
 
-#: netprofile_entities/models.py:1335
+#: netprofile_entities/models.py:1336
 msgid "Male"
 msgstr "Мужской"
 
-#: netprofile_entities/models.py:1336
+#: netprofile_entities/models.py:1337
 msgid "Female"
 msgstr "Женский"
 
-#: netprofile_entities/models.py:1337
+#: netprofile_entities/models.py:1338
 msgid "Other"
 msgstr "Другое"
 
-#: netprofile_entities/models.py:1338
+#: netprofile_entities/models.py:1339
 msgid "Not applicable"
 msgstr "Не применимо"
 
-#: netprofile_entities/models.py:1364
+#: netprofile_entities/models.py:1365
 msgid "Physical entities"
 msgstr "Физ. лица"
 
-#: netprofile_entities/models.py:1419
+#: netprofile_entities/models.py:1420
 msgid "Add new physical entity"
 msgstr "Добавить новое физ. лицо"
 
-#: netprofile_entities/models.py:1445 netprofile_entities/models.py:1723
+#: netprofile_entities/models.py:1446 netprofile_entities/models.py:1724
 msgid "Contract"
 msgstr "Договор"
 
-#: netprofile_entities/models.py:1453 netprofile_entities/models.py:1743
+#: netprofile_entities/models.py:1454 netprofile_entities/models.py:1744
 msgid "Family Name"
 msgstr "Фамилия"
 
-#: netprofile_entities/models.py:1462 netprofile_entities/models.py:1755
+#: netprofile_entities/models.py:1463 netprofile_entities/models.py:1756
 msgid "Given Name"
 msgstr "Имя"
 
-#: netprofile_entities/models.py:1473 netprofile_entities/models.py:1767
+#: netprofile_entities/models.py:1474 netprofile_entities/models.py:1768
 msgid "Middle Name"
 msgstr "Отчество"
 
-#: netprofile_entities/models.py:1483
+#: netprofile_entities/models.py:1484
 msgid "Gender"
 msgstr "Пол"
 
-#: netprofile_entities/models.py:1493 netprofile_entities/models.py:1789
+#: netprofile_entities/models.py:1494 netprofile_entities/models.py:1790
 msgid "E-mail"
 msgstr "E-mail"
 
-#: netprofile_entities/models.py:1504 netprofile_entities/models.py:1801
+#: netprofile_entities/models.py:1505 netprofile_entities/models.py:1802
 msgid "ICQ"
 msgstr "ICQ"
 
-#: netprofile_entities/models.py:1514 netprofile_entities/models.py:1811
+#: netprofile_entities/models.py:1515 netprofile_entities/models.py:1812
 msgid "URL"
 msgstr "URL"
 
-#: netprofile_entities/models.py:1525
+#: netprofile_entities/models.py:1526
 msgid "DoB"
 msgstr "Дата рождения"
 
-#: netprofile_entities/models.py:1536
+#: netprofile_entities/models.py:1537
 msgid "Pass. Series"
 msgstr "Серия паспорта"
 
-#: netprofile_entities/models.py:1547
+#: netprofile_entities/models.py:1548
 msgid "Pass. Number"
 msgstr "Номер паспорта"
 
-#: netprofile_entities/models.py:1558
+#: netprofile_entities/models.py:1559
 msgid "Pass. Issued By"
 msgstr "Кем выдан паспорт"
 
-#: netprofile_entities/models.py:1569
+#: netprofile_entities/models.py:1570
 msgid "Pass. Issue Date"
 msgstr "Дата выдачи паспорта"
 
-#: netprofile_entities/models.py:1639
+#: netprofile_entities/models.py:1640
 msgid "Legal entities"
 msgstr "Юр. лица"
 
-#: netprofile_entities/models.py:1697
+#: netprofile_entities/models.py:1698
 msgid "Add new legal entity"
 msgstr "Добавить новое юр. лицо"
 
-#: netprofile_entities/models.py:1778
+#: netprofile_entities/models.py:1779
 msgid "Title"
 msgstr "Должность"
 
-#: netprofile_entities/models.py:1822
+#: netprofile_entities/models.py:1823
 msgid "Legal Addr."
 msgstr "Юр. адрес"
 
-#: netprofile_entities/models.py:1832
+#: netprofile_entities/models.py:1833
 msgid "Taxpayer ID"
 msgstr "ИНН"
 
-#: netprofile_entities/models.py:1842
+#: netprofile_entities/models.py:1843
 msgid "Tax Code"
 msgstr "КПП"
 
-#: netprofile_entities/models.py:1852
+#: netprofile_entities/models.py:1853
 msgid "Bank ID"
 msgstr "БИК"
 
-#: netprofile_entities/models.py:1862
+#: netprofile_entities/models.py:1863
 msgid "Acc. #"
 msgstr "Расчётный счёт"
 
-#: netprofile_entities/models.py:1872
+#: netprofile_entities/models.py:1873
 msgid "C./acc. #"
 msgstr "Корр. счёт"
 
-#: netprofile_entities/models.py:1882
+#: netprofile_entities/models.py:1883
 msgid "Bank"
 msgstr "Банк"
 
-#: netprofile_entities/models.py:1925
+#: netprofile_entities/models.py:1926
 msgid "Structural entities"
 msgstr "Здания"
 
-#: netprofile_entities/models.py:1963
+#: netprofile_entities/models.py:1964
 msgid "Add new structural entity"
 msgstr "Добавить новое здание"
 
-#: netprofile_entities/models.py:2022
+#: netprofile_entities/models.py:2023
 msgid "External entities"
 msgstr "Внешние объекты"
 
-#: netprofile_entities/models.py:2055
+#: netprofile_entities/models.py:2056
 msgid "Add new external entity"
 msgstr "Добавить новый внешний объект"
 

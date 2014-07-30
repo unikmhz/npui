@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_paidservices 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-29 06:56+0400\n"
+"POT-Creation-Date: 2014-07-30 12:59+0400\n"
 "PO-Revision-Date: 2014-07-29 05:40+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -20,8 +20,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: netprofile_paidservices/__init__.py:70 netprofile_paidservices/models.py:126
-#: netprofile_paidservices/views.py:67 netprofile_paidservices/views.py:81
+#: netprofile_paidservices/__init__.py:131
+#: netprofile_paidservices/models.py:126 netprofile_paidservices/views.py:67
+#: netprofile_paidservices/views.py:81
 msgid "Paid Services"
 msgstr "Платные услуги"
 

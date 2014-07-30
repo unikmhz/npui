@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_devices 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-29 06:56+0400\n"
+"POT-Creation-Date: 2014-07-30 12:59+0400\n"
 "PO-Revision-Date: 2013-06-14 13:47+0400\n"
 "Last-Translator: annndrey <gontchar@gmail.com>\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: netprofile_devices/__init__.py:61 netprofile_devices/models.py:463
+#: netprofile_devices/__init__.py:62 netprofile_devices/models.py:463
 msgid "Devices"
 msgstr "Устройства"
 

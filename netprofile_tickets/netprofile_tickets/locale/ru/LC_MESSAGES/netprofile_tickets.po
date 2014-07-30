@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_tickets 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-07-29 06:57+0400\n"
+"POT-Creation-Date: 2014-07-30 12:59+0400\n"
 "PO-Revision-Date: 2014-07-29 06:56+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -19,8 +19,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: netprofile_tickets/__init__.py:96 netprofile_tickets/models.py:847
-#: netprofile_tickets/views.py:167 netprofile_tickets/views.py:462
+#: netprofile_tickets/__init__.py:302 netprofile_tickets/models.py:847
+#: netprofile_tickets/views.py:167 netprofile_tickets/views.py:465
 msgid "Tickets"
 msgstr "Задачи"
 
@@ -35,18 +35,18 @@ msgstr "Добавить новый источник задач"
 #: netprofile_tickets/models.py:183 netprofile_tickets/models.py:263
 #: netprofile_tickets/models.py:430 netprofile_tickets/models.py:545
 #: netprofile_tickets/models.py:624 netprofile_tickets/models.py:682
-#: netprofile_tickets/models.py:923 netprofile_tickets/models.py:1316
-#: netprofile_tickets/models.py:1550 netprofile_tickets/models.py:1607
-#: netprofile_tickets/models.py:1766 netprofile_tickets/models.py:1898
-#: netprofile_tickets/models.py:2155 netprofile_tickets/models.py:2226
-#: netprofile_tickets/models.py:2298
+#: netprofile_tickets/models.py:923 netprofile_tickets/models.py:1317
+#: netprofile_tickets/models.py:1551 netprofile_tickets/models.py:1608
+#: netprofile_tickets/models.py:1767 netprofile_tickets/models.py:1899
+#: netprofile_tickets/models.py:2156 netprofile_tickets/models.py:2227
+#: netprofile_tickets/models.py:2299
 msgid "ID"
 msgstr "ID"
 
 #: netprofile_tickets/models.py:191 netprofile_tickets/models.py:438
 #: netprofile_tickets/models.py:553 netprofile_tickets/models.py:1037
-#: netprofile_tickets/models.py:1324 netprofile_tickets/models.py:1558
-#: netprofile_tickets/models.py:1906
+#: netprofile_tickets/models.py:1325 netprofile_tickets/models.py:1559
+#: netprofile_tickets/models.py:1907
 msgid "Name"
 msgstr "Название"
 
@@ -91,7 +91,7 @@ msgid "Show to Clients"
 msgstr "Показывать клиентам"
 
 #: netprofile_tickets/models.py:334 netprofile_tickets/models.py:1007
-#: netprofile_tickets/models.py:1414
+#: netprofile_tickets/models.py:1415
 msgid "Duration"
 msgstr "Продолжительность"
 
@@ -120,7 +120,7 @@ msgid "Add new ticket flag type"
 msgstr "Добавить новый тип флагов задач"
 
 #: netprofile_tickets/models.py:634 netprofile_tickets/models.py:692
-#: netprofile_tickets/models.py:1617
+#: netprofile_tickets/models.py:1618
 msgid "Ticket"
 msgstr "Задача"
 
@@ -143,7 +143,7 @@ msgid "File"
 msgstr "Файл"
 
 #: netprofile_tickets/models.py:744 netprofile_tickets/models.py:945
-#: netprofile_tickets/models.py:1424 netprofile_tickets/models.py:2327
+#: netprofile_tickets/models.py:1425 netprofile_tickets/models.py:2328
 msgid "State"
 msgstr "Состояние"
 
@@ -163,16 +163,16 @@ msgstr "Добавить из шаблона"
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_tickets/models.py:956 netprofile_tickets/models.py:1434
+#: netprofile_tickets/models.py:956 netprofile_tickets/models.py:1435
 msgid "Origin"
 msgstr "Источник"
 
-#: netprofile_tickets/models.py:969 netprofile_tickets/models.py:1643
-#: netprofile_tickets/models.py:2165
+#: netprofile_tickets/models.py:969 netprofile_tickets/models.py:1644
+#: netprofile_tickets/models.py:2166
 msgid "User"
 msgstr "Сотрудник"
 
-#: netprofile_tickets/models.py:983 netprofile_tickets/models.py:2236
+#: netprofile_tickets/models.py:983 netprofile_tickets/models.py:2237
 msgid "Group"
 msgstr "Группа"
 
@@ -180,11 +180,11 @@ msgstr "Группа"
 msgid "Due"
 msgstr "Назначено"
 
-#: netprofile_tickets/models.py:1018 netprofile_tickets/models.py:1830
+#: netprofile_tickets/models.py:1018 netprofile_tickets/models.py:1831
 msgid "Archived"
 msgstr "В архиве"
 
-#: netprofile_tickets/models.py:1029 netprofile_tickets/models.py:1665
+#: netprofile_tickets/models.py:1029 netprofile_tickets/models.py:1666
 msgid "Show to Client"
 msgstr "Показывать клиенту"
 
@@ -197,175 +197,175 @@ msgid "Modified"
 msgstr "Изменено"
 
 #: netprofile_tickets/models.py:1083 netprofile_tickets/models.py:1122
-#: netprofile_tickets/models.py:1630 netprofile_tickets/views.py:274
+#: netprofile_tickets/models.py:1631 netprofile_tickets/views.py:274
 msgid "Transition"
 msgstr "Переход"
 
-#: netprofile_tickets/models.py:1256
+#: netprofile_tickets/models.py:1257
 #, python-format
 msgid "Ticket #%d Created: %s"
 msgstr "Задача №%d создана: %s"
 
-#: netprofile_tickets/models.py:1288
+#: netprofile_tickets/models.py:1289
 msgid "Templates"
 msgstr "Шаблоны"
 
-#: netprofile_tickets/models.py:1304
+#: netprofile_tickets/models.py:1305
 msgid "Add new template"
 msgstr "Добавить новый шаблон"
 
-#: netprofile_tickets/models.py:1334
+#: netprofile_tickets/models.py:1335
 msgid "Name Template"
 msgstr "Шаблон названия"
 
-#: netprofile_tickets/models.py:1345
+#: netprofile_tickets/models.py:1346
 msgid "Description Template"
 msgstr "Шаблон описания"
 
-#: netprofile_tickets/models.py:1356
+#: netprofile_tickets/models.py:1357
 msgid "Assign to Self"
 msgstr "Назначить на автора"
 
-#: netprofile_tickets/models.py:1367
+#: netprofile_tickets/models.py:1368
 msgid "Assign to My Group"
 msgstr "Назначить на группу автора"
 
-#: netprofile_tickets/models.py:1379
+#: netprofile_tickets/models.py:1380
 msgid "Assign to User"
 msgstr "Назначить на сотрудника"
 
-#: netprofile_tickets/models.py:1391
+#: netprofile_tickets/models.py:1392
 msgid "Assign to Group"
 msgstr "Назначить на группу"
 
-#: netprofile_tickets/models.py:1403 netprofile_tickets/models.py:2175
-#: netprofile_tickets/models.py:2246 netprofile_tickets/views.py:182
+#: netprofile_tickets/models.py:1404 netprofile_tickets/models.py:2176
+#: netprofile_tickets/models.py:2247 netprofile_tickets/views.py:182
 #: netprofile_tickets/views.py:197
 msgid "Scheduler"
 msgstr "Планировщик"
 
-#: netprofile_tickets/models.py:1446
+#: netprofile_tickets/models.py:1447
 msgid "Creation Callback"
 msgstr "Обратный вызов при создании"
 
-#: netprofile_tickets/models.py:1532
+#: netprofile_tickets/models.py:1533
 msgid "Change Fields"
 msgstr "Поля типов изменений"
 
-#: netprofile_tickets/models.py:1538
+#: netprofile_tickets/models.py:1539
 msgid "Add new change field"
 msgstr "Добавить новое поле типов изменений"
 
-#: netprofile_tickets/models.py:1592
+#: netprofile_tickets/models.py:1593
 msgid "Changes"
 msgstr "Изменения"
 
-#: netprofile_tickets/models.py:1655
+#: netprofile_tickets/models.py:1656
 msgid "Time"
 msgstr "Время"
 
-#: netprofile_tickets/models.py:1675
+#: netprofile_tickets/models.py:1676
 msgid "From Client"
 msgstr "От клиента"
 
-#: netprofile_tickets/models.py:1685
+#: netprofile_tickets/models.py:1686
 msgid "Comments"
 msgstr "Комментарии"
 
-#: netprofile_tickets/models.py:1715
+#: netprofile_tickets/models.py:1716
 #, python-format
 msgid "Ticket #%d Changed: %s"
 msgstr "Задача №%d изменена: %s"
 
-#: netprofile_tickets/models.py:1751
+#: netprofile_tickets/models.py:1752
 msgid "Change Bits"
 msgstr "Элементы изменений"
 
-#: netprofile_tickets/models.py:1776 netprofile_tickets/models.py:2308
+#: netprofile_tickets/models.py:1777 netprofile_tickets/models.py:2309
 msgid "Change"
 msgstr "Изменение"
 
-#: netprofile_tickets/models.py:1787
+#: netprofile_tickets/models.py:1788
 msgid "Field"
 msgstr "Поле"
 
-#: netprofile_tickets/models.py:1798
+#: netprofile_tickets/models.py:1799
 msgid "Old"
 msgstr "Было"
 
-#: netprofile_tickets/models.py:1808
+#: netprofile_tickets/models.py:1809
 msgid "New"
 msgstr "Стало"
 
-#: netprofile_tickets/models.py:1831
+#: netprofile_tickets/models.py:1832
 msgid "Unarchived"
 msgstr "Разархивировано"
 
-#: netprofile_tickets/models.py:1873
+#: netprofile_tickets/models.py:1874
 msgid "Schedulers"
 msgstr "Планировщики"
 
-#: netprofile_tickets/models.py:1886
+#: netprofile_tickets/models.py:1887
 msgid "Add new scheduling preset"
 msgstr "Добавить новую настройку планировщика"
 
-#: netprofile_tickets/models.py:1917
+#: netprofile_tickets/models.py:1918
 msgid "Max. Simultaneous per User"
 msgstr "Макс. одновременных для сотрудника"
 
-#: netprofile_tickets/models.py:1927
+#: netprofile_tickets/models.py:1928
 msgid "Max. Simultaneous per Group"
 msgstr "Макс. одновременных для группы"
 
-#: netprofile_tickets/models.py:1939
+#: netprofile_tickets/models.py:1940
 msgid "Force Duration"
 msgstr "Замещение продолжительности"
 
-#: netprofile_tickets/models.py:1950
+#: netprofile_tickets/models.py:1951
 msgid "Start Hour"
 msgstr "Начальный час"
 
-#: netprofile_tickets/models.py:1962
+#: netprofile_tickets/models.py:1963
 msgid "End Hour"
 msgstr "Конечный час"
 
-#: netprofile_tickets/models.py:1974
+#: netprofile_tickets/models.py:1975
 msgid "Weekdays"
 msgstr "Дни недели"
 
-#: netprofile_tickets/models.py:1985
+#: netprofile_tickets/models.py:1986
 msgid "Ticket Spacing"
 msgstr "Расстояние между задачами"
 
-#: netprofile_tickets/models.py:2140
+#: netprofile_tickets/models.py:2141
 msgid "Scheduler Assignments for Users"
 msgstr "Назначения планировщиков сотрудникам"
 
-#: netprofile_tickets/models.py:2143 netprofile_tickets/models.py:2214
+#: netprofile_tickets/models.py:2144 netprofile_tickets/models.py:2215
 msgid "Add new scheduling assignment"
 msgstr "Назначить планировщик"
 
-#: netprofile_tickets/models.py:2211
+#: netprofile_tickets/models.py:2212
 msgid "Scheduler Assignments for Groups"
 msgstr "Назначения планировщиков группам"
 
-#: netprofile_tickets/models.py:2283
+#: netprofile_tickets/models.py:2284
 msgid "Flag Bits"
 msgstr "Элементы флагов"
 
-#: netprofile_tickets/models.py:2318
+#: netprofile_tickets/models.py:2319
 msgid "Flag"
 msgstr "Флаг"
 
-#: netprofile_tickets/models.py:2351
+#: netprofile_tickets/models.py:2352
 msgid "Dependencies"
 msgstr "Зависимости"
 
-#: netprofile_tickets/models.py:2366
+#: netprofile_tickets/models.py:2367
 msgid "Parent"
 msgstr "Родитель"
 
-#: netprofile_tickets/models.py:2378
+#: netprofile_tickets/models.py:2379
 msgid "Child"
 msgstr "Потомок"
 
@@ -385,35 +385,35 @@ msgstr "Без изменений"
 msgid "Do not change ticket state."
 msgstr "Не менять состояние задачи."
 
-#: netprofile_tickets/views.py:331
+#: netprofile_tickets/views.py:332
 msgid "Update ticket"
 msgstr "Обновить задачу"
 
-#: netprofile_tickets/views.py:559
+#: netprofile_tickets/views.py:562
 msgid "Issues"
 msgstr "Задачи"
 
-#: netprofile_tickets/views.py:639 netprofile_tickets/views.py:664
-#: netprofile_tickets/views.py:736 netprofile_tickets/views.py:799
+#: netprofile_tickets/views.py:642 netprofile_tickets/views.py:667
+#: netprofile_tickets/views.py:739 netprofile_tickets/views.py:802
 msgid "Issues view is disabled"
 msgstr "Просмотр задач выключен"
 
-#: netprofile_tickets/views.py:689
+#: netprofile_tickets/views.py:692
 msgid "Invalid issue type"
 msgstr "Неверный тип задачи"
 
-#: netprofile_tickets/views.py:708
+#: netprofile_tickets/views.py:711
 msgid "New issue successfully created"
 msgstr "Новая задача была успешно создана"
 
-#: netprofile_tickets/views.py:714 netprofile_tickets/views.py:766
-#: netprofile_tickets/views.py:802
+#: netprofile_tickets/views.py:717 netprofile_tickets/views.py:769
+#: netprofile_tickets/views.py:805
 #: netprofile_tickets/templates/client_list.mak:4
 #: netprofile_tickets/templates/client_list.mak:11
 msgid "My Issues"
 msgstr "Мои задачи"
 
-#: netprofile_tickets/views.py:717
+#: netprofile_tickets/views.py:720
 #: netprofile_tickets/templates/client_create.mak:3
 #: netprofile_tickets/templates/client_create.mak:5
 #: netprofile_tickets/templates/client_list.mak:8
@@ -421,44 +421,44 @@ msgstr "Мои задачи"
 msgid "New Issue"
 msgstr "Новая задача"
 
-#: netprofile_tickets/views.py:741
+#: netprofile_tickets/views.py:744
 msgid "This ticket is archived. You can't append to it."
 msgstr "Эта задача находится в архиве. Вы не можете её изменять."
 
-#: netprofile_tickets/views.py:761
+#: netprofile_tickets/views.py:764
 msgid "Your comment was successfully appended to the issue"
 msgstr "Ваш комментарий был успешно добавлен к задаче"
 
-#: netprofile_tickets/views.py:769 netprofile_tickets/views.py:805
+#: netprofile_tickets/views.py:772 netprofile_tickets/views.py:808
 #: netprofile_tickets/templates/client_view.mak:4
 #, python-format
 msgid "View Issue #%d"
 msgstr "Просмотр задачи №%d"
 
-#: netprofile_tickets/views.py:772
+#: netprofile_tickets/views.py:775
 #: netprofile_tickets/templates/client_append.mak:4
 #, python-format
 msgid "Append Comment to Issue #%d"
 msgstr "Комментарий к задаче №%d"
 
-#: netprofile_tickets/views.py:808
+#: netprofile_tickets/views.py:811
 msgid "Begin"
 msgstr "Начать"
 
-#: netprofile_tickets/views.py:809
+#: netprofile_tickets/views.py:812
 msgid "Cancel"
 msgstr "Отмена"
 
-#: netprofile_tickets/views.py:810
+#: netprofile_tickets/views.py:813
 #: netprofile_tickets/templates/client_view.mak:104
 msgid "Delete"
 msgstr "Удалить"
 
-#: netprofile_tickets/views.py:811
+#: netprofile_tickets/views.py:814
 msgid "Error"
 msgstr "Ошибка"
 
-#: netprofile_tickets/views.py:812
+#: netprofile_tickets/views.py:815
 msgid "Processing…"
 msgstr "Обработка…"
 
