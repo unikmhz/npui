@@ -29,6 +29,7 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 
+from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_ipaddresses')
@@ -61,6 +62,58 @@ class Module(ModuleBase):
 			models.IP6AddrGetOffsetGenFunction,
 			models.IP6AddrGetOffsetHGFunction
 		)
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		from netprofile_core.models import (
+			Group,
+			GroupCapability,
+			LogType,
+			Privilege
+		)
+
+		sess.add(LogType(
+			id=8,
+			name='IPv4 Addresses'
+		))
+		sess.add(LogType(
+			id=19,
+			name='IPv6 Addresses'
+		))
+
+		privs = (
+			Privilege(
+				code='BASE_IPADDR',
+				name='Access: IP Addresses'
+			),
+			Privilege(
+				code='IPADDR_LIST',
+				name='IP Addresses: List'
+			),
+			Privilege(
+				code='IPADDR_CREATE',
+				name='IP Addresses: Create'
+			),
+			Privilege(
+				code='IPADDR_EDIT',
+				name='IP Addresses: Edit'
+			),
+			Privilege(
+				code='IPADDR_DELETE',
+				name='IP Addresses: Delete'
+			)
+		)
+		for priv in privs:
+			priv.module = modobj
+			sess.add(priv)
+		try:
+			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
+			for priv in privs:
+				cap = GroupCapability()
+				cap.group = grp_admins
+				cap.privilege = priv
+		except NoResultFound:
+			pass
 
 	def get_css(self, request):
 		return (

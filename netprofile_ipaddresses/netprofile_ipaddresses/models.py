@@ -108,6 +108,11 @@ class IPv4Address(Base):
 			'mysql_engine'      : 'InnoDB',
 			'mysql_charset'     : 'utf8',
 			'info'              : {
+				'cap_menu'      : 'BASE_IPADDR',
+				'cap_read'      : 'IPADDR_LIST',
+				'cap_create'    : 'IPADDR_CREATE',
+				'cap_edit'      : 'IPADDR_EDIT',
+				'cap_delete'    : 'IPADDR_DELETE',
 				'menu_name'     : _('IPv4 Addresses'),
 				'show_in_menu'  : 'modules',
 				'menu_order'    : 10,
@@ -287,6 +292,11 @@ class IPv6Address(Base):
 			'mysql_engine'      : 'InnoDB',
 			'mysql_charset'     : 'utf8',
 			'info'              : {
+				'cap_menu'      : 'BASE_IPADDR',
+				'cap_read'      : 'IPADDR_LIST',
+				'cap_create'    : 'IPADDR_CREATE',
+				'cap_edit'      : 'IPADDR_EDIT',
+				'cap_delete'    : 'IPADDR_DELETE',
 				'menu_name'     : _('IPv6 Addresses'),
 				'show_in_menu'  : 'modules',
 				'menu_order'    : 20,
