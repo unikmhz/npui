@@ -89,6 +89,14 @@ class Module(ModuleBase):
 		)
 
 	@classmethod
+	def get_sql_events(cls):
+		from netprofile_access import models
+		return (
+			models.AccessblockExpireEvent,
+			models.AcctPollEvent
+		)
+
+	@classmethod
 	def get_sql_data(cls, modobj, sess):
 		from netprofile_entities.models import Entity
 		from netprofile_access import models

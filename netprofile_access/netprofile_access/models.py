@@ -39,8 +39,13 @@ __all__ = [
 	'AcctPollProcedure',
 	'AcctRateModsProcedure',
 	'AcctRollbackProcedure',
-	'CheckAuthFunction'
+	'CheckAuthFunction',
+
+	'AccessblockExpireEvent',
+	'AcctPollEvent'
 ]
+
+import datetime as dt
 
 from sqlalchemy import (
 	Boolean,
@@ -86,6 +91,7 @@ from netprofile.db.ddl import (
 	InArgument,
 	InOutArgument,
 	OutArgument,
+	SQLEvent,
 	SQLFunction,
 	SQLFunctionArgument,
 	Trigger
@@ -914,5 +920,20 @@ AcctRollbackProcedure = SQLFunction(
 	comment='Rollback current period for an account',
 	label='rbfunc',
 	is_procedure=True
+)
+
+AccessblockExpireEvent = SQLEvent(
+	'ev_accessblock_expire',
+	sched_unit='day',
+	sched_interval=1,
+	comment='Find and mark expired access blocks'
+)
+
+AcctPollEvent = SQLEvent(
+	'ev_acct_poll',
+	sched_unit='day',
+	sched_interval=1,
+	starts=dt.datetime.combine(dt.date.today(), dt.time(0, 0, 1)),
+	comment='Perform passive accounting'
 )
 
