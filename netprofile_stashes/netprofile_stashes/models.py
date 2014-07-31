@@ -34,7 +34,9 @@ __all__ = [
 	'StashIOType',
 	'StashOperation',
 
-	'FuturesPollProcedure'
+	'FuturesPollProcedure',
+
+	'FuturesPollEvent'
 ]
 
 from sqlalchemy import (
@@ -75,6 +77,7 @@ from netprofile.ext.data import ExtModel
 from netprofile.db.ddl import (
 	Comment,
 	CurrentTimestampDefault,
+	SQLEvent,
 	SQLFunction,
 	Trigger
 )
@@ -982,5 +985,12 @@ FuturesPollProcedure = SQLFunction(
 	'futures_poll',
 	comment='Poll for expired futures',
 	is_procedure=True
+)
+
+FuturesPollEvent = SQLEvent(
+	'ev_futures_poll',
+	sched_unit='hour',
+	sched_interval=1,
+	comment='Poll for expired promised payments'
 )
 

@@ -70,6 +70,13 @@ class Module(ModuleBase):
 		)
 
 	@classmethod
+	def get_sql_events(cls):
+		from netprofile_stashes import models
+		return (
+			models.FuturesPollEvent,
+		)
+
+	@classmethod
 	def get_sql_data(cls, modobj, sess):
 		from netprofile_stashes.models import (
 			IOOperationType,
