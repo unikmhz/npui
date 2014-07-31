@@ -67,8 +67,18 @@ class Module(ModuleBase):
 		)
 
 	@classmethod
+	def get_sql_events(cls):
+		from netprofile_sessions import models
+		return (
+			models.IPAddrClearStaleEvent,
+			models.SessionsClearStaleEvent
+		)
+
+	@classmethod
 	def get_sql_data(cls, modobj, sess):
 		from netprofile_core.models import (
+			GlobalSetting,
+			GlobalSettingSection,
 			Group,
 			GroupCapability,
 			Privilege
@@ -103,6 +113,45 @@ class Module(ModuleBase):
 				cap.privilege = priv
 		except NoResultFound:
 			pass
+
+		gss_acct = GlobalSettingSection( # no old id
+			module=modobj,
+			name='Accounting',
+			description='Client accounting settings.'
+		)
+
+		sess.add(gss_acct)
+
+		sess.add(GlobalSetting(
+			section=gss_acct,
+			module=modobj,
+			name='acct_interval',
+			title='Default accounting interval',
+			type='text',
+			value='60',
+			default='60',
+			constraints={
+				'cast'   : 'int',
+				'nullok' : False,
+				'minval' : 20
+			},
+			description='Interval (in seconds) between session accounting reports.'
+		))
+		sess.add(GlobalSetting(
+			section=gss_acct,
+			module=modobj,
+			name='acct_stale_cutoff',
+			title='Inactivity before close',
+			type='text',
+			value='130',
+			default='130',
+			constraints={
+				'cast'   : 'int',
+				'nullok' : False,
+				'minval' : 45
+			},
+			description='Maximum session inactivity time (in seconds) before it is considered stale and closed down.'
+		))
 
 	def get_css(self, request):
 		return (

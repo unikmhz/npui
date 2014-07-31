@@ -36,7 +36,10 @@ __all__ = [
 	'AcctAllocIPv6Procedure',
 	'AcctAuthzSessionProcedure',
 	'AcctCloseSessionProcedure',
-	'AcctOpenSessionProcedure'
+	'AcctOpenSessionProcedure',
+
+	'IPAddrClearStaleEvent',
+	'SessionsClearStaleEvent'
 ]
 
 from sqlalchemy import (
@@ -72,6 +75,7 @@ from netprofile.db.fields import (
 from netprofile.db.ddl import (
 	Comment,
 	InArgument,
+	SQLEvent,
 	SQLFunction,
 	Trigger
 )
@@ -669,5 +673,20 @@ AcctOpenSessionProcedure = SQLFunction(
 	comment='Open new session',
 	label='aosfunc',
 	is_procedure=True
+)
+
+IPAddrClearStaleEvent = SQLEvent(
+	'ev_ipaddr_clear_stale',
+	sched_unit='minute',
+	sched_interval=91,
+	enabled=False,
+	comment='Clear stale in-use IP addresses'
+)
+
+SessionsClearStaleEvent = SQLEvent(
+	'ev_sessions_clear_stale',
+	sched_unit='minute',
+	sched_interval=2,
+	comment='Clear open but stale sessions'
 )
 
