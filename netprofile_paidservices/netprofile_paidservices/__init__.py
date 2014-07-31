@@ -62,6 +62,13 @@ class Module(ModuleBase):
 		)
 
 	@classmethod
+	def get_sql_events(cls):
+		from netprofile_paidservices import models
+		return (
+			models.PSPollEvent,
+		)
+
+	@classmethod
 	def get_sql_data(cls, modobj, sess):
 		from netprofile_core.models import (
 			Group,

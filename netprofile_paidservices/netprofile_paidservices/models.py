@@ -33,7 +33,9 @@ __all__ = [
 
 	'PSCallbackProcedure',
 	'PSExecuteProcedure',
-	'PSPollProcedure'
+	'PSPollProcedure',
+
+	'PSPollEvent'
 ]
 
 from sqlalchemy import (
@@ -78,6 +80,7 @@ from netprofile.db.ddl import (
 	Comment,
 	InArgument,
 	InOutArgument,
+	SQLEvent,
 	SQLFunction,
 	Trigger
 )
@@ -523,5 +526,12 @@ PSPollProcedure = SQLFunction(
 	),
 	comment='Poll paid services',
 	is_procedure=True
+)
+
+PSPollEvent = SQLEvent(
+	'ev_ps_poll',
+	sched_unit='minute',
+	sched_interval=15,
+	comment='Poll for independent paid services'
 )
 
