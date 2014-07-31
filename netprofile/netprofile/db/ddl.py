@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 import sys
+import datetime as dt
 
 from sqlalchemy.schema import (
 	Column,
@@ -36,7 +37,10 @@ from sqlalchemy.schema import (
 	SchemaItem,
 	Table
 )
-from sqlalchemy import event
+from sqlalchemy import (
+	event,
+	text
+)
 from sqlalchemy.sql import sqltypes
 from sqlalchemy.sql.expression import ClauseElement
 from sqlalchemy.sql.functions import FunctionElement
@@ -208,7 +212,7 @@ def visit_set_table_comment(element, compiler, **kw):
 
 def ddl_fmt(ctx, obj):
 	compiler = ctx['compiler']
-	if isinstance(obj, (Trigger, SQLFunction)):
+	if isinstance(obj, (Trigger, SQLFunction, SQLEvent)):
 		return compiler.sql_compiler.preparer.quote(obj.name)
 	if isinstance(obj, Table):
 		return compiler.sql_compiler.preparer.format_table(obj)
@@ -220,7 +224,17 @@ def ddl_fmt(ctx, obj):
 		return compiler.dialect.type_compiler.process(obj)
 	if isinstance(obj, (FunctionElement, ClauseElement)):
 		return compiler.sql_compiler.process(obj)
-	return str(obj)
+	if isinstance(obj, dt.datetime):
+		dname = compiler.dialect.name
+		date = obj
+		if dname in ('mysql', 'postgresql', 'sqlite'):
+			date = date.strftime('%Y-%m-%d %H:%M:%S')
+		return compiler.sql_compiler.render_literal_value(date, sqltypes.STRINGTYPE)
+	if isinstance(obj, str):
+		return compiler.sql_compiler.render_literal_value(obj, sqltypes.STRINGTYPE)
+	if isinstance(obj, int):
+		return compiler.sql_compiler.render_literal_value(obj, sqltypes.INTEGERTYPE)
+	raise ValueError('Unable to format value for DDL')
 
 class CreateTrigger(DDLElement):
 	def __init__(self, table, trigger):
@@ -244,7 +258,8 @@ def visit_create_trigger(element, compiler, **kw):
 		'module'   : module,
 		'compiler' : compiler,
 		'dialect'  : compiler.dialect,
-		'trigger'  : trigger
+		'trigger'  : trigger,
+		'raw'      : text
 	}
 	tpldef.update(Base._decl_class_registry.items())
 
@@ -301,7 +316,8 @@ def visit_create_function(element, compiler, **kw):
 		'name'     : name,
 		'module'   : module,
 		'compiler' : compiler,
-		'dialect'  : compiler.dialect
+		'dialect'  : compiler.dialect,
+		'raw'      : text
 	}
 	tpldef.update(Base._decl_class_registry.items())
 
@@ -356,6 +372,69 @@ class SQLFunction(object):
 
 	def drop(self):
 		return DropFunction(self)
+
+class CreateEvent(DDLElement):
+	"""
+	SQL event template DDL object.
+	"""
+	def __init__(self, evt, module):
+		self.event = evt
+		self.module = module
+
+@compiles(CreateEvent, 'mysql')
+def visit_create_event_mysql(element, compiler, **kw):
+	evt = element.event
+	name = evt.name
+	module = 'netprofile_' + element.module
+	tpldef = {
+		'event'    : evt,
+		'name'     : name,
+		'module'   : module,
+		'compiler' : compiler,
+		'dialect'  : compiler.dialect,
+		'raw'      : text
+	}
+	tpldef.update(Base._decl_class_registry.items())
+
+	tplname = '%s:templates/sql/%s/events/%s.mak' % (
+		module,
+		compiler.dialect.name,
+		name
+	)
+	return render(tplname, tpldef, package=sys.modules[module])
+
+class DropEvent(DDLElement):
+	"""
+	SQL DROP EVENT DDL object.
+	"""
+	def __init__(self, evt):
+		self.event = evt
+
+@compiles(DropEvent, 'mysql')
+def visit_drop_event_mysql(element, compiler, **kw):
+	evt = element.event
+	return 'DROP EVENT %s' % (
+		compiler.sql_compiler.preparer.quote(evt.name),
+	)
+
+class SQLEvent(object):
+	"""
+	Schema element that defines some periodically executed SQL code.
+	"""
+	def __init__(self, name, sched_unit='month', sched_interval=1, starts=None, preserve=True, enabled=True, comment=None):
+		self.name = name
+		self.preserve = preserve
+		self.enabled = enabled
+		self.comment = comment
+		self.sched_unit = sched_unit
+		self.sched_interval = sched_interval
+		self.starts = starts
+
+	def create(self, modname):
+		return CreateEvent(self, modname)
+
+	def drop(self):
+		return DropEvent(self)
 
 class CreateView(DDLElement):
 	"""

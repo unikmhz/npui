@@ -4,13 +4,13 @@
 % if function.is_procedure:
 CREATE PROCEDURE ${function}(
 % for arg in function.args:
-	${arg}${'' if loop.last else ','}
+	${arg}${raw('' if loop.last else ',')}
 % endfor
 )
 % else:
 CREATE FUNCTION ${function}(
 % for arg in function.args:
-	${arg}${'' if loop.last else ','}
+	${arg}${raw('' if loop.last else ',')}
 % endfor
 ) RETURNS ${function.returns}
 % endif
@@ -27,10 +27,10 @@ NO SQL
 % endif
 SQL SECURITY INVOKER
 % if function.comment:
-COMMENT '${function.comment}'
+COMMENT ${function.comment}
 % endif
 % if function.label:
-${function.label}: BEGIN
+${raw(function.label)}: BEGIN
 % else:
 BEGIN
 % endif

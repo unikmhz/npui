@@ -165,9 +165,6 @@ class ModuleManager(object):
 		ret = {}
 
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
-			sql_funcs = []
-			sql_events = []
-			sql_data = []
 			mod_name = ep.name
 			mod_version = '0.0.0'
 
@@ -459,11 +456,6 @@ class ModuleManager(object):
 			for view in get_sql_views():
 				sess.execute(view.create())
 
-		get_sql_events = getattr(modcls, 'get_sql_events', None)
-		if callable(get_sql_events):
-			for evt in get_sql_events():
-				sess.execute(evt.create(moddef))
-
 		modobj = NPModule(id=None)
 		modobj.name = moddef
 		modobj.current_version = modversion
@@ -484,6 +476,12 @@ class ModuleManager(object):
 			self.installed = set()
 		self.installed.add(moddef)
 		transaction.commit()
+
+		get_sql_events = getattr(modcls, 'get_sql_events', None)
+		if callable(get_sql_events):
+			for evt in get_sql_events():
+				sess.execute(evt.create(moddef))
+			transaction.commit()
 
 		if moddef == 'core':
 			self.load('core')

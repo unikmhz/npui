@@ -2,12 +2,12 @@
 <%namespace name="ddl" module="netprofile.db.ddl" import="ddl_fmt" inheritable="True"/>
 % if dialect.name == 'mysql':
 CREATE TRIGGER ${trigger}
-${trigger.when.upper()} ${trigger.event.upper()}
+${raw(trigger.when.upper())} ${raw(trigger.event.upper())}
 ON ${table}
 FOR EACH ROW
 BEGIN
 % elif dialect.name == 'postgresql':
-CREATE FUNCTION ${trigger.name + '_func()'}
+CREATE FUNCTION ${raw(trigger.name + '_func()')}
 RETURNS TRIGGER AS $$
 BEGIN
 % endif
@@ -19,9 +19,9 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 CREATE TRIGGER ${trigger}
-${trigger.when.upper()} ${trigger.event.upper()}
+${raw(trigger.when.upper())} ${raw(trigger.event.upper())}
 ON ${table}
 FOR EACH ROW
 EXECUTE PROCEDURE
-${trigger.name + '_func()'};
+${raw(trigger.name + '_func()')};
 % endif
