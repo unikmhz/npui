@@ -24,7 +24,6 @@ Before we begin, let's check if you have all of the following:
 
 4. Some way to host WSGI applications. There are multiple options here,
    some of them are:
-
    * [mod_wsgi](http://code.google.com/p/modwsgi/)
    * [waitress](https://github.com/Pylons/waitress)
    * [Tornado](http://www.tornadoweb.org/en/stable/)
@@ -40,42 +39,31 @@ You will need to install some OS packages as dependencies to be able to
 compile various needed Python modules later on. Here is the list:
 
 * Generic compilation support packages
-
   - In Fedora/RHEL/CentOS: package group `@development-tools`
   - In Debian/Ubuntu/Mint: virtual package `build-essential`
   - In Arch: package group `base-devel`
   - In Gentoo: you already have it
-
 * Development package for `libxslt`
-
   - In Fedora/RHEL/CentOS: package `libxslt-devel`
   - In Debian/Ubuntu/Mint: package `libxslt1-dev`
   - In Arch: package `libxslt`
   - In Gentoo: package `dev-libs/libxslt`
-
 * Development package for `cracklib`
-
   - In Fedora/RHEL/CentOS: package `cracklib-devel`
   - In Debian/Ubuntu/Mint: package `libcrack2-dev`
   - In Arch: package `cracklib`
   - In Gentoo: package `sys-libs/cracklib`
-
 * Development package for `zlib`
-
   - In Fedora/RHEL/CentOS: package `zlib-devel`
   - In Debian/Ubuntu/Mint: package `zlib1g-dev`
   - In Arch: package `zlib`
   - In Gentoo: package `sys-libs/zlib`
-
 * Package for `libmagic`
-
   - In Fedora/RHEL/CentOS: package `file-libs`
   - In Debian/Ubuntu/Mint: package `libmagic1`
   - In Arch: package `file`
   - In Gentoo: package `sys-apps/file`
-
 * Python `virtualenv` package
-
   - In Fedora/RHEL/CentOS: package `python-virtualenv`
   - In Debian/Ubuntu/Mint: package `python3-virtualenv` or `python-virtualenv`
   - In Arch: package `python-virtualenv` or `python2-virtualenv`
@@ -90,6 +78,18 @@ Database configuration
 #### MySQL
 
 *FIXME: Write this*
+
+```INI
+[mysqld]
+event_scheduler = ON
+```
+
+```SQL
+CREATE USER 'np'@'localhost' IDENTIFIED BY 'make-your-own-password-here';
+CREATE DATABASE `np` DEFAULT CHARACTER SET utf8;
+GRANT ALL PRIVILEGES ON np.* TO 'np'@'localhost';
+FLUSH PRIVILEGES;
+```
 
 Creating virtual environment
 ----------------------------
@@ -153,7 +153,9 @@ npctl module ls
 Now what?
 ---------
 
-*FIXME: TO BE FINISHED*
+*FIXME: Write this*
+
+Write about pserve, .wsgi files etc.
 
   [python]: https://www.python.org/
   [mysql]: https://www.mysql.com/
