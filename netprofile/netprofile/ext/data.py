@@ -1093,10 +1093,8 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 		if self.value_attr:
 			data = getattr(data, self.value_attr, data)
 		if data is not None:
-			data = str(data)
-		return {
-			k : data
-		}
+			return { k : str(data) }
+		return dict()
 
 	def append_field(self):
 		return self.column.name
@@ -1199,6 +1197,8 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 
 	def apply_data(self, obj, data):
 		cont = getattr(obj, self.name)
+		if data is None:
+			return
 		for relobj in data:
 			if relobj not in cont:
 				cont.append(relobj)
