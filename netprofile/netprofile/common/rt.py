@@ -57,6 +57,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 		self.session = session
 		self.app = session.server.app
 		self.user = None
+		self.uid = None
 		self.np_session = None
 
 	def _notify_presence(self, event, **kwargs):
@@ -66,7 +67,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 		msg = {
 			'type' : event,
 			'user' : self.user.login,
-			'uid'  : self.user.id,
+			'uid'  : self.uid,
 			'msg'  : ''
 		}
 		msg.update(kwargs)
@@ -74,18 +75,20 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 
 	def on_open(self, req):
 		self.user = None
+		self.uid = None
 		self.np_session = None
 
 	def on_close(self):
 		sess = self.app.sess
 		sess.sub.unsubscribe('bcast', self)
 		if self.user:
-			cnt = sess.r.hincrby('rtsess', self.user.id, -1)
+			cnt = sess.r.hincrby('rtsess', self.uid, -1)
 			if cnt <= 0:
-				sess.r.hdel('rtsess', self.user.id)
+				sess.r.hdel('rtsess', self.uid)
 				self._notify_presence('user_leaves')
-			sess.sub.unsubscribe('direct.%d' % self.user.id, self)
+			sess.sub.unsubscribe('direct.%d' % self.uid, self)
 		self.user = None
+		self.uid = None
 		self.np_session = None
 
 	def on_message(self, msg):
@@ -119,11 +122,12 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 			# TODO: check time constraints
 			self.np_session = npsess
 			self.user = npsess.user
+			self.uid = npsess.user.id
 			sess = self.app.sess
-			cnt = sess.r.hincrby('rtsess', self.user.id, 1)
+			cnt = sess.r.hincrby('rtsess', self.uid, 1)
 			sess.sub.subscribe((
 				'bcast',
-				'direct.%d' % self.user.id
+				'direct.%d' % self.uid
 			), self)
 			if cnt == 1:
 				self._notify_presence('user_enters')
@@ -140,7 +144,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 			recip = int(data.get('to'))
 			data.update({
 				'ts'      : datetime.datetime.now().replace(tzinfo=tzlocal()).isoformat(),
-				'fromid'  : self.user.id,
+				'fromid'  : self.uid,
 				'fromstr' : self.user.login
 			})
 			if msgtype == 'user':

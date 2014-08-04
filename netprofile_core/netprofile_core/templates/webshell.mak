@@ -143,7 +143,7 @@ Ext.require([
 		extend: 'NetProfile.data.IPAddress',
 		constructor: function(val)
 		{
-			if((val !== undefined) && (val !== null))
+			if((val !== undefined) && (val !== null) && (val !== ''))
 				this.setValue(val);
 		},
 		setValue: function(val)
@@ -166,7 +166,9 @@ Ext.require([
 			var ip, i, ioct;
 
 			if(oct.length !== 4)
+			{
 				throw 'Invalid IPv4 octets';
+			}
 			ip = 0;
 			for(i = 0; i < oct.length; i++)
 			{
