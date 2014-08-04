@@ -77,12 +77,22 @@ Database configuration
 
 #### MySQL
 
-*FIXME: Write this*
+Your MySQL configuration (usually stored in `/etc/mysql/my.cnf` file) must
+enable `event_scheduler` option, as shown here:
 
 ```INI
 [mysqld]
+
+...
+
 event_scheduler = ON
 ```
+
+Next, you need to create NetProfile database and user. To do so, log in to
+MySQL CLI as `root` user (usually done with `mysql -u root -p`, but whether
+the `-p` flag is needed depends on your configuration) and execute
+the following 4 SQL commands, substituting the password string in the first
+one.
 
 ```SQL
 CREATE USER 'np'@'localhost' IDENTIFIED BY 'make-your-own-password-here';
@@ -90,6 +100,9 @@ CREATE DATABASE `np` DEFAULT CHARACTER SET utf8;
 GRANT ALL PRIVILEGES ON np.* TO 'np'@'localhost';
 FLUSH PRIVILEGES;
 ```
+
+This will create a user `np@localhost`, create a database named `np`, grant
+required privileges for the users, and reread them.
 
 Creating virtual environment
 ----------------------------
@@ -123,11 +136,23 @@ affect your OS outside. Also note that this is **not** a chroot.
 Installing NetProfile Python packages
 -------------------------------------
 
-*FIXME: Write this*
+Note: All commands in this section **must** be executed as `netprofile` user
+from within a virtual environment, if you use one.
+
+To install NetProfile modules for production use, execute following commands:
 
 ```sh
 pip install netprofile_core
 pip install <add any other needed modules here>
+```
+
+Alternatively, if you want to participate in development or fix a bug, you
+can use bundled `develop.sh` script to manually install all prerequisites
+and register module source directories as installed packages. To do that,
+go to the root of a checked out repository and execute:
+
+```sh
+./develop.sh
 ```
 
 NetProfile configuration
