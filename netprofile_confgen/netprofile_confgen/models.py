@@ -109,7 +109,8 @@ class ServerType(Base):
 		Comment('Server type name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	description = Column(
