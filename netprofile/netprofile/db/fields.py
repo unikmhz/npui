@@ -112,6 +112,21 @@ def _is_ora(d):
 def _is_mssql(d):
 	return d.__class__ in _D_MSSQL
 
+class LargeBLOB(types.TypeDecorator):
+	"""
+	Large binary object.
+	"""
+	impl = types.LargeBinary
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.LONGBLOB()
+		return self.impl
+
+	@property
+	def python_type(self):
+		return bytes
+
 class IPv4Address(types.TypeDecorator):
 	"""
 	Hybrid IPv4 address.
