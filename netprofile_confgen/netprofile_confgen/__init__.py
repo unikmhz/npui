@@ -149,6 +149,11 @@ class Module(ModuleBase):
 			'netprofile_confgen:static/css/main.css',
 		)
 
+	def get_task_imports(self):
+		return (
+			'netprofile_confgen.tasks',
+		)
+
 	@property
 	def name(self):
 		return _('Config Generation')
