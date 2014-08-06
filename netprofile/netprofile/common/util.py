@@ -57,3 +57,12 @@ def make_config_dict(d, prefix='netprofile.'):
 		res[nkey] = value_from_config(d[key])
 	return res
 
+def as_dict(d):
+	ret = dict()
+	for key in d:
+		key_first, key_rest = key.split('.', 1)
+		if key_first not in ret:
+			ret[key_first] = dict()
+		ret[key_first][key_rest] = value_from_config(d[key])
+	return ret
+

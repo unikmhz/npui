@@ -130,6 +130,9 @@ class ModuleBase(object):
 	def get_dav_plugins(self, request):
 		return {}
 
+	def get_task_imports(self):
+		return ()
+
 	def load(self):
 		pass
 
@@ -588,6 +591,15 @@ class ModuleManager(object):
 		ret = {}
 		for moddef, mod in self.loaded.items():
 			ret.update(mod.get_dav_plugins(request))
+		return ret
+
+	def get_task_imports(self):
+		"""
+		Get a list of all modules containing Celery tasks.
+		"""
+		ret = []
+		for moddef, mod in self.loaded.items():
+			ret.extend(mod.get_task_imports())
 		return ret
 
 def includeme(config):
