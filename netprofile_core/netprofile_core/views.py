@@ -82,7 +82,9 @@ from .models import (
 	UserSetting,
 	UserSettingSection,
 	UserSettingType,
-	UserState
+	UserState,
+
+	F_DEFAULT_FILES
 )
 
 from pyramid.i18n import (
@@ -233,7 +235,13 @@ def file_ul(request):
 	if folder and not folder.can_write(request.user):
 		raise ValueError('Folder access denied')
 	for fo in request.POST.getall('file'):
-		obj = File(user=request.user, group=request.user.group)
+		obj = File(
+			user_id=request.user.id,
+			user=request.user,
+			group_id=request.user.group.id,
+			group=request.user.group,
+			rights=F_DEFAULT_FILES
+		)
 		if fo.filename:
 			obj.name = obj.filename = fo.filename
 		obj.folder = folder

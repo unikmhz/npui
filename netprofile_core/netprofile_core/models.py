@@ -45,6 +45,7 @@ __all__ = [
 	'FileFolderAccessRule',
 	'FileFolder',
 	'File',
+	'FileChunk',
 	'Tag',
 	'LogType',
 	'LogAction',
@@ -144,6 +145,7 @@ from netprofile.db.fields import (
 	Int8,
 	IPv4Address,
 	IPv6Address,
+	LargeBLOB,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -3318,7 +3320,7 @@ class File(Base):
 		}
 	)
 	data = deferred(Column(
-		LargeBinary(),
+		LargeBLOB(),
 		Comment('Actual file data'),
 		nullable=True,
 		default=None,
@@ -3807,10 +3809,17 @@ class FileChunk(Base):
 	"""
 	__tablename__ = 'files_chunks'
 	__table_args__ = (
-		Comment('Stored File Chunks'),
+		Comment('Stored file chunks'),
 		{
 			'mysql_engine'  : 'InnoDB',
-			'mysql_charset' : 'utf8'
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_ADMIN',
+				'cap_read'      : 'BASE_ADMIN',
+				'cap_create'    : '__NOPRIV__',
+				'cap_edit'      : '__NOPRIV__',
+				'cap_delete'    : '__NOPRIV__'
+			}
 		}
 	)
 	file_id = Column(
@@ -3837,7 +3846,7 @@ class FileChunk(Base):
 	)
 	# needs deferred? maybe not
 	data = Column(
-		LargeBinary(),
+		LargeBLOB(),
 		Comment('File chunk data'),
 		nullable=False,
 		info={
