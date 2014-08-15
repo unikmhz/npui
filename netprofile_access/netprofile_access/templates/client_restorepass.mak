@@ -21,6 +21,7 @@
 <form method="post" novalidate="novalidate" action="${req.route_url('access.cl.restorepass')}" id="restorepass-form" class="form-horizontal" role="form">
 <fieldset>
 	<legend>${_('Account Settings')}</legend>
+% if not  maillogin:
 	<div class="row form-group${' has-warning' if 'user' in errors else ''}">
 		<label class="col-sm-4 control-label" for="user">${_('User Name')}</label>
 		<div class="controls col-sm-8">
@@ -35,7 +36,7 @@
 				value=""
 				size="30"
 				maxlength="254"
-				pattern="[\w\d._-]+"
+				pattern="[\w\d._-@]+"
 				tabindex="1"
 				data-validation-required-message="${_('This field is required')}"
 				data-validation-maxlength-message="${_('This field is too long')}"
@@ -49,6 +50,7 @@
 			</ul></div>
 		</div>
 	</div>
+% endif
 	<div class="row form-group${' has-warning' if 'email' in errors else ''}">
 		<label class="col-sm-4 control-label" for="email">${_('E-mail')}</label>
 		<div class="controls col-sm-8">
