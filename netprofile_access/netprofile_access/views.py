@@ -330,11 +330,12 @@ def client_register(request):
 				errors['email'] = _('Invalid e-mail format')
 			if maillogin:
 				login = email
-			l = len(login)
-			if (l == 0) or (l > 254):
-				errors['user'] = _('Invalid field length')
-			elif not maillogin and not _re_login.match(login):
-				errors['user'] = _('Invalid character used in username')
+			else:
+				l = len(login)
+				if (l == 0) or (l > 254):
+					errors['user'] = _('Invalid field length')
+				elif _re_login.match(login):
+					errors['user'] = _('Invalid character used in username')
 			l = len(passwd)
 			if l < min_pwd_len:
 				errors['pass'] = _('Password is too short')
