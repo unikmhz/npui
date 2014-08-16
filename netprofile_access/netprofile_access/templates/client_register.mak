@@ -17,6 +17,7 @@
 <form method="post" novalidate="novalidate" action="${req.route_url('access.cl.register')}" id="register-form" class="form-horizontal" role="form">
 <fieldset>
 	<legend>${_('Account Settings')}</legend>
+% if not  maillogin:
 	<div class="row form-group${' has-warning' if 'user' in errors else ''}">
 		<label class="col-sm-4 control-label" for="user">${_('User Name')}</label>
 		<div class="controls col-sm-8">
@@ -47,6 +48,7 @@
 			</ul></div>
 		</div>
 	</div>
+% endif
 	<div class="row form-group${' has-warning' if 'email' in errors else ''}">
 		<label class="col-sm-4 control-label" for="email">${_('E-mail')}</label>
 		<div class="controls col-sm-8">

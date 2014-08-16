@@ -15,7 +15,7 @@
 	</div>
 % endfor
 	<input type="hidden" id="csrf" name="csrf" value="${req.get_csrf()}" />
-	<input type="text" class="form-control" placeholder="${_('User Name')}" required="required" autofocus="autofocus" id="user" name="user" title="${_('Enter your user name here')}" value="" maxlength="254" tabindex="1" autocomplete="off" />
+	<input type="text" class="form-control" placeholder="${_('E-mail') if maillogin else _('User Name')}" required="required" autofocus="autofocus" id="user" name="user" title="${_('Enter your e-mail address') if maillogin else _('Enter your user name here')}" value="" maxlength="254" tabindex="1" autocomplete="off" />
 	<input type="password" class="form-control" placeholder="${_('Password')}" required="required" id="pass" name="pass" title="${_('Enter your password here')}" value="" maxlength="254" tabindex="2" autocomplete="off" />
 	<button type="submit" class="btn btn-lg btn-primary btn-block" id="submit" name="submit" title="${_('Log in to your account')}" tabindex="3">${_('Log In')}</button>
 </form>

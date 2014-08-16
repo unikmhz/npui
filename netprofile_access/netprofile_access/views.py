@@ -250,6 +250,7 @@ def client_login(request):
 	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	can_recover = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
+	maillogin = asbool(cfg.get('netprofile.client.email_as_username', False))
 
 	if 'submit' in request.POST:
 		csrf = request.POST.get('csrf', '')
@@ -270,6 +271,7 @@ def client_login(request):
 		'failed'      : did_fail,
 		'can_reg'     : can_reg,
 		'can_recover' : can_recover,
+		'maillogin'   : maillogin,
 		'cur_loc'     : cur_locale,
 		'comb_js'     : comb_js
 	}
@@ -290,6 +292,7 @@ def client_register(request):
 	min_pwd_len = int(cfg.get('netprofile.client.registration.min_password_length', 8))
 	rate_id = int(cfg.get('netprofile.client.registration.rate_id', 1))
 	state_id = int(cfg.get('netprofile.client.registration.state_id', 1))
+	maillogin = asbool(cfg.get('netprofile.client.email_as_username', False))
 	csrf = request.POST.get('csrf', '')
 	errors = {}
 	if not can_reg:
@@ -320,11 +323,19 @@ def client_register(request):
 			name_family = request.POST.get('name_family', '')
 			name_given = request.POST.get('name_given', '')
 			name_middle = request.POST.get('name_middle', '')
-			l = len(login)
+			l = len(email)
 			if (l == 0) or (l > 254):
-				errors['user'] = _('Invalid field length')
-			elif not _re_login.match(login):
-				errors['user'] = _('Invalid character used in username')
+				errors['email'] = _('Invalid field length')
+			elif not _re_email.match(email):
+				errors['email'] = _('Invalid e-mail format')
+			if maillogin:
+				login = email
+			else:
+				l = len(login)
+				if (l == 0) or (l > 254):
+					errors['user'] = _('Invalid field length')
+				elif _re_login.match(login):
+					errors['user'] = _('Invalid character used in username')
 			l = len(passwd)
 			if l < min_pwd_len:
 				errors['pass'] = _('Password is too short')
@@ -332,11 +343,6 @@ def client_register(request):
 				errors['pass'] = _('Password is too long')
 			if passwd != passwd2:
 				errors['pass2'] = _('Passwords do not match')
-			l = len(email)
-			if (l == 0) or (l > 254):
-				errors['email'] = _('Invalid field length')
-			elif not _re_email.match(email):
-				errors['email'] = _('Invalid e-mail format')
 			l = len(name_family)
 			if (l == 0) or (l > 254):
 				errors['name_family'] = _('Invalid field length')
@@ -440,6 +446,7 @@ def client_register(request):
 		'must_verify'    : must_verify,
 		'must_recaptcha' : must_recaptcha,
 		'min_pwd_len'    : min_pwd_len,
+		'maillogin'	 : maillogin,
 		'errors'         : {err: loc.translate(errors[err]) for err in errors}
 	}
 	if must_recaptcha:
@@ -539,6 +546,8 @@ def client_restorepass(request):
 	can_rp = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
 	change_pass = asbool(cfg.get('netprofile.client.password_recovery.change_password', True))
 	must_recaptcha = asbool(cfg.get('netprofile.client.password_recovery.recaptcha.enabled', False))
+	maillogin = asbool(cfg.get('netprofile.client.email_as_username', False))
+
 	errors = {}
 	if not can_rp:
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
@@ -563,16 +572,19 @@ def client_restorepass(request):
 		if len(errors) == 0:
 			login = request.POST.get('user', '')
 			email = request.POST.get('email', '')
-			l = len(login)
-			if (l == 0) or (l > 254):
-				errors['user'] = _('Invalid field length')
-			elif not _re_login.match(login):
-				errors['user'] = _('Invalid character used in username')
 			l = len(email)
 			if (l == 0) or (l > 254):
 				errors['email'] = _('Invalid field length')
 			elif not _re_email.match(email):
 				errors['email'] = _('Invalid e-mail format')
+			if maillogin:
+				login = email
+			else:
+				l = len(login)
+				if (l == 0) or (l > 254):
+					errors['user'] = _('Invalid field length')
+				elif not _re_login.match(login):
+					errors['user'] = _('Invalid character used in username')
 		if len(errors) == 0:
 			sess = DBSession()
 			for acc in sess.query(AccessEntity)\
@@ -640,6 +652,7 @@ def client_restorepass(request):
 		'comb_js'        : comb_js,
 		'change_pass'    : change_pass,
 		'must_recaptcha' : must_recaptcha,
+		'maillogin'	 : maillogin,
 		'errors'         : {err: loc.translate(errors[err]) for err in errors}
 	}
 	if must_recaptcha:
