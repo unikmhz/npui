@@ -572,18 +572,19 @@ def client_restorepass(request):
 		if len(errors) == 0:
 			login = request.POST.get('user', '')
 			email = request.POST.get('email', '')
-			if maillogin:
-				login = email
-			l = len(login)
-			if (l == 0) or (l > 254):
-				errors['user'] = _('Invalid field length')
-			elif not maillogin and not _re_login.match(login):
-				errors['user'] = _('Invalid character used in username')
 			l = len(email)
 			if (l == 0) or (l > 254):
 				errors['email'] = _('Invalid field length')
 			elif not _re_email.match(email):
 				errors['email'] = _('Invalid e-mail format')
+			if maillogin:
+				login = email
+			else:
+				l = len(login)
+				if (l == 0) or (l > 254):
+					errors['user'] = _('Invalid field length')
+				elif not _re_login.match(login):
+					errors['user'] = _('Invalid character used in username')
 		if len(errors) == 0:
 			sess = DBSession()
 			for acc in sess.query(AccessEntity)\
