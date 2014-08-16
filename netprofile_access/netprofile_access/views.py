@@ -576,7 +576,7 @@ def client_restorepass(request):
 			l = len(login)
 			if (l == 0) or (l > 254):
 				errors['user'] = _('Invalid field length')
-			elif not _re_login.match(login):
+			elif not maillogin and not _re_login.match(login):
 				errors['user'] = _('Invalid character used in username')
 			l = len(email)
 			if (l == 0) or (l > 254):
