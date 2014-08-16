@@ -323,6 +323,13 @@ def client_register(request):
 			name_family = request.POST.get('name_family', '')
 			name_given = request.POST.get('name_given', '')
 			name_middle = request.POST.get('name_middle', '')
+			l = len(email)
+			if (l == 0) or (l > 254):
+				errors['email'] = _('Invalid field length')
+			elif not _re_email.match(email):
+				errors['email'] = _('Invalid e-mail format')
+			if maillogin:
+				login = email
 			l = len(login)
 			if (l == 0) or (l > 254):
 				errors['user'] = _('Invalid field length')
@@ -335,13 +342,6 @@ def client_register(request):
 				errors['pass'] = _('Password is too long')
 			if passwd != passwd2:
 				errors['pass2'] = _('Passwords do not match')
-			l = len(email)
-			if (l == 0) or (l > 254):
-				errors['email'] = _('Invalid field length')
-			elif not _re_email.match(email):
-				errors['email'] = _('Invalid e-mail format')
-			if maillogin:
-				login = email
 			l = len(name_family)
 			if (l == 0) or (l > 254):
 				errors['name_family'] = _('Invalid field length')
