@@ -36,7 +36,7 @@
 				value=""
 				size="30"
 				maxlength="254"
-				pattern="[\w\d._-@]+"
+				pattern="[\w\d._-]+"
 				tabindex="1"
 				data-validation-required-message="${_('This field is required')}"
 				data-validation-maxlength-message="${_('This field is too long')}"

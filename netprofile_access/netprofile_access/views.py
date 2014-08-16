@@ -86,8 +86,7 @@ from .recaptcha import verify_recaptcha
 
 _ = TranslationStringFactory('netprofile_access')
 
-_re_login = re.compile(r'^[\w\d._@-]+$')
-#_re_login = re.compile(r'^[\w\d._-]+$')
+_re_login = re.compile(r'^[\w\d._-]+$')
 _re_email = re.compile(r'^[-.\w]+@(?:[\w\d-]{2,}\.)+\w{2,6}$')
 
 @view_config(route_name='access.cl.home', renderer='netprofile_access:templates/client_home.mak', permission='USAGE')
@@ -251,7 +250,7 @@ def client_login(request):
 	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	can_recover = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
-	maillogin = asbool(cfg.get('netprofile.client.registration.maillogin', False))
+	maillogin = asbool(cfg.get('netprofile.client.email_as_username', False))
 
 	if 'submit' in request.POST:
 		csrf = request.POST.get('csrf', '')
@@ -293,7 +292,7 @@ def client_register(request):
 	min_pwd_len = int(cfg.get('netprofile.client.registration.min_password_length', 8))
 	rate_id = int(cfg.get('netprofile.client.registration.rate_id', 1))
 	state_id = int(cfg.get('netprofile.client.registration.state_id', 1))
-	maillogin = asbool(cfg.get('netprofile.client.registration.maillogin', False))
+	maillogin = asbool(cfg.get('netprofile.client.email_as_username', False))
 	csrf = request.POST.get('csrf', '')
 	errors = {}
 	if not can_reg:
@@ -321,15 +320,13 @@ def client_register(request):
 			passwd = request.POST.get('pass', '')
 			passwd2 = request.POST.get('pass2', '')
 			email = request.POST.get('email', '')
-			if maillogin:
-				login = email
 			name_family = request.POST.get('name_family', '')
 			name_given = request.POST.get('name_given', '')
 			name_middle = request.POST.get('name_middle', '')
 			l = len(login)
 			if (l == 0) or (l > 254):
 				errors['user'] = _('Invalid field length')
-			elif not _re_login.match(login):
+			elif not maillogin and not _re_login.match(login):
 				errors['user'] = _('Invalid character used in username')
 			l = len(passwd)
 			if l < min_pwd_len:
@@ -343,6 +340,8 @@ def client_register(request):
 				errors['email'] = _('Invalid field length')
 			elif not _re_email.match(email):
 				errors['email'] = _('Invalid e-mail format')
+			if maillogin:
+				login = email
 			l = len(name_family)
 			if (l == 0) or (l > 254):
 				errors['name_family'] = _('Invalid field length')
@@ -546,7 +545,7 @@ def client_restorepass(request):
 	can_rp = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
 	change_pass = asbool(cfg.get('netprofile.client.password_recovery.change_password', True))
 	must_recaptcha = asbool(cfg.get('netprofile.client.password_recovery.recaptcha.enabled', False))
-	maillogin = asbool(cfg.get('netprofile.client.registration.maillogin', False))
+	maillogin = asbool(cfg.get('netprofile.client.email_as_username', False))
 
 	errors = {}
 	if not can_rp:
