@@ -49,7 +49,7 @@ Project links
 Source repositories
 ~~~~~~~~~~~~~~~~~~~
 
-* NetProfile UI: `on GitHub <npui>`_
+* NetProfile UI: `on GitHub <npui_>`__
 
   Contains all the standard modules as well as basic framework for running
   NetProfile WSGI app.
@@ -62,14 +62,14 @@ Source repositories
 Bug tracker
 ~~~~~~~~~~~
 
-* NetProfile UI: `on GitHub <npui-it>`_
+* NetProfile UI: `on GitHub <npui-it_>`__
 
   Add bug reports, patches, translations and feature requests here.
 
 Mailing lists
 ~~~~~~~~~~~~~
 
-* User discussions: `Google Group <ml-users>`_
+* User discussions: `Google Group <ml-users_>`__
 
   Everything not appropriate for a bug tracker (i.e. questions, how-tos etc.)
   should be posted here.
