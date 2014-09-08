@@ -49,7 +49,7 @@ Project links
 Source repositories
 ~~~~~~~~~~~~~~~~~~~
 
-* NetProfile UI: `on GitHub <npui_>`__
+* NetProfile UI: `NetProfile UI on GitHub`_
 
   Contains all the standard modules as well as basic framework for running
   NetProfile WSGI app.
@@ -62,21 +62,21 @@ Source repositories
 Bug tracker
 ~~~~~~~~~~~
 
-* NetProfile UI: `on GitHub <npui-it_>`__
+* NetProfile UI: `NetProfile UI bug tracker`_
 
   Add bug reports, patches, translations and feature requests here.
 
 Mailing lists
 ~~~~~~~~~~~~~
 
-* User discussions: `Google Group <ml-users_>`__
+* User discussions: `netprofile-users Google Group`_
 
   Everything not appropriate for a bug tracker (i.e. questions, how-tos etc.)
   should be posted here.
 
-.. _npui: https://github.com/unikmhz/npui
-.. _npui-it: https://github.com/unikmhz/npui/issues
-.. _ml-users: https://groups.google.com/d/forum/netprofile-users
+.. _NetProfile UI on GitHub: https://github.com/unikmhz/npui
+.. _NetProfile UI bug tracker: https://github.com/unikmhz/npui/issues
+.. _netprofile-users Google Group: https://groups.google.com/d/forum/netprofile-users
 
 First steps
 -----------
