@@ -49,7 +49,7 @@ Project links
 Source repositories
 ~~~~~~~~~~~~~~~~~~~
 
-* NetProfile UI: `on GitHub <npui_>`_
+* NetProfile UI: `on GitHub <npui>`_
 
   Contains all the standard modules as well as basic framework for running
   NetProfile WSGI app.
@@ -62,14 +62,14 @@ Source repositories
 Bug tracker
 ~~~~~~~~~~~
 
-* NetProfile UI: `on GitHub <npui-it_>`_
+* NetProfile UI: `on GitHub <npui-it>`_
 
   Add bug reports, patches, translations and feature requests here.
 
 Mailing lists
 ~~~~~~~~~~~~~
 
-* User discussions: `Google Group <ml-users_>`_
+* User discussions: `Google Group <ml-users>`_
 
   Everything not appropriate for a bug tracker (i.e. questions, how-tos etc.)
   should be posted here.
@@ -151,7 +151,7 @@ Bundled libraries
    THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
    SUCH DAMAGE.
 
-* `SockJS JavaScript client`_, licensed under `MIT license <sockjs-mit_>`_
+* `SockJS JavaScript client`_, licensed under `MIT license <sockjs-mit>`_
 * TinyMCE_, licensed under `LGPL 2.1`_
 
 .. _GPLv3: http://www.gnu.org/licenses/gpl.html
