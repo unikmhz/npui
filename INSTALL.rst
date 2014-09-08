@@ -174,6 +174,8 @@ go to the root of a checked out repository and execute:
 
 .. code:: sh
 
+   ./generate.sh
+   ./gen-locale.sh
    ./develop.sh
 
 NetProfile configuration
@@ -181,9 +183,9 @@ NetProfile configuration
 
 *FIXME: Write this. Also, add proper comments to INI files*
 
-1.	Copy .ini
-2.	Edit .ini
-3.	Use ``export NP_INI_FILE=/path/to/file.ini``
+1. Copy .ini
+2. Edit .ini
+3. Use ``export NP_INI_FILE=/path/to/file.ini``
 
 Installing and enabling NetProfile modules
 ------------------------------------------
