@@ -79,6 +79,7 @@ def main(argv=sys.argv):
 	)
 	config.add_route_predicate('vhost', VHostPredicate)
 	config.add_view_predicate('vhost', VHostPredicate)
+	config.commit()
 
 	mmgr = config.registry.getUtility(IModuleManager)
 	mmgr.load('core')

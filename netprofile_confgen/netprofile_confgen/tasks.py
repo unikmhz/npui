@@ -30,6 +30,7 @@ from __future__ import (
 import logging
 import os
 import shutil
+import transaction
 
 from netprofile.celery import app
 
@@ -56,5 +57,6 @@ def task_generate(station_ids=()):
 	cfg = app.settings
 	st_id, outdir = _prep_confgen(cfg)
 
+	sess = DBSession()
 	pass
 
