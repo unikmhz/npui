@@ -61,3 +61,7 @@ target/
 debug-shell.py
 /netprofile/data/
 
+# NetProfile-specific
+README-NP.rst
+LICENSE.txt
+
