@@ -29,11 +29,12 @@ requires = [
 	'pyramid_debugtoolbar >= 1.0',
 	'pyramid_redis_sessions >= 0.9b5',
 	'pyramid_mailer >= 0.13',
-	'argh >= 0.25',
-	'prettytable >= 0.7',
 	'Babel',
 	'lingua',
 	'lxml',
+
+	'configobj >= 5.0',
+	'cliff >= 1.7.0',
 
 	'tornado',
 	'sockjs-tornado',
@@ -76,15 +77,26 @@ setup(
 	zip_safe=False,
 	test_suite='netprofile',
 	install_requires=requires,
-	entry_points="""\
-		[paste.app_factory]
-		main = netprofile:main
-		[console_scripts]
-		npctl = netprofile.scripts.ctl:main
-		np_createdb = netprofile.scripts.createdb:main
-		np_dropdb = netprofile.scripts.dropdb:main
-		np_rtd = netprofile.scripts.rtd:main
-		[netprofile.modules]
-	""",
+	entry_points={
+		'paste.app_factory' : [
+			'main = netprofile:main'
+		],
+		'console_scripts' : [
+			'npctl = netprofile.scripts.ctl:main',
+			'np_rtd = netprofile.scripts.rtd:main'
+		],
+		'netprofile.cli.commands' : [
+			'module list = netprofile.cli:ListModules',
+			'module ls = netprofile.cli:ListModules', # ?
+
+			'module show = netprofile.cli:ShowModule',
+			'module info = netprofile.cli:ShowModule',
+
+			'module install = netprofile.cli:InstallModule',
+			'module uninstall = netprofile.cli:UninstallModule',
+			'module enable = netprofile.cli:EnableModule',
+			'module disable = netprofile.cli:DisableModule'
+		]
+	}
 )
 
