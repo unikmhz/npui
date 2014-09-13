@@ -29,311 +29,157 @@ from __future__ import (
 	division
 )
 
-import os
 import locale
-import transaction
+import logging
+import os
+import pkg_resources
+import sys
 
-from argh import (
-	ArghParser,
-
-	aliases,
-	arg,
-	expects_obj,
-	named,
-	wrap_errors
-)
+from cliff.app import App
+from cliff.commandmanager import CommandManager
 
 from babel import Locale
-from prettytable import PrettyTable
 from pyramid import threadlocal
-from pyramid.paster import (
-	get_appsettings,
-	setup_logging
-)
+from pyramid.decorator import reify
+from pyramid.paster import get_appsettings
 from pyramid.interfaces import IRendererFactory
 from pyramid.path import DottedNameResolver
 from pyramid.i18n import (
 	ITranslationDirectories,
-	TranslationStringFactory,
 	make_localizer
 )
 import pyramid_mako
 
-from sqlalchemy.exc import ProgrammingError
-
 from netprofile import setup_config
 from netprofile.db.connection import DBSession
 from netprofile.db.clauses import SetVariable
+from netprofile.common.modules import ModuleManager
 
-from netprofile.common.modules import (
-	ModuleError,
-	ModuleManager
-)
+class CLIApplication(App):
+	"""
+	Cliff application for npctl utility
+	"""
+	log = logging.getLogger(__name__)
 
-_loc = None
-_ = TranslationStringFactory('netprofile')
+	def __init__(self):
+		np = pkg_resources.get_distribution('netprofile')
 
-def setup_app(ini_file, app_name):
-	config_uri = '#'.join((ini_file, app_name))
-	settings = get_appsettings(config_uri)
-
-	cfg = setup_config(settings)
-	cfg.commit()
-	return cfg
-
-def setup_mako_sql(cfg):
-	reg = threadlocal.get_current_registry()
-	factory = pyramid_mako.MakoRendererFactory()
-
-	name_resolver = DottedNameResolver()
-	lookup_opts = pyramid_mako.parse_options_from_settings(cfg.registry.settings, 'mako.', name_resolver.maybe_resolve)
-	lookup_opts.update({
-		'default_filters' : ['context[\'self\'].ddl.ddl_fmt']
-	})
-	factory.lookup = pyramid_mako.PkgResourceTemplateLookup(**lookup_opts)
-
-	reg.registerUtility(factory, IRendererFactory, name='.mak')
-
-def get_loc(cfg):
-	global _loc
-
-	reg = cfg.registry
-	cur_locale = reg.settings.get('pyramid.default_locale_name', 'en')
-	sys_locale = locale.getlocale()[0]
-
-	if sys_locale:
-		new_locale = Locale.negotiate(
-			(locale.getlocale()[0],),
-			reg.settings.get('pyramid.available_languages', '').split()
+		super(CLIApplication, self).__init__(
+			description='NetProfile CLI utility',
+			version=np.version,
+			command_manager=CommandManager('netprofile.cli.commands')
 		)
-		if new_locale:
-			cur_locale = str(new_locale)
-	else:
-		cur_locale = 'en'
 
-	tdirs = reg.queryUtility(ITranslationDirectories, default=[])
-	_loc = make_localizer(cur_locale, tdirs)
-	return _loc
+		self._mako_setup = False
 
-def get_session():
-	sess = DBSession()
-	sess.execute(SetVariable('accessuid', 0))
-	sess.execute(SetVariable('accessgid', 0))
-	sess.execute(SetVariable('accesslogin', '[NPCTL]'))
-	return sess
+	def build_option_parser(self, descr, vers, argparse_kwargs=None):
+		parser = super(CLIApplication, self).build_option_parser(descr, vers, argparse_kwargs)
 
-@named('list')
-@aliases('ls')
-@arg('--filter', '-f',
-	choices=('all', 'installed', 'uninstalled', 'enabled', 'disabled'),
-	default='all',
-	help='Show only modules in this state'
-)
-@expects_obj
-def module_list(args):
-	"""
-	List available/installed modules
-	"""
-	cfg = setup_app(args.ini_file, args.application)
-	loc = get_loc(cfg)
-	has_core = True
-	flt = args.filter
-	try:
-		from netprofile_core.models import NPModule
-	except ImportError:
-		has_core = False
+		parser.add_argument(
+			'-i', '--ini-file',
+			metavar='FILE',
+			default=self.default_ini_file,
+			help='Specify .ini file to use.'
+		)
+		parser.add_argument(
+			'-a', '--application',
+			metavar='SECTION',
+			default=self.default_ini_name,
+			help='Default app section of .ini file to use.'
+		)
 
-	tr_name = loc.translate(_('Name'))
-	tr_avail = loc.translate(_('Available'))
-	tr_inst = loc.translate(_('Installed'))
-	tr_enab = loc.translate(_('Enabled'))
-	mm = ModuleManager(cfg)
-	tbl = PrettyTable((
-		tr_name,
-		tr_avail,
-		tr_inst,
-		tr_enab
-	))
-	tbl.align = 'l'
-	tbl.align[tr_enab] = 'c'
-	tbl.sortby = tr_name
-	tbl.padding_width = 2
+		return parser
 
-	installed = {}
-	if has_core:
-		sess = get_session()
-		try:
-			for mod in sess.query(NPModule):
-				installed[mod.name] = (mod.current_version, mod.enabled)
-		except ProgrammingError:
-			has_core = False
+	def initialize_app(self, argv):
+		self.log.debug('Starting NetProfile CLI shell')
 
-	for moddef, data in mm.prepare().items():
-		curversion = _('- N/A -')
-		enabled = _('- N/A -')
-		if moddef in installed:
-			if installed[moddef][1] and (flt == 'disabled'):
-				continue
-			if (not installed[moddef][1]) and (flt == 'enabled'):
-				continue
-			curversion = installed[moddef][0]
-			enabled = _('YES') if installed[moddef][1] else _('NO')
-		elif flt in ('installed', 'enabled', 'disabled'):
-			continue
-		tbl.add_row((
-			moddef,
-			data[1],
-			loc.translate(curversion),
-			loc.translate(enabled)
+	def prepare_to_run_command(self, cmd):
+		self.log.debug('Running command %s', cmd.__class__.__name__)
+
+	def clean_up(self, cmd, result, err):
+		self.log.debug('Finishing command %s', cmd.__class__.__name__)
+		if err:
+			self.log.debug('Got an error: %s', err)
+
+	@reify
+	def default_ini_file(self):
+		if 'NP_INI_FILE' in os.environ:
+			return os.environ['NP_INI_FILE']
+		return 'production.ini'
+
+	@reify
+	def default_ini_name(self):
+		if 'NP_INI_NAME' in os.environ:
+			return os.environ['NP_INI_NAME']
+		return 'netprofile'
+
+	@reify
+	def locale(self):
+		reg = self.app_config.registry
+		cur_locale = reg.settings.get('pyramid.default_locale_name', 'en')
+		sys_locale = locale.getlocale()[0]
+
+		if sys_locale:
+			new_locale = Locale.negotiate(
+				(locale.getlocale()[0],),
+				reg.settings.get('pyramid.available_languages', '').split()
+			)
+			if new_locale:
+				cur_locale = str(new_locale)
+		else:
+			cur_locale = 'en'
+
+		tdirs = reg.queryUtility(ITranslationDirectories, default=[])
+		return make_localizer(cur_locale, tdirs)
+
+	@reify
+	def mm(self):
+		return ModuleManager(self.app_config)
+
+	@reify
+	def db_session(self):
+		sess = DBSession()
+		sess.execute(SetVariable('accessuid', 0))
+		sess.execute(SetVariable('accessgid', 0))
+		sess.execute(SetVariable('accesslogin', '[NPCTL]'))
+		return sess
+
+	@reify
+	def app_config(self):
+		config_uri = '#'.join((
+			self.options.ini_file,
+			self.options.application
 		))
+		settings = get_appsettings(config_uri)
 
-	return tbl
+		cfg = setup_config(settings)
+		cfg.commit()
+		return cfg
 
-@named('install')
-@aliases('in')
-@arg('name',
-	help='Name of the module to install or a special value \'all\''
-)
-@wrap_errors((ModuleError,), processor=lambda e: 'Error: %s' % (e,))
-@expects_obj
-def module_install(args):
-	"""
-	Install available module to database
-	"""
-	cfg = setup_app(args.ini_file, args.application)
-	setup_mako_sql(cfg)
-	mm = ModuleManager(cfg)
-	sess = get_session()
-	mm.scan()
-	if args.name != 'core':
-		mm.load('core')
-	mm.load_all()
+	def setup_mako_sql(self):
+		if self._mako_setup:
+			return
+		reg = threadlocal.get_current_registry()
+		factory = pyramid_mako.MakoRendererFactory()
 
-	if args.name.lower() == 'all':
-		mm.install('core', sess)
-		for mod in mm.modules:
-			if mod != 'core':
-				mm.install(mod, sess)
-		return 'All done.'
+		name_resolver = DottedNameResolver()
+		lookup_opts = pyramid_mako.parse_options_from_settings(
+			self.app_config.registry.settings,
+			'mako.',
+			name_resolver.maybe_resolve
+		)
+		lookup_opts.update({
+			'default_filters' : ['context[\'self\'].ddl.ddl_fmt']
+		})
+		factory.lookup = pyramid_mako.PkgResourceTemplateLookup(**lookup_opts)
 
-	ret = mm.install(args.name, sess)
-	if isinstance(ret, bool):
-		if ret:
-			return 'Module \'%s\' successfully installed.' % (args.name,)
-		else:
-			return 'Error: Module \'%s\' is already installed.' % (args.name,)
-	return 'Error: Unknown result.'
+		reg.registerUtility(factory, IRendererFactory, name='.mak')
+		self._mako_setup = True
 
-@named('uninstall')
-@aliases('un')
-@wrap_errors((ModuleError,), processor=lambda e: 'Error: %s' % (e,))
-@expects_obj
-@arg('name',
-	help='Name of the module to uninstall or a special value \'all\''
-)
-def module_uninstall(args):
-	"""
-	Uninstall module from database
-	"""
-	cfg = setup_app(args.ini_file, args.application)
-	setup_mako_sql(cfg)
-	mm = ModuleManager(cfg)
-	sess = get_session()
-	mm.scan()
-	raise Exception('Unimplemented')
+def main(argv=sys.argv[1:]):
+	app = CLIApplication()
+	return app.run(argv)
 
-@named('enable')
-@aliases('en')
-@arg('name',
-	help='Name of the module to enable or a special value \'all\''
-)
-@wrap_errors((ModuleError,), processor=lambda e: 'Error: %s' % (e,))
-@expects_obj
-def module_enable(args):
-	"""
-	Enable installed module
-	"""
-	cfg = setup_app(args.ini_file, args.application)
-	setup_mako_sql(cfg)
-	mm = ModuleManager(cfg)
-	sess = get_session()
-	mm.scan()
-	if not mm.load('core'):
-		return 'Error: Unable to proceed without core module.'
-
-	if args.name.lower() == 'all':
-		for mod in mm.modules:
-			if mm.is_installed(mod, sess) and (mod != 'core'):
-				mm.enable(mod)
-		return 'All done.'
-
-	ret = mm.enable(args.name)
-	if isinstance(ret, bool):
-		if ret:
-			return 'Enabled module \'%s\'.' % (args.name,)
-		else:
-			return 'Error: Module \'%s\' wasn\'t found or is not installed.' % (args.name,)
-	return 'Error: Unknown result.'
-
-@named('disable')
-@aliases('dis')
-@arg('name',
-	help='Name of the module to disable or a special value \'all\''
-)
-@wrap_errors((ModuleError,), processor=lambda e: 'Error: %s' % (e,))
-@expects_obj
-def module_disable(args):
-	"""
-	Disable installed module
-	"""
-	cfg = setup_app(args.ini_file, args.application)
-	setup_mako_sql(cfg)
-	mm = ModuleManager(cfg)
-	sess = get_session()
-	mm.scan()
-	if not mm.load('core'):
-		return 'Error: Unable to proceed without core module.'
-
-	if args.name.lower() == 'all':
-		for mod in mm.modules:
-			if mm.is_installed(mod, sess) and (mod != 'core'):
-				mm.disable(mod)
-		return 'All done.'
-
-	ret = mm.disable(args.name)
-	if isinstance(ret, bool):
-		if ret:
-			return 'Disabled module \'%s\'.' % (args.name,)
-		else:
-			return 'Error: Module \'%s\' wasn\'t found or is not installed.' % (args.name,)
-	return 'Error: Unknown result.'
-
-def main():
-	parser = ArghParser()
-
-	parser.add_commands(
-		(
-			module_list,
-			module_install,
-			module_uninstall,
-			module_enable,
-			module_disable
-		),
-		namespace='module',
-		title='Module commands',
-		description='Group of commands related to listing or (un)installing modules'
-	)
-
-	ini_file='production.ini'
-	if 'NP_INI_FILE' in os.environ:
-		ini_file = os.environ['NP_INI_FILE']
-
-	ini_name='netprofile'
-	if 'NP_INI_NAME' in os.environ:
-		ini_name = os.environ['NP_INI_NAME']
-
-	parser.add_argument('--ini-file', '-i', default=ini_file, help='Specify .ini file to use')
-	parser.add_argument('--application', '-a', default=ini_name, help='Default app section of .ini file to use')
-
-	parser.dispatch()
+if __name__ == '__main__':
+	sys.exit(main(sys.argv[1:]))
 
