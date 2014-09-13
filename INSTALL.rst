@@ -175,8 +175,8 @@ go to the root of a checked out repository and execute:
 .. code:: sh
 
    ./generate.sh
-   ./gen-locale.sh
    ./develop.sh
+   ./gen-locale.sh
 
 NetProfile configuration
 ------------------------
