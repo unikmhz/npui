@@ -1,2 +1,2 @@
-include *.txt *.ini *.cfg *.rst
+include *.txt *.ini *.cfg *.wsgi *.rst
 recursive-include netprofile *.ico *.png *.css *.gif *.jpg *.pt *.txt *.mak *.mako *.js *.html *.xml
