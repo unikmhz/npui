@@ -181,11 +181,12 @@ go to the root of a checked out repository and execute:
 NetProfile configuration
 ------------------------
 
-*FIXME: Write this. Also, add proper comments to INI files*
+*FIXME: Write this*
 
 1. Copy .ini
 2. Edit .ini
 3. Use ``export NP_INI_FILE=/path/to/file.ini``
+   and optionally ``export NP_INI_NAME=name-of-ini-section``
 
 Installing and enabling NetProfile modules
 ------------------------------------------
@@ -203,7 +204,7 @@ Now what?
 
 *FIXME: Write this*
 
-Write about pserve, .wsgi files etc.
+Write about pserve, .wsgi files, realtime server etc.
 
 .. _CPython: https://www.python.org/
 .. _MySQL: https://www.mysql.com/
