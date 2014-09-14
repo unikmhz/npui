@@ -157,8 +157,8 @@ Installing NetProfile Python packages
 
 .. note::
 
-   All commands in this section **must** be executed as ``netprofile`` user
-   from within a virtual environment, if you use one.
+   All commands in this and following sections **must** be executed as
+   ``netprofile`` user from within a virtual environment, if you use one.
 
 To install NetProfile modules for production use, execute following commands:
 
@@ -183,10 +183,30 @@ NetProfile configuration
 
 *FIXME: Write this*
 
-1. Copy .ini
-2. Edit .ini
-3. Use ``export NP_INI_FILE=/path/to/file.ini``
-   and optionally ``export NP_INI_NAME=name-of-ini-section``
+Next you'll need to choose a path for configuration and WSGI files. You can
+create and populate it with the following command:
+
+.. code:: sh
+
+   npctl deploy <chosen deployment path>
+
+.. note::
+
+   This command is not strictly necessary, as you can create or copy all
+   files by hand. It is simply a time-saver feature.
+
+This will create a directory at your specified path. After that you can use
+``activate-*`` files as an alternative to specifying .ini file paths to
+every invocation of ``npctl``. You use it like so:
+
+.. code:: sh
+
+   source <chosen deployment path>/activate-development
+
+.. note::
+
+   These files will also activate the virtual environment that was active
+   at the time ``npctl deploy`` command was run.
 
 Installing and enabling NetProfile modules
 ------------------------------------------
