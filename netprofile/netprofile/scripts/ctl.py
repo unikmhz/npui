@@ -36,6 +36,7 @@ import pkg_resources
 import sys
 
 from cliff.app import App
+from cliff.interactive import InteractiveApp
 from cliff.commandmanager import CommandManager
 
 from babel import Locale
@@ -55,6 +56,44 @@ from netprofile.db.connection import DBSession
 from netprofile.db.clauses import SetVariable
 from netprofile.common.modules import ModuleManager
 
+class CLIInteractiveApp(InteractiveApp):
+	"""
+	cmd2 interactive application for npctl utility
+	"""
+	def completedefault(self, text, line, begidx, endidx):
+		completions = []
+		words = line.split()
+		num_words = len(words)
+
+		for n, v in self.command_manager:
+			idx = 0
+			cmd_words = n.split()
+
+			while len(cmd_words) > 0:
+				if idx >= num_words:
+					completions.append(cmd_words[0])
+					break
+				cword = cmd_words.pop(0)
+				if cword == words[idx]:
+					idx += 1
+					continue
+				if text and cword.startswith(text) and ((idx + 1) == num_words):
+					completions.append(cword)
+					break
+
+		return sorted(completions)
+
+	def completenames(self, text, line, begidx, endidx):
+		dotext = 'do_' + text
+		cmds = [a[3:] for a in self.get_names() if a.startswith(dotext)]
+
+		for n, v in self.command_manager:
+			word = n.split()[0]
+			if (not text) or (word.startswith(text)):
+					cmds.append(word)
+
+		return sorted(cmds)
+
 class CLIApplication(App):
 	"""
 	Cliff application for npctl utility
@@ -67,7 +106,8 @@ class CLIApplication(App):
 		super(CLIApplication, self).__init__(
 			description='NetProfile CLI utility',
 			version=np.version,
-			command_manager=CommandManager('netprofile.cli.commands')
+			command_manager=CommandManager('netprofile.cli.commands'),
+			interactive_app_factory=CLIInteractiveApp
 		)
 
 		self._mako_setup = False
