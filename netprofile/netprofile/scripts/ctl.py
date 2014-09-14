@@ -71,6 +71,7 @@ class CLIApplication(App):
 		)
 
 		self._mako_setup = False
+		self.dist = np
 
 	def build_option_parser(self, descr, vers, argparse_kwargs=None):
 		parser = super(CLIApplication, self).build_option_parser(descr, vers, argparse_kwargs)

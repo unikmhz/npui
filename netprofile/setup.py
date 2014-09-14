@@ -33,7 +33,6 @@ requires = [
 	'lingua',
 	'lxml',
 
-	'configobj >= 5.0',
 	'cliff >= 1.7.0',
 
 	'tornado',
@@ -87,7 +86,7 @@ setup(
 		],
 		'netprofile.cli.commands' : [
 			'module list = netprofile.cli:ListModules',
-			'module ls = netprofile.cli:ListModules', # ?
+			'module ls = netprofile.cli:ListModules',
 
 			'module show = netprofile.cli:ShowModule',
 			'module info = netprofile.cli:ShowModule',
@@ -95,7 +94,9 @@ setup(
 			'module install = netprofile.cli:InstallModule',
 			'module uninstall = netprofile.cli:UninstallModule',
 			'module enable = netprofile.cli:EnableModule',
-			'module disable = netprofile.cli:DisableModule'
+			'module disable = netprofile.cli:DisableModule',
+
+			'deploy = netprofile.cli:Deploy'
 		]
 	}
 )
