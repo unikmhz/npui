@@ -59,6 +59,7 @@ class ListModules(Lister):
 		return parser
 
 	def take_action(self, args):
+		vlevel = self.app.options.verbose_level # not needed here?
 		has_core = True
 		loc = self.app.locale
 		flt = args.filter
@@ -128,6 +129,7 @@ class InstallModule(Command):
 		return parser
 
 	def take_action(self, args):
+		vlevel = self.app.options.verbose_level
 		self.app.setup_mako_sql()
 		sess = self.app.db_session
 		mm = self.app.mm
@@ -145,13 +147,15 @@ class InstallModule(Command):
 			for mod in mm.modules:
 				if mod != 'core':
 					mm.install(mod, sess)
-			self.app.stdout.write('All done.\n')
+			if vlevel > 0:
+				self.app.stdout.write('All done.\n')
 			return
 
 		ret = mm.install(args.name, sess)
 		if isinstance(ret, bool):
 			if ret:
-				self.app.stdout.write('Module \'%s\' successfully installed.\n' % (args.name,))
+				if vlevel > 0:
+					self.app.stdout.write('Module \'%s\' successfully installed.\n' % (args.name,))
 				return
 			raise RuntimeError('Error: Module \'%s\' is already installed.' % (args.name,))
 		raise RuntimeError('Error: Unknown result.')
@@ -172,6 +176,7 @@ class UninstallModule(Command):
 		return parser
 
 	def take_action(self, args):
+		vlevel = self.app.options.verbose_level
 		raise RuntimeError('Not implemented.')
 
 class EnableModule(Command):
@@ -190,6 +195,7 @@ class EnableModule(Command):
 		return parser
 
 	def take_action(self, args):
+		vlevel = self.app.options.verbose_level
 		self.app.setup_mako_sql()
 		sess = self.app.db_session
 		mm = self.app.mm
@@ -206,13 +212,15 @@ class EnableModule(Command):
 			for mod in mm.modules:
 				if mm.is_installed(mod, sess) and (mod != 'core'):
 					mm.enable(mod)
-			self.app.stdout.write('All done.\n')
+			if vlevel > 0:
+				self.app.stdout.write('All done.\n')
 			return
 
 		ret = mm.enable(args.name)
 		if isinstance(ret, bool):
 			if ret:
-				self.app.stdout.write('Enabled module \'%s\'.\n' % (args.name,))
+				if vlevel > 0:
+					self.app.stdout.write('Enabled module \'%s\'.\n' % (args.name,))
 				return
 			raise RuntimeError('Error: Module \'%s\' wasn\'t found or is not installed.' % (args.name,))
 		raise RuntimeError('Error: Unknown result.')
@@ -233,6 +241,7 @@ class DisableModule(Command):
 		return parser
 
 	def take_action(self, args):
+		vlevel = self.app.options.verbose_level
 		self.app.setup_mako_sql()
 		sess = self.app.db_session
 		mm = self.app.mm
@@ -249,13 +258,15 @@ class DisableModule(Command):
 			for mod in mm.modules:
 				if mm.is_installed(mod, sess) and (mod != 'core'):
 					mm.disable(mod)
-			self.app.stdout.write('All done.\n')
+			if vlevel > 0:
+				self.app.stdout.write('All done.\n')
 			return
 
 		ret = mm.disable(args.name)
 		if isinstance(ret, bool):
 			if ret:
-				self.app.stdout.write('Disabled module \'%s\'.\n' % (args.name,))
+				if vlevel > 0:
+					self.app.stdout.write('Disabled module \'%s\'.\n' % (args.name,))
 				return
 			else:
 				raise RuntimeError('Error: Module \'%s\' wasn\'t found or is not installed.' % (args.name,))
@@ -283,6 +294,7 @@ class Deploy(Command):
 		if not os.path.lexists(fdir):
 			os.mkdir(fdir, 0o700)
 		elif not os.path.isdir(fdir):
+			os.umask(self.old_mask)
 			raise RuntimeError('Error: Path exists but is not a directory: "%s".' % (fdir,))
 
 		return fdir
@@ -312,13 +324,25 @@ class Deploy(Command):
 		# This is racy
 		os.chmod(wsgi_file, 0o700)
 
+	def _write_activate(self, sh_file, ini_file):
+		with open(sh_file, 'x') as outf:
+			outf.write('NP_INI_FILE="%s"\nexport NP_INI_FILE\n\n' % (ini_file,))
+			if 'VIRTUAL_ENV' in os.environ:
+				outf.write('source %s/bin/activate\n\n' % (os.environ['VIRTUAL_ENV'],))
+		# This is racy
+		os.chmod(sh_file, 0o600)
+
 	def take_action(self, args):
+		vlevel = self.app.options.verbose_level
+		self.old_mask = os.umask(0o077)
 		np_dir = os.path.abspath(self.app.dist.location)
 		deploy_dir = os.path.abspath(args.path)
 
 		if not os.path.isdir(np_dir):
+			os.umask(self.old_mask)
 			raise RuntimeError('Error: Can\'t locate netprofile module directory.')
 		if os.path.lexists(deploy_dir) and (not os.path.isdir(deploy_dir)):
+			os.umask(self.old_mask)
 			raise RuntimeError('Error: Invalid path specified.')
 
 		if not os.path.exists(deploy_dir):
@@ -382,5 +406,16 @@ class Deploy(Command):
 			ini_dev, 'xop'
 		)
 
-		self.app.stdout.write('Created NetProfile deployment: %s\n' % (deploy_dir,))
+		self._write_activate(
+			os.path.join(deploy_dir, 'activate-production'),
+			ini_prod
+		)
+		self._write_activate(
+			os.path.join(deploy_dir, 'activate-development'),
+			ini_dev
+		)
+
+		os.umask(self.old_mask)
+		if vlevel > 0:
+			self.app.stdout.write('Created NetProfile deployment: %s\n' % (deploy_dir,))
 
