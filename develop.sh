@@ -38,8 +38,7 @@ pip install --upgrade \
 	pyramid_debugtoolbar \
 	pyramid_redis_sessions \
 	pyramid_mailer \
-	argh \
-	prettytable \
+	cliff \
 	Babel \
 	lingua \
 	lxml \

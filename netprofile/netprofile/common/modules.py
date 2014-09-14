@@ -159,30 +159,6 @@ class ModuleManager(object):
 	and (un)installing modules.
 	"""
 
-	@classmethod
-	def prepare(cls):
-		"""
-		Perform module discovery without loading all the discovered
-		modules. Might be handy for various utility tasks.
-		"""
-		ret = {}
-
-		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
-			mod_name = ep.name
-			mod_version = '0.0.0'
-
-			modcls = ep.load()
-			modprep = getattr(modcls, 'prepare', None)
-			if callable(modprep):
-				modprep()
-			func = getattr(modcls, 'version', None)
-			if callable(func):
-				mod_version = str(func())
-
-			ret[ep.name] = (mod_name, mod_version)
-
-		return ret
-
 	def __init__(self, cfg, vhost=None):
 		self.cfg = cfg
 		self.modules = {}
