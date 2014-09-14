@@ -181,8 +181,6 @@ go to the root of a checked out repository and execute:
 NetProfile configuration
 ------------------------
 
-*FIXME: Write this*
-
 Next you'll need to choose a path for configuration and WSGI files. You can
 create and populate it with the following command:
 
@@ -207,6 +205,11 @@ every invocation of ``npctl``. You use it like so:
 
    These files will also activate the virtual environment that was active
    at the time ``npctl deploy`` command was run.
+
+Next you need to edit .ini files inside your deployment directory. Refer
+to comments and links in them for further info. ``npctl deploy`` command
+has created two .ini files for you -- one is preconfigured for production
+deployment, and the other is for development.
 
 Installing and enabling NetProfile modules
 ------------------------------------------
