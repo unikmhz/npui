@@ -37,13 +37,23 @@ from pyramid.paster import (
 )
 
 from celery import Celery
-from celery.signals import worker_init
+from celery.signals import celeryd_init
+from kombu import (
+	Exchange,
+	Queue
+)
+from kombu.common import Broadcast
 
 from netprofile import setup_config
 from netprofile.common.modules import IModuleManager
 from netprofile.common.util import (
 	as_dict,
 	make_config_dict
+)
+
+_default_queues = (
+	Queue('celery', Exchange('celery'), routing_key='celery'),
+	Broadcast('broadcast')
 )
 
 def _parse_ini_settings(reg, celery):
@@ -304,6 +314,8 @@ def _parse_ini_settings(reg, celery):
 	opts = make_config_dict(cfg, 'queues.')
 	if len(opts) > 0:
 		newconf['CELERY_QUEUES'] = opts
+	else:
+		newconf['CELERY_QUEUES'] = _default_queues
 
 	mm = reg.getUtility(IModuleManager)
 
@@ -323,10 +335,17 @@ def _parse_ini_settings(reg, celery):
 		newconf['CELERY_INCLUDE'] = opts
 
 	if len(newconf) > 0:
-		celery.conf.update(newconf)
+		if isinstance(celery, Celery):
+			celery.config_from_object(newconf)
+		else:
+			celery.update(newconf)
 
-@worker_init.connect
-def _setup(signal, sender):
+app = Celery('netprofile')
+
+@celeryd_init.connect
+def _setup(conf=None, **kwargs):
+	global app
+
 	ini_file='production.ini'
 	if 'NP_INI_FILE' in os.environ:
 		ini_file = os.environ['NP_INI_FILE']
@@ -339,9 +358,6 @@ def _setup(signal, sender):
 	setup_logging(config_uri)
 	settings = get_appsettings(config_uri)
 
-	app = sender.app
-	app.settings = settings
-
 	cfg = setup_config(settings)
 	cfg.commit()
 
@@ -349,12 +365,11 @@ def _setup(signal, sender):
 	mmgr.load('core')
 	mmgr.load_enabled()
 
-	_parse_ini_settings(cfg.registry, app)
+	_parse_ini_settings(cfg.registry, conf)
+	app.settings = settings
 
 def setup_celery(reg):
 	_parse_ini_settings(reg, app)
-
-app = Celery('netprofile')
 
 if __name__ == '__main__':
 	app.start()
