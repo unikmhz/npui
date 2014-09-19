@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Real-time services via Tornado
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,12 +29,6 @@ from __future__ import (
 
 import os
 import sys
-import transaction
-
-import tornado.ioloop
-import tornado.web
-
-import sockjs.tornado
 
 from sqlalchemy import engine_from_config
 
@@ -86,6 +80,8 @@ def main(argv=sys.argv):
 	mmgr.load_enabled()
 
 	rts = rt.configure(mmgr, config.registry)
-	app = rts.app()
-	rt.run(rts, app)
+	return rt.run(rts)
+
+if __name__ == '__main__':
+	sys.exit(main(sys.argv))
 

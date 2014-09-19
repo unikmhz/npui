@@ -37,6 +37,7 @@ import os
 import json
 import transaction
 import redis
+import tcelery
 import tornadoredis
 import tornadoredis.pubsub
 import sockjs.tornado
@@ -46,11 +47,13 @@ from threading import Thread
 from functools import partial
 from dateutil.tz import tzlocal
 from sqlalchemy.orm.exc import NoResultFound
+from pyramid.decorator import reify
 
 import netprofile
 from netprofile.common.hooks import IHookManager
 from netprofile.common.util import make_config_dict
 from netprofile.db.connection import DBSession
+from netprofile.celery import app as celery_app
 
 class WorkerThread(Thread):
 	def __init__(self, queue):
@@ -65,7 +68,7 @@ class WorkerThread(Thread):
 			try:
 				result = func(*args, **kwargs)
 				if callback is not None:
-					tornado.ioloop.IOLoop.instance().add_callback(partial(callback, result))
+					tornado.ioloop.IOLoop.current().add_callback(partial(callback, result))
 			except Exception as e:
 				print(e)
 			self.queue.task_done()
@@ -133,9 +136,6 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 		# TODO: compute next session timeout check
 		transaction.abort()
 		return (npsess, npuser)
-
-	def _celery_task(self, name, *args, **kwargs):
-		pass
 
 	def on_open(self, req):
 		self.user = None
@@ -221,20 +221,43 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 			print('TASK')
 			print(repr(data))
 			print('=========================================================')
-			pass
+			task_name = data.get('tname')
+			task_args = data.get('args', [])
+			task_kwargs = data.get('kwargs', {})
+
+			if task_name not in celery_app.tasks:
+				pass
+			task = celery_app.tasks[task_name]
+
+			resp = yield tornado.gen.Task(
+				task.apply_async,
+				args=task_args,
+				kwargs=task_kwargs
+			)
+
+			rdata = {
+				'ts'    : datetime.datetime.now().replace(tzinfo=tzlocal()).isoformat(),
+				'type'  : 'task_result',
+				'tname' : task_name,
+				'tid'   : resp.task_id,
+				'value' : resp.result
+			}
+			print('=========================================================')
+			print('TASK_RESULT')
+			print(repr(rdata))
+			print('=========================================================')
+			self.send(json.dumps(rdata))
 		else:
 			self.app.hm.run_hook('np.rt.message', self, data)
 
 class RTSession(object):
 	def __init__(self, reg, r, tr):
 		self.reg = reg
-		self.r = r
-		self.tr = tr
-		self.sub = tornadoredis.pubsub.SockJSSubscriber(tr)
+		self.r_conf = r
+		self.tr_conf = tr
 		self.routes = [
 			(r'/', RTIndexHandler),
 		]
-		self.sockjs_router = sockjs.tornado.SockJSRouter(RTMessageHandler, '/sock')
 
 	def app(self):
 		cfg = make_config_dict(self.reg.settings, 'netprofile.rt.')
@@ -244,16 +267,32 @@ class RTSession(object):
 				'templates'
 			)
 		}
-		app = tornado.web.Application(
-			self.routes + self.sockjs_router.urls,
-			**settings
-		)
-		self.sockjs_router.app = app
+		app = tornado.web.Application(self.routes, **settings)
 		app.sess = self
 		app.hm = self.reg.getUtility(IHookManager)
 		return app
 
-def run(sess, app):
+	@reify
+	def r(self):
+		return redis.Redis(**self.r_conf)
+
+	@reify
+	def tr(self):
+		return tornadoredis.Client(**self.tr_conf)
+
+	@reify
+	def sub(self):
+		return tornadoredis.pubsub.SockJSSubscriber(self.tr)
+
+	@reify
+	def sockjs_router(self):
+		return sockjs.tornado.SockJSRouter(RTMessageHandler, '/sock')
+
+	def add_sockjs_routes(self, app):
+		app.add_handlers('.*$', self.sockjs_router.urls)
+		self.sockjs_router.app = app
+
+def run(sess):
 	cfg = make_config_dict(sess.reg.settings, 'netprofile.rt.')
 	sslopts = None
 	if cfg.get('ssl'):
@@ -262,11 +301,16 @@ def run(sess, app):
 			sslopts['certfile'] = cfg['certfile']
 		if 'keyfile' in cfg:
 			sslopts['keyfile'] = cfg['keyfile']
+	app = sess.app()
 	http_server = tornado.httpserver.HTTPServer(app, ssl_options=sslopts)
-	http_server.listen(cfg.get('port'))
-#	http_server.bind(cfg.get('port'))
-#	http_server.start(0)
-	tornado.ioloop.IOLoop.instance().start()
+	http_server.bind(int(cfg.get('port', 8808)))
+	http_server.start(int(cfg.get('processes', 0)))
+	sess.add_sockjs_routes(app)
+	iol = tornado.ioloop.IOLoop.current()
+	tcelery.setup_nonblocking_producer(celery_app, io_loop=iol)
+	iol.start()
+
+	return 0
 
 def configure(mmgr, reg):
 	cfg = reg.settings
@@ -281,9 +325,5 @@ def configure(mmgr, reg):
 		del trconf['charset']
 	if 'decode_responses' in rconf:
 		del trconf['decode_responses']
-	return RTSession(
-		reg,
-		redis.Redis(**rconf),
-		tornadoredis.Client(**trconf)
-	)
+	return RTSession(reg, rconf, trconf)
 
