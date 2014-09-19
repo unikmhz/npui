@@ -55,6 +55,7 @@ from netprofile import setup_config
 from netprofile.db.connection import DBSession
 from netprofile.db.clauses import SetVariable
 from netprofile.common.modules import ModuleManager
+from netprofile.common.hooks import IHookManager
 
 class CLIInteractiveApp(InteractiveApp):
 	"""
@@ -196,6 +197,10 @@ class CLIApplication(App):
 		cfg = setup_config(settings)
 		cfg.commit()
 		return cfg
+
+	@reify
+	def hooks(self):
+		return self.app_config.registry.getUtility(IHookManager)
 
 	def setup_mako_sql(self):
 		if self._mako_setup:
