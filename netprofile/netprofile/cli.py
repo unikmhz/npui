@@ -101,6 +101,7 @@ class ListModules(Lister):
 				continue
 			data.append((moddef, ep.dist.version, loc.translate(curversion), loc.translate(enabled)))
 
+		self.app.hooks.run_hook('np.cli.module.list', self.app, columns, data)
 		return (columns, data)
 
 class ShowModule(ShowOne):
@@ -146,12 +147,16 @@ class InstallModule(Command):
 			mm.install('core', sess)
 			for mod in mm.modules:
 				if mod != 'core':
-					mm.install(mod, sess)
+					self.app.hooks.run_hook('np.cli.module.install.before', self.app, mod, sess)
+					ret = mm.install(mod, sess)
+					self.app.hooks.run_hook('np.cli.module.install.after', self.app, mod, sess, ret)
 			if vlevel > 0:
 				self.app.stdout.write('All done.\n')
 			return
 
+		self.app.hooks.run_hook('np.cli.module.install.before', self.app, args.name, sess)
 		ret = mm.install(args.name, sess)
+		self.app.hooks.run_hook('np.cli.module.install.after', self.app, args.name, sess, ret)
 		if isinstance(ret, bool):
 			if ret:
 				if vlevel > 0:
@@ -211,12 +216,16 @@ class EnableModule(Command):
 		if args.name.lower() == 'all':
 			for mod in mm.modules:
 				if mm.is_installed(mod, sess) and (mod != 'core'):
-					mm.enable(mod)
+					self.app.hooks.run_hook('np.cli.module.enable.before', self.app, mod, sess)
+					ret = mm.enable(mod)
+					self.app.hooks.run_hook('np.cli.module.enable.after', self.app, mod, sess, ret)
 			if vlevel > 0:
 				self.app.stdout.write('All done.\n')
 			return
 
+		self.app.hooks.run_hook('np.cli.module.enable.before', self.app, args.name, sess)
 		ret = mm.enable(args.name)
+		self.app.hooks.run_hook('np.cli.module.enable.after', self.app, args.name, sess, ret)
 		if isinstance(ret, bool):
 			if ret:
 				if vlevel > 0:
@@ -257,12 +266,16 @@ class DisableModule(Command):
 		if args.name.lower() == 'all':
 			for mod in mm.modules:
 				if mm.is_installed(mod, sess) and (mod != 'core'):
-					mm.disable(mod)
+					self.app.hooks.run_hook('np.cli.module.disable.before', self.app, mod, sess)
+					ret = mm.disable(mod)
+					self.app.hooks.run_hook('np.cli.module.disable.after', self.app, mod, sess, ret)
 			if vlevel > 0:
 				self.app.stdout.write('All done.\n')
 			return
 
+		self.app.hooks.run_hook('np.cli.module.disable.before', self.app, args.name, sess)
 		ret = mm.disable(args.name)
+		self.app.hooks.run_hook('np.cli.module.disable.after', self.app, args.name, sess, ret)
 		if isinstance(ret, bool):
 			if ret:
 				if vlevel > 0:
@@ -337,6 +350,7 @@ class Deploy(Command):
 		self.old_mask = os.umask(0o077)
 		np_dir = os.path.abspath(self.app.dist.location)
 		deploy_dir = os.path.abspath(args.path)
+		self.app.hooks.run_hook('np.cli.module.deploy.before', self.app, deploy_dir)
 
 		if not os.path.isdir(np_dir):
 			os.umask(self.old_mask)
@@ -414,6 +428,8 @@ class Deploy(Command):
 			os.path.join(deploy_dir, 'activate-development'),
 			ini_dev
 		)
+
+		self.app.hooks.run_hook('np.cli.module.deploy.after', self.app, deploy_dir)
 
 		os.umask(self.old_mask)
 		if vlevel > 0:
