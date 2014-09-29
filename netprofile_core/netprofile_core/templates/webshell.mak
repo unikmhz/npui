@@ -43,6 +43,7 @@ Ext.require([
 	//NetProfile.rtURL = '//${rt_host}:${rt_port}';
 	NetProfile.rtURL = '//' + window.location.hostname + ':${rt_port}';
 	NetProfile.rtSocket = null;
+	NetProfile.rtSocketReady = false;
 	NetProfile.rtActiveUIDs = null;
 	NetProfile.rtMessageRenderers = {
 		file: function(val, meta, rec)
@@ -96,6 +97,67 @@ Ext.require([
 			}
 		};
 	}();
+
+	NetProfile.showConsole = function()
+	{
+		var pbar = Ext.getCmp('npws_propbar'),
+			store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
+			str_id = 'cons:system:log',
+			tab;
+
+		tab = pbar.addConsoleTab(str_id, {
+			xtype: 'grid',
+			title: '${_('System Console')}',
+			iconCls: 'ico-console',
+			store: store,
+			viewConfig: {
+				preserveScrollOnRefresh: true
+			},
+			columns: [{
+				text: 'Date',
+				dataIndex: 'ts',
+				width: 120,
+				xtype: 'datecolumn',
+				format: Ext.util.Format.dateFormat + ' H:i:s'
+			}, {
+				text: 'Message',
+				dataIndex: 'data',
+				flex: 1,
+				sortable: false,
+				filterable: false,
+				menuDisabled: true,
+				editor: null,
+				renderer: function(val, meta, rec)
+				{
+					var ret = '',
+						from = rec.get('from'),
+						btype = rec.get('bodytype'),
+						cssPrefix = Ext.baseCSSPrefix,
+						cls = [cssPrefix + 'cons-data'];
+
+					if(from)
+						ret += '<strong>' + Ext.String.htmlEncode(from) + ':</strong> ';
+					if(btype in NetProfile.rtMessageRenderers)
+						ret += NetProfile.rtMessageRenderers[btype](val, meta, rec);
+					else
+						ret += Ext.String.htmlEncode(val);
+					return '<div class="' + cls.join(' ') + '">' + ret + '</div>';
+				}
+			}]
+		}, function(val)
+		{
+			// FIXME: implement system console commands?
+		});
+		tab.mon(store, 'add', function(st, recs, idx)
+		{
+			var view = tab.getView(),
+				node = view.getNode(recs[0]);
+
+			node.scrollIntoView();
+		});
+		tab.down('toolbar')
+		pbar.show();
+	}
 
 	Ext.define('Ext.data.ConnectionNPOver', {
 		override: 'Ext.data.Connection',
@@ -587,6 +649,7 @@ Ext.application({
 						break;
 					case 'user_list':
 						var u, uid, obj;
+						NetProfile.rtSocketReady = true;
 						NetProfile.rtActiveUIDs = ev.data.users;
 						for(u in ev.data.users)
 						{
@@ -612,6 +675,19 @@ Ext.application({
 								rec.set('data', ev.data.msg);
 							store.add(rec);
 						}
+						break;
+					case 'task_result':
+						var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
+							rec;
+						if(store)
+						{
+							rec = Ext.create('NetProfile.model.ConsoleMessage');
+							rec.set('ts', new Date(ev.data.ts));
+							rec.set('bodytype', 'task_result');
+							rec.set('data', ev.data.value);
+							store.add(rec);
+						}
+						NetProfile.showConsole();
 						break;
 				}
 			}

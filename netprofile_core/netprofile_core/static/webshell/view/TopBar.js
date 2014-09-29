@@ -19,6 +19,7 @@ Ext.define('NetProfile.view.TopBar', {
 	logoutText: 'Log out',
 	logoutTipText: 'Log out of the application and return to login screen.',
 	chLangText: 'Change language',
+	showConsoleText: 'Show console',
 	aboutText: 'About…',
 
 	initComponent: function()
@@ -64,13 +65,19 @@ Ext.define('NetProfile.view.TopBar', {
 							}]
 						}]
 					}
+				}, {
+					xtype: 'menuitem',
+					iconCls: 'ico-console',
+					text: this.showConsoleText,
+					handler: function(el, ev)
+					{
+						NetProfile.showConsole();
+					}
 				}, '-', {
 					text: this.aboutText,
 					iconCls: 'ico-info',
-					listeners: {
-						click: function(el, ev)
-						{
-						}
+					handler: function(el, ev)
+					{
 					}
 				}]
 			}
