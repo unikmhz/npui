@@ -224,7 +224,8 @@ class ModuleManager(object):
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
 		if not self.is_installed(moddef, DBSession()):
-			logger.error('Can\'t load uninstalled module \'%s\'. Please install it first.', moddef)
+			if moddef != 'core':
+				logger.error('Can\'t load uninstalled module \'%s\'. Please install it first.', moddef)
 			return False
 		mstack.append(moddef)
 		modcls = self.modules[moddef].load()
