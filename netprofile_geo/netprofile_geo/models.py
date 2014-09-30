@@ -72,11 +72,6 @@ from sqlalchemy.ext.associationproxy import (
 	association_proxy
 )
 
-#from colanderalchemy import (
-#	Column,
-#	relationship
-#)
-
 from netprofile.db.connection import (
 	Base,
 	DBSession

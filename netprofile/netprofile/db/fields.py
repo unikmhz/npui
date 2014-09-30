@@ -69,7 +69,6 @@ else:
 	)
 
 import re
-import colander
 
 _D_MYSQL = frozenset([
 	mysql.mysqlconnector.dialect,
@@ -365,12 +364,9 @@ class ASCIIString(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
-
-	def colander_type(self):
-		return colander.String(encoding='ascii')
 
 class ASCIIFixedString(types.TypeDecorator):
 	"""
@@ -386,12 +382,9 @@ class ASCIIFixedString(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
-
-	def colander_type(self):
-		return colander.String(encoding='ascii')
 
 class ExactUnicode(types.TypeDecorator):
 	"""
@@ -407,7 +400,7 @@ class ExactUnicode(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode()
 		return value
 
@@ -529,12 +522,9 @@ class ASCIITinyText(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
-
-	def colander_type(self):
-		return colander.String(encoding='ascii')
 
 class ASCIIText(types.TypeDecorator):
 	"""
@@ -550,12 +540,9 @@ class ASCIIText(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
-
-	def colander_type(self):
-		return colander.String(encoding='ascii')
 
 @compiles(EnumSymbol)
 def compile_enumsym(element, compiler, **kw):
@@ -600,7 +587,7 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return self.enum.from_string(value.strip())
 
