@@ -48,6 +48,13 @@ compile various needed Python modules later on. Here is the list:
   - In Arch: package group ``base-devel``
   - In Gentoo: you already have it
 
+* Development packages for Python
+
+  - In Fedora/RHEL/CentOS: package ``python-devel``
+  - In Debian/Ubuntu/Mint: package ``python3-dev`` or ``python-dev``
+  - In Arch: you already have it if you've installed required Python version
+  - In Gentoo: you already have it if you've installed required Python version
+
 * Development package for ``libxslt``
 
   - In Fedora/RHEL/CentOS: package ``libxslt-devel``
