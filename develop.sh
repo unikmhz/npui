@@ -19,7 +19,8 @@ NPMOD_DEFAULT="netprofile \
 	netprofile_access \
 	netprofile_sessions \
 	netprofile_paidservices \
-	netprofile_xop"
+	netprofile_xop \
+	netprofile_confgen"
 
 pip install \
 	--upgrade \
