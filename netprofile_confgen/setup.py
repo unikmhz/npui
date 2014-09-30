@@ -53,6 +53,13 @@ setup(
 	entry_points={
 		'netprofile.modules' : [
 			'confgen = netprofile_confgen:Module'
+		],
+		'netprofile.confgen.generators' : [
+			'iscbind9 = netprofile_confgen.gen:BIND9Generator',
+			'iscbind93 = netprofile_confgen.gen:BIND9Generator',
+			'iscbind94 = netprofile_confgen.gen:BIND9Generator',
+			'iscbind99 = netprofile_confgen.gen:BIND9Generator',
+			'iscdhcp = netprofile_confgen.gen:ISCDHCPGenerator'
 		]
 	},
 	message_extractors={'.' : [

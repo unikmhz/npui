@@ -29,34 +29,34 @@ from __future__ import (
 
 import logging
 import os
-import shutil
+import redis
 import transaction
 
 from netprofile.celery import app
-
 from netprofile.db.connection import DBSession
+from netprofile.common.util import make_config_dict
+
+from netprofile_confgen.models import Server
+from netprofile_confgen.gen import ConfigGeneratorFactory
 
 logger = logging.getLogger(__name__)
-
-def _prep_confgen(cfg):
-	if 'confgen.station_id' not in cfg:
-		raise RuntimeError('Station ID is not defined in INI file.')
-	st_id = int(cfg['confgen.station_id'])
-	if 'confgen.output' not in cfg:
-		raise RuntimeError('Output directory for configuration generator not defined in INI file.')
-	outdir = cfg['confgen.output']
-	if not os.path.isdir(outdir):
-		if os.path.exists(outdir):
-			raise RuntimeError('Output path exists but is not a directory.')
-		os.mkdir(outdir, 0o700)
-		logger.warn('Created confgen output directory: %s', outdir)
-	return (st_id, outdir)
 
 @app.task
 def task_generate(station_ids=()):
 	cfg = app.settings
-	st_id, outdir = _prep_confgen(cfg)
+	rconf = make_config_dict(cfg, 'netprofile.rt.redis.')
+	factory = ConfigGeneratorFactory(cfg)
+
+	if len(station_ids) == 0:
+		return
 
 	sess = DBSession()
-	pass
+	rsess = redis.Redis(**rconf)
+
+	for srv in sess.query(Server).filter(Server.host_id.in_(station_ids)):
+		gen = factory.get(srv.type.generator_name)
+		logger.info('Generating config of type %s for host %s', srv.type.generator_name, str(srv.host))
+		gen.generate(srv)
+
+	transaction.commit()
 

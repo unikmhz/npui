@@ -49,6 +49,7 @@ class Module(ModuleBase):
 		from netprofile_confgen import models
 		return (
 			models.Server,
+			models.ServerParameter,
 			models.ServerType
 		)
 
@@ -103,40 +104,78 @@ class Module(ModuleBase):
 		except NoResultFound:
 			pass
 
+		bind_defaults = {
+			'dir_bindconf'           : '/etc/bind',
+			'dir_bindzones'          : '/var/bind',
+			'dir_bindconf_internal'  : '/etc/bind',
+			'dir_bindzones_internal' : '/var/bind',
+			'dir_bind_pri'           : 'pri',
+			'dir_bind_sec'           : 'sec',
+			'dir_bind_rev'           : 'rev',
+			'key_name_gen'           : 'nslink.',
+			'key_name_int'           : 'nsexternal.',
+			'key_name_ext'           : 'nsinternal.',
+			'key_value_gen'          : None,
+			'key_value_int'          : None,
+			'key_value_ext'          : None,
+			'revzone_refresh'        : 3600,
+			'revzone_retry'          : 300,
+			'revzone_expire'         : 1814400,
+			'revzone_minimum'        : 3600,
+			'default_domain'         : None,
+			'hostmaster'             : None,
+			'dnssec'                 : True,
+			'dnssec_accept_expired'  : False
+		};
+
 		stypes = (
 			ServerType(
 				id=1,
 				name='ISC DHCP 3',
+				generator_name='iscdhcp',
+				parameter_defaults={
+					'dir_dhcp' : '/etc/dhcp'
+				},
 				description='ISC DHCP server version 3 for IPv4.'
 			),
 			ServerType(
 				id=2,
 				name='ISC BIND 9.0-9.2',
+				generator_name='iscbind9',
+				parameter_defaults=bind_defaults,
 				description='ISC BIND DNS server versions 9.0-9.2 in mixed mode.'
 			),
 			ServerType(
 				id=3,
 				name='ISC BIND 9.3',
+				generator_name='iscbind93',
+				parameter_defaults=bind_defaults,
 				description='ISC BIND DNS server version 9.3 in mixed mode.'
 			),
 			ServerType(
 				id=4,
 				name='ISC BIND 9.4-9.8',
+				generator_name='iscbind94',
+				parameter_defaults=bind_defaults,
 				description='ISC BIND DNS server versions 9.4-9.8 in mixed mode.'
 			),
 			ServerType(
 				id=5,
 				name='Samba 3',
+				generator_name='samba3',
 				description='Samba NT domain server version 3.'
 			),
 			ServerType(
 				id=6,
 				name='OpenSLP',
+				generator_name='openslp',
 				description='OpenSLP server.'
 			),
 			ServerType(
 				id=7,
 				name='ISC BIND 9.9+',
+				generator_name='iscbind99',
+				parameter_defaults=bind_defaults,
 				description='ISC BIND DNS server versions 9.9+ in mixed mode.'
 			)
 		)
