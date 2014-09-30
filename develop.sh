@@ -21,7 +21,8 @@ NPMOD_DEFAULT="netprofile \
 	netprofile_paidservices \
 	netprofile_xop"
 
-pip install --upgrade \
+pip install \
+	--upgrade \
 	python-dateutil \
 	icalendar \
 	phpserialize \
@@ -35,7 +36,6 @@ pip install --upgrade \
 	pyramid_mako \
 	pyramid_rpc \
 	pyramid_debugtoolbar \
-	pyramid_redis_sessions \
 	pyramid_mailer \
 	cliff \
 	Babel \
@@ -45,6 +45,19 @@ pip install --upgrade \
 	sockjs-tornado \
 	tornado-redis \
 	cracklib
+
+# FIXME: remove this as soon as there is a non-pre-release version of
+# pyramid_redis_sessions package
+pip install \
+	--upgrade \
+	--pre \
+	pyramid_redis_sessions
+
+# FIXME: maybe remove this, or let the user choose a driver?
+pip install \
+	--upgrade \
+	--allow-external mysql-connector-python \
+	mysql-connector-python
 
 for mod in $NPMOD_DEFAULT
 do
