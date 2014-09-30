@@ -30,7 +30,6 @@ pip install --upgrade \
 	SQLAlchemy \
 	zope.sqlalchemy \
 	transaction \
-	colander \
 	waitress \
 	pyramid \
 	pyramid_mako \

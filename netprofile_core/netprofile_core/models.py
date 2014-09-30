@@ -117,11 +117,6 @@ from sqlalchemy.ext.mutable import Mutable
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.orm.exc import NoResultFound
 
-#from colanderalchemy import (
-#	Column,
-#	relationship
-#)
-
 from netprofile import (
 	PY3,
 	inst_id

@@ -29,7 +29,6 @@ from __future__ import (
 
 import importlib
 import logging
-import colander
 import decimal
 
 import datetime as dt
@@ -95,7 +94,6 @@ from netprofile.db.fields import (
 	UInt32,
 	UInt64
 )
-from netprofile.db.colander import SQLAlchemySchemaNode
 
 # USE ME!
 #from sqlalchemy.orm import (
@@ -456,32 +454,6 @@ class ExtColumn(object):
 			return _JS_TYPE_MAP[cls]
 		return 'string'
 
-	@property
-	def colander_type(self):
-		cls = self.column.type.__class__
-		ccls = colander.String
-		if hasattr(self.column.type, 'impl'):
-			cls = self.column.type.impl
-			if isinstance(cls, TypeEngine):
-				cls = cls.__class__
-		if cls in _COLANDER_TYPE_MAP:
-			ccls = _COLANDER_TYPE_MAP[cls]
-		elif issubclass(cls, Boolean):
-			ccls = colander.Boolean
-		elif issubclass(cls, Date):
-			ccls = colander.Date
-		elif issubclass(cls, DateTime):
-			ccls = colander.DateTime
-		elif issubclass(cls, Float):
-			ccls = colander.Float
-		elif issubclass(cls, Integer):
-			ccls = colander.Integer
-		elif issubclass(cls, Numeric):
-			ccls = colander.Decimal
-		elif issubclass(cls, Time):
-			ccls = colander.Time
-		return ccls()
-
 	def _set_min_max(self, conf):
 		typecls = self.column.type.__class__
 		vmin = self.column.info.get('min_value', None)
@@ -594,39 +566,6 @@ class ExtColumn(object):
 				return None
 			return int(param)
 		return param
-
-	def get_colander_validations(self):
-		typecls = self.column.type.__class__
-		ret = []
-		if issubclass(typecls, _INTEGER_SET):
-			vmin = getattr(typecls, 'MIN_VALUE')
-			vmax = getattr(typecls, 'MAX_VALUE')
-			if vmax is None:
-				if issubclass(typecls, SmallInteger):
-					if getattr(self.column.type, 'unsigned', False):
-						vmin = UInt16.MIN_VALUE
-						vmax = UInt16.MAX_VALUE
-					else:
-						vmin = Int16.MIN_VALUE
-						vmax = Int16.MAX_VALUE
-				elif issubclass(typecls, Integer):
-					if getattr(self.column.type, 'unsigned', False):
-						vmin = UInt32.MIN_VALUE
-						vmax = UInt32.MAX_VALUE
-					else:
-						vmin = Int32.MIN_VALUE
-						vmax = Int32.MAX_VALUE
-			if (vmin is not None) or (vmax is not None):
-				ret.append(colander.Range(min=vmin, max=vmax))
-		if issubclass(typecls, _STRING_SET):
-			vmin = None
-			vmax = self.length
-			if not self.nullable:
-				vmin = 1
-			ret.append(colander.Length(min=vmin, max=vmax))
-		if typecls is DeclEnumType:
-			ret.append(colander.OneOf(self.column.type.enum.values()))
-		return ret
 
 	def get_model_validations(self):
 		typecls = self.column.type.__class__
@@ -999,10 +938,6 @@ class ExtPseudoColumn(ExtColumn):
 		if not callable(self.column.parse):
 			return param
 		return self.column.parse(param)
-
-	def get_colander_validations(self):
-		# FIXME: add smth here
-		raise NotImplementedError('Colander support is missing for pseudo columns.')
 
 	def get_model_validations(self):
 		# FIXME: add smth here
@@ -1532,9 +1467,6 @@ class ExtModel(object):
 			if colrel is not None:
 				ret.extend(colrel)
 		return ret
-
-	def get_colander_schema(self, **kwargs):
-		return SQLAlchemySchemaNode(self.model, **kwargs)
 
 	def get_model_validations(self):
 		ret = []

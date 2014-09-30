@@ -69,7 +69,6 @@ else:
 	)
 
 import re
-import colander
 
 _D_MYSQL = frozenset([
 	mysql.mysqlconnector.dialect,
@@ -369,9 +368,6 @@ class ASCIIString(types.TypeDecorator):
 			value = value.decode('ascii')
 		return value
 
-	def colander_type(self):
-		return colander.String(encoding='ascii')
-
 class ASCIIFixedString(types.TypeDecorator):
 	"""
 	ASCII-only version of fixed-length string field.
@@ -389,9 +385,6 @@ class ASCIIFixedString(types.TypeDecorator):
 		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
-
-	def colander_type(self):
-		return colander.String(encoding='ascii')
 
 class ExactUnicode(types.TypeDecorator):
 	"""
@@ -533,9 +526,6 @@ class ASCIITinyText(types.TypeDecorator):
 			value = value.decode('ascii')
 		return value
 
-	def colander_type(self):
-		return colander.String(encoding='ascii')
-
 class ASCIIText(types.TypeDecorator):
 	"""
 	Large ASCII text field.
@@ -553,9 +543,6 @@ class ASCIIText(types.TypeDecorator):
 		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
-
-	def colander_type(self):
-		return colander.String(encoding='ascii')
 
 @compiles(EnumSymbol)
 def compile_enumsym(element, compiler, **kw):
