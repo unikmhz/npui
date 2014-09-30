@@ -365,7 +365,7 @@ class ASCIIString(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
 
@@ -386,7 +386,7 @@ class ASCIIFixedString(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
 
@@ -407,7 +407,7 @@ class ExactUnicode(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode()
 		return value
 
@@ -529,7 +529,7 @@ class ASCIITinyText(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
 
@@ -550,7 +550,7 @@ class ASCIIText(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
 
@@ -600,7 +600,7 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return self.enum.from_string(value.strip())
 
