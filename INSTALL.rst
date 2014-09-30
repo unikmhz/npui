@@ -48,6 +48,13 @@ compile various needed Python modules later on. Here is the list:
   - In Arch: package group ``base-devel``
   - In Gentoo: you already have it
 
+* Development packages for Python
+
+  - In Fedora/RHEL/CentOS: package ``python-devel``
+  - In Debian/Ubuntu/Mint: package ``python3-dev`` or ``python-dev``
+  - In Arch: you already have it if you've installed required Python version
+  - In Gentoo: you already have it if you've installed required Python version
+
 * Development package for ``libxslt``
 
   - In Fedora/RHEL/CentOS: package ``libxslt-devel``
@@ -95,15 +102,34 @@ MySQL
 ~~~~~
 
 Your MySQL configuration (usually stored in ``/etc/mysql/my.cnf`` file) must
+configure default server and client character sets to be ``utf8``, and also
 enable ``event_scheduler`` option, as shown here:
 
 .. code:: INI
+
+   [client]
+
+   ...
+
+   default_character_set = utf8
+
+   [mysql]
+
+   ...
+
+   default_character_set = utf8
 
    [mysqld]
 
    ...
 
    event_scheduler = ON
+   character_set_server = utf8
+
+.. note::
+
+   Setting character sets in ``my.cnf`` is not strictly necessary, but it
+   makes following configuration steps a bit easier.
 
 Next, you need to create NetProfile database and user. To do so, log in to
 MySQL CLI as ``root`` user (usually done with ``mysql -u root -p``, but whether
@@ -152,13 +178,26 @@ the prefix **[np]** before your prompt — it tells you that any Python-related
 commands you issue will be executed inside this environment and will not
 affect your OS outside. Also note that this is **not** a chroot.
 
-Installing NetProfile Python packages
--------------------------------------
+Installing NetProfile
+---------------------
 
 .. note::
 
    All commands in this and following sections **must** be executed as
    ``netprofile`` user from within a virtual environment, if you use one.
+
+You can now proceed to install NetProfile. You can do it in two different ways:
+either installing pre-packaged modules from a `Python package index`_ or
+manually from a git repository.
+
+Installing NetProfile Python packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+   As of this writing there are no NetProfile packages available from PyPI.
+   So your only option might be to install from git, as described in following
+   subsection.
 
 To install NetProfile modules for production use, execute following commands:
 
@@ -167,10 +206,28 @@ To install NetProfile modules for production use, execute following commands:
    pip install netprofile_core
    pip install <add any other needed modules here>
 
+Installing NetProfile packages from Git
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Alternatively, if you want to participate in development or fix a bug, you
-can use bundled ``develop.sh`` script to manually install all prerequisites
-and register module source directories as installed packages. To do that,
-go to the root of a checked out repository and execute:
+can use bundled scripts to manually install all prerequisites and register
+module source directories as installed packages. To do that, first check out
+main (or your own, forked) repository by running this command from the home
+directory of your new user (which will be ``/var/lib/netprofile`` if you've
+followed instructions in previous chapter):
+
+.. code:: sh
+
+   git clone https://github.com/unikmhz/npui.git
+
+.. note::
+
+   You will need to have ``git`` application installed to be able to work with
+   a repository.
+
+You will now have a new directory called ``npui``, that contains checked-out
+code of the NetProfile UI standard modules. Go to this directory (which we will
+call "repository root") and execute:
 
 .. code:: sh
 
@@ -233,4 +290,5 @@ Write about pserve, .wsgi files, realtime server etc.
 .. _MySQL: https://www.mysql.com/
 .. _MariaDB: https://mariadb.com/
 .. _Redis server: http://redis.io/
+.. _Python package index: https://pypi.python.org/pypi/
 
