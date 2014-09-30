@@ -9,11 +9,11 @@ NPMOD_DEFAULT="netprofile \
 	netprofile_geo \
 	netprofile_dialup \
 	netprofile_domains \
+	netprofile_entities \
 	netprofile_hosts \
 	netprofile_networks \
 	netprofile_ipaddresses \
 	netprofile_rates \
-	netprofile_entities \
 	netprofile_tickets \
 	netprofile_stashes \
 	netprofile_access \
