@@ -29,6 +29,7 @@ from __future__ import (
 
 __all__ = [
 	'Server',
+	'ServerParameter',
 	'ServerType'
 ]
 
@@ -36,6 +37,7 @@ from sqlalchemy import (
 	Column,
 	ForeignKey,
 	Index,
+	PickleType,
 	Sequence,
 	Unicode,
 	UnicodeText,
@@ -45,13 +47,17 @@ from sqlalchemy.orm import (
 	backref,
 	relationship
 )
+from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.ext.associationproxy import association_proxy
 
 from netprofile.db.connection import (
 	Base,
 	DBSession
 )
-from netprofile.db.fields import UInt32
+from netprofile.db.fields import (
+	ASCIIString,
+	UInt32
+)
 from netprofile.ext.wizards import SimpleWizard
 from netprofile.db.ddl import Comment
 
@@ -111,6 +117,26 @@ class ServerType(Base):
 		info={
 			'header_string' : _('Name'),
 			'column_flex'   : 1
+		}
+	)
+	generator_name = Column(
+		'gen',
+		ASCIIString(64),
+		Comment('Registered generator class name'),
+		nullable=False,
+		info={
+			'header_string' : _('Class')
+		}
+	)
+	parameter_defaults = Column(
+		'paramdef',
+		PickleType(),
+		Comment('Dictionary of parameter defaults'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Defaults')
 		}
 	)
 	description = Column(
@@ -209,10 +235,107 @@ class Server(Base):
 		innerjoin=True,
 		backref='servers'
 	)
+	parameters = relationship(
+		'ServerParameter',
+		collection_class=attribute_mapped_collection('name'),
+		backref=backref('server', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	def __str__(self):
 		return '%s: %s' % (
 			str(self.type),
 			str(self.host)
+		)
+
+	def get_param(self, name):
+		# TODO: Maybe fix to be more DB-friendly?
+		if name in self.parameters:
+			return self.parameters[name].value
+		srvt = self.type
+		try:
+			if name in srvt.parameter_defaults:
+				return srvt.parameter_defaults[name]
+		except (TypeError, IndexError):
+			pass
+		return None
+
+class ServerParameter(Base):
+	"""
+	Parameter of a server instance object.
+	"""
+	__tablename__ = 'srv_params'
+	__table_args__ = (
+		Comment('Server parameters'),
+		Index('srv_params_u_param', 'srvid', 'name', unique=True),
+		Index('srv_params_i_name', 'name'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_ADMIN',
+				'cap_read'      : 'SRV_LIST',
+				'cap_create'    : 'SRV_EDIT',
+				'cap_edit'      : 'SRV_EDIT',
+				'cap_delete'    : 'SRV_EDIT',
+
+				'menu_name'     : _('Server Parameters'),
+				'menu_order'    : 20,
+				'grid_view'     : ('server', 'name', 'value'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new parameter'))
+			}
+		}
+	)
+	id = Column(
+		'srvparamid',
+		UInt32(),
+		Sequence('srv_params_srvparamid_seq'),
+		Comment('Server parameter ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	server_id = Column(
+		'srvid',
+		UInt32(),
+		ForeignKey('srv_def.srvid', name='srv_params_fk_srvid', onupdate='CASCADE', ondelete='CASCADE'),
+		Comment('Server ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Server'),
+			'column_flex'   : 1,
+			'filter_type'   : 'none'
+		}
+	)
+	name = Column(
+		ASCIIString(64),
+		Comment('Server parameter name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 1
+		}
+	)
+	value = Column(
+		Unicode(255),
+		Comment('Server parameter value'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Value'),
+			'column_flex'   : 1
+		}
+	)
+
+	def __str__(self):
+		return '%s: %s' % (
+			str(self.server),
+			str(self.name)
 		)
 
