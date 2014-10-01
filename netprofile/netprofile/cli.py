@@ -39,6 +39,8 @@ from cliff.command import Command
 from pyramid.i18n import TranslationStringFactory
 from sqlalchemy.exc import ProgrammingError
 
+from netprofile.common.modules import ModuleError
+
 _ = TranslationStringFactory('netprofile')
 
 class ListModules(Lister):
@@ -59,7 +61,6 @@ class ListModules(Lister):
 		return parser
 
 	def take_action(self, args):
-		vlevel = self.app.options.verbose_level # not needed here?
 		has_core = True
 		loc = self.app.locale
 		flt = args.filter
@@ -101,7 +102,7 @@ class ListModules(Lister):
 				continue
 			data.append((moddef, ep.dist.version, loc.translate(curversion), loc.translate(enabled)))
 
-		return (columns, data)
+		return (columns, sorted(data, key=lambda row: row[0]))
 
 class ShowModule(ShowOne):
 	"""
@@ -129,7 +130,6 @@ class InstallModule(Command):
 		return parser
 
 	def take_action(self, args):
-		vlevel = self.app.options.verbose_level
 		self.app.setup_mako_sql()
 		sess = self.app.db_session
 		mm = self.app.mm
@@ -144,21 +144,30 @@ class InstallModule(Command):
 
 		if args.name.lower() == 'all':
 			mm.install('core', sess)
+			is_ok = True
 			for mod in mm.modules:
 				if mod != 'core':
-					mm.install(mod, sess)
-			if vlevel > 0:
-				self.app.stdout.write('All done.\n')
+					try:
+						mm.install(mod, sess)
+					except ModuleError as e:
+						if self.app.options.debug:
+							raise e
+						is_ok = False
+						self.log.error(e)
+					else:
+						self.log.info('Module \'%s\' successfully installed.', mod)
+			if not is_ok:
+				raise RuntimeError('Some modules failed to install.')
+			self.log.info('All done.')
 			return
 
 		ret = mm.install(args.name, sess)
 		if isinstance(ret, bool):
 			if ret:
-				if vlevel > 0:
-					self.app.stdout.write('Module \'%s\' successfully installed.\n' % (args.name,))
+				self.log.info('Module \'%s\' successfully installed.', args.name)
 				return
-			raise RuntimeError('Error: Module \'%s\' is already installed.' % (args.name,))
-		raise RuntimeError('Error: Unknown result.')
+			raise RuntimeError('Module \'%s\' is already installed.' % (args.name,))
+		raise RuntimeError('Unknown result.')
 
 class UninstallModule(Command):
 	"""
@@ -206,24 +215,30 @@ class EnableModule(Command):
 			mm.scan()
 
 		if not mm.load('core'):
-			raise RuntimeError('Error: Unable to proceed without core module.')
+			raise RuntimeError('Unable to proceed without core module.')
 
 		if args.name.lower() == 'all':
 			for mod in mm.modules:
-				if mm.is_installed(mod, sess) and (mod != 'core'):
-					mm.enable(mod)
-			if vlevel > 0:
-				self.app.stdout.write('All done.\n')
+				if mm.is_installed(mod, sess):
+					if (mod != 'core') and mm.enable(mod):
+						self.log.info('Enabled module \'%s\'.', mod)
+				elif vlevel > 1:
+					self.log.info('Module \'%s\' is not installed, so can\'t enable.', mod)
+			self.log.info('All done.')
 			return
 
+		if not mm.is_installed(args.name, sess):
+			raise RuntimeError('Module \'%s\' is not installed, so can\'t enable.' % (args.name,))
+		if args.name == 'core':
+			raise RuntimeError('Can\'t enable core module.')
 		ret = mm.enable(args.name)
 		if isinstance(ret, bool):
 			if ret:
-				if vlevel > 0:
-					self.app.stdout.write('Enabled module \'%s\'.\n' % (args.name,))
+				self.log.info('Enabled module \'%s\'.', args.name)
 				return
-			raise RuntimeError('Error: Module \'%s\' wasn\'t found or is not installed.' % (args.name,))
-		raise RuntimeError('Error: Unknown result.')
+			else:
+				raise RuntimeError('Module \'%s\' wasn\'t found or is not installed.' % (args.name,))
+		raise RuntimeError('Unknown result.')
 
 class DisableModule(Command):
 	"""
@@ -252,25 +267,30 @@ class DisableModule(Command):
 			mm.scan()
 
 		if not mm.load('core'):
-			raise RuntimeError('Error: Unable to proceed without core module.')
+			raise RuntimeError('Unable to proceed without core module.')
 
 		if args.name.lower() == 'all':
 			for mod in mm.modules:
-				if mm.is_installed(mod, sess) and (mod != 'core'):
-					mm.disable(mod)
-			if vlevel > 0:
-				self.app.stdout.write('All done.\n')
+				if mm.is_installed(mod, sess):
+					if (mod != 'core') and mm.disable(mod):
+						self.log.info('Disabled module \'%s\'.', mod)
+				elif vlevel > 1:
+					self.log.info('Module \'%s\' is not installed, so can\'t disable.', mod)
+			self.log.info('All done.')
 			return
 
+		if not mm.is_installed(args.name, sess):
+			raise RuntimeError('Module \'%s\' is not installed, so can\'t disable.' % (args.name,))
+		if args.name == 'core':
+			raise RuntimeError('Can\'t disable core module.')
 		ret = mm.disable(args.name)
 		if isinstance(ret, bool):
 			if ret:
-				if vlevel > 0:
-					self.app.stdout.write('Disabled module \'%s\'.\n' % (args.name,))
+				self.log.info('Disabled module \'%s\'.', args.name)
 				return
 			else:
-				raise RuntimeError('Error: Module \'%s\' wasn\'t found or is not installed.' % (args.name,))
-		raise RuntimeError('Error: Unknown result.')
+				raise RuntimeError('Module \'%s\' wasn\'t found or is not installed.' % (args.name,))
+		raise RuntimeError('Unknown result.')
 
 class Deploy(Command):
 	"""
@@ -295,7 +315,7 @@ class Deploy(Command):
 			os.mkdir(fdir, 0o700)
 		elif not os.path.isdir(fdir):
 			os.umask(self.old_mask)
-			raise RuntimeError('Error: Path exists but is not a directory: "%s".' % (fdir,))
+			raise RuntimeError('Path exists but is not a directory: "%s".' % (fdir,))
 
 		return fdir
 
@@ -333,17 +353,16 @@ class Deploy(Command):
 		os.chmod(sh_file, 0o600)
 
 	def take_action(self, args):
-		vlevel = self.app.options.verbose_level
 		self.old_mask = os.umask(0o077)
 		np_dir = os.path.abspath(self.app.dist.location)
 		deploy_dir = os.path.abspath(args.path)
 
 		if not os.path.isdir(np_dir):
 			os.umask(self.old_mask)
-			raise RuntimeError('Error: Can\'t locate netprofile module directory.')
+			raise RuntimeError('Can\'t locate netprofile module directory.')
 		if os.path.lexists(deploy_dir) and (not os.path.isdir(deploy_dir)):
 			os.umask(self.old_mask)
-			raise RuntimeError('Error: Invalid path specified.')
+			raise RuntimeError('Invalid path specified.')
 
 		if not os.path.exists(deploy_dir):
 			os.mkdir(deploy_dir, 0o700)
@@ -416,6 +435,5 @@ class Deploy(Command):
 		)
 
 		os.umask(self.old_mask)
-		if vlevel > 0:
-			self.app.stdout.write('Created NetProfile deployment: %s\n' % (deploy_dir,))
+		self.log.info('Created NetProfile deployment: %s', deploy_dir)
 

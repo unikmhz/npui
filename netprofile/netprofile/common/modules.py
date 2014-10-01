@@ -402,7 +402,10 @@ class ModuleManager(object):
 				))
 			self.modules[moddef] = ep
 
-		modcls = ep.load()
+		try:
+			modcls = ep.load()
+		except ImportError as e:
+			raise ModuleError('Can\'t locate ModuleBase class for module \'%s\'.' % (moddef,)) from e
 
 		get_deps = getattr(modcls, 'get_deps', None)
 		if callable(get_deps):
