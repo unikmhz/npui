@@ -249,7 +249,7 @@ class Server(Base):
 			str(self.host)
 		)
 
-	def get_param(self, name):
+	def get_param(self, name, default=None):
 		# TODO: Maybe fix to be more DB-friendly?
 		if name in self.parameters:
 			return self.parameters[name].value
@@ -259,7 +259,7 @@ class Server(Base):
 				return srvt.parameter_defaults[name]
 		except (TypeError, IndexError):
 			pass
-		return None
+		return default
 
 class ServerParameter(Base):
 	"""

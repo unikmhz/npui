@@ -39,15 +39,14 @@ options {
 % endfor
 	};
 
-	directory "${cfg.get('netprofile.confgen.bind.workdir', '/var/bind')}";
-	pid-file "${cfg.get('netprofile.confgen.bind.pidfile', '/run/named/named.pid')}";
+	directory "${srv.get_param('dir_bindzones_internal', '/var/bind')}";
+	pid-file "${srv.get_param('file_pid', '/run/named/named.pid')}";
 
 	allow-query { any; };
 	allow-transfer { selfacl; };
 	allow-update-forwarding { none; };
 	match-mapped-addresses yes;
 
-	IF IPv4 source:
 % if len(srv.host.ipv4_addresses) > 0:
 	query-source address ${srv.host.ipv4_addresses[0]} port *;
 	transfer-source ${srv.host.ipv4_addresses[0]};
@@ -59,32 +58,55 @@ options {
 	notify-source-v6 ${srv.host.ipv6_addresses[0]};
 % endif
 
-	IF dnssec:
-		dnssec-enable yes;
+% if srv.get_param('dnssec', True):
+	dnssec-enable yes;
 
-		IF >= BIND98:
-			dnssec-validation auto;
-		ELIF >= BIND94:
-			dnssec-validation yes;
-		IF >= BIND94:
-			IF accept_expired:
-				dnssec-accept-expired yes;
-			ELSE:
-				dnssec-accept-expired no;
-	ELSE:
-		dnssec-enable no;
+% if gen_name == 'iscbind99':
+	dnssec-validation auto;
+% elif gen_name == 'iscbind94':
+	dnssec-validation yes;
+% endif
+% if gen_name in ('iscbind94', 'iscbind99'):
+% if srv.get_param('dnssec_accept_expired', False):
+	dnssec-accept-expired yes;
+% else:
+	dnssec-accept-expired no;
+% endif
+% endif
+% else:
+	dnssec-enable no;
+% endif
 
-	root-delegation-only exclude { "de"; "lv"; "us"; "museum"; };
+	root-delegation-only exclude {
+		"ad"; "ar"; "biz"; "cr"; "cu"; "de"; "dm"; "id"; "lu"; "lv"; "md";
+		"ms"; "museum"; "name"; "no"; "pa"; "pf"; "sr"; "to"; "tw"; "us";
+		"uy";
+	};
 	statistics-file "named.stats";
 	memstatistics-file "named.memstats";
 	version "NetProfile DNS server";
 };
 
-LOGGING
+logging {
+	channel mainlog {
+		syslog ${srv.get_param('syslog_facility', 'local5')};
+		severity ${srv.get_param('syslog_severity', 'info')};
+		print-category yes;
+	};
 
-include "/etc/bind/rndc.key";
+	category default { mainlog; };
+	category general { mainlog; };
+};
+
+include "${srv.get_param('key_file_rndc', srv.get_param('dir_bindconf_internal', '/etc/bind') + '/rndc.key')}";
 controls {
-	inet 127.0.0.1 port 953 allow { 127.0.0.1/32; ::1/128; } keys { "rndc-key"; };
+	inet 127.0.0.1 port 953 allow { 127.0.0.1/32; ::1/128; } keys { "${srv.get_param('key_name_rndc', 'rndc-key')}"; };
+};
+
+SRVKEYS LIKE:
+key STUFF. {
+	algorithm hmac-md5;
+	secret "FIXME";
 };
 
 (IF SPLITDNS)
@@ -98,12 +120,6 @@ view "internal" {
 	ELSE:
 		match-clients { ownnets; };
 	recursion yes;
-
-	SRVKEYS LIKE:
-	key STUFF. {
-		algorithm hmac-md5;
-		secret "FIXME";
-	};
 
 	zone "." IN {
 		type hint;
@@ -122,14 +138,6 @@ view "internal" {
 		file "FIXMEDIR/127.zone";
 		allow-update { none; };
 		notify no;
-	};
-
-	/* is it still needed? */
-	zone "com" IN {
-		type delegation-only;
-	};
-	zone "net" IN {
-		type delegation-only;
 	};
 
 	ZONES
