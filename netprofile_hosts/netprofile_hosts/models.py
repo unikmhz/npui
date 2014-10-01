@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 __all__ = [
+	'DomainService',
 	'Host',
 	'HostGroup',
 	'Service',
@@ -723,6 +724,99 @@ class Service(Base):
 		info={
 			'header_string' : _('Visibility')
 		}
+	)
+
+class DomainService(Base):
+	"""
+	Domain service object.
+	"""
+	__tablename__ = 'domains_hosts'
+	__table_args__ = (
+		Comment('Domains-hosts linkage'),
+		Index('domains_hosts_u_dhl', 'domainid', 'hostid', 'hltypeid', unique=True),
+		Index('domains_hosts_i_hostid', 'hostid'),
+		Index('domains_hosts_i_hltypeid', 'hltypeid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DOMAINS',
+				'cap_read'      : 'DOMAINS_LIST',
+				'cap_create'    : 'DOMAINS_EDIT',
+				'cap_edit'      : 'DOMAINS_EDIT',
+				'cap_delete'    : 'DOMAINS_EDIT',
+				'menu_name'     : _('Services'),
+				'grid_view'     : ('domain', 'host', 'type'),
+				'form_view'     : ('domain', 'host', 'type'),
+				'create_wizard' : SimpleWizard(title=_('Add new domain service'))
+			}
+		}
+	)
+	id = Column(
+		'dhid',
+		UInt32(),
+		Sequence('domains_hosts_dhid_seq'),
+		Comment('Domain-host linkage ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	domain_id = Column(
+		'domainid',
+		UInt32(),
+		ForeignKey('domains_def.domainid', name='domains_hosts_fk_domainid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Domain ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Domain'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
+		}
+	)
+	host_id = Column(
+		'hostid',
+		UInt32(),
+		ForeignKey('hosts_def.hostid', name='domains_hosts_fk_hostid', onupdate='CASCADE', ondelete='CASCADE'),
+		Comment('Host ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Host'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
+		}
+	)
+	type_id = Column(
+		'hltypeid',
+		UInt32(),
+		ForeignKey('domains_hltypes.hltypeid', name='domains_hosts_fk_hltypeid', onupdate='CASCADE'),
+		Comment('Domain-host linkage type'),
+		nullable=False,
+		info={
+			'header_string' : _('Type'),
+			'filter_type'   : 'list',
+			'column_flex'   : 1
+		}
+	)
+
+	domain = relationship(
+		'Domain',
+		innerjoin=True,
+		backref=backref(
+			'services',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+	host = relationship(
+		'Host',
+		innerjoin=True,
+		backref=backref(
+			'domain_services',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
 	)
 
 HostCreateAliasProcedure = SQLFunction(
