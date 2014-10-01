@@ -76,3 +76,17 @@ def _dpane_entity_hosts(tabs, model, req):
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
+@register_hook('core.dpanetabs.domains.Domain')
+def _dpane_domain_services(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Services')),
+		'iconCls'           : 'ico-mod-domainservice',
+		'xtype'             : 'grid_hosts_DomainService',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('domain',),
+		'extraParamProp'    : 'domainid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+

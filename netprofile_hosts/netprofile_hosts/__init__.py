@@ -48,6 +48,7 @@ class Module(ModuleBase):
 	def get_models(cls):
 		from netprofile_hosts import models
 		return (
+			models.DomainService,
 			models.Host,
 			models.HostGroup,
 			models.Service,
