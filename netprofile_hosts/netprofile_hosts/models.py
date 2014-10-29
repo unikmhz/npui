@@ -818,6 +818,11 @@ class DomainService(Base):
 			passive_deletes=True
 		)
 	)
+	type = relationship(
+		'DomainServiceType',
+		innerjoin=True,
+		backref='services'
+	)
 
 HostCreateAliasProcedure = SQLFunction(
 	'host_create_alias',
