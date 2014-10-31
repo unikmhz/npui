@@ -231,7 +231,11 @@ class ModuleManager(object):
 				logger.error('Can\'t load uninstalled module \'%s\'. Please install it first.', moddef)
 			return False
 		mstack.append(moddef)
-		modcls = self.modules[moddef].load()
+		try:
+			modcls = self.modules[moddef].load()
+		except ImportError:
+			logger.error('Can\'t load module \'%s\'. Verify installation and try again.', moddef)
+			return False
 		if not issubclass(modcls, ModuleBase):
 			logger.error('Module \'%s\' is invalid. Verify installation and try again.', moddef)
 			return False
