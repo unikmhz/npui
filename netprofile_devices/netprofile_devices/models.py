@@ -28,14 +28,19 @@ from __future__ import (
 )
 
 __all__ = [
-#    'Device',
+	'Device',
 	'DeviceCategory',
 	'DeviceFlagType',
 	'DeviceManufacturer',
 	'DeviceMetatypeField',
 	'DeviceType',
 	'DeviceTypeFlagType',
-	'DeviceTypeFlag'
+	'DeviceTypeFlag',
+	'NetworkDeviceType',
+	'SimpleDeviceType',
+	'DeviceFlag',
+	'SimpleDevice',
+	'NetworkDevice'
 ]
 
 import datetime as dt
@@ -121,6 +126,10 @@ from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
+
+from netprofile_geo.models import Place
+
+from netprofile_entities.models import Entity
 
 _ = TranslationStringFactory('netprofile_devices')
 
@@ -356,7 +365,7 @@ class DeviceTypeFlag(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_menu'      : 'BASE_DEVICES',
 				'cap_read'      : 'DEVICES_TYPES_LIST',
 				'cap_create'    : 'DEVICES_TYPES_EDIT',
 				'cap_edit'      : 'DEVICES_TYPES_EDIT',
@@ -699,7 +708,7 @@ class NetworkDeviceType(DeviceType):
 				'cap_delete'    : 'DEVICES_TYPES_DELETE',
 
 				'show_in_menu'  : 'admin',
-				'menu_name'     : _('Simple Device types'),
+				'menu_name'     : _('Network Device types'),
 				'menu_order'    : 3,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('category', 'manufacturer', 'name', 'descr'),
@@ -725,4 +734,539 @@ class NetworkDeviceType(DeviceType):
 		}
 	)
 
+	manageable = Column(
+		'manageable',
+		NPBoolean(),
+		Comment('Is Manageable?'),
+		nullable=False,
+		default=False,
+		info={
+			'header_string' : _('Is Manageable?')
+			}
+		)
 
+	modular = Column(
+		'modular',
+		NPBoolean(),
+		Comment('Is Modular?'),
+		nullable=False,
+		default=False,
+		info={
+			'header_string' : _('Is Modular?')
+			}
+		)
+
+	icon = Column(
+		'icon',
+		Unicode(16),
+		Comment('Device icon'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('Icon')
+			}
+		)
+
+	handler = Column(
+		'handler',
+		Unicode(255),
+		Comment('Device handler'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('Handler')
+			}
+		)
+
+
+class Device(Base):
+	"""
+	NetProfile device definition
+	"""
+	__tablename__ = 'devices_def'
+	__table_args__ = (
+		Comment('Devices'),
+		Index('device_def_i_dtid', 'dtid'),
+		Index('device_def_i_placeid', 'placeid'),
+		Index('device_def_i_entityid', 'entityid'),
+		Index('device_def_i_cby', 'cby'),
+		Index('device_def_i_mby', 'mby'),
+		Index('device_def_i_iby', 'iby'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DEVICES',
+				'cap_read'      : 'DEVICES_LIST',
+				'cap_create'    : 'DEVICES_CREATE',
+				'cap_edit'      : 'DEVICES_EDIT',
+				'cap_delete'    : 'DEVICES_DELETE',
+				'menu_name'    : _('Devices'),
+				'show_in_menu'  : 'modules',
+				'menu_main'     : True,
+				'menu_order'    : 40,
+				'default_sort' : ({ 'property': 'serial' ,'direction': 'ASC' },),
+				'grid_view'    : ('devicetype', 'serial', 'entity', 'descr'),
+				'form_view'    : ('devicetype',
+								  'serial',
+								  'dtype',
+								  'oper',
+								  'place',
+								  'entity',
+								  'created',
+								  'modified',
+								  'installed',
+								  'ctime',
+								  'mtime',
+								  'itime',
+								  'descr'),
+				'easy_search'  : ('devicetype',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new device'))
+				}
+			}
+		)
+	id = Column(
+		'did',
+		UInt32(),
+		Sequence('did_seq'),
+		Comment('Device ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+			}
+		)
+	serial = Column(
+		'serial',
+		Unicode(64),
+		Comment('Device serial'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('Serial')
+			}
+		)
+	dtid = Column(
+		'dtid',
+		UInt32(),
+		ForeignKey('devices_types_def.dtid', name='devices_def_fk_dtid', onupdate='CASCADE'),
+		Comment('Device Type ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Type'),
+			'filter_type'   : 'list'
+			}
+		)
+	type = Column(
+		'dtype',
+		DeviceMetatypeField.db_type(),
+		Comment('Device Metatype Shortcut'),
+		nullable=False,
+		default=DeviceMetatypeField.simple,
+		info={
+			'header_string' : _('Metatype')
+			}
+		)
+	oper = Column(
+		'oper',
+		NPBoolean(),
+		Comment('Is Operational?'),
+		nullable=False,
+		default=False,
+		info={
+			'header_string' : _('Is Operational?')
+			}
+		)
+	placeid = Column(
+		'placeid',
+		UInt32(),
+		ForeignKey('addr_places.placeid', name='devices_def_fk_placeid', onupdate='CASCADE'),
+		Comment('Place ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Place')
+			}
+		)
+	entityid = Column(
+		'entityid',
+		UInt32(),
+		ForeignKey('entities_def.entityid', name='devices_def_fk_entityid', onupdate='CASCADE', ondelete='SET NULL'),
+		Comment('Entity ID'),
+		nullable=True,
+		info={
+			'header_string' : _('Entity')
+			}
+		)
+	ctime = Column(
+		'ctime',
+		TIMESTAMP(),
+		Comment('Creation time'),
+		nullable=True,
+		default=None,
+		server_default=FetchedValue(),
+		info={
+			'header_string' : _('Created'),
+			# 'read_only'     : True
+			}
+		)
+	mtime = Column(
+		'mtime',
+		TIMESTAMP(),
+		Comment('Modification time'),
+		nullable=True,
+		default=None,
+		server_default=FetchedValue(),
+		info={
+			'header_string' : _('Modified'),
+			# 'read_only'     : True
+			}
+		)
+	itime = Column(
+		'itime',
+		TIMESTAMP(),
+		Comment('Installation time'),
+		nullable=True,
+		default=None,
+		server_default=FetchedValue(),
+		info={
+			'header_string' : _('Installed'),
+			# 'read_only'     : True
+			}
+		)
+	created_by_id = Column(
+		'cby',
+		UInt32(),
+		ForeignKey('users.uid', name='devices_def_fk_cby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Created by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Created')
+			}
+		)
+	modified_by_id = Column(
+		'mby',
+		UInt32(),
+		ForeignKey('users.uid', name='devices_def_fk_mby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Modified by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Modified')
+			}
+		)
+	installed_by_id = Column(
+		'iby',
+		UInt32(),
+		ForeignKey('users.uid', name='devices_def_fk_iby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Installed by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Installed')
+			}
+		)
+	descr = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Device Description'),
+		info={
+			'header_string' : _('Description')
+			}
+		)
+
+	place = relationship(
+		'Place',
+		innerjoin=True,
+		backref='deviceplaces'
+	)
+
+	entity = relationship(
+		'Entity',
+		innerjoin=True,
+		backref='deviceentities'
+	)
+
+	created_by = relationship(
+		'User',
+		foreign_keys=created_by_id,
+		backref='devicecreated'
+	)
+
+	modified_by = relationship(
+		'User',
+		foreign_keys=modified_by_id,
+		backref='devicemodified'
+	)
+
+	installed_by = relationship(
+		'User',
+		foreign_keys=installed_by_id,
+		backref='deviceinstalled'
+	)
+
+	device_type = relationship(
+		'DeviceType',
+		innerjoin=True,
+		backref='devices'
+	)
+
+	flagmap = relationship(
+		'DeviceTypeFlag',
+		backref=backref('device', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
+	flags = association_proxy(
+		'flagmap',
+		'type',
+		creator=lambda v: DeviceFlag(type = v)
+	)
+
+	__mapper_args__ = {
+		'polymorphic_identity' : 'device',
+		'polymorphic_on'       : type,
+		'with_polymorphic'     : '*'
+	}
+
+	@classmethod
+	def __augment_result__(cls, sess, res, params, req):
+		populate_related(
+			res, 'dtid', 'device_type', DeviceType,
+			sess.query(DeviceType)
+		)
+		populate_related(
+			res, 'placeid', 'place', Place,
+			sess.query(Place)
+		)
+		populate_related(
+			res, 'entityid', 'entity', Entity,
+			sess.query(Entity)
+		)
+		#TODO user cby,mby,iby add
+
+		populate_related_list(
+			res, 'id', 'flagmap', DeviceFlag,
+			sess.query(DeviceFlag),
+			None, 'device_id'
+		)
+		return res
+
+	@property
+	def data(self):
+		return {
+			'flags' : [(ft.id, ft.name) for ft in self.flags]
+		}
+
+	def template_vars(self, req):
+		return {
+			'id'          : self.id,
+			'serial'      : self.serial,
+			'device_type' : {
+				'id'   : self.dtid,
+				'name' : str(self.device_type)
+			},
+			'type'        : self.dtype,
+			'oper'        : self.oper,
+			'place'       : {
+				'id'	: self.placeid,
+				'name'  : str(self.place)
+			},
+			'entity'       : {
+				'id'	: self.entityid,
+				'name'  : str(self.entity)
+			},
+			'ctime'		: self.ctime,
+			'mtime'		: self.mtime,
+			'itime'		: self.itime,
+			'created_by'	: {
+				'id'	: self.created_by_id,
+				'name'  : str(self.created_by)
+			},
+			'modified_by'	: {
+				'id'	: self.modified_by_id,
+				'name'  : str(self.modified_by)
+			},
+			'installed_by'	: {
+				'id'	: self.installed_by_id,
+				'name'  : str(self.installed_by)
+			},
+			'description' : self.descr
+		}
+
+	#TODO def grid_icon(self, req):
+	# 	return req.static_url('netprofile_entities:static/img/entity.png')
+
+
+	def __str__(self):
+		return str(self.serial)
+
+
+class DeviceFlag(Base):
+	"""
+	Many-to-many relationship object. Links devices and device flags.
+	"""
+	__tablename__ = 'devices_flags_def'
+	__table_args__ = (
+		Comment('Device flag mappings'),
+		Index('devices_flags_def_u_ef', 'deviceid', 'flagid', unique=True),
+		Index('devices_flags_def_i_flagid', 'flagid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DEVICES',
+				'cap_read'      : 'DEVICES_LIST',
+				'cap_create'    : 'DEVICES_EDIT',
+				'cap_edit'      : 'DEVICES_EDIT',
+				'cap_delete'    : 'DEVICES_EDIT',
+
+				'menu_name'     : _('Device Flags')
+			}
+		}
+	)
+	id = Column(
+		'id',
+		UInt32(),
+		Sequence('devices_flags_def_id_seq'),
+		Comment('Device flag ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	device_id = Column(
+		'deviceid',
+		UInt32(),
+		ForeignKey('devices_def.did', name='devices_flags_def_fk_deviceid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Device ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Device'),
+			'filter_type'   : 'none'
+		}
+	)
+	type_id = Column(
+		'flagid',
+		UInt32(),
+		ForeignKey('devices_flags_types.dtftid', name='devices_flags_types_fk_dtftid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Device flag type ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Type')
+		}
+	)
+
+
+class SimpleDevice(Device):
+	"""
+	Simple device.
+	"""
+
+	__tablename__ = 'devices_simple'
+	__table_args__ = (
+		Comment('Simple Device'),
+		Trigger('after', 'delete', 't_devices_simple_ad'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DEVICES',
+				'cap_read'      : 'DEVICES_LIST',
+				'cap_create'    : 'DEVICES_CREATE',
+				'cap_edit'      : 'DEVICES_EDIT',
+				'cap_delete'    : 'DEVICES_DELETE',
+
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Simple Devices'),
+				'menu_order'    : 3,
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'    : ('name', 'descr'),
+				'form_view'    : ('name', 'descr'),
+				'easy_search'  : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new device'))
+			}
+		}
+	)
+	__mapper_args__ = {
+		'polymorphic_identity' : DeviceMetatypeField.simple
+	}
+	id = Column(
+		'id',
+		UInt32(),
+		ForeignKey('devices_def.dtid', name='devices_simple_def_fk_dtid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Device ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+
+	# @property
+	# def data(self):
+	# 	ret = super(SimpleDeviceType, self).data
+	#
+	# 	ret['addrs'] = []
+	# 	ret['phones'] = []
+	# 	for obj in self.addresses:
+	# 		ret['addrs'].append(str(obj))
+	# 	for obj in self.phones:
+	# 		ret['phones'].append(obj.data)
+	# 	return ret
+	#
+	# def grid_icon(self, req):
+	# 	return req.static_url('netprofile_entities:static/img/structural.png')
+
+class NetworkDevice(Device):
+	"""
+	Network device.
+	"""
+
+	__tablename__ = 'devices_network'
+	__table_args__ = (
+		Comment('Network Devices'),
+		Trigger('after', 'delete', 't_devices_network_ad'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DEVICES',
+				'cap_read'      : 'DEVICES_LIST',
+				'cap_create'    : 'DEVICES_CREATE',
+				'cap_edit'      : 'DEVICES_EDIT',
+				'cap_delete'    : 'DEVICES_DELETE',
+
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Network Devices'),
+				'menu_order'    : 3,
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'    : ('name', 'descr'),
+				'form_view'    : ('name', 'descr'),
+				'easy_search'  : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new device'))
+			}
+		}
+	)
+	__mapper_args__ = {
+		'polymorphic_identity' : DeviceMetatypeField.network
+	}
+	id = Column(
+		'id',
+		UInt32(),
+		ForeignKey('devices_def.dtid', name='devices_network_def_fk_dtid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Device ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)

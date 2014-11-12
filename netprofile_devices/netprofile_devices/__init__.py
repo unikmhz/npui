@@ -32,6 +32,7 @@ from netprofile.common.modules import ModuleBase
 from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
+
 _ = TranslationStringFactory('netprofile_devices')
 
 class Module(ModuleBase):
@@ -42,19 +43,24 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return 'geo',
+		return 'geo','entities'
 
 	@classmethod
 	def get_models(cls):
 		from netprofile_devices import models
 		return (
-			# models.Device,
+			models.Device,
 			models.DeviceCategory,
 			models.DeviceFlagType,
 			models.DeviceManufacturer,
 			models.DeviceType,
 			models.DeviceTypeFlagType,
-			models.DeviceTypeFlag
+			models.DeviceTypeFlag,
+			models.SimpleDeviceType,
+			models.NetworkDeviceType,
+			models.DeviceFlag,
+			models.SimpleDevice,
+			models.NetworkDevice
 		)
 
 	#TODO @classmethod
@@ -101,22 +107,10 @@ class Module(ModuleBase):
 				code='DEVICES_DELETE',
 				name='Devices: Delete'
 			),
-			Privilege(
-				code='FILES_ATTACH_2DEVICES',
-				name='Files: Attach to devices'
-			),
-			Privilege(
-				code='DEVICES_STATES_CREATE',
-				name='Devices: Create states'
-			),
-			Privilege(
-				code='DEVICES_STATES_EDIT',
-				name='Devices: Edit states'
-			),
-			Privilege(
-				code='DEVICES_STATES_DELETE',
-				name='Devices: Delete states'
-			),
+			# Privilege(
+			# 	code='FILES_ATTACH_2DEVICES',
+			# 	name='Files: Attach to devices'
+			# ),
 			Privilege(
 				code='DEVICES_FLAGTYPES_CREATE',
 				name='Devices: Create flag types'
@@ -129,22 +123,70 @@ class Module(ModuleBase):
 				code='DEVICES_FLAGTYPES_DELETE',
 				name='Devices: Delete flag types'
 			),
+
 			Privilege(
-				code='DEVICES_COMMENT',
-				name='Devices: Add comments'
+				code='DEVICES_TYPES_FLAGTYPES_CREATE',
+				name='Devices: Create device types flag types'
 			),
 			Privilege(
-				code='DEVICES_COMMENTS_EDIT',
-				name='Devices: Edit comments'
+				code='DEVICES_TYPES_FLAGTYPES_EDIT',
+				name='Devices: Edit device types flag types'
 			),
 			Privilege(
-				code='DEVICES_COMMENTS_DELETE',
-				name='Devices: Delete comments'
+				code='DEVICES_TYPES_FLAGTYPES_DELETE',
+				name='Devices: Delete device types flag types'
+			),
+
+			Privilege(
+				code='DEVICES_TYPES_LIST',
+				name='Devices: List device types'
 			),
 			Privilege(
-				code='DEVICES_COMMENTS_MARK',
-				name='Devices: Mark comments as obsolete'
+				code='DEVICES_TYPES_CREATE',
+				name='Devices: Create device types'
 			),
+			Privilege(
+				code='DEVICES_TYPES_EDIT',
+				name='Devices: Edit device types'
+			),
+			Privilege(
+				code='DEVICES_TYPES_DELETE',
+				name='Devices: Delete device types'
+			),
+
+			Privilege(
+				code='DEVICES_CATEGORIES_LIST',
+				name='Devices: List device categories'
+			),
+			Privilege(
+				code='DEVICES_CATEGORIES_CREATE',
+				name='Devices: Create device categories'
+			),
+			Privilege(
+				code='DEVICES_CATEGORIES_EDIT',
+				name='Devices: Edit device categories'
+			),
+			Privilege(
+				code='DEVICES_CATEGORIES_DELETE',
+				name='Devices: Delete device categories'
+			),
+
+			# Privilege(
+			# 	code='DEVICES_COMMENT',
+			# 	name='Devices: Add comments'
+			# ),
+			# Privilege(
+			# 	code='DEVICES_COMMENTS_EDIT',
+			# 	name='Devices: Edit comments'
+			# ),
+			# Privilege(
+			# 	code='DEVICES_COMMENTS_DELETE',
+			# 	name='Devices: Delete comments'
+			# ),
+			# Privilege(
+			# 	code='DEVICES_COMMENTS_MARK',
+			# 	name='Devices: Mark comments as obsolete'
+			# ),
 		)
 		for priv in privs:
 			priv.module = modobj
