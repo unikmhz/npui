@@ -127,10 +127,6 @@ from pyramid.i18n import (
 	get_localizer
 )
 
-from netprofile_geo.models import Place
-
-from netprofile_entities.models import Entity
-
 _ = TranslationStringFactory('netprofile_devices')
 
 class DeviceMetatypeField(DeclEnum):
@@ -1036,6 +1032,9 @@ class Device(Base):
 
 	@classmethod
 	def __augment_result__(cls, sess, res, params, req):
+		from netprofile_geo.models import Place
+		from netprofile_entities.models import Entity
+
 		populate_related(
 			res, 'dtid', 'device_type', DeviceType,
 			sess.query(DeviceType)
@@ -1155,7 +1154,7 @@ class DeviceFlag(Base):
 	type_id = Column(
 		'flagid',
 		UInt32(),
-		ForeignKey('devices_flags_types.dtftid', name='devices_flags_types_fk_dtftid', ondelete='CASCADE', onupdate='CASCADE'),
+		ForeignKey('devices_flags_types.dftid', name='devices_flags_types_fk_dftid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('Device flag type ID'),
 		nullable=False,
 		info={
@@ -1199,7 +1198,7 @@ class SimpleDevice(Device):
 		'polymorphic_identity' : DeviceMetatypeField.simple
 	}
 	id = Column(
-		'id',
+		'did',
 		UInt32(),
 		ForeignKey('devices_def.dtid', name='devices_simple_def_fk_dtid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('Device ID'),
@@ -1260,7 +1259,7 @@ class NetworkDevice(Device):
 		'polymorphic_identity' : DeviceMetatypeField.network
 	}
 	id = Column(
-		'id',
+		'did',
 		UInt32(),
 		ForeignKey('devices_def.dtid', name='devices_network_def_fk_dtid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('Device ID'),
