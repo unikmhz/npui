@@ -39,7 +39,7 @@ from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 from netprofile.ext.direct import extdirect_method
 
-from .models import Device
+#TODO from .models import Device
 
 _ = TranslationStringFactory('netprofile_devices')
 

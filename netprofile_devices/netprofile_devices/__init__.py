@@ -48,20 +48,21 @@ class Module(ModuleBase):
 	def get_models(cls):
 		from netprofile_devices import models
 		return (
-			models.Device,
+			# models.Device,
 			models.DeviceCategory,
 			models.DeviceFlagType,
 			models.DeviceManufacturer,
 			models.DeviceType,
-			models.DeviceTypeFlagType
+			models.DeviceTypeFlagType,
+			models.DeviceTypeFlag
 		)
 
-	@classmethod
-	def get_sql_views(cls):
-		from netprofile_devices import models
-		return (
-			models.DevicesBaseView,
-		)
+	#TODO @classmethod
+	# def get_sql_views(cls):
+	# 	from netprofile_devices import models
+	# 	return (
+	# 		models.DevicesBaseView,
+	# 	)
 
 	@classmethod
 	def get_sql_data(cls, modobj, sess):
@@ -74,7 +75,7 @@ class Module(ModuleBase):
 		)
 
 		sess.add(LogType(
-			id=2,
+			id=9,
 			name='Devices'
 		))
 		sess.flush()
@@ -157,25 +158,25 @@ class Module(ModuleBase):
 		except NoResultFound:
 			pass
 
-		# sess.add(models.EntityState(
+		#TODO sess.add(models.EntityState(
 		# 	name='Default',
 		# 	description='Default entity state. You can safely rename and/or delete it if you wish.'
 		# ))
 
-	def get_local_js(self, request, lang):
-		return (
-			'netprofile_devices:static/webshell/locale/webshell-lang-' + lang + '.js',
-		)
+	#TODO def get_local_js(self, request, lang):
+	# 	return (
+	# 		'netprofile_devices:static/webshell/locale/webshell-lang-' + lang + '.js',
+	# 	)
 
-	def get_autoload_js(self, request):
-		return (
-			'NetProfile.devices.view.HistoryGrid',
-		)
+	#TODO def get_autoload_js(self, request):
+	# 	return (
+	# 		'NetProfile.devices.view.HistoryGrid',
+	# 	)
 
-	def get_css(self, request):
-		return (
-			'netprofile_devices:static/css/main.css',
-		)
+	#TODO def get_css(self, request):
+	# 	return (
+	# 		'netprofile_devices:static/css/main.css',
+	# 	)
 
 	@property
 	def name(self):
