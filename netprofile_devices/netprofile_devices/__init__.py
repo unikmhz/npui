@@ -49,16 +49,20 @@ class Module(ModuleBase):
 	def get_models(cls):
 		from netprofile_devices import models
 		return (
-			models.Device,
 			models.DeviceCategory,
-			models.DeviceFlagType,
 			models.DeviceManufacturer,
-			models.DeviceType,
+
 			models.DeviceTypeFlagType,
 			models.DeviceTypeFlag,
+
+			models.DeviceFlagType,
+			models.DeviceFlag,
+
+			models.DeviceType,
 			models.SimpleDeviceType,
 			models.NetworkDeviceType,
-			models.DeviceFlag,
+
+			models.Device,
 			models.SimpleDevice,
 			models.NetworkDevice
 		)

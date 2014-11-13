@@ -28,17 +28,21 @@ from __future__ import (
 )
 
 __all__ = [
-	'Device',
 	'DeviceCategory',
-	'DeviceFlagType',
 	'DeviceManufacturer',
 	'DeviceMetatypeField',
-	'DeviceType',
+
 	'DeviceTypeFlagType',
 	'DeviceTypeFlag',
-	'NetworkDeviceType',
+
+	'DeviceType',
 	'SimpleDeviceType',
+	'NetworkDeviceType',
+
+	'DeviceFlagType',
 	'DeviceFlag',
+
+	'Device',
 	'SimpleDevice',
 	'NetworkDevice'
 ]
@@ -268,6 +272,19 @@ class DeviceFlagType(Base):
 			}
 		)
 
+	flagmap = relationship(
+		'DeviceFlag',
+		backref=backref('type', innerjoin=True, lazy='joined'),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
+	devices = association_proxy(
+		'flagmap',
+		'device',
+		creator=lambda v: DeviceFlag(device=v)
+	)
+
 	def __str__(self):
 		return "%s" % str(self.name)
 
@@ -469,7 +486,7 @@ class DeviceType(Base):
 	__table_args__ = (
 		Comment('Device Types'),
 		Index('devices_types_def_u_dt', 'dtmid', 'name', unique=True),
-		Index('devices_types_def_i_dtcid', 'dtcid', 'dtcid'),
+		Index('devices_types_def_i_dtcid', 'dtcid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -631,7 +648,7 @@ class SimpleDeviceType(DeviceType):
 	__tablename__ = 'devices_types_simple'
 	__table_args__ = (
 		Comment('Simple Device Types'),
-		Trigger('after', 'delete', 't_devices_types_simple_ad'),
+		#TODO Trigger('after', 'delete', 't_devices_types_simple_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -654,9 +671,6 @@ class SimpleDeviceType(DeviceType):
 			}
 		}
 	)
-	__mapper_args__ = {
-		'polymorphic_identity' : DeviceMetatypeField.simple
-	}
 	id = Column(
 		'id',
 		UInt32(),
@@ -668,6 +682,9 @@ class SimpleDeviceType(DeviceType):
 			'header_string' : _('ID')
 		}
 	)
+	__mapper_args__ = {
+		'polymorphic_identity' : DeviceMetatypeField.simple
+	}
 
 	# @property
 	# def data(self):
@@ -692,7 +709,7 @@ class NetworkDeviceType(DeviceType):
 	__tablename__ = 'devices_types_network'
 	__table_args__ = (
 		Comment('Network Device Types'),
-		Trigger('after', 'delete', 't_devices_types_network_ad'),
+		#TODO Trigger('after', 'delete', 't_devices_types_network_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -715,9 +732,6 @@ class NetworkDeviceType(DeviceType):
 			}
 		}
 	)
-	__mapper_args__ = {
-		'polymorphic_identity' : DeviceMetatypeField.network
-	}
 	id = Column(
 		'id',
 		UInt32(),
@@ -773,6 +787,10 @@ class NetworkDeviceType(DeviceType):
 			'header_string' : _('Handler')
 			}
 		)
+
+	__mapper_args__ = {
+		'polymorphic_identity' : DeviceMetatypeField.network
+	}
 
 
 class Device(Base):
@@ -854,7 +872,7 @@ class Device(Base):
 			'filter_type'   : 'list'
 			}
 		)
-	type = Column(
+	dtype = Column(
 		'dtype',
 		DeviceMetatypeField.db_type(),
 		Comment('Device Metatype Shortcut'),
@@ -1012,7 +1030,7 @@ class Device(Base):
 	)
 
 	flagmap = relationship(
-		'DeviceTypeFlag',
+		'DeviceFlag',
 		backref=backref('device', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
@@ -1026,7 +1044,7 @@ class Device(Base):
 
 	__mapper_args__ = {
 		'polymorphic_identity' : 'device',
-		'polymorphic_on'       : type,
+		'polymorphic_on'       : dtype,
 		'with_polymorphic'     : '*'
 	}
 
@@ -1171,7 +1189,7 @@ class SimpleDevice(Device):
 	__tablename__ = 'devices_simple'
 	__table_args__ = (
 		Comment('Simple Device'),
-		Trigger('after', 'delete', 't_devices_simple_ad'),
+		#TODO Trigger('after', 'delete', 't_devices_simple_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1186,9 +1204,21 @@ class SimpleDevice(Device):
 				'menu_name'     : _('Simple Devices'),
 				'menu_order'    : 3,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name', 'descr'),
-				'form_view'    : ('name', 'descr'),
-				'easy_search'  : ('name',),
+				'grid_view'    : ('devicetype', 'serial', 'entity', 'descr'),
+				'form_view'    : ('devicetype',
+								  'serial',
+								  'dtype',
+								  'oper',
+								  'place',
+								  'entity',
+								  'created',
+								  'modified',
+								  'installed',
+								  'ctime',
+								  'mtime',
+								  'itime',
+								  'descr'),
+				'easy_search'  : ('devicetype',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new device'))
 			}
@@ -1200,7 +1230,7 @@ class SimpleDevice(Device):
 	id = Column(
 		'did',
 		UInt32(),
-		ForeignKey('devices_def.dtid', name='devices_simple_def_fk_dtid', ondelete='CASCADE', onupdate='CASCADE'),
+			ForeignKey('devices_def.did', name='devices_simple_def_fk_did', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('Device ID'),
 		primary_key=True,
 		nullable=False,
@@ -1232,7 +1262,7 @@ class NetworkDevice(Device):
 	__tablename__ = 'devices_network'
 	__table_args__ = (
 		Comment('Network Devices'),
-		Trigger('after', 'delete', 't_devices_network_ad'),
+		#TODO Trigger('after', 'delete', 't_devices_network_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1247,9 +1277,21 @@ class NetworkDevice(Device):
 				'menu_name'     : _('Network Devices'),
 				'menu_order'    : 3,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name', 'descr'),
-				'form_view'    : ('name', 'descr'),
-				'easy_search'  : ('name',),
+				'grid_view'    : ('devicetype', 'serial', 'entity', 'descr'),
+				'form_view'    : ('devicetype',
+								  'serial',
+								  'dtype',
+								  'oper',
+								  'place',
+								  'entity',
+								  'created',
+								  'modified',
+								  'installed',
+								  'ctime',
+								  'mtime',
+								  'itime',
+								  'descr'),
+				'easy_search'  : ('devicetype',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new device'))
 			}
@@ -1261,7 +1303,7 @@ class NetworkDevice(Device):
 	id = Column(
 		'did',
 		UInt32(),
-		ForeignKey('devices_def.dtid', name='devices_network_def_fk_dtid', ondelete='CASCADE', onupdate='CASCADE'),
+		ForeignKey('devices_def.did', name='devices_network_def_fk_did', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('Device ID'),
 		primary_key=True,
 		nullable=False,
