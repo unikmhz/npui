@@ -46,7 +46,13 @@ __all__ = [
 
 	'Device',
 	'SimpleDevice',
-	'NetworkDevice'
+	'NetworkDevice',
+
+	'SNMPTypeField',
+	'SNMPV3SchemeField',
+	'SNMPV3ProtoField',
+	'SNMPV3PrivProtoField',
+	'SNMPV3MgmtTypeField'
 ]
 
 import datetime as dt
@@ -142,6 +148,7 @@ class DeviceMetatypeField(DeclEnum):
 	simple = 'simple', _('Simple'),   10
 	network = 'network', _('Network'), 20
 
+#TODO rename to DeviceTypeManufacturer
 class DeviceManufacturer(Base):
 	"""
 	NetProfile device manufacturer definition
@@ -156,13 +163,13 @@ class DeviceManufacturer(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_DEVICES',
 				'cap_read'      : 'DEVICES_LIST',
-				'cap_create'    : 'DEVICES_CREATE',
-				'cap_edit'      : 'DEVICES_EDIT',
-				'cap_delete'    : 'DEVICES_DELETE',
+				'cap_create'    : 'DEVICES_TYPES_MANUFACTURERS_CREATE',
+				'cap_edit'      : 'DEVICES_TYPES_MANUFACTURERS_EDIT',
+				'cap_delete'    : 'DEVICES_TYPES_MANUFACTURERS_DELETE',
 				'menu_name'    : _('Device Manufacturers'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 3,
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'menu_order'    : 30,
+				'default_sort' : ({ 'property': 'sname' ,'direction': 'ASC' },),
 				'grid_view'    : ('sname', 'name', 'website'),
 				'form_view'    : ('sname', 'name', 'website'),
 				'easy_search'  : ('name',),
@@ -210,8 +217,6 @@ class DeviceManufacturer(Base):
 			}
 		)
 
-#TODO    manuf_names = relationship("DeviceType", backref=backref('manufacturer', innerjoin=True))
-
 	def __str__(self):
 		return "%s" % str(self.name)
 
@@ -234,7 +239,7 @@ class DeviceFlagType(Base):
 				'cap_delete'    : 'DEVICES_FLAGTYPES_DELETE',
 				'menu_name'    : _('Device flag types'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 3,
+				'menu_order'    : 10,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name', 'descr'),
 				'form_view'    : ('name', 'descr'),
@@ -310,7 +315,7 @@ class DeviceTypeFlagType(Base):
 				'cap_delete'    : 'DEVICES_TYPES_FLAGTYPES_DELETE',
 				'menu_name'    : _('Device type flag types'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 3,
+				'menu_order'    : 20,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name', 'descr'),
 				'form_view'    : ('name', 'descr'),
@@ -423,7 +428,7 @@ class DeviceTypeFlag(Base):
 		}
 	)
 
-
+#TODO rename to DeviceTypeCategory
 class DeviceCategory(Base):
 	"""
 	NetProfile device category definition
@@ -443,7 +448,7 @@ class DeviceCategory(Base):
 				'cap_delete'    : 'DEVICES_CATEGORIES_DELETE',
 				'menu_name'    : _('Device categories'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 3,
+				'menu_order'    : 40,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view' : ('name',),
 				'form_view' : ('name',),
@@ -474,8 +479,6 @@ class DeviceCategory(Base):
 			}
 		)
 
-#	device_categories = relationship("DeviceType", backref=backref('category', innerjoin=True))
-
 	def __str__(self):
 		return "%s" % str(self.name)
 
@@ -489,6 +492,7 @@ class DeviceType(Base):
 		Comment('Device Types'),
 		Index('devices_types_def_u_dt', 'dtmid', 'name', unique=True),
 		Index('devices_types_def_i_dtcid', 'dtcid'),
+		#TODO ADD TRIGGERS HERE
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -499,21 +503,23 @@ class DeviceType(Base):
 				'cap_edit'      : 'DEVICES_TYPES_EDIT',
 				'cap_delete'    : 'DEVICES_TYPES_DELETE',
 
-				'tree_property' : 'children',
+#				'show_in_menu'  : 'admin',
+#				'menu_name'    : _('Device types'),
+#				'menu_order'    : 50,
 
-				'show_in_menu'  : 'modules',
-				'menu_name'    : _('Device types'),
-				'menu_main'     : True,
-				'menu_order'    : 30,
+#				'tree_property' : 'children',
+#				'menu_main'     : True,
+
+				#TODO HERE WIZARD AND VIEW CUSTOMIZATION
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('category', 'manufacturer', 'name', 'descr'),
-				'form_view'    : ('category', 'manufacturer', 'name', 'descr'),
+				'form_view'    : ('category', 'manufacturer', 'name', 'descr','flags','files'),
 				'easy_search'  : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				'create_wizard' : SimpleWizard(title=_('Add new device type'))
-				}
+#				'create_wizard' : SimpleWizard(title=_('Add new device type'))
 			}
-		)
+		}
+	)
 
 	id = Column(
 		'dtid',
@@ -620,40 +626,41 @@ class DeviceType(Base):
 		creator=lambda v: DeviceTypeFile(file=v)
 	)
 
-	@classmethod
-	def __augment_result__(cls, sess, res, params, req):
-		populate_related(
-			res, 'dtmid', 'manufacturer', DeviceManufacturer,
-			sess.query(DeviceManufacturer)
-		)
-		populate_related(
-			res, 'dtcid', 'category', DeviceCategory,
-			sess.query(DeviceCategory)
-		)
-		populate_related_list(
-			res, 'id', 'flagmap', DeviceTypeFlag,
-			sess.query(DeviceTypeFlag),
-			None, 'device_type_id'
-		)
-		return res
-
-	def template_vars(self, req):
-		return {
-			'id'          : self.id,
-			'manufacturer': {
-				'id'	: self.dtmid,
-				'name'	: str(self.manufacturer)
-			},
-			'category': {
-				'id'	: self.dtcid,
-				'name'	: str(self.category)
-			},
-			'flags'       : [(ft.id, ft.name) for ft in self.flags],
-			'type'		: self.type,
-			'name'		: self.name,
-			'descr'		: self.descr
-			#TODO DeviceTypeFlags
-		}
+	# @classmethod
+	# def __augment_result__(cls, sess, res, params, req):
+	# 	#TODO THIS SECTION
+	# 	populate_related(
+	# 		res, 'dtmid', 'manufacturer', DeviceManufacturer,
+	# 		sess.query(DeviceManufacturer)
+	# 	)
+	# 	populate_related(
+	# 		res, 'dtcid', 'category', DeviceCategory,
+	# 		sess.query(DeviceCategory)
+	# 	)
+	# 	populate_related_list(
+	# 		res, 'id', 'flagmap', DeviceTypeFlag,
+	# 		sess.query(DeviceTypeFlag),
+	# 		None, 'device_type_id'
+	# 	)
+	# 	return res
+	#
+	# def template_vars(self, req):
+	# 	#TODO THIS SECTION
+	# 	return {
+	# 		'id'          : self.id,
+	# 		'manufacturer': {
+	# 			'id'	: self.dtmid,
+	# 			'name'	: str(self.manufacturer)
+	# 		},
+	# 		'category': {
+	# 			'id'	: self.dtcid,
+	# 			'name'	: str(self.category)
+	# 		},
+	# 		'flags'       : [(ft.id, ft.name) for ft in self.flags],
+	# 		'type'		: self.type,
+	# 		'name'		: self.name,
+	# 		'descr'		: self.descr
+	# 	}
 
 	def __str__(self):
 		return "%s" % str(self.name)
@@ -680,13 +687,13 @@ class SimpleDeviceType(DeviceType):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Simple Device types'),
-				'menu_order'    : 3,
+				'menu_order'    : 60,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('category', 'manufacturer', 'name', 'descr'),
-				'form_view'    : ('category', 'manufacturer', 'name', 'descr'),
+				'form_view'    : ('category', 'manufacturer', 'name', 'descr','flags','files'),
 				'easy_search'  : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				'create_wizard' : SimpleWizard(title=_('Add new device type'))
+				'create_wizard' : SimpleWizard(title=_('Add new simple device type'))
 			}
 		}
 	)
@@ -701,22 +708,12 @@ class SimpleDeviceType(DeviceType):
 			'header_string' : _('ID')
 		}
 	)
+
 	__mapper_args__ = {
 		'polymorphic_identity' : DeviceMetatypeField.simple
 	}
 
-	# @property
-	# def data(self):
-	# 	ret = super(SimpleDeviceType, self).data
-	#
-	# 	ret['addrs'] = []
-	# 	ret['phones'] = []
-	# 	for obj in self.addresses:
-	# 		ret['addrs'].append(str(obj))
-	# 	for obj in self.phones:
-	# 		ret['phones'].append(obj.data)
-	# 	return ret
-	#
+	#TODO THIS SECTION
 	# def grid_icon(self, req):
 	# 	return req.static_url('netprofile_entities:static/img/structural.png')
 
@@ -741,13 +738,18 @@ class NetworkDeviceType(DeviceType):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Network Device types'),
-				'menu_order'    : 3,
+				'menu_order'    : 70,
+
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('category', 'manufacturer', 'name', 'descr'),
-				'form_view'    : ('category', 'manufacturer', 'name', 'descr'),
+				'grid_view'    : ('category', 'manufacturer',
+								  'name', 'descr',
+								  'manageable','modular','icon','handler'),
+				'form_view'    : ('category', 'manufacturer', 'name', 'descr',
+								  'flags','files',
+								'manageable','modular','icon','handler'),
 				'easy_search'  : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				'create_wizard' : SimpleWizard(title=_('Add new device type'))
+				'create_wizard' : SimpleWizard(title=_('Add new network device type'))
 			}
 		}
 	)
@@ -826,6 +828,7 @@ class Device(Base):
 		Index('device_def_i_mby', 'mby'),
 		Index('device_def_i_iby', 'iby'),
 		{
+			#TODO THIS SECTION
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
@@ -840,12 +843,11 @@ class Device(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'    : _('Devices'),
 				'menu_main'     : True,
-				'menu_order'    : 40,
+				'menu_order'    : 5,
 				'default_sort' : ({ 'property': 'serial' ,'direction': 'ASC' },),
 				'grid_view'    : ('device_type', 'serial', 'entity', 'descr'),
 				'form_view'    : ('device_type',
 								  'serial',
-								  'dtype',
 								  'oper',
 								  'place',
 								  'entity',
@@ -857,8 +859,9 @@ class Device(Base):
 								  'itime',
 								  'descr'),
 				'easy_search'  : ('device_type',),
+				# 'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				'create_wizard' : SimpleWizard(title=_('Add new device'))
+#				'create_wizard' : SimpleWizard(title=_('Add new device'))
 				}
 			}
 		)
@@ -1070,76 +1073,79 @@ class Device(Base):
 		'with_polymorphic'     : '*'
 	}
 
-	@classmethod
-	def __augment_result__(cls, sess, res, params, req):
-		from netprofile_geo.models import Place
-		from netprofile_entities.models import Entity
+	# @classmethod
+	# def __augment_result__(cls, sess, res, params, req):
+	# 	#TODO THIS SECTION
+	# 	from netprofile_geo.models import Place
+	# 	from netprofile_entities.models import Entity
+	#
+	# 	populate_related(
+	# 		res, 'dtid', 'device_type', DeviceType,
+	# 		sess.query(DeviceType)
+	# 	)
+	# 	populate_related(
+	# 		res, 'placeid', 'place', Place,
+	# 		sess.query(Place)
+	# 	)
+	# 	populate_related(
+	# 		res, 'entityid', 'entity', Entity,
+	# 		sess.query(Entity)
+	# 	)
+	# 	#TODO user cby,mby,iby add
+	#
+	# 	populate_related_list(
+	# 		res, 'id', 'flagmap', DeviceFlag,
+	# 		sess.query(DeviceFlag),
+	# 		None, 'device_id'
+	# 	)
+	# 	return res
+	#
+	# @property
+	# def data(self):
+	# 	#TODO THIS SECTION
+	# 	return {
+	# 		'flags' : [(ft.id, ft.name) for ft in self.flags]
+	# 	}
+	#
+	# def template_vars(self, req):
+	# 	#TODO THIS SECTION
+	# 	return {
+	# 		'id'          : self.id,
+	# 		'serial'      : self.serial,
+	# 		'device_type' : {
+	# 			'id'   : self.dtid,
+	# 			'name' : str(self.device_type)
+	# 		},
+	# 		'type'        : self.dtype,
+	# 		'oper'        : self.oper,
+	# 		'place'       : {
+	# 			'id'	: self.placeid,
+	# 			'name'  : str(self.place)
+	# 		},
+	# 		'entity'       : {
+	# 			'id'	: self.entityid,
+	# 			'name'  : str(self.entity)
+	# 		},
+	# 		'ctime'		: self.ctime,
+	# 		'mtime'		: self.mtime,
+	# 		'itime'		: self.itime,
+	# 		'created_by'	: {
+	# 			'id'	: self.created_by_id,
+	# 			'name'  : str(self.created_by)
+	# 		},
+	# 		'modified_by'	: {
+	# 			'id'	: self.modified_by_id,
+	# 			'name'  : str(self.modified_by)
+	# 		},
+	# 		'installed_by'	: {
+	# 			'id'	: self.installed_by_id,
+	# 			'name'  : str(self.installed_by)
+	# 		},
+	# 		'description' : self.descr
+	# 	}
 
-		populate_related(
-			res, 'dtid', 'device_type', DeviceType,
-			sess.query(DeviceType)
-		)
-		populate_related(
-			res, 'placeid', 'place', Place,
-			sess.query(Place)
-		)
-		populate_related(
-			res, 'entityid', 'entity', Entity,
-			sess.query(Entity)
-		)
-		#TODO user cby,mby,iby add
-
-		populate_related_list(
-			res, 'id', 'flagmap', DeviceFlag,
-			sess.query(DeviceFlag),
-			None, 'device_id'
-		)
-		return res
-
-	@property
-	def data(self):
-		return {
-			'flags' : [(ft.id, ft.name) for ft in self.flags]
-		}
-
-	def template_vars(self, req):
-		return {
-			'id'          : self.id,
-			'serial'      : self.serial,
-			'device_type' : {
-				'id'   : self.dtid,
-				'name' : str(self.device_type)
-			},
-			'type'        : self.dtype,
-			'oper'        : self.oper,
-			'place'       : {
-				'id'	: self.placeid,
-				'name'  : str(self.place)
-			},
-			'entity'       : {
-				'id'	: self.entityid,
-				'name'  : str(self.entity)
-			},
-			'ctime'		: self.ctime,
-			'mtime'		: self.mtime,
-			'itime'		: self.itime,
-			'created_by'	: {
-				'id'	: self.created_by_id,
-				'name'  : str(self.created_by)
-			},
-			'modified_by'	: {
-				'id'	: self.modified_by_id,
-				'name'  : str(self.modified_by)
-			},
-			'installed_by'	: {
-				'id'	: self.installed_by_id,
-				'name'  : str(self.installed_by)
-			},
-			'description' : self.descr
-		}
-
-	#TODO def grid_icon(self, req):
-	# 	return req.static_url('netprofile_entities:static/img/entity.png')
+	# def grid_icon(self, req):
+	# 	return req.static_url('netprofile_devices:static/img/device.png')
 
 
 	def __str__(self):
@@ -1156,6 +1162,7 @@ class DeviceFlag(Base):
 		Index('devices_flags_def_u_ef', 'deviceid', 'flagid', unique=True),
 		Index('devices_flags_def_i_flagid', 'flagid'),
 		{
+			#TODO THIS SECTION
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
@@ -1213,6 +1220,7 @@ class SimpleDevice(Device):
 		Comment('Simple Device'),
 		#TODO Trigger('after', 'delete', 't_devices_simple_ad'),
 		{
+			#TODO THIS SECTION
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
@@ -1229,7 +1237,6 @@ class SimpleDevice(Device):
 				'grid_view'    : ('device_type', 'serial', 'entity', 'descr'),
 				'form_view'    : ('device_type',
 								  'serial',
-								  'dtype',
 								  'oper',
 								  'place',
 								  'entity',
@@ -1241,8 +1248,9 @@ class SimpleDevice(Device):
 								  'itime',
 								  'descr'),
 				'easy_search'  : ('device_type',),
+				# 'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				'create_wizard' : SimpleWizard(title=_('Add new device'))
+				'create_wizard' : SimpleWizard(title=_('Add new simple device'))
 			}
 		}
 	)
@@ -1261,6 +1269,7 @@ class SimpleDevice(Device):
 		}
 	)
 
+	#TODO THIS SECTION
 	# @property
 	# def data(self):
 	# 	ret = super(SimpleDeviceType, self).data
@@ -1274,7 +1283,49 @@ class SimpleDevice(Device):
 	# 	return ret
 	#
 	# def grid_icon(self, req):
-	# 	return req.static_url('netprofile_entities:static/img/structural.png')
+	# 	return req.static_url('netprofile_devices:static/img/simple.png')
+
+
+class SNMPTypeField(DeclEnum):
+	"""
+	SNMP Type ENUM.
+	"""
+	v1	= 'v1', _('Version 1'),   10
+	v2c	= 'v2c', _('Version 2'), 20
+	v3	= 'v3', _('Version 3'), 30
+
+class SNMPV3SchemeField(DeclEnum):
+	"""
+	SNMP Connection level ENUM.
+	"""
+	noAuthNoPriv	= 'noAuthNoPriv', _('NoAuthNoPriv'),   10
+	authNoPriv		= 'authNoPriv', _('AuthNoPriv'), 20
+	authPriv		= 'authPriv', _('AuthPriv'), 30
+
+class SNMPV3ProtoField(DeclEnum):
+	"""
+	SNMP Auth Protocol ENUM.
+	"""
+	md5	= 'md5', _('MD5'), 10
+	sha	= 'sha', _('SHA'), 20
+
+class SNMPV3PrivProtoField(DeclEnum):
+	"""
+	SNMP Crypt protocol ENUM.
+	"""
+	des = 'des', _('DES'),   10
+	aes128 = 'aes128', _('AES128'), 20
+	aes192 = 'aes192', _('AES192'), 30
+	aes256 = 'aes256', _('AES256'), 40
+
+class SNMPV3MgmtTypeField(DeclEnum):
+	"""
+	Management Access Type.
+	"""
+	ssh = 'ssh', _('SSH'),   10
+	telnet = 'telnet', _('Telnet'), 20
+	vnc = 'vnc', _('VNC'), 30
+	rdp = 'rdp', _('RDP'), 40
 
 class NetworkDevice(Device):
 	"""
@@ -1302,7 +1353,6 @@ class NetworkDevice(Device):
 				'grid_view'    : ('device_type', 'serial', 'entity', 'descr'),
 				'form_view'    : ('device_type',
 								  'serial',
-								  'dtype',
 								  'oper',
 								  'place',
 								  'entity',
@@ -1312,8 +1362,24 @@ class NetworkDevice(Device):
 								  'ctime',
 								  'mtime',
 								  'itime',
-								  'descr'),
+								  'descr',
+								  'hostid',
+								  'snmptype',
+								  'cs_ro',
+								  'cs_rw',
+								  'v3user',
+								  'v3scheme',
+								  'v3authproto',
+								  'v3authpass',
+								  'v3privproto',
+								  'v3privpass',
+								  'mgmttype',
+								  'mgmtuser',
+								  'mgmtpass',
+								  'mgmtepass'
+				),
 				'easy_search'  : ('device_type',),
+				# 'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new device'))
 			}
@@ -1333,6 +1399,158 @@ class NetworkDevice(Device):
 			'header_string' : _('ID')
 		}
 	)
+	host_id = Column(
+		'hostid',
+		UInt32(),
+		ForeignKey('hosts_def.hostid', name='devices_network_fk_hostid', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Host ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Host'),
+		}
+	)
+	snmp_type = Column(
+		'snmptype',
+		SNMPTypeField.db_type(),
+		Comment('SNMP type'),
+		nullable=True,
+		default=SNMPTypeField.v1,
+		info={
+			'header_string' : _('SNMP Type'),
+		}
+	)
+	cs_ro = Column(
+		'cs_ro',
+		Unicode(255),
+		Comment('SNMPv2 Read-Only Community'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('ROCom')
+			}
+	)
+	cs_rw = Column(
+		'cs_rw',
+		Unicode(255),
+		Comment('SNMPv2 Read-Write Community'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('RWCom')
+			}
+	)
+	v3user = Column(
+		'v3user',
+		Unicode(255),
+		Comment('SNMPv3 User Name'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('V3User')
+			}
+	)
+	v3scheme = Column(
+		'v3scheme',
+		SNMPV3SchemeField.db_type(),
+		Comment('SNMPv3 Connection Level'),
+		nullable=True,
+		default=SNMPV3SchemeField.authPriv,
+		info={
+			'header_string' : _('V3ConnLvl'),
+		}
+	)
+	v3authproto = Column(
+		'v3authproto',
+		SNMPV3ProtoField.db_type(),
+		Comment('SNMPv3 Auth Protocol'),
+		nullable=True,
+		default=SNMPV3ProtoField.md5,
+		info={
+			'header_string' : _('V3AuthProto')
+		}
+	)
+	v3authpass = Column(
+		'v3authpass',
+		Unicode(255),
+		Comment('SNMPv3 Auth Passphrase'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('V3AuthPass')
+			}
+	)
+	v3privproto = Column(
+		'v3privproto',
+		SNMPV3PrivProtoField.db_type(),
+		Comment('SNMPv3 Crypt Protocol'),
+		nullable=True,
+		default=SNMPV3PrivProtoField.des,
+		info={
+			'header_string' : _('V3CryptProto')
+		}
+	)
+	v3privpass = Column(
+		'v3privpass',
+		Unicode(255),
+		Comment('SNMPv3 Crypt Passphrase'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('V3PrivPass')
+		}
+	)
+	mgmttype = Column(
+		'mgmttype',
+		SNMPV3MgmtTypeField.db_type(),
+		Comment('Management Access Type'),
+		nullable=True,
+		default=SNMPV3MgmtTypeField.telnet,
+		info={
+			'header_string' : _('MgmtType')
+		}
+	)
+	mgmtuser = Column(
+		'mgmtuser',
+		Unicode(255),
+		Comment('Management User Name'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('MgmtUser')
+		}
+	)
+	mgmtpass = Column(
+		'mgmtpass',
+		Unicode(255),
+		Comment('Management Password'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('MgmtPass')
+		}
+	)
+	mgmtepass = Column(
+		'mgmtepass',
+		Unicode(255),
+		Comment('Management Enablement Password'),
+		nullable=True,
+		default='NULL',
+		info={
+			'header_string' : _('MgmtEnabPass')
+		}
+	)
+
+	host = relationship(
+		'Host',
+		innerjoin=True,
+		backref='network_devices'
+	)
+
+
+	# def grid_icon(self, req):
+	# 	return req.static_url('netprofile_devices:static/img/network.png')
 
 class DeviceTypeFile(Base):
 	"""

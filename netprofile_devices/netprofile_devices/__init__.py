@@ -119,28 +119,41 @@ class Module(ModuleBase):
 			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_CREATE',
-				name='Devices: Create flag types'
+				name='Devices: Create device flag types'
 			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_EDIT',
-				name='Devices: Edit flag types'
+				name='Devices: Edit device flag types'
 			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_DELETE',
-				name='Devices: Delete flag types'
+				name='Devices: Delete device flag types'
 			),
 
 			Privilege(
 				code='DEVICES_TYPES_FLAGTYPES_CREATE',
-				name='Devices: Create device types flag types'
+				name='Devices: Create device type flag types'
 			),
 			Privilege(
 				code='DEVICES_TYPES_FLAGTYPES_EDIT',
-				name='Devices: Edit device types flag types'
+				name='Devices: Edit device type flag types'
 			),
 			Privilege(
 				code='DEVICES_TYPES_FLAGTYPES_DELETE',
-				name='Devices: Delete device types flag types'
+				name='Devices: Delete device type flag types'
+			),
+
+			Privilege(
+				code='DEVICES_TYPES_MANUFACTURERS_CREATE',
+				name='Devices: Create device types manufacturers'
+			),
+			Privilege(
+				code='DEVICES_TYPES_MANUFACTURERS_EDIT',
+				name='Devices: Edit device types manufacturers'
+			),
+			Privilege(
+				code='DEVICES_TYPES_MANUFACTURERS_DELETE',
+				name='Devices: Delete device types manufacturers'
 			),
 
 			Privilege(
@@ -221,10 +234,10 @@ class Module(ModuleBase):
 	# 		'NetProfile.devices.view.HistoryGrid',
 	# 	)
 
-	#TODO def get_css(self, request):
-	# 	return (
-	# 		'netprofile_devices:static/css/main.css',
-	# 	)
+	def get_css(self, request):
+		return (
+			'netprofile_devices:static/css/main.css',
+		)
 
 	@property
 	def name(self):
