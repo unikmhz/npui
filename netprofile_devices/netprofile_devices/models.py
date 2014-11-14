@@ -35,6 +35,8 @@ __all__ = [
 	'DeviceTypeFlagType',
 	'DeviceTypeFlag',
 
+	'DeviceTypeFile',
+
 	'DeviceType',
 	'SimpleDeviceType',
 	'NetworkDeviceType',
@@ -496,9 +498,13 @@ class DeviceType(Base):
 				'cap_create'    : 'DEVICES_TYPES_CREATE',
 				'cap_edit'      : 'DEVICES_TYPES_EDIT',
 				'cap_delete'    : 'DEVICES_TYPES_DELETE',
+
+				'tree_property' : 'children',
+
+				'show_in_menu'  : 'modules',
 				'menu_name'    : _('Device types'),
-				'show_in_menu'  : 'admin',
-				'menu_order'    : 3,
+				'menu_main'     : True,
+				'menu_order'    : 30,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('category', 'manufacturer', 'name', 'descr'),
 				'form_view'    : ('category', 'manufacturer', 'name', 'descr'),
@@ -599,6 +605,19 @@ class DeviceType(Base):
 		'flagmap',
 		'type',
 		creator=lambda v: DeviceTypeFlag(type = v)
+	)
+
+	filemap = relationship(
+		'DeviceTypeFile',
+		backref=backref('device_type', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
+	files = association_proxy(
+		'filemap',
+		'file',
+		creator=lambda v: DeviceTypeFile(file=v)
 	)
 
 	@classmethod
@@ -815,26 +834,29 @@ class Device(Base):
 				'cap_create'    : 'DEVICES_CREATE',
 				'cap_edit'      : 'DEVICES_EDIT',
 				'cap_delete'    : 'DEVICES_DELETE',
-				'menu_name'    : _('Devices'),
+
+				'tree_property' : 'children',
+
 				'show_in_menu'  : 'modules',
+				'menu_name'    : _('Devices'),
 				'menu_main'     : True,
 				'menu_order'    : 40,
 				'default_sort' : ({ 'property': 'serial' ,'direction': 'ASC' },),
-				'grid_view'    : ('devicetype', 'serial', 'entity', 'descr'),
-				'form_view'    : ('devicetype',
+				'grid_view'    : ('device_type', 'serial', 'entity', 'descr'),
+				'form_view'    : ('device_type',
 								  'serial',
 								  'dtype',
 								  'oper',
 								  'place',
 								  'entity',
-								  'created',
-								  'modified',
-								  'installed',
+								  'created_by',
+								  'modified_by',
+								  'installed_by',
 								  'ctime',
 								  'mtime',
 								  'itime',
 								  'descr'),
-				'easy_search'  : ('devicetype',),
+				'easy_search'  : ('device_type',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new device'))
 				}
@@ -1200,25 +1222,25 @@ class SimpleDevice(Device):
 				'cap_edit'      : 'DEVICES_EDIT',
 				'cap_delete'    : 'DEVICES_DELETE',
 
-				'show_in_menu'  : 'admin',
+				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Simple Devices'),
-				'menu_order'    : 3,
+				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('devicetype', 'serial', 'entity', 'descr'),
-				'form_view'    : ('devicetype',
+				'grid_view'    : ('device_type', 'serial', 'entity', 'descr'),
+				'form_view'    : ('device_type',
 								  'serial',
 								  'dtype',
 								  'oper',
 								  'place',
 								  'entity',
-								  'created',
-								  'modified',
-								  'installed',
+								  'created_by',
+								  'modified_by',
+								  'installed_by',
 								  'ctime',
 								  'mtime',
 								  'itime',
 								  'descr'),
-				'easy_search'  : ('devicetype',),
+				'easy_search'  : ('device_type',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new device'))
 			}
@@ -1273,25 +1295,25 @@ class NetworkDevice(Device):
 				'cap_edit'      : 'DEVICES_EDIT',
 				'cap_delete'    : 'DEVICES_DELETE',
 
-				'show_in_menu'  : 'admin',
+				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Network Devices'),
-				'menu_order'    : 3,
+				'menu_order'    : 20,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('devicetype', 'serial', 'entity', 'descr'),
-				'form_view'    : ('devicetype',
+				'grid_view'    : ('device_type', 'serial', 'entity', 'descr'),
+				'form_view'    : ('device_type',
 								  'serial',
 								  'dtype',
 								  'oper',
 								  'place',
 								  'entity',
-								  'created',
-								  'modified',
-								  'installed',
+								  'created_by',
+								  'modified_by',
+								  'installed_by',
 								  'ctime',
 								  'mtime',
 								  'itime',
 								  'descr'),
-				'easy_search'  : ('devicetype',),
+				'easy_search'  : ('device_type',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new device'))
 			}
@@ -1311,3 +1333,75 @@ class NetworkDevice(Device):
 			'header_string' : _('ID')
 		}
 	)
+
+class DeviceTypeFile(Base):
+	"""
+	Many-to-many relationship object. Links device types and files from VFS.
+	"""
+	__tablename__ = 'devices_types_files'
+	__table_args__ = (
+		Comment('File mappings to devices types'),
+		Index('devices_types_files_u_efl', 'dtid', 'fileid', unique=True),
+		Index('devices_types_files_i_fileid', 'fileid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DEVICES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'FILES_ATTACH_2DEVICES',
+				'cap_edit'      : 'FILES_ATTACH_2DEVICES',
+				'cap_delete'    : 'FILES_ATTACH_2DEVICES',
+
+				'menu_name'     : _('Files'),
+				'grid_view'     : ('device_type', 'file'),
+
+				'create_wizard' : SimpleWizard(title=_('Attach file'))
+			}
+		}
+	)
+	id = Column(
+		'dtfid',
+		UInt32(),
+		Sequence('deveices_types_files_dtfid_seq'),
+		Comment('DeviceType-file mapping ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	devicetype_id = Column(
+		'dtid',
+		UInt32(),
+		ForeignKey('devices_types_def.dtid', name='devices_types_files_fk_dtid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('DeviceType ID'),
+		nullable=False,
+		info={
+			'header_string' : _('DeviceType'),
+			'column_flex'   : 1
+		}
+	)
+	file_id = Column(
+		'fileid',
+		UInt32(),
+		ForeignKey('files_def.fileid', name='devices_types_files_fk_fileid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('File ID'),
+		nullable=False,
+		info={
+			'header_string' : _('File'),
+			'column_flex'   : 1
+		}
+	)
+
+	file = relationship(
+		'File',
+		backref=backref(
+			'linked_devices_types',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+
+	def __str__(self):
+		return '%s' % str(self.file)

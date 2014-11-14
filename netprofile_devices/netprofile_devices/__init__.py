@@ -58,6 +58,8 @@ class Module(ModuleBase):
 			models.DeviceFlagType,
 			models.DeviceFlag,
 
+			models.DeviceTypeFile,
+
 			models.DeviceType,
 			models.SimpleDeviceType,
 			models.NetworkDeviceType,
@@ -111,10 +113,10 @@ class Module(ModuleBase):
 				code='DEVICES_DELETE',
 				name='Devices: Delete'
 			),
-			# Privilege(
-			# 	code='FILES_ATTACH_2DEVICES',
-			# 	name='Files: Attach to devices'
-			# ),
+			Privilege(
+				code='FILES_ATTACH_2DEVICES',
+				name='Files: Attach to devices'
+			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_CREATE',
 				name='Devices: Create flag types'
