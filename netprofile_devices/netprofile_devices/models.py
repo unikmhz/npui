@@ -212,6 +212,8 @@ class DeviceManufacturer(Base):
 		Unicode(255),
 		Comment('Device Type Manufacturer Website URL'),
 		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('URL')
 			}
@@ -792,7 +794,8 @@ class NetworkDeviceType(DeviceType):
 		Unicode(16),
 		Comment('Device icon'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('Icon')
 			}
@@ -803,7 +806,8 @@ class NetworkDeviceType(DeviceType):
 		Unicode(255),
 		Comment('Device handler'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('Handler')
 			}
@@ -881,7 +885,8 @@ class Device(Base):
 		Unicode(64),
 		Comment('Device serial'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('Serial')
 			}
@@ -1426,7 +1431,8 @@ class NetworkDevice(Device):
 		Unicode(255),
 		Comment('SNMPv2 Read-Only Community'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('ROCom')
 			}
@@ -1436,7 +1442,8 @@ class NetworkDevice(Device):
 		Unicode(255),
 		Comment('SNMPv2 Read-Write Community'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('RWCom')
 			}
@@ -1446,7 +1453,8 @@ class NetworkDevice(Device):
 		Unicode(255),
 		Comment('SNMPv3 User Name'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('V3User')
 			}
@@ -1476,7 +1484,8 @@ class NetworkDevice(Device):
 		Unicode(255),
 		Comment('SNMPv3 Auth Passphrase'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('V3AuthPass')
 			}
@@ -1496,7 +1505,8 @@ class NetworkDevice(Device):
 		Unicode(255),
 		Comment('SNMPv3 Crypt Passphrase'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('V3PrivPass')
 		}
@@ -1516,7 +1526,8 @@ class NetworkDevice(Device):
 		Unicode(255),
 		Comment('Management User Name'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('MgmtUser')
 		}
@@ -1526,7 +1537,8 @@ class NetworkDevice(Device):
 		Unicode(255),
 		Comment('Management Password'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('MgmtPass')
 		}
@@ -1536,7 +1548,8 @@ class NetworkDevice(Device):
 		Unicode(255),
 		Comment('Management Enablement Password'),
 		nullable=True,
-		default='NULL',
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('MgmtEnabPass')
 		}
