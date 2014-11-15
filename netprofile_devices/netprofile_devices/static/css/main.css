@@ -1,0 +1,17 @@
+.ico-mod-device,.ico-mod-devicetype{
+    background-image: url(../img/device.png) !important;
+}
+
+.ico-mod-simpledevice, .ico-mod-simpledevicetype {
+    background-image: url(../img/simple.png) !important;
+}
+
+.ico-mod-networkdevice, .ico-mod-networkdevicetype {
+    background-image: url(../img/network.png) !important;
+}
+
+.ico-mod-deviceflagtype {background-image: url(../img/flagtype.png) !important;}
+.ico-mod-devicetypeflagtype {background-image: url(../img/typeflagtype.png) !important;}
+.ico-mod-devicemanufacturer {background-image: url(../img/manufacturer.png) !important;}
+.ico-mod-devicecategory {background-image: url(../img/category.png) !important;}
+

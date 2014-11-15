@@ -1,0 +1,343 @@
+# Russian translations for PROJECT.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2014-11-15 14:21+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.3\n"
+
+#: netprofile_devices/__init__.py:244 netprofile_devices/models.py:848
+msgid "Devices"
+msgstr "Устройства"
+
+#: netprofile_devices/models.py:148
+msgid "Simple"
+msgstr ""
+
+#: netprofile_devices/models.py:149
+msgid "Network"
+msgstr ""
+
+#: netprofile_devices/models.py:169
+msgid "Device Manufacturers"
+msgstr ""
+
+#: netprofile_devices/models.py:177
+msgid "Add new device manufacturer"
+msgstr ""
+
+#: netprofile_devices/models.py:189 netprofile_devices/models.py:263
+#: netprofile_devices/models.py:340 netprofile_devices/models.py:408
+#: netprofile_devices/models.py:471 netprofile_devices/models.py:534
+#: netprofile_devices/models.py:710 netprofile_devices/models.py:766
+#: netprofile_devices/models.py:880 netprofile_devices/models.py:1192
+#: netprofile_devices/models.py:1273 netprofile_devices/models.py:1404
+#: netprofile_devices/models.py:1602
+msgid "ID"
+msgstr ""
+
+#: netprofile_devices/models.py:198
+msgid "Short Name"
+msgstr ""
+
+#: netprofile_devices/models.py:207 netprofile_devices/models.py:272
+#: netprofile_devices/models.py:349 netprofile_devices/models.py:480
+msgid "Name"
+msgstr ""
+
+#: netprofile_devices/models.py:218
+msgid "URL"
+msgstr ""
+
+#: netprofile_devices/models.py:242
+msgid "Device flag types"
+msgstr ""
+
+#: netprofile_devices/models.py:250
+msgid "Add new device flag type"
+msgstr ""
+
+#: netprofile_devices/models.py:280 netprofile_devices/models.py:357
+#: netprofile_devices/models.py:583 netprofile_devices/models.py:1022
+msgid "Description"
+msgstr ""
+
+#: netprofile_devices/models.py:318
+msgid "Device type flag types"
+msgstr ""
+
+#: netprofile_devices/models.py:326
+msgid "Add new device type flag type"
+msgstr ""
+
+#: netprofile_devices/models.py:396
+msgid "Device Type Flags"
+msgstr ""
+
+#: netprofile_devices/models.py:418 netprofile_devices/models.py:575
+msgid "Device Type"
+msgstr ""
+
+#: netprofile_devices/models.py:429 netprofile_devices/models.py:566
+#: netprofile_devices/models.py:901 netprofile_devices/models.py:1213
+msgid "Type"
+msgstr ""
+
+#: netprofile_devices/models.py:451
+msgid "Device categories"
+msgstr ""
+
+#: netprofile_devices/models.py:459
+msgid "Add new device category"
+msgstr ""
+
+#: netprofile_devices/models.py:544
+msgid "Device Manufacturer"
+msgstr ""
+
+#: netprofile_devices/models.py:555
+msgid "Device Category"
+msgstr ""
+
+#: netprofile_devices/models.py:691
+msgid "Simple Device types"
+msgstr ""
+
+#: netprofile_devices/models.py:698
+msgid "Add new simple device type"
+msgstr ""
+
+#: netprofile_devices/models.py:742
+msgid "Network Device types"
+msgstr ""
+
+#: netprofile_devices/models.py:754
+msgid "Add new network device type"
+msgstr ""
+
+#: netprofile_devices/models.py:777
+msgid "Is Manageable?"
+msgstr ""
+
+#: netprofile_devices/models.py:788
+msgid "Is Modular?"
+msgstr ""
+
+#: netprofile_devices/models.py:800
+msgid "Icon"
+msgstr ""
+
+#: netprofile_devices/models.py:812
+msgid "Handler"
+msgstr ""
+
+#: netprofile_devices/models.py:891
+msgid "Serial"
+msgstr ""
+
+#: netprofile_devices/models.py:912
+msgid "Metatype"
+msgstr ""
+
+#: netprofile_devices/models.py:922
+msgid "Is Operational?"
+msgstr ""
+
+#: netprofile_devices/models.py:932
+msgid "Place"
+msgstr ""
+
+#: netprofile_devices/models.py:942
+msgid "Entity"
+msgstr ""
+
+#: netprofile_devices/models.py:953 netprofile_devices/models.py:990
+msgid "Created"
+msgstr ""
+
+#: netprofile_devices/models.py:965 netprofile_devices/models.py:1002
+msgid "Modified"
+msgstr ""
+
+#: netprofile_devices/models.py:977 netprofile_devices/models.py:1014
+msgid "Installed"
+msgstr ""
+
+#: netprofile_devices/models.py:1180
+msgid "Device Flags"
+msgstr ""
+
+#: netprofile_devices/models.py:1202
+msgid "Device"
+msgstr ""
+
+#: netprofile_devices/models.py:1239
+msgid "Simple Devices"
+msgstr ""
+
+#: netprofile_devices/models.py:1258
+msgid "Add new simple device"
+msgstr ""
+
+#: netprofile_devices/models.py:1298
+msgid "Version 1"
+msgstr ""
+
+#: netprofile_devices/models.py:1299
+msgid "Version 2"
+msgstr ""
+
+#: netprofile_devices/models.py:1300
+msgid "Version 3"
+msgstr ""
+
+#: netprofile_devices/models.py:1306
+msgid "NoAuthNoPriv"
+msgstr ""
+
+#: netprofile_devices/models.py:1307
+msgid "AuthNoPriv"
+msgstr ""
+
+#: netprofile_devices/models.py:1308
+msgid "AuthPriv"
+msgstr ""
+
+#: netprofile_devices/models.py:1314
+msgid "MD5"
+msgstr ""
+
+#: netprofile_devices/models.py:1315
+msgid "SHA"
+msgstr ""
+
+#: netprofile_devices/models.py:1321
+msgid "DES"
+msgstr ""
+
+#: netprofile_devices/models.py:1322
+msgid "AES128"
+msgstr ""
+
+#: netprofile_devices/models.py:1323
+msgid "AES192"
+msgstr ""
+
+#: netprofile_devices/models.py:1324
+msgid "AES256"
+msgstr ""
+
+#: netprofile_devices/models.py:1330
+msgid "SSH"
+msgstr ""
+
+#: netprofile_devices/models.py:1331
+msgid "Telnet"
+msgstr ""
+
+#: netprofile_devices/models.py:1332
+msgid "VNC"
+msgstr ""
+
+#: netprofile_devices/models.py:1333
+msgid "RDP"
+msgstr ""
+
+#: netprofile_devices/models.py:1355
+msgid "Network Devices"
+msgstr ""
+
+#: netprofile_devices/models.py:1389
+msgid "Add new device"
+msgstr ""
+
+#: netprofile_devices/models.py:1416
+msgid "Host"
+msgstr ""
+
+#: netprofile_devices/models.py:1426
+msgid "SNMP Type"
+msgstr ""
+
+#: netprofile_devices/models.py:1437
+msgid "ROCom"
+msgstr ""
+
+#: netprofile_devices/models.py:1448
+msgid "RWCom"
+msgstr ""
+
+#: netprofile_devices/models.py:1459
+msgid "V3User"
+msgstr ""
+
+#: netprofile_devices/models.py:1469
+msgid "V3ConnLvl"
+msgstr ""
+
+#: netprofile_devices/models.py:1479
+msgid "V3AuthProto"
+msgstr ""
+
+#: netprofile_devices/models.py:1490
+msgid "V3AuthPass"
+msgstr ""
+
+#: netprofile_devices/models.py:1500
+msgid "V3CryptProto"
+msgstr ""
+
+#: netprofile_devices/models.py:1511
+msgid "V3PrivPass"
+msgstr ""
+
+#: netprofile_devices/models.py:1521
+msgid "MgmtType"
+msgstr ""
+
+#: netprofile_devices/models.py:1532
+msgid "MgmtUser"
+msgstr ""
+
+#: netprofile_devices/models.py:1543
+msgid "MgmtPass"
+msgstr ""
+
+#: netprofile_devices/models.py:1554
+msgid "MgmtEnabPass"
+msgstr ""
+
+#: netprofile_devices/models.py:1587
+msgid "Files"
+msgstr ""
+
+#: netprofile_devices/models.py:1590
+msgid "Attach file"
+msgstr ""
+
+#: netprofile_devices/models.py:1612
+msgid "DeviceType"
+msgstr ""
+
+#: netprofile_devices/models.py:1623
+msgid "File"
+msgstr ""
+
+#~ msgid "Device types"
+#~ msgstr ""
+
+#~ msgid "Add new device type"
+#~ msgstr ""
+
