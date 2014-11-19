@@ -3,6 +3,7 @@
 #
 # NetProfile: Entities module - Models
 # © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -163,9 +164,9 @@ class DeviceManufacturer(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_DEVICES',
 				'cap_read'      : 'DEVICES_LIST',
-				'cap_create'    : 'DEVICES_TYPES_MANUFACTURERS_CREATE',
-				'cap_edit'      : 'DEVICES_TYPES_MANUFACTURERS_EDIT',
-				'cap_delete'    : 'DEVICES_TYPES_MANUFACTURERS_DELETE',
+				'cap_create'    : 'DEVICETYPES_MANUFACTURERS_CREATE',
+				'cap_edit'      : 'DEVICETYPES_MANUFACTURERS_EDIT',
+				'cap_delete'    : 'DEVICETYPES_MANUFACTURERS_DELETE',
 				'menu_name'    : _('Device Manufacturers'),
 				'show_in_menu'  : 'admin',
 				'menu_order'    : 30,
@@ -312,9 +313,9 @@ class DeviceTypeFlagType(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_DEVICES',
 				'cap_read'      : 'DEVICES_LIST',
-				'cap_create'    : 'DEVICES_TYPES_FLAGTYPES_CREATE',
-				'cap_edit'      : 'DEVICES_TYPES_FLAGTYPES_EDIT',
-				'cap_delete'    : 'DEVICES_TYPES_FLAGTYPES_DELETE',
+				'cap_create'    : 'DEVICETYPES_FLAGTYPES_CREATE',
+				'cap_edit'      : 'DEVICETYPES_FLAGTYPES_EDIT',
+				'cap_delete'    : 'DEVICETYPES_FLAGTYPES_DELETE',
 				'menu_name'    : _('Device type flag types'),
 				'show_in_menu'  : 'admin',
 				'menu_order'    : 20,
@@ -388,10 +389,10 @@ class DeviceTypeFlag(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_DEVICES',
-				'cap_read'      : 'DEVICES_TYPES_LIST',
-				'cap_create'    : 'DEVICES_TYPES_EDIT',
-				'cap_edit'      : 'DEVICES_TYPES_EDIT',
-				'cap_delete'    : 'DEVICES_TYPES_EDIT',
+				'cap_read'      : 'DEVICETYPES_LIST',
+				'cap_create'    : 'DEVICETYPES_EDIT',
+				'cap_edit'      : 'DEVICETYPES_EDIT',
+				'cap_delete'    : 'DEVICETYPES_EDIT',
 
 				'menu_name'     : _('Device Type Flags')
 			}
@@ -500,10 +501,10 @@ class DeviceType(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_DEVICES',
-				'cap_read'      : 'DEVICES_TYPES_LIST',
-				'cap_create'    : 'DEVICES_TYPES_CREATE',
-				'cap_edit'      : 'DEVICES_TYPES_EDIT',
-				'cap_delete'    : 'DEVICES_TYPES_DELETE',
+				'cap_read'      : 'DEVICETYPES_LIST',
+				'cap_create'    : 'DEVICETYPES_CREATE',
+				'cap_edit'      : 'DEVICETYPES_EDIT',
+				'cap_delete'    : 'DEVICETYPES_DELETE',
 
 #				'show_in_menu'  : 'admin',
 #				'menu_name'    : _('Device types'),
@@ -682,10 +683,10 @@ class SimpleDeviceType(DeviceType):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_DEVICES',
-				'cap_read'      : 'DEVICES_TYPES_LIST',
-				'cap_create'    : 'DEVICES_TYPES_CREATE',
-				'cap_edit'      : 'DEVICES_TYPES_EDIT',
-				'cap_delete'    : 'DEVICES_TYPES_DELETE',
+				'cap_read'      : 'DEVICETYPES_LIST',
+				'cap_create'    : 'DEVICETYPES_CREATE',
+				'cap_edit'      : 'DEVICETYPES_EDIT',
+				'cap_delete'    : 'DEVICETYPES_DELETE',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Simple Device types'),
@@ -733,10 +734,10 @@ class NetworkDeviceType(DeviceType):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_DEVICES',
-				'cap_read'      : 'DEVICES_TYPES_LIST',
-				'cap_create'    : 'DEVICES_TYPES_CREATE',
-				'cap_edit'      : 'DEVICES_TYPES_EDIT',
-				'cap_delete'    : 'DEVICES_TYPES_DELETE',
+				'cap_read'      : 'DEVICETYPES_LIST',
+				'cap_create'    : 'DEVICETYPES_CREATE',
+				'cap_edit'      : 'DEVICETYPES_EDIT',
+				'cap_delete'    : 'DEVICETYPES_DELETE',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Network Device types'),
@@ -1579,10 +1580,10 @@ class DeviceTypeFile(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_DEVICES',
-				'cap_read'      : 'ENTITIES_LIST',
-				'cap_create'    : 'FILES_ATTACH_2DEVICES',
-				'cap_edit'      : 'FILES_ATTACH_2DEVICES',
-				'cap_delete'    : 'FILES_ATTACH_2DEVICES',
+				'cap_read'      : 'DEVICETYPES_LIST',
+				'cap_create'    : 'FILES_ATTACH_2DEVICETYPES',
+				'cap_edit'      : 'FILES_ATTACH_2DEVICETYPES',
+				'cap_delete'    : 'FILES_ATTACH_2DEVICETYPES',
 
 				'menu_name'     : _('Files'),
 				'grid_view'     : ('device_type', 'file'),

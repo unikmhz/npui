@@ -2,7 +2,8 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Devices module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or

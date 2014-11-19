@@ -3,6 +3,7 @@
 #
 # NetProfile: Devices module
 # © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -43,7 +44,7 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return 'geo','entities'
+		return 'entities'
 
 	@classmethod
 	def get_models(cls):
@@ -68,13 +69,6 @@ class Module(ModuleBase):
 			models.SimpleDevice,
 			models.NetworkDevice
 		)
-
-	#TODO @classmethod
-	# def get_sql_views(cls):
-	# 	from netprofile_devices import models
-	# 	return (
-	# 		models.DevicesBaseView,
-	# 	)
 
 	@classmethod
 	def get_sql_data(cls, modobj, sess):
@@ -114,98 +108,81 @@ class Module(ModuleBase):
 				name='Devices: Delete'
 			),
 			Privilege(
-				code='FILES_ATTACH_2DEVICES',
+				code='DEVICES_PASSWORDS',
+				name='Devices: Access to passwords'
+			),
+			Privilege(
+				code='FILES_ATTACH_2DEVICETYPES',
 				name='Files: Attach to devices'
 			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_CREATE',
-				name='Devices: Create device flag types'
+				name='Devices: Create flags'
 			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_EDIT',
-				name='Devices: Edit device flag types'
+				name='Devices: Edit flags'
 			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_DELETE',
-				name='Devices: Delete device flag types'
+				name='Devices: Delete flags'
 			),
 
 			Privilege(
-				code='DEVICES_TYPES_FLAGTYPES_CREATE',
-				name='Devices: Create device type flag types'
+				code='DEVICETYPES_FLAGTYPES_CREATE',
+				name='Devices: Create device type flags'
 			),
 			Privilege(
-				code='DEVICES_TYPES_FLAGTYPES_EDIT',
-				name='Devices: Edit device type flag types'
+				code='DEVICETYPES_FLAGTYPES_EDIT',
+				name='Devices: Edit device type flags'
 			),
 			Privilege(
-				code='DEVICES_TYPES_FLAGTYPES_DELETE',
-				name='Devices: Delete device type flag types'
+				code='DEVICETYPES_FLAGTYPES_DELETE',
+				name='Devices: Delete device type flags'
 			),
 
 			Privilege(
-				code='DEVICES_TYPES_MANUFACTURERS_CREATE',
-				name='Devices: Create device types manufacturers'
+				code='DEVICETYPES_MANUFACTURERS_CREATE',
+				name='Devices: Create manufacturers'
 			),
 			Privilege(
-				code='DEVICES_TYPES_MANUFACTURERS_EDIT',
-				name='Devices: Edit device types manufacturers'
+				code='DEVICETYPES_MANUFACTURERS_EDIT',
+				name='Devices: Edit manufacturers'
 			),
 			Privilege(
-				code='DEVICES_TYPES_MANUFACTURERS_DELETE',
-				name='Devices: Delete device types manufacturers'
+				code='DEVICETYPES_MANUFACTURERS_DELETE',
+				name='Devices: Delete manufacturers'
 			),
 
 			Privilege(
-				code='DEVICES_TYPES_LIST',
-				name='Devices: List device types'
+				code='DEVICETYPES_LIST',
+				name='Devices: List types'
 			),
 			Privilege(
-				code='DEVICES_TYPES_CREATE',
-				name='Devices: Create device types'
+				code='DEVICETYPES_CREATE',
+				name='Devices: Create types'
 			),
 			Privilege(
-				code='DEVICES_TYPES_EDIT',
-				name='Devices: Edit device types'
+				code='DEVICETYPES_EDIT',
+				name='Devices: Edit types'
 			),
 			Privilege(
-				code='DEVICES_TYPES_DELETE',
-				name='Devices: Delete device types'
+				code='DEVICETYPES_DELETE',
+				name='Devices: Delete types'
 			),
 
 			Privilege(
-				code='DEVICES_CATEGORIES_LIST',
-				name='Devices: List device categories'
+				code='DEVICETYPES_CATEGORIES_CREATE',
+				name='Devices: Create categories'
 			),
 			Privilege(
-				code='DEVICES_CATEGORIES_CREATE',
-				name='Devices: Create device categories'
+				code='DEVICETYPES_CATEGORIES_EDIT',
+				name='Devices: Edit categories'
 			),
 			Privilege(
-				code='DEVICES_CATEGORIES_EDIT',
-				name='Devices: Edit device categories'
-			),
-			Privilege(
-				code='DEVICES_CATEGORIES_DELETE',
-				name='Devices: Delete device categories'
-			),
-
-			# Privilege(
-			# 	code='DEVICES_COMMENT',
-			# 	name='Devices: Add comments'
-			# ),
-			# Privilege(
-			# 	code='DEVICES_COMMENTS_EDIT',
-			# 	name='Devices: Edit comments'
-			# ),
-			# Privilege(
-			# 	code='DEVICES_COMMENTS_DELETE',
-			# 	name='Devices: Delete comments'
-			# ),
-			# Privilege(
-			# 	code='DEVICES_COMMENTS_MARK',
-			# 	name='Devices: Mark comments as obsolete'
-			# ),
+				code='DEVICETYPES_CATEGORIES_DELETE',
+				name='Devices: Delete categories'
+			)
 		)
 		for priv in privs:
 			priv.module = modobj
@@ -227,11 +204,6 @@ class Module(ModuleBase):
 	#TODO def get_local_js(self, request, lang):
 	# 	return (
 	# 		'netprofile_devices:static/webshell/locale/webshell-lang-' + lang + '.js',
-	# 	)
-
-	#TODO def get_autoload_js(self, request):
-	# 	return (
-	# 		'NetProfile.devices.view.HistoryGrid',
 	# 	)
 
 	def get_css(self, request):
