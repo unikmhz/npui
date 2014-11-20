@@ -44,14 +44,14 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return 'entities'
+		return ('entities', 'hosts')
 
 	@classmethod
 	def get_models(cls):
 		from netprofile_devices import models
 		return (
-			models.DeviceCategory,
-			models.DeviceManufacturer,
+			models.DeviceTypeCategory,
+			models.DeviceTypeManufacturer,
 
 			models.DeviceTypeFlagType,
 			models.DeviceTypeFlag,
