@@ -510,9 +510,6 @@ class DeviceType(Base):
 				'menu_name'     : _('Types'),
 				'menu_order'    : 50,
 
-#				'tree_property' : 'children',
-#				'menu_main'     : True,
-
 				#TODO HERE WIZARD AND VIEW CUSTOMIZATION
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('category', 'manufacturer', 'name'),
@@ -688,7 +685,9 @@ class SimpleDeviceType(DeviceType):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Simple Devices'),
-				'menu_order'    : 60,
+				'menu_order'    : 10,
+				'menu_parent'   : 'devicetype',
+
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('category', 'manufacturer', 'name'),
 				'form_view'     : ('category', 'manufacturer', 'name', 'descr', 'flags'),
@@ -737,7 +736,8 @@ class NetworkDeviceType(DeviceType):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Network Devices'),
-				'menu_order'    : 70,
+				'menu_order'    : 20,
+				'menu_parent'   : 'devicetype',
 
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('category', 'manufacturer', 'name', 'manageable', 'modular'),
@@ -831,8 +831,6 @@ class Device(Base):
 				'cap_create'    : 'DEVICES_CREATE',
 				'cap_edit'      : 'DEVICES_EDIT',
 				'cap_delete'    : 'DEVICES_DELETE',
-
-#				'tree_property' : 'children',
 
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Devices'),
