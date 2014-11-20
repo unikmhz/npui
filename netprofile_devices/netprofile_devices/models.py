@@ -663,7 +663,10 @@ class DeviceType(Base):
 	# 	}
 
 	def __str__(self):
-		return "%s" % str(self.name)
+		return '%s %s' % (
+			str(self.manufacturer.short_name or self.manufacturer.name),
+			str(self.name)
+		)
 
 class SimpleDeviceType(DeviceType):
 	"""
@@ -1143,7 +1146,15 @@ class Device(Base):
 	# 	return req.static_url('netprofile_devices:static/img/device.png')
 
 	def __str__(self):
-		return str(self.serial)
+		if self.serial:
+			return '%s: S/N %s' % (
+				str(self.device_type),
+				str(self.serial)
+			)
+		return '%s @%s' % (
+			str(self.device_type),
+			str(self.place)
+		)
 
 class DeviceFlag(Base):
 	"""
@@ -1561,6 +1572,14 @@ class NetworkDevice(Device):
 		innerjoin=True,
 		backref='network_devices'
 	)
+
+	def __str__(self):
+		if self.host:
+			return '%s: %s' % (
+				str(self.device_type),
+				str(self.host)
+			)
+		return super(NetworkDevice, self).__str__()
 
 	# def grid_icon(self, req):
 	# 	return req.static_url('netprofile_devices:static/img/network.png')
