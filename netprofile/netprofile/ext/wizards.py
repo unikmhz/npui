@@ -300,6 +300,8 @@ class SimpleWizard(Wizard):
 	def get_cfg(self, model, req, **kwargs):
 		step = []
 		for cname, col in model.get_form_columns().items():
+			if col.get_read_only(req):
+				continue
 			colfld = col.get_editor_cfg(req, in_form=True)
 			if colfld:
 				coldef = col.default
