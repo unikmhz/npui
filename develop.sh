@@ -11,6 +11,7 @@ NPMOD_DEFAULT="netprofile \
 	netprofile_domains \
 	netprofile_entities \
 	netprofile_hosts \
+	netprofile_devices \
 	netprofile_networks \
 	netprofile_ipaddresses \
 	netprofile_rates \
