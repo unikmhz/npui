@@ -42,7 +42,7 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return ('hosts',)
+		return ('devices',)
 
 	@classmethod
 	def get_models(cls):

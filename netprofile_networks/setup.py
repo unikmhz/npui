@@ -8,7 +8,7 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
 	'setuptools',
-	'netprofile_hosts >= 0.3'
+	'netprofile_devices >= 0.3'
 ]
 
 setup(
