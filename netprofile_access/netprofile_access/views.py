@@ -27,7 +27,11 @@ from __future__ import (
 	division
 )
 
-import datetime, os, random, re, string
+import datetime, os, random, re, string, hashlib
+import json
+
+from rauth import OAuth2Service, OAuth1Service
+from rauth.utils import parse_utf8_qsl
 
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -251,6 +255,12 @@ def client_login(request):
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
 	can_recover = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
 	maillogin = asbool(cfg.get('netprofile.client.email_as_username', False))
+	can_use_socialnetworks = asbool(cfg.get('netprofile.client.registration.social', False))
+
+	login_providers = {'facebook':'http://facebook.com',
+					   'google'	 :'http://google.com',
+					   'twitter' :'http://twitter.com' 
+					   }
 
 	if 'submit' in request.POST:
 		csrf = request.POST.get('csrf', '')
@@ -267,16 +277,292 @@ def client_login(request):
 		did_fail = True
 
 	tpldef = {
-		'login'       : login,
-		'failed'      : did_fail,
-		'can_reg'     : can_reg,
-		'can_recover' : can_recover,
-		'maillogin'   : maillogin,
-		'cur_loc'     : cur_locale,
-		'comb_js'     : comb_js
+		'login'          : login,
+		'failed'         : did_fail,
+		'can_reg'        : can_reg,
+		'can_usesocial'  : can_use_socialnetworks,
+		'login_providers': login_providers,
+		'can_recover'    : can_recover,
+		'cur_loc'        : cur_locale,
+		'comb_js'        : comb_js
 	}
 	request.run_hook('access.cl.tpldef.login', tpldef, request)
 	return tpldef
+
+@view_config(route_name='access.cl.oauthwrapper', request_method='GET')
+def client_oauth_wrapper(request):
+	auth_provider = request.GET.get('prov', None)
+	redirect_uri = request.route_url('access.cl.home')
+
+	if auth_provider == 'facebook':
+		redirect_uri = request.route_url('access.cl.oauthfacebook')
+	elif auth_provider == 'google':
+		redirect_uri = request.route_url('access.cl.oauthgoogle')
+	elif auth_provider == 'twitter':
+		csrf = request.GET.get('csrf', None)
+		email = request.GET.get('twitterEmail', None)
+		if email and csrf == request.get_csrf():
+			return HTTPFound(location=request.route_url('access.cl.oauthtwitter', email=email))
+
+	return HTTPSeeOther(redirect_uri)
+
+@view_config(route_name='access.cl.oauthtwitter', request_method='GET')
+def client_oauth_twitter(request):
+	if authenticated_userid(request):
+		return HTTPSeeOther(location=request.route_url('access.cl.home'))
+
+	cfg = request.registry.settings
+	loc = get_localizer(request)
+	req_session = request.session
+
+	min_pwd_len = int(cfg.get('netprofile.client.registration.min_password_length', 8))
+	auth_provider = 'twitter'
+
+
+
+	email =  request.matchdict['email']
+	redirect_uri = request.route_url('access.cl.oauthtwitter', email=email)
+
+	reg_params = {
+		'email':email,
+		'username':None,
+		'password':None,
+		'givenname':None,
+		'familyname':None,
+		}
+
+	TWITTER_APP_ID = cfg.get('netprofile.client.TWITTER_APP_ID', False)
+	TWITTER_APP_SECRET = cfg.get('netprofile.client.TWITTER_APP_SECRET', False)
+
+	twitter = OAuth1Service(
+		consumer_key=TWITTER_APP_ID,
+		consumer_secret=TWITTER_APP_SECRET,
+		name='twitter',
+		authorize_url='https://api.twitter.com/oauth/authorize',
+		access_token_url='https://api.twitter.com/oauth/access_token',
+		request_token_url='https://api.twitter.com/oauth/request_token',
+		base_url='https://api.twitter.com/1.1/')
+
+	if TWITTER_APP_ID and TWITTER_APP_SECRET:
+		auth_token = request.GET.get('oauth_token', False)
+		auth_verifier = request.GET.get('oauth_verifier', False)
+
+		if not auth_token and not auth_verifier:
+			params = {
+				'oauth_callback': redirect_uri,
+				}
+
+			authorize_url = twitter.get_raw_request_token(params=params)
+
+			data = parse_utf8_qsl(authorize_url.content)
+
+			# should pass callback_url
+			# and get something like http://netprofile.ru/?oauth_token=1jMq4YD5cKEgRrOjoRae3xdfHJaoQRPf&oauth_verifier=bpOPZ1CYVUGtNs8nTFihwBv6KWhJzV1C
+			# http://stackoverflow.com/questions/17512572/rauth-flask-how-to-login-via-twitter
+		    #it works
+
+			req_session['twitter_oauth'] = (data['oauth_token'], data['oauth_token_secret'])
+			return HTTPSeeOther(twitter.get_authorize_url(data['oauth_token'], **params))
+		else:
+			request_token, request_token_secret = req_session.pop('twitter_oauth')
+			creds = {
+				'request_token': request_token,
+				'request_token_secret': request_token_secret
+				}
+			params = {'oauth_verifier': auth_verifier}
+			sess = twitter.get_auth_session(params=params, **creds)
+			res_json = sess.get('account/verify_credentials.json',
+							  params={'format':'json'}).json()
+			print(res_json)
+			#twitter does not provide email with rest api, we hawe to ask the user explicitly
+			reg_params['username'] = res_json['screen_name'].replace(' ','').lower()
+			reg_params['givenname'] = res_json['name'].split()[0]
+			reg_params['familyname'] = res_json['name'].split()[-1]
+			passwordhash = hashlib.sha224((auth_provider + reg_params['email'] + reg_params['username'] + str(res_json['id'])).encode('utf8')).hexdigest()
+			reg_params['password'] = passwordhash[::3][:8]
+
+			headers = client_oauth_register(request, reg_params)
+			
+			if headers:
+				return HTTPSeeOther(location=request.route_url('access.cl.home'), headers=headers)
+
+	return HTTPSeeOther(location=request.route_url('access.cl.login'))
+
+@view_config(route_name='access.cl.oauthgoogle', request_method='GET')
+def client_oauth_google(request):
+	cfg = request.registry.settings
+	loc = get_localizer(request)
+	min_pwd_len = int(cfg.get('netprofile.client.registration.min_password_length', 8))
+	auth_provider = 'google'
+	reg_params = {
+		'email':None,
+		'username':None,
+		'password':None,
+		'givenname':None,
+		'familyname':None,
+		}
+
+	GOOGLE_APP_ID = cfg.get('netprofile.client.GOOGLE_APP_ID', False)
+	GOOGLE_APP_SECRET = cfg.get('netprofile.client.GOOGLE_APP_SECRET', False)
+
+	gauthcode = request.GET.get('code', False)
+	redirect_uri = request.route_url('access.cl.oauthgoogle')
+
+	google = OAuth2Service(
+		client_id=GOOGLE_APP_ID,
+		client_secret=GOOGLE_APP_SECRET,
+		name='google',
+		authorize_url='https://accounts.google.com/o/oauth2/auth',
+		access_token_url='https://accounts.google.com/o/oauth2/token',
+		base_url='https://accounts.google.com/o/oauth2/auth',
+		)
+
+	if gauthcode is not False:
+		gsession = google.get_auth_session(
+			data={
+				'code'         : gauthcode,
+				'redirect_uri' : redirect_uri,
+				'grant_type'   : 'authorization_code'
+				},
+			decoder=lambda b: json.loads(b.decode())
+			)
+		json_path = 'https://www.googleapis.com/oauth2/v1/userinfo'
+		res_json = gsession.get(json_path).json()
+		
+		reg_params['email'] = res_json['email']
+		reg_params['username'] = res_json['email'].split("@")[0]
+		reg_params['givenname'] = res_json['given_name']
+		reg_params['familyname'] = res_json['family_name']
+		passwordhash = hashlib.sha224((auth_provider + reg_params['email'] + reg_params['username'] + res_json['id']).encode('utf8')).hexdigest()
+		reg_params['password'] = passwordhash[::3][:8]
+		
+		headers = client_oauth_register(request, reg_params)
+		if headers:
+			return HTTPSeeOther(location=request.route_url('access.cl.home'), headers=headers)
+		else:
+			return HTTPSeeOther(location=request.route_url('access.cl.home'))
+
+	if GOOGLE_APP_ID and GOOGLE_APP_SECRET:
+		params = {
+			'scope': 'email profile',
+			'response_type': 'code',
+			'redirect_uri': redirect_uri
+			}
+		authorize_url = google.get_authorize_url(**params)
+		return HTTPSeeOther(authorize_url)
+
+@view_config(route_name='access.cl.oauthfacebook', request_method='GET')
+def client_oauth_facebook(request):
+	if authenticated_userid(request):
+		return HTTPSeeOther(location=request.route_url('access.cl.home'))
+
+	cfg = request.registry.settings
+	loc = get_localizer(request)
+	min_pwd_len = int(cfg.get('netprofile.client.registration.min_password_length', 8))
+	auth_provider = 'facebook'
+	reg_params = {
+		'email':None,
+		'username':None,
+		'password':None,
+		'givenname':None,
+		'familyname':None,
+		}
+
+	FACEBOOK_APP_ID = cfg.get('netprofile.client.FACEBOOK_APP_ID', False)
+	FACEBOOK_APP_SECRET = cfg.get('netprofile.client.FACEBOOK_APP_SECRET', False)
+
+	facebook = OAuth2Service(
+		client_id=FACEBOOK_APP_ID,
+		client_secret=FACEBOOK_APP_SECRET,
+		name='facebook',
+		authorize_url='https://graph.facebook.com/oauth/authorize',
+		access_token_url='https://graph.facebook.com/oauth/access_token',
+		base_url='https://graph.facebook.com/')
+
+	fbauthcode = request.GET.get('code', False)
+
+	redirect_uri = request.route_url('access.cl.oauthfacebook')
+	if fbauthcode is not False:
+		fbsession = facebook.get_auth_session(data={'code': fbauthcode,	'redirect_uri': redirect_uri})
+		res_json = fbsession.get('me').json()
+		reg_params['email'] = res_json['email']
+		reg_params['username'] = res_json['name'].replace(' ','').lower()
+		reg_params['givenname'] = res_json['first_name']
+		reg_params['familyname'] = res_json['last_name']
+		passwordhash = hashlib.sha224((auth_provider + reg_params['email'] + reg_params['username'] + res_json['id']).encode('utf8')).hexdigest()
+		reg_params['password'] = passwordhash[::3][:8]
+
+		headers = client_oauth_register(request, reg_params)
+
+		if headers:
+			return HTTPSeeOther(location=request.route_url('access.cl.home'), headers=headers)
+
+	if FACEBOOK_APP_ID and FACEBOOK_APP_SECRET:
+		params = {'scope': 'email',
+				  'response_type': 'code',
+				  'redirect_uri': redirect_uri}
+		authorize_url = facebook.get_authorize_url(**params)
+		return HTTPSeeOther(authorize_url)
+		
+@view_config(route_name='access.cl.oauthreg')
+def client_oauth_register(request, regdict):
+	nxt = request.route_url('access.cl.home')
+	loc = get_localizer(request)
+	headers = None
+	#if authenticated_userid(request):
+	#	 return HTTPSeeOther(location=nxt)
+
+	cfg = request.registry.settings
+	rate_id = int(cfg.get('netprofile.client.registration.rate_id', 1))
+	state_id = int(cfg.get('netprofile.client.registration.state_id', 1))
+
+	errors = {}
+	sess = DBSession()
+
+	login = regdict.get('username', None)
+	passwd = regdict.get('password', None)
+	email = regdict.get('email', None)
+	name_family = regdict.get('familyname', '')
+	name_given = regdict.get('givenname', '')
+
+	### !!!!! What if user changes his password in out database?!
+	if login is not None and passwd is not None:
+		q = sess.query(AccessEntity).filter(AccessEntity.nick == login, AccessEntity.access_state != AccessState.block_inactive.value)
+		if q is not None:
+			for user in q:
+				if user.password == passwd:
+					headers = remember(request, login)
+					return headers
+
+	if headers is None:
+		ent = PhysicalEntity()
+		ent.nick = login
+		ent.email = email
+		ent.name_family = name_family
+		ent.name_given = name_given
+		ent.state_id = state_id
+
+		stash = Stash()
+		stash.entity = ent
+		stash.name = loc.translate(_('Primary Account'))
+
+		acc = AccessEntity()
+		acc.nick = login
+		acc.password = passwd
+		acc.stash = stash
+		acc.rate_id = rate_id
+		acc.state_id = state_id
+		ent.children.append(acc)
+		
+		sess.add(ent)
+		sess.add(stash)
+		sess.add(acc)
+		sess.flush()
+		headers = remember(request, login)
+		return headers
+
+	else:
+		return False
 
 @view_config(route_name='access.cl.register', renderer='netprofile_access:templates/client_register.mak')
 def client_register(request):
@@ -323,19 +609,11 @@ def client_register(request):
 			name_family = request.POST.get('name_family', '')
 			name_given = request.POST.get('name_given', '')
 			name_middle = request.POST.get('name_middle', '')
-			l = len(email)
+			l = len(login)
 			if (l == 0) or (l > 254):
-				errors['email'] = _('Invalid field length')
-			elif not _re_email.match(email):
-				errors['email'] = _('Invalid e-mail format')
-			if maillogin:
-				login = email
-			else:
-				l = len(login)
-				if (l == 0) or (l > 254):
-					errors['user'] = _('Invalid field length')
-				elif _re_login.match(login):
-					errors['user'] = _('Invalid character used in username')
+				errors['user'] = _('Invalid field length')
+			elif not maillogin and not _re_login.match(login):
+				errors['user'] = _('Invalid character used in username')
 			l = len(passwd)
 			if l < min_pwd_len:
 				errors['pass'] = _('Password is too short')
@@ -343,6 +621,13 @@ def client_register(request):
 				errors['pass'] = _('Password is too long')
 			if passwd != passwd2:
 				errors['pass2'] = _('Passwords do not match')
+			l = len(email)
+			if (l == 0) or (l > 254):
+				errors['email'] = _('Invalid field length')
+			elif not _re_email.match(email):
+				errors['email'] = _('Invalid e-mail format')
+			if maillogin:
+				login = email
 			l = len(name_family)
 			if (l == 0) or (l > 254):
 				errors['name_family'] = _('Invalid field length')
@@ -446,7 +731,7 @@ def client_register(request):
 		'must_verify'    : must_verify,
 		'must_recaptcha' : must_recaptcha,
 		'min_pwd_len'    : min_pwd_len,
-		'maillogin'	 : maillogin,
+		'maillogin'      : maillogin,
 		'errors'         : {err: loc.translate(errors[err]) for err in errors}
 	}
 	if must_recaptcha:
@@ -547,7 +832,6 @@ def client_restorepass(request):
 	change_pass = asbool(cfg.get('netprofile.client.password_recovery.change_password', True))
 	must_recaptcha = asbool(cfg.get('netprofile.client.password_recovery.recaptcha.enabled', False))
 	maillogin = asbool(cfg.get('netprofile.client.email_as_username', False))
-
 	errors = {}
 	if not can_rp:
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
@@ -572,19 +856,18 @@ def client_restorepass(request):
 		if len(errors) == 0:
 			login = request.POST.get('user', '')
 			email = request.POST.get('email', '')
+			if maillogin:
+				login = email
+			l = len(login)
+			if (l == 0) or (l > 254):
+				errors['user'] = _('Invalid field length')
+			elif not _re_login.match(login):
+				errors['user'] = _('Invalid character used in username')
 			l = len(email)
 			if (l == 0) or (l > 254):
 				errors['email'] = _('Invalid field length')
 			elif not _re_email.match(email):
 				errors['email'] = _('Invalid e-mail format')
-			if maillogin:
-				login = email
-			else:
-				l = len(login)
-				if (l == 0) or (l > 254):
-					errors['user'] = _('Invalid field length')
-				elif not _re_login.match(login):
-					errors['user'] = _('Invalid character used in username')
 		if len(errors) == 0:
 			sess = DBSession()
 			for acc in sess.query(AccessEntity)\
@@ -652,7 +935,7 @@ def client_restorepass(request):
 		'comb_js'        : comb_js,
 		'change_pass'    : change_pass,
 		'must_recaptcha' : must_recaptcha,
-		'maillogin'	 : maillogin,
+		'maillogin'      : maillogin,
 		'errors'         : {err: loc.translate(errors[err]) for err in errors}
 	}
 	if must_recaptcha:
@@ -678,6 +961,8 @@ def client_restoresent(request):
 	}
 	request.run_hook('access.cl.tpldef.restoresent', tpldef, request)
 	return tpldef
+
+
 
 @view_config(route_name='access.cl.logout')
 def client_logout(request):
