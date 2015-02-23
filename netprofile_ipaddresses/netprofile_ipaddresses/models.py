@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: IP addresses module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -30,6 +30,8 @@ from __future__ import (
 __all__ = [
 	'IPv4Address',
 	'IPv6Address',
+	'IPv4ReverseZoneSerial',
+	'IPv6ReverseZoneSerial',
 
 	'IPAddrGetDotStrFunction',
 	'IPAddrGetOffsetGenFunction',
@@ -40,6 +42,7 @@ __all__ = [
 
 from sqlalchemy import (
 	Column,
+	Date,
 	ForeignKey,
 	Index,
 	Sequence,
@@ -61,6 +64,7 @@ from netprofile.db.fields import (
 	IPv6Offset,
 	MACAddress,
 	NPBoolean,
+	UInt8,
 	UInt32,
 	UInt64,
 	npbool
@@ -455,6 +459,144 @@ class IPv6Address(Base):
 	def __str__(self):
 		if self.network and self.network.ipv6_address:
 			return str(self.network.ipv6_address + self.offset)
+
+class IPv4ReverseZoneSerial(Base):
+	"""
+	IPv4 reverse zone serial object.
+	"""
+	__tablename__ = 'revzone_serials'
+	__table_args__ = (
+		Comment('IPv4 reverse zone DNS serial numbers'),
+		Index('revzone_serials_u_ipaddr', 'ipaddr', unique=True),
+		{
+			'mysql_engine'      : 'InnoDB',
+			'mysql_charset'     : 'utf8',
+			'info'              : {
+				'cap_read'      : 'IPADDR_LIST',
+				'cap_create'    : 'IPADDR_EDIT',
+				'cap_edit'      : 'IPADDR_EDIT',
+				'cap_delete'    : 'IPADDR_EDIT',
+				'menu_name'     : _('IPv4 Serials'),
+				'grid_view'     : ('ipaddr', 'date', 'rev'),
+				'form_view'     : ('ipaddr', 'date', 'rev'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+			}
+		}
+	)
+	id = Column(
+		'rsid',
+		UInt32(),
+		Sequence('revzone_serials_rsid_seq'),
+		Comment('IPv4 reverse zone serial ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	ipv4_address = Column(
+		'ipaddr',
+		fields.IPv4Address(),
+		Comment('IPv4 reverse zone address'),
+		nullable=False,
+		info={
+			'header_string' : _('Address')
+		}
+	)
+	date = Column(
+		Date(),
+		Comment('IPv4 reverse zone serial date'),
+		nullable=False,
+		info={
+			'header_string' : _('Date')
+		}
+	)
+	revision = Column(
+		'rev',
+		UInt8(),
+		Comment('IPv4 reverse zone serial revision'),
+		nullable=False,
+		default=1,
+		server_default=text('1'),
+		info={
+			'header_string' : _('Revision')
+		}
+	)
+
+	def __str__(self):
+		return '%s%02d' % (
+			self.date.strftime('%Y%m%d'),
+			(self.revision % 100)
+		)
+
+class IPv6ReverseZoneSerial(Base):
+	"""
+	IPv6 reverse zone serial object.
+	"""
+	__tablename__ = 'revzone_serials6'
+	__table_args__ = (
+		Comment('IPv6 reverse zone DNS serial numbers'),
+		Index('revzone_serials6_u_ip6addr', 'ip6addr', unique=True),
+		{
+			'mysql_engine'      : 'InnoDB',
+			'mysql_charset'     : 'utf8',
+			'info'              : {
+				'cap_read'      : 'IPADDR_LIST',
+				'cap_create'    : 'IPADDR_EDIT',
+				'cap_edit'      : 'IPADDR_EDIT',
+				'cap_delete'    : 'IPADDR_EDIT',
+				'menu_name'     : _('IPv6 Serials'),
+				'grid_view'     : ('ip6addr', 'date', 'rev'),
+				'form_view'     : ('ip6addr', 'date', 'rev'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+			}
+		}
+	)
+	id = Column(
+		'rsid',
+		UInt32(),
+		Sequence('revzone_serials6_rsid_seq'),
+		Comment('IPv6 reverse zone serial ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	ipv6_address = Column(
+		'ip6addr',
+		fields.IPv6Address(),
+		Comment('IPv6 reverse zone address'),
+		nullable=False,
+		info={
+			'header_string' : _('Address')
+		}
+	)
+	date = Column(
+		Date(),
+		Comment('IPv6 reverse zone serial date'),
+		nullable=False,
+		info={
+			'header_string' : _('Date')
+		}
+	)
+	revision = Column(
+		'rev',
+		UInt8(),
+		Comment('IPv6 reverse zone serial revision'),
+		nullable=False,
+		default=1,
+		server_default=text('1'),
+		info={
+			'header_string' : _('Revision')
+		}
+	)
+
+	def __str__(self):
+		return '%s%02d' % (
+			self.date.strftime('%Y%m%d'),
+			(self.revision % 100)
+		)
 
 IPAddrGetDotStrFunction = SQLFunction(
 	'ipaddr_get_dotstr',
