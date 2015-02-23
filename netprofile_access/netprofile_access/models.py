@@ -97,7 +97,7 @@ from netprofile.db.ddl import (
 	Trigger
 )
 from netprofile.ext.columns import MarkupColumn
-from netprofile.ext.wizards import SimpleWizard
+from netprofile.ext.wizards import SimpleWizard, Wizard, Step
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
@@ -105,7 +105,7 @@ from pyramid.i18n import (
 
 from netprofile_entities.models import (
 	Entity,
-	EntityType
+	EntityType,
 )
 
 _ = TranslationStringFactory('netprofile_access')
@@ -188,7 +188,20 @@ class AccessEntity(Entity):
 				),
 				'easy_search'  : ('nick',),
 				'extra_data'    : ('grid_icon',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities'),
+				'create_wizard' : Wizard(
+					Step(
+						'nick', 'parent',
+						'state', 'flags', 'descr',
+						id='generic', title=_('Generic entity properties')
+					),
+					Step(
+						'password',
+						'stash', 'rate',
+						id='ent_access1', title=_('Access entity properties')
+					),
+					title=_('Add new access entity')
+				)
 			}
 		}
 	)
@@ -332,7 +345,7 @@ class AccessEntity(Entity):
 		}
 	)
 	access_state = Column(
-		'state',
+		'access_code',
 		UInt8(),
 		Comment('Access code'),
 		nullable=False,
@@ -424,6 +437,7 @@ class AccessEntity(Entity):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+
 
 	def access_state_string(self, req):
 		loc = get_localizer(req)

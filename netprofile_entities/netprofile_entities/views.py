@@ -151,6 +151,8 @@ def new_entity_validator(ret, values, request):
 		em = mod['StructuralEntity']
 	elif etype == 'external':
 		em = mod['ExternalEntity']
+	elif etype == 'access':
+		em = mod['AccessEntity']
 	else:
 		return
 	xret = em.validate_fields(values, request)
