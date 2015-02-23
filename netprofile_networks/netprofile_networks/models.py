@@ -133,7 +133,7 @@ class Network(Base):
 				),
 				'form_view'     : (
 					'name', 'domain', 'group',
-					# 'management_device',
+					'management_device',
 					'enabled', 'public',
 					'ipaddr', 'cidr',
 					'ip6addr', 'cidr6',
@@ -196,7 +196,7 @@ class Network(Base):
 	management_device_id = Column(
 		'mgmtdid',
 		UInt32(),
-#TODO:		ForeignKey('devices_network.did', name='nets_def_fk_mgmtdid', ondelete='SET NULL', onupdate='CASCADE'),
+		ForeignKey('devices_network.did', name='nets_def_fk_mgmtdid', ondelete='SET NULL', onupdate='CASCADE'),
 		Comment('Management device ID'),
 		nullable=True,
 		default=None,
@@ -359,7 +359,10 @@ class Network(Base):
 		'NetworkGroup',
 		backref='networks'
 	)
-	# TODO: management_device
+	management_device = relationship(
+		'NetworkDevice',
+		backref='networks'
+	)
 	routing_table = relationship(
 		'RoutingTable',
 		backref='networks'

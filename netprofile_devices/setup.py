@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 
 from setuptools import setup, find_packages
@@ -8,7 +11,8 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
 	'setuptools',
-	'netprofile_core >= 0.3'
+	'netprofile_entities >= 0.3',
+	'netprofile_hosts >= 0.3'
 ]
 
 setup(
@@ -38,8 +42,8 @@ setup(
 		'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
 		'Operating System :: OS Independent'
 	],
-	author='Andriyanov Nikita',
-	author_email='nikitos@compot.ru',
+	author='Alex Unigovsky',
+	author_email='unik@compot.ru',
 	url='https://github.com/unikmhz/npui',
 	keywords='web wsgi pyramid np netprofile crm billing accounting network isp',
 	packages=find_packages(),
