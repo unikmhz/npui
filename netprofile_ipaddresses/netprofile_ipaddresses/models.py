@@ -529,6 +529,24 @@ class IPv4ReverseZoneSerial(Base):
 			(self.revision % 100)
 		)
 
+	@property
+	def zone_name(self):
+		ipint = int(self.ipv4_address)
+		return '%d.%d.%d.in-addr.arpa' % (
+			(ipint >> 8) % 256,
+			(ipint >> 16) % 256,
+			(ipint >> 24) % 256
+		)
+
+	@property
+	def zone_filename(self):
+		ipint = int(self.ipv4_address)
+		return '%d.%d.%d' % (
+			(ipint >> 24) % 256,
+			(ipint >> 16) % 256,
+			(ipint >> 8) % 256
+		)
+
 class IPv6ReverseZoneSerial(Base):
 	"""
 	IPv6 reverse zone serial object.
@@ -596,6 +614,22 @@ class IPv6ReverseZoneSerial(Base):
 		return '%s%02d' % (
 			self.date.strftime('%Y%m%d'),
 			(self.revision % 100)
+		)
+
+	@property
+	def zone_name(self):
+		return '%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.ip6.arpa' % tuple(
+			item
+			for b in self.ipv6_address.packed[7::-1]
+			for item in [b % 16, (b >> 4) % 16]
+		)
+
+	@property
+	def zone_filename(self):
+		return '%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x' % tuple(
+			item
+			for b in self.ipv6_address.packed[:8]
+			for item in [(b >> 4) % 16, b % 16]
 		)
 
 IPAddrGetDotStrFunction = SQLFunction(
