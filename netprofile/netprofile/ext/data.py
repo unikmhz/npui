@@ -638,7 +638,7 @@ class ExtColumn(object):
 		if (self.column.primary_key) or \
 				(len(self.column.foreign_keys) > 0): # add check for read-only non-pk fields
 			hret = {
-				'xtype'      : 'hidden',
+				'xtype'      : 'hidden' if in_form else 'numberfield',
 				'editable'   : False,
 				'allowBlank' : self.nullable,
 				'name'       : self.name
@@ -1324,6 +1324,10 @@ class ExtModel(object):
 	@property
 	def extra_data(self):
 		return self.model.__table__.info.get('extra_data', ())
+
+	@property
+	def extra_actions(self):
+		return self.model.__table__.info.get('extra_actions', ())
 
 	def get_column(self, colname):
 		if isinstance(colname, PseudoColumn):

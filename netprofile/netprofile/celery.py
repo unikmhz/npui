@@ -367,6 +367,7 @@ def _setup(conf=None, **kwargs):
 
 	_parse_ini_settings(cfg.registry, conf)
 	app.settings = settings
+	app.mmgr = mmgr
 
 def setup_celery(reg):
 	_parse_ini_settings(reg, app)

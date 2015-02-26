@@ -54,6 +54,7 @@ from netprofile.common.hooks import IHookManager
 from netprofile.common.util import make_config_dict
 from netprofile.db.connection import DBSession
 from netprofile.celery import app as celery_app
+from netprofile.celery import setup_celery
 
 class WorkerThread(Thread):
 	def __init__(self, queue):
@@ -235,6 +236,9 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 				kwargs=task_kwargs
 			)
 
+			if resp.traceback:
+				print(resp.traceback)
+
 			rdata = {
 				'ts'    : datetime.datetime.now().replace(tzinfo=tzlocal()).isoformat(),
 				'type'  : 'task_result',
@@ -307,6 +311,7 @@ def run(sess):
 	http_server.start(int(cfg.get('processes', 0)))
 	sess.add_sockjs_routes(app)
 	iol = tornado.ioloop.IOLoop.current()
+	setup_celery(sess.reg)
 	tcelery.setup_nonblocking_producer(celery_app, io_loop=iol)
 	iol.start()
 

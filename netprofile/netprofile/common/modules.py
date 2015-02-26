@@ -493,6 +493,13 @@ class ModuleManager(object):
 
 		return True
 
+	def assert_loaded(self, *mods):
+		if (len(mods) == 1) and isinstance(mods[0], (list, tuple, set)):
+			mods = mods[0]
+		not_loaded = set(mods) - set(self.loaded)
+		if len(not_loaded) > 0:
+			raise ModuleError('These modules aren\'t loaded, but are required: %s.' % (', '.join(not_loaded),))
+
 	def _import_model(self, moddef, model, mb, hm):
 		mname = model.__name__
 		model.__moddef__ = moddef
