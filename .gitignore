@@ -59,6 +59,7 @@ target/
 # Test deployments
 *-local.ini
 debug-shell.py
+run-celery-worker.sh
 /netprofile/data/
 
 # NetProfile-specific
