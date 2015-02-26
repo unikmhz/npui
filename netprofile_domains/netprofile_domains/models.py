@@ -3,7 +3,7 @@
 #
 # NetProfile: Domains module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -148,7 +148,9 @@ class Domain(Base):
 					'name', 'parent',
 					'enabled', 'public', 'signed',
 					'soa_refresh', 'soa_retry', 'soa_expire', 'soa_minimum',
-					'dkim_name', 'dkim_data',
+					'spf_gen', 'spf_rule', 'spf_errmsg',
+					'dkim_name', 'dkim_data', 'dkim_test', 'dkim_subdomains', 'dkim_strict',
+					'dmarc_trailer',
 					'descr'
 				),
 				'easy_search'   : ('name', 'descr'),
@@ -294,8 +296,82 @@ class Domain(Base):
 		ASCIIText(),
 		Comment('DKIM public key body'),
 		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('DKIM Key')
+		}
+	)
+	dkim_test = Column(
+		NPBoolean(),
+		Comment('Use DKIM in test mode'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('DKIM Test')
+		}
+	)
+	dkim_subdomains = Column(
+		NPBoolean(),
+		Comment('Propagate DKIM rules to subdomains'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('DKIM in Subdomains')
+		}
+	)
+	dkim_strict = Column(
+		NPBoolean(),
+		Comment('Use DKIM strict check and discard'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('DKIM Strict')
+		}
+	)
+	spf_generate = Column(
+		'spf_gen',
+		NPBoolean(),
+		Comment('Generate SPF record'),
+		nullable=False,
+		default=True,
+		server_default=npbool(True),
+		info={
+			'header_string' : _('Use SPF')
+		}
+	)
+	spf_rule = Column(
+		ASCIIText(),
+		Comment('Custom SPF rule'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Custom SPF Rule')
+		}
+	)
+	spf_error_message = Column(
+		'spf_errmsg',
+		UnicodeText(),
+		Comment('Custom SPF error explanation string'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('SPF Error')
+		}
+	)
+	dmarc_trailer = Column(
+		ASCIIString(255),
+		Comment('DMARC record trailer'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('DMARC Trailer')
 		}
 	)
 	description = Column(
@@ -314,6 +390,15 @@ class Domain(Base):
 		'Domain',
 		backref=backref('parent', remote_side=[id])
 	)
+
+	@property
+	def serial(self):
+		if not self.serial_date:
+			return str(self.serial_revision % 100)
+		return '%s%02d' % (
+			self.serial_date.strftime('%Y%m%d'),
+			(self.serial_revision % 100)
+		)
 
 	def __str__(self):
 		if self.parent:
