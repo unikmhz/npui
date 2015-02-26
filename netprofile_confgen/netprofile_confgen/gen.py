@@ -213,8 +213,34 @@ class BIND9Generator(ConfigGenerator):
 			return ';t=' + ':'.join(flags)
 		return ''
 
-	def all_ipv4(self, host):
-		pass
+	def generate_zone(self, param, ds, dname, outdir, tpl, split_dns=False, is_root=False):
+		if is_root:
+			param['hosts'] = self.domain_hosts(ds.domain)
+		if split_dns:
+			param.update({
+				'domain'   : ds.domain,
+				'dname'    : dname,
+				'service'  : ds,
+				'zonetype' : 'internal'
+			})
+			with open(os.path.join(outdir, dname + '.internal.zone'), 'wb') as fd:
+				fd.write(tpl.render(**param))
+			param['zonetype'] = 'external'
+			with open(os.path.join(outdir, dname + '.external.zone'), 'wb') as fd:
+				fd.write(tpl.render(**param))
+		else:
+			param.update({
+				'domain'   : ds.domain,
+				'dname'    : dname,
+				'service'  : ds,
+				'zonetype' : 'generic'
+			})
+			with open(os.path.join(outdir, dname + '.generic.zone'), 'wb') as fd:
+				fd.write(tpl.render(**param))
+
+		if is_root:
+			for alias in ds.domain.aliases:
+				self.generate_zone(param, ds, str(alias), outdir, tpl, split_dns)
 
 	def generate(self, srv):
 		self.confgen.mm.assert_loaded('ipaddresses')
@@ -240,27 +266,7 @@ class BIND9Generator(ConfigGenerator):
 		for ds in srv.host.domain_services:
 			if ds.type_id != 1:
 				continue
-			hosts = self.domain_hosts(ds.domain)
-			if splitdns:
-				param.update({
-					'domain'   : ds.domain,
-					'dname'    : str(ds.domain),
-					'service'  : ds,
-					'hosts'    : hosts,
-					'zonetype' : 'internal'
-				})
-				with open(os.path.join(pridir, str(ds.domain) + '.internal.zone'), 'wb') as fd:
-					fd.write(zone_tpl.render(**param))
-				param['zonetype'] = 'external'
-				with open(os.path.join(pridir, str(ds.domain) + '.external.zone'), 'wb') as fd:
-					fd.write(zone_tpl.render(**param))
-			else:
-				param.update({
-					'domain'   : ds.domain,
-					'dname'    : str(ds.domain),
-					'service'  : ds,
-					'zonetype' : 'generic'
-				})
+			self.generate_zone(param, ds, str(ds.domain), pridir, zone_tpl, splitdns, True)
 
 class ISCDHCPGenerator(ConfigGenerator):
 	pass
