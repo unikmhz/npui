@@ -272,6 +272,11 @@ class IPv4Address(Base):
 		)
 	)
 
+	@property
+	def address(self):
+		if self.network and self.network.ipv4_address:
+			return self.network.ipv4_address + self.offset
+
 	def __str__(self):
 		if self.network and self.network.ipv4_address:
 			return str(self.network.ipv4_address + self.offset)
@@ -455,6 +460,11 @@ class IPv6Address(Base):
 			passive_deletes=True
 		)
 	)
+
+	@property
+	def address(self):
+		if self.network and self.network.ipv6_address:
+			return self.network.ipv6_address + self.offset
 
 	def __str__(self):
 		if self.network and self.network.ipv6_address:

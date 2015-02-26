@@ -355,6 +355,15 @@ class Host(Base):
 		passive_deletes=True
 	)
 
+	@property
+	def real(self):
+		if not self.original:
+			return self
+		h = self
+		while h.original:
+			h = h.original
+		return h
+
 	def __str__(self):
 		if self.domain:
 			return '%s.%s' % (
@@ -634,6 +643,21 @@ class ServiceType(Base):
 				str(self.name)
 			)
 		return str(self.name)
+
+	@property
+	def record_name(self):
+		rrn = []
+		if self.abbreviation:
+			rrn.append('_' + self.abbreviation)
+		if self.protocol != ServiceProtocol.none:
+			rrn.append('_' + self.protocol.name)
+		return '.'.join(rrn)
+
+	@property
+	def port_range(self):
+		if self.start_port and self.end_port and (self.start_port <= self.end_port):
+			return range(self.start_port, self.end_port + 1)
+		return ()
 
 class Service(Base):
 	"""
