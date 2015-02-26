@@ -53,6 +53,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	canEdit: false,
 	canDelete: false,
 	border: 0,
+	extraActions: [],
 
 	emptyText: 'Sorry, but no items were found.',
 	clearText: 'Clear',
@@ -187,6 +188,24 @@ Ext.define('NetProfile.view.ModelGrid', {
 					},
 					scope: this
 				}];
+				if(this.extraActions && this.extraActions.length)
+				{
+					var extra_i = [];
+					var ea_handler = function(grid, rowidx, colidx, item, e, record)
+					{
+						if(item && item.itemId && grid && grid.ownerCt)
+							grid.ownerCt.fireEvent('action_' + item.itemId, grid, item, e, record);
+						return true;
+					};
+
+					Ext.Array.forEach(this.extraActions, function(ea)
+					{
+						ea.scope = this;
+						ea.handler = ea_handler;
+						extra_i.push(ea);
+					}, this);
+					i = i.concat(extra_i);
+				}
 				if(this.canDelete)
 					i.push({
 						iconCls: 'ico-delete',

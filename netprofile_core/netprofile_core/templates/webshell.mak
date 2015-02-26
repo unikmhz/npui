@@ -511,7 +511,7 @@ Ext.require([
 		extend: 'Ext.data.Store',
 		requires: 'NetProfile.model.${module}.${model}',
 		model: 'NetProfile.model.${module}.${model}',
-		sorters: ${mod.default_sort | n, jsone},
+		sorters: ${mod.default_sort | n,jsone},
 		pageSize: NetProfile.userSettings.datagrid_perpage,
 		remoteFilter: true,
 		remoteGroup: true,
@@ -530,6 +530,7 @@ Ext.require([
 		stateful: true,
 		simpleSearch: ${'true' if mod.easy_search else 'false'},
 		extraSearch: ${mod.get_extra_search_cfg(req) | n,jsone},
+		extraActions: ${mod.extra_actions | n,jsone},
 		detailPane: ${mod.get_detail_pane(req) | n,jsone},
 % if mod.create_wizard:
 		canCreate: <%np:jscap code="${mod.cap_create}" />,
