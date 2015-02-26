@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Hosts module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -642,8 +642,9 @@ class Service(Base):
 	__tablename__ = 'services_def'
 	__table_args__ = (
 		Comment('Services'),
-		Index('services_def_u_service', 'hostid', 'stid', unique=True),
+		Index('services_def_u_service', 'hostid', 'stid', 'domainid', unique=True),
 		Index('services_def_i_stid', 'stid'),
+		Index('services_def_i_domainid', 'domainid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -654,8 +655,8 @@ class Service(Base):
 				'cap_edit'      : 'SERVICES_EDIT',
 				'cap_delete'    : 'SERVICES_DELETE',
 				'menu_name'     : _('Service Types'),
-				'grid_view'     : ('host', 'type', 'priority', 'weight', 'vis'),
-				'form_view'     : ('host', 'type', 'priority', 'weight', 'vis'),
+				'grid_view'     : ('host', 'domain', 'type', 'priority', 'weight', 'vis'),
+				'form_view'     : ('host', 'domain', 'type', 'priority', 'weight', 'vis'),
 				'create_wizard' : SimpleWizard(title=_('Add new service'))
 			}
 		}
@@ -694,6 +695,20 @@ class Service(Base):
 			'column_flex'   : 1
 		}
 	)
+	domain_id = Column(
+		'domainid',
+		UInt32(),
+		ForeignKey('domains_def.domainid', name='services_def_fk_domainid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Alternate domain ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Domain'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
+		}
+	)
 	priority = Column(
 		UInt32(),
 		Comment('Service priority'),
@@ -725,6 +740,21 @@ class Service(Base):
 			'header_string' : _('Visibility')
 		}
 	)
+
+	domain = relationship(
+		'Domain',
+		backref=backref(
+			'srv_records',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+
+	@property
+	def service_domain(self):
+		if self.domain:
+			return self.domain
+		return self.host.domain
 
 class DomainService(Base):
 	"""
