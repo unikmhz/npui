@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Config Generation module
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -107,28 +107,38 @@ class Module(ModuleBase):
 		bind_defaults = {
 			'dir_bindconf'           : '/etc/bind',
 			'dir_bindzones'          : '/var/bind',
-			'dir_bindconf_internal'  : '/etc/bind',
-			'dir_bindzones_internal' : '/var/bind',
 			'dir_bind_pri'           : 'pri',
 			'dir_bind_sec'           : 'sec',
 			'dir_bind_rev'           : 'rev',
+			'dir_bindkeys_int'       : '/etc/bind/keys/int',
+			'dir_bindkeys_ext'       : '/etc/bind/keys/ext',
+			'dir_bindkeys_gen'       : '/etc/bind/keys/gen',
 			'file_pid'               : '/run/named/named.pid',
 			'key_name_gen'           : 'nslink.',
 			'key_name_int'           : 'nsexternal.',
 			'key_name_ext'           : 'nsinternal.',
-			'key_value_gen'          : None,
-			'key_value_int'          : None,
-			'key_value_ext'          : None,
+# TODO: generate these at install time to be somewhat secure even w/o configuration
+#			'key_value_gen'          : None,
+#			'key_value_int'          : None,
+#			'key_value_ext'          : None,
+			'key_algo_gen'           : 'hmac-md5',
+			'key_algo_int'           : 'hmac-md5',
+			'key_algo_ext'           : 'hmac-md5',
 			'key_name_rndc'          : 'rndc-key',
 			'key_file_rndc'          : '/etc/bind/rndc.key',
 			'revzone_refresh'        : 3600,
 			'revzone_retry'          : 300,
 			'revzone_expire'         : 1814400,
 			'revzone_minimum'        : 3600,
-			'default_domain'         : None,
-			'hostmaster'             : None,
-			'dnssec'                 : True,
-			'dnssec_accept_expired'  : False
+#			'default_domain'         : None,
+#			'hostmaster'             : None,
+			'dnssec'                 : 'true',
+			'dnssec_accept_expired'  : 'false',
+			'split_dns'              : 'false',
+			'only_external'          : 'false',
+			'gen_spf'                : 'true',
+			'gen_dkim'               : 'false',
+			'gen_dmarc'              : 'false'
 		};
 
 		stypes = (
@@ -194,6 +204,11 @@ class Module(ModuleBase):
 	def get_task_imports(self):
 		return (
 			'netprofile_confgen.tasks',
+		)
+
+	def get_controllers(self, request):
+		return (
+			'NetProfile.confgen.controller.ConfGen',
 		)
 
 	@property

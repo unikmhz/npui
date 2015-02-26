@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Config Generation module - Tasks
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -42,18 +42,20 @@ from netprofile_confgen.gen import ConfigGeneratorFactory
 logger = logging.getLogger(__name__)
 
 @app.task
-def task_generate(station_ids=()):
+def task_generate(srv_ids=(), station_ids=()):
 	cfg = app.settings
 	rconf = make_config_dict(cfg, 'netprofile.rt.redis.')
-	factory = ConfigGeneratorFactory(cfg)
-
-	if len(station_ids) == 0:
-		return
+	factory = ConfigGeneratorFactory(cfg, app.mmgr)
 
 	sess = DBSession()
 	rsess = redis.Redis(**rconf)
 
-	for srv in sess.query(Server).filter(Server.host_id.in_(station_ids)):
+	q = sess.query(Server)
+	if len(srv_ids) > 0:
+		q = q.filter(Server.id.in_(srv_ids))
+	if len(station_ids) > 0:
+		q = q.filter(Server.host_id.in_(station_ids))
+	for srv in q:
 		gen = factory.get(srv.type.generator_name)
 		logger.info('Generating config of type %s for host %s', srv.type.generator_name, str(srv.host))
 		gen.generate(srv)

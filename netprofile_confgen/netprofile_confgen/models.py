@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Config Generation module - Models
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -58,8 +58,10 @@ from netprofile.db.fields import (
 	ASCIIString,
 	UInt32
 )
+from netprofile.tpl import TemplateObject
 from netprofile.ext.wizards import SimpleWizard
 from netprofile.db.ddl import Comment
+from netprofile.ext.columns import MarkupColumn
 
 from pyramid.i18n import (
 	TranslationStringFactory,
@@ -190,7 +192,13 @@ class Server(Base):
 				'grid_view'     : ('host', 'type'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
-				'create_wizard' : SimpleWizard(title=_('Add new server'))
+				'create_wizard' : SimpleWizard(title=_('Add new server')),
+
+				'extra_actions' : [{
+					'iconCls' : 'ico-cog',
+					'tooltip' : _('Generate server configuration'),
+					'itemId'  : 'srvgen'
+				}]
 			}
 		}
 	)
@@ -259,6 +267,19 @@ class Server(Base):
 				return srvt.parameter_defaults[name]
 		except (TypeError, IndexError):
 			pass
+		return default
+
+	def get_bool_param(self, name, default=False):
+		ret = self.get_param(name, default)
+		if isinstance(ret, bool):
+			return ret
+		if not isinstance(ret, str):
+			raise ValueError('Invalid parameter type')
+		ret = ret.lower()
+		if ret in ('t', 'true', 'y', 'yes', 'on', '1', 'enabled'):
+			return True
+		if ret in ('f', 'false', 'n', 'no', 'off', '0', 'disabled'):
+			return False
 		return default
 
 class ServerParameter(Base):
