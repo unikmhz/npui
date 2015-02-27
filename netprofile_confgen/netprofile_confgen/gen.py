@@ -43,10 +43,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import (
 	attributes,
+	contains_eager,
 	joinedload
 )
 
 from netprofile.db.connection import DBSession
+from netprofile.db.clauses import Binary16ToDecimal
 from netprofile.db.util import populate_related_list
 from netprofile_confgen.models import (
 	Server,
@@ -179,6 +181,28 @@ class BIND9Generator(ConfigGenerator):
 			and_(Service.domain_id == None, Host.domain_id == domain.id)
 		))
 
+	def revzone_ipv4(self, rz):
+		from netprofile_networks.models import Network
+		from netprofile_ipaddresses.models import IPv4Address
+		return DBSession().query(IPv4Address).join(IPv4Address.host).join(IPv4Address.network).options(
+			contains_eager(IPv4Address.host),
+			contains_eager(IPv4Address.network)
+		).filter(
+			(Network.ipv4_address + IPv4Address.offset) >= int(rz.ipv4_network.network),
+			(Network.ipv4_address + IPv4Address.offset) <= int(rz.ipv4_network.broadcast)
+		)
+
+	def revzone_ipv6(self, rz):
+		from netprofile_networks.models import Network
+		from netprofile_ipaddresses.models import IPv6Address
+		return DBSession().query(IPv6Address).join(IPv6Address.host).join(IPv6Address.network).options(
+			contains_eager(IPv6Address.host),
+			contains_eager(IPv6Address.network)
+		).filter(
+			(Binary16ToDecimal(Network.ipv6_address) + IPv6Address.offset) >= int(rz.ipv6_network.network),
+			(Binary16ToDecimal(Network.ipv6_address) + IPv6Address.offset) <= int(rz.ipv6_network.broadcast)
+		)
+
 	def domain_hosts(self, domain):
 		from netprofile_hosts.models import Host
 		from netprofile_ipaddresses.models import (
@@ -242,6 +266,29 @@ class BIND9Generator(ConfigGenerator):
 			for alias in ds.domain.aliases:
 				self.generate_zone(param, ds, str(alias), outdir, tpl, split_dns)
 
+	def generate_revzone(self, param, rz, outdir, tpl, split_dns=False):
+		from netprofile_ipaddresses.models import IPv4ReverseZoneSerial
+		param['rz'] = rz
+		if isinstance(rz, IPv4ReverseZoneSerial):
+			param['rztype'] = 4
+			net = rz.ipv4_network
+		else:
+			param['rztype'] = 6
+			net = rz.ipv6_network
+
+		if split_dns:
+			param['zonetype'] = 'internal'
+			with open(os.path.join(outdir, rz.zone_filename + '.internal.zone'), 'wb') as fd:
+				fd.write(tpl.render(**param))
+			if (not net.is_private) and (not net.is_link_local) and (not net.is_loopback) and (not net.is_reserved):
+				param['zonetype'] = 'external'
+				with open(os.path.join(outdir, rz.zone_filename + '.external.zone'), 'wb') as fd:
+					fd.write(tpl.render(**param))
+		else:
+			param['zonetype'] = 'generic'
+			with open(os.path.join(outdir, rz.zone_filename + '.generic.zone'), 'wb') as fd:
+				fd.write(tpl.render(**param))
+
 	def generate(self, srv):
 		self.confgen.mm.assert_loaded('ipaddresses')
 		srvdir = self.confgen.srvdir(srv)
@@ -251,7 +298,6 @@ class BIND9Generator(ConfigGenerator):
 			'gen' : self,
 			'srv' : srv
 		}
-
 		conf_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/named.conf.mak')
 		zone_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/named.zone.mak')
 
@@ -259,14 +305,26 @@ class BIND9Generator(ConfigGenerator):
 			fd.write(conf_tpl.render(**param))
 
 		pridir = self.confgen.srvdir(srv, srv.get_param('dir_bind_pri', 'pri'))
-		#secdir = self.confgen.srvdir(srv, srv.get_param('dir_bind_sec', 'sec'))
 		revdir = self.confgen.srvdir(srv, srv.get_param('dir_bind_rev', 'rev'))
 
 		splitdns = srv.get_bool_param('split_dns', False)
+		genrev = srv.get_bool_param('gen_revzones', True)
 		for ds in srv.host.domain_services:
 			if ds.type_id != 1:
 				continue
 			self.generate_zone(param, ds, str(ds.domain), pridir, zone_tpl, splitdns, True)
+
+		param = {
+			'now' : datetime.datetime.now().replace(microsecond=0),
+			'gen' : self,
+			'srv' : srv
+		}
+		rev_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/named.revzone.mak')
+
+		for rz in self.all_ipv4_revzones:
+			self.generate_revzone(param, rz, revdir, rev_tpl, splitdns)
+		for rz in self.all_ipv6_revzones:
+			self.generate_revzone(param, rz, revdir, rev_tpl, splitdns)
 
 class ISCDHCPGenerator(ConfigGenerator):
 	pass

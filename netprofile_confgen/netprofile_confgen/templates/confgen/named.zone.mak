@@ -138,7 +138,7 @@ ${srvrr.type.record_name}.${dname}. IN SRV ${srvrr.priority} ${srvrr.weight} ${p
 ; ------------------------------------------------------------------------
 ; IP addresses (A/AAAA RRs)
 ; ------------------------------------------------------------------------
-% for host in gen.domain_hosts(domain):
+% for host in hosts:
 % if (not host.original) or (host.alias_type == HostAliasType.numeric):
 % for ipv4 in host.real.ipv4_addresses:
 % if gen.check_vis(zonetype, ipv4.visibility) and ((zonetype in ('internal', 'generic')) or not ipv4.address.is_private):
