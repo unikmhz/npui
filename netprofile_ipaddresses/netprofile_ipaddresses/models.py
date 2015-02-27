@@ -57,6 +57,7 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from netprofile.common import ipaddr
 from netprofile.db.connection import Base
 from netprofile.db import fields
 from netprofile.db.fields import (
@@ -277,6 +278,12 @@ class IPv4Address(Base):
 		if self.network and self.network.ipv4_address:
 			return self.network.ipv4_address + self.offset
 
+	@property
+	def ptr_name(self):
+		addr = self.address
+		if addr:
+			return int(addr) % 256
+
 	def __str__(self):
 		if self.network and self.network.ipv4_address:
 			return str(self.network.ipv4_address + self.offset)
@@ -466,6 +473,16 @@ class IPv6Address(Base):
 		if self.network and self.network.ipv6_address:
 			return self.network.ipv6_address + self.offset
 
+	@property
+	def ptr_name(self):
+		addr = self.address
+		if addr:
+			return '%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x' % tuple(
+				item
+				for b in addr.packed[-1:7:-1]
+				for item in (b % 16, (b >> 4) % 16)
+			)
+
 	def __str__(self):
 		if self.network and self.network.ipv6_address:
 			return str(self.network.ipv6_address + self.offset)
@@ -538,6 +555,10 @@ class IPv4ReverseZoneSerial(Base):
 			self.date.strftime('%Y%m%d'),
 			(self.revision % 100)
 		)
+
+	@property
+	def ipv4_network(self):
+		return ipaddr.IPv4Network(str(self.ipv4_address) + '/24')
 
 	@property
 	def zone_name(self):
@@ -627,11 +648,15 @@ class IPv6ReverseZoneSerial(Base):
 		)
 
 	@property
+	def ipv6_network(self):
+		return ipaddr.IPv6Network(str(self.ipv6_address) + '/64')
+
+	@property
 	def zone_name(self):
 		return '%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.%1x.ip6.arpa' % tuple(
 			item
 			for b in self.ipv6_address.packed[7::-1]
-			for item in [b % 16, (b >> 4) % 16]
+			for item in (b % 16, (b >> 4) % 16)
 		)
 
 	@property

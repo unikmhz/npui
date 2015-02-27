@@ -55,6 +55,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from netprofile.common import ipaddr
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -373,6 +374,22 @@ class Network(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+
+	@property
+	def ipv4_network(self):
+		if self.ipv4_address:
+			return ipaddr.IPv4Network('%s/%s' % (
+				str(self.ipv4_address),
+				str(self.ipv4_cidr)
+			))
+
+	@property
+	def ipv6_network(self):
+		if self.ipv6_address:
+			return ipaddr.IPv6Network('%s/%s' % (
+				str(self.ipv6_address),
+				str(self.ipv6_cidr)
+			))
 
 	def __str__(self):
 		return str(self.name)
