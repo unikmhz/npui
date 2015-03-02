@@ -282,6 +282,10 @@ class Server(Base):
 			return False
 		return default
 
+	def has_param(self, name):
+		ret = self.get_param(name)
+		return ret not in (None, False, '')
+
 class ServerParameter(Base):
 	"""
 	Parameter of a server instance object.

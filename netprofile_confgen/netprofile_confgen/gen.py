@@ -27,6 +27,7 @@ from __future__ import (
 	division
 )
 
+import collections
 import datetime
 import os
 import logging
@@ -134,7 +135,7 @@ class ConfigGenerator(object):
 class BIND9Generator(ConfigGenerator):
 	@reify
 	def dns_srvs(self):
-		return DBSession().query(Server).join(ServerType).filter(ServerType.generator_name.startswith('iscbind')).all()
+		return DBSession().query(Server).join(Server.type).filter(ServerType.generator_name.startswith('iscbind')).all()
 
 	@reify
 	def all_nets(self):
@@ -163,13 +164,12 @@ class BIND9Generator(ConfigGenerator):
 		return vis in (ObjectVisibility.both, ObjectVisibility.external)
 
 	def host_iplist(self, host):
-		from netprofile_hosts.models import HostAliasType
 		if host.original:
 			return self.host_iplist(host.original)
 		ips = []
 		ips.extend(host.ipv4_addresses)
 		ips.extend(host.ipv6_addresses)
-		return ''.join([str(ip) + '; ' for ip in ips])
+		return ''.join(str(ip) + '; ' for ip in ips)
 
 	def domain_srv_rr(self, domain):
 		from netprofile_hosts.models import (
@@ -305,27 +305,64 @@ class BIND9Generator(ConfigGenerator):
 			fd.write(conf_tpl.render(**param))
 
 		pridir = self.confgen.srvdir(srv, srv.get_param('dir_bind_pri', 'pri'))
-		revdir = self.confgen.srvdir(srv, srv.get_param('dir_bind_rev', 'rev'))
-
 		splitdns = srv.get_bool_param('split_dns', False)
-		genrev = srv.get_bool_param('gen_revzones', True)
 		for ds in srv.host.domain_services:
 			if ds.type_id != 1:
 				continue
 			self.generate_zone(param, ds, str(ds.domain), pridir, zone_tpl, splitdns, True)
 
-		param = {
-			'now' : datetime.datetime.now().replace(microsecond=0),
-			'gen' : self,
-			'srv' : srv
-		}
-		rev_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/named.revzone.mak')
+		if srv.get_bool_param('gen_revzones', True):
+			param = {
+				'now' : datetime.datetime.now().replace(microsecond=0),
+				'gen' : self,
+				'srv' : srv
+			}
+			revdir = self.confgen.srvdir(srv, srv.get_param('dir_bind_rev', 'rev'))
+			rev_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/named.revzone.mak')
 
-		for rz in self.all_ipv4_revzones:
-			self.generate_revzone(param, rz, revdir, rev_tpl, splitdns)
-		for rz in self.all_ipv6_revzones:
-			self.generate_revzone(param, rz, revdir, rev_tpl, splitdns)
+			for rz in self.all_ipv4_revzones:
+				self.generate_revzone(param, rz, revdir, rev_tpl, splitdns)
+			for rz in self.all_ipv6_revzones:
+				self.generate_revzone(param, rz, revdir, rev_tpl, splitdns)
 
 class ISCDHCPGenerator(ConfigGenerator):
-	pass
+	@reify
+	def all_nets(self):
+		from netprofile_networks.models import Network
+		return DBSession().query(Network).all()
+
+	@reify
+	def all_netgroups(self):
+		from netprofile_networks.models import NetworkGroup
+		return DBSession().query(NetworkGroup).all()
+
+	def host_iplist(self, host, ipv=4):
+		if isinstance(host, collections.Iterable):
+			return ','.join(self.host_iplist(h, ipv) for h in host)
+		if host.original:
+			return self.host_iplist(host.original)
+		if ipv == 4:
+			ips = host.ipv4_addresses
+		else:
+			ips = host.ipv6_addresses
+		return ','.join(str(ip) for ip in ips)
+
+	def generate(self, srv):
+		self.confgen.mm.assert_loaded('ipaddresses')
+		srvdir = self.confgen.srvdir(srv)
+
+		dhcpv6 = srv.get_bool_param('dhcpv6', False)
+		param = {
+			'now'    : datetime.datetime.now().replace(microsecond=0),
+			'gen'    : self,
+			'srv'    : srv,
+			'dhcpv6' : dhcpv6
+		}
+		if dhcpv6:
+			conf_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/dhcpd.ipv6.conf.mak')
+		else:
+			conf_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/dhcpd.ipv4.conf.mak')
+
+		with open(os.path.join(srvdir, 'dhcpd.conf'), 'wb') as fd:
+			fd.write(conf_tpl.render(**param))
 
