@@ -144,33 +144,33 @@ class Module(ModuleBase):
 		stypes = (
 			ServerType(
 				id=1,
-				name='ISC DHCP 3',
+				name='ISC DHCP 3+',
 				generator_name='iscdhcp',
 				parameter_defaults={
 					'dir_dhcp' : '/etc/dhcp'
 				},
-				description='ISC DHCP server version 3 for IPv4.'
+				description='ISC DHCP server version 3+.'
 			),
 			ServerType(
 				id=2,
 				name='ISC BIND 9.0-9.2',
 				generator_name='iscbind9',
 				parameter_defaults=bind_defaults,
-				description='ISC BIND DNS server versions 9.0-9.2 in mixed mode.'
+				description='ISC BIND DNS server versions 9.0-9.2.'
 			),
 			ServerType(
 				id=3,
 				name='ISC BIND 9.3',
 				generator_name='iscbind93',
 				parameter_defaults=bind_defaults,
-				description='ISC BIND DNS server version 9.3 in mixed mode.'
+				description='ISC BIND DNS server version 9.3.'
 			),
 			ServerType(
 				id=4,
 				name='ISC BIND 9.4-9.8',
 				generator_name='iscbind94',
 				parameter_defaults=bind_defaults,
-				description='ISC BIND DNS server versions 9.4-9.8 in mixed mode.'
+				description='ISC BIND DNS server versions 9.4-9.8.'
 			),
 			ServerType(
 				id=5,
@@ -189,7 +189,7 @@ class Module(ModuleBase):
 				name='ISC BIND 9.9+',
 				generator_name='iscbind99',
 				parameter_defaults=bind_defaults,
-				description='ISC BIND DNS server versions 9.9+ in mixed mode.'
+				description='ISC BIND DNS server versions 9.9+.'
 			)
 		)
 
