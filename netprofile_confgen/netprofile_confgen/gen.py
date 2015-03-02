@@ -347,6 +347,11 @@ class ISCDHCPGenerator(ConfigGenerator):
 			ips = host.ipv6_addresses
 		return ','.join(str(ip) for ip in ips)
 
+	@property
+	def all_hosts_ipv4(self):
+		from netprofile_hosts.models import Host
+		return DBSession().query(Host).options(joinedload(Host.ipv4_addresses))
+
 	def generate(self, srv):
 		self.confgen.mm.assert_loaded('ipaddresses')
 		srvdir = self.confgen.srvdir(srv)

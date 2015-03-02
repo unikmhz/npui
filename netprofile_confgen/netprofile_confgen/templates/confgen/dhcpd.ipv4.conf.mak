@@ -1,4 +1,7 @@
 ## -*- coding: utf-8 -*-
+<%!
+	import itertools
+%>\
 # NetProfile
 # Configuration: ${srv.type.description or srv.type.name}
 # For DHCPv4 server
@@ -8,6 +11,7 @@
 log-facility ${srv.get_param('syslog_facility', 'local7')};
 default-lease-time ${srv.get_param('lease_time_default', '9600')};
 max-lease-time ${srv.get_param('lease_time_max', '86400')};
+option architecture code 93 = unsigned integer 16;
 option classless-route code 121 = string;
 option ms-classless-route code 249 = string;
 option domain-name "${srv.get_param('domain_default', str(srv.host.domain))}";
@@ -52,7 +56,10 @@ shared-network ${ng.name}
 % if net.ipv4_guest_start and net.ipv4_guest_end and (net.ipv4_guest_start <= net.ipv4_guest_end) and (net.ipv4_guest_end <= net.ipv4_network.numhosts):
 		range ${net.ipv4_address + net.ipv4_guest_start} ${net.ipv4_address + net.ipv4_guest_end};
 % endif
-		FIXME RT
+% if net.routing_table and len(net.routing_table.entries):
+		option classless-route ${':'.join(itertools.chain.from_iterable(rte.dhcp_strings(net) for rte in net.routing_table.entries))};
+		option ms-classless-route ${':'.join(itertools.chain.from_iterable(rte.dhcp_strings(net) for rte in net.routing_table.entries))};
+% endif
 	}
 % endif
 % endfor
@@ -90,7 +97,10 @@ subnet ${net.ipv4_network.network} netmask ${net.ipv4_network.netmask}
 % if net.ipv4_guest_start and net.ipv4_guest_end and (net.ipv4_guest_start <= net.ipv4_guest_end) and (net.ipv4_guest_end <= net.ipv4_network.numhosts):
 	range ${net.ipv4_address + net.ipv4_guest_start} ${net.ipv4_address + net.ipv4_guest_end};
 % endif
-	FIXME RT
+% if net.routing_table and len(net.routing_table.entries):
+	option classless-route ${':'.join(itertools.chain.from_iterable(rte.dhcp_strings(net) for rte in net.routing_table.entries))};
+	option ms-classless-route ${':'.join(itertools.chain.from_iterable(rte.dhcp_strings(net) for rte in net.routing_table.entries))};
+% endif
 }
 % endif
 % endfor
@@ -106,7 +116,20 @@ group
 % if srv.has_param('option_tz_name'):
 	option tcode "${srv.get_param('option_tz_name')}";
 % endif
-	OPTIONS
-	HOSTS
+% for host in gen.all_hosts_ipv4:
+	# Host ID:   ${host.id}
+	# Entity ID: ${host.entity_id}
+	group
+	{
+		option host-name "${host}";
+% for ipv4 in host.ipv4_addresses:
+		host ${host.name}-${ipv4}
+		{
+			hardware ethernet ${ipv4.hardware_address};
+			fixed-address ${ipv4};
+		}
+% endfor
+	}
+% endfor
 }
 

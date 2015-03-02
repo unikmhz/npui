@@ -36,6 +36,9 @@ __all__ = [
 	'RoutingTableEntry'
 ]
 
+import itertools
+import math
+
 from sqlalchemy import (
 	Column,
 	ForeignKey,
@@ -672,11 +675,11 @@ class RoutingTable(Base):
 
 class RoutingTableEntry(Base):
 	"""
-	Routing table entry object.
+	IPv4 routing table entry object.
 	"""
 	__tablename__ = 'rt_bits'
 	__table_args__ = (
-		Comment('Routing table entries'),
+		Comment('IPv4 routing table entries'),
 		Index('rt_bits_i_rtid', 'rtid'),
 		Index('rt_bits_i_rtr', 'rtr'),
 		{
@@ -691,7 +694,7 @@ class RoutingTableEntry(Base):
 				'menu_name'     : _('Routing Table Entries'),
 				'grid_view'     : ('table', 'net', 'cidr', 'next_hop'),
 				'form_view'     : ('table', 'net', 'cidr', 'next_hop'),
-				'create_wizard' : SimpleWizard(title=_('Add new routing table entry'))
+				'create_wizard' : SimpleWizard(title=_('Add new IPv4 routing table entry'))
 			}
 		}
 	)
@@ -761,4 +764,27 @@ class RoutingTableEntry(Base):
 			passive_deletes=True
 		)
 	)
+
+	@property
+	def ipv4_network(self):
+		return ipaddr.IPv4Network('%s/%s' % (
+			str(self.network),
+			str(self.cidr)
+		))
+
+	def dhcp_strings(self, net):
+		if self.next_hop:
+			gws = self.next_hop.ipv4_addresses
+		else:
+			gws = itertools.chain.from_iterable(ns.host.ipv4_addresses for ns in net.services if ns.type_id == 4)
+		ret = []
+		netstr = ':'.join('{0:02x}'.format(o) for o in self.network.packed[:math.ceil(self.cidr / 8)])
+		for gw in gws:
+			ret.append('%02x%s%s:%s' % (
+				self.cidr,
+				':' if self.cidr > 0 else '',
+				netstr,
+				'%02x:%02x:%02x:%02x' % tuple(gw.address.packed)
+			))
+		return ret
 
