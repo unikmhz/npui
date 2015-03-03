@@ -195,7 +195,7 @@ class Server(Base):
 				'create_wizard' : SimpleWizard(title=_('Add new server')),
 
 				'extra_actions' : [{
-					'iconCls' : 'ico-cog',
+					'iconCls' : 'ico-redo',
 					'tooltip' : _('Generate server configuration'),
 					'itemId'  : 'srvgen'
 				}]

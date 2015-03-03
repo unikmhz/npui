@@ -29,8 +29,8 @@ from __future__ import (
 
 import collections
 import datetime
-import os
 import logging
+import os
 import pkg_resources
 import pyramid_mako
 

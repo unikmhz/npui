@@ -80,6 +80,10 @@ class Module(ModuleBase):
 				name='Servers: Delete'
 			),
 			Privilege(
+				code='SRV_CONFGEN',
+				name='Servers: Generate configuration'
+			),
+			Privilege(
 				code='SRVTYPES_CREATE',
 				name='Servers: Create types'
 			),
@@ -199,6 +203,11 @@ class Module(ModuleBase):
 	def get_css(self, request):
 		return (
 			'netprofile_confgen:static/css/main.css',
+		)
+
+	def get_local_js(self, request, lang):
+		return (
+			'netprofile_confgen:static/webshell/locale/webshell-lang-' + lang + '.js',
 		)
 
 	def get_task_imports(self):

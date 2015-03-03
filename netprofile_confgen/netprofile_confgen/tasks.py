@@ -32,23 +32,34 @@ import os
 import redis
 import transaction
 
-from netprofile.celery import app
+from pyramid.i18n import TranslationStringFactory
+
+from netprofile.celery import (
+	app,
+	task_cap
+)
 from netprofile.db.connection import DBSession
 from netprofile.common.util import make_config_dict
+from netprofile.common.locale import sys_localizer
 
 from netprofile_confgen.models import Server
 from netprofile_confgen.gen import ConfigGeneratorFactory
 
 logger = logging.getLogger(__name__)
 
+_ = TranslationStringFactory('netprofile_confgen')
+
+@task_cap('SRV_CONFGEN')
 @app.task
 def task_generate(srv_ids=(), station_ids=()):
 	cfg = app.settings
 	rconf = make_config_dict(cfg, 'netprofile.rt.redis.')
 	factory = ConfigGeneratorFactory(cfg, app.mmgr)
 
+	ret = []
 	sess = DBSession()
 	rsess = redis.Redis(**rconf)
+	loc = sys_localizer(app.mmgr.cfg.registry)
 
 	q = sess.query(Server)
 	if len(srv_ids) > 0:
@@ -59,6 +70,11 @@ def task_generate(srv_ids=(), station_ids=()):
 		gen = factory.get(srv.type.generator_name)
 		logger.info('Generating config of type %s for host %s', srv.type.generator_name, str(srv.host))
 		gen.generate(srv)
+		ret.append(loc.translate(_('Successfully generated %s configuration for host %s.')) % (
+			srv.type.name,
+			str(srv.host)
+		))
 
 	transaction.commit()
+	return ret
 
