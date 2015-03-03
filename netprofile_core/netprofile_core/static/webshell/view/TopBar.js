@@ -27,10 +27,17 @@ Ext.define('NetProfile.view.TopBar', {
 		this.items = [{
 			text: this.toolsText,
 			iconCls: 'ico-tool',
+			itemId: 'sub_tools',
 			tooltip: { text: this.toolsTipText, title: this.toolsText },
 			menu: {
 				xtype: 'menu',
 				items: [{
+					text: this.aboutText,
+					iconCls: 'ico-info',
+					handler: function(el, ev)
+					{
+					}
+				}, '-', {
 					xtype: 'menuitem',
 					showSeparator: false,
 					iconCls: 'ico-locale',
@@ -72,12 +79,6 @@ Ext.define('NetProfile.view.TopBar', {
 					handler: function(el, ev)
 					{
 						NetProfile.showConsole();
-					}
-				}, '-', {
-					text: this.aboutText,
-					iconCls: 'ico-info',
-					handler: function(el, ev)
-					{
 					}
 				}]
 			}

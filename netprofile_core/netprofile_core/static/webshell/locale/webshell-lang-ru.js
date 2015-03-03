@@ -116,6 +116,7 @@ Ext.onReady(function()
 		logoutText: 'Выход',
 		logoutTipText: 'Выйти из системы.',
 		chLangText: 'Переключение языка',
+		showConsoleText: 'Показать консоль',
 		aboutText: 'О программе…'
 	});
 

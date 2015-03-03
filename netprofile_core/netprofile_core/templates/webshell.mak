@@ -37,11 +37,12 @@ Ext.require([
 	NetProfile.currentUserId = ${req.user.id};
 	NetProfile.currentSession = '${str(req.np_session)}';
 	NetProfile.userSettings = ${req.user.client_settings(req) | n,jsone};
+	NetProfile.userCapabilities = ${req.user.flat_privileges | n,jsone};
+	NetProfile.userACLs = ${req.user.client_acls(req) | n,jsone};
 	NetProfile.rootFolder = ${req.user.get_root_folder() | n,jsone};
 	NetProfile.baseURL = '${req.host_url}';
 	NetProfile.staticURL = '${req.host_url}';
-	//NetProfile.rtURL = '//${rt_host}:${rt_port}';
-	NetProfile.rtURL = '//' + window.location.hostname + ':${rt_port}';
+	NetProfile.rtURL = '//${rt_host}:${rt_port}';
 	NetProfile.rtSocket = null;
 	NetProfile.rtSocketReady = false;
 	NetProfile.rtActiveUIDs = null;
@@ -52,6 +53,25 @@ Ext.require([
 				surl = NetProfile.staticURL;
 
 			return '<a class="np-file-wrap" href="#" onclick="Ext.getCmp(\'npws_filedl\').loadFileById(' + Ext.String.htmlEncode(val.id) + '); return false;"><img class="np-file-icon" src="' + surl + '/static/core/img/mime/16/' + Ext.String.htmlEncode(val.mime) + '.png" title="' + fname + '" onerror=\'this.onerror = null; this.src="' + surl + '/static/core/img/mime/16/default.png"\' /><span title="' + fname + '">' + fname + '</span></a>';
+		},
+		task_result: function(val, meta, rec)
+		{
+			if(Ext.isArray(val))
+				val = Ext.Array.map(val, Ext.String.htmlEncode).join('<br />');
+			else
+				val = Ext.String.htmlEncode(val);
+			return Ext.String.format('<img class="np-console-icon" src="{0}/static/core/img/info.png" /><span class="np-console-message">{1}</span>',
+				NetProfile.staticURL,
+				val
+			);
+		},
+		task_error: function(val, meta, rec)
+		{
+			return Ext.String.format('<img class="np-console-icon" src="{0}/static/core/img/cancel.png" /><span class="np-console-message"><strong>Error {1}</strong>: {2}</span>',
+				NetProfile.staticURL,
+				Ext.String.htmlEncode(val[0]),
+				Ext.String.htmlEncode(val[1])
+			);
 		}
 	};
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
@@ -97,6 +117,21 @@ Ext.require([
 			}
 		};
 	}();
+
+	NetProfile.cap = function(capname)
+	{
+		if(capname in NetProfile.userCapabilities)
+			return NetProfile.userCapabilities[capname];
+		return false;
+	};
+	NetProfile.acl = function(capname, resid)
+	{
+		if(!(capname in NetProfile.userACLs))
+			return NetProfile.cap(capname);
+		if(!(resid in NetProfile.userACLs[capname]))
+			return NetProfile.cap(capname);
+		return NetProfile.userACLs[capname][resid];
+	};
 
 	NetProfile.showConsole = function()
 	{
@@ -157,7 +192,7 @@ Ext.require([
 		});
 		tab.down('toolbar')
 		pbar.show();
-	}
+	};
 
 	Ext.define('Ext.data.ConnectionNPOver', {
 		override: 'Ext.data.Connection',
@@ -690,8 +725,21 @@ Ext.application({
 						}
 						NetProfile.showConsole();
 						break;
+					case 'task_error':
+						var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
+							rec;
+						if(store)
+						{
+							rec = Ext.create('NetProfile.model.ConsoleMessage');
+							rec.set('ts', new Date(ev.data.ts));
+							rec.set('bodytype', 'task_error');
+							rec.set('data', [ev.data.errno, ev.data.value]);
+							store.add(rec);
+						}
+						NetProfile.showConsole();
+						break;
 				}
-			}
+			};
 			NetProfile.rtSocket = rt_sock;
 		}
 
