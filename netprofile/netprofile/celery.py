@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Celery application setup
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -341,6 +341,13 @@ def _parse_ini_settings(reg, celery):
 			celery.update(newconf)
 
 app = Celery('netprofile')
+
+def task_cap(cap):
+	def _app_cap_wrapper(wrapped):
+		wrapped.__cap__ = cap
+		return wrapped
+
+	return _app_cap_wrapper
 
 @celeryd_init.connect
 def _setup(conf=None, **kwargs):

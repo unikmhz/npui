@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Centralized CLI utility
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,7 +29,6 @@ from __future__ import (
 	division
 )
 
-import locale
 import logging
 import os
 import pkg_resources
@@ -39,16 +38,11 @@ from cliff.app import App
 from cliff.interactive import InteractiveApp
 from cliff.commandmanager import CommandManager
 
-from babel import Locale
 from pyramid import threadlocal
 from pyramid.decorator import reify
 from pyramid.paster import get_appsettings
 from pyramid.interfaces import IRendererFactory
 from pyramid.path import DottedNameResolver
-from pyramid.i18n import (
-	ITranslationDirectories,
-	make_localizer
-)
 import pyramid_mako
 
 from netprofile import setup_config
@@ -56,6 +50,7 @@ from netprofile.db.connection import DBSession
 from netprofile.db.clauses import SetVariable
 from netprofile.common.modules import ModuleManager
 from netprofile.common.hooks import IHookManager
+from netprofile.common.locale import sys_localizer
 
 class CLIInteractiveApp(InteractiveApp):
 	"""
@@ -157,22 +152,7 @@ class CLIApplication(App):
 
 	@reify
 	def locale(self):
-		reg = self.app_config.registry
-		cur_locale = reg.settings.get('pyramid.default_locale_name', 'en')
-		sys_locale = locale.getlocale()[0]
-
-		if sys_locale:
-			new_locale = Locale.negotiate(
-				(locale.getlocale()[0],),
-				reg.settings.get('pyramid.available_languages', '').split()
-			)
-			if new_locale:
-				cur_locale = str(new_locale)
-		else:
-			cur_locale = 'en'
-
-		tdirs = reg.queryUtility(ITranslationDirectories, default=[])
-		return make_localizer(cur_locale, tdirs)
+		return sys_localizer(self.app_config.registry)
 
 	@reify
 	def mm(self):

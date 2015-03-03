@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Async server routines
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -96,6 +96,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 		self.app = session.server.app
 		self.user = None
 		self.np_session = None
+		self.privileges = ()
 
 	@property
 	def thread_pool(self):
@@ -132,15 +133,17 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 			transaction.abort()
 			return None
 		npuser = npsess.user
+		privs = npuser.flat_privileges
 		db.expunge(npuser)
 		db.expunge(npsess)
 		# TODO: compute next session timeout check
 		transaction.abort()
-		return (npsess, npuser)
+		return (npsess, npuser, privs)
 
 	def on_open(self, req):
 		self.user = None
 		self.np_session = None
+		self.privileges = ()
 
 	def on_close(self):
 		sess = self.app.sess
@@ -153,6 +156,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 			sess.sub.unsubscribe('direct.%d' % self.user.id, self)
 		self.user = None
 		self.np_session = None
+		self.privileges = ()
 
 	@tornado.gen.engine
 	def on_message(self, msg):
@@ -161,10 +165,6 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 			return
 		if 'type' not in data:
 			return
-		print('=========================================================')
-		print('MESSAGE')
-		print(repr(data))
-		print('=========================================================')
 		dtype = data['type']
 
 		if dtype == 'auth':
@@ -184,6 +184,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 
 			self.np_session = dbres[0]
 			self.user = dbres[1]
+			self.privileges = dbres[2]
 
 			sess = self.app.sess
 			cnt = sess.r.hincrby('rtsess', self.user.id, 1)
@@ -209,26 +210,36 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 				'fromstr' : self.user.login
 			})
 			if msgtype == 'user':
-				print('=========================================================')
-				print('PUBLISH')
-				print(repr(data))
-				print('=========================================================')
 				sess.r.publish(
 					'direct.%d' % recip,
 					json.dumps(data)
 				)
 		elif dtype == 'task':
-			print('=========================================================')
-			print('TASK')
-			print(repr(data))
-			print('=========================================================')
 			task_name = data.get('tname')
 			task_args = data.get('args', [])
 			task_kwargs = data.get('kwargs', {})
 
 			if task_name not in celery_app.tasks:
-				pass
+				self.send(json.dumps({
+					'ts'    : datetime.datetime.now().replace(tzinfo=tzlocal()).isoformat(),
+					'type'  : 'task_error',
+					'tname' : task_name,
+					'errno' : 404,
+					'value' : 'No task found'
+				}))
+				return
 			task = celery_app.tasks[task_name]
+			task_cap = getattr(task, '__cap__', None)
+			if task_cap:
+				if (not self.privileges) or (not self.privileges.get(task_cap, False)):
+					self.send(json.dumps({
+						'ts'    : datetime.datetime.now().replace(tzinfo=tzlocal()).isoformat(),
+						'type'  : 'task_error',
+						'tname' : task_name,
+						'errno' : 403,
+						'value' : 'Access denied'
+					}))
+					return
 
 			resp = yield tornado.gen.Task(
 				task.apply_async,
@@ -236,6 +247,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 				kwargs=task_kwargs
 			)
 
+			# TODO: proper error handling w/ passing debug stacktraces to client
 			if resp.traceback:
 				print(resp.traceback)
 
@@ -246,10 +258,6 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
 				'tid'   : resp.task_id,
 				'value' : resp.result
 			}
-			print('=========================================================')
-			print('TASK_RESULT')
-			print(repr(rdata))
-			print('=========================================================')
 			self.send(json.dumps(rdata))
 		else:
 			self.app.hm.run_hook('np.rt.message', self, data)
