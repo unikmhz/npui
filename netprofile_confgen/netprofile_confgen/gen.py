@@ -33,6 +33,7 @@ import logging
 import os
 import pkg_resources
 import pyramid_mako
+import shutil
 
 from itertools import groupby
 from pyramid.decorator import reify
@@ -63,18 +64,26 @@ class ConfigGeneratorFactory(object):
 		self.cfg = cfg
 		self._gen = {}
 		self.mm = mmgr
+		self.to_deploy = set()
+		self.orig_umask = os.umask(0o027)
 
 	@reify
 	def outdir(self):
-		if 'netprofile.confgen.output' not in self.cfg:
+		if 'netprofile.confgen.output_dir' not in self.cfg:
 			raise RuntimeError('Output directory for configuration generator not defined in INI file.')
-		outdir = self.cfg['netprofile.confgen.output']
+		outdir = self.cfg['netprofile.confgen.output_dir']
 		if not os.path.isdir(outdir):
 			if os.path.exists(outdir):
 				raise RuntimeError('Output path exists but is not a directory.')
-			os.mkdir(outdir, 0o700)
+			os.mkdir(outdir, 0o750)
 			logger.warn('Created confgen output directory: %s', outdir)
 		return outdir
+
+	@reify
+	def depdir(self):
+		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'puppet')
+		if deptype == 'puppet':
+			return self.cfg.get('netprofile.confgen.puppet_dir', '/etc/puppet/modules/npconfgen/files/generated')
 
 	@reify
 	def mako_lookup(self):
@@ -91,24 +100,28 @@ class ConfigGeneratorFactory(object):
 		})
 		return pyramid_mako.PkgResourceTemplateLookup(**lookup_opts)
 
+	def restore_umask(self):
+		os.umask(self.orig_umask)
+
 	def srvdir(self, srv, xdir=None):
 		host_name = str(srv.host)
 		srvdir = os.path.join(self.outdir, host_name)
 		if not os.path.isdir(srvdir):
 			if os.path.exists(srvdir):
 				raise RuntimeError('Output path for host "%s" exists but is not a directory.' % (host_name,))
-			os.mkdir(srvdir, 0o700)
+			os.mkdir(srvdir, 0o750)
 		srvdir = os.path.join(self.outdir, host_name, srv.type.generator_name)
 		if not os.path.isdir(srvdir):
 			if os.path.exists(srvdir):
 				raise RuntimeError('Output path for host "%s" module "%s" exists but is not a directory.' % (host_name, srv.type.generator_name))
-			os.mkdir(srvdir, 0o700)
+			os.mkdir(srvdir, 0o750)
 		if xdir is not None:
 			srvdir = os.path.join(self.outdir, host_name, srv.type.generator_name, xdir)
 			if not os.path.isdir(srvdir):
 				if os.path.exists(srvdir):
 					raise RuntimeError('Output path for host "%s" module "%s" directory "%s" exists but is not a directory.' % (host_name, srv.type.generator_name, xdir))
-				os.mkdir(srvdir, 0o700)
+				os.mkdir(srvdir, 0o750)
+		self.to_deploy.add(host_name)
 		return srvdir
 
 	def get(self, gen_name):
@@ -123,6 +136,24 @@ class ConfigGeneratorFactory(object):
 			gen = gen_class(self, gen_name)
 			self._gen[gen_name] = gen
 		return self._gen[gen_name]
+
+	def deploy(self):
+		for host_name in self.to_deploy:
+			src_path = os.path.join(self.outdir, host_name)
+			dep_path = os.path.join(self.depdir, host_name)
+			trash_path = dep_path + '.confgen_old'
+			if not os.path.isdir(src_path):
+				raise RuntimeError('Output path for host "%s" was not found.' % (host_name,))
+			if os.path.exists(dep_path):
+				if os.path.exists(trash_path):
+					shutil.rmtree(trash_path)
+				shutil.move(dep_path, trash_path)
+			shutil.move(src_path, dep_path)
+			if os.path.exists(trash_path):
+				shutil.rmtree(trash_path)
+		ret = self.to_deploy
+		self.to_deploy = set()
+		return ret
 
 class ConfigGenerator(object):
 	def __init__(self, factory, name):

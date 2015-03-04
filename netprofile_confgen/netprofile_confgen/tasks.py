@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 import logging
-import os
 import redis
 import transaction
 
@@ -75,6 +74,10 @@ def task_generate(srv_ids=(), station_ids=()):
 			str(srv.host)
 		))
 
+	hosts = factory.deploy()
+	ret.append(loc.translate(_('Successfully deployed configuration for hosts: %s.')) % (', '.join(hosts),))
+
+	factory.restore_umask()
 	transaction.commit()
 	return ret
 
