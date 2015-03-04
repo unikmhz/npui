@@ -102,9 +102,9 @@ options {
 		"uy";
 	};
 
-	statistics-file "named.stats";
-	memstatistics-file "named.memstats";
-	version "NetProfile DNS server";
+	statistics-file "${srv.get_param('file_stats', 'named.stats')}";
+	memstatistics-file "${srv.get_param('file_memstats', 'named.memstats')}";
+	version "${srv.get_param('version_string', 'NetProfile DNS server')}";
 };
 
 logging {
@@ -158,17 +158,17 @@ view "internal" {
 
 	zone "." IN {
 		type hint;
-		file "named.cache";
+		file "${srv.get_param('file_rootzone', 'named.cache')}";
 	};
 	zone "localhost" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_pri', 'pri')}/localhost.zone";
+		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('file_localzone', srv.get_param('dir_bind_pri', 'pri') + '/localhost.zone')}";
 		allow-update { none; };
 		notify no;
 	};
 	zone "127.in-addr.arpa" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_rev', 'rev')}/127.zone";
+		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('file_127zone', srv.get_param('dir_bind_rev', 'rev') + '/127.zone')}";
 		allow-update { none; };
 		notify no;
 	};
