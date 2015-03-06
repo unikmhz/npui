@@ -49,6 +49,20 @@ def _dpane_srvtype_servers(tabs, model, req):
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
+@register_hook('core.dpanetabs.confgen.Server')
+def _dpane_srv_params(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Parameters')),
+		'iconCls'           : 'ico-mod-serverparameter',
+		'xtype'             : 'grid_confgen_ServerParameter',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('server',),
+		'extraParamProp'    : 'srvid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
 @register_hook('core.dpanetabs.hosts.Host')
 def _dpane_district_streets(tabs, model, req):
 	loc = get_localizer(req)

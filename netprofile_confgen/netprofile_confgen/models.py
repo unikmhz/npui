@@ -308,7 +308,6 @@ class ServerParameter(Base):
 				'menu_name'     : _('Server Parameters'),
 				'menu_order'    : 20,
 				'grid_view'     : ('server', 'name', 'value'),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : SimpleWizard(title=_('Add new parameter'))
 			}
