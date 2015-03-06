@@ -109,15 +109,6 @@ class Module(ModuleBase):
 			pass
 
 		bind_defaults = {
-			'dir_bindconf'           : '/etc/bind',
-			'dir_bindzones'          : '/var/bind',
-			'dir_bind_pri'           : 'pri',
-			'dir_bind_sec'           : 'sec',
-			'dir_bind_rev'           : 'rev',
-			'dir_bindkeys_int'       : '/etc/bind/keys/int',
-			'dir_bindkeys_ext'       : '/etc/bind/keys/ext',
-			'dir_bindkeys_gen'       : '/etc/bind/keys/gen',
-			'file_pid'               : '/run/named/named.pid',
 			'key_name_gen'           : 'nslink.',
 			'key_name_int'           : 'nsexternal.',
 			'key_name_ext'           : 'nsinternal.',
@@ -128,8 +119,6 @@ class Module(ModuleBase):
 			'key_algo_gen'           : 'hmac-md5',
 			'key_algo_int'           : 'hmac-md5',
 			'key_algo_ext'           : 'hmac-md5',
-			'key_name_rndc'          : 'rndc-key',
-			'key_file_rndc'          : '/etc/bind/rndc.key',
 			'revzone_refresh'        : 3600,
 			'revzone_retry'          : 300,
 			'revzone_expire'         : 1814400,

@@ -59,31 +59,83 @@ from netprofile_confgen.models import (
 
 logger = logging.getLogger(__name__)
 
+class DeploymentTemplateLanguage(object):
+	pass
+
+class ERBTemplateLanguage(DeploymentTemplateLanguage):
+	def var(self, tname):
+		return '<%%= @%s %%>' % (tname,)
+
+	def loop_var(self, lname):
+		return '<%%= %s %%>' % (lname,)
+
+	def if_var(self, tname):
+		return '<%% if @%s -%%>' % (tname,)
+
+	def for_in(self, iname, tname):
+		return '<%% @%s.each do |%s| -%%>' % (tname, iname)
+
+	@property
+	def endif(self):
+		return '<% end -%>'
+
+	@property
+	def endfor(self):
+		return '<% end -%>'
+
+	@property
+	def file_suffix(self):
+		return '.erb'
+
 class ConfigGeneratorFactory(object):
 	def __init__(self, cfg, mmgr):
 		self.cfg = cfg
 		self._gen = {}
 		self.mm = mmgr
-		self.to_deploy = set()
+		self.deploy_files = set()
+		self.deploy_templates = set()
 		self.orig_umask = os.umask(0o027)
 
 	@reify
-	def outdir(self):
-		if 'netprofile.confgen.output_dir' not in self.cfg:
-			raise RuntimeError('Output directory for configuration generator not defined in INI file.')
-		outdir = self.cfg['netprofile.confgen.output_dir']
+	def outdir_files(self):
+		if 'netprofile.confgen.files_output_dir' not in self.cfg:
+			raise RuntimeError('File output directory for configuration generator not defined in INI file.')
+		outdir = self.cfg['netprofile.confgen.files_output_dir']
 		if not os.path.isdir(outdir):
 			if os.path.exists(outdir):
-				raise RuntimeError('Output path exists but is not a directory.')
+				raise RuntimeError('File output path exists but is not a directory.')
 			os.mkdir(outdir, 0o750)
-			logger.warn('Created confgen output directory: %s', outdir)
+			logger.warn('Created confgen file output directory: %s', outdir)
 		return outdir
 
 	@reify
-	def depdir(self):
+	def outdir_templates(self):
+		if 'netprofile.confgen.templates_output_dir' not in self.cfg:
+			raise RuntimeError('Template output directory for configuration generator not defined in INI file.')
+		outdir = self.cfg['netprofile.confgen.templates_output_dir']
+		if not os.path.isdir(outdir):
+			if os.path.exists(outdir):
+				raise RuntimeError('Template output path exists but is not a directory.')
+			os.mkdir(outdir, 0o750)
+			logger.warn('Created confgen template output directory: %s', outdir)
+		return outdir
+
+	@reify
+	def depdir_files(self):
 		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'puppet')
 		if deptype == 'puppet':
-			return self.cfg.get('netprofile.confgen.puppet_dir', '/etc/puppet/modules/npconfgen/files/generated')
+			return self.cfg.get('netprofile.confgen.puppet.files_dir', '/etc/puppet/modules/npconfgen/files/generated')
+
+	@reify
+	def depdir_templates(self):
+		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'puppet')
+		if deptype == 'puppet':
+			return self.cfg.get('netprofile.confgen.puppet.templates_dir', '/etc/puppet/modules/npconfgen/templates/generated')
+
+	def deptpl(self):
+		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'puppet')
+		if deptype == 'puppet':
+			return ERBTemplateLanguage()
 
 	@reify
 	def mako_lookup(self):
@@ -103,25 +155,46 @@ class ConfigGeneratorFactory(object):
 	def restore_umask(self):
 		os.umask(self.orig_umask)
 
-	def srvdir(self, srv, xdir=None):
+	def srvdir_files(self, srv, xdir=None):
 		host_name = str(srv.host)
-		srvdir = os.path.join(self.outdir, host_name)
+		srvdir = os.path.join(self.outdir_files, host_name)
 		if not os.path.isdir(srvdir):
 			if os.path.exists(srvdir):
-				raise RuntimeError('Output path for host "%s" exists but is not a directory.' % (host_name,))
+				raise RuntimeError('File output path for host "%s" exists but is not a directory.' % (host_name,))
 			os.mkdir(srvdir, 0o750)
-		srvdir = os.path.join(self.outdir, host_name, srv.type.generator_name)
+		srvdir = os.path.join(srvdir, srv.type.generator_name)
 		if not os.path.isdir(srvdir):
 			if os.path.exists(srvdir):
-				raise RuntimeError('Output path for host "%s" module "%s" exists but is not a directory.' % (host_name, srv.type.generator_name))
+				raise RuntimeError('File output path for host "%s" module "%s" exists but is not a directory.' % (host_name, srv.type.generator_name))
 			os.mkdir(srvdir, 0o750)
 		if xdir is not None:
-			srvdir = os.path.join(self.outdir, host_name, srv.type.generator_name, xdir)
+			srvdir = os.path.join(srvdir, xdir)
 			if not os.path.isdir(srvdir):
 				if os.path.exists(srvdir):
-					raise RuntimeError('Output path for host "%s" module "%s" directory "%s" exists but is not a directory.' % (host_name, srv.type.generator_name, xdir))
+					raise RuntimeError('File output path for host "%s" module "%s" directory "%s" exists but is not a directory.' % (host_name, srv.type.generator_name, xdir))
 				os.mkdir(srvdir, 0o750)
-		self.to_deploy.add(host_name)
+		self.deploy_files.add(host_name)
+		return srvdir
+
+	def srvdir_templates(self, srv, xdir=None):
+		host_name = str(srv.host)
+		srvdir = os.path.join(self.outdir_templates, host_name)
+		if not os.path.isdir(srvdir):
+			if os.path.exists(srvdir):
+				raise RuntimeError('Template output path for host "%s" exists but is not a directory.' % (host_name,))
+			os.mkdir(srvdir, 0o750)
+		srvdir = os.path.join(srvdir, srv.type.generator_name)
+		if not os.path.isdir(srvdir):
+			if os.path.exists(srvdir):
+				raise RuntimeError('Template output path for host "%s" module "%s" exists but is not a directory.' % (host_name, srv.type.generator_name))
+			os.mkdir(srvdir, 0o750)
+		if xdir is not None:
+			srvdir = os.path.join(srvdir, xdir)
+			if not os.path.isdir(srvdir):
+				if os.path.exists(srvdir):
+					raise RuntimeError('Template output path for host "%s" module "%s" directory "%s" exists but is not a directory.' % (host_name, srv.type.generator_name, xdir))
+				os.mkdir(srvdir, 0o750)
+		self.deploy_templates.add(host_name)
 		return srvdir
 
 	def get(self, gen_name):
@@ -138,21 +211,35 @@ class ConfigGeneratorFactory(object):
 		return self._gen[gen_name]
 
 	def deploy(self):
-		for host_name in self.to_deploy:
-			src_path = os.path.join(self.outdir, host_name)
-			dep_path = os.path.join(self.depdir, host_name)
-			trash_path = dep_path + '.confgen_old'
-			if not os.path.isdir(src_path):
-				raise RuntimeError('Output path for host "%s" was not found.' % (host_name,))
+		for host_name in self.deploy_files:
+			src_path = os.path.join(self.outdir_files, host_name)
+			dep_path = os.path.join(self.depdir_files, host_name)
+			dep_path_old = dep_path + '.confgen_old'
+			dep_path_new = dep_path + '.confgen_new'
+			if os.path.exists(dep_path_new):
+				shutil.rmtree(dep_path_new)
+			shutil.move(src_path, dep_path_new)
 			if os.path.exists(dep_path):
-				if os.path.exists(trash_path):
-					shutil.rmtree(trash_path)
-				shutil.move(dep_path, trash_path)
-			shutil.move(src_path, dep_path)
-			if os.path.exists(trash_path):
-				shutil.rmtree(trash_path)
-		ret = self.to_deploy
-		self.to_deploy = set()
+				if os.path.exists(dep_path_old):
+					shutil.rmtree(dep_path_old)
+				shutil.move(dep_path, dep_path_old)
+			shutil.move(dep_path_new, dep_path)
+		for host_name in self.deploy_templates:
+			src_path = os.path.join(self.outdir_templates, host_name)
+			dep_path = os.path.join(self.depdir_templates, host_name)
+			dep_path_old = dep_path + '.confgen_old'
+			dep_path_new = dep_path + '.confgen_new'
+			if os.path.exists(dep_path_new):
+				shutil.rmtree(dep_path_new)
+			shutil.move(src_path, dep_path_new)
+			if os.path.exists(dep_path):
+				if os.path.exists(dep_path_old):
+					shutil.rmtree(dep_path_old)
+				shutil.move(dep_path, dep_path_old)
+			shutil.move(dep_path_new, dep_path)
+		ret = self.deploy_files.union(self.deploy_templates)
+		self.deploy_files = set()
+		self.deploy_templates = set()
 		return ret
 
 class ConfigGenerator(object):
@@ -322,20 +409,24 @@ class BIND9Generator(ConfigGenerator):
 
 	def generate(self, srv):
 		self.confgen.mm.assert_loaded('ipaddresses')
-		srvdir = self.confgen.srvdir(srv)
+		deptpl = self.confgen.deptpl()
+		files_dir = self.confgen.srvdir_files(srv)
+		tpl_dir = self.confgen.srvdir_templates(srv)
 
 		param = {
-			'now' : datetime.datetime.now().replace(microsecond=0),
-			'gen' : self,
-			'srv' : srv
+			'now'     : datetime.datetime.now().replace(microsecond=0),
+			'gen'     : self,
+			'srv'     : srv,
+			'deptype' : self.confgen.cfg.get('netprofile.confgen.deployment_type', 'puppet'),
+			'dtpl'    : deptpl
 		}
 		conf_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/named.conf.mak')
 		zone_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/named.zone.mak')
 
-		with open(os.path.join(srvdir, 'named.conf'), 'wb') as fd:
+		with open(os.path.join(tpl_dir, 'named.conf' + deptpl.file_suffix), 'wb') as fd:
 			fd.write(conf_tpl.render(**param))
 
-		pridir = self.confgen.srvdir(srv, srv.get_param('dir_bind_pri', 'pri'))
+		pridir = self.confgen.srvdir_files(srv, 'pri')
 		splitdns = srv.get_bool_param('split_dns', False)
 		for ds in srv.host.domain_services:
 			if ds.type_id != 1:
@@ -348,7 +439,7 @@ class BIND9Generator(ConfigGenerator):
 				'gen' : self,
 				'srv' : srv
 			}
-			revdir = self.confgen.srvdir(srv, srv.get_param('dir_bind_rev', 'rev'))
+			revdir = self.confgen.srvdir_files(srv, 'rev')
 			rev_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/named.revzone.mak')
 
 			for rz in self.all_ipv4_revzones:
@@ -385,7 +476,7 @@ class ISCDHCPGenerator(ConfigGenerator):
 
 	def generate(self, srv):
 		self.confgen.mm.assert_loaded('ipaddresses')
-		srvdir = self.confgen.srvdir(srv)
+		srvdir = self.confgen.srvdir_files(srv)
 
 		dhcpv6 = srv.get_bool_param('dhcpv6', False)
 		param = {

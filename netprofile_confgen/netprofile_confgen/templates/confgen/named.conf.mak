@@ -59,8 +59,24 @@ options {
 % endfor
 	};
 
-	directory "${srv.get_param('dir_bindzones', '/var/bind')}";
-	pid-file "${srv.get_param('file_pid', '/run/named/named.pid')}";
+	directory "${dtpl.var('work_dir')}";
+${dtpl.if_var('pid_file')}
+	pid-file "${dtpl.var('pid_file')}";
+${dtpl.endif}
+${dtpl.if_var('sesskey_file')}
+	session-keyfile "${dtpl.var('sesskey_file')}";
+${dtpl.endif}
+${dtpl.if_var('dump_file')}
+	dump-file "${dtpl.var('dump_file')}";
+${dtpl.endif}
+% if gen.name == 'iscbind99':
+${dtpl.if_var('keys_file')}
+	bindkeys-file "${dtpl.var('keys_file')}";
+${dtpl.endif}
+% endif
+${dtpl.if_var('managedkeys_dir')}
+	managed-keys-directory "${dtpl.var('managedkeys_dir')}";
+${dtpl.endif}
 
 	allow-query { any; };
 	allow-transfer { selfacl; };
@@ -102,8 +118,8 @@ options {
 		"uy";
 	};
 
-	statistics-file "${srv.get_param('file_stats', 'named.stats')}";
-	memstatistics-file "${srv.get_param('file_memstats', 'named.memstats')}";
+	statistics-file "${dtpl.var('stats_file')}";
+	memstatistics-file "${dtpl.var('memstats_file')}";
 	version "${srv.get_param('version_string', 'NetProfile DNS server')}";
 };
 
@@ -118,9 +134,9 @@ logging {
 	category general { mainlog; };
 };
 
-include "${srv.get_param('key_file_rndc', srv.get_param('dir_bindconf', '/etc/bind') + '/rndc.key')}";
+include "${dtpl.var('rndc_file')}";
 controls {
-	inet 127.0.0.1 port 953 allow { 127.0.0.1/32; ::1/128; } keys { "${srv.get_param('key_name_rndc', 'rndc-key')}"; };
+	inet 127.0.0.1 port 953 allow { 127.0.0.1/32; ::1/128; } keys { "${dtpl.var('rndc_key')}"; };
 };
 
 % for dnssrv in gen.dns_srvs:
@@ -158,17 +174,17 @@ view "internal" {
 
 	zone "." IN {
 		type hint;
-		file "${srv.get_param('file_rootzone', 'named.cache')}";
+		file "${dtpl.var('zone_root')}";
 	};
 	zone "localhost" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('file_localzone', srv.get_param('dir_bind_pri', 'pri') + '/localhost.zone')}";
+		file "${dtpl.var('zone_localhost')}";
 		allow-update { none; };
 		notify no;
 	};
 	zone "127.in-addr.arpa" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('file_127zone', srv.get_param('dir_bind_rev', 'rev') + '/127.zone')}";
+		file "${dtpl.var('zone_127')}";
 		allow-update { none; };
 		notify no;
 	};
@@ -189,12 +205,12 @@ view "internal" {
 	zone "${dhl.domain}" IN {
 % if dhl.type_id == 1:
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_pri', 'pri')}/${dhl.domain}.internal.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('pri_dir')}/${dhl.domain}.internal.zone";
 		allow-update { none; };
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % if srv.get_bool_param('dnssec', True) and dhl.domain.signed:
 % if gen.name == 'iscbind99':
-		key-directory "${srv.get_param('dir_bindkeys_int', '/etc/bind/keys/int')}";
+		key-directory "${dtpl.var('keys_dir')}/int";
 		inline-signing yes;
 		auto-dnssec maintain;
 % else:
@@ -203,7 +219,7 @@ view "internal" {
 % endif
 % else:
 		type slave;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_sec', 'sec')}/${dhl.domain}.internal.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('sec_dir')}/${dhl.domain}.internal.zone";
 		masters { ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id == 1])}};
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % endif
@@ -212,12 +228,12 @@ view "internal" {
 	zone "${alias}" IN {
 % if dhl.type_id == 1:
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_pri', 'pri')}/${alias}.internal.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('pri_dir')}/${alias}.internal.zone";
 		allow-update { none; };
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % if srv.get_bool_param('dnssec', True) and dhl.domain.signed:
 % if gen.name == 'iscbind99':
-		key-directory "${srv.get_param('dir_bindkeys_int', '/etc/bind/keys/int')}";
+		key-directory "${dtpl.var('keys_dir')}/int";
 		inline-signing yes;
 		auto-dnssec maintain;
 % else:
@@ -226,7 +242,7 @@ view "internal" {
 % endif
 % else:
 		type slave;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_sec', 'sec')}/${alias}.internal.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('sec_dir')}/${alias}.internal.zone";
 		masters { ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id == 1])}};
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % endif
@@ -239,7 +255,7 @@ view "internal" {
 % if not rz.ipv4_address.is_reserved:
 	zone "${rz.zone_name}" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_rev', 'rev')}/${rz.zone_filename}.internal.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('rev_dir')}/${rz.zone_filename}.internal.zone";
 		allow-update { none; };
 		allow-transfer { dnsacl; };
 	};
@@ -249,7 +265,7 @@ view "internal" {
 % if not rz.ipv6_address.is_reserved:
 	zone "${rz.zone_name}" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_rev', 'rev')}/${rz.zone_filename}.internal.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('rev_dir')}/${rz.zone_filename}.internal.zone";
 		allow-update { none; };
 		allow-transfer { dnsacl; };
 	};
@@ -270,17 +286,17 @@ view "external" {
 
 	zone "." IN {
 		type hint;
-		file "named.cache";
+		file "${dtpl.var('zone_root')}";
 	};
 	zone "localhost" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_pri', 'pri')}/localhost.zone";
+		file "${dtpl.var('zone_localhost')}";
 		allow-update { none; };
 		notify no;
 	};
 	zone "127.in-addr.arpa" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_rev', 'rev')}/127.zone";
+		file "${dtpl.var('zone_127')}";
 		allow-update { none; };
 		notify no;
 	};
@@ -301,12 +317,12 @@ view "external" {
 	zone "${dhl.domain}" IN {
 % if dhl.type_id == 1:
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_pri', 'pri')}/${dhl.domain}.external.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('pri_dir')}/${dhl.domain}.external.zone";
 		allow-update { none; };
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % if srv.get_bool_param('dnssec', True) and dhl.domain.signed:
 % if gen.name == 'iscbind99':
-		key-directory "${srv.get_param('dir_bindkeys_ext', '/etc/bind/keys/ext')}";
+		key-directory "${dtpl.var('keys_dir')}/ext";
 		inline-signing yes;
 		auto-dnssec maintain;
 % else:
@@ -315,7 +331,7 @@ view "external" {
 % endif
 % else:
 		type slave;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_sec', 'sec')}/${dhl.domain}.external.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('sec_dir')}/${dhl.domain}.external.zone";
 		masters { ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id == 1])}};
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % endif
@@ -324,12 +340,12 @@ view "external" {
 	zone "${alias}" IN {
 % if dhl.type_id == 1:
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_pri', 'pri')}/${alias}.external.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('pri_dir')}/${alias}.external.zone";
 		allow-update { none; };
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % if srv.get_bool_param('dnssec', True) and dhl.domain.signed:
 % if gen.name == 'iscbind99':
-		key-directory "${srv.get_param('dir_bindkeys_ext', '/etc/bind/keys/ext')}";
+		key-directory "${dtpl.var('keys_dir')}/ext";
 		inline-signing yes;
 		auto-dnssec maintain;
 % else:
@@ -338,7 +354,7 @@ view "external" {
 % endif
 % else:
 		type slave;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_sec', 'sec')}/${alias}.external.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('sec_dir')}/${alias}.external.zone";
 		masters { ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id == 1])}};
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % endif
@@ -351,7 +367,7 @@ view "external" {
 % if (not rz.ipv4_address.is_reserved) and (not rz.ipv4_address.is_private) and (not rz.ipv4_address.is_link_local):
 	zone "${rz.zone_name}" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_rev', 'rev')}/${rz.zone_filename}.external.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('rev_dir')}/${rz.zone_filename}.external.zone";
 		allow-update { none; };
 		allow-transfer { dnsacl; };
 	};
@@ -361,7 +377,7 @@ view "external" {
 % if (not rz.ipv6_address.is_reserved) and (not rz.ipv6_address.is_private) and (not rz.ipv6_address.is_link_local):
 	zone "${rz.zone_name}" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_rev', 'rev')}/${rz.zone_filename}.external.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('rev_dir')}/${rz.zone_filename}.external.zone";
 		allow-update { none; };
 		allow-transfer { dnsacl; };
 	};
@@ -378,17 +394,17 @@ view "generic" {
 
 	zone "." IN {
 		type hint;
-		file "named.cache";
+		file "${dtpl.var('zone_root')}";
 	};
 	zone "localhost" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_pri', 'pri')}/localhost.zone";
+		file "${dtpl.var('zone_localhost')}";
 		allow-update { none; };
 		notify no;
 	};
 	zone "127.in-addr.arpa" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_rev', 'rev')}/127.zone";
+		file "${dtpl.var('zone_127')}";
 		allow-update { none; };
 		notify no;
 	};
@@ -409,12 +425,12 @@ view "generic" {
 	zone "${dhl.domain}" IN {
 % if dhl.type_id == 1:
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_pri', 'pri')}/${dhl.domain}.generic.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('pri_dir')}/${dhl.domain}.generic.zone";
 		allow-update { none; };
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % if srv.get_bool_param('dnssec', True) and dhl.domain.signed:
 % if gen.name == 'iscbind99':
-		key-directory "${srv.get_param('dir_bindkeys_gen', '/etc/bind/keys/gen')}";
+		key-directory "${dtpl.var('keys_dir')}/gen";
 		inline-signing yes;
 		auto-dnssec maintain;
 % else:
@@ -423,7 +439,7 @@ view "generic" {
 % endif
 % else:
 		type slave;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_sec', 'sec')}/${dhl.domain}.generic.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('sec_dir')}/${dhl.domain}.generic.zone";
 		masters { ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id == 1])}};
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % endif
@@ -432,12 +448,12 @@ view "generic" {
 	zone "${alias}" IN {
 % if dhl.type_id == 1:
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_pri', 'pri')}/${alias}.generic.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('pri_dir')}/${alias}.generic.zone";
 		allow-update { none; };
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % if srv.get_bool_param('dnssec', True) and dhl.domain.signed:
 % if gen.name == 'iscbind99':
-		key-directory "${srv.get_param('dir_bindkeys_gen', '/etc/bind/keys/gen')}";
+		key-directory "${dtpl.var('keys_dir')}/gen";
 		inline-signing yes;
 		auto-dnssec maintain;
 % else:
@@ -446,7 +462,7 @@ view "generic" {
 % endif
 % else:
 		type slave;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_sec', 'sec')}/${alias}.generic.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('sec_dir')}/${alias}.generic.zone";
 		masters { ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id == 1])}};
 		allow-transfer { selfacl; ${''.join([gen.host_iplist(s.host) for s in dhl.domain.services if s.type_id in (1, 2)])}};
 % endif
@@ -459,7 +475,7 @@ view "generic" {
 % if not rz.ipv4_address.is_reserved:
 	zone "${rz.zone_name}" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_rev', 'rev')}/${rz.zone_filename}.generic.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('rev_dir')}/${rz.zone_filename}.generic.zone";
 		allow-update { none; };
 		allow-transfer { dnsacl; };
 	};
@@ -469,7 +485,7 @@ view "generic" {
 % if not rz.ipv6_address.is_reserved:
 	zone "${rz.zone_name}" IN {
 		type master;
-		file "${srv.get_param('dir_bindzones', '/var/bind')}/${srv.get_param('dir_bind_rev', 'rev')}/${rz.zone_filename}.generic.zone";
+		file "${dtpl.var('zones_dir')}/${dtpl.var('rev_dir')}/${rz.zone_filename}.generic.zone";
 		allow-update { none; };
 		allow-transfer { dnsacl; };
 	};
@@ -477,4 +493,7 @@ view "generic" {
 % endfor
 };
 % endif
+${dtpl.if_var('rootkey_file')}
+include "${dtpl.var('rootkey_file')}";
+${dtpl.endif}
 
