@@ -179,15 +179,17 @@ Ext.define('NetProfile.view.ModelGrid', {
 			}, this);
 			if(!has_action)
 			{
-				var i = [{
-					iconCls: 'ico-props',
-					tooltip: this.propTipText,
-					handler: function(grid, rowidx, colidx, item, e, record)
-					{
-						return this.selectRecord(record);
-					},
-					scope: this
-				}];
+				var i = [];
+				if(this.detailPane)
+					i.push({
+						iconCls: 'ico-props',
+						tooltip: this.propTipText,
+						handler: function(grid, rowidx, colidx, item, e, record)
+						{
+							return this.selectRecord(record);
+						},
+						scope: this
+					});
 				if(this.extraActions && this.extraActions.length)
 				{
 					var extra_i = [];
