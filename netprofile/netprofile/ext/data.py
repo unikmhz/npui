@@ -86,6 +86,7 @@ from netprofile.db.fields import (
 	IPv4Address,
 	IPv6Address,
 	IPv6Offset,
+	MACAddress,
 	Money,
 	NPBoolean,
 	Traffic,
@@ -353,6 +354,8 @@ class ExtColumn(object):
 	@property
 	def length(self):
 		typecls = self.column.type.__class__
+		if typecls is MACAddress:
+			return 17
 		try:
 			if typecls is DeclEnumType:
 				xlen = 0
