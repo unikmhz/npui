@@ -519,12 +519,14 @@ class Module(ModuleBase):
 				'netprofile_core:static/extjs/ext-all-dev.js',
 				'netprofile_core:static/extensible/lib/extensible-all-debug.js',
 				'netprofile_core:static/tinymce/tiny_mce_src.js',
+				'netprofile_core:static/ipaddr/ipaddr.js',
 				'netprofile_core:static/sockjs/sockjs.js'
 			)
 		return (
 			'netprofile_core:static/extjs/ext-all.js',
 			'netprofile_core:static/extensible/lib/extensible-all.js',
 			'netprofile_core:static/tinymce/tiny_mce.js',
+			'netprofile_core:static/ipaddr/ipaddr.min.js',
 			'netprofile_core:static/sockjs/sockjs.min.js'
 		)
 
