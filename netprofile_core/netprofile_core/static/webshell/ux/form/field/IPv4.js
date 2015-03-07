@@ -74,14 +74,16 @@ Ext.define('Ext.ux.form.field.IPv4', {
 					},
 					keydown: function(fld, ev)
 					{
-						var k = ev.getKey();
+						var k = ev.getKey(),
+							octnum = parseInt(this.itemId.substr(3, 1));
 
-						if((k === 190) || (ev.getKey() === ev.NUM_PERIOD))
+						if(octnum < 4)
 						{
-							ev.stopEvent();
-							k = parseInt(this.itemId.substr(3, 1));
-							if(k < 4)
-								this.parentComponent['oct' + (k + 1)].focus();
+							if((k === 190) || (k === ev.NUM_PERIOD) || (k === ev.TAB))
+							{
+								ev.stopEvent();
+								this.parentComponent['oct' + (octnum + 1)].focus();
+							}
 						}
 					}
 				}
