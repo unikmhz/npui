@@ -62,14 +62,19 @@ Ext.define('Ext.ux.form.field.IPv4', {
 					change: function(fld, val)
 					{
 						var ipre = /^\s*\d+\.\d+\.\d+\.\d+\s*$/,
-							sval = String(fld.getRawValue());
+							sval = String(fld.getRawValue()),
+							comp = this.parentComponent,
+							oldval;
 
 						if(ipre.test(sval))
 						{
-							this.parentComponent.setRawValue(sval);
+							oldval = comp.value;
+							comp.setRawValue(sval);
+							if((oldval === null) || (comp.value && (oldval.toString() != comp.value.toString())))
+								comp.fireEvent('change', comp, comp.value, oldval);
 							return true;
 						}
-						this.parentComponent.parseFields();
+						comp.parseFields();
 						return true;
 					},
 					keydown: function(fld, ev)
