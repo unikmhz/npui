@@ -92,6 +92,8 @@ class JsonReprEncoder(json.JSONEncoder):
 			return obj.isoformat()
 		if isinstance(obj, ipaddr.IPv4Address):
 			return int(obj)
+		if isinstance(obj, ipaddr.IPv6Address):
+			return tuple(obj.packed)
 		if isinstance(obj, decimal.Decimal):
 			return str(obj)
 

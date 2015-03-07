@@ -175,7 +175,7 @@ class IPv6Address(types.TypeDecorator):
 			return None
 		if _is_pgsql(dialect):
 			return str(value)
-		return value.packed()
+		return value.packed
 
 	def process_result_value(self, value, dialect):
 		if value is None:
