@@ -103,7 +103,8 @@ Ext.define('Ext.ux.grid.FiltersFeature', {
         'Ext.ux.grid.filter.ListFilter',
         'Ext.ux.grid.filter.NumericFilter',
         'Ext.ux.grid.filter.StringFilter',
-		'Ext.ux.grid.filter.IPv4Filter'
+		'Ext.ux.grid.filter.IPv4Filter',
+		'Ext.ux.grid.filter.IPv6Filter'
     ],
 
     /**
@@ -786,9 +787,7 @@ Ext.define('Ext.ux.grid.FiltersFeature', {
               type = 'boolean';
               break;
             case 'ipv4':
-              break;
             case 'ipv6':
-              type = 'string';
               break;
         }
         return Ext.ClassManager.getByAlias('gridfilter.' + type);
