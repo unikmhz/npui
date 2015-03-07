@@ -52,8 +52,10 @@ def on_new_request(event):
 
 	request.translate = auto_translate
 
-#	request.response.headerlist.append((
-#		'Content-Security-Policy',
-#		'default-src \'self\'; script-src \'self\' \'unsafe-eval\''
-#	))
+	request.response.headerlist.extend((
+#		('Content-Security-Policy', FIXME),
+		('X-Frame-Options', 'DENY'),
+		('X-Content-Type-Options', 'nosniff')
+	))
+	# TODO: add configurable HSTS
 

@@ -86,7 +86,12 @@ def _new_request_csp(event):
 	csp = 'default-src \'self\' www.google.com; style-src \'self\' www.google.com \'unsafe-inline\''
 	if request.debug_enabled:
 		csp += '; script-src \'self\' www.google.com \'unsafe-inline\''
-	request.response.headerlist.append(('Content-Security-Policy', csp))
+	request.response.headerlist.extend((
+		('Content-Security-Policy', csp),
+		('X-Frame-Options', 'DENY'),
+		('X-Content-Type-Options', 'nosniff')
+	))
+	# TODO: add configurable HSTS
 
 def includeme(config):
 	"""
