@@ -171,6 +171,11 @@ Ext.onReady(function()
 		traverseText: 'Переход'
 	});
 
+	Ext.define('Ext.locale.ru.ux.form.field.IPv6', {
+		override: 'Ext.ux.form.field.IPv6',
+		invalidAddressText: 'Некорректный адрес IPv6'
+	});
+
 	Ext.define('Ext.locale.ru.NetProfile.view.FileBrowser', {
 		override: 'NetProfile.view.FileBrowser',
 

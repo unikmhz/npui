@@ -266,6 +266,16 @@ Ext.require([
 					return value;
 				throw "Supplied with an unknown object type";
 			}
+			if(Ext.isArray(value) && (value.length == 16))
+			{
+				var newval = [], i;
+
+				for(i = 0; i < value.length; i += 2)
+				{
+					newval.push((value[i] << 8) + value[i + 1]);
+				}
+				return new ipaddr.IPv6(newval);
+			}
 			return ipaddr.IPv6.parse(value);
 		},
 		serialize: function(value, record)
