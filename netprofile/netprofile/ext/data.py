@@ -126,8 +126,6 @@ _INTEGER_SET = (
 	Int32,
 	Int64,
 	Integer,
-	IPv6Offset, #?
-	Traffic, #?
 	UInt8,
 	UInt16,
 	UInt32,
@@ -137,7 +135,8 @@ _INTEGER_SET = (
 _DECIMAL_SET = (
 	IPv6Offset,
 	Money,
-	Numeric
+	Numeric,
+	Traffic
 )
 
 _STRING_SET = (
@@ -167,7 +166,7 @@ _IPADDR_SET = (
 )
 
 _COLUMN_XTYPE_MAP = {
-	BigInteger   : 'numbercolumn',
+	BigInteger   : 'numbercolumn', # ?
 	Boolean      : 'checkcolumn',
 	DeclEnumType : 'enumcolumn',
 	Enum         : 'enumcolumn',
@@ -175,27 +174,27 @@ _COLUMN_XTYPE_MAP = {
 	Int8         : 'numbercolumn',
 	Int16        : 'numbercolumn',
 	Int32        : 'numbercolumn',
-	Int64        : 'numbercolumn',
+	Int64        : 'numbercolumn', # ?
 	Integer      : 'numbercolumn',
 	IPv4Address  : 'ipaddrcolumn',
 	IPv6Address  : 'ipaddrcolumn',
 	IPv6Offset   : 'numbercolumn',
-	Money        : 'numbercolumn',
+	Money        : 'numbercolumn', # ?
 	NPBoolean    : 'checkcolumn',
-	Numeric      : 'numbercolumn',
+	Numeric      : 'numbercolumn', # ?
 	SmallInteger : 'numbercolumn',
 	TIMESTAMP    : 'datecolumn',
-	Traffic      : 'numbercolumn',
+	Traffic      : 'numbercolumn', # ?
 	UInt8        : 'numbercolumn',
 	UInt16       : 'numbercolumn',
 	UInt32       : 'numbercolumn',
-	UInt64       : 'numbercolumn'
+	UInt64       : 'numbercolumn' # ?
 }
 
 _EDITOR_XTYPE_MAP = {
 	ASCIITinyText : 'textareafield',
 	ASCIIText     : 'textareafield',
-	BigInteger    : 'numberfield',
+	BigInteger    : 'numberfield', # ?
 	Boolean       : 'checkbox',
 	Date          : 'datefield',
 	DateTime      : 'datetimefield',
@@ -205,27 +204,27 @@ _EDITOR_XTYPE_MAP = {
 	Int8          : 'numberfield',
 	Int16         : 'numberfield',
 	Int32         : 'numberfield',
-	Int64         : 'numberfield',
+	Int64         : 'numberfield', # ?
 	Integer       : 'numberfield',
 	IPv4Address   : 'ipv4field',
 	IPv6Address   : 'ipv6field',
 	IPv6Offset    : 'numberfield',
-	Money         : 'numberfield',
+	Money         : 'numberfield', # ?
 	NPBoolean     : 'checkbox',
-	Numeric       : 'numberfield',
+	Numeric       : 'numberfield', # ?
 	SmallInteger  : 'numberfield',
 	Time          : 'timefield',
 	TIMESTAMP     : 'datetimefield',
-	Traffic       : 'numberfield',
+	Traffic       : 'numberfield', # ?
 	UInt8         : 'numberfield',
 	UInt16        : 'numberfield',
 	UInt32        : 'numberfield',
-	UInt64        : 'numberfield',
+	UInt64        : 'numberfield', # ?
 	UnicodeText   : 'textareafield'
 }
 
 _JS_TYPE_MAP = {
-	BigInteger   : 'int',
+	BigInteger   : 'int', # ?
 	Boolean      : 'boolean',
 	Date         : 'date',
 	DateTime     : 'date',
@@ -233,11 +232,10 @@ _JS_TYPE_MAP = {
 	Money        : 'float', # ?
 	NPBoolean    : 'boolean',
 	Numeric      : 'float', # ?
-	Numeric      : 'float', # ?
 	Int8         : 'int',
 	Int16        : 'int',
 	Int32        : 'int',
-	Int64        : 'int',
+	Int64        : 'int', # ?
 	Integer      : 'int',
 	IPv4Address  : 'ipv4',
 	IPv6Address  : 'ipv6',
@@ -245,11 +243,11 @@ _JS_TYPE_MAP = {
 	PickleType   : 'auto',
 	SmallInteger : 'int',
 	TIMESTAMP    : 'date',
-	Traffic      : 'int',
+	Traffic      : 'int', # ?
 	UInt8        : 'int',
 	UInt16       : 'int',
 	UInt32       : 'int',
-	UInt64       : 'int'
+	UInt64       : 'int' # ?
 }
 
 _DATE_FMT_MAP = {
@@ -708,7 +706,7 @@ class ExtColumn(object):
 			self._set_min_max(conf)
 		elif issubclass(typecls, _DECIMAL_SET):
 			conf.update({
-				'allowDecimals' : True
+				'allowDecimals' : (True if self.column.type.scale > 0 else False)
 			})
 			if self.unsigned:
 				conf['allowNegative'] = False
@@ -839,7 +837,7 @@ class ExtColumn(object):
 		if issubclass(typecls, _DECIMAL_SET):
 			conf.update({
 				'align'  : 'right',
-				'format' : '0.00'
+				'format' : ('0.00' if self.column.type.scale > 0 else '0')
 			})
 		if issubclass(typecls, _INTEGER_SET):
 			conf.update({
@@ -1571,7 +1569,7 @@ class ExtModel(object):
 						if fkey == 'notin':
 							query = query.filter(not col.in_(fval))
 							continue
-						# parse_param chokes on list values (maybe fix?)
+						# FIXME: parse_param chokes on list values
 						continue
 					fval = extcol.parse_param(fval)
 					if fkey == 'eq':
@@ -1581,7 +1579,6 @@ class ExtModel(object):
 						query = query.filter(col != fval)
 						continue
 					if issubclass(colcls, _DATE_SET):
-						#fval = dparse(fval)
 						if fval.tzinfo is not None:
 							fval = fval.astimezone(tzlocal())
 						if fval is None:
@@ -2040,10 +2037,13 @@ class ExtModel(object):
 		fields = {}
 		for index in self.u_idx:
 			has_all = True
+			has_defined = False
 			for ifld in index:
 				if (ifld not in values) or (ifld not in cols) or (ifld not in trans):
 					has_all = False
-			if not has_all:
+				if values[ifld] is not None:
+					has_defined = True
+			if (not has_all) or (not has_defined):
 				continue
 			q = sess.query(func.count('*')).select_from(self.model)
 			for ifld in index:
