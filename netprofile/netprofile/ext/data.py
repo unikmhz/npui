@@ -208,6 +208,7 @@ _EDITOR_XTYPE_MAP = {
 	Int64         : 'numberfield',
 	Integer       : 'numberfield',
 	IPv4Address   : 'ipv4field',
+	IPv6Address   : 'ipv6field',
 	IPv6Offset    : 'numberfield',
 	Money         : 'numberfield',
 	NPBoolean     : 'checkbox',
@@ -556,9 +557,16 @@ class ExtColumn(object):
 			return param
 		if issubclass(typecls, _IPADDR_SET):
 			if isinstance(param, dict):
-				if 'value' not in param:
+				if 'octets' in param:
+					param = param['octets']
+				elif 'parts' in param:
+					param = [byte for word in param['parts'] for byte in (word >> 8, word % 256)]
+				elif 'value' in param:
+					param = param['value']
+				else:
 					return None
-				param = param['value']
+				if isinstance(param, (list, tuple)):
+					param = bytes(param)
 			if issubclass(typecls, IPv4Address):
 				return ipaddr.IPv4Address(param)
 			if issubclass(typecls, IPv6Address):

@@ -2,6 +2,7 @@ Ext.define('NetProfile.controller.UserSettingsForm', {
 	requires: [
 		'Ext.form.*',
 		'Ext.ux.form.field.IPv4',
+		'Ext.ux.form.field.IPv6',
 		'Ext.ux.form.field.Password',
 		'Ext.panel.Panel'
 	],

@@ -227,125 +227,58 @@ Ext.require([
 		}
 	});
 
-	Ext.define('NetProfile.data.IPAddress', {
-		MAX_IPV4: 0xffffffff,
-		value: null,
-		getValue: function()
-		{
-			return this.value;
-		}
-	});
-
-	Ext.define('NetProfile.data.IPv4Address', {
-		extend: 'NetProfile.data.IPAddress',
-		constructor: function(val)
-		{
-			if((val !== undefined) && (val !== null) && (val !== ''))
-				this.setValue(val);
-		},
-		setValue: function(val)
-		{
-			if(Ext.isNumeric(val))
-				val = parseInt(val);
-			else
-				val = this.parseTextual(val);
-			this.value = val;
-			return this;
-		},
-		setOctets: function(oct)
-		{
-			oct = this.parseOctets(oct);
-			this.value = oct;
-			return this;
-		},
-		parseOctets: function(oct)
-		{
-			var ip, i, ioct;
-
-			if(oct.length !== 4)
-			{
-				throw 'Invalid IPv4 octets';
-			}
-			ip = 0;
-			for(i = 0; i < oct.length; i++)
-			{
-				ioct = parseInt(oct[i]);
-				if(isNaN(ioct) || (ioct < 0) || (ioct > 255) ||
-						((oct[i].length > 1) && (oct[i].slice(0, 1) == '0')))
-					throw 'Invalid octet ' + (i + 1) + ' in IPv4 address';
-				ip = (ip | ioct) >>> 0;
-				if(i < 3)
-					ip = (ip << 8) >>> 0;
-			}
-			return ip;
-		},
-		parseTextual: function(val)
-		{
-			if(!val.match(/^[0-9.]*$/))
-				throw 'Invalid IPv4 address: ' + val;
-			return this.parseOctets(val.split('.'));
-		},
-		toOctets: function()
-		{
-			var oct, v, i;
-
-			oct = [0, 0, 0, 0];
-			v = this.value;
-
-			for(i = 3; i >= 0; i--)
-			{
-				oct[i] = String((v & 0xff));
-				v = v >>> 8;
-			}
-			return oct;
-		},
-		toString: function()
-		{
-			return this.toOctets().join('.');
-		}
-	});
-
-	Ext.define('NetProfile.data.IPv6Address', {
-		extend: 'NetProfile.data.IPAddress',
-	});
-
 	Ext.data.Types.IPV4 = {
 		type: 'ipv4',
 		convert: function(value, record)
 		{
-			if(value === null)
+			if((value === null) || (value === undefined) || (value === ''))
 				return null;
 			if(Ext.isObject(value))
 			{
-				if(Ext.getClassName(value) === 'NetProfile.data.IPv4Address')
+				if(value instanceof ipaddr.IPv4)
 					return value;
 				throw "Supplied with an unknown object type";
 			}
-			return new NetProfile.data.IPv4Address(value);
+			return ipaddr.IPv4.parse(value);
 		},
 		serialize: function(value, record)
 		{
-			if(value === null)
+			if((value === null) || (value === undefined) || (value === ''))
 				return null;
-			if(Ext.isObject(value) && (Ext.getClassName(value) === 'NetProfile.data.IPv4Address'))
-				return value.value;
+			if(Ext.isObject(value) && (value instanceof ipaddr.IPv4))
+				return value.toInteger();
 			return value;
 		},
 		sortType: function(t)
 		{
-			return t.value;
+			return t.toInteger();
 		}
 	};
 	Ext.data.Types.IPV6 = {
 		type: 'ipv6',
 		convert: function(value, record)
 		{
-			if(value === null)
+			if((value === null) || (value === undefined) || (value === ''))
 				return null;
-			return new NetProfile.data.IPv6Address(value);
+			if(Ext.isObject(value))
+			{
+				if(value instanceof ipaddr.IPv6)
+					return value;
+				throw "Supplied with an unknown object type";
+			}
+			return ipaddr.IPv6.parse(value);
+		},
+		serialize: function(value, record)
+		{
+			if((value === null) || (value === undefined) || (value === ''))
+				return null;
+			if(Ext.isObject(value) && (value instanceof ipaddr.IPv6))
+				return value.toByteArray();
+			return value;
 		},
 		sortType: function(t)
 		{
+			return t.toByteArray();
 		}
 	};
 

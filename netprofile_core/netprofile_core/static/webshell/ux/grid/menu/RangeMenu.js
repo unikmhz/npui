@@ -196,11 +196,13 @@ menuItemCfgs : {
      * @return {String} The value of this filter
      */
     getValue : function () {
-        var result = {}, key, field;
+        var result = {}, key, field, val;
         for (key in this.fields) {
             field = this.fields[key];
-            if (field.isValid() && field.getValue() !== null) {
-                result[key] = field.getValue();
+            if (field.isValid()) {
+                val = field.getValue();
+				if((val !== null) && (val !== undefined) && (val !== ''))
+					result[key] = val;
             }
         }
         return result;
@@ -213,6 +215,8 @@ menuItemCfgs : {
     setValue : function (data, susp) {
         var key;
         for (key in this.fields) {
+			if(!(key in data) || (data[key] === null) || (data[key] === undefined) || (data[key] === ''))
+				continue;
 			if(susp)
 				this.fields[key].suspendEvents();
             this.fields[key].setValue(key in data ? data[key] : '');

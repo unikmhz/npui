@@ -70,12 +70,20 @@
       return 'ipv4';
     };
 
+    IPv4.prototype.getValue = function() {
+      return this.toInteger();
+    };
+
     IPv4.prototype.toString = function() {
       return this.octets.join(".");
     };
 
     IPv4.prototype.toByteArray = function() {
       return this.octets.slice(0);
+    };
+
+    IPv4.prototype.toInteger = function() {
+      return (this.octets[0] << 24 | this.octets[1] << 16 | this.octets[2] << 8 | this.octets[3]) >>> 0;
     };
 
     IPv4.prototype.match = function(other, cidrRange) {
@@ -85,7 +93,7 @@
       return matchCIDR(this.octets, other.octets, 8, cidrRange);
     };
 
-    IPv4.prototype.SpecialRanges = {
+    IPv4.SpecialRanges = {
       unspecified: [[new IPv4([0, 0, 0, 0]), 8]],
       broadcast: [[new IPv4([255, 255, 255, 255]), 32]],
       multicast: [[new IPv4([224, 0, 0, 0]), 4]],
@@ -96,7 +104,7 @@
     };
 
     IPv4.prototype.range = function() {
-      return ipaddr.subnetMatch(this, this.SpecialRanges);
+      return ipaddr.subnetMatch(this, IPv4.SpecialRanges);
     };
 
     IPv4.prototype.toIPv4MappedAddress = function() {
@@ -123,6 +131,11 @@
         return parseInt(string);
       }
     };
+    if ((typeof(string) === 'object') && string.octets)
+      return string.octets;
+    if (typeof(string) === 'number') {
+      string = string.toString();
+    }
     if (match = string.match(ipv4Regexes.fourOctet)) {
       return (function() {
         var _i, _len, _ref, _results;
@@ -169,6 +182,10 @@
 
     IPv6.prototype.kind = function() {
       return 'ipv6';
+    };
+
+    IPv6.prototype.getValue = function() {
+      return this.toByteArray();
     };
 
     IPv6.prototype.toString = function() {
@@ -257,7 +274,7 @@
       return matchCIDR(this.parts, other.parts, 16, cidrRange);
     };
 
-    IPv6.prototype.SpecialRanges = {
+    IPv6.SpecialRanges = {
       unspecified: [new IPv6([0, 0, 0, 0, 0, 0, 0, 0]), 128],
       linkLocal: [new IPv6([0xfe80, 0, 0, 0, 0, 0, 0, 0]), 10],
       multicast: [new IPv6([0xff00, 0, 0, 0, 0, 0, 0, 0]), 8],
@@ -272,7 +289,7 @@
     };
 
     IPv6.prototype.range = function() {
-      return ipaddr.subnetMatch(this, this.SpecialRanges);
+      return ipaddr.subnetMatch(this, IPv6.SpecialRanges);
     };
 
     IPv6.prototype.isIPv4MappedAddress = function() {
@@ -341,6 +358,8 @@
 
   ipaddr.IPv6.parser = function(string) {
     var match, parts;
+    if ((typeof(string) === 'object') && string.parts)
+      return string.parts;
     if (string.match(ipv6Regexes['native'])) {
       return expandIPv6(string, 8);
     } else if (match = string.match(ipv6Regexes['transitional'])) {

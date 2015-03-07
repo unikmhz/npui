@@ -38,7 +38,8 @@ Ext.define('Ext.ux.grid.filter.IPv4Filter', {
 				fieldCls: 'Ext.ux.form.field.IPv4',
 				menuItemCfgs : {
 					selectOnFocus: false,
-					width: 200
+					allowBlank: true,
+					width: 220
 				}
 			})
 		);
@@ -67,7 +68,7 @@ Ext.define('Ext.ux.grid.filter.IPv4Filter', {
 		for(key in value)
 		{
 			if(value[key])
-				value[key] = new NetProfile.data.IPv4Address(value[key]);
+				value[key] = ipaddr.IPv4.parse(value[key]);
 			else
 				delete value[key];
 		}

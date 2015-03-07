@@ -8,6 +8,7 @@ Ext.define('NetProfile.view.Form', {
 	requires: [
 		'Ext.form.*',
 		'Ext.ux.form.field.IPv4',
+		'Ext.ux.form.field.IPv6',
 		'Ext.ux.form.field.Password'
 	],
 	statics: {

@@ -41,6 +41,7 @@ Ext.define('Ext.ux.form.field.IPv4', {
 		selectOnFocus: true,
 		fieldStyle: 'text-align: right;'
 	},
+	value: null,
 	createInput: function(idx, oct)
 	{
 		var fdname = 'oct' + idx,
@@ -56,7 +57,7 @@ Ext.define('Ext.ux.form.field.IPv4', {
 				parentComponent: this,
 				itemId: fdname,
 				enableKeyEvents: true,
-				value: (oct && (oct.length === 4)) ? oct[idx - 1] : "",
+				value: (oct && (oct.length === 4)) ? oct[idx - 1] : '',
 				listeners: {
 					change: function(fld, val)
 					{
@@ -96,7 +97,7 @@ Ext.define('Ext.ux.form.field.IPv4', {
 		this.callParent([pn, idx]);
 
 		if(this.value)
-			oct = this.value.toOctets();
+			oct = this.value.toByteArray();
 		else
 			oct = false;
 
@@ -118,7 +119,13 @@ Ext.define('Ext.ux.form.field.IPv4', {
 					click: function(fld, ev)
 					{
 						if(!this.disabled)
+						{
+							var oldval = this.value;
+
 							this.clearValue();
+							if(oldval !== null)
+								this.fireEvent('change', this, this.value, oldval);
+						}
 					},
 					scope: this
 				}
@@ -131,6 +138,8 @@ Ext.define('Ext.ux.form.field.IPv4', {
 	},
 	getFieldOctets: function()
 	{
+		if(!this.oct1.isValid() || !this.oct2.isValid() || !this.oct3.isValid() || !this.oct4.isValid())
+			throw 'Invalid octets found'
 		return [
 			this.oct1.getValue(),
 			this.oct2.getValue(),
@@ -140,7 +149,7 @@ Ext.define('Ext.ux.form.field.IPv4', {
 	},
 	updateFields: function()
 	{
-		var oct = this.value.toOctets();
+		var oct = this.value.toByteArray();
 
 		if(this.oct1)
 			this.oct1.setRawValue(oct[0]);
@@ -153,10 +162,26 @@ Ext.define('Ext.ux.form.field.IPv4', {
 	},
 	parseFields: function()
 	{
+		var oldval = this.value,
+			oct, ectr = 0;
+
 		try
 		{
-			this.value = new NetProfile.data.IPv4Address();
-			this.value.setOctets(this.getFieldOctets());
+			oct = this.getFieldOctets();
+			oct = Ext.Array.map(oct, function(o)
+			{
+				if((o === null) || (o === undefined) || (o === ''))
+				{
+					ectr ++;
+					if(!this.allowBlank)
+						throw 'Invalid octets found'
+				}
+				return parseInt(o) || 0;
+			}, this);
+			if(ectr === 4)
+				this.value = null;
+			else
+				this.value = new ipaddr.IPv4(oct);
 		}
 		catch(e)
 		{
@@ -164,20 +189,21 @@ Ext.define('Ext.ux.form.field.IPv4', {
 			this.markInvalid([e]);
 			return false;
 		}
-		this.validate();
+		if(this.validate() && ((oldval && !this.value.match(oldval, 32)) || !oldval))
+			this.fireEvent('change', this, this.value, oldval);
 		return true;
 	},
 	setRawValue: function(val)
 	{
-		if((val === null) || (val === ''))
+		if((val === null) || (val === undefined) || (val === ''))
 			return this.clearValue();
 		if(Ext.isObject(val))
 		{
-			if(Ext.getClassName(val) !== 'NetProfile.data.IPv4Address')
+			if(!(val instanceof ipaddr.IPv4))
 				throw "Supplied with an unknown object type";
 		}
 		else
-			val = new NetProfile.data.IPv4Address(val);
+			val = ipaddr.IPv4.parse(val);
 		this.value = val;
 		this.updateFields();
 		return true;
