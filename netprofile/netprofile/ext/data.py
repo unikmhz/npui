@@ -1331,6 +1331,13 @@ class ExtModel(object):
 		)
 
 	@property
+	def export_view(self):
+		return self.model.__table__.info.get(
+			'export_view',
+			self.model.__table__.info.get('grid_view', ())
+		)
+
+	@property
 	def extra_data(self):
 		return self.model.__table__.info.get('extra_data', ())
 
@@ -1753,6 +1760,7 @@ class ExtModel(object):
 	def read_one(self, params, request):
 		logger.info('Running ExtDirect class:%s method:%s', self.name, 'read_one')
 		logger.debug('Params: %r', params)
+		raise RuntimeError('read_one() not implemented')
 
 	def set_values(self, obj, values, request, is_create=False):
 		cols = self.get_columns()
@@ -2332,4 +2340,7 @@ class ExtBrowser(object):
 		req.run_hook('np.menu', name, menu, req, self)
 
 		return menu
+
+	def get_export_menu(self, req):
+		return tuple(fmt.export_panel(req, name) for name, fmt in self.mmgr.get_export_formats().items())
 

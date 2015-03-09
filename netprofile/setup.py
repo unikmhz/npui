@@ -99,6 +99,9 @@ setup(
 			'module disable = netprofile.cli:DisableModule',
 
 			'deploy = netprofile.cli:Deploy'
+		],
+		'netprofile.export.formats' : [
+			'csv = netprofile.export.csv:CSVExportFormat'
 		]
 	}
 )

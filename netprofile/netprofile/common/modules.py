@@ -512,6 +512,19 @@ class ModuleManager(object):
 		"""
 		return ExtBrowser(self)
 
+	def get_export_formats(self):
+		"""
+		Get registered data export formats.
+		"""
+		ret = {}
+		for ep in pkg_resources.iter_entry_points('netprofile.export.formats'):
+			try:
+				cls = ep.load()
+				ret[ep.name] = cls()
+			except ImportError:
+				logger.error('Can\'t load export formatter \'%s\'.', moddef)
+		return ret
+
 	def get_js(self, request):
 		"""
 		Get a list of required JS file resources.
