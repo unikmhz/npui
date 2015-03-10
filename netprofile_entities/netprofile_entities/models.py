@@ -142,7 +142,7 @@ class EntityType(DeclEnum):
 	legal      = 'legal',      _('Legal'),      20
 	structural = 'structural', _('Structural'), 30
 	external   = 'external',   _('External'),   40
-	access     = 'access',     _('Access'),     50
+
 
 def _wizcb_ent_generic_next(wiz, step, act, val, req):
 	ret = {
@@ -350,14 +350,6 @@ class Entity(Base):
 						id='ent_external1', title=_('External entity properties'),
 						on_prev='generic',
 						on_submit=_wizcb_ent_submit('ExternalEntity')
-					),
-					Step(
-						ExternalWizardField('AccessEntity', 'password'),
-						ExternalWizardField('AccessEntity', 'stash'),
-						ExternalWizardField('AccessEntity', 'rate'),
-						id='ent_access1', title=_('Access entity properties'),
-						on_prev='generic',
-						on_submit=_wizcb_ent_submit('AccessEntity')
 					),
 					title=_('Add new entity'), validator='CreateEntity'
 				)
