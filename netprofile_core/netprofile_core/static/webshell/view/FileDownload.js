@@ -8,6 +8,7 @@ Ext.define('NetProfile.view.FileDownload', {
 	autoEl: {
 		tag: 'iframe',
 		cls: 'x-hidden',
+		name: 'npws_filedl_frame',
 		src: Ext.SSL_SECURE_URL
 	},
 	id: 'npws_filedl',
@@ -35,11 +36,35 @@ Ext.define('NetProfile.view.FileDownload', {
 			return false;
 		if(!this.funcInstalled)
 		{
-			el.on('load', this._onIFrameLoad);
+			el.on('load', this._onIFrameLoad, this);
 			this.funcInstalled = true;
 		}
 		el.dom.src = url;
 		return true;
+	},
+	loadExport: function(moddef, model, fmt, par)
+	{
+		var uri = NetProfile.baseURL + '/core/file/export/' + moddef + '/' + model,
+			form;
+
+		if(!par)
+			par = {};
+		form = Ext.create('Ext.form.Panel', {
+			hidden: true,
+			stateful: false,
+			standardSubmit: true
+		});
+		form.getForm().submit({
+			url: uri,
+			method: 'POST',
+			target: 'npws_filedl_frame',
+			params: {
+				'csrf'   : Ext.Ajax.defaultHeaders['X-CSRFToken'],
+				'format' : fmt,
+				'params' : Ext.JSON.encode(par)
+			}
+		});
+		form.destroy();
 	},
 	loadFileById: function(file_id)
 	{

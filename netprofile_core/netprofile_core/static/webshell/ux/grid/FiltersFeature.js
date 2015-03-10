@@ -513,6 +513,8 @@ Ext.define('Ext.ux.grid.FiltersFeature', {
         this.cleanParams(options.params);
         var params = this.buildQuery(this.getFilterData());
         Ext.apply(options.params, params);
+        store.lastExtraParams = store.lastExtraParams || {};
+        Ext.apply(store.lastExtraParams, params);
     },
 
     /**

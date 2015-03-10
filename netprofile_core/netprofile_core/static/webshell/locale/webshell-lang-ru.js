@@ -95,7 +95,8 @@ Ext.onReady(function()
 		propTipText: 'Просмотр свойств объекта',
 		deleteTipText: 'Удалить объект',
 		deleteMsgText: 'Вы уверены в том, что хотите удалить данный объект?',
-		actionTipText: 'Действия для объекта'
+		actionTipText: 'Действия для объекта',
+		exportText: 'Экспорт'
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.view.ModelSelect', {

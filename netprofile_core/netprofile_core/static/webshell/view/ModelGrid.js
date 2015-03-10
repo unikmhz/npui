@@ -53,6 +53,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	canCreate: false,
 	canEdit: false,
 	canDelete: false,
+	canExport: true,
 	border: 0,
 	extraActions: [],
 
@@ -66,6 +67,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	deleteTipText: 'Delete object',
 	deleteMsgText: 'Are you sure you want to delete this object?',
 	actionTipText: 'Object actions',
+	exportText: 'Export',
 
 	dockedItems: [],
 	plugins: [],
@@ -163,6 +165,12 @@ Ext.define('NetProfile.view.ModelGrid', {
 					return true;
 				},
 				scope: this
+			});
+		if(this.canExport)
+			tbitems.push({
+				iconCls: 'ico-download',
+				text: this.exportText,
+				menu: { xtype: 'exportmenu' }
 			});
 		this.dockedItems = [{
 			xtype: 'toolbar',

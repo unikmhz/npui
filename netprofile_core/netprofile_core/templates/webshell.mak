@@ -20,6 +20,7 @@ Ext.require([
 	'Ext.direct.*',
 	'Ext.form.field.Field',
 	'Ext.tip.*',
+	'Ext.menu.*',
 	'Ext.state.*',
 	'Ext.util.Cookies',
 	'Ext.Ajax',
@@ -339,6 +340,26 @@ Ext.require([
 			{ name: 'data', type: 'auto' }
 		],
 		idProperty: 'id'
+	});
+
+	Ext.define('NetProfile.view.ExportMenu', {
+		extend: 'Ext.menu.Menu',
+		alias: 'widget.exportmenu',
+		plain: true,
+		layout: 'fit',
+		minWidth: 200,
+		showSeparator: false,
+		defaults: {
+			plain: true
+		},
+		items: [{
+			xtype: 'panel',
+			layout: {
+				type: 'accordion',
+				align: 'stretch'
+			},
+			items: ${modules.get_export_menu(req) | n,jsone}
+		}]
 	});
 
 	Ext.define('NetProfile.model.Menu', {

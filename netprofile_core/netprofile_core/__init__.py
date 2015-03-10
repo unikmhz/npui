@@ -79,6 +79,7 @@ class Module(ModuleBase):
 				custom_predicates=(_int_fileid,))
 		config.add_route('core.file.upload', '/file/ul', vhost='MAIN')
 		config.add_route('core.file.mount', '/file/mount/{ffid:\d+}*filename', vhost='MAIN')
+		config.add_route('core.export', '/file/export/{module:[\w_.-]+}/{model:[\w_.-]+}', vhost='MAIN')
 
 	@classmethod
 	def get_models(cls):
