@@ -525,6 +525,19 @@ class ModuleManager(object):
 				logger.error('Can\'t load export formatter \'%s\'.', moddef)
 		return ret
 
+	def get_export_format(self, name):
+		"""
+		Get registered data export format by name.
+		"""
+		eps = tuple(pkg_resources.iter_entry_points('netprofile.export.formats', name))
+		if len(eps) == 0:
+			raise ModuleError('Can\'t load export formatter \'%s\'.' % (name,))
+		try:
+			cls = eps[0].load()
+			return cls()
+		except ImportError:
+			raise ModuleError('Can\'t load export formatter \'%s\'.' % (name,))
+
 	def get_js(self, request):
 		"""
 		Get a list of required JS file resources.

@@ -50,7 +50,7 @@ class ExportFormat(object):
 	def options(self):
 		return []
 
-	def export(self, extm, query):
+	def export(self, extm, params, req):
 		pass
 
 	def export_panel(self, req, name):
@@ -73,6 +73,7 @@ class ExportFormat(object):
 			},
 			'items'         : opt,
 			'buttons'       : ({
+				'cls'     : 'np-data-export',
 				'iconCls' : 'ico-save',
 				'xtype'   : 'button',
 				'text'    : loc.translate(_('Export'))
