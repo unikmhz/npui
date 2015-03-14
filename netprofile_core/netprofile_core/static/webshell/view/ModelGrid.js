@@ -75,6 +75,9 @@ Ext.define('NetProfile.view.ModelGrid', {
 	},
 	initComponent: function()
 	{
+		var create_kmap = false,
+			kmap_binds;
+
 		this._create_ctl = {};
 		this.tabConfig = { cls: 'record-tab-hdl' };
 		if(this.selectRow)
@@ -333,82 +336,87 @@ Ext.define('NetProfile.view.ModelGrid', {
 			scope: this
 		});
 
-		var kmap_binds = [{
-			key: Ext.EventObject.LEFT,
-			fn: function(kc, ev)
-			{
-				var st = this.getStore();
-
-				if(st && ev.ctrlKey)
-				{
-					ev.stopEvent();
-					if(st.currentPage > 1)
-					{
-						if(ev.shiftKey)
-							st.loadPage(1);
-						else
-							st.previousPage();
-					}
-				}
-			},
-			scope: this
-		}, {
-			key: Ext.EventObject.RIGHT,
-			fn: function(kc, ev)
-			{
-				var st = this.getStore(),
-					maxpg = Math.ceil(st.getTotalCount() / st.pageSize);
-
-				if(st && ev.ctrlKey)
-				{
-					ev.stopEvent();
-					if(st.currentPage < maxpg)
-					{
-						if(ev.shiftKey)
-							st.loadPage(maxpg);
-						else
-							st.nextPage();
-					}
-				}
-			},
-			scope: this
-		}, {
-			key: 'r',
-			fn: function(kc, ev)
-			{
-				if(ev.altKey)
-				{
-					ev.stopEvent();
-					this.onPressReset();
-				}
-			},
-			scope: this
-		}];
-		if(this.simpleSearch)
-			kmap_binds.push({
-				key: 's',
+		if(this.id === 'main_content')
+			create_kmap = true;
+		if(create_kmap)
+		{
+			kmap_binds = [{
+				key: Ext.EventObject.LEFT,
 				fn: function(kc, ev)
 				{
-					var fld;
+					var st = this.getStore();
 
-					if(ev.altKey)
+					if(st && ev.ctrlKey)
 					{
-						fld = this.down('textfield[cls~=np-ssearch-field]');
-						if(fld)
+						ev.stopEvent();
+						if(st.currentPage > 1)
 						{
-							ev.stopEvent();
-							fld.focus();
-							fld.selectText();
+							if(ev.shiftKey)
+								st.loadPage(1);
+							else
+								st.previousPage();
 						}
 					}
 				},
 				scope: this
-			});
+			}, {
+				key: Ext.EventObject.RIGHT,
+				fn: function(kc, ev)
+				{
+					var st = this.getStore(),
+						maxpg = Math.ceil(st.getTotalCount() / st.pageSize);
 
-		this.kmap = new Ext.util.KeyMap({
-			target: Ext.getBody(),
-			binding: kmap_binds
-		});
+					if(st && ev.ctrlKey)
+					{
+						ev.stopEvent();
+						if(st.currentPage < maxpg)
+						{
+							if(ev.shiftKey)
+								st.loadPage(maxpg);
+							else
+								st.nextPage();
+						}
+					}
+				},
+				scope: this
+			}, {
+				key: 'r',
+				fn: function(kc, ev)
+				{
+					if(ev.altKey)
+					{
+						ev.stopEvent();
+						this.onPressReset();
+					}
+				},
+				scope: this
+			}];
+			if(this.simpleSearch)
+				kmap_binds.push({
+					key: 's',
+					fn: function(kc, ev)
+					{
+						var fld;
+
+						if(ev.altKey)
+						{
+							fld = this.down('textfield[cls~=np-ssearch-field]');
+							if(fld)
+							{
+								ev.stopEvent();
+								fld.focus();
+								fld.selectText();
+							}
+						}
+					},
+					scope: this
+				});
+
+			this.kmap = new Ext.util.KeyMap({
+				target: Ext.getBody(),
+				binding: kmap_binds
+			});
+		}
 	},
 	onPressReset: function()
 	{
