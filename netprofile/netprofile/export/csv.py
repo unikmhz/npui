@@ -150,6 +150,7 @@ class CSVExportFormat(ExportFormat):
 		return 'ico-csv'
 
 	def options(self, req, name):
+		loc = get_localizer(req)
 		return ({
 			'name'           : 'csv_dialect',
 			'fieldLabel'     : _('Dialect'),
@@ -170,18 +171,18 @@ class CSVExportFormat(ExportFormat):
 				'fields'  : ('id', 'value'),
 				'data'    : ({
 					'id'    : 'excel',
-					'value' : _('Excel')
+					'value' : loc.translate(_('Excel'))
 				}, {
 					'id'    : 'excel-tab',
-					'value' : _('Excel with TAB delimiters')
+					'value' : loc.translate(_('Excel with TAB delimiters'))
 				}, {
 					'id'    : 'unix',
-					'value' : _('UNIX')
+					'value' : loc.translate(_('UNIX'))
 				})
 			}
 		}, {
 			'name'           : 'csv_encoding',
-			'fieldLabel'     : _('Encoding'),
+			'fieldLabel'     : loc.translate(_('Encoding')),
 			'xtype'          : 'combobox',
 			'displayField'   : 'value',
 			'valueField'     : 'id',

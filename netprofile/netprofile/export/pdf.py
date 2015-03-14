@@ -69,7 +69,7 @@ class PDFExportFormat(ExportFormat):
 		loc = get_localizer(req)
 		return ({
 			'name'           : 'pdf_pagesz',
-			'fieldLabel'     : _('Page size'),
+			'fieldLabel'     : loc.translate(_('Page size')),
 			'xtype'          : 'combobox',
 			'displayField'   : 'value',
 			'valueField'     : 'id',
@@ -89,7 +89,7 @@ class PDFExportFormat(ExportFormat):
 			}
 		}, {
 			'name'           : 'pdf_orient',
-			'fieldLabel'     : _('Orientation'),
+			'fieldLabel'     : loc.translate(_('Orientation')),
 			'xtype'          : 'combobox',
 			'displayField'   : 'value',
 			'valueField'     : 'id',
