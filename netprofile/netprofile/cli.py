@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: CLI commands
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -373,7 +373,7 @@ class Deploy(Command):
 		self.old_mask = os.umask(0o077)
 		np_dir = os.path.abspath(self.app.dist.location)
 		deploy_dir = os.path.abspath(args.path)
-		self.app.hooks.run_hook('np.cli.module.deploy.before', self.app, deploy_dir)
+		self.app.hooks.run_hook('np.cli.deploy.before', self.app, deploy_dir)
 
 		if not os.path.isdir(np_dir):
 			os.umask(self.old_mask)
@@ -388,13 +388,15 @@ class Deploy(Command):
 		admin_tplc_dir = self._assert_dir(tplc_dir, 'admin')
 		client_tplc_dir = self._assert_dir(tplc_dir, 'client')
 		xop_tplc_dir = self._assert_dir(tplc_dir, 'xop')
+		fonts_dir = self._assert_dir(deploy_dir, 'fonts')
 
 		mail_dir = self._assert_dir(deploy_dir, 'maildir')
 
 		replace = {
 			'app:netprofile' : {
-				'mail.queue_path'       : mail_dir,
-				'mako.module_directory' : admin_tplc_dir
+				'mail.queue_path'            : mail_dir,
+				'mako.module_directory'      : admin_tplc_dir,
+				'netprofile.fonts.directory' : fonts_dir
 			},
 			'app:app_npclient' : {
 				'mail.queue_path'       : mail_dir,
@@ -405,6 +407,7 @@ class Deploy(Command):
 				'mako.module_directory' : xop_tplc_dir
 			}
 		}
+		self.app.hooks.run_hook('np.cli.deploy.before_ini', self, np_dir, deploy_dir, replace)
 
 		ini_prod = os.path.join(deploy_dir, 'production.ini')
 		ini_dev = os.path.join(deploy_dir, 'development.ini')
@@ -452,7 +455,7 @@ class Deploy(Command):
 			ini_dev
 		)
 
-		self.app.hooks.run_hook('np.cli.module.deploy.after', self.app, deploy_dir)
+		self.app.hooks.run_hook('np.cli.deploy.after', self.app, deploy_dir)
 
 		os.umask(self.old_mask)
 		self.log.info('Created NetProfile deployment: %s', deploy_dir)
