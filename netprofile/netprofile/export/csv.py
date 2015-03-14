@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
-# NetProfile: Data export support via CSV files
+# NetProfile: Data export support for CSV files
 # © Copyright 2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
@@ -139,7 +139,7 @@ _encodings = {
 
 class CSVExportFormat(ExportFormat):
 	"""
-	Export data via CSV.
+	Export data as CSV files.
 	"""
 	@property
 	def name(self):
@@ -149,9 +149,8 @@ class CSVExportFormat(ExportFormat):
 	def icon(self):
 		return 'ico-csv'
 
-	@property
-	def options(self):
-		return [{
+	def options(self, req, name):
+		return ({
 			'name'           : 'csv_dialect',
 			'fieldLabel'     : _('Dialect'),
 			'xtype'          : 'combobox',
@@ -200,7 +199,7 @@ class CSVExportFormat(ExportFormat):
 				'fields'  : ('id', 'value'),
 				'data'    : tuple({ 'id' : k, 'value' : v[1] } for k, v in _encodings.items())
 			}
-		}]
+		})
 
 	def export(self, extm, params, req):
 		csv_dialect = params.pop('csv_dialect', 'excel')

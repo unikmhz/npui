@@ -46,16 +46,15 @@ class ExportFormat(object):
 	def icon(self):
 		pass
 
-	@property
-	def options(self):
-		return []
+	def options(self, req, name):
+		return ()
 
 	def export(self, extm, params, req):
 		pass
 
 	def export_panel(self, req, name):
 		loc = get_localizer(req)
-		opt = self.options
+		opt = self.options(req, name)
 		return {
 			'title'         : loc.translate(self.name),
 			'iconCls'       : self.icon,
