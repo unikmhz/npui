@@ -39,7 +39,9 @@ requires = [
 	'tornado-redis',
 
 	'celery >= 3.1',
-	'msgpack-python >= 0.4'
+	'msgpack-python >= 0.4',
+
+	'reportlab >= 3.1'
 ]
 
 setup(
@@ -101,7 +103,8 @@ setup(
 			'deploy = netprofile.cli:Deploy'
 		],
 		'netprofile.export.formats' : [
-			'csv = netprofile.export.csv:CSVExportFormat'
+			'csv = netprofile.export.csv:CSVExportFormat',
+			'pdf = netprofile.export.pdf:PDFExportFormat'
 		]
 	}
 )
