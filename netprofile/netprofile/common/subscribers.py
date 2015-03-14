@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Pyramid event subscribers
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -52,7 +52,9 @@ def on_new_request(event):
 
 	request.translate = auto_translate
 
-	request.response.headerlist.extend((
+def on_response(event):
+	res = event.response
+	res.headerlist.extend((
 #		('Content-Security-Policy', FIXME),
 		('X-Frame-Options', 'DENY'),
 		('X-Content-Type-Options', 'nosniff')

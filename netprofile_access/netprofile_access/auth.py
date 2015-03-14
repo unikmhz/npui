@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -35,7 +35,7 @@ from pyramid.security import (
 	unauthenticated_userid
 )
 from pyramid.events import (
-	NewRequest,
+	NewResponse,
 	ContextFound
 )
 from pyramid.authentication import SessionAuthenticationPolicy
@@ -80,13 +80,14 @@ def _auth_to_db(event):
 	else:
 		sess.execute(SetVariable('accesslogin', '[ACCESS:GUEST]'))
 
-def _new_request_csp(event):
+def _new_response(event):
 	request = event.request
+	response = event.response
 	# TODO: add static URL if set
 	csp = 'default-src \'self\' www.google.com; style-src \'self\' www.google.com \'unsafe-inline\''
 	if request.debug_enabled:
 		csp += '; script-src \'self\' www.google.com \'unsafe-inline\''
-	request.response.headerlist.extend((
+	response.headerlist.extend((
 		('Content-Security-Policy', csp),
 		('X-Frame-Options', 'DENY'),
 		('X-Content-Type-Options', 'nosniff')
@@ -108,6 +109,6 @@ def includeme(config):
 	config.set_authorization_policy(authz_policy)
 	config.set_authentication_policy(authn_policy)
 
-	config.add_subscriber(_new_request_csp, NewRequest)
+	config.add_subscriber(_new_response, NewResponse)
 	config.add_subscriber(_auth_to_db, ContextFound)
 
