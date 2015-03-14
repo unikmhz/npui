@@ -165,8 +165,8 @@ def do_login(request):
 
 @view_config(route_name='core.noop', permission='USAGE')
 def do_noop(request):
-	if request.referer:
-		return HTTPFound(location=request.referer)
+	# Force locale renegotiation if necessary
+	request.locale_name
 	return HTTPFound(location=request.route_url('core.home'))
 
 @view_config(route_name='core.logout')
