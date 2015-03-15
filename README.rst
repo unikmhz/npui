@@ -153,6 +153,7 @@ Bundled libraries
 
 * `SockJS JavaScript client`_, licensed under `MIT license <sockjs-mit>`_
 * TinyMCE_, licensed under `LGPL 2.1`_
+* `ipaddr.js`_, licensed under `MIT license <ipaddr-mit>`_
 
 .. _GPLv3: http://www.gnu.org/licenses/gpl.html
 .. _LGPL 2.1: https://www.gnu.org/licenses/lgpl-2.1.html
@@ -164,4 +165,6 @@ Bundled libraries
 .. _Google ipaddr-py: http://code.google.com/p/ipaddr-py/
 .. _pyramid_extdirect: https://github.com/jenner/pyramid_extdirect
 .. _TinyMCE: http://www.tinymce.com/
+.. _ipaddr.js: http://adilapapaya.com/docs/ipaddr.js/
+.. _ipaddr-mit: https://github.com/whitequark/ipaddr.js/blob/master/LICENSE
 
