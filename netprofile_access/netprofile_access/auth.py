@@ -91,9 +91,10 @@ def _new_response(event):
 		csp += '; script-src \'self\' www.google.com \'unsafe-inline\''
 	response.headerlist.extend((
 		('Content-Security-Policy', csp),
-		('X-Frame-Options', 'DENY'),
 		('X-Content-Type-Options', 'nosniff')
 	))
+	if 'X-Frame-Options' not in response.headers:
+		response.headerlist.append(('X-Frame-Options', 'DENY'))
 	if asbool(settings.get('netprofile.http.sts.enabled', False)):
 		try:
 			max_age = int(settings.get('netprofile.http.sts.max_age', 604800))

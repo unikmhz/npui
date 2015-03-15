@@ -57,11 +57,10 @@ def on_new_request(event):
 def on_response(event):
 	settings = event.request.registry.settings
 	res = event.response
-	res.headerlist.extend((
-#		('Content-Security-Policy', FIXME),
-		('X-Frame-Options', 'DENY'),
-		('X-Content-Type-Options', 'nosniff')
-	))
+	# FIXME: add CSP
+	res.headerlist.append(('X-Content-Type-Options', 'nosniff'))
+	if 'X-Frame-Options' not in res.headers:
+		res.headerlist.append(('X-Frame-Options', 'DENY'))
 	if asbool(settings.get('netprofile.http.sts.enabled', False)):
 		try:
 			max_age = int(settings.get('netprofile.http.sts.max_age', 604800))
