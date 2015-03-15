@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Setup and entry points
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -135,6 +135,10 @@ def main(global_config, **settings):
 	config.add_subscriber(
 		'netprofile.common.subscribers.on_new_request',
 		'pyramid.events.ContextFound'
+	)
+	config.add_subscriber(
+		'netprofile.common.subscribers.on_response',
+		'pyramid.events.NewResponse'
 	)
 	config.add_route_predicate('vhost', VHostPredicate)
 	config.add_view_predicate('vhost', VHostPredicate)
