@@ -429,6 +429,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	onPressReset: function()
 	{
 		store = this.getStore();
+		store.lastExtraParams = {};
 		if(this.filters)
 			this.filters.clearFilters(true);
 		if(this.ssearch)
