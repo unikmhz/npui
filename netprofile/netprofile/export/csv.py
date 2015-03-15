@@ -226,6 +226,7 @@ class CSVExportFormat(ExportFormat):
 		res.cache_control.no_store = True
 		res.cache_control.private = True
 		res.cache_control.must_revalidate = True
+		res.headerlist.append(('X-Frame-Options', 'SAMEORIGIN'))
 		if PY3:
 			res.content_disposition = \
 				'attachment; filename*=UTF-8\'\'%s-%s.csv' % (
