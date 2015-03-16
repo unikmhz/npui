@@ -169,6 +169,12 @@ class DefaultDocTemplate(doctemplate.BaseDocTemplate):
 		if orient in PAGE_ORIENTATIONS:
 			pgsz = PAGE_ORIENTATIONS[orient][1](pgsz)
 		kwargs['pagesize'] = pgsz
+		kwargs['creator'] = 'NetProfile'
+		req = kwargs.pop('request', None)
+		if req:
+			u = req.user
+			if u:
+				kwargs['author'] = (u.name_full + ' (' + u.login + ')').strip()
 
 		super(DefaultDocTemplate, self).__init__(filename, **kwargs)
 
