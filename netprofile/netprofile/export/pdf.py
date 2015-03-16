@@ -49,7 +49,11 @@ from reportlab.platypus import (
 	Paragraph,
 	LongTable
 )
-from reportlab.lib.units import inch
+from reportlab.lib.units import (
+	cm,
+	inch
+)
+from babel.dates import format_datetime
 
 _ = TranslationStringFactory('netprofile')
 
@@ -107,11 +111,37 @@ class PDFExportFormat(ExportFormat):
 				'fields'  : ('id', 'value'),
 				'data'    : tuple({ 'id' : k, 'value' : loc.translate(v[0]) } for k, v in PAGE_ORIENTATIONS.items())
 			}
+		}, {
+			'name'           : 'pdf_hmargins',
+			'fieldLabel'     : loc.translate(_('Horizontal Margins')),
+			'xtype'          : 'numberfield',
+			'allowBlank'     : False,
+			'autoStripChars' : True,
+			'minValue'       : 0.0,
+			'step'           : 0.2,
+			'value'          : 1.8
+		}, {
+			'name'           : 'pdf_vmargins',
+			'fieldLabel'     : loc.translate(_('Vertical Margins')),
+			'xtype'          : 'numberfield',
+			'allowBlank'     : False,
+			'autoStripChars' : True,
+			'minValue'       : 0.0,
+			'step'           : 0.2,
+			'value'          : 2.0
 		})
 
 	def export(self, extm, params, req):
 		pdf_pagesz = params.pop('pdf_pagesz', 'a4')
 		pdf_orient = params.pop('pdf_orient', 'portrait')
+		try:
+			pdf_hmargins = float(params.pop('pdf_hmargins', 1.8))
+		except ValueError:
+			pdf_hmargins = 1.8
+		try:
+			pdf_vmargins = float(params.pop('pdf_vmargins', 2.0))
+		except ValueError:
+			pdf_vmargins = 2.0
 		fields = []
 		flddef = []
 		col_widths = []
@@ -157,6 +187,7 @@ class PDFExportFormat(ExportFormat):
 		res.cache_control.no_store = True
 		res.cache_control.private = True
 		res.cache_control.must_revalidate = True
+		res.headerlist.append(('X-Frame-Options', 'SAMEORIGIN'))
 		if PY3:
 			res.content_disposition = \
 				'attachment; filename*=UTF-8\'\'%s-%s.pdf' % (
@@ -175,7 +206,20 @@ class PDFExportFormat(ExportFormat):
 				del params[prop]
 		data = extm.read(params, req)['records']
 
-		doc = DefaultDocTemplate(res, pagesize=pdf_pagesz, orientation=pdf_orient)
+		doc = DefaultDocTemplate(
+			res,
+			request=req,
+			pagesize=pdf_pagesz,
+			orientation=pdf_orient,
+			topMargin=pdf_vmargins * cm,
+			leftMargin=pdf_hmargins * cm,
+			rightMargin=pdf_hmargins * cm,
+			bottomMargin=pdf_vmargins * cm,
+			title=loc.translate(_('{0}, exported at {1}')).format(
+				loc.translate(extm.menu_name),
+				format_datetime(now, locale=req.current_locale)
+			)
+		)
 
 		total_width = doc.width - total_width - 12
 		if total_flex > 0:
@@ -190,6 +234,10 @@ class PDFExportFormat(ExportFormat):
 				table_widths.append(col_widths[idx])
 
 		ss = req.pdf_styles
+		# TODO: add custom extmodel option to specify rowHeights, as an
+		# optimization measure. Otherwise reportlab takes +Inf time on huge
+		# tables.
+		# Crude hack: rowHeights=([0.5 * inch] * (len(data) + 1)
 		table = LongTable(
 			tuple(storyteller(data, fields, flddef, localizer=loc, model=extm, styles=ss)),
 			colWidths=table_widths,
