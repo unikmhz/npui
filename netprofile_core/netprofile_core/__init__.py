@@ -517,31 +517,27 @@ class Module(ModuleBase):
 	def get_js(self, request):
 		if request.debug_enabled:
 			return (
-				'netprofile_core:static/extjs/ext-all-dev.js',
-				'netprofile_core:static/extensible/lib/extensible-all-debug.js',
-				'netprofile_core:static/tinymce/tiny_mce_src.js',
-				'netprofile_core:static/ipaddr/ipaddr.js',
-				'netprofile_core:static/sockjs/sockjs.js'
+				'netprofile_core:static/extern/extjs/ext-all-dev.js',
+				'netprofile_core:static/extern/tinymce/tiny_mce_src.js',
+				'netprofile_core:static/extern/ipaddr/ipaddr.js',
+				'netprofile_core:static/extern/sockjs/sockjs.js'
 			)
 		return (
-			'netprofile_core:static/extjs/ext-all.js',
-			'netprofile_core:static/extensible/lib/extensible-all.js',
-			'netprofile_core:static/tinymce/tiny_mce.js',
-			'netprofile_core:static/ipaddr/ipaddr.min.js',
-			'netprofile_core:static/sockjs/sockjs.min.js'
+			'netprofile_core:static/extern/extjs/ext-all.js',
+			'netprofile_core:static/extern/tinymce/tiny_mce.js',
+			'netprofile_core:static/extern/ipaddr/ipaddr.min.js',
+			'netprofile_core:static/extern/sockjs/sockjs.min.js'
 		)
 
 	def get_local_js(self, request, lang):
 		return (
-			'netprofile_core:static/extjs/locale/ext-lang-' + lang + '.js',
-			'netprofile_core:static/extensible/src/locale/extensible-lang-' + lang + '.js',
+			'netprofile_core:static/extern/extjs/locale/ext-lang-' + lang + '.js',
 			'netprofile_core:static/webshell/locale/webshell-lang-' + lang + '.js'
 		)
 
 	def get_css(self, request):
 		return (
-			'netprofile_core:static/extjs/resources/css/ext-all.css',
-			'netprofile_core:static/extensible/resources/css/extensible-all.css',
+			'netprofile_core:static/extern/extjs/resources/css/ext-all.css',
 			'netprofile_core:static/css/main.css'
 		)
 
