@@ -204,6 +204,8 @@ Ext.define('Ext.ux.grid.SimpleSearchFeature', {
 		this.cleanParams(options.params);
 		var params = this.buildQuery(this.getSearchData());
 		Ext.apply(options.params, params);
+		store.lastExtraParams = store.lastExtraParams || {};
+		Ext.apply(store.lastExtraParams, params);
 	},
 
 	/**

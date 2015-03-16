@@ -6,6 +6,31 @@ Ext.define('NetProfile.controller.DataStores', {
 		this.cons_stores = {};
 
 		NetProfile.StoreManager = this;
+
+		this.control({
+			'button[cls~=np-data-export]': {
+				click: this.onDataExport
+			}
+		});
+	},
+	onDataExport: function(btn, ev, opts)
+	{
+		var form = btn.up('form'),
+			grid = form.up('grid'),
+			store = grid.getStore(),
+			proxy = store.getProxy(),
+			params, form_params, format;
+
+		if(!store.lastOptions)
+			return; // FIXME: report error
+		params = proxy.getParams(store.lastOptions) || {};
+		if(store.lastExtraParams)
+			Ext.apply(params, store.lastExtraParams);
+		format = form.itemId;
+		form_params = form.getValues();
+		if(form_params)
+			Ext.apply(params, form_params);
+		Ext.getCmp('npws_filedl').loadExport(grid.apiModule, grid.apiClass, format, params);
 	},
 	onBeforeLoad: function(store, op)
 	{

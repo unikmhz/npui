@@ -3060,6 +3060,7 @@ class FileResponse(Response):
 		self.vary = ('Cookie',)
 		# TODO: self.cache_control
 		self.accept_ranges = 'bytes'
+		self.headerlist.append(('X-Frame-Options', 'SAMEORIGIN'))
 		if PY3:
 			self.content_disposition = \
 				'attachment; filename*=UTF-8\'\'%s' % (

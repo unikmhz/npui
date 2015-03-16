@@ -158,20 +158,6 @@ Ext.define('Ext.ux.grid.ExtraSearchFeature', {
 			tooltip: { text: me.searchTipText, title: me.searchText },
 			iconCls: 'ico-find'
 		};
-//					xtype: 'buttongroup',
-//					collapsible: true,
-//					collapsed: true,
-//					titleCollapse: true,
-//					title: 'Saved searches',
-//					titleAlign: 'left',
-//					hideCollapseTool: true,
-//					animCollapse: false,
-//					columns: 2,
-//					defaults: {
-//						margin: 3,
-//						labelAlign: 'right'
-//					},
-//					items: []
 		if(menui.length > 0)
 		{
 			config.menu = {
@@ -393,6 +379,8 @@ Ext.define('Ext.ux.grid.ExtraSearchFeature', {
 		this.cleanParams(options.params);
 		var params = this.buildQuery(this.getSearchData());
 		Ext.apply(options.params, params);
+		store.lastExtraParams = store.lastExtraParams || {};
+		Ext.apply(store.lastExtraParams, params);
 	},
 
 	/**

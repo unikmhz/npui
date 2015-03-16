@@ -33,6 +33,7 @@ import datetime as dt
 from dateutil.parser import parse as dparse
 
 from pyramid.response import Response
+from pyramid.security import has_permission
 from pyramid.i18n import get_locale_name
 from pyramid.view import (
 	forbidden_view_config,
@@ -271,6 +272,33 @@ def file_mnt(request):
 	)
 	resp.make_body()
 	return resp
+
+@view_config(route_name='core.export', permission='USAGE')
+def data_export(request):
+	moddef = request.matchdict.get('module')
+	objcls = request.matchdict.get('model')
+	if (not moddef) or (not objcls):
+		return HTTPNotFound()
+	mmgr = request.registry.getUtility(IModuleManager)
+	mb = mmgr.get_module_browser()
+	if moddef not in mb:
+		return HTTPNotFound()
+	mod = mb[moddef]
+	if objcls not in mod:
+		return HTTPNotFound()
+	model = mod[objcls]
+	rcap = model.cap_read
+	if rcap and (not has_permission(rcap, request.context, request)):
+		return HTTPForbidden()
+	csrf = request.POST.get('csrf')
+	fmt = request.POST.get('format')
+	params = request.POST.get('params')
+	if (not csrf) or (csrf != request.get_csrf()):
+		return HTTPForbidden()
+	if not fmt:
+		raise ValueError('No export format specified')
+	fmt = mmgr.get_export_format(fmt)
+	return fmt.export(model, json.loads(params), request)
 
 def dpane_simple(model, request):
 	tabs = []
