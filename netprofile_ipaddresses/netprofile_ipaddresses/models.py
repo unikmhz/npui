@@ -253,6 +253,7 @@ class IPv4Address(Base):
 	host = relationship(
 		'Host',
 		innerjoin=True,
+		lazy='joined',
 		backref=backref(
 			'ipv4_addresses',
 			cascade='all, delete-orphan',
@@ -448,6 +449,7 @@ class IPv6Address(Base):
 	host = relationship(
 		'Host',
 		innerjoin=True,
+		lazy='joined',
 		backref=backref(
 			'ipv6_addresses',
 			cascade='all, delete-orphan',
