@@ -1,49 +1,62 @@
 /**
  * @class NetProfile.view.ModelSelect
- * @extends Ext.form.field.Trigger
+ * @extends Ext.form.field.Text
  */
 Ext.define('NetProfile.view.ModelSelect', {
-	extend: 'Ext.form.field.Trigger',
+	extend: 'Ext.form.field.Text',
 	alias: 'widget.modelselect',
 	requires: [
 		'Ext.ux.window.CenterWindow'
 	],
-	apiModule: null,
-	apiClass: null,
-	hiddenField: null,
-	gridConfig: null,
-	extraParams: null,
-	showLink: true,
-	trigger1Cls: 'x-form-clear-trigger',
-	trigger2Cls: ' ',
-	trigger3Cls: 'x-form-search-trigger',
 
 	chooseText: 'Choose an object',
 
+	config: {
+		apiModule: null,
+		apiClass: null,
+		hiddenField: null,
+		gridConfig: null,
+		extraParams: null,
+		showLink: true,
+		triggers: {
+			clear: {
+				cls: 'x-form-clear-trigger',
+				weight: 1,
+				hidden: true,
+				handler: function()
+				{
+					this.onTriggerClear();
+				}
+			},
+			select: {
+				weight: 2,
+				hidden: false,
+				handler: function()
+				{
+					this.onTriggerSelect();
+				}
+			},
+			link: {
+				cls: 'x-form-search-trigger',
+				weight: 3,
+				hidden: true,
+				handler: function()
+				{
+					this.onTriggerLink();
+				}
+			}
+		}
+	},
+
 	initComponent: function()
 	{
-		if(!this.allowBlank)
-		{
-			this.trigger1Cls = this.trigger2Cls;
-			this.onTrigger1Click = this.onTrigger2Click;
-			this.trigger2Cls = undefined;
-			this.onTrigger2Click = undefined;
-		}
-		if(!this.showLink)
-		{
-			this.trigger3Cls = undefined;
-			this.onTrigger3Click = undefined;
-		}
-		else if(!this.allowBlank)
-		{
-			this.trigger2Cls = this.trigger3Cls;
-			this.onTrigger2Click = this.onTrigger3Click;
-			this.trigger3Cls = undefined;
-			this.onTrigger3Click = undefined;
-		}
+		if(this.allowBlank)
+			this.getTrigger('clear').show();
+		if(this.showLink)
+			this.getTrigger('link').show();
 		this.callParent(arguments);
 	},
-	onTrigger1Click: function(ev)
+	onTriggerClear: function()
 	{
 		var form = this.up('form'),
 			hf = form.down('field[name=' + this.hiddenField + ']');
@@ -54,7 +67,7 @@ Ext.define('NetProfile.view.ModelSelect', {
 
 		this.setValue('');
 	},
-	onTrigger2Click: function(ev)
+	onTriggerSelect: function()
 	{
 		var sel_win = Ext.create('Ext.ux.window.CenterWindow', {
 //			animateTarget: this,
@@ -84,7 +97,7 @@ Ext.define('NetProfile.view.ModelSelect', {
 		sel_win.add(sel_grid);
 		sel_win.show();
 	},
-	onTrigger3Click: function(ev)
+	onTriggerLink: function()
 	{
 		var ff,
 			store = NetProfile.StoreManager.getStore(

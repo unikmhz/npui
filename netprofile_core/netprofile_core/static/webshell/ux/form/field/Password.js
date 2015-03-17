@@ -1,10 +1,22 @@
 Ext.define('Ext.ux.form.field.Password', {
-	extend: 'Ext.form.field.Trigger',
+	extend: 'Ext.form.field.Text',
 	alias: 'widget.passwordfield',
 
-	inputType: 'password',
-	selectOnFocus: true,
-	trigger1Cls: 'x-form-clear-trigger',
+	config: {
+		inputType: 'password',
+		selectOnFocus: true,
+		triggers: {
+			clear: {
+				cls: 'x-form-clear-trigger',
+				weight: 1,
+				handler: function()
+				{
+					this.setRawValue(null);
+					return this.isValid();
+				}
+			}
+		}
+	},
 
 	initComponent: function()
 	{
@@ -29,11 +41,6 @@ Ext.define('Ext.ux.form.field.Password', {
 			v = '• • •';
 		}
 		return this.callParent([v]);
-	},
-	onTrigger1Click: function(ev)
-	{
-		this.setRawValue(null);
-		return this.isValid();
 	},
 	getModelData: function()
 	{
