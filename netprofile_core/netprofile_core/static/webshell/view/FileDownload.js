@@ -7,7 +7,7 @@ Ext.define('NetProfile.view.FileDownload', {
 	alias: 'widget.filedownload',
 	autoEl: {
 		tag: 'iframe',
-		cls: 'x-hidden',
+		cls: 'x-hidden-display',
 		name: 'npws_filedl_frame',
 		src: Ext.SSL_SECURE_URL
 	},
@@ -45,24 +45,28 @@ Ext.define('NetProfile.view.FileDownload', {
 	loadExport: function(moddef, model, fmt, par)
 	{
 		var uri = NetProfile.baseURL + '/core/file/export/' + moddef + '/' + model,
-			form;
+			csrf = null,
+			form, headers;
 
 		if(!par)
 			par = {};
+		headers = Ext.Ajax.getDefaultHeaders();
 		form = Ext.create('Ext.form.Panel', {
 			hidden: true,
 			stateful: false,
 			standardSubmit: true
 		});
+		par = {
+			'format' : fmt,
+			'params' : Ext.JSON.encode(par)
+		};
+		if('X-CSRFToken' in headers)
+			par['csrf'] = headers['X-CSRFToken'];
 		form.getForm().submit({
 			url: uri,
 			method: 'POST',
 			target: 'npws_filedl_frame',
-			params: {
-				'csrf'   : Ext.Ajax.defaultHeaders['X-CSRFToken'],
-				'format' : fmt,
-				'params' : Ext.JSON.encode(par)
-			}
+			params: par
 		});
 		form.destroy();
 	},

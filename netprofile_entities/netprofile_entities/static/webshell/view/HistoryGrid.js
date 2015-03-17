@@ -9,7 +9,6 @@ Ext.define('NetProfile.entities.view.HistoryGrid', {
 		'Ext.grid.*',
 		'Ext.form.field.Number',
 		'Ext.form.field.Date',
-		'Ext.ux.RowExpander',
 		'NetProfile.entities.store.EntityHistory'
 	],
 
@@ -197,7 +196,7 @@ Ext.define('NetProfile.entities.view.HistoryGrid', {
 					groupParam: '__group',
 					reader: {
 						type: 'json',
-						root: 'history',
+						rootProperty: 'history',
 						successProperty: 'success',
 						totalProperty: 'total'
 					}

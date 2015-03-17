@@ -3,7 +3,7 @@ Ext.define('NetProfile.model.PrivCap', {
 	fields: [{
 		name: 'privid',
 		type: 'int',
-		useNull: false,
+		allowNull: false,
 		allowBlank: false
 	}, {
 		name: 'owner',
@@ -13,24 +13,24 @@ Ext.define('NetProfile.model.PrivCap', {
 	}, {
 		name: 'code',
 		type: 'string',
-		useNull: false,
+		allowNull: false,
 		allowBlank: false
 	}, {
 		name: 'name',
 		type: 'string',
-		useNull: false,
+		allowNull: false,
 		allowBlank: false,
 		persist: false
 	}, {
 		name: 'hasacls',
 		type: 'boolean',
-		useNull: false,
+		allowNull: false,
 		allowBlank: false,
 		persist: false
 	}, {
 		name: 'value',
 		type: 'boolean',
-		useNull: true,
+		allowNull: true,
 		allowBlank: true
 	}],
 	idProperty: 'privid'

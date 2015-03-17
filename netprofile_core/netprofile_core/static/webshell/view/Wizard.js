@@ -113,14 +113,6 @@ Ext.define('NetProfile.view.Wizard', {
 
 		this.callParent();
 
-		this.addEvents(
-			'fieldchanged',
-			'beforeaddfields',
-			'wizardloaded',
-			'wizardloadfailed',
-			'submitsuccess',
-			'submitfailure'
-		);
 		this.on('beforerender', this.loadWizard, this);
 		this.on('fieldchanged', this.remoteValidate, this, { buffer: 500 });
 	},

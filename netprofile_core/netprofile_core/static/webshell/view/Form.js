@@ -14,7 +14,7 @@ Ext.define('NetProfile.view.Form', {
 	statics: {
 		formdef: {}
 	},
-	autoScroll: true,
+	scrollable: 'vertical',
 	remoteValidation: false,
 	readOnly: false,
 	bodyPadding: 5,
@@ -85,13 +85,6 @@ Ext.define('NetProfile.view.Form', {
 
 		this.callParent();
 
-		this.addEvents(
-			'fieldchanged',
-			'formloaded',
-			'formloadfailed',
-			'submitsuccess',
-			'submitfailure'
-		);
 		this.on('beforerender', this.loadForm, this);
 		this.on('fieldchanged', this.remoteValidate, this, { buffer: 500 });
 	},

@@ -493,7 +493,7 @@ class Module(ModuleBase):
 					}
 				},),
 				'plugins'     : ({
-					'ptype'    : 'manualediting',
+					'ptype'    : 'cellediting',
 					'pluginId' : 'editor'
 				},),
 				'useArrows'   : False,

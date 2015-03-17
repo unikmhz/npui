@@ -9,7 +9,7 @@ Ext.define('NetProfile.view.WizardPane', {
 	border: 0,
 	bodyPadding: 5,
 	width: 400,
-	autoScroll: true,
+	scrollable: 'vertical',
 	doValidation: true,
 	doGetValues: true,
 	remotePrev: false,

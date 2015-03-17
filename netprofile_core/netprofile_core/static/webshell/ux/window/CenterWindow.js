@@ -4,7 +4,10 @@ Ext.define('Ext.ux.window.CenterWindow', {
 	requires: [
 	],
 	layout: 'fit',
+	shrinkWrap: 3,
+	minHeight: 200,
 	minWidth: 500,
+	width: 500,
 	constrain: true,
 	constrainHeader: true,
 	maximizable: true,

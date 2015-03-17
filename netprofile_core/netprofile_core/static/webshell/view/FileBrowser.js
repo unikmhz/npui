@@ -14,8 +14,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 		'Ext.XTemplate',
 		'NetProfile.store.core.File',
 		'NetProfile.view.FileIconView',
-		'Ext.ux.form.RightsBitmaskField',
-		'Ext.ux.grid.plugin.ManualEditing'
+		'Ext.ux.form.RightsBitmaskField'
 	],
 
 	border: 0,
@@ -596,7 +595,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 						mode: 'MULTI'
 					},
 					plugins: [{
-						ptype: 'manualediting',
+						ptype: 'cellediting',
 						pluginId: 'editor'
 					}],
 					viewConfig: {

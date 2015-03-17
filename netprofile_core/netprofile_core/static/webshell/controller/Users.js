@@ -18,7 +18,7 @@ Ext.define('NetProfile.controller.Users', {
 			}
 		});
 	},
-	onStoreLoad: function(store, node, recs, succ)
+	onStoreLoad: function(store, recs, succ, op, node, opts)
 	{
 		var uids, obj, i;
 

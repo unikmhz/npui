@@ -79,7 +79,7 @@ Ext.define('NetProfile.view.CapabilityGrid', {
 				xtype: 'combobox',
 				format: 'string',
 				editable: false,
-				valueField: 'id',
+				valueField: 'xid',
 				displayField: 'value',
 				forceSelection: false,
 				allowBlank: true,
@@ -87,15 +87,23 @@ Ext.define('NetProfile.view.CapabilityGrid', {
 				emptyText: this.textNotDefined,
 				store: {
 					xtype: 'simplestore',
-					fields: ['id', 'value'],
+					fields: [{
+						name: 'xid',
+						type: 'boolean',
+						allowNull: true,
+						allowBlank: true
+					}, {
+						name: 'value',
+						type: 'string'
+					}],
 					data: [{
-						id: null,
+						xid: null,
 						value: this.textNotDefined
 					}, {
-						id: true,
+						xid: true,
 						value: this.textAllowed
 					}, {
-						id: false,
+						xid: false,
 						value: this.textDenied
 					}]
 				}
@@ -163,13 +171,13 @@ Ext.define('NetProfile.view.CapabilityGrid', {
 						type: 'json',
 						idProperty: 'privid',
 						messageProperty: 'message',
-						root: 'records',
+						rootProperty: 'records',
 						successProperty: 'success',
 						totalProperty: 'total'
 					},
 					writer: {
 						type: 'json',
-						root: 'records',
+						rootProperty: 'records',
 						writeAllFields: true,
 						allowSingle: false
 					},

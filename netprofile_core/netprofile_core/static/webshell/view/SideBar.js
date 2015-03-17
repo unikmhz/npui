@@ -7,7 +7,6 @@ Ext.define('NetProfile.view.SideBar', {
 		'Ext.tree.plugin.TreeViewDragDrop',
 		'Ext.util.History',
 		'Ext.state.Manager',
-		'Ext.ux.grid.plugin.ManualEditing',
 		'Ext.layout.container.Accordion',
 		'NetProfile.view.TopBar'
 	],
@@ -174,11 +173,14 @@ Ext.define('NetProfile.view.SideBar', {
 	},
 	onAfterRender: function()
 	{
-		this.onHistoryChange(Ext.History.getToken());
 		Ext.History.on({
 			change: this.onHistoryChange,
 			scope: this
 		});
+		this.up('viewport').on('afterlayout', function()
+		{
+			this.onHistoryChange(Ext.History.getToken());
+		}, this, { single: true });
 	},
 	doSelectMenuView: function(xview)
 	{
