@@ -166,38 +166,6 @@ Ext.define ('Ext.ux.WebSocket', {
 		me.initConfig (cfg);
 		me.mixins.observable.constructor.call (me, cfg);
 		
-		me.addEvents (
-			/**
-			 * @event open
-			 * Fires after the websocket has been connected.
-			 * @param {Ext.ux.WebSocket} this The websocket
-			 */
-			'open' ,
-			
-			/**
-			 * @event error
-			 * Fires after an error occured
-			 * @param {Ext.ux.WebSocket} this The websocket
-			 * @param {Object} error The error object to display
-			 */
-			'error' ,
-			
-			/**
-			 * @event close
-			 * Fires after the websocket has been disconnected.
-			 * @param {Ext.ux.WebSocket} this The websocket
-			 */
-			'close' ,
-			
-			/**
-			 * @event message
-			 * Fires after a message is arrived from the server.
-			 * @param {Ext.ux.WebSocket} this The websocket
-			 * @param {String/Object} message The message arrived
-			 */
-			'message'
-		);
-		
 		try {
 			me.ws = Ext.isEmpty (me.protocol) ? new SockJS (me.url) : new SockJS (me.url, me.protocol);
 			
