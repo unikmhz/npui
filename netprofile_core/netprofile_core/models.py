@@ -5732,7 +5732,7 @@ def _wizfld_import_cal(fld, model, req, **kwargs):
 			'model'         : 'Extensible.calendar.data.CalendarModel',
 			'directFn'      : 'NetProfile.api.Calendar.cal_avail',
 			'totalProperty' : 'total',
-			'root'          : 'calendars'
+			'rootProperty'  : 'calendars'
 		},
 		'fieldLabel'     : _('Calendar'),
 		'tpl'            : '<tpl for="."><div class="x-boundlist-item">{Owner}: {Title}</div></tpl>'

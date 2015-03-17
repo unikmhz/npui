@@ -427,7 +427,8 @@ class Entity(Base):
 		default=None,
 		server_default=FetchedValue(),
 		info={
-			'header_string' : _('Created')
+			'header_string' : _('Created'),
+			'read_only'     : True
 		}
 	)
 	modification_time = Column(
@@ -438,7 +439,8 @@ class Entity(Base):
 		nullable=False,
 #		default=zzz,
 		info={
-			'header_string' : _('Modified')
+			'header_string' : _('Modified'),
+			'read_only'     : True
 		}
 	)
 	created_by_id = Column(
@@ -450,7 +452,8 @@ class Entity(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Created')
+			'header_string' : _('Created'),
+			'read_only'     : True
 		}
 	)
 	modified_by_id = Column(
@@ -462,7 +465,8 @@ class Entity(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Modified')
+			'header_string' : _('Modified'),
+			'read_only'     : True
 		}
 	)
 	description = Column(

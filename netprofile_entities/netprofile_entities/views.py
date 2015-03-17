@@ -110,7 +110,7 @@ def dpane_entities(model, request):
 		},
 		'items' : [{
 			'xtype'  : 'panel',
-			'autoScroll' : True,
+			'scrollable' : 'vertical',
 			'border' : 1,
 			'flex'   : 2,
 			'layout' : {
@@ -118,8 +118,9 @@ def dpane_entities(model, request):
 				'align' : 'stretch'
 			},
 			'items'  : [{
-				'xtype'  : 'npform',
-				'border' : 0
+				'xtype'      : 'npform',
+				'scrollable' : False,
+				'border'     : 0
 			}]
 		}, {
 			'xtype' : 'splitter'
