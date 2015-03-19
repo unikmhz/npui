@@ -20,7 +20,7 @@ Ext.define('NetProfile.view.ModelSelect', {
 		showLink: true,
 		triggers: {
 			clear: {
-				cls: 'x-form-clear-trigger',
+				cls: Ext.baseCSSPrefix + 'form-clear-trigger',
 				weight: 1,
 				hidden: true,
 				handler: function()
@@ -37,7 +37,7 @@ Ext.define('NetProfile.view.ModelSelect', {
 				}
 			},
 			link: {
-				cls: 'x-form-search-trigger',
+				cls: Ext.baseCSSPrefix + 'form-search-trigger',
 				weight: 3,
 				hidden: true,
 				hideOnReadOnly: false,
