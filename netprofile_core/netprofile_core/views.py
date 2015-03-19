@@ -114,7 +114,19 @@ def home_screen(request):
 	}
 	return tpldef
 
-@forbidden_view_config()
+@notfound_view_config(vhost='MAIN', renderer='netprofile_core:templates/404.mak')
+def do_notfound(request):
+	mmgr = request.registry.getUtility(IModuleManager)
+	lang = get_locale_name(request)
+	request.response.status_code = 404
+	return {
+		'res_css' : mmgr.get_css(request),
+		'res_js'  : mmgr.get_js(request),
+		'res_ljs' : mmgr.get_local_js(request, lang),
+		'cur_loc' : lang
+	}
+
+@forbidden_view_config(vhost='MAIN')
 def do_forbidden(request):
 	if authenticated_userid(request):
 		return HTTPForbidden()
