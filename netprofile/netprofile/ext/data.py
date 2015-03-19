@@ -223,6 +223,7 @@ _EDITOR_XTYPE_MAP = {
 	UnicodeText   : 'textareafield'
 }
 
+# Default is 'string'
 _JS_TYPE_MAP = {
 	BigInteger   : 'int', # ?
 	Boolean      : 'boolean',
@@ -248,6 +249,37 @@ _JS_TYPE_MAP = {
 	UInt16       : 'int',
 	UInt32       : 'int',
 	UInt64       : 'int' # ?
+}
+
+# boolean date list number string
+# Default is 'string'
+_FILTER_TYPE_MAP = {
+	BigInteger   : 'npnumber', # ?
+	Boolean      : 'boolean',
+	Date         : 'npdate',
+	DateTime     : 'npdate',
+	DeclEnumType : 'list',
+	Float        : 'npnumber',
+	Money        : 'npnumber', # ?
+	NPBoolean    : 'boolean',
+	Numeric      : 'npnumber', # ?
+	Int8         : 'npnumber',
+	Int16        : 'npnumber',
+	Int32        : 'npnumber',
+	Int64        : 'npnumber', # ?
+	Integer      : 'npnumber',
+#	IPv4Address  : FIXME,
+#	IPv6Address  : FIXME,
+	IPv6Offset   : 'npnumber', # ?
+	PickleType   : 'none',
+	SmallInteger : 'npnumber',
+#	Time         : FIXME,
+	TIMESTAMP    : 'npdate',
+	Traffic      : 'npnumber', # ?
+	UInt8        : 'npnumber',
+	UInt16       : 'npnumber',
+	UInt32       : 'npnumber',
+	UInt64       : 'npnumber' # ?
 }
 
 _DATE_FMT_MAP = {
@@ -324,7 +356,12 @@ class ExtColumn(object):
 
 	@property
 	def filter_type(self):
-		return self.column.info.get('filter_type', 'default')
+		typecls = self.column.type.__class__
+		ft = self.column.info.get('filter_type', _FILTER_TYPE_MAP.get(typecls, 'string'))
+		# TODO: remove this hack after all models are updated
+		if ft == 'list':
+			return 'nplist'
+		return ft
 
 	@property
 	def reader(self):
@@ -540,7 +577,7 @@ class ExtColumn(object):
 				return False
 			return bool(param)
 		if issubclass(typecls, _DECIMAL_SET):
-			return decimal.Decimal(param)
+			return decimal.Decimal(str(param))
 		if typecls is DeclEnumType:
 			if isinstance(param, EnumSymbol):
 				return param
@@ -773,7 +810,7 @@ class ExtColumn(object):
 		conf = {
 			'name'       : self.name,
 			'allowBlank' : self.nullable,
-			'useNull'    : self.nullable,
+			'allowNull'  : self.nullable,
 			'type'       : self.js_type
 		}
 		if conf['type'] == 'date':
@@ -786,7 +823,7 @@ class ExtColumn(object):
 			if self.model.__mapper__.polymorphic_on.name == self.name:
 				conf.update({
 					'allowBlank'   : False,
-					'useNull'      : False,
+					'allowNull'    : False,
 					'defaultValue' : self.model.__mapper__.polymorphic_identity
 				})
 		return conf
@@ -834,6 +871,12 @@ class ExtColumn(object):
 		cw = self.cell_class
 		if cw is not None:
 			conf['tdCls'] = cw
+		ftype = self.filter_type
+		filter_conf = None
+		if ftype == 'none':
+			conf['filterable'] = False
+		else:
+			filter_conf = { 'type' : ftype }
 		if issubclass(typecls, _DECIMAL_SET):
 			conf.update({
 				'align'  : 'right',
@@ -855,6 +898,8 @@ class ExtColumn(object):
 				conf['format'] = 'd.m.Y'
 			if issubclass(typecls, Time):
 				conf['format'] = 'H:i:s'
+		if filter_conf:
+			conf['filter'] = filter_conf
 		if typecls is DeclEnumType:
 			chx = {}
 			chf = []
@@ -862,30 +907,13 @@ class ExtColumn(object):
 				tdescr = loc.translate(sym.description)
 				chx[sym.value] = tdescr
 				chf.append({ 'id' : sym.value, 'value' : tdescr })
-			conf['valueMap'] = chx
-			conf['filter'] = {
-				'type'       : 'list',
-				'options'    : chf,
-				'labelField' : 'value'
-			}
-		return conf
-
-	def get_related_cfg(self):
-		fks = self.column.foreign_keys
-		if len(fks) == 0:
-			return None
-		conf = []
-		for fk in fks:
-			cls = _table_to_class(fk.column.table.name)
-			conf.append({
-				'type'       : 'belongsTo',
-				'model'      : 'NetProfile.model.%s.%s' % (
-					cls.__moddef__,
-					cls.__name__
-				),
-				'foreignKey' : self.name,
-				'primaryKey' : fk.column.name
-			})
+			if ('filter' in conf) and (conf['filter']['type'] == 'nplist'):
+				conf['valueMap'] = chx
+				conf['filter'].update({
+					'idField'    : 'id',
+					'labelField' : 'value',
+					'options'    : chf
+				})
 		return conf
 
 	def append_data(self, obj):
@@ -1000,9 +1028,6 @@ class ExtPseudoColumn(ExtColumn):
 			conf['tdCls'] = cw
 		return conf
 
-	def get_related_cfg(self):
-		return []
-
 	def append_data(self, obj):
 		pass
 
@@ -1055,19 +1080,16 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 		conf = super(ExtManyToOneRelationshipColumn, self).get_column_cfg(req)
 
 		ftype = self.filter_type
-		if ftype == 'none':
-			conf['filterable'] = False
-		if ftype == 'list':
+		if ftype == 'nplist':
 			rcol = self.prop.remote_side.copy().pop()
 			if rcol is not None:
 				rmodel = _table_to_class(rcol.table.name)
 				if rmodel is not None:
 					conf['filter'] = {
-						'queryIndex' : self.name,
-						'optStore'   : 'NetProfile.store.' + rmodel.__moddef__ + '.' + rmodel.__name__,
+						'type'       : 'nplist',
+						'optStore'   : 'NetProfile.store.{0}.{1}'.format(rmodel.__moddef__, rmodel.__name__),
 						'idField'    : rcol.name,
-						'labelField' : '__str__',
-						'type'       : 'list'
+						'labelField' : '__str__'
 					}
 
 		return conf
@@ -1111,7 +1133,7 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 		return {
 			'name'       : self.prop.key,
 			'allowBlank' : self.nullable,
-			'useNull'    : self.nullable,
+			'allowNull'  : self.nullable,
 			'type'       : 'string',
 			'persist'    : False
 		}
@@ -1186,7 +1208,7 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 		return {
 			'name'       : self.name,
 			'allowBlank' : True,
-			'useNull'    : True,
+			'allowNull'  : True,
 			'type'       : 'auto'
 		}
 
@@ -1450,7 +1472,7 @@ class ExtModel(object):
 			ret.append({
 				'name'       : '__str__',
 				'allowBlank' : True,
-				'useNull'    : True,
+				'allowNull'  : True,
 				'type'       : 'string',
 				'persist'    : False
 			})
@@ -1458,7 +1480,7 @@ class ExtModel(object):
 			ret.append({
 				'name'       : '__poly',
 				'allowBlank' : True,
-				'useNull'    : True,
+				'allowNull'  : True,
 				'type'       : 'auto',
 				'persist'    : False
 			})
@@ -1466,7 +1488,7 @@ class ExtModel(object):
 			ret.append({
 				'name'       : extra,
 				'allowBlank' : True,
-				'useNull'    : True,
+				'allowNull'  : True,
 				'type'       : 'auto',
 				'persist'    : False
 			})
@@ -1479,14 +1501,6 @@ class ExtModel(object):
 			for xf in xs:
 				ret.append(xf.get_cfg(req))
 			return ret
-
-	def get_related_cfg(self):
-		ret = []
-		for cname, col in self.get_columns().items():
-			colrel = col.get_related_cfg()
-			if colrel is not None:
-				ret.extend(colrel)
-		return ret
 
 	def get_model_validations(self):
 		ret = []
@@ -1559,82 +1573,76 @@ class ExtModel(object):
 
 	def _apply_filters(self, query, trans, params, pname='__filter'):
 		flist = params[pname]
-		for fcol in flist:
+		for fltr in flist:
+			fcol = fltr.get('property', None)
+			operator = fltr.get('operator', 'eq')
+			value = fltr.get('value', None)
 			if fcol in trans:
 				prop = trans[fcol]
 				coldef = self.model.__mapper__.c[prop.key]
 				colcls = coldef.type.__class__
 				col = getattr(self.model, prop.key)
 				extcol = self.get_column(fcol)
-				for fkey, fval in flist[fcol].items():
-					if fkey == 'type':
+
+				if isinstance(value, list):
+					if operator == 'in':
+						query = query.filter(col.in_(value))
 						continue
-					if isinstance(fval, list):
-						if fkey == 'in':
-							query = query.filter(col.in_(fval))
-							continue
-						if fkey == 'notin':
-							query = query.filter(not col.in_(fval))
-							continue
-						# FIXME: parse_param chokes on list values
+					if operator == 'notin':
+						query = query.filter(not col.in_(value))
 						continue
-					fval = extcol.parse_param(fval)
-					if fkey == 'eq':
-						query = query.filter(col == fval)
+					# FIXME: parse_param chokes on list values
+					continue
+
+				value = extcol.parse_param(value)
+				if operator in ('eq', '=', '==', '==='):
+					query = query.filter(col == value)
+					continue
+				if operator in ('ne', '!=', '!=='):
+					query = query.filter(col != value)
+					continue
+				if issubclass(colcls, _DATE_SET):
+					if value.tzinfo is not None:
+						value = value.astimezone(tzlocal())
+					if value is None:
 						continue
-					if fkey == 'ne':
-						query = query.filter(col != fval)
+					if operator in ('gt', '>'):
+						query = query.filter(col > value)
+					if operator in ('lt', '<'):
+						query = query.filter(col < value)
+					if operator in ('ge', '>='):
+						query = query.filter(col >= value)
+					if operator in ('le', '<='):
+						query = query.filter(col <= value)
+					continue
+				if issubclass(colcls, _INTEGER_SET) or issubclass(colcls, _DECIMAL_SET) or issubclass(colcls, _IPADDR_SET):
+					if value is None:
 						continue
-					if issubclass(colcls, _DATE_SET):
-						if fval.tzinfo is not None:
-							fval = fval.astimezone(tzlocal())
-						if fval is None:
-							continue
-						if fkey == 'gt':
-							query = query.filter(col > fval)
-						if fkey == 'lt':
-							query = query.filter(col < fval)
-						if fkey == 'ge':
-							query = query.filter(col >= fval)
-						if fkey == 'le':
-							query = query.filter(col <= fval)
+					if operator in ('gt', '>'):
+						query = query.filter(col > value)
+					if operator in ('lt', '<'):
+						query = query.filter(col < value)
+					if operator in ('ge', '>='):
+						query = query.filter(col >= value)
+					if operator in ('le', '<='):
+						query = query.filter(col <= value)
+					continue
+				if issubclass(colcls, _STRING_SET):
+					if value is None:
 						continue
-					if issubclass(colcls, _INTEGER_SET) or issubclass(colcls, _DECIMAL_SET) or issubclass(colcls, _IPADDR_SET):
-						if fval is None:
-							continue
-						if fkey == 'gt':
-							query = query.filter(col > fval)
-							continue
-						if fkey == 'lt':
-							query = query.filter(col < fval)
-							continue
-						if fkey == 'ge':
-							query = query.filter(col >= fval)
-							continue
-						if fkey == 'le':
-							query = query.filter(col <= fval)
-							continue
-					if issubclass(colcls, _STRING_SET):
-						if fval is None:
-							continue
-						if fkey == 'contains':
-							query = query.filter(col.contains(fval))
-							continue
-						if fkey == 'ncontains':
-							query = query.filter(not col.contains(fval))
-							continue
-						if fkey == 'startswith':
-							query = query.filter(col.startswith(fval))
-							continue
-						if fkey == 'nstartswith':
-							query = query.filter(not col.startswith(fval))
-							continue
-						if fkey == 'endswith':
-							query = query.filter(col.endswith(fval))
-							continue
-						if fkey == 'nendswith':
-							query = query.filter(not col.endswith(fval))
-							continue
+					if operator in ('contains', 'like'):
+						query = query.filter(col.contains(value))
+					if operator in ('ncontains', 'notlike'):
+						query = query.filter(not col.contains(value))
+					if operator == 'startswith':
+						query = query.filter(col.startswith(value))
+					if operator == 'nstartswith':
+						query = query.filter(not col.startswith(value))
+					if operator == 'endswith':
+						query = query.filter(col.endswith(value))
+					if operator == 'nendswith':
+						query = query.filter(not col.endswith(value))
+					continue
 		return query
 
 	def _get_trans(self, cols):
@@ -1827,7 +1835,8 @@ class ExtModel(object):
 						cols[p] = rcols[p]
 					elif p in self.model.__mapper__.attrs:
 						attr = self.model.__mapper__.attrs[p]
-						if len(attr.columns) > 0:
+						# FIXME: wtf is this?
+						if hasattr(attr, 'columns') and (len(attr.columns) > 0):
 							cols[p] = self.get_column(p)
 						else:
 							continue
@@ -1931,7 +1940,8 @@ class ExtModel(object):
 						cols[p] = rcols[p]
 					elif p in self.model.__mapper__.attrs:
 						attr = self.model.__mapper__.attrs[p]
-						if len(attr.columns) > 0:
+						# FIXME: wtf is this?
+						if hasattr(attr, 'columns') and (len(attr.columns) > 0):
 							cols[p] = self.get_column(p)
 						else:
 							continue

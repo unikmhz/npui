@@ -24,64 +24,50 @@ Ext.onReady(function()
 		menuText: '<i>Действия</i>'
 	});
 
-	Ext.define('Ext.locale.ru.ux.grid.FiltersFeature', {
-		override: 'Ext.ux.grid.FiltersFeature',
+	Ext.define('Ext.locale.ru.grid.filters.Filters', {
+		override: 'Ext.grid.filters.Filters',
 		menuFilterText: 'Фильтры'
 	});
-	Ext.define('Ext.locale.ru.ux.grid.filter.BooleanFilter', {
-		override: 'Ext.ux.grid.filter.BooleanFilter',
+	Ext.define('Ext.locale.ru.grid.filters.filter.String', {
+		override: 'Ext.grid.filters.filter.String',
+		emptyText: 'Введите текст...'
+	});
+	Ext.define('Ext.locale.ru.grid.filters.filter.Boolean', {
+		override: 'Ext.grid.filters.filter.Boolean',
 		yesText: 'Да',
 		noText: 'Нет'
 	});
-	Ext.define('Ext.locale.ru.ux.grid.filter.DateFilter', {
-		override: 'Ext.ux.grid.filter.DateFilter',
-		afterText: 'Позднее',
-		beforeText: 'Раньше',
-		dateFormat: 'd.m.Y',
-		onText: 'В'
+	Ext.define('Ext.locale.ru.grid.filters.filter.Date', {
+		override: 'Ext.grid.filters.filter.Date',
+		config: {
+			fields: {
+				gt: { text: 'Позднее' },
+				lt: { text: 'Раньше' },
+				eq: { text: 'В' }
+			}
+		}
 	});
-	Ext.define('Ext.locale.ru.ux.grid.menu.ListMenu', {
-		override: 'Ext.ux.grid.menu.ListMenu',
+	Ext.define('Ext.locale.ru.NetProfile.grid.filters.filter.Date', {
+		override: 'NetProfile.grid.filters.filter.Date',
+		config: {
+			fields: {
+				ge: { text: 'Позднее' },
+				le: { text: 'Раньше' },
+				eq: { text: 'В' }
+			}
+		}
+	});
+	Ext.define('Ext.locale.ru.grid.filters.filter.List', {
+		override: 'Ext.grid.filters.filter.List',
 		loadingText: 'Загрузка...'
 	});
-	Ext.define('Ext.locale.ru.ux.grid.menu.RangeMenu', {
-		override: 'Ext.ux.grid.menu.RangeMenu',
-		fieldLabels: {
-			gt: 'Больше',
-			lt: 'Меньше',
-			eq: 'Равно'
-		},
-		menuItemCfgs: {
-			emptyText: 'Введите число...',
-			selectOnFocus: false,
-			width: 155
-		}
+	Ext.define('Ext.locale.ru.grid.filters.filter.Number', {
+		override: 'Ext.grid.filters.filter.Number',
+		emptyText: 'Введите число...'
 	});
-	Ext.define('Ext.locale.ru.ux.grid.menu.StringMenu', {
-		override: 'Ext.ux.grid.menu.StringMenu',
-		fieldLabels: {
-			contains: 'Содержит',
-			startswith: 'Начинается на',
-			endswith: 'Заканчивается на'
-		},
-		menuItemCfgs: {
-			emptyText: 'Введите фильтр...',
-			selectOnFocus: true,
-			width: 155
-		}
-	});
-
-	Ext.define('Ext.locale.ru.ux.grid.SimpleSearchFeature', {
-		override: 'Ext.ux.grid.SimpleSearchFeature',
-		fieldEmptyText: 'Поиск...'
-	});
-
-	Ext.define('Ext.locale.ru.ux.grid.ExtraSearchFeature', {
-		override: 'Ext.ux.grid.ExtraSearchFeature',
-		searchText: 'Поиск',
-		searchTipText: 'Дополнительные условия поиска.',
-		advSearchText: 'Расширенный поиск',
-		clearText: 'Сбросить'
+	Ext.define('Ext.locale.ru.NetProfile.grid.filters.filter.Number', {
+		override: 'NetProfile.grid.filters.filter.Number',
+		emptyText: 'Введите число...'
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.view.ModelGrid', {

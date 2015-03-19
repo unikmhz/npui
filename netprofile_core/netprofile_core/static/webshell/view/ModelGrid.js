@@ -15,11 +15,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.toolbar.Paging',
 		'Ext.toolbar.TextItem',
 		'Ext.window.MessageBox',
-		'Ext.EventObject',
-		'Ext.ux.grid.FiltersFeature',
-		'Ext.ux.grid.SimpleSearchFeature',
-		'Ext.ux.grid.ExtraSearchFeature',
-		'Ext.ux.CheckColumn',
+		'Ext.event.Event',
 		'Ext.ux.EnumColumn',
 		'Ext.ux.IPAddressColumn',
 		'Ext.ux.form.field.DateTime',
@@ -29,12 +25,14 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.ux.form.DynamicCheckboxGroup',
 		'Ext.ux.form.TinyMCETextArea',
 		'Ext.ux.window.CenterWindow',
-		'Ext.ux.RowExpander',
 		'NetProfile.view.ModelSelect',
 		'NetProfile.view.SimpleModelSelect',
-		'NetProfile.view.NullableComboBox'
+		'NetProfile.view.NullableComboBox',
+		'NetProfile.grid.filters.filter.Date',
+		'NetProfile.grid.filters.filter.Number',
+		'NetProfile.grid.filters.filter.List'
 	],
-	rowEditing: true,
+	rowEditing: false,
 	simpleSearch: false,
 	extraSearch: null,
 	actionCol: true,
@@ -70,7 +68,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	exportText: 'Export',
 
 	dockedItems: [],
-	plugins: [],
+	plugins: ['gridfilters'],
 	viewConfig: {
 		stripeRows: true,
 		plugins: []
@@ -88,26 +86,16 @@ Ext.define('NetProfile.view.ModelGrid', {
 			this.canEdit = false;
 			this.canDelete = false;
 		}
+		if(!this.detailPane)
+			this.rowEditing = true;
 		if(!this.canEdit)
 			this.rowEditing = false;
 		if(!this.features)
 			this.features = [];
-		this.features.push({
-			ftype: 'filters',
-			multi: true,
-			encode: false,
-			local: false
-		});
-		if(this.extraSearch)
-			this.features.push({
-				ftype: 'extrasearch',
-				local: false
-			});
-		if(this.simpleSearch)
-			this.features.push({
-				ftype: 'simplesearch',
-				local: false
-			});
+//		if(this.extraSearch)
+//			FIXME
+//		if(this.simpleSearch)
+//			FIXME
 		var tbitems = [{
 			text: this.clearText,
 			tooltip: { text: this.clearTipText, title: this.clearText },
@@ -308,6 +296,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 			},
 			selectionchange: function(sel, recs, opts)
 			{
+				if(this.selectRow) // FIXME: add a way to open objects from modelselect
+					return true;
 				if(!sel.hasSelection() || (sel.getSelectionMode() != 'SINGLE'))
 					return true;
 				if(!recs || !recs.length)
@@ -337,9 +327,10 @@ Ext.define('NetProfile.view.ModelGrid', {
 					if(this.selectField)
 						this.selectField.setValue(record.get('__str__'));
 					this.up('window').close();
-					return false;
 				}
-				return true;
+				else
+					this.selectRecord(record);
+				return false;
 			},
 			scope: this
 		});
@@ -349,7 +340,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 		if(create_kmap)
 		{
 			kmap_binds = [{
-				key: Ext.EventObject.LEFT,
+				key: Ext.event.Event.LEFT,
 				fn: function(kc, ev)
 				{
 					var st = this.getStore();
@@ -368,7 +359,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 				},
 				scope: this
 			}, {
-				key: Ext.EventObject.RIGHT,
+				key: Ext.event.Event.RIGHT,
 				fn: function(kc, ev)
 				{
 					var st = this.getStore(),
@@ -432,13 +423,13 @@ Ext.define('NetProfile.view.ModelGrid', {
 		store.lastExtraParams = {};
 		if(this.filters)
 			this.filters.clearFilters(true);
-		if(this.ssearch)
-			this.ssearch.clearValue(true);
-		if(this.xsearch)
-			this.xsearch.clearValue(true);
+//		if(this.ssearch)
+//			this.ssearch.clearValue(true);
+//		if(this.xsearch)
+//			this.xsearch.clearValue(true);
 		store.sorters.clear();
 		if(store.initialSorters)
-			store.sorters.addAll(store.initialSorters);
+			store.sorters.add(store.initialSorters.getRange());
 		this.saveState();
 		store.loadPage(1);
 		return true;
@@ -464,8 +455,11 @@ Ext.define('NetProfile.view.ModelGrid', {
 				);
 			if(!store)
 				return false;
-			ff = { __ffilter: {} };
-			ff.__ffilter[store.model.prototype.idProperty] = { eq: parseInt(record.getId()) };
+			ff = { __ffilter: [{
+				property: store.model.prototype.idProperty,
+				operator: 'eq',
+				value:    parseInt(record.getId())
+			}] };
 			store.load({
 				params: ff,
 				callback: function(recs, op, success)

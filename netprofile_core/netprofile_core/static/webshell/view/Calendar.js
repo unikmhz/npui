@@ -100,58 +100,58 @@ Extensible.calendar.data.EventMappings = {
         name:    'RRule',
         mapping: 'rrule',
         type:    'string',
-        useNull: true
+        allowNull: true
     },
     Duration: {
         name:         'Duration',
         mapping:      'duration',
         defaultValue: -1,
-        useNull:      true,
+        allowNull:      true,
         type:         'int'
     },
     OriginalEventId: {
         name:    'OriginalEventId',
         mapping: 'origid',
         type:    'string',
-        useNull: true
+        allowNull: true
     },
     RSeriesStartDate: {
         name:       'RSeriesStartDate',
         mapping:    'rsstart',
         type:       'date',
         dateFormat: 'c',
-        useNull:    true
+        allowNull:    true
     },
     RInstanceStartDate: {
         name:       'RInstanceStartDate',
         mapping:    'ristart',
         type:       'date',
         dateFormat: 'c',
-        useNull:    true
+        allowNull:    true
     },
     REditMode: {
         name:    'REditMode',
         mapping: 'redit',
         type:    'string',
-        useNull: true
+        allowNull: true
     },
 	APIModule: {
 		name:    'APIModule',
 		mapping: 'apim',
 		type:    'string',
-		useNull: true
+		allowNull: true
 	},
 	APIClass: {
 		name:    'APIClass',
 		mapping: 'apic',
 		type:    'string',
-		useNull: true
+		allowNull: true
 	},
 	APIId: {
 		name:    'APIId',
 		mapping: 'apiid',
 		type:    'int',
-		useNull: true
+		allowNull: true
 	},
 	CanEditText: {
 		name:    'CanEditText',
@@ -199,8 +199,11 @@ Ext.define('NetProfile.override.Extensible.calendar.view.AbstractCalendar', {
 				);
 				if(!store)
 					return;
-				ff = { __ffilter: {} };
-				ff.__ffilter[store.model.prototype.idProperty] = { eq: parseInt(id) };
+				ff = { __ffilter: [{
+					property: store.model.prototype.idProperty,
+					operator: 'eq',
+					value:    parseInt(id)
+				}] };
 				store.load({
 					params: ff,
 					callback: function(recs, op, success)

@@ -40,6 +40,7 @@ Ext.define('NetProfile.view.ModelSelect', {
 				cls: 'x-form-search-trigger',
 				weight: 3,
 				hidden: true,
+				hideOnReadOnly: false,
 				handler: function()
 				{
 					this.onTriggerLink();
@@ -50,7 +51,7 @@ Ext.define('NetProfile.view.ModelSelect', {
 
 	initComponent: function()
 	{
-		if(this.allowBlank)
+		if(this.allowBlank && !this.readOnly)
 			this.getTrigger('clear').show();
 		if(this.showLink)
 			this.getTrigger('link').show();
@@ -116,8 +117,11 @@ Ext.define('NetProfile.view.ModelSelect', {
 		hf = hf.getValue();
 		if(!hf)
 			return false;
-		ff = { __ffilter: {} };
-		ff.__ffilter[store.model.prototype.idProperty] = { eq: parseInt(hf) };
+		ff = { __ffilter: [{
+			property: store.model.prototype.idProperty,
+			operator: 'eq',
+			value:    parseInt(hf)
+		}] };
 		store.load({
 			params: ff,
 			callback: function(recs, op, success)

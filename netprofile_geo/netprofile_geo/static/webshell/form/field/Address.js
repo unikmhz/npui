@@ -168,11 +168,15 @@ Ext.define('NetProfile.geo.form.field.Address', {
 	},
 	_getFiltersBefore: function(stype)
 	{
-		var ret = {};
+		var ret = [];
 
 		Ext.Object.each(this._getSubValuesBefore(stype), function(k, v)
 		{
-			ret[k] = { eq: v };
+			ret.push({
+				operator: k,
+				property: 'eq',
+				value:    v
+			});
 		});
 		return ret;
 	},

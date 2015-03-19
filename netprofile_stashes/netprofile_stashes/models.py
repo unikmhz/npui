@@ -483,7 +483,11 @@ class StashIO(Base):
 			'filter_type'   : 'list',
 			'editor_xtype'  : 'simplemodelselect',
 			'editor_config' : {
-				'extraParams' : { '__ffilter' : { 'oper_visible' : { 'eq' : True } } }
+				'extraParams' : { '__ffilter' : [{
+					'property' : 'oper_visible',
+					'operator' : 'eq',
+					'value'    : True
+				}]}
 			},
 			'column_flex'   : 2
 		}

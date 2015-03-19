@@ -27,10 +27,9 @@ Ext.require([
 % for i_ajs in res_ajs:
 	'${i_ajs}',
 % endfor
-	'NetProfile.model.Basic',
 	'NetProfile.view.CapabilityGrid',
-	'Ext.ux.form.MultiField',
-	'NetProfile.view.Calendar'
+	'Ext.ux.form.MultiField'
+//	'NetProfile.view.Calendar'
 ], function()
 {
 	NetProfile.currentLocale = '${cur_loc}';
@@ -76,7 +75,7 @@ Ext.require([
 		}
 	};
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
-	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {
+	Ext.Ajax.setDefaultHeaders({
 		'X-CSRFToken': '${req.get_csrf()}'
 	});
 	NetProfile.msg = function()
@@ -195,6 +194,7 @@ Ext.require([
 		pbar.show();
 	};
 
+/*
 	Ext.define('Ext.data.ConnectionNPOver', {
 		override: 'Ext.data.Connection',
 		setOptions: function(opt, scope)
@@ -212,6 +212,7 @@ Ext.require([
 			return res;
 		}
 	});
+*/
 	Ext.define('Ext.form.field.BaseErrors', {
 		override: 'Ext.form.field.Base',
 		getErrors: function(value)
@@ -228,8 +229,9 @@ Ext.require([
 		}
 	});
 
-	Ext.data.Types.IPV4 = {
-		type: 'ipv4',
+	Ext.define('NetProfile.data.field.IPv4', {
+		extend: 'Ext.data.field.Field',
+		alias: 'data.field.ipv4',
 		convert: function(value, record)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
@@ -254,9 +256,10 @@ Ext.require([
 		{
 			return t.toInteger();
 		}
-	};
-	Ext.data.Types.IPV6 = {
-		type: 'ipv6',
+	});
+	Ext.define('NetProfile.data.field.IPv6', {
+		extend: 'Ext.data.field.Field',
+		alias: 'data.field.ipv6',
 		convert: function(value, record)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
@@ -291,7 +294,7 @@ Ext.require([
 		{
 			return t.toByteArray();
 		}
-	};
+	});
 
 	Ext.apply(Ext.data.validations, {
 		rangeMessage: 'is out of range',
@@ -331,7 +334,7 @@ Ext.require([
 	});
 
 	Ext.define('NetProfile.model.ConsoleMessage', {
-		extend: 'NetProfile.model.Basic',
+		extend: 'Ext.data.Model',
 		fields: [
 			{ name: 'id',   type: 'auto' },
 			{ name: 'ts',   type: 'date', dateFormat: 'c' },
@@ -431,14 +434,14 @@ Ext.require([
 			},
 			reader: {
 				type: 'json',
-				root: 'records',
+				rootProperty: 'records',
 				messageProperty: 'message',
 				successProperty: 'success',
 				totalProperty: 'total'
 			},
 			writer: {
 				type: 'json',
-				root: 'records',
+				rootProperty: 'records',
 				writeAllFields: true,
 				allowSingle: false
 			}
@@ -484,23 +487,22 @@ Ext.require([
 			type: 'json',
 			idProperty: '${mod.pk}',
 			messageProperty: 'message',
-			root: 'records',
+			rootProperty: 'records',
 			successProperty: 'success',
 			totalProperty: 'total'
 		},
 		writer: {
 			type: 'json',
-			root: 'records',
+			rootProperty: 'records',
 			writeAllFields: false,
+			clientIdProperty: '_clid',
 			allowSingle: false
 		}
 	});
 	Ext.define('NetProfile.model.${module}.${model}', {
-		extend: 'NetProfile.model.Basic',
+		extend: 'Ext.data.Model',
 		fields: ${mod.get_reader_cfg() | n,jsone},
-		associations: ${mod.get_related_cfg() | n,jsone},
 		idProperty: '${mod.pk}',
-		clientIdProperty: '_clid',
 		proxy: {
 			type: '${module}_${model}'
 		}

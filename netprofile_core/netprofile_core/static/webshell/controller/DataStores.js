@@ -45,12 +45,16 @@ Ext.define('NetProfile.controller.DataStores', {
 			{
 				rec = rec.record;
 				store = this.getStore();
-				store.proxy.extraParams = { __ffilter: {} };
+				store.proxy.extraParams = { __ffilter: [] };
 				if(this.extraParamRelProp)
 					val = rec.get(this.extraParamRelProp);
 				else
 					val = rec.get(this.extraParamProp);
-				store.proxy.extraParams.__ffilter[this.extraParamProp] = { eq: val };
+				store.proxy.extraParams.__ffilter.push({
+					property: this.extraParamProp,
+					operator: 'eq',
+					value:    val
+				});
 			}
 		}
 	},

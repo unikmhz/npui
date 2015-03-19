@@ -80,7 +80,11 @@ Ext.define('NetProfile.view.FileDownload', {
 		if(!store)
 			return false;
 		store.load({
-			params: { __ffilter: { fileid: { eq: file_id } } },
+			params: { __ffilter: [{
+				property: 'fileid',
+				operator: 'eq',
+				value:    file_id
+			}]},
 			callback: function(recs, op, success)
 			{
 				if(!success || !recs || (recs.length <= 0))

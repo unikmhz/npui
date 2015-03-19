@@ -51,7 +51,11 @@ Ext.define('NetProfile.controller.FileBrowser', {
 		}
 		st.folderStore.load({
 			params: {
-				__ffilter: { ffid: { eq: xid } }
+				__ffilter: [{
+					property: 'ffid',
+					operator: 'eq',
+					value:    xid
+				}]
 			},
 			callback: function(recs, op, success)
 			{

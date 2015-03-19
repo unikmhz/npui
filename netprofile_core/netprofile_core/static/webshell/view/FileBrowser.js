@@ -498,12 +498,20 @@ Ext.define('NetProfile.view.FileBrowser', {
 	updateStore: function()
 	{
 		var proxy = this.store.getProxy(),
-			qparam;
+			qparam = { __ffilter: [] };
 
 		if(this.folder === null)
-			qparam = { __ffilter: { ffid: { eq: null } } };
+			qparam.__ffilter.push({
+				property: 'ffid',
+				operator: 'eq',
+				value:    null
+			});
 		else
-			qparam = { __ffilter: { ffid: { eq: this.folder.getId() } } };
+			qparam.__ffilter.push({
+				property: 'ffid',
+				operator: 'eq',
+				value:    this.folder.getId()
+			});
 		// TODO: insert other search criteria here
 		if(this.searchStr)
 			qparam.__sstr = this.searchStr;

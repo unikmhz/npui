@@ -1209,19 +1209,21 @@ class Ticket(Base):
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
-		flt = {}
+		flist = []
 		if '__filter' in params:
-			flt.update(params['__filter'])
+			flist.extend(params['__filter'])
 		if '__ffilter' in params:
-			flt.update(params['__ffilter'])
-		if ('parentid' in flt) and ('eq' in flt['parentid']):
-			val = int(flt['parentid']['eq'])
-			if val > 0:
-				query = query.join(TicketDependency, Ticket.id == TicketDependency.child_id).filter(TicketDependency.parent_id == val)
-		if ('childid' in flt) and ('eq' in flt['childid']):
-			val = int(flt['childid']['eq'])
-			if val > 0:
-				query = query.join(TicketDependency, Ticket.id == TicketDependency.parent_id).filter(TicketDependency.child_id == val)
+			flist.extend(params['__ffilter'])
+		for flt in flist:
+			prop = flt.get('property', None)
+			oper = flt.get('property', None)
+			value = flt.get('value', None)
+			if prop == 'parentid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.join(TicketDependency, Ticket.id == TicketDependency.child_id).filter(TicketDependency.parent_id == int(value))
+			if prop == 'childid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.join(TicketDependency, Ticket.id == TicketDependency.parent_id).filter(TicketDependency.child_id == int(value))
 		# FIXME: check TICKETS_LIST_ARCHIVED, TICKETS_OWN_LIST, TICKETS_OWNGROUP_LIST and ACLs
 		return query
 

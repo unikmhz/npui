@@ -218,12 +218,16 @@ Ext.define('NetProfile.controller.FileFolders', {
 						null, true, true
 					),
 					can_wr = true,
-					ff = { __ffilter: {} },
+					ff = { __ffilter: [] },
 					xrec;
 
 				if(!pb || !rec || !dp || !store)
 					return false;
-				ff.__ffilter[store.model.prototype.idProperty] = { eq: parseInt(rec.getId()) };
+				ff.__ffilter.push({
+					property: store.model.prototype.idProperty,
+					operator: 'eq',
+					value:    parseInt(rec.getId())
+				});
 				if(is_root || !rec.get('parent_write'))
 					can_wr = false;
 				store.load({
