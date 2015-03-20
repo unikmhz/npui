@@ -69,9 +69,9 @@ Ext.onReady(function()
 		override: 'NetProfile.grid.filters.filter.Number',
 		emptyText: 'Введите число...'
 	});
-	Ext.define('Ext.locale.ru.NetProfile.form.field.StoreSearch', {
-		override: 'NetProfile.form.field.StoreSearch',
-		emptyText: 'Поиск...'
+	Ext.define('Ext.locale.ru.NetProfile.grid.plugin.SimpleSearch', {
+		override: 'NetProfile.grid.plugin.SimpleSearch',
+		fieldEmptyText: 'Поиск...'
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.view.ModelGrid', {

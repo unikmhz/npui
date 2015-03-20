@@ -27,6 +27,7 @@ Ext.require([
 % for i_ajs in res_ajs:
 	'${i_ajs}',
 % endfor
+	'NetProfile.model.Base',
 	'NetProfile.view.CapabilityGrid',
 	'Ext.ux.form.MultiField'
 //	'NetProfile.view.Calendar'
@@ -500,7 +501,7 @@ Ext.require([
 		}
 	});
 	Ext.define('NetProfile.model.${module}.${model}', {
-		extend: 'Ext.data.Model',
+		extend: 'NetProfile.model.Base',
 		fields: ${mod.get_reader_cfg() | n,jsone},
 		idProperty: '${mod.pk}',
 		clientIdProperty: '_clid',
@@ -518,7 +519,7 @@ Ext.require([
 		remoteFilter: true,
 		remoteSort: true,
 		storeId: 'npstore_${module}_${model}',
-		autoLoad: true,
+		autoLoad: false,
 		autoSync: true
 	});
 	Ext.define('NetProfile.view.grid.${module}.${model}', {

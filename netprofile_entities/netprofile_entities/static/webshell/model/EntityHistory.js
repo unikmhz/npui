@@ -1,9 +1,9 @@
 /**
  * @class NetProfile.entities.model.EntityHistory
- * @extends Ext.data.Model
+ * @extends NetProfile.model.Base
  */
 Ext.define('NetProfile.entities.model.EntityHistory', {
-	extend: 'Ext.data.Model',
+	extend: 'NetProfile.model.Base',
 	fields: [
 		{ name: 'time', type: 'date', dateFormat: 'c', allowNull: false, allowBlank: false },
 		{ name: 'author', type: 'string', allowNull: true, allowBlank: true },

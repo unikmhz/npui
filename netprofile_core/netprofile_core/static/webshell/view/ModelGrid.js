@@ -30,7 +30,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'NetProfile.view.NullableComboBox',
 		'NetProfile.grid.filters.filter.Date',
 		'NetProfile.grid.filters.filter.Number',
-		'NetProfile.grid.filters.filter.List'
+		'NetProfile.grid.filters.filter.List',
+		'NetProfile.grid.plugin.SimpleSearch'
 	],
 	rowEditing: false,
 	simpleSearch: false,
@@ -67,16 +68,13 @@ Ext.define('NetProfile.view.ModelGrid', {
 	actionTipText: 'Object actions',
 	exportText: 'Export',
 
-	dockedItems: [],
-	plugins: ['gridfilters'],
 	viewConfig: {
-		stripeRows: true,
-		plugins: []
+		stripeRows: true
 	},
 	initComponent: function()
 	{
 		var create_kmap = false,
-			kmap_binds;
+			kmap_binds, plugins;
 
 		this._create_ctl = {};
 		this.tabConfig = { cls: 'record-tab-hdl' };
@@ -90,12 +88,16 @@ Ext.define('NetProfile.view.ModelGrid', {
 			this.rowEditing = true;
 		if(!this.canEdit)
 			this.rowEditing = false;
-		if(!this.features)
-			this.features = [];
+		if(this.plugins && this.plugins.length)
+			plugins = Ext.Array.clone(this.plugins);
+		else
+			plugins = [ 'gridfilters' ];
 //		if(this.extraSearch)
 //			FIXME
-//		if(this.simpleSearch)
-//			FIXME
+		if(this.simpleSearch)
+			plugins.push({
+				ptype: 'simplesearch'
+			});
 		var tbitems = [{
 			text: this.clearText,
 			tooltip: { text: this.clearTipText, title: this.clearText },
@@ -253,7 +255,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 			}
 		}
 		if(this.rowEditing)
-			this.plugins.push({
+			plugins.push({
 				ptype: 'rowediting',
 				autoCancel: true,
 				clicksToEdit: 2,
@@ -263,6 +265,11 @@ Ext.define('NetProfile.view.ModelGrid', {
 		if(!this.store && this.apiModule && this.apiClass)
 			this.store = NetProfile.StoreManager.getStore(this.apiModule, this.apiClass, this, !this.stateful);
 
+		// This is a hack to apply all plugin state/listeners before
+		// gridfilters forces our store to load.
+		plugins.reverse();
+
+		this.plugins = plugins;
 		this.callParent();
 
 		this.addDocked({
@@ -399,7 +406,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 
 						if(ev.altKey)
 						{
-							fld = this.down('storesearch[cls~=np-ssearch-field]');
+							fld = this.down('textfield[cls~=np-ssearch-field]');
 							if(fld)
 							{
 								ev.stopEvent();
@@ -424,19 +431,13 @@ Ext.define('NetProfile.view.ModelGrid', {
 		store.lastExtraParams = {};
 		if(this.filters)
 			this.filters.clearFilters(true);
-//		if(this.ssearch)
-//			this.ssearch.clearValue(true);
+		if(this.ssearch)
+			this.ssearch.clearValue(true);
 //		if(this.xsearch)
 //			this.xsearch.clearValue(true);
 		store.sorters.clear();
-		if(store.initialSorters)
-			store.initialSorters.each(function(isort)
-			{
-				store.sorters.add({
-					'property'  : isort.getProperty(),
-					'direction' : isort.getDirection()
-				});
-			});
+		if(store.initialSorters && store.initialSorters.length)
+			store.sorters.add(store.initialSorters);
 		this.saveState();
 		store.unblockLoad(); // undocumented API of Ext.data.ProxyStore
 		store.loadPage(1);

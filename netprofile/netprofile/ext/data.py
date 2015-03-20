@@ -819,6 +819,7 @@ class ExtColumn(object):
 		if val is not None:
 			if type(val) in {int, str, list, dict, bool}:
 				conf['defaultValue'] = val
+		fks = self.column.foreign_keys
 		if self.model.__mapper__.polymorphic_on is not None:
 			if self.model.__mapper__.polymorphic_on.name == self.name:
 				conf.update({
@@ -826,6 +827,13 @@ class ExtColumn(object):
 					'allowNull'    : False,
 					'defaultValue' : self.model.__mapper__.polymorphic_identity
 				})
+		elif len(fks) == 1:
+			fk = list(fks)[0]
+			cls = _table_to_class(fk.column.table.name)
+			conf['reference'] = 'NetProfile.model.{0}.{1}'.format(
+				cls.__moddef__,
+				cls.__name__
+			)
 		return conf
 
 	def get_column_cfg(self, req):

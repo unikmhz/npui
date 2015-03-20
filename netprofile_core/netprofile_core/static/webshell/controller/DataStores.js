@@ -105,6 +105,18 @@ Ext.define('NetProfile.controller.DataStores', {
 				'NetProfile.store.' + module + '.' + model,
 				store_cfg
 			);
+
+			if(store.sorters && store.sorters.length)
+			{
+				store.initialSorters = [];
+				store.sorters.each(function(isort)
+				{
+					store.initialSorters.push({
+						'property'  : isort.getProperty(),
+						'direction' : isort.getDirection()
+					});
+				});
+			}
 		}
 		if(!store)
 			throw 'Unable to create store for ' + module + ' ' + model;
@@ -124,9 +136,6 @@ Ext.define('NetProfile.controller.DataStores', {
 				NetProfile.StoreManager.refreshRelated(module, model, rec.getId(), store);
 			return true;
 		});
-
-		if(store.sorters && (store.sorters.length > 0))
-			store.initialSorters = store.sorters.clone();
 
 		if(!nocache)
 			this.stores[module][model] = store;
