@@ -230,7 +230,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 											else if(this.store.getById(record.getId()))
 												this.store.remove(record);
 											else
-												record.destroy();
+												record.erase();
 										}
 										return true;
 									},
@@ -399,7 +399,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 
 						if(ev.altKey)
 						{
-							fld = this.down('textfield[cls~=np-ssearch-field]');
+							fld = this.down('storesearch[cls~=np-ssearch-field]');
 							if(fld)
 							{
 								ev.stopEvent();
@@ -420,6 +420,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 	onPressReset: function()
 	{
 		store = this.getStore();
+		store.blockLoad(); // undocumented API of Ext.data.ProxyStore
 		store.lastExtraParams = {};
 		if(this.filters)
 			this.filters.clearFilters(true);
@@ -429,8 +430,15 @@ Ext.define('NetProfile.view.ModelGrid', {
 //			this.xsearch.clearValue(true);
 		store.sorters.clear();
 		if(store.initialSorters)
-			store.sorters.add(store.initialSorters.getRange());
+			store.initialSorters.each(function(isort)
+			{
+				store.sorters.add({
+					'property'  : isort.getProperty(),
+					'direction' : isort.getDirection()
+				});
+			});
 		this.saveState();
+		store.unblockLoad(); // undocumented API of Ext.data.ProxyStore
 		store.loadPage(1);
 		return true;
 	},
