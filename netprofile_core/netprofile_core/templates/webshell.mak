@@ -503,6 +503,7 @@ Ext.require([
 		extend: 'Ext.data.Model',
 		fields: ${mod.get_reader_cfg() | n,jsone},
 		idProperty: '${mod.pk}',
+		clientIdProperty: '_clid',
 		proxy: {
 			type: '${module}_${model}'
 		}
