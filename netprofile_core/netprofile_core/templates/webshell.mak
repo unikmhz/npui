@@ -516,7 +516,6 @@ Ext.require([
 		sorters: ${mod.default_sort | n,jsone},
 		pageSize: NetProfile.userSettings.datagrid_perpage,
 		remoteFilter: true,
-		remoteGroup: true,
 		remoteSort: true,
 		storeId: 'npstore_${module}_${model}',
 		autoLoad: true,

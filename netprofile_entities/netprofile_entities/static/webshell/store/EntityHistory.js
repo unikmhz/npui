@@ -11,7 +11,6 @@ Ext.define('NetProfile.entities.store.EntityHistory', {
 		property: 'time'
 	}],
 	remoteFilter: true,
-	remoteGroup: true,
 	remoteSort: true,
 	storeId: 'npstore_entities_EntityHistory',
 	autoLoad: false,

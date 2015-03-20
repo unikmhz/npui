@@ -161,7 +161,6 @@ Ext.define('NetProfile.controller.DataStores', {
 				autoLoad: true,
 				autoSync: true,
 				remoteFilter: false,
-				remoteGroup: false,
 				remoteSort: false,
 				sorters: [{
 					direction: 'ASC',
