@@ -1044,6 +1044,14 @@ class ExtRelationshipColumn(ExtColumn):
 		self.model = sqla_model
 		self.value_attr = None
 
+	@property
+	def filter_type(self):
+		ft = self.column.info.get('filter_type', 'none')
+		# TODO: remove this hack after all models are updated
+		if ft == 'list':
+			return 'nplist'
+		return ft
+
 	def get_column_cfg(self, req):
 		conf = super(ExtRelationshipColumn, self).get_column_cfg(req)
 		conf['dataIndex'] = self.prop.key
