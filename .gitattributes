@@ -1,4 +1,4 @@
-# Language hints for GitHub
+# Vendor code marking for GitHub
 netprofile_core/netprofile_core/static/extern/** linguist-vendored
 netprofile_access/netprofile_access/static/css/bootstrap* linguist-vendored
 netprofile_access/netprofile_access/static/css/font* linguist-vendored
@@ -12,4 +12,8 @@ netprofile_access/netprofile_access/static/js/jqBootstrapValidation* linguist-ve
 netprofile_access/netprofile_access/static/js/jquery* linguist-vendored
 netprofile_access/netprofile_access/static/js/moment* linguist-vendored
 netprofile_access/netprofile_access/static/js/respond* linguist-vendored
+
+# Documentation hints for GitHub
+**/README.rst linguist-documentation
+**/INSTALL.rst linguist-documentation
 
