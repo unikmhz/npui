@@ -1,5 +1,8 @@
 Ext.define('NetProfile.controller.DataStores', {
 	extend: 'Ext.app.Controller',
+	requires: [
+		'Ext.data.operation.Read'
+	],
 	init: function()
 	{
 		this.stores = {};
@@ -19,11 +22,12 @@ Ext.define('NetProfile.controller.DataStores', {
 			grid = form.up('grid'),
 			store = grid.getStore(),
 			proxy = store.getProxy(),
-			params, form_params, format;
+			oper, params, form_params, format;
 
 		if(!store.lastOptions)
 			return; // FIXME: report error
-		params = proxy.getParams(store.lastOptions) || {};
+		oper = new Ext.data.operation.Read(store.lastOptions);
+		params = proxy.getParams(oper);
 		if(store.lastExtraParams)
 			Ext.apply(params, store.lastExtraParams);
 		format = form.itemId;

@@ -4,10 +4,13 @@
  */
 Ext.define('NetProfile.view.FileDownload', {
 	extend: 'Ext.Component',
+	requires: [
+		'Ext.form.Panel'
+	],
 	alias: 'widget.filedownload',
 	autoEl: {
 		tag: 'iframe',
-		cls: 'x-hidden-display',
+		cls: Ext.baseCSSPrefix + 'hidden-display',
 		name: 'npws_filedl_frame',
 		src: Ext.SSL_SECURE_URL
 	},
@@ -15,47 +18,45 @@ Ext.define('NetProfile.view.FileDownload', {
 	hidden: true,
 	stateful: false,
 
-	_onIFrameLoad: function(ev, tgt, opts)
-	{
-	},
 	initComponent: function()
 	{
-		this.funcInstalled = false;
+		this.form = null;
 		this.callParent(arguments);
+	},
+	getForm: function()
+	{
+		var me = this;
+
+		if(!me.form)
+			me.form = Ext.create('Ext.form.Panel', {
+				hidden: true,
+				stateful: false,
+				standardSubmit: true
+			});
+		return me.form;
 	},
 	load: function(params)
 	{
-		var el, url;
+		var el = this.getEl(),
+			url = params.url;
 
-		url = params.url;
-		if(params.params)
-			url += ('?' + Ext.Object.toQueryString(config.params));
-
-		el = this.getEl();
 		if(!el)
 			return false;
-		if(!this.funcInstalled)
-		{
-			el.on('load', this._onIFrameLoad, this);
-			this.funcInstalled = true;
-		}
+		if(params.params)
+			url += ('?' + Ext.Object.toQueryString(config.params));
 		el.dom.src = url;
 		return true;
 	},
 	loadExport: function(moddef, model, fmt, par)
 	{
-		var uri = NetProfile.baseURL + '/core/file/export/' + moddef + '/' + model,
+		var me = this,
+			uri = NetProfile.baseURL + '/core/file/export/' + moddef + '/' + model,
+			form = me.getForm(),
 			csrf = null,
-			form, headers;
+			headers = Ext.Ajax.getDefaultHeaders();
 
 		if(!par)
 			par = {};
-		headers = Ext.Ajax.getDefaultHeaders();
-		form = Ext.create('Ext.form.Panel', {
-			hidden: true,
-			stateful: false,
-			standardSubmit: true
-		});
 		par = {
 			'format' : fmt,
 			'params' : Ext.JSON.encode(par)
@@ -66,16 +67,17 @@ Ext.define('NetProfile.view.FileDownload', {
 			url: uri,
 			method: 'POST',
 			target: 'npws_filedl_frame',
+			clientValidation: false,
 			params: par
 		});
-		form.destroy();
 	},
 	loadFileById: function(file_id)
 	{
-		var store = NetProfile.StoreManager.getStore(
-			'core', 'File',
-			null, true, true
-		);
+		var me = this,
+			store = NetProfile.StoreManager.getStore(
+				'core', 'File',
+				null, true, true
+			);
 
 		if(!store)
 			return false;
@@ -97,7 +99,7 @@ Ext.define('NetProfile.view.FileDownload', {
 					)
 				});
 			},
-			scope: this
+			scope: me
 		});
 		return true;
 	}
