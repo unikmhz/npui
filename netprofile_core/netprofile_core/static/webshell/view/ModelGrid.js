@@ -116,49 +116,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 				itemId: 'addBtn',
 				handler: function()
 				{
-					var wiz_win = Ext.create('Ext.ux.window.CenterWindow', {
-						title: this.addWindowText,
-						modal: true
-					});
-					var wiz = Ext.create('NetProfile.view.Wizard', {
-						stateful: false,
-						wizardCls: this.apiClass,
-						createInto: this.store,
-						actionApi: 'create_wizard_action'
-					});
-					if(this.createControllers)
-					{
-						Ext.require(
-							this.createControllers,
-							function()
-							{
-								var ctl = this.createControllers,
-									me = this;
-								if(Ext.isString(ctl))
-									ctl = [ ctl ];
-								if(Ext.isArray(ctl))
-								{
-									Ext.Array.forEach(ctl, function(cclass)
-									{
-										if(!(cclass in me._create_ctl))
-											me._create_ctl[cclass] = Ext.create(cclass, {
-												caller: me
-											});
-										if(me._create_ctl[cclass].observeWizard)
-											me._create_ctl[cclass].observeWizard(wiz);
-									});
-								}
-								wiz_win.add(wiz);
-								wiz_win.show();
-							},
-							this
-						);
-						return true;
-					}
-					wiz_win.add(wiz);
-					wiz_win.show();
-
-					return true;
+					return this.spawnCreateWizard();
 				},
 				scope: this
 			});
@@ -420,6 +378,16 @@ Ext.define('NetProfile.view.ModelGrid', {
 					},
 					scope: this
 				});
+			if(this.canCreate)
+				kmap_binds.push({
+					key: 'c',
+					fn: function(kc, ev)
+					{
+						if(ev.altKey && this.canCreate)
+							this.spawnCreateWizard();
+					},
+					scope: this
+				});
 
 			this.kmap = new Ext.util.KeyMap({
 				target: Ext.getBody(),
@@ -516,6 +484,56 @@ Ext.define('NetProfile.view.ModelGrid', {
 		me.fstate = state;
 		me.callParent(arguments);
 		me.columns = columns;
+	},
+	spawnCreateWizard: function()
+	{
+		var me = this,
+			wiz_win, wiz;
+
+		if(!me.canCreate)
+			return false;
+		wiz_win = Ext.create('Ext.ux.window.CenterWindow', {
+			title: me.addWindowText,
+			modal: true
+		});
+		wiz = Ext.create('NetProfile.view.Wizard', {
+			stateful: false,
+			wizardCls: me.apiClass,
+			createInto: me.store,
+			actionApi: 'create_wizard_action'
+		});
+		if(me.createControllers)
+		{
+			Ext.require(
+				me.createControllers,
+				function()
+				{
+					var ctl = me.createControllers;
+
+					if(Ext.isString(ctl))
+						ctl = [ ctl ];
+					if(Ext.isArray(ctl))
+					{
+						Ext.Array.forEach(ctl, function(cclass)
+						{
+							if(!(cclass in me._create_ctl))
+								me._create_ctl[cclass] = Ext.create(cclass, {
+									caller: me
+								});
+							if(me._create_ctl[cclass].observeWizard)
+								me._create_ctl[cclass].observeWizard(wiz);
+						});
+					}
+					wiz_win.add(wiz);
+					wiz_win.show();
+				}
+			);
+			return true;
+		}
+		wiz_win.add(wiz);
+		wiz_win.show();
+
+		return true;
 	},
 	spawnWizard: function(wname)
 	{
