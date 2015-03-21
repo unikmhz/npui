@@ -57,8 +57,6 @@ Ext.define('NetProfile.geo.form.field.Address', {
 		this.items = [];
 		this._orig = {};
 
-		this.addEvents('change');
-
 		Ext.Array.forEach(this._deps, function(stype)
 		{
 			cfg = null;
