@@ -31,7 +31,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'NetProfile.grid.filters.filter.Date',
 		'NetProfile.grid.filters.filter.Number',
 		'NetProfile.grid.filters.filter.List',
-		'NetProfile.grid.plugin.SimpleSearch'
+		'NetProfile.grid.plugin.SimpleSearch',
+		'NetProfile.grid.plugin.ExtraSearch'
 	],
 	rowEditing: false,
 	simpleSearch: false,
@@ -92,11 +93,13 @@ Ext.define('NetProfile.view.ModelGrid', {
 			plugins = Ext.Array.clone(this.plugins);
 		else
 			plugins = [ 'gridfilters' ];
-//		if(this.extraSearch)
-//			FIXME
 		if(this.simpleSearch)
 			plugins.push({
 				ptype: 'simplesearch'
+			});
+		if(this.extraSearch)
+			plugins.push({
+				ptype: 'extrasearch'
 			});
 		var tbitems = [{
 			text: this.clearText,
@@ -433,8 +436,8 @@ Ext.define('NetProfile.view.ModelGrid', {
 			this.filters.clearFilters(true);
 		if(this.ssearch)
 			this.ssearch.clearValue(true);
-//		if(this.xsearch)
-//			this.xsearch.clearValue(true);
+		if(this.xsearch)
+			this.xsearch.clearValue(true);
 		store.sorters.clear();
 		if(store.initialSorters && store.initialSorters.length)
 			store.sorters.add(store.initialSorters);

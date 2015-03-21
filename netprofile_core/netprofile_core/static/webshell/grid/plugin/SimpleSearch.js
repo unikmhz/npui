@@ -3,6 +3,7 @@ Ext.define('NetProfile.grid.plugin.SimpleSearch', {
 	alias: 'plugin.simplesearch',
 	pluginId: 'simplesearch',
 	requires: [
+		'Ext.form.field.Text',
 		'Ext.util.DelayedTask'
 	],
 
