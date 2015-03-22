@@ -323,17 +323,20 @@ def dpane_simple(model, request):
 		'layout' : {
 			'type'    : 'hbox',
 			'align'   : 'stretch',
-			'padding' : 4
+			'padding' : 0
 		},
 		'items' : [{
-			'xtype' : 'npform',
-			'flex'  : 2
+			'xtype'   : 'npform',
+			'flex'    : 2,
+			'padding' : '4 0 4 4'
 		}, {
-			'xtype' : 'splitter'
+			'xtype'   : 'splitter'
 		}, {
-			'xtype'  : 'tabpanel',
-			'flex'   : 3,
-			'items'  : tabs
+			'xtype'   : 'tabpanel',
+			'cls'     : 'np-subtab',
+			'border'  : False,
+			'flex'    : 3,
+			'items'   : tabs
 		}]
 	}
 	request.run_hook(

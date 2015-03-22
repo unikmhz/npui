@@ -341,17 +341,15 @@ table.np-rights-tbl td.vlabel
 	min-width: 4em;
 }
 
-div.np-propbar-tabbar div.x-tab-bar-body
+div#npws_propbar div.np-subtab
 {
-	border-top-color: #dfe8f6;
-	border-left: 0;
-	border-right: 0;
+	border-left-width: 1px;
+	border-left-style: solid;
 }
 
-div.np-propbar-tabbar div.x-tab-bar-strip
+div#npws_propbar div.np-subtab div.x-tab-bar-body
 {
-	border-left: 0;
-	border-right: 0;
+	padding-top: 2px;
 }
 
 .x-tree-icon-parent

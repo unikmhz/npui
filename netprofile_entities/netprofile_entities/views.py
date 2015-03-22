@@ -106,28 +106,30 @@ def dpane_entities(model, request):
 		'layout' : {
 			'type'    : 'hbox',
 			'align'   : 'stretch',
-			'padding' : 4
+			'padding' : 0
 		},
 		'items' : [{
-			'xtype'  : 'panel',
+			'xtype'      : 'panel',
 			'scrollable' : 'vertical',
-			'border' : 1,
-			'flex'   : 2,
-			'layout' : {
+			'border'     : 0,
+			'flex'       : 2,
+			'layout'     : {
 				'type'  : 'vbox',
 				'align' : 'stretch'
 			},
-			'items'  : [{
+			'items'      : [{
 				'xtype'      : 'npform',
 				'scrollable' : False,
 				'border'     : 0
 			}]
 		}, {
-			'xtype' : 'splitter'
+			'xtype'      : 'splitter'
 		}, {
-			'xtype'  : 'tabpanel',
-			'flex'   : 3,
-			'items'  : tabs
+			'xtype'      : 'tabpanel',
+			'cls'        : 'np-subtab',
+			'border'     : False,
+			'flex'       : 3,
+			'items'      : tabs
 		}]
 	}
 	request.run_hook(
