@@ -401,11 +401,11 @@ class House(Base):
 	def _filter_address(cls, query, value):
 		if not isinstance(value, dict):
 			return query
-		if 'districtid' in value:
+		if ('districtid' in value) and value['districtid']:
 			val = int(value['districtid'])
 			if val > 0:
 				query = query.filter(Street.district_id == val)
-		elif 'cityid' in value:
+		elif ('cityid' in value) and value['cityid']:
 			val = int(value['cityid'])
 			if val > 0:
 				query = query.filter(Street.city_id == val)
