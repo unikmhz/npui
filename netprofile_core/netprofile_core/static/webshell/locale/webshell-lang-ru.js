@@ -73,6 +73,13 @@ Ext.onReady(function()
 		override: 'NetProfile.grid.plugin.SimpleSearch',
 		fieldEmptyText: 'Поиск...'
 	});
+	Ext.define('Ext.locale.ru.NetProfile.grid.plugin.ExtraSearch', {
+		override: 'NetProfile.grid.plugin.ExtraSearch',
+		searchText: 'Поиск',
+		searchTipText: 'Дополнительные условия поиска.',
+		advSearchText: 'Расширенный поиск',
+		clearText: 'Сбросить'
+	});
 
 	Ext.define('Ext.locale.ru.NetProfile.view.ModelGrid', {
 		override: 'NetProfile.view.ModelGrid',

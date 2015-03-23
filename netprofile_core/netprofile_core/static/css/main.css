@@ -79,23 +79,9 @@ h2
 	vertical-align: bottom;
 }
 
-.x-grid-checkheader, .x-boundlist-item .x-combo-check
+.np-valign-top
 {
-	height: 14px;
-	background-image: url('../img/unchecked.gif');
-	background-position: 50% -2px;
-	background-repeat: no-repeat;
-	background-color: transparent;
-}
-
-.x-grid-checkheader-checked, .x-boundlist-selected .x-combo-check
-{
-	background-image: url('../img/checked.gif');
-}
-
-.x-grid-checkheader-editor .x-form-cb-wrap
-{
-	text-align: center;
+	vertical-align: top;
 }
 
 .ux-timefield label, .ux-timefield input
@@ -109,35 +95,9 @@ h2
 	padding: 6px;
 }
 
-.ux-filtered-column
-{
-	font-style: italic;
-	font-weight: bold;
-}
-
-.ux-gridfilter-text-icon
+.x-grid-filters-find
 {
 	background-image: url(../img/find.png) !important;
-}
-
-.ux-rangemenu-icon
-{
-	margin-top: 0;
-}
-
-.ux-rangemenu-gt
-{
-	background-image: url(../img/greater_than.png) !important;
-}
-
-.ux-rangemenu-lt
-{
-	background-image: url(../img/less_than.png) !important;
-}
-
-.ux-rangemenu-eq
-{
-	background-image: url(../img/equals.png) !important;
 }
 
 .record-tab-hdl span.x-tab-icon
@@ -443,6 +403,7 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-folder-ren   { background-image: url(../img/folder_rename.png) !important; }
 .ico-folder-tree  { background-image: url(../img/folder_tree.png) !important; }
 .ico-find         { background-image: url(../img/find.png) !important; }
+.ico-find-plus    { background-image: url(../img/find_plus.png) !important; }
 .ico-first        { background-image: url(../img/first.png) !important; }
 .ico-home         { background-image: url(../img/home.png) !important; }
 .ico-info         { background-image: url(../img/info.png) !important; }

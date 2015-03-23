@@ -98,11 +98,11 @@ Ext.define('NetProfile.grid.plugin.ExtraSearch', {
 					xtype: 'button',
 					text: me.clearText,
 					iconCls: 'ico-clear',
+					cellCls: 'np-valign-top',
 					listeners: {
 						click: function(el, ev)
 						{
-							// FIXME: this is not a buttongroup any more!
-							this.up('buttongroup').getComponent(name).setValue(null);
+							this.up('panel').getComponent(name).setValue(null);
 						}
 					}
 				};
@@ -110,17 +110,16 @@ Ext.define('NetProfile.grid.plugin.ExtraSearch', {
 			}, me);
 
 			menui.push({
-				xtype: 'buttongroup',
-				collapsible: true,
-				titleCollapse: true,
+				xtype: 'panel',
+				iconCls: 'ico-find-plus',
 				title: me.advSearchText,
-				titleAlign: 'left',
-				hideCollapseTool: true,
-				animCollapse: false,
-				columns: 2,
 				defaults: {
-					margin: 3,
+					margin: 5,
 					labelAlign: 'right'
+				},
+				layout: {
+					type: 'table',
+					columns: 2
 				},
 				items: srch
 			});
@@ -133,7 +132,20 @@ Ext.define('NetProfile.grid.plugin.ExtraSearch', {
 				iconCls: 'ico-find',
 				menu: {
 					xtype: 'menu',
-					items: menui
+					plain: true,
+					layout: 'fit',
+					showSeparator: false,
+					defaults: {
+						plain: true
+					},
+					items: [{
+						xtype: 'panel',
+						layout: {
+							type: 'accordion',
+							align: 'stretch'
+						},
+						items: menui
+					}]
 				}
 			};
 			me.btn = Ext.create('Ext.button.Button', config);
