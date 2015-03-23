@@ -539,7 +539,8 @@ Ext.require([
 		canCreate: false,
 % endif
 		canEdit: <%np:jscap code="${mod.cap_edit}" />,
-		canDelete: <%np:jscap code="${mod.cap_delete}" />
+		canDelete: <%np:jscap code="${mod.cap_delete}" />,
+		canExport: ${'false' if (mod.export_view is None) else 'true'}
 	});
 % endfor
 % endfor

@@ -299,6 +299,8 @@ def data_export(request):
 	if objcls not in mod:
 		return HTTPNotFound()
 	model = mod[objcls]
+	if model.export_view is None:
+		return HTTPForbidden()
 	rcap = model.cap_read
 	if rcap and (not has_permission(rcap, request.context, request)):
 		return HTTPForbidden()
