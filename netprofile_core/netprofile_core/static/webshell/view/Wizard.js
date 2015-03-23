@@ -7,8 +7,8 @@ Ext.define('NetProfile.view.Wizard', {
 	alias: 'widget.npwizard',
 	requires: [
 		'Ext.form.*',
-		'Ext.ux.form.field.IPv4',
-		'Ext.ux.form.field.IPv6',
+		'NetProfile.form.field.IPv4',
+		'NetProfile.form.field.IPv6',
 		'Ext.ux.form.field.Password',
 		'NetProfile.view.WizardPane'
 	],

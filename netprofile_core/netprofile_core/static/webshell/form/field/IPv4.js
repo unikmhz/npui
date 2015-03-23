@@ -1,8 +1,8 @@
 /**
- * @class Ext.ux.form.field.IPv4
+ * @class NetProfile.form.field.IPv4
  * @extends Ext.form.field.Base
  */
-Ext.define('Ext.ux.form.field.IPv4', {
+Ext.define('NetProfile.form.field.IPv4', {
 	extend: 'Ext.form.field.Base',
 	alias: 'widget.ipv4field',
 	requires: [
