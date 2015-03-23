@@ -61,6 +61,7 @@ target/
 debug-shell.py
 run-celery-worker.sh
 /netprofile/data/
+/find.sh
 
 # NetProfile-specific
 README-NP.rst

@@ -44,37 +44,40 @@ Ext.define('NetProfile.form.field.IPv4', {
 	value: null,
 	createInput: function(idx, oct)
 	{
-		var fdname = 'oct' + idx,
+		var me = this,
+			el = me.getEl(),
+			fdname = 'oct' + idx,
 			ctname = fdname + 'Ct';
 
-		this[ctname] = Ext.query('.ipv4-field-input' + idx, this.el.dom)[0];
-		this[fdname] = Ext.create('Ext.form.field.Number', Ext.apply(
+//		me[ctname] = Ext.query('.ipv4-field-input' + idx, this.el.dom)[0];
+		me[ctname] = el.query('.ipv4-field-input' + idx)[0];
+		me[fdname] = Ext.create('Ext.form.field.Number', Ext.apply(
 			{},
 			{
-				renderTo: this[ctname],
-				allowBlank: this.allowBlank ? true : false,
-				disabled: this.disabled ? true : false,
-				parentComponent: this,
+				renderTo: me[ctname],
+				allowBlank: me.allowBlank ? true : false,
+				disabled: me.disabled ? true : false,
+				parentComponent: me,
 				itemId: fdname,
 				enableKeyEvents: true,
 				value: (oct && (oct.length === 4)) ? oct[idx - 1] : '',
+				submitValue: false,
 				listeners: {
 					change: function(fld, val)
 					{
 						var ipre = /^\s*\d+\.\d+\.\d+\.\d+\s*$/,
 							sval = String(fld.getRawValue()),
-							comp = this.parentComponent,
 							oldval;
 
 						if(ipre.test(sval))
 						{
-							oldval = comp.value;
-							comp.setRawValue(sval);
-							if((oldval === null) || (comp.value && (oldval.toString() != comp.value.toString())))
-								comp.fireEvent('change', comp, comp.value, oldval);
+							oldval = me.value;
+							me.setRawValue(sval);
+							if((oldval === null) || (me.value && (oldval.toString() != me.value.toString())))
+								me.fireEvent('change', me, me.value, oldval);
 							return true;
 						}
-						comp.parseFields();
+						me.parseFields();
 						return true;
 					},
 					keydown: function(fld, ev)
@@ -87,54 +90,55 @@ Ext.define('NetProfile.form.field.IPv4', {
 							if((k === 190) || (k === ev.NUM_PERIOD) || (k === ev.TAB))
 							{
 								ev.stopEvent();
-								this.parentComponent['oct' + (octnum + 1)].focus();
+								me['oct' + (octnum + 1)].focus();
 							}
 						}
 					}
 				}
 			},
-			this.octetFieldProto || {}
+			me.octetFieldProto || {}
 		));
-		this[fdname].getEl().dom.removeAttribute('name');
+//		me[fdname].getEl().dom.removeAttribute('name');
 	},
 	onRender: function(pn, idx)
 	{
-		var i, oct;
+		var me = this,
+			el = me.getEl(),
+			i, oct;
 
-		this.callParent([pn, idx]);
+		me.callParent([pn, idx]);
 
-		if(this.value)
-			oct = this.value.toByteArray();
+		if(me.value)
+			oct = me.value.toByteArray();
 		else
 			oct = false;
 
 		for(i = 1; i < 5; i++)
-			this.createInput(i, oct);
+			me.createInput(i, oct);
 
-		i = Ext.query('.ipv4-field-btns', this.el.dom)[0];
+		i = el.query('.ipv4-field-btns')[0];
 
-		if(this.allowBlank && !this.readOnly)
+		if(me.allowBlank && !me.readOnly)
 		{
-			this.clearBtn = Ext.create('Ext.button.Button', {
+			me.clearBtn = Ext.create('Ext.button.Button', {
 				iconCls: 'ico-clear',
 				renderTo: i,
-				tooltip: this.clearTipText,
+				tooltip: me.clearTipText,
 				shrinkWrap: 0,
 				height: 22,
 				width: 22,
 				listeners: {
 					click: function(fld, ev)
 					{
-						if(!this.disabled)
+						if(!me.disabled)
 						{
-							var oldval = this.value;
+							var oldval = me.value;
 
-							this.clearValue();
+							me.clearValue();
 							if(oldval !== null)
-								this.fireEvent('change', this, this.value, oldval);
+								me.fireEvent('change', me, me.value, oldval);
 						}
-					},
-					scope: this
+					}
 				}
 			});
 		}
@@ -145,65 +149,71 @@ Ext.define('NetProfile.form.field.IPv4', {
 	},
 	getFieldOctets: function()
 	{
-		if(!this.oct1.isValid() || !this.oct2.isValid() || !this.oct3.isValid() || !this.oct4.isValid())
+		var me = this;
+
+		if(!me.oct1.isValid() || !me.oct2.isValid() || !me.oct3.isValid() || !me.oct4.isValid())
 			throw 'Invalid octets found'
 		return [
-			this.oct1.getValue(),
-			this.oct2.getValue(),
-			this.oct3.getValue(),
-			this.oct4.getValue()
+			me.oct1.getValue(),
+			me.oct2.getValue(),
+			me.oct3.getValue(),
+			me.oct4.getValue()
 		];
 	},
 	updateFields: function()
 	{
-		var oct = this.value.toByteArray();
+		var me = this,
+			oct = me.value.toByteArray();
 
-		if(this.oct1)
-			this.oct1.setRawValue(oct[0]);
-		if(this.oct2)
-			this.oct2.setRawValue(oct[1]);
-		if(this.oct3)
-			this.oct3.setRawValue(oct[2]);
-		if(this.oct4)
-			this.oct4.setRawValue(oct[3]);
+		if(me.oct1)
+			me.oct1.setRawValue(oct[0]);
+		if(me.oct2)
+			me.oct2.setRawValue(oct[1]);
+		if(me.oct3)
+			me.oct3.setRawValue(oct[2]);
+		if(me.oct4)
+			me.oct4.setRawValue(oct[3]);
 	},
 	parseFields: function()
 	{
-		var oldval = this.value,
+		var me = this,
+			oldval = me.value,
 			oct, ectr = 0;
 
 		try
 		{
-			oct = this.getFieldOctets();
+			oct = me.getFieldOctets();
 			oct = Ext.Array.map(oct, function(o)
 			{
 				if((o === null) || (o === undefined) || (o === ''))
 				{
 					ectr ++;
-					if(!this.allowBlank)
+					if(!me.allowBlank)
 						throw 'Invalid octets found'
 				}
 				return parseInt(o) || 0;
-			}, this);
+			});
 			if(ectr === 4)
-				this.value = null;
+				me.value = null;
 			else
-				this.value = new ipaddr.IPv4(oct);
+				me.value = new ipaddr.IPv4(oct);
 		}
 		catch(e)
 		{
-			this.validate();
-			this.markInvalid([e]);
+			me.validate();
+			me.markInvalid([e]);
 			return false;
 		}
-		if(this.validate() && ((oldval && !this.value.match(oldval, 32)) || !oldval))
-			this.fireEvent('change', this, this.value, oldval);
+		if(me.validate() && ((oldval && !me.value.match(oldval, 32)) || !oldval))
+			me.fireEvent('change', me, me.value, oldval);
 		return true;
 	},
 	setRawValue: function(val)
 	{
+		var me = this;
+
 		if((val === null) || (val === undefined) || (val === ''))
-			return this.clearValue();
+			return me.clearValue();
 		if(Ext.isObject(val))
 		{
 			if(!(val instanceof ipaddr.IPv4))
@@ -211,46 +221,49 @@ Ext.define('NetProfile.form.field.IPv4', {
 		}
 		else
 			val = ipaddr.IPv4.parse(val);
-		this.value = val;
-		this.updateFields();
+		me.value = val;
+		me.updateFields();
 		return true;
 	},
 	clearValue: function()
 	{
-		this.value = null;
-		if(this.oct1)
-			this.oct1.setRawValue('');
-		if(this.oct2)
-			this.oct2.setRawValue('');
-		if(this.oct3)
-			this.oct3.setRawValue('');
-		if(this.oct4)
-			this.oct4.setRawValue('');
+		var me = this;
+
+		me.value = null;
+		if(me.oct1)
+			me.oct1.setRawValue('');
+		if(me.oct2)
+			me.oct2.setRawValue('');
+		if(me.oct3)
+			me.oct3.setRawValue('');
+		if(me.oct4)
+			me.oct4.setRawValue('');
 		return true;
 	},
 	isValid: function()
 	{
-		var valid = true;
+		var me = this,
+			valid = true;
 
-		if(this.disabled)
+		if(me.disabled)
 			return true;
-		if(this.oct1 && !this.oct1.isValid())
+		if(me.oct1 && !me.oct1.isValid())
 			valid = false;
-		if(this.oct2 && !this.oct2.isValid())
+		if(me.oct2 && !me.oct2.isValid())
 			valid = false;
-		if(this.oct3 && !this.oct3.isValid())
+		if(me.oct3 && !me.oct3.isValid())
 			valid = false;
-		if(this.oct4 && !this.oct4.isValid())
+		if(me.oct4 && !me.oct4.isValid())
 			valid = false;
 
 		if(!valid)
 		{
-			if(!this.preventMark)
-				this.markInvalid();
+			if(!me.preventMark)
+				me.markInvalid();
 			return false;
 		}
-		if(!this.preventMark)
-			this.clearInvalid();
+		if(!me.preventMark)
+			me.clearInvalid();
 		return true;
 	}
 });
