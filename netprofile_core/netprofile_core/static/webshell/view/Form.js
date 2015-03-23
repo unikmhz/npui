@@ -26,6 +26,7 @@ Ext.define('NetProfile.view.Form', {
 	formCls: null,
 	store: null,
 	record: null,
+	extraButtons: null,
 	fieldDefaults: {
 		labelWidth: 120,
 		labelAlign: 'right',
@@ -82,6 +83,8 @@ Ext.define('NetProfile.view.Form', {
 			},
 			tooltip: { text: this.submitTipText, title: this.submitTipTitleText }
 		}];
+		if(this.extraButtons && this.extraButtons.length)
+			this.buttons = this.buttons.concat(this.extraButtons, ['->'], this.buttons);
 
 		this.callParent();
 

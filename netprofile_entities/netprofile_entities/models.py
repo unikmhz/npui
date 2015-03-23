@@ -271,7 +271,7 @@ class Entity(Base):
 				),
 				'easy_search'   : ('nick',),
 				'extra_data'    : ('data', 'grid_icon'),
-				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'extra_search'  : (
 					TextFilter('phone', _filter_phone,
 						title=_('Phone')
@@ -1391,7 +1391,7 @@ class PhysicalEntity(Entity):
 				),
 				'easy_search'   : ('nick', 'name_family'),
 				'extra_data'    : ('grid_icon',),
-				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'extra_search'  : (
 					TextFilter('phone', Entity._filter_phone,
 						title=_('Phone')
@@ -1666,7 +1666,7 @@ class LegalEntity(Entity):
 				),
 				'easy_search'   : ('nick', 'name'),
 				'extra_data'    : ('grid_icon',),
-				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'extra_search'  : (
 					TextFilter('phone', Entity._filter_phone,
 						title=_('Phone')
@@ -1945,7 +1945,7 @@ class StructuralEntity(Entity):
 				'form_view'     : ('nick', 'parent', 'state', 'flags', 'descr'),
 				'easy_search'   : ('nick',),
 				'extra_data'    : ('grid_icon',),
-				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'extra_search'  : (
 					TextFilter('phone', Entity._filter_phone,
 						title=_('Phone')
@@ -2045,7 +2045,7 @@ class ExternalEntity(Entity):
 				),
 				'easy_search'   : ('nick', 'name'),
 				'extra_data'    : ('grid_icon',),
-				'detail_pane'   : ('netprofile_entities.views', 'dpane_entities'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : Wizard(
 					Step(
