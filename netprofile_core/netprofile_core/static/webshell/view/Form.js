@@ -9,7 +9,7 @@ Ext.define('NetProfile.view.Form', {
 		'Ext.form.*',
 		'NetProfile.form.field.IPv4',
 		'NetProfile.form.field.IPv6',
-		'Ext.ux.form.field.Password'
+		'NetProfile.form.field.Password'
 	],
 	statics: {
 		formdef: {}

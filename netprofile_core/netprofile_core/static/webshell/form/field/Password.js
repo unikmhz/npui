@@ -1,4 +1,4 @@
-Ext.define('Ext.ux.form.field.Password', {
+Ext.define('NetProfile.form.field.Password', {
 	extend: 'Ext.form.field.Text',
 	alias: 'widget.passwordfield',
 
