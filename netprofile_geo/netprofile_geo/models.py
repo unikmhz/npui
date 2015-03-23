@@ -401,11 +401,11 @@ class House(Base):
 	def _filter_address(cls, query, value):
 		if not isinstance(value, dict):
 			return query
-		if ('districtid' in value) and value['districtid']:
+		if 'districtid' in value:
 			val = int(value['districtid'])
 			if val > 0:
 				query = query.filter(Street.district_id == val)
-		elif ('cityid' in value) and value['cityid']:
+		elif 'cityid' in value:
 			val = int(value['cityid'])
 			if val > 0:
 				query = query.filter(Street.city_id == val)
@@ -570,7 +570,7 @@ class House(Base):
 			flist.extend(params['__ffilter'])
 		for flt in flist:
 			prop = flt.get('property', None)
-			oper = flt.get('property', None)
+			oper = flt.get('operator', None)
 			value = flt.get('value', None)
 			if prop == 'districtid':
 				if oper in ('eq', '=', '==', '==='):

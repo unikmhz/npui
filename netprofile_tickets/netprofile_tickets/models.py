@@ -1216,7 +1216,7 @@ class Ticket(Base):
 			flist.extend(params['__ffilter'])
 		for flt in flist:
 			prop = flt.get('property', None)
-			oper = flt.get('property', None)
+			oper = flt.get('operator', None)
 			value = flt.get('value', None)
 			if prop == 'parentid':
 				if oper in ('eq', '=', '==', '==='):
