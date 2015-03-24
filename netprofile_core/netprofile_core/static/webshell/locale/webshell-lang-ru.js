@@ -1,9 +1,15 @@
 Ext.onReady(function()
 {
-	Ext.define('Ext.locale.ru.ux.DateTimePicker', {
-		override: 'Ext.ux.DateTimePicker',
-		todayText: 'Сейчас',
-		timeLabel: 'Время'
+	Ext.define('Ext.locale.ru.NetProfile.form.field.DateTime', {
+		override: 'NetProfile.form.field.DateTime',
+		format: 'd.m.Y H:i',
+		altFormats: 'Y-m-d H:i|Y-m-d H:i:s|Y-m-d\\TH:i:s|Y-m-d\\TH:i:sP|C', // FIXME
+		timeFormat: 'H:i'
+	});
+	Ext.define('Ext.locale.ru.NetProfile.picker.DateTime', {
+		override: 'NetProfile.picker.DateTime',
+		applyText: 'Применить',
+		cancelText: 'Отмена'
 	});
 
 	Ext.define('Ext.locale.ru.grid.RowEditor', {

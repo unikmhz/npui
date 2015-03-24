@@ -773,14 +773,10 @@ class ExtColumn(object):
 				}
 			})
 		elif issubclass(typecls, _DATE_SET):
-			conf.update({
-				'format'       : _DATE_FMT_MAP[typecls],
-				'submitFormat' : _DATE_FMT_MAP[typecls]
-			})
+			conf['submitFormat'] = _DATE_FMT_MAP[typecls]
 			# FIXME: configurable formats
 			init_fmt = None
 			if issubclass(typecls, (DateTime, TIMESTAMP, Date)):
-				conf['format'] = 'd.m.Y'
 				if issubclass(typecls, Date):
 					init_fmt = '%d.%m.%Y'
 				else:
@@ -896,16 +892,13 @@ class ExtColumn(object):
 				'format' : '0'
 			})
 		if issubclass(typecls, _DATE_SET):
-			conf.update({
-				'format' : _DATE_FMT_MAP[typecls]
-			})
 			# FIXME: configurable formats
 			if issubclass(typecls, (DateTime, TIMESTAMP)):
-				conf['format'] = 'd.m.Y H:i:s'
+				conf['format'] = loc.translate(_('Y-m-d H:i:s'))
 			if issubclass(typecls, Date):
-				conf['format'] = 'd.m.Y'
+				conf['format'] = loc.translate(_('Y-m-d'))
 			if issubclass(typecls, Time):
-				conf['format'] = 'H:i:s'
+				conf['format'] = loc.translate(_('H:i:s'))
 		if filter_conf:
 			conf['filter'] = filter_conf
 		if typecls is DeclEnumType:
