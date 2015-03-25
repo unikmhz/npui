@@ -833,12 +833,18 @@ class ExtColumn(object):
 				# table_*:
 				#
 				# Ignored for now: autoresize,autosave,bbcode,directionality,emoticons
-				'plugins'                 : 'advlist,anchor,autolink,charmap,code,colorpicker,contextmenu,fullscreen,hr,image,insertdatetime,link,lists,media,nonbreaking,pagebreak,paste,preview,print,searchreplace,tabfocus,table,textcolor,visualblocks,visualchars,wordcount',
-				'toolbar'                 : [
+				'plugins' : [
+					'advlist', 'anchor', 'autolink', 'charmap', 'code', 'colorpicker',
+					'contextmenu', 'fullscreen', 'hr', 'image', 'insertdatetime', 'link',
+					'lists', 'media', 'nonbreaking', 'pagebreak', 'paste', 'preview',
+					'print', 'searchreplace', 'tabfocus', 'table', 'textcolor',
+					'visualblocks', 'visualchars', 'wordcount'
+				],
+				'toolbar' : [
 					'undo redo | print preview searchreplace | styleselect | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify subscript superscript | fullscreen code',
 					'bullist numlist outdent indent | image media | link anchor | table hr nonbreaking'
 				],
-				'image_advtab'            : True
+				'image_advtab' : True
 			}
 			conf['tinyMCEConfig'] = tinymce_cfg
 		if in_form:
