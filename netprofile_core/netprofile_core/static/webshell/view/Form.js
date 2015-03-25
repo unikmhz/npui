@@ -18,7 +18,10 @@ Ext.define('NetProfile.view.Form', {
 	remoteValidation: false,
 	readOnly: false,
 	bodyPadding: 5,
-	layout: 'anchor',
+	layout: {
+		type: 'anchor',
+		reserveScrollbar: true
+	},
 	defaults: {
 		anchor: '100%'
 	},

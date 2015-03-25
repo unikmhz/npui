@@ -519,14 +519,16 @@ class Module(ModuleBase):
 			return (
 				'netprofile_core:static/extern/extjs/build/ext-all-debug.js',
 				'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic-debug.js',
-				'netprofile_core:static/extern/tinymce/tiny_mce_src.js',
+				# TODO: Upstream doesn't distribute unminified source.
+				#       Might be a good idea to include it though.
+				'netprofile_core:static/extern/tinymce/tinymce.min.js',
 				'netprofile_core:static/extern/ipaddr/ipaddr.js',
 				'netprofile_core:static/extern/sockjs/sockjs.js'
 			)
 		return (
 			'netprofile_core:static/extern/extjs/build/ext-all.js',
 			'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic.js',
-			'netprofile_core:static/extern/tinymce/tiny_mce.js',
+			'netprofile_core:static/extern/tinymce/tinymce.min.js',
 			'netprofile_core:static/extern/ipaddr/ipaddr.min.js',
 			'netprofile_core:static/extern/sockjs/sockjs.min.js'
 		)
