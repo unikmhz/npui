@@ -322,6 +322,11 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 	background-image: url(../img/folder_open.png);
 }
 
+.tinymce-hide-border
+{
+	border-width: 0px;
+}
+
 .x-cons-data strong
 {
 	font-weight: bold;
