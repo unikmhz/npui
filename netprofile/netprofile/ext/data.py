@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: ExtJS schema and data generation
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -2078,6 +2078,12 @@ class ExtModel(object):
 		logger.info('Running ExtDirect class:%s method:%s', self.name, 'get_create_wizard')
 		wiz = self.create_wizard
 		if wiz:
+			if not wiz.init_done:
+				request.run_hook(
+					'np.wizard.init.%s.%s' % (self.model.__moddef__, self.name),
+					wiz, self, request
+				)
+				wiz.init_done = True
 			title = wiz.title
 			if title:
 				loc = get_localizer(request)
@@ -2101,6 +2107,12 @@ class ExtModel(object):
 		wizdict = self.wizards
 		if wizdict and (wname in wizdict):
 			wiz = wizdict[wname]
+			if not wiz.init_done:
+				request.run_hook(
+					'np.wizard.init.%s.%s' % (self.model.__moddef__, self.name),
+					wiz, self, request
+				)
+				wiz.init_done = True
 			title = wiz.title
 			if title:
 				loc = get_localizer(request)
@@ -2124,7 +2136,13 @@ class ExtModel(object):
 		logger.debug('Params: %r', (pane_id, act, values))
 		wiz = self.create_wizard
 		if wiz:
-			ret = wiz.action(pane_id, act, values, request)
+			if not wiz.init_done:
+				request.run_hook(
+					'np.wizard.init.%s.%s' % (self.model.__moddef__, self.name),
+					wiz, self, request
+				)
+				wiz.init_done = True
+			ret = wiz.action(self, pane_id, act, values, request)
 			if ret:
 				request.run_hook('np.create_wizard.action', ret, wiz, pane_id, act, values, request, self)
 				return {
@@ -2139,7 +2157,13 @@ class ExtModel(object):
 		wizdict = self.wizards
 		if wizdict and (wname in wizdict):
 			wiz = wizdict[wname]
-			ret = wiz.action(pane_id, act, values, request)
+			if not wiz.init_done:
+				request.run_hook(
+					'np.wizard.init.%s.%s' % (self.model.__moddef__, self.name),
+					wiz, self, request
+				)
+				wiz.init_done = True
+			ret = wiz.action(self, pane_id, act, values, request)
 			if ret:
 				request.run_hook('np.wizard.action', ret, wiz, pane_id, act, values, request, self)
 				return {
