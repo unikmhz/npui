@@ -34,7 +34,10 @@ import decimal
 import datetime as dt
 from dateutil.tz import tzlocal
 from dateutil.parser import parse as dparse
-from collections import OrderedDict
+from collections import (
+	Mapping,
+	OrderedDict
+)
 
 from sqlalchemy import (
 	BigInteger,
@@ -301,6 +304,14 @@ def _table_to_class(tname):
 		if getattr(cls, '__tablename__', None) == tname:
 			return cls
 	raise KeyError(tname)
+
+def _recursive_update(dest, src):
+	for k, v in src.items():
+		if isinstance(v, Mapping):
+			dest[k] = _recursive_update(dest.get(k, {}), v)
+		else:
+			dest[k] = v
+	return dest
 
 class ExtColumn(object):
 	MIN_PIXELS = 40
@@ -789,6 +800,47 @@ class ExtColumn(object):
 					conf['value'] = conf['value'].isoformat()
 				else:
 					conf['value'] = conf['value'].strftime(init_fmt)
+		if ed_xtype in ('tinymce_field', 'tinymce_textarea'):
+			tinymce_cfg = {
+				'theme'                  : 'modern',
+				'schema'                 : 'html5',
+				'language'               : req.current_locale.language,
+				'spellchecker_language'  : req.current_locale.language,
+				'spellchecker_languages' : ','.join('%s=%s' % (
+					req.current_locale.languages[lang],
+					lang,
+				) for lang in req.locales),
+				# To implement:
+				#  Plugins: fullpage,importcss,save,spellchecker,template,textpattern,visualblocks(maybe base tpl on this)
+				#  color_picker_callback: JS code
+				#  contextmenu: 'a b c | d e'
+				# fullpage_default_*:
+				# fullpage_hide_in_source_view:
+				# image_list: list of images? or a callback?
+				# image_class_list: link classes
+				# insertdatetime_formats: formats to insert as (for split button)
+				# insertdatetime_dateformat:
+				# insertdatetime_timeformat:
+				# link_list:
+				# target_list:
+				# rel_list:
+				# link_class_list:
+				# media_*:
+				# nonbreaking_force_tab: insert series of nbsps on tab, probably not needed
+				# pagebreak_separator:
+				# paste_*:
+				# spellchecker_*:
+				# table_*:
+				#
+				# Ignored for now: autoresize,autosave,bbcode,directionality,emoticons
+				'plugins'                 : 'advlist,anchor,autolink,charmap,code,colorpicker,contextmenu,fullscreen,hr,image,insertdatetime,link,lists,media,nonbreaking,pagebreak,paste,preview,print,searchreplace,tabfocus,table,textcolor,visualblocks,visualchars,wordcount',
+				'toolbar'                 : [
+					'undo redo | print preview searchreplace | styleselect | bold italic underline strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify subscript superscript | fullscreen code',
+					'bullist numlist outdent indent | image media | link anchor | table hr nonbreaking'
+				],
+				'image_advtab'            : True
+			}
+			conf['tinyMCEConfig'] = tinymce_cfg
 		if in_form:
 			conf['fieldLabel'] = loc.translate(self.header_string)
 			val = self.pixels
@@ -798,7 +850,7 @@ class ExtColumn(object):
 					conf['width'] += 25
 		val = self.editor_config
 		if val:
-			conf.update(val)
+			_recursive_update(conf, val)
 		return conf
 
 	def get_reader_cfg(self):
