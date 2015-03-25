@@ -235,7 +235,7 @@ Ext.define('NetProfile.view.SideBar', {
 			if(!store)
 				return true;
 			node = store.getNodeById(pts[1]);
-			menu = this.getComponent('npmenu_' + pts[0]);
+			menu = me.getComponent('npmenu_' + pts[0]);
 			if(menu)
 				menu.expand();
 			if(!node)
@@ -292,10 +292,10 @@ Ext.define('NetProfile.view.SideBar', {
 						node.expand(false, rec_exp);
 				}
 				else
-					this.doSelectNode(node, pts[0]);
+					me.doSelectNode(node, pts[0]);
 				return true;
 			}
-			this.doSelectNode(node, pts[0]);
+			me.doSelectNode(node, pts[0]);
 		}
 		else if(this.lastPanel)
 		{
@@ -307,12 +307,27 @@ Ext.define('NetProfile.view.SideBar', {
 	},
 	doSelectNode: function(node, menu)
 	{
+		var me = this,
+			path = node.getPath(),
+			tree, store, cb;
+
 		if(node.get('xview'))
-			this.doSelectMenuView(node.get('xview'));
+			me.doSelectMenuView(node.get('xview'));
 		if(node.get('xhandler'))
-			this.doSelectMenuHandler(node.get('xhandler'), node.getId());
+			me.doSelectMenuHandler(node.get('xhandler'), node.getId());
 		if(menu)
-			this.menus[menu].selectPath(node.getPath());
+		{
+			tree = me.menus[menu];
+			store = tree.getStore();
+			if(store.isLoading())
+				store.on('load', function(store, records, succ)
+				{
+					if(succ)
+						this.selectPath(path);
+				}, tree, { single: true });
+			else
+				tree.selectPath(path);
+		}
 	}
 });
 
