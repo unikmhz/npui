@@ -116,6 +116,8 @@ from netprofile_geo.models import (
 	House,
 	Street
 )
+
+
 from netprofile_geo.filters import AddressFilter
 from netprofile.ext.wizards import (
 	ExternalWizardField,
@@ -140,6 +142,7 @@ class EntityType(DeclEnum):
 	legal      = 'legal',      _('Legal'),      20
 	structural = 'structural', _('Structural'), 30
 	external   = 'external',   _('External'),   40
+
 
 def _wizcb_ent_generic_next(wiz, step, act, val, req):
 	ret = {
