@@ -321,7 +321,7 @@ def dpane_simple(model, request):
 		tabs, model, request
 	)
 	cont = {
-		'border' : 0,
+		'border' : False,
 		'layout' : {
 			'type'    : 'hbox',
 			'align'   : 'stretch',
@@ -331,7 +331,10 @@ def dpane_simple(model, request):
 			'xtype'   : 'npform',
 			'flex'    : 2,
 			'padding' : '4 0 4 4'
-		}, {
+		}]
+	}
+	if len(tabs) > 0:
+		cont['items'].extend(({
 			'xtype'   : 'splitter'
 		}, {
 			'xtype'   : 'tabpanel',
@@ -339,12 +342,44 @@ def dpane_simple(model, request):
 			'border'  : False,
 			'flex'    : 3,
 			'items'   : tabs
-		}]
+		}))
+	else:
+		cont['items'][0]['padding'] = '4'
+	request.run_hook(
+		'core.dpane.%s.%s' % (model.__parent__.moddef, model.name),
+		cont, model, request
+	)
+	return cont
+
+def dpane_wide_content(model, request):
+	loc = get_localizer(request)
+	tabs = [{
+		'xtype'   : 'npform',
+		'iconCls' : 'ico-props',
+		'border'  : True,
+		'padding' : '4',
+		'title'   : loc.translate(_('Properties'))
+	}]
+	request.run_hook(
+		'core.dpanetabs.%s.%s' % (model.__parent__.moddef, model.name),
+		tabs, model, request
+	)
+	cont = {
+		'xtype'  : 'tabpanel',
+		'cls'    : 'np-subtab',
+		'border' : False,
+		'items'  : tabs
 	}
 	request.run_hook(
 		'core.dpane.%s.%s' % (model.__parent__.moddef, model.name),
 		cont, model, request
 	)
+	if len(cont['items']) == 1:
+		cont['layout'] = 'fit'
+		del cont['xtype']
+		del cont['cls']
+		del cont['items'][0]['title']
+		del cont['items'][0]['iconCls']
 	return cont
 
 @extdirect_method('DataCache', 'save_ls', request_as_last_param=True, permission='USAGE')
