@@ -1,9 +1,9 @@
 NetProfile
 ==========
 
-Copyright © 2010-2014 Alex Unigovsky
+Copyright © 2010-2015 Alex Unigovsky
 
-Copyright © 2010-2014 NetProfile project contributors
+Copyright © 2010-2015 NetProfile project contributors
 
 What is this?
 -------------
