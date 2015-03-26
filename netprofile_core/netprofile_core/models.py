@@ -5720,11 +5720,11 @@ def _wizfld_import_cal(fld, model, req, **kwargs):
 	return {
 		'xtype'          : 'combobox',
 		'allowBlank'     : False,
-		'name'           : 'calid',
+		'name'           : 'caldef',
 		'format'         : 'string',
 		'displayField'   : 'Title',
 		'valueField'     : 'CalendarId',
-		'hiddenName'     : 'calid',
+		'hiddenName'     : 'caldef',
 		'editable'       : False,
 		'forceSelection' : True,
 		'store'          : {
@@ -5738,10 +5738,10 @@ def _wizfld_import_cal(fld, model, req, **kwargs):
 		'tpl'            : '<tpl for="."><div class="x-boundlist-item">{Owner}: {Title}</div></tpl>'
 	}
 
-def _wizcb_import_cal_submit(wiz, step, act, val, req):
-	if ('calid' not in val) or (val['calid'][:5] != 'user-'):
+def _wizcb_import_cal_submit(wiz, em, step, act, val, req):
+	if ('caldef' not in val) or (val['caldef'][:5] != 'user-'):
 		raise ValueError
-	cal_id = int(val['calid'][5:])
+	cal_id = int(val['caldef'][5:])
 	sess = DBSession()
 	cal = sess.query(Calendar).get(cal_id)
 	if (not cal) or (not cal.can_read(req.user)):
@@ -5799,7 +5799,8 @@ class CalendarImport(Base):
 						id='generic',
 						on_submit=_wizcb_import_cal_submit
 					),
-					title=_('Import a calendar')
+					title=_('Import a calendar'),
+					validator='ImportCalendar'
 				)
 			}
 		}

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -772,9 +772,8 @@ def _wizfld_ticket_tpl(fld, model, req, **kwargs):
 		'fieldLabel'     : loc.translate(_('Template'))
 	}
 
-def _wizcb_ticket_submit(wiz, step, act, val, req):
+def _wizcb_ticket_submit(wiz, em, step, act, val, req):
 	sess = DBSession()
-	em = ExtModel(Ticket)
 	obj = Ticket(origin_id=1)
 	em.set_values(obj, val, req, True)
 	sess.add(obj)
@@ -789,9 +788,8 @@ def _wizcb_ticket_submit(wiz, step, act, val, req):
 		'reload' : True
 	}
 
-def _wizcb_ticket_tpl_submit(wiz, step, act, val, req):
+def _wizcb_ticket_tpl_submit(wiz, em, step, act, val, req):
 	sess = DBSession()
-	em = ExtModel(Ticket)
 	if ('ttplid' not in val) or ('entityid' not in val):
 		raise ValueError
 	tpl = sess.query(TicketTemplate).get(int(val['ttplid']))

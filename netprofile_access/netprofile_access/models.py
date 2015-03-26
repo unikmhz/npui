@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -97,11 +97,24 @@ from netprofile.db.ddl import (
 	Trigger
 )
 from netprofile.ext.columns import MarkupColumn
-from netprofile.ext.wizards import SimpleWizard
+from netprofile.ext.wizards import (
+	SimpleWizard, 
+	Wizard, 
+	Step, 
+	ExternalWizardField
+)
+
+from netprofile.ext.data import (
+	ExtModel,
+	_name_to_class
+)
+from netprofile.common.hooks import register_hook
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
+
+from pyramid.threadlocal import get_current_request
 
 from netprofile_entities.models import (
 	Entity,
@@ -111,6 +124,31 @@ from netprofile_entities.models import (
 _ = TranslationStringFactory('netprofile_access')
 
 EntityType.add_symbol('access', ('access', _('Access'), 50))
+
+@register_hook('np.wizard.init.entities.Entity')
+def _wizcb_aent_init(wizard, model, req):
+	def _wizcb_aent_submit(wiz, em, step, act, val, req):
+		sess = DBSession()
+		em = ExtModel(AccessEntity)
+		obj = AccessEntity()
+		# Work around field name clash
+		if 'state' in val:
+			del val['state']
+		em.set_values(obj, val, req, True)
+		sess.add(obj)
+		return {
+			'do'     : 'close',
+			'reload' : True
+		}
+
+	wizard.steps.append(Step(
+		ExternalWizardField('AccessEntity', 'password'),
+		ExternalWizardField('AccessEntity', 'stash'),
+		ExternalWizardField('AccessEntity', 'rate'),
+		id='ent_access1', title=_('Access entity properties'),
+		on_prev='generic',
+		on_submit=_wizcb_aent_submit
+	))
 
 class AccessState(DeclEnum):
 	"""
@@ -133,9 +171,7 @@ class AccessEntity(Entity):
 	"""
 	Access entity object.
 	"""
-
 	DN_ATTR = 'uid'
-
 	__tablename__ = 'entities_access'
 	__table_args__ = (
 		Comment('Access entities'),
@@ -188,7 +224,19 @@ class AccessEntity(Entity):
 				),
 				'easy_search'  : ('nick',),
 				'extra_data'    : ('grid_icon',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : Wizard(
+					Step(
+						'nick', 'parent', 'state', 
+						'flags', 'descr',
+						id='generic', title=_('Generic entity properties'),
+					),
+					Step(
+						'password', 'stash', 'rate',
+						id='ent_access1', title=_('Access entity properties'),
+					),
+					title=_('Add new access entity'), validator='CreateAccessEntity'
+				)
 			}
 		}
 	)
