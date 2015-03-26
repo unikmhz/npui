@@ -2047,10 +2047,15 @@ class ExtModel(object):
 			has_all = True
 			has_defined = False
 			for ifld in index:
-				if (ifld not in values) or (ifld not in cols) or (ifld not in trans):
+				if (ifld not in cols) or (ifld not in trans):
 					has_all = False
-				if values[ifld] is not None:
+					break
+				colval = values.get(ifld)
+				if colval is not None:
 					has_defined = True
+				elif not cols[ifld].nullable:
+					has_all = False
+					break
 			if (not has_all) or (not has_defined):
 				continue
 			q = sess.query(func.count('*')).select_from(self.model)
@@ -2058,7 +2063,7 @@ class ExtModel(object):
 				prop = trans[ifld]
 				extcol = cols[ifld]
 				col = getattr(self.model, prop.key)
-				q = q.filter(col == extcol.parse_param(values[ifld]))
+				q = q.filter(col == extcol.parse_param(values.get(ifld)))
 			if pkey is not None:
 				col = getattr(self.model, self.object_pk)
 				q = q.filter(col != pkey)
