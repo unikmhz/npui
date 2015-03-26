@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -118,38 +118,37 @@ from pyramid.threadlocal import get_current_request
 
 from netprofile_entities.models import (
 	Entity,
-	EntityType,
-	EntityState,
-	_wizcb_ent_generic_next,
-	_wizcb_ent_submit
+	EntityType
 )
 
 _ = TranslationStringFactory('netprofile_access')
 
 EntityType.add_symbol('access', ('access', _('Access'), 50))
 
-@register_hook('np.wizard.cfg.entities.Entity')
-def _modify_wizard(wizard, model, res):
-	if not 'ent_access1' in [s.id for s in wizard.steps]:
-		accessEntityStep = Step(
-			ExternalWizardField('AccessEntity', 'password'),
-			ExternalWizardField('AccessEntity', 'stash'),
-			ExternalWizardField('AccessEntity', 'rate'),
-			id='ent_access1', title=_('Access entity properties'),
-			on_prev='generic',
-			on_submit=_wizcb_ent_submit('AccessEntity')
-			)
-		req = get_current_request()
-		scfg = accessEntityStep.get_cfg(model, req)
-		if scfg:
-			scfg['itemId'] = accessEntityStep.id
-			res.append(scfg)
-	
-		createWizardSteps = list(model.create_wizard.steps)
-		createWizardSteps.append(accessEntityStep)
-		model.create_wizard.steps = tuple(createWizardSteps)
-		wizard.steps = tuple(createWizardSteps)
-	return model, res
+@register_hook('np.wizard.init.entities.Entity')
+def _wizcb_aent_init(wizard, model, req):
+	def _wizcb_aent_submit(wiz, em, step, act, val, req):
+		sess = DBSession()
+		em = ExtModel(AccessEntity)
+		obj = AccessEntity()
+		# Work around field name clash
+		if 'state' in val:
+			del val['state']
+		em.set_values(obj, val, req, True)
+		sess.add(obj)
+		return {
+			'do'     : 'close',
+			'reload' : True
+		}
+
+	wizard.steps.append(Step(
+		ExternalWizardField('AccessEntity', 'password'),
+		ExternalWizardField('AccessEntity', 'stash'),
+		ExternalWizardField('AccessEntity', 'rate'),
+		id='ent_access1', title=_('Access entity properties'),
+		on_prev='generic',
+		on_submit=_wizcb_aent_submit
+	))
 
 class AccessState(DeclEnum):
 	"""
@@ -225,21 +224,22 @@ class AccessEntity(Entity):
 				),
 				'easy_search'  : ('nick',),
 				'extra_data'    : ('grid_icon',),
-				'detail_pane'  : ('netprofile_entities.views', 'dpane_entities'),
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : Wizard(
 					Step(
 						'nick', 'parent', 'state', 
 						'flags', 'descr',
 						id='generic', title=_('Generic entity properties'),
-						),
-					Step('password', 'stash', 'rate',
-						 id='ent_access1', title=_('Access entity properties'),
-						 ),
+					),
+					Step(
+						'password', 'stash', 'rate',
+						id='ent_access1', title=_('Access entity properties'),
+					),
 					title=_('Add new access entity'), validator='CreateAccessEntity'
-					)
-				}
+				)
 			}
-		)
+		}
+	)
 	__mapper_args__ = {
 		'polymorphic_identity' : EntityType.access
 	}
@@ -472,7 +472,6 @@ class AccessEntity(Entity):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
-
 
 	def access_state_string(self, req):
 		loc = get_localizer(req)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -116,8 +116,6 @@ from netprofile_geo.models import (
 	House,
 	Street
 )
-
-
 from netprofile_geo.filters import AddressFilter
 from netprofile.ext.wizards import (
 	ExternalWizardField,
@@ -143,8 +141,7 @@ class EntityType(DeclEnum):
 	structural = 'structural', _('Structural'), 30
 	external   = 'external',   _('External'),   40
 
-
-def _wizcb_ent_generic_next(wiz, step, act, val, req):
+def _wizcb_ent_generic_next(wiz, em, step, act, val, req):
 	ret = {
 		'do'      : 'goto',
 		'goto'    : 'ent_physical1'
@@ -166,7 +163,7 @@ def _wizcb_ent_generic_next(wiz, step, act, val, req):
 	return ret
 
 def _wizcb_ent_submit(cls):
-	def _wizcb_submit_hdl(wiz, step, act, val, req):
+	def _wizcb_submit_hdl(wiz, em, step, act, val, req):
 		xcls = cls
 		if isinstance(xcls, str):
 			xcls = _name_to_class(xcls)

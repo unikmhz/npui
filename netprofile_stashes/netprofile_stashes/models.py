@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -73,7 +73,6 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.ext.data import ExtModel
 from netprofile.db.ddl import (
 	Comment,
 	CurrentTimestampDefault,
@@ -393,9 +392,8 @@ class StashIOType(Base):
 	def __str__(self):
 		return str(self.name)
 
-def _wizcb_stashio_submit(wiz, step, act, val, req):
+def _wizcb_stashio_submit(wiz, em, step, act, val, req):
 	sess = DBSession()
-	em = ExtModel(StashIO)
 	obj = StashIO()
 	em.set_values(obj, val, req, True)
 	sess.add(obj)
@@ -408,9 +406,8 @@ def _wizcb_stashio_submit(wiz, step, act, val, req):
 		'reload' : True
 	}
 
-def _wizcb_future_submit(wiz, step, act, val, req):
+def _wizcb_future_submit(wiz, em, step, act, val, req):
 	sess = DBSession()
-	em = ExtModel(FuturePayment)
 	obj = FuturePayment()
 	em.set_values(obj, val, req, True)
 	sess.add(obj)

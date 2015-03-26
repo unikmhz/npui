@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module - Views
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -30,6 +30,7 @@ from __future__ import (
 import json
 import logging
 import datetime as dt
+from collections import defaultdict
 from dateutil.parser import parse as dparse
 
 from pyramid.response import Response
@@ -54,7 +55,8 @@ from pyramid.httpexceptions import (
 
 from sqlalchemy import (
 	and_,
-	or_
+	or_,
+	func
 )
 from sqlalchemy.orm import undefer
 
@@ -1275,6 +1277,31 @@ def _cal_events_delete(params, req):
 		return False
 	sess.delete(ev)
 	return True
+
+@register_hook('core.validators.ImportCalendar')
+def import_calendar_validator(ret, values, request):
+	loc = get_localizer(request)
+	errors = defaultdict(list)
+	if ('caldef' not in values) or (values['caldef'][:5] != 'user-'):
+		errors['caldef'].append(loc.translate(_('Invalid calendar selected.')))
+	else:
+		try:
+			cal_id = int(values['caldef'][5:])
+		except ValueError:
+			errors['caldef'].append(loc.translate(_('Invalid calendar selected.')))
+		else:
+			sess = DBSession()
+			cal = sess.query(Calendar).get(cal_id)
+			if (not cal) or (not cal.can_read(request.user)):
+				errors['caldef'].append(loc.translate(_('Invalid calendar selected.')))
+			else:
+				cnt = sess.query(func.count('*')).select_from(CalendarImport).filter(
+					CalendarImport.user == request.user,
+					CalendarImport.calendar == cal
+				).scalar()
+				if cnt > 0:
+					errors['caldef'].append(loc.translate(_('You have already imported this calendar.')))
+	ret['errors'].update(errors)
 
 @register_hook('np.menu')
 def _menu_custom(name, menu, req, extb):
