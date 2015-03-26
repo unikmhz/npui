@@ -23,6 +23,7 @@ Ext.require([
 	'Ext.menu.*',
 	'Ext.state.*',
 	'Ext.util.Cookies',
+	'Ext.util.LocalStorage',
 	'Ext.Ajax',
 % for i_ajs in res_ajs:
 	'${i_ajs}',
@@ -43,6 +44,7 @@ Ext.require([
 	NetProfile.rootFolder = ${req.user.get_root_folder() | n,jsone};
 	NetProfile.baseURL = '${req.host_url}';
 	NetProfile.staticURL = '${req.host_url}';
+	NetProfile.state = null;
 	NetProfile.rtURL = '//${rt_host}:${rt_port}';
 	NetProfile.rtSocket = null;
 	NetProfile.rtSocketReady = false;
@@ -464,7 +466,6 @@ Ext.require([
 </%np:limit>\
 % endfor
 
-	Ext.require('NetProfile.view.Viewport');
 % for module in modules:
 % for model in modules[module]:
 <% mod = modules[module][model] %>
@@ -545,190 +546,189 @@ Ext.require([
 % endfor
 % endfor
 
+	// Choose supported state storage
+	if(Ext.util.LocalStorage.supported)
+		NetProfile.state = new Ext.state.LocalStorageProvider({
+			prefix: 'np' + NetProfile.currentUserId + '_'
+		});
+	else
+		NetProfile.state = new Ext.state.CookieProvider({
+			prefix: 'np' + NetProfile.currentUserId + '_'
+		});
+	var state_loaded = NetProfile.state.get('loaded');
 
-Ext.application({
-	name: 'NetProfile',
-	appFolder: 'static/core/webshell',
-	autoCreateViewport: false,
+	Ext.define('NetProfile.main.Application', {
+		extend: 'Ext.app.Application',
+		name: 'NetProfile',
+		appFolder: 'static/core/webshell',
+		mainView: 'Viewport',
 
-	models: [],
-	stores: [],
-	controllers: [
-		'NetProfile.controller.DataStores',
-		'NetProfile.controller.Users',
-		'NetProfile.controller.FileAttachments',
+		models: [],
+		views: ['Viewport'],
+		stores: [],
+		controllers: [
+			'NetProfile.controller.DataStores',
+			'NetProfile.controller.Users',
+			'NetProfile.controller.FileAttachments',
 % for cont in res_ctl:
-		'${cont}',
+			'${cont}',
 % endfor
-		'NetProfile.controller.FileFolders'
-	],
+			'NetProfile.controller.FileFolders'
+		],
 
-	launch: function()
-	{
-		var state_prov = null,
-			state_loaded = false,
-			rt_sock = null;
-
-		Ext.onReady(NetProfile.msg.init, NetProfile.msg);
-		if('localStorage' in window && window['localStorage'] !== null)
+		init: function(app)
 		{
-			state_prov = new Ext.state.LocalStorageProvider({
-				prefix: 'nps_'
-			});
-		}
-		else
-		{
-			state_prov = new Ext.state.CookieProvider({
-				prefix: 'nps_'
-			});
-		}
+			var rt_sock = null,
+				direct_provider;
 
-		Ext.state.Manager.setProvider(state_prov);
-		state_loaded = state_prov.get('loaded');
+			// Init popup messages
+			Ext.onReady(NetProfile.msg.init, NetProfile.msg);
 
-		var npp = Ext.direct.Manager.getProvider('netprofile-provider');
-		npp.on('exception', function(p, e)
-		{
-			if(e && e.message)
+			// Init state storage
+			Ext.state.Manager.setProvider(NetProfile.state);
+
+			// Init ExtDirect remoting provider
+			direct_provider = Ext.direct.Manager.getProvider('netprofile-provider');
+			direct_provider.on('exception', function(p, e)
 			{
-% if req.debug_enabled:
-				Ext.log.error(e.message);
-% endif
-				NetProfile.msg.err('${_('Error')}', '{0}', e.message);
-			}
-		});
-		npp.on('data', function(p, e)
-		{
-			if(e.result && !e.result.success)
-			{
-				if(e.result.message)
+				if(e && e.message)
 				{
 % if req.debug_enabled:
-					Ext.log.warn(e.result.message);
-					if(e.result.stacktrace)
-						Ext.log.info(e.result.stacktrace);
+					Ext.log.error(e.message);
 % endif
-					NetProfile.msg.warn('${_('Warning')}', '{0}', e.result.message);
+					NetProfile.msg.err('${_('Error')}', '{0}', e.message);
 				}
-			}
-		});
-
-		if(NetProfile.rtURL)
-		{
-			rt_sock = SockJS(NetProfile.rtURL + '/sock');
-			rt_sock.onopen = function()
+			});
+			direct_provider.on('data', function(p, e)
 			{
-% if req.debug_enabled:
-				Ext.log.info('SockJS connected');
-% endif
-				var msg = {
-					type:    'auth',
-					user:    NetProfile.currentUser,
-					uid:     NetProfile.currentUserId,
-					session: NetProfile.currentSession
-				};
-				rt_sock.send(Ext.JSON.encode(msg));
-			};
-			rt_sock.onmessage = function(ev)
-			{
-				ev.data = Ext.JSON.decode(ev.data);
-% if req.debug_enabled:
-				Ext.log.info({ dump: ev }, 'SockJS event received');
-% endif
-				if(typeof(ev.data.type) !== 'string')
-					return;
-				switch(ev.data.type)
+				if(e.result && !e.result.success)
 				{
-					case 'user_enters':
-					case 'user_leaves':
-						var uid = ev.data.uid,
-							obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
-						if(!obj)
-							return;
-						if(ev.data.type === 'user_enters')
-							obj.set('iconCls', 'ico-status-online');
-						else
-							obj.set('iconCls', 'ico-status-offline');
-						break;
-					case 'user_list':
-						var u, uid, obj;
-						NetProfile.rtSocketReady = true;
-						NetProfile.rtActiveUIDs = ev.data.users;
-						for(u in ev.data.users)
-						{
-							uid = ev.data.users[u];
-							obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
-							if(!obj)
-								continue;
-							obj.set('iconCls', 'ico-status-online');
-						}
-						break;
-					case 'direct':
-						var store = NetProfile.StoreManager.getConsoleStore(ev.data.msgtype, ev.data.fromid),
-							rec;
-						if(store)
-						{
-							rec = Ext.create('NetProfile.model.ConsoleMessage');
-							rec.set('ts', new Date(ev.data.ts));
-							if(ev.data.fromstr)
-								rec.set('from', ev.data.fromstr);
-							if(ev.data.bodytype)
-								rec.set('bodytype', ev.data.bodytype);
-							if(ev.data.msg)
-								rec.set('data', ev.data.msg);
-							store.add(rec);
-						}
-						break;
-					case 'task_result':
-						var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
-							rec;
-						if(store)
-						{
-							rec = Ext.create('NetProfile.model.ConsoleMessage');
-							rec.set('ts', new Date(ev.data.ts));
-							rec.set('bodytype', 'task_result');
-							rec.set('data', ev.data.value);
-							store.add(rec);
-						}
-						NetProfile.showConsole();
-						break;
-					case 'task_error':
-						var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
-							rec;
-						if(store)
-						{
-							rec = Ext.create('NetProfile.model.ConsoleMessage');
-							rec.set('ts', new Date(ev.data.ts));
-							rec.set('bodytype', 'task_error');
-							rec.set('data', [ev.data.errno, ev.data.value]);
-							store.add(rec);
-						}
-						NetProfile.showConsole();
-						break;
-				}
-			};
-			NetProfile.rtSocket = rt_sock;
-		}
-
-		if(state_loaded !== 'OK')
-		{
-			NetProfile.api.DataCache.load_ls(function(data, res)
-			{
-				if(data && data.state && data.success)
-				{
-					Ext.Object.each(data.state, function(k, v)
+					if(e.result.message)
 					{
-						state_prov.set(k, v);
-					});
+% if req.debug_enabled:
+						Ext.log.warn(e.result.message);
+						if(e.result.stacktrace)
+							Ext.log.info(e.result.stacktrace);
+% endif
+						NetProfile.msg.warn('${_('Warning')}', '{0}', e.result.message);
+					}
 				}
-				state_prov.set('loaded', 'OK');
-				Ext.create('NetProfile.view.Viewport', {});
 			});
+
+			// Init SockJS connection to realtime server
+			// TODO: move this to a separate component
+			if(NetProfile.rtURL)
+			{
+				rt_sock = SockJS(NetProfile.rtURL + '/sock');
+				rt_sock.onopen = function()
+				{
+% if req.debug_enabled:
+					Ext.log.info('SockJS connected');
+% endif
+					var msg = {
+						type:    'auth',
+						user:    NetProfile.currentUser,
+						uid:     NetProfile.currentUserId,
+						session: NetProfile.currentSession
+					};
+					rt_sock.send(Ext.JSON.encode(msg));
+				};
+				rt_sock.onmessage = function(ev)
+				{
+					ev.data = Ext.JSON.decode(ev.data);
+% if req.debug_enabled:
+					Ext.log.info({ dump: ev }, 'SockJS event received');
+% endif
+					if(typeof(ev.data.type) !== 'string')
+						return;
+					switch(ev.data.type)
+					{
+						case 'user_enters':
+						case 'user_leaves':
+							var uid = ev.data.uid,
+								obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
+							if(!obj)
+								return;
+							if(ev.data.type === 'user_enters')
+								obj.set('iconCls', 'ico-status-online');
+							else
+								obj.set('iconCls', 'ico-status-offline');
+							break;
+						case 'user_list':
+							var u, uid, obj;
+							NetProfile.rtSocketReady = true;
+							NetProfile.rtActiveUIDs = ev.data.users;
+							for(u in ev.data.users)
+							{
+								uid = ev.data.users[u];
+								obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
+								if(!obj)
+									continue;
+								obj.set('iconCls', 'ico-status-online');
+							}
+							break;
+						case 'direct':
+							var store = NetProfile.StoreManager.getConsoleStore(ev.data.msgtype, ev.data.fromid),
+								rec;
+							if(store)
+							{
+								rec = Ext.create('NetProfile.model.ConsoleMessage');
+								rec.set('ts', new Date(ev.data.ts));
+								if(ev.data.fromstr)
+									rec.set('from', ev.data.fromstr);
+								if(ev.data.bodytype)
+									rec.set('bodytype', ev.data.bodytype);
+								if(ev.data.msg)
+									rec.set('data', ev.data.msg);
+								store.add(rec);
+							}
+							break;
+						case 'task_result':
+							var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
+								rec;
+							if(store)
+							{
+								rec = Ext.create('NetProfile.model.ConsoleMessage');
+								rec.set('ts', new Date(ev.data.ts));
+								rec.set('bodytype', 'task_result');
+								rec.set('data', ev.data.value);
+								store.add(rec);
+							}
+							NetProfile.showConsole();
+							break;
+						case 'task_error':
+							var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
+								rec;
+							if(store)
+							{
+								rec = Ext.create('NetProfile.model.ConsoleMessage');
+								rec.set('ts', new Date(ev.data.ts));
+								rec.set('bodytype', 'task_error');
+								rec.set('data', [ev.data.errno, ev.data.value]);
+								store.add(rec);
+							}
+							NetProfile.showConsole();
+							break;
+					}
+				};
+				NetProfile.rtSocket = rt_sock;
+			}
 		}
-		else
-			Ext.create('NetProfile.view.Viewport', {});
-	}
-});
+	});
+
+	if(state_loaded !== 'OK')
+		NetProfile.api.DataCache.load_ls(function(data, res)
+		{
+			if(data && data.state && data.success)
+				Ext.Object.each(data.state, function(k, v)
+				{
+					NetProfile.state.set(k, v);
+				});
+			NetProfile.state.set('loaded', 'OK');
+			Ext.application('NetProfile.main.Application');
+		});
+	else
+		Ext.application('NetProfile.main.Application');
 
 });
 
