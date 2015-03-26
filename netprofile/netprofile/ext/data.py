@@ -737,8 +737,6 @@ class ExtColumn(object):
 			conf['vtype'] = val
 		if issubclass(typecls, _BOOLEAN_SET):
 			conf.update({
-				'cls'            : 'x-grid-checkheader-editor',
-				'anchor'         : '0%',
 				'inputValue'     : 'true',
 				'uncheckedValue' : 'false'
 			})
