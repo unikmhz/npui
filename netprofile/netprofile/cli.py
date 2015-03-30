@@ -373,7 +373,6 @@ class Deploy(Command):
 		self.old_mask = os.umask(0o077)
 		np_dir = os.path.abspath(self.app.dist.location)
 		deploy_dir = os.path.abspath(args.path)
-		self.app.hooks.run_hook('np.cli.deploy.before', self.app, deploy_dir)
 
 		if not os.path.isdir(np_dir):
 			os.umask(self.old_mask)
@@ -407,7 +406,6 @@ class Deploy(Command):
 				'mako.module_directory' : xop_tplc_dir
 			}
 		}
-		self.app.hooks.run_hook('np.cli.deploy.before_ini', self, np_dir, deploy_dir, replace)
 
 		ini_prod = os.path.join(deploy_dir, 'production.ini')
 		ini_dev = os.path.join(deploy_dir, 'development.ini')
@@ -454,8 +452,6 @@ class Deploy(Command):
 			os.path.join(deploy_dir, 'activate-development'),
 			ini_dev
 		)
-
-		self.app.hooks.run_hook('np.cli.deploy.after', self.app, deploy_dir)
 
 		os.umask(self.old_mask)
 		self.log.info('Created NetProfile deployment: %s', deploy_dir)
