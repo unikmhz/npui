@@ -33,6 +33,7 @@ __all__ = (
 	'TABLE_STYLE_DEFAULT'
 )
 
+import logging
 import os
 
 from reportlab.lib import (
@@ -60,6 +61,8 @@ from netprofile.common.util import (
 	as_dict,
 	make_config_dict
 )
+
+logger = logging.getLogger(__name__)
 
 _ = TranslationStringFactory('netprofile')
 
@@ -261,7 +264,11 @@ def _add_custom_ss(ss, custom_cfg, name):
 
 def _pdf_style_sheet(cfg):
 	settings = cfg.registry.settings
-	ffamily = _register_fonts(settings)
+	try:
+		ffamily = _register_fonts(settings)
+	except ttfonts.TTFError:
+		logger.error('Can\'t find or register configured fonts. PDF generation will be disabled.')
+		return None
 	if ffamily == 'Times-Roman':
 		fonts = ('Times-Roman', 'Times-Bold', 'Times-Italic', 'Times-BoldItalic')
 	else:
@@ -311,6 +318,7 @@ def _pdf_style_sheet(cfg):
 		for name in custom_ss:
 			pass # FIXME: write this
 
+	logger.info('Loaded preconfigured PDF fonts and styles.')
 	return ss
 
 def _get_pdfss(req):

@@ -69,6 +69,11 @@ class PDFExportFormat(ExportFormat):
 	def icon(self):
 		return 'ico-pdf'
 
+	def enabled(self, req):
+		if req.pdf_styles is None:
+			return False
+		return True
+
 	def options(self, req, name):
 		loc = get_localizer(req)
 		return ({
@@ -234,6 +239,8 @@ class PDFExportFormat(ExportFormat):
 				table_widths.append(col_widths[idx])
 
 		ss = req.pdf_styles
+		if ss is None:
+			raise RuntimeError('PDF subsystem is not configured. See application .INI files.')
 		# TODO: add custom extmodel option to specify rowHeights, as an
 		# optimization measure. Otherwise reportlab takes +Inf time on huge
 		# tables.

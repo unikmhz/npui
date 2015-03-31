@@ -46,6 +46,9 @@ class ExportFormat(object):
 	def icon(self):
 		pass
 
+	def enabled(self, req):
+		return True
+
 	def options(self, req, name):
 		return ()
 

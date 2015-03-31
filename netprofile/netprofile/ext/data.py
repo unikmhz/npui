@@ -2371,5 +2371,10 @@ class ExtBrowser(object):
 		return menu
 
 	def get_export_menu(self, req):
-		return tuple(fmt.export_panel(req, name) for name, fmt in sorted(self.mmgr.get_export_formats().items(), key=lambda x: x[0]))
+		return tuple(
+			fmt.export_panel(req, name)
+			for name, fmt
+			in sorted(self.mmgr.get_export_formats().items(), key=lambda x: x[0])
+			if fmt.enabled(req)
+		)
 
