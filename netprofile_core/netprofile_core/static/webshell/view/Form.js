@@ -38,10 +38,8 @@ Ext.define('NetProfile.view.Form', {
 	trackResetOnLoad: true,
 
 	resetText: 'Reset',
-	resetTipTitleText: 'Reset Form',
 	resetTipText: 'Reset form fields to original values.',
 	submitText: 'Submit',
-	submitTipTitleText: 'Submit Form',
 	submitTipText: 'Validate and submit this form.',
 
 	initComponent: function()
@@ -54,7 +52,8 @@ Ext.define('NetProfile.view.Form', {
 			{
 				this.up('form').getForm().reset();
 			},
-			tooltip: { text: this.resetTipText, title: this.resetTipTitleText }
+			tooltip: this.resetTipText,
+			tooltipType: 'title'
 		}, {
 			text: this.submitText,
 			iconCls: 'ico-accept',
@@ -84,7 +83,8 @@ Ext.define('NetProfile.view.Form', {
 					form.loadRecord(fp.record);
 				}
 			},
-			tooltip: { text: this.submitTipText, title: this.submitTipTitleText }
+			tooltip: this.submitTipText,
+			tooltipType: 'title'
 		}];
 		if(this.extraButtons && this.extraButtons.length)
 			this.buttons = this.buttons.concat(this.extraButtons, ['->'], this.buttons);

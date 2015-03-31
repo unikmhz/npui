@@ -139,10 +139,8 @@ Ext.onReady(function()
 	Ext.define('Ext.locale.ru.NetProfile.view.Form', {
 		override: 'NetProfile.view.Form',
 		resetText: 'Сбросить',
-		resetTipTitleText: 'Сбросить данные',
 		resetTipText: 'Вернуть значения полей в этой форме к исходным.',
 		submitText: 'Сохранить',
-		submitTipTitleText: 'Сохранить данные',
 		submitTipText: 'Проверить и сохранить данные в этой форме.'
 	});
 
