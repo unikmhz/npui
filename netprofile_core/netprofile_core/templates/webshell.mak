@@ -833,6 +833,21 @@ Ext.require([
 				};
 				NetProfile.rtSocket = rt_sock;
 			}
+		},
+		launch: function(profile)
+		{
+			var spl = Ext.get('splash');
+
+			if(spl)
+				spl.fadeOut({
+					opacity: 0,
+					delay: 300,
+					duration: 400,
+					easing: 'easeIn',
+					remove: true,
+					useDisplay: true
+				});
+			return true;
 		}
 	});
 

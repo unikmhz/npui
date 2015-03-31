@@ -29,6 +29,42 @@ h2
 	margin:10px 0;
 }
 
+div#splash
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	color: #fff;
+	background: #5080b0;
+	z-index: 1000;
+}
+
+div#splash div.splashcont
+{
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	width: 6cm;
+	height: 6cm;
+	margin-top: -3cm;
+	margin-left: -3cm;
+	text-align: center;
+}
+
+div#splash div.splashcont img
+{
+	width: 5cm;
+	height: 5cm;
+}
+
+div#splash div.splashcont h1
+{
+	font-family: helvetica,tahoma,verdana,sans-serif;
+	font-size: 18pt;
+}
+
 .x-action-col-icon
 {
 	display: inline-block;
