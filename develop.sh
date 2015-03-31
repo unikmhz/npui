@@ -36,6 +36,7 @@ pip install \
 	waitress \
 	pyramid \
 	pyramid_mako \
+	pyramid_redis_sessions \
 	pyramid_rpc \
 	pyramid_debugtoolbar \
 	pyramid_mailer \
@@ -48,12 +49,12 @@ pip install \
 	tornado-redis \
 	cracklib
 
-# FIXME: remove this as soon as there is a non-pre-release version of
-# pyramid_redis_sessions package
+# FIXME: Remove this as soon as new version of tornado-celery is out.
+#        This fixes inability to install on Py3k.
+#        Version 0.3.4 from PyPI is affected.
 pip install \
 	--upgrade \
-	--pre \
-	pyramid_redis_sessions
+	git+https://github.com/mher/tornado-celery.git
 
 # FIXME: maybe remove this, or let the user choose a driver?
 pip install \
