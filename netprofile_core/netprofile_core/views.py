@@ -1244,19 +1244,23 @@ def _cal_events(evts, params, req):
 		evts.append(ev)
 
 def _ev_set(sess, ev, params, req):
-	cal_id = params.get('CalendarId', '')
-	if (not cal_id) or (cal_id[:5] != 'user-'):
-		return False
-	try:
-		cal_id = int(cal_id[5:])
-	except ValueError:
-		return False
-	cal = sess.query(Calendar).get(cal_id)
-	if (cal is None) or (not cal.can_write(req.user)):
-		return False
-	if ev.calendar and (ev.calendar is not cal):
-		if not ev.calendar.can_write(req.user):
+	user = req.user
+	if ev.id:
+		if (not ev.calendar) or (not ev.calendar.can_write(user)):
 			return False
+	cal_id = params.get('CalendarId', '')
+	if cal_id:
+		if cal_id[:5] != 'user-':
+			return False
+		try:
+			cal_id = int(cal_id[5:])
+		except ValueError:
+			return False
+		cal = sess.query(Calendar).get(cal_id)
+		if (cal is None) or (not cal.can_write(user)):
+			return False
+		ev.calendar = cal
+
 	val = params.get('Title', False)
 	if val:
 		ev.summary = val
@@ -1266,8 +1270,6 @@ def _ev_set(sess, ev, params, req):
 	val = params.get('Notes', False)
 	if val:
 		ev.description = val
-	if ev.calendar is not cal:
-		ev.calendar = cal
 	val = params.get('Location', False)
 	if val:
 		ev.location = val

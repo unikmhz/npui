@@ -478,6 +478,7 @@ def _cal_calendars(cals, params, req):
 def _cal_events(evts, params, req):
 	if not has_permission('TICKETS_LIST', req.context, req):
 		return
+	# TODO: fancy permissions/ACLs
 	ts_from = params.get('startDate')
 	ts_to = params.get('endDate')
 	if (not ts_from) or (not ts_to):
@@ -507,9 +508,6 @@ def _cal_events(evts, params, req):
 
 @register_hook('core.calendar.events.update')
 def _cal_events_update(params, req):
-	cal_id = params.get('CalendarId', '')
-	if cal_id != _cal['id']:
-		return
 	if 'EventId' not in params:
 		return
 	evtype, evid = params['EventId'].split('-')
@@ -518,6 +516,7 @@ def _cal_events_update(params, req):
 	evid = int(evid)
 	if not has_permission('TICKETS_UPDATE', req.context, req):
 		return
+	# TODO: fancy permissions/ACLs
 	sess = DBSession()
 	tkt = sess.query(Ticket).get(evid)
 	if tkt is None:
