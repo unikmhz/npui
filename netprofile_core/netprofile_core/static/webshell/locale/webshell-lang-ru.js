@@ -1,10 +1,22 @@
 Ext.onReady(function()
 {
+	Ext.define('Ext.locale.ru.Date', {
+		override: 'Ext.Date',
+		defaultFormat: 'd.m.Y'
+	});
 	Ext.define('Ext.locale.ru.NetProfile.form.field.DateTime', {
 		override: 'NetProfile.form.field.DateTime',
 		format: 'd.m.Y H:i',
 		altFormats: 'Y-m-d H:i|Y-m-d H:i:s|Y-m-d\\TH:i:s|Y-m-d\\TH:i:sP|C', // FIXME
 		timeFormat: 'H:i'
+	});
+	Ext.define('Ext.locale.ru.picker.Date', {
+		override: 'Ext.picker.Date',
+		format: 'd.m.Y'
+	});
+	Ext.define('Ext.locale.ru.form.field.Date', {
+		override: 'Ext.form.field.Date',
+		format: 'd.m.Y'
 	});
 	Ext.define('Ext.locale.ru.NetProfile.picker.DateTime', {
 		override: 'NetProfile.picker.DateTime',
