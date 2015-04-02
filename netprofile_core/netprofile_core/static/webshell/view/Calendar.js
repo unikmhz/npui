@@ -339,12 +339,47 @@ Ext.define('Ext.ux.form.field.CalendarColor', {
 		field: 'Ext.form.field.Field'
 	},
 	requires: [
-		'Extensible.calendar.util.ColorPicker'
+		'Ext.picker.Color'
 	],
 	alias: 'widget.calendarcolor',
 
 	readOnly: false,
 	value: null,
+
+	colorMap: [
+		'FA7166',
+		'CF2424',
+		'A01A1A',
+		'7E3838',
+		'CA7609',
+		'F88015',
+		'EDA12A',
+		'D5B816',
+		'E281CA',
+		'BF53A4',
+		'9D3283',
+		'7A0F60',
+		'542382',
+		'7742A9',
+		'8763CA',
+		'B586E2',
+		'7399F9',
+		'4E79E6',
+		'2951B9',
+		'133897',
+		'1A5173',
+		'1A699C',
+		'3694B7',
+		'64B9D9',
+		'A8C67B',
+		'83AD47',
+		'2E8F0C',
+		'176413',
+		'0F4C30',
+		'386651',
+		'3EA987',
+		'7BC3B5'
+	],
 
 	initComponent: function()
 	{
@@ -354,9 +389,10 @@ Ext.define('Ext.ux.form.field.CalendarColor', {
 			me.items = []; // TODO: implement read-only view
 		else
 			me.items = [{
-				xtype: 'extensible.calendarcolorpicker',
+				xtype: 'colorpicker',
 				itemId: 'picker',
-				value: me.value,
+				colors: me.colorMap,
+				value: me.indexToColor(me.value),
 				listeners: {
 					select: function(fld, newval)
 					{
@@ -367,13 +403,32 @@ Ext.define('Ext.ux.form.field.CalendarColor', {
 			}];
 		me.callParent(arguments);
 	},
+	indexToColor: function(idx)
+	{
+		if(typeof(idx) !== 'number')
+			return null;
+		if(idx <= 0)
+			return null;
+		if(idx > this.colorMap.length)
+			return null;
+		return this.colorMap[idx - 1];
+	},
+	colorToIndex: function(col)
+	{
+		if(typeof(col) !== 'string')
+			return null;
+		var idx = this.colorMap.indexOf(col.toUpperCase());
+		if(idx === -1)
+			return null;
+		return (idx + 1);
+	},
 	getValue: function()
 	{
-		return this.getComponent('picker').getValue();
+		return this.colorToIndex(this.getComponent('picker').getValue());
 	},
 	setValue: function(val)
 	{
-		return this.getComponent('picker').select(val);
+		return this.getComponent('picker').select(this.indexToColor(val));
 	},
 	isValid: function()
 	{
