@@ -109,6 +109,7 @@ Bundled libraries
 -----------------
 
 * `Sencha ExtJS`_, licensed under GPLv3_
+* `Extensible Calendar Pro`_, ported to ExtJS 5, licensed under GPLv3_
 * `Google ipaddr-py`_, licensed under `Apache 2.0 license`_
 * Modified pyramid_extdirect_, licensed under following license::
 
@@ -158,6 +159,7 @@ Bundled libraries
 .. _LGPL 2.1: https://www.gnu.org/licenses/lgpl-2.1.html
 .. _Apache 2.0 license: http://www.apache.org/licenses/LICENSE-2.0
 .. _Sencha ExtJS: http://www.sencha.com/products/extjs/
+.. _Extensible Calendar Pro: http://ext.ensible.com/
 .. _SockJS JavaScript client: https://github.com/sockjs/sockjs-client
 .. _sockjs-mit: https://github.com/sockjs/sockjs-client/blob/master/LICENSE
 .. _Google ipaddr-py: http://code.google.com/p/ipaddr-py/
