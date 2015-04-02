@@ -519,6 +519,7 @@ class Module(ModuleBase):
 			return (
 				'netprofile_core:static/extern/extjs/build/ext-all-debug.js',
 				'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic-debug.js',
+				'netprofile_core:static/extern/extensible/lib/extensible-all-debug.js',
 				# TODO: Upstream doesn't distribute unminified source.
 				#       Might be a good idea to include it though.
 				'netprofile_core:static/extern/tinymce/tinymce.min.js',
@@ -528,6 +529,7 @@ class Module(ModuleBase):
 		return (
 			'netprofile_core:static/extern/extjs/build/ext-all.js',
 			'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic.js',
+			'netprofile_core:static/extensible/lib/extensible-all.js',
 			'netprofile_core:static/extern/tinymce/tinymce.min.js',
 			'netprofile_core:static/extern/ipaddr/ipaddr.min.js',
 			'netprofile_core:static/extern/sockjs/sockjs.min.js'
@@ -536,6 +538,7 @@ class Module(ModuleBase):
 	def get_local_js(self, request, lang):
 		return (
 			'netprofile_core:static/extern/extjs/build/packages/ext-locale/build/ext-locale-' + lang + '.js',
+			'netprofile_core:static/extern/extensible/src/locale/extensible-lang-' + lang + '.js',
 			'netprofile_core:static/webshell/locale/webshell-lang-' + lang + '.js'
 		)
 
@@ -543,10 +546,12 @@ class Module(ModuleBase):
 		if request.debug_enabled:
 			return (
 				'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all-debug.css',
+				'netprofile_core:static/extern/extensible/resources/css/extensible-all.css',
 				'netprofile_core:static/css/main.css'
 			)
 		return (
 			'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all.css',
+			'netprofile_core:static/extern/extensible/resources/css/extensible-all.css',
 			'netprofile_core:static/css/main.css'
 		)
 

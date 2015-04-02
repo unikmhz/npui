@@ -30,8 +30,8 @@ Ext.require([
 % endfor
 	'NetProfile.model.Base',
 	'NetProfile.view.CapabilityGrid',
-	'Ext.ux.form.MultiField'
-//	'NetProfile.view.Calendar'
+	'Ext.ux.form.MultiField',
+	'NetProfile.view.Calendar'
 ], function()
 {
 	NetProfile.currentLocale = '${cur_loc}';

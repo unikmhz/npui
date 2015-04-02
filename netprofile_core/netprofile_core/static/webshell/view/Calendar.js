@@ -264,7 +264,7 @@ Ext.define('NetProfile.view.Calendar', {
 					},
 					reader: {
 						type: 'json',
-						root: 'calendars',
+						rootProperty: 'calendars',
 						messageProperty: 'message',
 						successProperty: 'success',
 						totalProperty: 'total'
@@ -284,7 +284,7 @@ Ext.define('NetProfile.view.Calendar', {
 					},
 					reader: {
 						type: 'json',
-						root: 'evts',
+						rootProperty: 'evts',
 						messageProperty: 'message',
 						successProperty: 'success',
 						totalProperty: 'total'
@@ -313,7 +313,7 @@ Ext.define('NetProfile.view.Calendar', {
 						},
 						reader: {
 							type: 'json',
-							root: 'calendars',
+							rootProperty: 'calendars',
 							messageProperty: 'message',
 							successProperty: 'success',
 							totalProperty: 'total'
@@ -346,8 +346,6 @@ Ext.define('Ext.ux.form.field.CalendarColor', {
 	readOnly: false,
 	value: null,
 
-//	layout: 'fit',
-
 	initComponent: function()
 	{
 		var me = this;
@@ -359,9 +357,6 @@ Ext.define('Ext.ux.form.field.CalendarColor', {
 				xtype: 'extensible.calendarcolorpicker',
 				itemId: 'picker',
 				value: me.value,
-//				style: {
-//					height: 'auto'
-//				},
 				listeners: {
 					select: function(fld, newval)
 					{
