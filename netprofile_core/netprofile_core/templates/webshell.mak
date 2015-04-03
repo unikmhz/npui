@@ -229,6 +229,131 @@ Ext.require([
 			return errs;
 		}
 	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16183.menu', {
+		override: 'Ext.menu.Menu',
+		compatibility: '5.1.0.107',
+		onFocusLeave: function(e)
+		{
+			var me = this;
+
+			me.callSuper([e]);
+			me.mixins.focusablecontainer.onFocusLeave.call(me, e);
+			if(me.floating)
+				me.hide();
+		},
+		beforeShow: function()
+		{
+			var me = this,
+				activeEl, viewHeight;
+
+			// Constrain the height to the containing element's viewable area
+			if(me.floating)
+			{
+				if(!me.parentMenu && !me.allowOtherMenus)
+					Ext.menu.Manager.hideAll();
+				// Only register a focusAnchor to return to on hide if the active element is not the document
+				// If there's no focusAnchor, we return to the ownerCmp, or first focusable ancestor.
+				activeEl = Ext.Element.getActiveElement();
+				me.focusAnchor = activeEl === document.body ? null : activeEl;
+
+				me.savedMaxHeight = me.maxHeight;
+				viewHeight = me.container.getViewSize().height;
+				me.maxHeight = Math.min(me.maxHeight || viewHeight, viewHeight);
+			}
+
+			me.callSuper(arguments);
+
+			// Add a touch start listener to check for taps outside the menu.
+			// iOS in particular does not trigger blur on document tap, so
+			// we have to check for taps outside this menu.
+			if(Ext.supports.Touch)
+			{
+				me.tapListener = Ext.getBody().on({
+					touchstart: me.onBodyTap,
+					scope: me,
+					destroyable: true
+				});
+			}
+		},
+		afterShow: function()
+		{
+			var me = this;
+
+			me.callSuper(arguments);
+			Ext.menu.Manager.onShow(me);
+
+			// Restore configured maxHeight
+			if(me.floating && me.autoFocus)
+			{
+				me.maxHeight = me.savedMaxHeight;
+				me.focus();
+			}
+		},
+		onHide: function(animateTarget, cb, scope)
+		{
+			var me = this,
+				focusTarget;
+
+			// If we contain focus just before element hide, move it elsewhere before hiding
+			if(me.el.contains(Ext.Element.getActiveElement()))
+			{
+				// focusAnchor was the active element before this menu was shown.
+				focusTarget = me.focusAnchor || me.ownerCmp || me.up(':focusable');
+
+				// Component hide processing will focus the "previousFocus" element.
+				if(focusTarget)
+					me.previousFocus = focusTarget;
+			}
+			this.callSuper([animateTarget, cb, scope]);
+			Ext.menu.Manager.onHide(me);
+		}
+	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16183.menuMgr', {
+		override: 'Ext.menu.Manager',
+		compatibility: '5.1.0.107',
+		visible: [],
+		onShow: function(menu)
+		{
+			if(menu.floating)
+				Ext.Array.include(this.visible, menu);
+		},
+		onHide: function(menu)
+		{
+			if(menu.floating)
+				Ext.Array.remove(this.visible, menu);
+		},
+		hideAll: function()
+		{
+			var allMenus = this.visible,
+				len = allMenus.length,
+				i,
+				result = false;
+
+			for(i = 0; i < len; i++)
+			{
+				allMenus[i].hide();
+				result = true;
+			}
+			return result;
+		},
+		checkActiveMenus: function(e)
+		{
+			var allMenus = this.visible,
+				len = allMenus.length,
+				i, menu;
+
+			for(i = 0; i < len; ++i)
+			{
+				menu = allMenus[i];
+				if(!menu.containsFocus && !menu.owns(e))
+					menu.hide();
+			}
+		}
+	});
+	Ext.onReady(function()
+	{
+		Ext.getDoc().on('mousedown', Ext.menu.Manager.checkActiveMenus, Ext.menu.Manager);
+	});
 	Ext.define('Ext.overrides.bugfix.EXTJS15525', {
 		override: 'Ext.util.Collection',
 		compatibility: '5.1.0.107',
