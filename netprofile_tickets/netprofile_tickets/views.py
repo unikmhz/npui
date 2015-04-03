@@ -33,6 +33,7 @@ if PY3:
 else:
 	from cgi import escape as html_escape
 
+import collections
 import datetime as dt
 from dateutil.parser import parse as dparse
 
@@ -483,6 +484,13 @@ def _cal_events(evts, params, req):
 	ts_to = params.get('endDate')
 	if (not ts_from) or (not ts_to):
 		return
+	cals = params.get('cals')
+	if cals:
+		if isinstance(cals, collections.Iterable):
+			if _cal['id'] not in cals:
+				return
+		else:
+			return
 	ts_from = dparse(ts_from).replace(hour=0, minute=0, second=0, microsecond=0)
 	ts_to = dparse(ts_to).replace(hour=23, minute=59, second=59, microsecond=999999)
 	sess = DBSession()

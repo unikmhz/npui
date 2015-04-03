@@ -30,7 +30,10 @@ from __future__ import (
 import json
 import logging
 import datetime as dt
-from collections import defaultdict
+from collections import (
+	defaultdict,
+	Iterable
+)
 from dateutil.parser import parse as dparse
 
 from pyramid.response import Response
@@ -1208,14 +1211,28 @@ def _cal_events(evts, params, req):
 	ts_to = params.get('endDate')
 	if (not ts_from) or (not ts_to):
 		return
+	cals = params.get('cals')
+	if isinstance(cals, Iterable) and len(cals):
+		try:
+			cals = [int(cal[5:]) for cal in cals if cal[:5] == 'user-']
+		except ValueError:
+			cals = ()
+		if len(cals) == 0:
+			return
+	else:
+		cals = None
 	ts_from = dparse(ts_from).replace(hour=0, minute=0, second=0, microsecond=0)
 	ts_to = dparse(ts_to).replace(hour=23, minute=59, second=59, microsecond=999999)
 	sess = DBSession()
-	# FIXME: Add calendar-based filters
-	cal_ids = [cal.id for cal in sess.query(Calendar).filter(Calendar.user == req.user)]
+	cal_q = sess.query(Calendar).filter(Calendar.user == req.user)
+	if cals:
+		cal_q = cal_q.filter(Calendar.id.in_(cals))
+	cal_ids = [cal.id for cal in cal_q]
 	for cali in sess.query(CalendarImport).filter(CalendarImport.user_id == req.user.id):
 		cal = cali.calendar
 		if cal.user == req.user:
+			continue
+		if cals and (cal.id not in cals):
 			continue
 		if not cal.can_read(req.user):
 			continue

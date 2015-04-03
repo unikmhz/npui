@@ -1000,29 +1000,7 @@ td.ext-cal-dtitle-today div {
     line-height: 10px;
 }
 
-
-
-/********************************************   EXTJS 5 **********************************************/
-.x-monthpicker-months {
-    width: 90px;
-}
-
-.x-monthpicker-months .x-monthpicker-item {
-    width: 44px;
-}
-
-.x-monthpicker-years {
-    width: 89px;
-}
-
-
-.x-monthpicker-yearnav-button-ct {
-    width: 44px;
-}
-
-.x-monthpicker-years .x-monthpicker-item {
-    width: 44px;
-}/*******************************************
+/*******************************************
  * 
  * Calendar event colors
  * 

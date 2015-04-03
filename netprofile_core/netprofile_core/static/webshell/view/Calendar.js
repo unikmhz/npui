@@ -180,66 +180,6 @@ Ext.define('NetProfile.override.Extensible.calendar.form.field.CalendarCombo', {
 	}
 });
 
-Ext.define('NetProfile.override.Extensible.calendar.view.AbstractCalendar', {
-	override: 'Extensible.calendar.view.AbstractCalendar',
-	showEventEditor: function(rec, animateTarget)
-	{
-		if(rec instanceof Extensible.calendar.data.EventModel)
-		{
-			var mod = rec.get('APIModule'),
-				cls = rec.get('APIClass'),
-				id = rec.get('APIId'),
-				ff, store;
-
-			if(mod && cls && id)
-			{
-				store = NetProfile.StoreManager.getStore(
-					mod, cls,
-					null, true, true
-				);
-				if(!store)
-					return;
-				ff = { __ffilter: [{
-					property: store.model.prototype.idProperty,
-					operator: 'eq',
-					value:    parseInt(id)
-				}] };
-				store.load({
-					params: ff,
-					callback: function(recs, op, success)
-					{
-						var dp, pb, poly, apim, apic;
-
-						poly = recs[0].get('__poly');
-						if(poly)
-						{
-							apim = poly[0];
-							apic = poly[1];
-						}
-						else
-						{
-							apim = mod;
-							apic = cls;
-						}
-
-						pb = Ext.getCmp('npws_propbar');
-						dp = NetProfile.view.grid[apim][apic].prototype.detailPane;
-						if(success && pb && dp)
-						{
-							pb.addRecordTab(apim, apic, dp, recs[0]);
-							pb.show();
-						}
-					},
-					scope: this,
-					synchronous: false
-				});
-				return;
-			}
-		}
-		this.callParent(arguments);
-	}
-});
-
 Ext.define('NetProfile.view.Calendar', {
 	extend: 'Extensible.calendar.CalendarPanel',
 	alias: 'widget.calendar',
@@ -250,10 +190,11 @@ Ext.define('NetProfile.view.Calendar', {
 	border: 0,
 	initComponent: function()
 	{
-		var tbar;
+		var me = this,
+			tbar, cmp;
 
-		if(!this.calendarStore)
-			this.calendarStore = Ext.create('Extensible.calendar.data.MemoryCalendarStore', {
+		if(!me.calendarStore)
+			me.calendarStore = Ext.create('Extensible.calendar.data.MemoryCalendarStore', {
 				proxy: {
 					type: 'direct',
 					api: {
@@ -271,8 +212,8 @@ Ext.define('NetProfile.view.Calendar', {
 					}
 				}
 			});
-		if(!this.eventStore)
-			this.eventStore = Ext.create('Extensible.calendar.data.EventStore', {
+		if(!me.store)
+			me.store = Ext.create('Extensible.calendar.data.EventStore', {
 				autoLoad: true,
 				proxy: {
 					type: 'direct',
@@ -291,14 +232,15 @@ Ext.define('NetProfile.view.Calendar', {
 					}
 				}
 			});
-		this.callParent();
+		me.callParent();
 
-		tbar = this.getDockedItems('toolbar[dock="top"]');
+		tbar = me.getDockedItems('toolbar[dock="top"]');
 		if(tbar && tbar.length)
 		{
 			tbar = tbar[0];
 			tbar.insert(0, {
 				xtype: 'extensible.calendarcombo',
+				itemId: 'cals',
 				multiSelect: true,
 				fieldLabel: null,
 				showAllCalendars: true,
@@ -319,12 +261,98 @@ Ext.define('NetProfile.view.Calendar', {
 							totalProperty: 'total'
 						}
 					}
-				}),
-				getListItemTpl: function(displayField) {
-					return '<div class="x-combo-list-item x-cal-{' + Extensible.calendar.data.CalendarMappings.ColorId.name +
-						'}"><div class="x-combo-check" style="float: left; width: 20px; margin: 1px 0;">&nbsp;</div><div class="ext-cal-picker-icon">&#160;</div>{' + displayField + '}</div>';
-				}
+				})
 			});
+		}
+
+		me.mon(me.store, 'beforeload', me.onBeforeLoad, me);
+		me.on({
+			eventclick: function(cal, rec, el)
+			{
+				if(rec instanceof Extensible.calendar.data.EventModel)
+				{
+					var mod = rec.get('APIModule'),
+						cls = rec.get('APIClass'),
+						id = rec.get('APIId'),
+						ff, store;
+
+					if(mod && cls && id)
+					{
+						store = NetProfile.StoreManager.getStore(
+							mod, cls,
+							null, true, true
+						);
+						if(!store)
+							return false;
+						ff = { __ffilter: [{
+							property: store.model.prototype.idProperty,
+							operator: 'eq',
+							value:    parseInt(id)
+						}] };
+						store.load({
+							params: ff,
+							callback: function(recs, op, success)
+							{
+								var dp, pb, poly, apim, apic;
+
+								poly = recs[0].get('__poly');
+								if(poly)
+								{
+									apim = poly[0];
+									apic = poly[1];
+								}
+								else
+								{
+									apim = mod;
+									apic = cls;
+								}
+
+								pb = Ext.getCmp('npws_propbar');
+								dp = NetProfile.view.grid[apim][apic].prototype.detailPane;
+								if(success && pb && dp)
+								{
+									pb.addRecordTab(apim, apic, dp, recs[0]);
+									pb.show();
+								}
+							},
+							scope: this,
+							synchronous: false
+						});
+						return false;
+					}
+				}
+				return true;
+			},
+			viewchange: function(cal, view, info)
+			{
+				var jump_id = cal.id + '-tb-jump-dt',
+					jump = Ext.getCmp(jump_id);
+
+				if(cal.showNavJump && jump && info.activeDate)
+					jump.setValue(info.activeDate);
+			},
+			scope: me
+		});
+	},
+	onBeforeLoad: function(store, oper)
+	{
+		var me = this,
+			tbar = me.getDockedItems('toolbar[dock="top"]'),
+			cals = null,
+			params;
+
+		if(tbar && tbar.length)
+		{
+			tbar = tbar[0];
+			cals = tbar.getComponent('cals');
+			if(cals)
+				cals = cals.getValue();
+		}
+		if(cals && cals.length)
+		{
+			params = oper.getParams() || {};
+			params.cals = cals;
+			oper.setParams(params);
 		}
 	}
 });
