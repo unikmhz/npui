@@ -185,6 +185,14 @@ Ext.onReady(function()
 		traverseText: 'Переход'
 	});
 
+	Ext.define('Ext.locale.ru.NetProfile.form.field.IPv4', {
+		override: 'NetProfile.form.field.IPv4',
+		config: {
+			clearBtnCfg: {
+				tooltip: 'Очистить поле'
+			}
+		}
+	});
 	Ext.define('Ext.locale.ru.NetProfile.form.field.IPv6', {
 		override: 'NetProfile.form.field.IPv6',
 		invalidAddressText: 'Некорректный адрес IPv6'

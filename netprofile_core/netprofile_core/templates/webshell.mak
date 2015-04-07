@@ -215,7 +215,7 @@ Ext.require([
 		}
 	});
 	Ext.define('Ext.overrides.mod.FieldAsyncErrors', {
-		override: 'Ext.form.field.Base',
+		override: 'Ext.form.field.Field',
 		getErrors: function(value)
 		{
 			var errs, i;
@@ -480,7 +480,8 @@ Ext.require([
 	Ext.define('NetProfile.data.field.IPv4', {
 		extend: 'Ext.data.field.Field',
 		alias: 'data.field.ipv4',
-		convert: function(value, record)
+		isIPField: true,
+		convert: function(value)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
 				return null;
@@ -488,11 +489,11 @@ Ext.require([
 			{
 				if(value instanceof ipaddr.IPv4)
 					return value;
-				throw "Supplied with an unknown object type";
+				throw 'Supplied with an unknown object type';
 			}
 			return ipaddr.IPv4.parse(value);
 		},
-		serialize: function(value, record)
+		serialize: function(value)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
 				return null;
@@ -503,12 +504,17 @@ Ext.require([
 		sortType: function(t)
 		{
 			return t.toInteger();
+		},
+		getType: function()
+		{
+			return 'ipv4';
 		}
 	});
 	Ext.define('NetProfile.data.field.IPv6', {
 		extend: 'Ext.data.field.Field',
 		alias: 'data.field.ipv6',
-		convert: function(value, record)
+		isIPField: true,
+		convert: function(value)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
 				return null;
@@ -516,7 +522,7 @@ Ext.require([
 			{
 				if(value instanceof ipaddr.IPv6)
 					return value;
-				throw "Supplied with an unknown object type";
+				throw 'Supplied with an unknown object type';
 			}
 			if(Ext.isArray(value) && (value.length == 16))
 			{
@@ -530,7 +536,7 @@ Ext.require([
 			}
 			return ipaddr.IPv6.parse(value);
 		},
-		serialize: function(value, record)
+		serialize: function(value)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
 				return null;
@@ -541,6 +547,10 @@ Ext.require([
 		sortType: function(t)
 		{
 			return t.toByteArray();
+		},
+		getType: function()
+		{
+			return 'ipv6';
 		}
 	});
 
