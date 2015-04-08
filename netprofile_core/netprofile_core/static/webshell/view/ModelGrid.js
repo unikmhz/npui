@@ -32,6 +32,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'NetProfile.grid.filters.filter.Number',
 		'NetProfile.grid.filters.filter.List',
 		'NetProfile.grid.filters.filter.IPv4',
+		'NetProfile.grid.filters.filter.IPv6',
 		'NetProfile.grid.plugin.SimpleSearch',
 		'NetProfile.grid.plugin.ExtraSearch'
 	],

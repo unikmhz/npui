@@ -8,6 +8,12 @@ Ext.define('NetProfile.form.field.IPv6', {
 
 	invalidAddressText: 'Invalid IPv6 address',
 
+	setValue: function(val)
+	{
+		if(Ext.isObject(val) && !(val instanceof ipaddr.IPv6) && ('parts' in val))
+			val = new ipaddr.IPv6(val.parts);
+		return this.callParent(arguments);
+	},
 	rawToValue: function(raw)
 	{
 		if((raw === null) || (raw === undefined) || (raw === ''))

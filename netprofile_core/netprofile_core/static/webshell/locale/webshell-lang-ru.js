@@ -87,6 +87,10 @@ Ext.onReady(function()
 		override: 'NetProfile.grid.filters.filter.Number',
 		emptyText: 'Введите число...'
 	});
+	Ext.define('Ext.locale.ru.NetProfile.grid.filters.filter.IPv6', {
+		override: 'NetProfile.grid.filters.filter.IPv6',
+		emptyText: 'Введите адрес IPv6...'
+	});
 	Ext.define('Ext.locale.ru.NetProfile.grid.plugin.SimpleSearch', {
 		override: 'NetProfile.grid.plugin.SimpleSearch',
 		fieldEmptyText: 'Поиск...'

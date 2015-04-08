@@ -272,7 +272,7 @@ _FILTER_TYPE_MAP = {
 	Int64        : 'npnumber', # ?
 	Integer      : 'npnumber',
 	IPv4Address  : 'ipv4',
-#	IPv6Address  : FIXME,
+	IPv6Address  : 'ipv6',
 	IPv6Offset   : 'npnumber', # ?
 	PickleType   : 'none',
 	SmallInteger : 'npnumber',
