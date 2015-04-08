@@ -35,6 +35,7 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 				weight: 3,
 				hidden: true,
 				hideOnReadOnly: false,
+				disableOnReadOnly: false,
 				handler: 'onTriggerLink'
 			}
 		}

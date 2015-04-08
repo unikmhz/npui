@@ -229,6 +229,21 @@ Ext.require([
 			return errs;
 		}
 	});
+	Ext.define('Ext.overrides.mod.ROTrigger', {
+		override: 'Ext.form.trigger.Trigger',
+		disableOnReadOnly: true,
+		onClick: function()
+		{
+			var me = this,
+				args = arguments,
+				e = me.clickRepeater ? args[1] : args[0],
+				handler = me.handler,
+				field = me.field;
+
+			if(handler && (!field.readOnly || !me.disableOnReadOnly) && me.isFieldEnabled())
+				Ext.callback(me.handler, me.scope, [field, me, e], 0, field);
+		}
+	});
 	Ext.define('Ext.overrides.bugfix.EXTJS16183.menu', {
 		override: 'Ext.menu.Menu',
 		compatibility: '5.1.0.107',
