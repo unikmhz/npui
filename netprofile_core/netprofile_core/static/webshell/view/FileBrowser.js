@@ -73,6 +73,8 @@ Ext.define('NetProfile.view.FileBrowser', {
 	gridCreatedText: 'Created',
 	gridModifiedText: 'Last Modified',
 
+	dragText: 'Move or attach files ({0})',
+
 	kibText: 'KiB',
 	mibText: 'MiB',
 	gibText: 'GiB',
@@ -610,7 +612,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 						plugins: [{
 							ptype: 'gridviewdragdrop',
 							dragGroup: 'ddFile',
-							dragText: 'Move or attach files ({0})'
+							dragText: this.dragText
 						}]
 					},
 					columns: [{

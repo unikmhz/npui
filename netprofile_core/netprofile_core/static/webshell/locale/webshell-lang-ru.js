@@ -250,6 +250,8 @@ Ext.onReady(function()
 		gridCreatedText: 'Создан',
 		gridModifiedText: 'Изменён',
 
+		dragText: 'Переместить или вложить файлы ({0})',
+
 		kibText: 'Кбайт',
 		mibText: 'Мбайт',
 		gibText: 'Гбайт',
