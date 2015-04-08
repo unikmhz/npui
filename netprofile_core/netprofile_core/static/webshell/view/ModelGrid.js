@@ -27,7 +27,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'Ext.ux.window.CenterWindow',
 		'NetProfile.form.field.ModelSelect',
 		'NetProfile.form.field.SimpleModelSelect',
-		'NetProfile.view.NullableComboBox',
+		'NetProfile.form.field.NullableComboBox',
 		'NetProfile.grid.filters.filter.Date',
 		'NetProfile.grid.filters.filter.Number',
 		'NetProfile.grid.filters.filter.List',
