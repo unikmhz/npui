@@ -910,6 +910,9 @@ class ExtColumn(object):
 		xt = self.column_xtype
 		if xt is not None:
 			conf['xtype'] = xt
+		if xt == 'checkcolumn':
+			# FIXME: maybe selectively allow in-place editing?
+			conf['readOnly'] = True
 		tpl = self.template
 		if tpl:
 			if isinstance(tpl, TemplateObject):

@@ -13,8 +13,17 @@ Ext.define('NetProfile.controller.DataStores', {
 		this.control({
 			'button[cls~=np-data-export]': {
 				click: this.onDataExport
+			},
+			'checkcolumn' : {
+				beforecheckchange: this.onCheckColumn
 			}
 		});
+	},
+	onCheckColumn: function(col, idx, checked)
+	{
+		if(col.readOnly)
+			return false;
+		return true;
 	},
 	onDataExport: function(btn, ev, opts)
 	{
