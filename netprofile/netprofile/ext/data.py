@@ -271,7 +271,7 @@ _FILTER_TYPE_MAP = {
 	Int32        : 'npnumber',
 	Int64        : 'npnumber', # ?
 	Integer      : 'npnumber',
-#	IPv4Address  : FIXME,
+	IPv4Address  : 'ipv4',
 #	IPv6Address  : FIXME,
 	IPv6Offset   : 'npnumber', # ?
 	PickleType   : 'none',
@@ -602,6 +602,7 @@ class ExtColumn(object):
 				param = param.replace(tzinfo=None)
 			return param
 		if issubclass(typecls, _IPADDR_SET):
+			# TODO: axe out this nonsense as soon as both IP fields are checked in
 			if isinstance(param, dict):
 				if 'octets' in param:
 					param = param['octets']

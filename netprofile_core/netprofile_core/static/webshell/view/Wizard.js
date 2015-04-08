@@ -377,7 +377,7 @@ Ext.define('NetProfile.view.Wizard', {
 		{
 			if(!i.doGetValues)
 				return;
-			iv = i.getValues();
+			iv = i.getValues(false, false, false, true);
 			for(j in iv)
 				res[j] = iv[j];
 		});

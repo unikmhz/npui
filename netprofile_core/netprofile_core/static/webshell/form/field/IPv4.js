@@ -25,11 +25,16 @@ Ext.define('NetProfile.form.field.IPv4', {
 			{
 				if(val instanceof ipaddr.IPv4)
 					return val;
+				else if('octets' in val)
+					return new ipaddr.IPv4(val.octets);
 				return null;
 			}
 			return ipaddr.IPv4.parse(val);
 		}
 	},
+
+	octetErrorText: 'Octet {0}: {1}',
+	blankText: 'This field can not be blank',
 
 	config: {
 		layout: {
@@ -37,10 +42,9 @@ Ext.define('NetProfile.form.field.IPv4', {
 			align: 'end',
 			enableSplitters: false
 		},
-		combineErrors: true,
-
 		octetFieldCfg: {
 			xtype: 'numberfield',
+			allowBlank: true,
 			allowDecimals: false,
 			allowExponential: false,
 			enableKeyEvents: true,
@@ -121,6 +125,27 @@ Ext.define('NetProfile.form.field.IPv4', {
 		});
 		me.mixins.field.resetOriginalValue.call(me);
 	},
+	getErrors: function(value)
+	{
+		var me = this,
+			errs = me.mixins.field.getErrors(value),
+			err;
+
+		if(me.asyncErrors && me.asyncErrors.length)
+			errs = errs.concat(me.asyncErrors);
+		if(!me.allowBlank && me.isBlank())
+			errs.push(me.blankText);
+		Ext.each(me.oct, function(oct, idx)
+		{
+			var err = oct.getErrors(),
+				i = 0;
+			for(; i < err.length; i++)
+			{
+				errs.push(Ext.String.format(me.octetErrorText, idx + 1, err[i]));
+			}
+		});
+		return errs;
+	},
 	validate: function()
 	{
 		var me = this,
@@ -150,15 +175,6 @@ Ext.define('NetProfile.form.field.IPv4', {
 
 		return isValid;
 	},
-	getCombinedErrors: function(invalidFields)
-	{
-		var me = this,
-			errs = me.callParent(arguments);
-
-		if(me.asyncErrors && me.asyncErrors.length)
-			errs = errs.concat(me.asyncErrors);
-		return errs;
-	},
 	createOctet: function(octnum, octval, cfg)
 	{
 		var me = this,
@@ -173,8 +189,6 @@ Ext.define('NetProfile.form.field.IPv4', {
 		oct.value = octval;
 		if(typeof(me.readOnly) === 'boolean')
 			oct.readOnly = me.readOnly;
-		if(typeof(me.allowBlank) === 'boolean')
-			oct.allowBlank = me.allowBlank;
 		if(typeof(me.disabled) === 'boolean')
 			oct.disabled = me.disabled;
 		oct = me.add(oct);
@@ -187,7 +201,7 @@ Ext.define('NetProfile.form.field.IPv4', {
 			me.add(me.separatorCfg);
 		return oct;
 	},
-	onFieldChange: function(fld, newval)
+	onFieldChange: function(fld, newval, oldval)
 	{
 		var me = this,
 			ipre = me.statics().ipRegEx,
@@ -199,6 +213,7 @@ Ext.define('NetProfile.form.field.IPv4', {
 			return true;
 		}
 		me.parseFields();
+		me.fireEvent('fieldchange', me, fld, newval, oldval);
 		return true;
 	},
 	onFieldKeyDown: function(fld, ev)
@@ -246,6 +261,19 @@ Ext.define('NetProfile.form.field.IPv4', {
 			oct.setRawValue(octval[octnum].toString());
 		});
 	},
+	isBlank: function()
+	{
+		var me = this,
+			blank = true;
+
+		Ext.each(me.oct, function(oct)
+		{
+			var octval = oct.getValue();
+			if((octval !== null) && (octval !== ''))
+				blank = false;
+		});
+		return blank;
+	},
 	parseFields: function()
 	{
 		var me = this,
@@ -254,16 +282,17 @@ Ext.define('NetProfile.form.field.IPv4', {
 			ectr = 0,
 			newval = null;
 
+		if(!me.allowBlank && me.isBlank())
+		{
+			me.validate();
+			return me;
+		}
 		try
 		{
 			oct = oct.map(function(o)
 			{
 				if((o === null) || (o === undefined) || (o === ''))
-				{
 					ectr ++;
-					if(!me.allowBlank)
-						throw 'Invalid octets found'
-				}
 				return parseInt(o) || 0;
 			});
 			if(ectr < 4)
@@ -287,7 +316,7 @@ Ext.define('NetProfile.form.field.IPv4', {
 
 		me.value = me.statics().filterValue(val);
 		me.updateFields();
-		if(me.value !== oldval)
+		if(me.value !== oldval && ((me.value === null) || (oldval === null)))
 			fire = true;
 		else if(me.value && oldval && !me.value.match(oldval, 32))
 			fire = true;

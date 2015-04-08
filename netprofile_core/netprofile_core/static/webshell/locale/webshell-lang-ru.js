@@ -187,6 +187,8 @@ Ext.onReady(function()
 
 	Ext.define('Ext.locale.ru.NetProfile.form.field.IPv4', {
 		override: 'NetProfile.form.field.IPv4',
+		octetErrorText: 'Октет {0}: {1}',
+		blankText: 'Это поле не может быть пустым',
 		config: {
 			clearBtnCfg: {
 				tooltip: 'Очистить поле'
