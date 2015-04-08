@@ -1,5 +1,5 @@
 /**
- * @class NetProfile.view.SimpleModelSelect
+ * @class NetProfile.view.NullableComboBox
  * @extends Ext.form.field.ComboBox
  */
 Ext.define('NetProfile.view.NullableComboBox', {

@@ -1,8 +1,8 @@
 /**
- * @class NetProfile.view.ModelSelect
+ * @class NetProfile.form.field.ModelSelect
  * @extends Ext.form.field.Text
  */
-Ext.define('NetProfile.view.ModelSelect', {
+Ext.define('NetProfile.form.field.ModelSelect', {
 	extend: 'Ext.form.field.Text',
 	alias: 'widget.modelselect',
 	requires: [

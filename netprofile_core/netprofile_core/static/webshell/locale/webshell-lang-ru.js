@@ -118,8 +118,8 @@ Ext.onReady(function()
 		exportText: 'Экспорт'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.ModelSelect', {
-		override: 'NetProfile.view.ModelSelect',
+	Ext.define('Ext.locale.ru.NetProfile.form.field.ModelSelect', {
+		override: 'NetProfile.form.field.ModelSelect',
 		chooseText: 'Выберите объект'
 	});
 

@@ -1,8 +1,8 @@
 /**
- * @class NetProfile.view.SimpleModelSelect
+ * @class NetProfile.form.field.SimpleModelSelect
  * @extends Ext.form.field.ComboBox
  */
-Ext.define('NetProfile.view.SimpleModelSelect', {
+Ext.define('NetProfile.form.field.SimpleModelSelect', {
 	extend: 'Ext.form.field.ComboBox',
 	alias: 'widget.simplemodelselect',
 	requires: [
