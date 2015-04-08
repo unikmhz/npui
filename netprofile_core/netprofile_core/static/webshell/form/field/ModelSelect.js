@@ -23,28 +23,19 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 				cls: Ext.baseCSSPrefix + 'form-clear-trigger',
 				weight: 1,
 				hidden: true,
-				handler: function()
-				{
-					this.onTriggerClear();
-				}
+				handler: 'onTriggerClear'
 			},
 			select: {
 				weight: 2,
 				hidden: false,
-				handler: function()
-				{
-					this.onTriggerSelect();
-				}
+				handler: 'onTriggerSelect'
 			},
 			link: {
 				cls: Ext.baseCSSPrefix + 'form-search-trigger',
 				weight: 3,
 				hidden: true,
 				hideOnReadOnly: false,
-				handler: function()
-				{
-					this.onTriggerLink();
-				}
+				handler: 'onTriggerLink'
 			}
 		}
 	},

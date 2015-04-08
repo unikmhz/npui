@@ -156,29 +156,24 @@ Ext.define('NetProfile.view.Form', {
 	loadCallback: function(data, result)
 	{
 		var me = this,
-			st = this.statics();
+			st = me.statics(),
+			ro = false,
+			cmp;
 
 		if(!data || !data.fields)
 		{
-			this.fireEvent('formloadfailed', this, data, result);
+			me.fireEvent('formloadfailed', me, data, result);
 			return false;
 		}
 		if(data.rvalid)
-			this.remoteValidation = true;
+			me.remoteValidation = true;
 		else
-			this.remoteValidation = false;
-		this.removeAll(true);
+			me.remoteValidation = false;
+		me.removeAll(true);
 		if(typeof(data.ro) === 'boolean')
-		{
-			this.readOnly = data.ro;
-			var tbar = this.down('toolbar');
-			if(this.readOnly)
-				tbar.hide();
-			else
-				tbar.show();
-		}
+			ro = me.readOnly = data.ro;
 		st.formdef[this.formCls] = data;
-		this.suspendLayouts();
+		me.suspendLayouts();
 		Ext.Array.forEach(data.fields, function(fld)
 		{
 			Ext.apply(fld, {
@@ -193,23 +188,21 @@ Ext.define('NetProfile.view.Form', {
 			if(me.readOnly)
 				fld.readOnly = true;
 		});
-		this.add(data.fields);
-		this.resumeLayouts(true);
+		me.add(data.fields);
 
-		this.fireEvent('formloaded', this);
+		me.fireEvent('formloaded', me);
 
-		if(this.record)
+		if(me.record)
 		{
-			if(this.record.store)
+			if(me.record.store)
 			{
-				this.mon(this.record.store, {
+				me.mon(me.record.store, {
 					load: function(store, recs, success, opts)
 					{
 						if(!success)
 							return;
 
-						var me = this,
-							rectab = this.up('panel[cls~=record-tab]');
+						var rectab = me.up('panel[cls~=record-tab]');
 
 						Ext.Array.forEach(recs, function(rec)
 						{
@@ -229,29 +222,28 @@ Ext.define('NetProfile.view.Form', {
 						if(op !== Ext.data.Model.COMMIT)
 							return;
 
-						var rectab = this.up('panel[cls~=record-tab]');
+						var rectab = me.up('panel[cls~=record-tab]');
 
-						if(rec.getId() === this.record.getId())
+						if(rec.getId() === me.record.getId())
 						{
-							this.record = rec;
+							me.record = rec;
 							title = rec.get('__str__');
 							if(title)
 								rectab.setTitle(title);
 						}
-					},
-					scope: this
+					}
 				});
 			}
-			var tb = this.down('toolbar[dock=bottom]'),
-				ro = !!this.record.readOnly;
-			if(ro)
-				tb.hide();
-			else
-				tb.show();
-			this.suspendEvents();
-			this.getForm().loadRecord(this.record);
-			this.resumeEvents();
+			ro = ro || !!me.record.readOnly;
+			me.suspendEvents();
+			me.getForm().loadRecord(me.record);
+			me.resumeEvents();
 		}
+
+		cmp = me.down('toolbar[dock=bottom]');
+		if(cmp)
+			cmp.setHidden(ro);
+		me.resumeLayouts(true);
 	}
 });
 
