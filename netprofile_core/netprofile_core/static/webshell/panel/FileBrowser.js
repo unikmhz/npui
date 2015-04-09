@@ -1,8 +1,8 @@
 /**
- * @class NetProfile.view.FileBrowser
+ * @class NetProfile.panel.FileBrowser
  * @extends Ext.panel.Panel
  */
-Ext.define('NetProfile.view.FileBrowser', {
+Ext.define('NetProfile.panel.FileBrowser', {
 	extend: 'Ext.panel.Panel',
 	alias: 'widget.filebrowser',
 	stateId: 'npws_filebrowser',

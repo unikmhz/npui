@@ -204,8 +204,8 @@ Ext.onReady(function()
 		invalidAddressText: 'Некорректный адрес IPv6'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.FileBrowser', {
-		override: 'NetProfile.view.FileBrowser',
+	Ext.define('Ext.locale.ru.NetProfile.panel.FileBrowser', {
+		override: 'NetProfile.panel.FileBrowser',
 
 		emptyText: 'Папка пуста',
 
