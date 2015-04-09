@@ -533,6 +533,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 		if(this.viewType in this.views)
 		{
 			this.view = this.add(this.views[this.viewType]);
+			this.view.refresh();
 			return;
 		}
 		switch(this.viewType)
@@ -562,6 +563,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 						scope: this
 					}
 				});
+				this.view.refresh();
 				break;
 			case 'list':
 				this.view = this.views[this.viewType] = this.add({
@@ -593,6 +595,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 						scope: this
 					}
 				});
+				this.view.refresh();
 				break;
 			case 'grid':
 				this.view = this.views[this.viewType] = this.add({

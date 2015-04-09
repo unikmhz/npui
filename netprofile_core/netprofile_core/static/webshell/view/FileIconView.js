@@ -25,6 +25,7 @@ Ext.define('NetProfile.view.FileIconView', {
 
 	itemSelector: 'div.np-file-wrap',
 	overItemCls: 'x-file-item-over',
+	deferInitialRefresh: true,
 	multiSelect: true,
 	trackOver: true,
 	scrollable: 'vertical',

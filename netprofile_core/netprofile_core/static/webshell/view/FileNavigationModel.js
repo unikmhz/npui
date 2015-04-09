@@ -95,6 +95,11 @@ Ext.define('NetProfile.view.FileNavigationModel', {
 				newIdx = lastIdx;
 		}
 		me.setPosition(newIdx, ev);
+	},
+	onKeyEnter: function(ev)
+	{
+		ev.stopEvent();
+		ev.view.fireEvent('itemdblclick', ev.view, ev.record, ev.item, ev.recordIndex, ev);
 	}
 });
 
