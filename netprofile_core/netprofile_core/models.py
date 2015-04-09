@@ -2634,6 +2634,7 @@ class FileFolder(Base):
 	@classmethod
 	def __augment_create__(cls, sess, obj, values, req):
 		u = req.user
+		root_ff = u.group.effective_root_folder
 		if 'parentid' in values:
 			pid = values['parentid']
 			if pid is None:
@@ -2649,9 +2650,10 @@ class FileFolder(Base):
 					return False
 				if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
 					return False
-				root_ff = u.group.effective_root_folder
 				if root_ff and (not parent.is_inside(root_ff)):
 					return False
+		elif root_ff or not u.root_writable:
+			return False
 		return True
 
 	@classmethod
@@ -3356,6 +3358,7 @@ class File(Base):
 	@classmethod
 	def __augment_create__(cls, sess, obj, values, req):
 		u = req.user
+		root_ff = u.group.effective_root_folder
 		if 'ffid' in values:
 			ffid = values['ffid']
 			if ffid is None:
@@ -3371,9 +3374,10 @@ class File(Base):
 					return False
 				if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
 					return False
-				root_ff = u.group.effective_root_folder
 				if root_ff and (not parent.is_inside(root_ff)):
 					return False
+		elif root_ff or not u.root_writable:
+			return False
 		return True
 
 	@classmethod
