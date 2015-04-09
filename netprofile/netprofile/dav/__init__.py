@@ -290,7 +290,7 @@ class DAVManager(object):
 			return dprops.DEPTH_INFINITY
 		try:
 			return int(d)
-		except ValueError:
+		except (TypeError, ValueError):
 			pass
 		return dd
 

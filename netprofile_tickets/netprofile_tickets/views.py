@@ -559,7 +559,7 @@ class ClientRootFactory(RootFactory):
 				return tkt
 			except NoResultFound:
 				raise KeyError('Invalid ticket ID')
-		except ValueError:
+		except (TypeError, ValueError):
 			pass
 		raise KeyError('Invalid URL')
 
@@ -578,7 +578,7 @@ def _tickets_upload_file(obj, mode, req, sess, tpldef):
 		return False
 	try:
 		ticket_id = int(req.POST.get('ticketid', ''))
-	except ValueError:
+	except (TypeError, ValueError):
 		return False
 	tkt = sess.query(Ticket).get(ticket_id)
 	if not tkt:
@@ -607,7 +607,7 @@ def _tickets_list_files(mode, req, sess, tpldef):
 		return False
 	try:
 		ticket_id = int(req.GET.get('ticketid', ''))
-	except ValueError:
+	except (TypeError, ValueError):
 		return False
 	tkt = sess.query(Ticket).get(ticket_id)
 	if not tkt:

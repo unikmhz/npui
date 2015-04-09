@@ -212,7 +212,7 @@ def client_download(request):
 	mode = request.matchdict['mode']
 	try:
 		objid = int(request.matchdict['id'])
-	except ValueError:
+	except (TypeError, ValueError):
 		raise HTTPForbidden('Invalid download link')
 	sess = DBSession()
 	ret = request.run_hook('access.cl.download', mode, objid, request, sess)
@@ -228,7 +228,7 @@ def client_delete(request):
 	mode = request.matchdict['mode']
 	try:
 		objid = int(request.matchdict['id'])
-	except ValueError:
+	except (TypeError, ValueError):
 		return False
 	sess = DBSession()
 	ret = request.run_hook('access.cl.download', mode, objid, request, sess)

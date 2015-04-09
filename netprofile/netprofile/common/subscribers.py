@@ -64,7 +64,7 @@ def on_response(event):
 	if asbool(settings.get('netprofile.http.sts.enabled', False)):
 		try:
 			max_age = int(settings.get('netprofile.http.sts.max_age', 604800))
-		except ValueError:
+		except (TypeError, ValueError):
 			max_age = 604800
 		sts_chunks = [ 'max-age=' + str(max_age) ]
 		if asbool(settings.get('netprofile.http.sts.include_subdomains', False)):
