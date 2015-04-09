@@ -44,7 +44,7 @@ Ext.define('NetProfile.view.FileDownload', {
 			return false;
 		if(params.params)
 			url += ('?' + Ext.Object.toQueryString(config.params));
-		el.dom.src = url;
+		el.dom.contentWindow.location.href = url;
 		return true;
 	},
 	loadExport: function(moddef, model, fmt, par)
