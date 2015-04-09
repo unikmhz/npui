@@ -275,7 +275,7 @@ def file_mnt(request):
 	ff_id = 0
 	try:
 		ff_id = int(request.matchdict.get('ffid', 0))
-	except ValueError:
+	except (TypeError, ValueError):
 		pass
 	sess = DBSession()
 	ff = sess.query(FileFolder).get(ff_id)
@@ -1215,7 +1215,7 @@ def _cal_events(evts, params, req):
 	if isinstance(cals, Iterable) and len(cals):
 		try:
 			cals = [int(cal[5:]) for cal in cals if cal[:5] == 'user-']
-		except ValueError:
+		except (TypeError, ValueError):
 			cals = ()
 		if len(cals) == 0:
 			return
@@ -1271,7 +1271,7 @@ def _ev_set(sess, ev, params, req):
 			return False
 		try:
 			cal_id = int(cal_id[5:])
-		except ValueError:
+		except (TypeError, ValueError):
 			return False
 		cal = sess.query(Calendar).get(cal_id)
 		if (cal is None) or (not cal.can_write(user)):
@@ -1358,7 +1358,7 @@ def import_calendar_validator(ret, values, request):
 	else:
 		try:
 			cal_id = int(values['caldef'][5:])
-		except ValueError:
+		except (TypeError, ValueError):
 			errors['caldef'].append(loc.translate(_('Invalid calendar selected.')))
 		else:
 			sess = DBSession()

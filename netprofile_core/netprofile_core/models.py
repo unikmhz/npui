@@ -2635,20 +2635,23 @@ class FileFolder(Base):
 	def __augment_create__(cls, sess, obj, values, req):
 		u = req.user
 		if 'parentid' in values:
-			if (values['parentid'] is None) and (not u.root_writable):
-				return False
-			try:
-				pid = int(values['parentid'])
-			except ValueError:
-				return False
-			parent = sess.query(FileFolder).get(pid)
-			if parent is None:
-				return False
-			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
-				return False
-			root_ff = u.group.effective_root_folder
-			if root_ff and (not parent.is_inside(root_ff)):
-				return False
+			pid = values['parentid']
+			if pid is None:
+				if not u.root_writable:
+					return False
+			else:
+				try:
+					pid = int(pid)
+				except (TypeError, ValueError):
+					return False
+				parent = sess.query(FileFolder).get(pid)
+				if parent is None:
+					return False
+				if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+					return False
+				root_ff = u.group.effective_root_folder
+				if root_ff and (not parent.is_inside(root_ff)):
+					return False
 		return True
 
 	@classmethod
@@ -2666,19 +2669,22 @@ class FileFolder(Base):
 		if (not root_ff) and (not u.root_writable):
 			return False
 		if 'parentid' in values:
-			if (values['parentid'] is None) and (not u.root_writable):
-				return False
-			try:
-				pid = int(values['parentid'])
-			except ValueError:
-				return False
-			new_parent = sess.query(FileFolder).get(pid)
-			if new_parent is None:
-				return False
-			if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
-				return False
-			if root_ff and (not new_parent.is_inside(root_ff)):
-				return False
+			pid = values['parentid']
+			if pid is None:
+				if not u.root_writable:
+					return False
+			else:
+				try:
+					pid = int(pid)
+				except (TypeError, ValueError):
+					return False
+				new_parent = sess.query(FileFolder).get(pid)
+				if new_parent is None:
+					return False
+				if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
+					return False
+				if root_ff and (not new_parent.is_inside(root_ff)):
+					return False
 		return True
 
 	@classmethod
@@ -3351,20 +3357,23 @@ class File(Base):
 	def __augment_create__(cls, sess, obj, values, req):
 		u = req.user
 		if 'ffid' in values:
-			if (values['ffid'] is None) and (not u.root_writable):
-				return False
-			try:
-				ffid = int(values['ffid'])
-			except ValueError:
-				return False
-			parent = sess.query(FileFolder).get(ffid)
-			if parent is None:
-				return False
-			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
-				return False
-			root_ff = u.group.effective_root_folder
-			if root_ff and (not parent.is_inside(root_ff)):
-				return False
+			ffid = values['ffid']
+			if ffid is None:
+				if not u.root_writable:
+					return False
+			else:
+				try:
+					ffid = int(ffid)
+				except (TypeError, ValueError):
+					return False
+				parent = sess.query(FileFolder).get(ffid)
+				if parent is None:
+					return False
+				if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+					return False
+				root_ff = u.group.effective_root_folder
+				if root_ff and (not parent.is_inside(root_ff)):
+					return False
 		return True
 
 	@classmethod
@@ -3382,19 +3391,22 @@ class File(Base):
 		if (not root_ff) and (not u.root_writable):
 			return False
 		if 'ffid' in values:
-			if (values['ffid'] is None) and (not u.root_writable):
-				return False
-			try:
-				ffid = int(values['ffid'])
-			except ValueError:
-				return False
-			new_parent = sess.query(FileFolder).get(ffid)
-			if new_parent is None:
-				return False
-			if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
-				return False
-			if root_ff and (not new_parent.is_inside(root_ff)):
-				return False
+			ffid = values['ffid']
+			if ffid is None:
+				if not u.root_writable:
+					return False
+			else:
+				try:
+					ffid = int(ffid)
+				except (TypeError, ValueError):
+					return False
+				new_parent = sess.query(FileFolder).get(ffid)
+				if new_parent is None:
+					return False
+				if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
+					return False
+				if root_ff and (not new_parent.is_inside(root_ff)):
+					return False
 		return True
 
 	@classmethod
@@ -5756,7 +5768,7 @@ def _wizcb_import_cal_submit(wiz, em, step, act, val, req):
 		style = int(val.get('style'))
 		if 0 < style <= len(_calendar_styles):
 			imp.style = style
-	except ValueError:
+	except (TypeError, ValueError):
 		pass
 	sess.add(imp)
 	return {
