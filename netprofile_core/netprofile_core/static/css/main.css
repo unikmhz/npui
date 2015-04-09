@@ -148,6 +148,16 @@ div#splash div.splashcont h1
 	position: relative;
 }
 
+.np-file-iview, .np-file-lview
+{
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
 .np-file-iview .x-view-empty, .np-file-lview .x-view-empty
 {
 	color: gray;
@@ -234,12 +244,14 @@ a.np-file-wrap span
 {
 	width: 48px;
 	height: 48px;
+	pointer-events: none;
 }
 
 .np-file-lview .np-file-wrap .np-file-icon img
 {
 	width: 16px;
 	height: 16px;
+	pointer-events: none;
 }
 
 .np-file-iview .np-file-wrap span, .x-dd-drag-ghost .np-file-wrap span

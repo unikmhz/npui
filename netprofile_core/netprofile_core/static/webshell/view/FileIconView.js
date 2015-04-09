@@ -6,14 +6,15 @@ Ext.define('NetProfile.view.FileIconView', {
 	extend: 'Ext.view.View',
 	alias: 'widget.fileiconview',
 	requires: [
-		'Ext.util.KeyNav',
-		'Ext.ux.view.DragSelector',
-		'Ext.ux.view.LabelEditor',
-		'Ext.ux.view.Draggable'
+		'NetProfile.view.FileNavigationModel'
+//		'Ext.util.KeyNav',
+//		'Ext.ux.view.DragSelector',
+//		'Ext.ux.view.LabelEditor',
+//		'Ext.ux.view.Draggable'
 	],
-	mixins: {
-		draggable: 'Ext.ux.view.Draggable'
-	},
+//	mixins: {
+//		draggable: 'Ext.ux.view.Draggable'
+//	},
 
 	useColumns: false,
 	browser: null,
@@ -27,6 +28,9 @@ Ext.define('NetProfile.view.FileIconView', {
 	multiSelect: true,
 	trackOver: true,
 	scrollable: 'vertical',
+	navigationModel: {
+		type: 'file'
+	},
 
 	iconTpl: [
 		'<tpl for=".">',
@@ -48,34 +52,56 @@ Ext.define('NetProfile.view.FileIconView', {
 
 	initComponent: function()
 	{
-		if(this.useColumns)
-			this.tpl = this.columnTpl;
+		var me = this;
+
+		if(me.useColumns)
+		{
+			me.tpl = me.columnTpl;
+			// FIXME: me.scrollable = 'horizontal';
+		}
 		else
-			this.tpl = this.iconTpl;
-		this.plugins = [
-			Ext.create('Ext.ux.view.DragSelector', { pluginId: 'dragsel' }),
-			Ext.create('Ext.ux.view.LabelEditor', {
-				dataIndex: 'fname',
-				pluginId: 'editor'
-			})
+			me.tpl = me.iconTpl;
+		me.plugins = [
+//			Ext.create('Ext.ux.view.DragSelector', { pluginId: 'dragsel' }),
+//			Ext.create('Ext.ux.view.LabelEditor', {
+//				dataIndex: 'fname',
+//				pluginId: 'editor'
+//			})
 		];
-		this.emptyText = '<div class="x-view-empty">' + this.emptyText + '</div>';
-		this.mixins.draggable.init(this, {
-			ddConfig: {
-				ddGroup: 'ddFile'
-			},
-			ghostCls: 'np-file-iview',
-			ghostTpl: [
-				'<tpl for=".">',
-					'<div>{fname}</div>',
-				'</tpl>'
-			]
+		me.emptyText = '<div class="x-view-empty">' + me.emptyText + '</div>';
+//		this.mixins.draggable.init(this, {
+//			ddConfig: {
+//				ddGroup: 'ddFile'
+//			},
+//			ghostCls: 'np-file-iview',
+//			ghostTpl: [
+//				'<tpl for=".">',
+//					'<div>{fname}</div>',
+//				'</tpl>'
+//			]
+//		});
+		me.callParent(arguments);
+		if(me.useColumns)
+			me.on('resize', me.onResize, me);
+		me.on({
+			scope: me,
+			afterrender: me.onAfterRender
 		});
-		this.nav = null;
-		this.callParent(arguments);
-		if(this.useColumns)
-			this.on('resize', this.onResize, this);
-		this.on('afterrender', this.onAfterRender);
+	},
+	itemsInGroup: function()
+	{
+		var me = this,
+			reg = me.getViewRegion(),
+			sbar = Ext.getScrollbarSize(),
+			len;
+
+		if(me.useColumns)
+		{
+			len = reg.bottom - reg.top - sbar.height - 2;
+			return Math.floor(len / 21);
+		}
+		len = reg.right - reg.left - sbar.width;
+		return Math.floor(len / 103);
 	},
 	onAfterRender: function(me)
 	{
@@ -116,7 +142,7 @@ Ext.define('NetProfile.view.FileIconView', {
 		}
 		ev.preventDefault();
 	},
-	onResize: function(view, w, h, oldw, oldh)
+	onResize: function(w, h, oldw, oldh)
 	{
 		if(!oldw || !oldh)
 			return;
@@ -124,16 +150,14 @@ Ext.define('NetProfile.view.FileIconView', {
 	},
 	prepareData: function(data)
 	{
-		if(this.useColumns)
-		{
-			data.maxHeight = this.browser.body.getHeight() - Ext.getScrollbarSize().height - 2;
-			data.maxItems = Math.floor(data.maxHeight / 21);
-		}
-		data.iconSz = this.iconSize;
+		var me = this;
+
+		data.maxItems = me.itemsInGroup();
+		data.iconSz = me.iconSize;
 		data.baseURL = NetProfile.baseURL;
 		data.staticURL = NetProfile.staticURL;
-		if(data.mime && this.getMIME)
-			data.mime_img = this.getMIME(data.mime);
+		if(data.mime && me.getMIME)
+			data.mime_img = me.getMIME(data.mime);
 
 		return data;
 	}
