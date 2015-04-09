@@ -209,7 +209,7 @@ Ext.onReady(function()
 
 		emptyText: 'Папка пуста',
 
-		viewText: 'Просмотр',
+		viewText: 'Вид',
 		viewAsIconsText: 'Иконки',
 		viewAsListText: 'Список',
 		viewAsGridText: 'Таблица',
