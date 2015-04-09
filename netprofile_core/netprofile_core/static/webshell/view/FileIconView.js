@@ -6,15 +6,12 @@ Ext.define('NetProfile.view.FileIconView', {
 	extend: 'Ext.view.View',
 	alias: 'widget.fileiconview',
 	requires: [
-		'NetProfile.view.FileNavigationModel'
+		'NetProfile.view.FileNavigationModel',
 //		'Ext.util.KeyNav',
 //		'Ext.ux.view.DragSelector',
 //		'Ext.ux.view.LabelEditor',
-//		'Ext.ux.view.Draggable'
+		'NetProfile.view.Draggable'
 	],
-//	mixins: {
-//		draggable: 'Ext.ux.view.Draggable'
-//	},
 
 	useColumns: false,
 	browser: null,
@@ -58,31 +55,29 @@ Ext.define('NetProfile.view.FileIconView', {
 		var me = this;
 
 		if(me.useColumns)
-		{
 			me.tpl = me.columnTpl;
-			// FIXME: me.scrollable = 'horizontal';
-		}
 		else
 			me.tpl = me.iconTpl;
-		me.plugins = [
+		me.plugins = [{
+			ptype: 'draggable',
+			ddConfig: {
+				ddGroup: 'ddFile'
+			},
+			ghostCls: 'np-file-iview',
+			ghostTpl: [
+				'<tpl for=".">',
+					'<div>{fname}</div>',
+				'</tpl>'
+			]
+		}];
+//		me.plugins = [
 //			Ext.create('Ext.ux.view.DragSelector', { pluginId: 'dragsel' }),
 //			Ext.create('Ext.ux.view.LabelEditor', {
 //				dataIndex: 'fname',
 //				pluginId: 'editor'
 //			})
-		];
+//		];
 		me.emptyText = '<div class="x-view-empty">' + me.emptyText + '</div>';
-//		this.mixins.draggable.init(this, {
-//			ddConfig: {
-//				ddGroup: 'ddFile'
-//			},
-//			ghostCls: 'np-file-iview',
-//			ghostTpl: [
-//				'<tpl for=".">',
-//					'<div>{fname}</div>',
-//				'</tpl>'
-//			]
-//		});
 		me.callParent(arguments);
 		if(me.useColumns)
 			me.on('resize', me.onResize, me);
