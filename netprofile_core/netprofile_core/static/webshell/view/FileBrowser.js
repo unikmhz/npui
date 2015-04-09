@@ -85,6 +85,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 		this.view = null;
 		this.views = {};
 		this.folder = null;
+		this.kmap = null;
 
 		this.selectEditable = Ext.dom.Query.compile('.x-editable');
 
@@ -436,7 +437,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 		Ext.Object.each(me.views, function(k, v)
 		{
 			if(v !== me.view)
-				v.clearListeners();
+				Ext.destroy(v);
 		});
 		if(me.ctxMenu)
 		{
@@ -573,7 +574,7 @@ Ext.define('NetProfile.view.FileBrowser', {
 					useColumns: true,
 					browser: this,
 					iconSize: 16,
-					shrinkWrap: 1,
+					scrollable: 'horizontal',
 					store: this.store,
 					emptyText: this.emptyText,
 					listeners: {

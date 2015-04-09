@@ -827,6 +827,20 @@ Ext.require([
 		});
 	var state_loaded = NetProfile.state.get('loaded');
 
+	Ext.onReady(function()
+	{
+		Ext.tip.QuickTipManager.init();
+		Ext.apply(Ext.tip.QuickTipManager.getQuickTip(), {
+			anchorToTarget: false,
+			anchor: 'right',
+			anchorOffset: 12,
+			trackMouse: true,
+			constraintInsets: '-8 -8 -8 -8',
+			showDelay: 650,
+			hideDelay: 0
+		});
+	});
+
 	Ext.define('NetProfile.main.Application', {
 		extend: 'Ext.app.Application',
 		name: 'NetProfile',
