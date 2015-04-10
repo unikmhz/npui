@@ -124,7 +124,8 @@ Ext.define('NetProfile.view.DragSelector', {
 		//here we reset and show the selection proxy element and cache the regions each item in the dataview take up
 		dragSelector.fillRegions();
 		dragSelector.getProxy().show();
-		view.getSelectionModel().deselectAll();
+		if(!e.ctrlKey && !e.shiftKey)
+			view.getSelectionModel().deselectAll();
 	},
 
 	/**
@@ -183,7 +184,7 @@ Ext.define('NetProfile.view.DragSelector', {
 
 			if(selected)
 				selModel.select(i, true);
-			else
+			else if(!e.ctrlKey && !e.shiftKey)
 				selModel.deselect(i);
 		}
 	},
