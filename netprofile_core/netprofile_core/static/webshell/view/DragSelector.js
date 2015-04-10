@@ -35,6 +35,7 @@ Ext.define('NetProfile.view.DragSelector', {
 			},
 			destroyable: true
 		});
+		me.selected = null;
 	},
 	destroy: function()
 	{
@@ -100,6 +101,7 @@ Ext.define('NetProfile.view.DragSelector', {
 	{
 		var me = this,
 			dragSelector = me.dragSelector,
+			advDrag = e.ctrlKey || e.shiftKey,
 			view = me.view;
 
 		// Flag which controls whether the cancelClick method vetoes the processing of the DataView's containerclick event.
@@ -110,7 +112,9 @@ Ext.define('NetProfile.view.DragSelector', {
 		//here we reset and show the selection proxy element and cache the regions each item in the dataview take up
 		dragSelector.fillRegions();
 		dragSelector.getProxy().show();
-		if(!e.ctrlKey && !e.shiftKey)
+		if(advDrag)
+			dragSelector.snapshotSelected();
+		else
 			view.getSelectionModel().deselectAll();
 	},
 
@@ -140,6 +144,7 @@ Ext.define('NetProfile.view.DragSelector', {
 			selModel = dragSelector.view.getSelectionModel(),
 			dragRegion = dragSelector.dragRegion,
 			bodyRegion = dragSelector.bodyRegion,
+			snapshot = dragSelector.selected,
 			proxy = dragSelector.getProxy(),
 			regions = dragSelector.regions,
 			length = regions.length,
@@ -151,7 +156,7 @@ Ext.define('NetProfile.view.DragSelector', {
 			width = Math.abs(startXY[0] - currentXY[0]),
 			height = Math.abs(startXY[1] - currentXY[1]),
 
-			region, selected, i;
+			region, selected, i, cursel;
 
 		Ext.apply(dragRegion, {
 			top: minY,
@@ -168,10 +173,31 @@ Ext.define('NetProfile.view.DragSelector', {
 			region = regions[i];
 			selected = dragRegion.intersect(region);
 
-			if(selected)
-				selModel.select(i, true);
-			else if(!e.ctrlKey && !e.shiftKey)
-				selModel.deselect(i);
+			if(snapshot && snapshot.length)
+			{
+				cursel = (snapshot.indexOf(i) !== -1);
+				if(selected)
+				{
+					if(cursel)
+						selModel.deselect(i);
+					else
+						selModel.select(i, true);
+				}
+				else
+				{
+					if(cursel)
+						selModel.select(i, true);
+					else
+						selModel.deselect(i);
+				}
+			}
+			else
+			{
+				if(selected)
+					selModel.select(i, true);
+				else
+					selModel.deselect(i);
+			}
 		}
 	},
 
@@ -190,6 +216,7 @@ Ext.define('NetProfile.view.DragSelector', {
 			dragSelector = me.dragSelector;
 
 		me.dragging = false;
+		dragSelector.selected = null;
 		dragSelector.destroyProxy();
 	}, 1),
 
@@ -236,6 +263,22 @@ Ext.define('NetProfile.view.DragSelector', {
 			regions.push(node.getRegion());
 		});
 		me.bodyRegion = view.getEl().getRegion();
+	},
+	snapshotSelected: function()
+	{
+		var me = this,
+			view = me.view,
+			selModel = view.getSelectionModel(),
+			snapshot = [],
+			idx;
+
+		Ext.each(selModel.getSelection(), function(rec)
+		{
+			idx = view.indexOf(rec);
+			if(idx !== -1)
+				snapshot.push(idx);
+		});
+		me.selected = snapshot;
 	}
 });
 
