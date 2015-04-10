@@ -83,40 +83,30 @@ Ext.require([
 	});
 	NetProfile.msg = function()
 	{
-		var msgCt;
-
-		function createBox(t, s, cls)
+		function getMsg(cls, delay, title, args)
 		{
-			return '<div class="msg ' + cls + '"><h3>' + t + '</h3><p>' + s + '</p></div>';
-		}
-
-		function getMsg(cls, title, args)
-		{
-			if(!msgCt)
-				msgCt = Ext.DomHelper.insertFirst(document.body, { id: 'msg-div' }, true);
-			var s = Ext.String.format.apply(String, args);
-			var m = Ext.DomHelper.append(msgCt, createBox(title, s, cls), true);
-			m.hide();
-			m.slideIn('t').ghost('t', { delay: 1250, remove: true });
+			return Ext.toast({
+				html: Ext.String.format.apply(Ext.String, args),
+				title: title,
+				minWidth: 200,
+				align: 'br',
+				autoCloseDelay: delay,
+				iconCls: cls
+			});
 		}
 
 		return {
 			notify: function(title, fmt)
 			{
-				return getMsg('', title, Array.prototype.slice.call(arguments, 1));
+				return getMsg('ico-info', 3000, title, Ext.Array.slice(arguments, 1));
 			},
 			warn: function(title, fmt)
 			{
-				return getMsg('warning', title, Array.prototype.slice.call(arguments, 1));
+				return getMsg('ico-warning', 4500, title, Ext.Array.slice(arguments, 1));
 			},
 			err: function(title, fmt)
 			{
-				return getMsg('error', title, Array.prototype.slice.call(arguments, 1));
-			},
-			init: function()
-			{
-				if(!msgCt)
-					msgCt = Ext.DomHelper.insertFirst(document.body, { id: 'msg-div' }, true);
+				return getMsg('ico-error', 6000, title, Ext.Array.slice(arguments, 1));
 			}
 		};
 	}();
@@ -864,9 +854,6 @@ Ext.require([
 		{
 			var rt_sock = null,
 				direct_provider;
-
-			// Init popup messages
-			Ext.onReady(NetProfile.msg.init, NetProfile.msg);
 
 			// Init state storage
 			Ext.state.Manager.setProvider(NetProfile.state);

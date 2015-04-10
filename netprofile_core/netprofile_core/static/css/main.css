@@ -380,57 +380,6 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 	font-weight: bold;
 }
 
-.msg .x-box-mc
-{
-	font-size: 14px;
-}
-
-#msg-div
-{
-	position: absolute;
-	left: 10px;
-	top: 10px;
-	width: 300px;
-	z-index: 20000;
-}
-
-#msg-div .msg
-{
-	border-radius: 8px;
-	-moz-border-radius: 8px;
-	background: #f6f6f6;
-	border: 2px solid #ccc;
-	margin-top: 2px;
-	padding: 10px 15px;
-	color: #555;
-}
-
-#msg-div .warning
-{
-	background: #fdff8b;
-	border: 2px solid #e61f00;
-	color: #e61f00;
-}
-
-#msg-div .error
-{
-	background: #cf0000;
-	border: 2px solid #fee;
-	color: #fff;
-}
-
-#msg-div .msg h3
-{
-	margin: 0 0 8px;
-	font-weight: bold;
-	font-size: 15px;
-}
-
-#msg-div .msg p
-{
-	margin: 0;
-}
-
 .ico-accept       { background-image: url(../img/accept.png) !important; }
 .ico-arrow-down   { background-image: url(../img/arrow_down.png) !important; }
 .ico-arrow-up     { background-image: url(../img/arrow_up.png) !important; }
@@ -449,6 +398,7 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-doc-ren      { background-image: url(../img/doc_rename.png) !important; }
 .ico-download     { background-image: url(../img/download.png) !important; }
 .ico-edit         { background-image: url(../img/edit.png) !important; }
+.ico-error        { background-image: url(../img/error.png) !important; }
 .ico-exit         { background-image: url(../img/exit.png) !important; }
 .ico-expand       { background-image: url(../img/expand.png) !important; }
 .ico-folder-del   { background-image: url(../img/folder_delete.png) !important; }
@@ -495,6 +445,7 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-upload       { background-image: url(../img/upload.png) !important; }
 .ico-undo         { background-image: url(../img/undo.png) !important; }
 .ico-view         { background-image: url(../img/view.png) !important; }
+.ico-warning      { background-image: url(../img/warning.png) !important; }
 
 .ico-status-away    { background-image: url(../img/status_away.png) !important; }
 .ico-status-busy    { background-image: url(../img/status_busy.png) !important; }
