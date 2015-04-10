@@ -7,8 +7,7 @@ Ext.define('NetProfile.view.FileIconView', {
 	alias: 'widget.fileiconview',
 	requires: [
 		'NetProfile.view.FileNavigationModel',
-//		'Ext.util.KeyNav',
-//		'Ext.ux.view.LabelEditor',
+		'NetProfile.view.LabelEditor',
 		'NetProfile.view.Draggable',
 		'NetProfile.view.DragSelector'
 	],
@@ -71,13 +70,18 @@ Ext.define('NetProfile.view.FileIconView', {
 			]
 		}, {
 			ptype: 'dragselector'
+		}, {
+			ptype: 'labeleditor',
+			dataIndex: 'fname',
+			recordFilter: Ext.bind(function(rec)
+			{
+				if(this.folder && !this.folder.get('allow_write'))
+					return false;
+				if(!rec.get('allow_write'))
+					return false;
+				return true;
+			}, me)
 		}];
-//		me.plugins = [
-//			Ext.create('Ext.ux.view.LabelEditor', {
-//				dataIndex: 'fname',
-//				pluginId: 'editor'
-//			})
-//		];
 		me.emptyText = '<div class="x-view-empty">' + me.emptyText + '</div>';
 		me.callParent(arguments);
 		if(me.useColumns)

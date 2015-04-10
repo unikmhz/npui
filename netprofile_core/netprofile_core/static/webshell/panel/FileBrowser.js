@@ -509,7 +509,15 @@ Ext.define('NetProfile.panel.FileBrowser', {
 						},
 						afteredit: function(ed, rec, val)
 						{
-							this.store.sync();
+							var me = this;
+
+							me.store.sync({
+								// FIXME: Hack to make newly renamed files render properly
+								callback: function(batch, opts)
+								{
+									me.view.refresh();
+								}
+							});
 						},
 						itemcontextmenu: this.onItemContextMenu,
 						scope: this
