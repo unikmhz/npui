@@ -8,9 +8,9 @@ Ext.define('NetProfile.view.FileIconView', {
 	requires: [
 		'NetProfile.view.FileNavigationModel',
 //		'Ext.util.KeyNav',
-//		'Ext.ux.view.DragSelector',
 //		'Ext.ux.view.LabelEditor',
-		'NetProfile.view.Draggable'
+		'NetProfile.view.Draggable',
+		'NetProfile.view.DragSelector'
 	],
 
 	useColumns: false,
@@ -69,9 +69,10 @@ Ext.define('NetProfile.view.FileIconView', {
 					'<div>{fname}</div>',
 				'</tpl>'
 			]
+		}, {
+			ptype: 'dragselector'
 		}];
 //		me.plugins = [
-//			Ext.create('Ext.ux.view.DragSelector', { pluginId: 'dragsel' }),
 //			Ext.create('Ext.ux.view.LabelEditor', {
 //				dataIndex: 'fname',
 //				pluginId: 'editor'

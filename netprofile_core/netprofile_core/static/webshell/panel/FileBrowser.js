@@ -450,7 +450,8 @@ Ext.define('NetProfile.panel.FileBrowser', {
 		if(this.viewType in this.views)
 		{
 			this.view = this.add(this.views[this.viewType]);
-			this.view.refresh();
+			if(this.view.refresh)
+				this.view.refresh();
 			return;
 		}
 		switch(this.viewType)
