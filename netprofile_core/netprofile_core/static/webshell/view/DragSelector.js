@@ -34,11 +34,19 @@ Ext.define('NetProfile.view.DragSelector', {
 				single: true
 			},
 			added: {
-				fn: me.onRender,
+				fn: function(v, cont, pos)
+				{
+					me.onRender();
+					v.mon(cont, 'resize', me.onRender, me);
+				},
 				scope: me
 			},
 			removed: {
-				fn: me.onRemoved,
+				fn: function(v, cont)
+				{
+					me.onRemoved();
+					v.mun(cont, 'resize', me.onRender, me);
+				},
 				scope: me
 			},
 			destroyable: true
