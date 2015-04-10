@@ -264,6 +264,11 @@ Ext.onReady(function()
 		clientInvalidMsg: 'Форма содержит некорректные данные и не может быть отправлена.',
 		connectFailureMsg: 'Ошибка соединения с сервером.',
 	});
+	Ext.define('Ext.locale.ru.NetProfile.view.FileIconView', {
+		override: 'NetProfile.view.FileIconView',
+		sizeText: 'Размер: {0}',
+		mimeTypeText: 'MIME тип: {0}'
+	});
 
 	Ext.define('Ext.locale.ru.NetProfile.view.CapabilityGrid', {
 		override: 'NetProfile.view.CapabilityGrid',
