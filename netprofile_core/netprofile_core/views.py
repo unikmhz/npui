@@ -600,6 +600,7 @@ def ff_tree_delete(params, request):
 		ff_id = rec.get('id')
 		if ff_id == 'root':
 			continue
+		ff_id = int(ff_id)
 		ff = sess.query(FileFolder).get(ff_id)
 		if ff is None:
 			raise KeyError('Unknown folder ID %d' % ff_id)
