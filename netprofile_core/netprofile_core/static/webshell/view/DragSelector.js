@@ -33,22 +33,6 @@ Ext.define('NetProfile.view.DragSelector', {
 				scope: me,
 				single: true
 			},
-			added: {
-				fn: function(v, cont, pos)
-				{
-					me.onRender();
-					v.mon(cont, 'resize', me.onRender, me);
-				},
-				scope: me
-			},
-			removed: {
-				fn: function(v, cont)
-				{
-					me.onRemoved();
-					v.mun(cont, 'resize', me.onRender, me);
-				},
-				scope: me
-			},
 			destroyable: true
 		});
 	},
@@ -58,10 +42,6 @@ Ext.define('NetProfile.view.DragSelector', {
 
 		if(me.viewListeners)
 			Ext.destroy(me.viewListeners);
-		me.onRemoved();
-	},
-	onRemoved: function()
-	{
 		Ext.destroyMembers(this, 'tracker', 'dragRegion', 'proxy');
 	},
 
@@ -73,8 +53,6 @@ Ext.define('NetProfile.view.DragSelector', {
 	onRender: function()
 	{
 		var me = this;
-
-		Ext.destroyMembers(me, 'tracker', 'dragRegion', 'proxy');
 
 		/**
 		 * @property tracker
@@ -212,7 +190,7 @@ Ext.define('NetProfile.view.DragSelector', {
 			dragSelector = me.dragSelector;
 
 		me.dragging = false;
-		dragSelector.getProxy().hide();
+		dragSelector.destroyProxy();
 	}, 1),
 
 	/**
@@ -230,6 +208,16 @@ Ext.define('NetProfile.view.DragSelector', {
 				cls: 'x-view-selector'
 			});
 		return me.proxy;
+	},
+	destroyProxy: function()
+	{
+		var me = this;
+
+		if(me.proxy)
+		{
+			me.proxy.hide();
+			Ext.destroyMembers(me, 'proxy');
+		}
 	},
 
 	/**
