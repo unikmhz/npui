@@ -8,10 +8,10 @@ Ext.define('NetProfile.panel.FileBrowser', {
 	stateId: 'npws_filebrowser',
 	stateful: true,
 	requires: [
-		'Ext.form.*',
 		'Ext.menu.*',
 		'Ext.grid.*',
 		'Ext.XTemplate',
+		'NetProfile.form.FileUpload',
 		'NetProfile.store.core.File',
 		'NetProfile.view.FileIconView',
 		'Ext.ux.form.RightsBitmaskField'
@@ -54,13 +54,6 @@ Ext.define('NetProfile.panel.FileBrowser', {
 	deleteManyMsgText: 'Are you sure you want to delete selected files?',
 
 	btnUploadText: 'Upload',
-
-	uploadTitleText: 'Upload Files',
-	uploadCloseText: 'Close',
-	uploadAddText: 'Add',
-	uploadUploadText: 'Upload',
-	uploadRemoveText: 'Remove',
-	uploadWaitMsg: 'Uploading Files...',
 
 	btnRenameText: 'Rename',
 	btnPropsText: 'Properties',
@@ -208,6 +201,13 @@ Ext.define('NetProfile.panel.FileBrowser', {
 			}]
 		});
 		this.selectedRecords = [];
+		this.dockedItems = [{
+			xtype: 'fileuploadform',
+			dock: 'left',
+			hidden: true,
+			url: this.uploadUrl,
+			itemId: 'fileupload'
+		}];
 		this.tbar = [{
 			text: this.viewText,
 			iconCls: 'ico-view',
@@ -299,99 +299,15 @@ Ext.define('NetProfile.panel.FileBrowser', {
 			iconCls: 'ico-upload',
 			itemId: 'btn_upload',
 			disabled: true,
-			menu: {
-				xtype: 'menu',
-				layout: 'fit',
-				showSeparator: false,
-				resizable: true,
-				defaults: {
-					plain: true
-				},
-				items: [{
-					xtype: 'form',
-					url: this.uploadUrl,
-					layout: 'anchor',
-					defaults: {
-						anchor: '100%'
-					},
-					minWidth: 300,
-					minHeight: 200,
-					title: this.uploadTitleText,
-					items: [],
-					buttons: [{
-						text: this.uploadCloseText,
-						iconCls: 'ico-cancel',
-						handler: function(btn, ev)
-						{
-							var xform = this.up('form');
+			enableToggle: true,
+			toggleHandler: function(btn, state)
+			{
+				var me = this,
+					fup = me.getDockedComponent('fileupload');
 
-							Ext.Array.forEach(
-								xform.query('container[cls~=np-file-upload-cont]'),
-								function(cont) { this.remove(cont, true); }, xform
-							);
-							this.up('menu').hide();
-						}
-					}, '->', {
-						text: this.uploadAddText,
-						iconCls: 'ico-add',
-						handler: function(btn, ev)
-						{
-							var xform = btn.up('form');
-							if(xform)
-								xform.add(this.getUploadField());
-						},
-						scope: this
-					}, {
-						text: this.uploadUploadText,
-						iconCls: 'ico-upload',
-						handler: function(btn, ev)
-						{
-							var xform = this.getUploadForm(),
-								form = xform.getForm();
-
-							if(form && form.isValid())
-							{
-								form.submit({
-									params: this.getUploadParams(),
-									success: function(rform, act)
-									{
-										var xform = rform.owner;
-
-										this.updateStore();
-										Ext.Array.forEach(
-											xform.query('container[cls~=np-file-upload-cont]'),
-											function(cont) { this.remove(cont, true); }, xform
-										);
-										xform.up('menu').hide();
-									},
-									failure: function(rform, act)
-									{
-									},
-									scope: this,
-									waitMsg: this.uploadWaitMsg
-								});
-							}
-						},
-						scope: this
-					}]
-				}],
-				listeners: {
-					beforeshow: function(m)
-					{
-						var f = m.down('form');
-
-						if(f)
-						{
-							Ext.Array.forEach(
-								f.query('container[cls~=np-file-upload-cont]'),
-								function(cont) { this.remove(cont, true); }, f
-							);
-							f.add(this.getUploadField());
-						}
-					},
-					scope: this
-				}
-			}
+				fup.setVisible(state);
+			},
+			scope: this
 		}, '->', {
 			xtype: 'textfield',
 			cls: 'np-ssearch-field',
@@ -542,6 +458,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 			case 'icon':
 				this.view = this.views[this.viewType] = this.add({
 					xtype: 'fileiconview',
+					region: 'center',
 					getMIME: this.getMIME,
 					store: this.store,
 					emptyText: this.emptyText,
@@ -569,6 +486,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 			case 'list':
 				this.view = this.views[this.viewType] = this.add({
 					xtype: 'fileiconview',
+					region: 'center',
 					getMIME: this.getMIME,
 					cls: 'np-file-lview',
 					useColumns: true,
@@ -601,6 +519,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 			case 'grid':
 				this.view = this.views[this.viewType] = this.add({
 					xtype: 'grid',
+					region: 'center',
 					border: 0,
 					store: this.store,
 					emptyText: this.emptyText,
@@ -848,8 +767,6 @@ Ext.define('NetProfile.panel.FileBrowser', {
 		var bad_upload = true,
 			drag_types = [
 				'application/x-moz-file',
-//				'text/x-moz-url',
-//				'text/plain',
 				'Files'
 			];
 		Ext.Array.forEach(drag_types, function(dt)
@@ -877,56 +794,6 @@ Ext.define('NetProfile.panel.FileBrowser', {
 			return false;
 		}
 		return true;
-	},
-	getUploadField: function()
-	{
-		var cfg = {
-			xtype: 'container',
-			cls: 'np-file-upload-cont',
-			layout: {
-				type: 'hbox',
-				align: 'stretch',
-				pack: 'end'
-			},
-			defaults: {
-				margin: 0
-			},
-			items: [{
-				xtype: 'filefield',
-				name: 'file',
-				flex: 1,
-				allowBlank: false
-			}, {
-				xtype: 'tool',
-				cls: 'np-file-upload-close',
-				tooltip: this.uploadRemoveText,
-				type: 'close',
-				handler: function()
-				{
-					var cont, pcont;
-
-					cont = this.up('container[cls~=np-file-upload-cont]');
-					if(!cont || !cont.ownerCt)
-						return;
-					pcont = cont.ownerCt;
-					pcont.remove(cont, true);
-				},
-				width: 20
-			}]
-		};
-		return cfg;
-	},
-	getUploadForm: function()
-	{
-		var cmp;
-
-		cmp = this.down('toolbar[dock=top]');
-		if(!cmp)
-			return null;
-		cmp = cmp.getComponent('btn_upload');
-		if(!cmp || !cmp.menu)
-			return null;
-		return cmp.menu.down('form');
 	},
 	getUploadParams: function()
 	{

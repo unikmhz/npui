@@ -315,7 +315,7 @@ a.np-file-wrap span
 
 .np-file-upload-cont .np-file-upload-close
 {
-	padding: 3px 0px;
+	padding: 3px 0px 3px 3px;
 }
 
 .np-console-icon

@@ -232,13 +232,6 @@ Ext.onReady(function()
 
 		btnUploadText: 'Залить',
 
-		uploadTitleText: 'Заливка файлов',
-		uploadCloseText: 'Закрыть',
-		uploadAddText: 'Добавить',
-		uploadUploadText: 'Залить',
-		uploadRemoveText: 'Убрать',
-		uploadWaitMsg: 'Файлы заливаются...',
-
 		btnRenameText: 'Переименовать',
 		btnPropsText: 'Свойства',
 		btnDownloadText: 'Скачать',
@@ -256,6 +249,20 @@ Ext.onReady(function()
 		mibText: 'Мбайт',
 		gibText: 'Гбайт',
 		tibText: 'Тбайт'
+	});
+	Ext.define('Ext.locale.ru.NetProfile.form.FileUpload', {
+		override: 'NetProfile.form.FileUpload',
+
+		titleText: 'Заливка файлов',
+		closeText: 'Закрыть',
+		addText: 'Добавить',
+		uploadText: 'Залить',
+		removeText: 'Убрать',
+		errorText: 'Ошибка заливки',
+
+		waitMsg: 'Файлы заливаются...',
+		clientInvalidMsg: 'Форма содержит некорректные данные и не может быть отправлена.',
+		connectFailureMsg: 'Ошибка соединения с сервером.',
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.view.CapabilityGrid', {

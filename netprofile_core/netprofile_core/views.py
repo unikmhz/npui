@@ -265,10 +265,12 @@ def file_ul(request):
 		obj.folder = folder
 		sess.add(obj)
 		obj.set_from_file(fo.file, request.user, sess)
-	return Response(html_escape(json.dumps({
+	res = Response(html_escape(json.dumps({
 		'success' : True,
 		'msg'     : 'File(s) uploaded'
 	}), False))
+	res.headerlist.append(('X-Frame-Options', 'SAMEORIGIN'))
+	return res
 
 @view_config(route_name='core.file.mount', permission='FILES_LIST')
 def file_mnt(request):
