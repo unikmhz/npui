@@ -18,7 +18,11 @@ Ext.define('NetProfile.controller.FileFolders', {
 				itemcontextmenu: this.onFolderCtxMenu,
 				beforeedit: function(ed, ev)
 				{
-					if(!ev.record || !ev.record.get('parent_write'))
+					var rec = ev.record;
+
+					if(!rec || !rec.get('parent_write'))
+						return false;
+					if(rec.getId() === 'root')
 						return false;
 				},
 				edit: function(ed, ev)
