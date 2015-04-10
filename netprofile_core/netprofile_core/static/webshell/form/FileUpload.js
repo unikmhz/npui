@@ -130,7 +130,7 @@ Ext.define('NetProfile.form.FileUpload', {
 					xtype: 'filefield',
 					name: 'file',
 					flex: 1,
-					allowBlank: true
+					allowBlank: false
 				}, {
 					xtype: 'tool',
 					cls: 'np-file-upload-close',
