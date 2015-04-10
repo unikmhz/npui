@@ -86,10 +86,13 @@ Ext.define('NetProfile.view.Draggable', {
 
 		if(target)
 		{
-			if(!view.isSelected(target))
-				selModel.select(view.getRecord(target));
-
 			selected = view.getSelectedNodes();
+			if(selected.length === 0)
+			{
+				if(!view.isSelected(target))
+					selModel.select(view.getRecord(target));
+				selected = view.getSelectedNodes();
+			}
 			dragData = {
 				copy: true,
 				nodes: selected,
