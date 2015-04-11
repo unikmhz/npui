@@ -7,7 +7,7 @@ Ext.define('NetProfile.controller.FileFolders', {
 	requires: [
 		'NetProfile.model.core.File',
 		'NetProfile.model.core.FileFolder',
-		'NetProfile.view.FileFolderContextMenu'
+		'NetProfile.menu.FileFolder'
 	],
 
 	init: function()
@@ -148,7 +148,7 @@ Ext.define('NetProfile.controller.FileFolders', {
 		ev.stopEvent();
 		if(!el.ctxMenu)
 		{
-			el.ctxMenu = Ext.create('NetProfile.view.FileFolderContextMenu', {
+			el.ctxMenu = Ext.create('NetProfile.menu.FileFolder', {
 				view: el,
 				tree: el.up('treepanel')
 			});

@@ -1,8 +1,8 @@
 /**
- * @class NetProfile.view.FileFolderContextMenu
+ * @class NetProfile.menu.FileFolder
  * @extends Ext.menu.Menu
  */
-Ext.define('NetProfile.view.FileFolderContextMenu', {
+Ext.define('NetProfile.menu.FileFolder', {
 	extend: 'Ext.menu.Menu',
 	require: [
 		'Ext.menu.*'

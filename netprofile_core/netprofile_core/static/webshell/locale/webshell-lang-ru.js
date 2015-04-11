@@ -166,8 +166,8 @@ Ext.onReady(function()
 		btnSaveTipText: 'Проверить и сохранить ваши настройки'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.FileFolderContextMenu', {
-		override: 'NetProfile.view.FileFolderContextMenu',
+	Ext.define('Ext.locale.ru.NetProfile.menu.FileFolder', {
+		override: 'NetProfile.menu.FileFolder',
 		createText: 'Создать подпапку',
 		propText: 'Свойства',
 		renameText: 'Переименовать',
