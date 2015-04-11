@@ -10,6 +10,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 	requires: [
 		'Ext.menu.*',
 		'Ext.grid.*',
+		'Ext.util.KeyMap',
 		'Ext.XTemplate',
 		'NetProfile.form.FileUpload',
 		'NetProfile.store.core.File',
@@ -78,15 +79,17 @@ Ext.define('NetProfile.panel.FileBrowser', {
 
 	initComponent: function()
 	{
-		this.view = null;
-		this.views = {};
-		this.folder = null;
-		this.kmap = null;
+		var me = this;
 
-		this.selectEditable = Ext.dom.Query.compile('.x-editable');
+		me.view = null;
+		me.views = {};
+		me.folder = null;
+		me.kmap = null;
 
-		if(!this.store)
-			this.store = Ext.create('NetProfile.store.core.File', {
+		me.selectEditable = Ext.dom.Query.compile('.x-editable');
+
+		if(!me.store)
+			me.store = Ext.create('NetProfile.store.core.File', {
 				autoDestroy: true,
 				autoLoad: false,
 				autoSync: false,
@@ -99,32 +102,31 @@ Ext.define('NetProfile.panel.FileBrowser', {
 				listeners: {
 					load: function(recs, op, success)
 					{
-						this.fireEvent('load', this, recs, op, success);
-					},
-					scope: this
+						me.fireEvent('load', me, recs, op, success);
+					}
 				}
 			});
-		this.ctxMenu = Ext.create('Ext.menu.Menu', {
+		me.ctxMenu = Ext.create('Ext.menu.Menu', {
 			items: [{
 				itemId: 'ren_item',
-				text: this.btnRenameText,
+				text: me.btnRenameText,
 				iconCls: 'ico-doc-ren',
 				handler: function(btn, ev)
 				{
 					var rec, plug, view;
 
-					rec = this.ctxMenu.record;
+					rec = me.ctxMenu.record;
 					if(!rec || Ext.isArray(rec))
 						return false;
-					switch(this.viewType)
+					switch(me.viewType)
 					{
 						case 'icon':
 						case 'list':
-							plug = this.view.getPlugin('editor');
-							view = this.view.getNode(rec);
+							plug = me.view.getPlugin('editor');
+							view = me.view.getNode(rec);
 							if(!view)
 								return false;
-							view = this.selectEditable(view);
+							view = me.selectEditable(view);
 							if(plug && view && view.length)
 							{
 								plug.startEdit(view[0], rec.get(plug.dataIndex));
@@ -132,27 +134,26 @@ Ext.define('NetProfile.panel.FileBrowser', {
 							}
 							break;
 						case 'grid':
-							plug = this.view.getPlugin('editor');
-							view = this.view.getView();
+							plug = me.view.getPlugin('editor');
+							view = me.view.getView();
 							if(plug && view)
 								plug.startEdit(rec, view.getHeaderAtIndex(1));
 							break;
 						default:
 							break;
 					}
-				},
-				scope: this
+				}
 			}, {
-				text: this.btnPropsText,
+				text: me.btnPropsText,
 				iconCls: 'ico-props',
 				handler: function(btn, ev)
 				{
 					var pb = Ext.getCmp('npws_propbar'),
-						rec = this.ctxMenu.record,
+						rec = me.ctxMenu.record,
 						dp = NetProfile.view.grid.core.File.prototype.detailPane,
 						can_wr = true;
 
-					if(this.folder && !this.folder.get('allow_write'))
+					if(me.folder && !me.folder.get('allow_write'))
 						can_wr = false;
 					if(!pb || !rec || !dp)
 						return false;
@@ -171,186 +172,173 @@ Ext.define('NetProfile.panel.FileBrowser', {
 						pb.addRecordTab('core', 'File', dp, rec);
 					}
 					pb.show();
-				},
-				scope: this
+				}
 			}, {
 				itemId: 'dl_item',
-				text: this.btnDownloadText,
+				text: me.btnDownloadText,
 				iconCls: 'ico-save',
 				handler: function(btn, ev)
 				{
 					var rec;
 
-					rec = this.ctxMenu.record;
+					rec = me.ctxMenu.record;
 					if(!rec)
 						return false;
-					return this.onFileOpen(rec);
-				},
-				scope: this
+					return me.onFileOpen(rec);
+				}
 			}, '-', {
 				itemId: 'del_item',
-				text: this.btnDeleteText,
+				text: me.btnDeleteText,
 				iconCls: 'ico-delete',
 				handler: function(btn, ev)
 				{
 					var rec;
 
-					rec = this.ctxMenu.record;
+					rec = me.ctxMenu.record;
 					if(!rec)
 						return false;
 					if(!Ext.isArray(rec))
 						rec = [rec];
-					return this.deleteRecords(rec);
-				},
-				scope: this
+					return me.deleteRecords(rec);
+				}
 			}]
 		});
-		this.selectedRecords = [];
-		this.dockedItems = [{
+		me.selectedRecords = [];
+		me.dockedItems = [{
 			xtype: 'fileuploadform',
 			dock: 'left',
 			hidden: true,
-			url: this.uploadUrl,
+			url: me.uploadUrl,
 			itemId: 'fileupload'
 		}];
-		this.tbar = [{
-			text: this.viewText,
+		me.tbar = [{
+			text: me.viewText,
 			iconCls: 'ico-view',
 			menu: [{
 				itemId: 'icon',
-				text: this.viewAsIconsText,
+				text: me.viewAsIconsText,
 				checked: true,
 				group: 'view',
-				checkHandler: this.onViewChange,
-				scope: this
+				checkHandler: 'onViewChange',
+				scope: me
 			}, {
 				itemId: 'list',
-				text: this.viewAsListText,
+				text: me.viewAsListText,
 				checked: false,
 				group: 'view',
-				checkHandler: this.onViewChange,
-				scope: this
+				checkHandler: 'onViewChange',
+				scope: me
 			}, {
 				itemId: 'grid',
-				text: this.viewAsGridText,
+				text: me.viewAsGridText,
 				checked: false,
 				group: 'view',
-				checkHandler: this.onViewChange,
-				scope: this
+				checkHandler: 'onViewChange',
+				scope: me
 			}]
 		}, {
-			text: this.sortText,
+			text: me.sortText,
 			iconCls: 'ico-sort',
 			menu: [{
 				itemId: 'fname',
-				text: this.sortByNameText,
+				text: me.sortByNameText,
 				checked: true,
 				group: 'sort',
-				checkHandler: this.onSortChange,
-				scope: this
+				checkHandler: 'onSortChange',
+				scope: me
 			}, {
 				itemId: 'ctime',
-				text: this.sortByCTimeText,
+				text: me.sortByCTimeText,
 				checked: false,
 				group: 'sort',
-				checkHandler: this.onSortChange,
-				scope: this
+				checkHandler: 'onSortChange',
+				scope: me
 			}, {
 				itemId: 'mtime',
-				text: this.sortByMTimeText,
+				text: me.sortByMTimeText,
 				checked: false,
 				group: 'sort',
-				checkHandler: this.onSortChange,
-				scope: this
+				checkHandler: 'onSortChange',
+				scope: me
 			}, {
 				itemId: 'size',
-				text: this.sortBySizeText,
+				text: me.sortBySizeText,
 				checked: false,
 				group: 'sort',
-				checkHandler: this.onSortChange,
-				scope: this
+				checkHandler: 'onSortChange',
+				scope: me
 			}, '-', {
 				itemId: 'ASC',
-				text: this.sortAscText,
+				text: me.sortAscText,
 				checked: true,
 				group: 'sdir',
-				checkHandler: this.onSortDirChange,
-				scope: this
+				checkHandler: 'onSortDirChange',
+				scope: me
 			}, {
 				itemId: 'DESC',
-				text: this.sortDescText,
+				text: me.sortDescText,
 				checked: true,
 				group: 'sdir',
-				checkHandler: this.onSortDirChange,
-				scope: this
+				checkHandler: 'onSortDirChange',
+				scope: me
 			}]
 		}, '-', {
-			text: this.btnDeleteText,
+			text: me.btnDeleteText,
 			iconCls: 'ico-delete',
 			itemId: 'btn_delete',
 			disabled: true,
 			handler: function(btn, ev)
 			{
-				var me = this;
-
-				this.deleteRecords(this.selectedRecords, function()
-				{
-					me.selectedRecords = [];
-				});
-			},
-			scope: this
+				me.deleteSelected();
+			}
 		}, '-', {
-			text: this.btnUploadText,
+			text: me.btnUploadText,
 			iconCls: 'ico-upload',
 			itemId: 'btn_upload',
 			disabled: true,
 			enableToggle: true,
 			toggleHandler: function(btn, state)
 			{
-				var me = this,
-					fup = me.getDockedComponent('fileupload');
-
-				fup.setVisible(state);
-			},
-			scope: this
+				me.getDockedComponent('fileupload').setVisible(state);
+			}
 		}, '->', {
 			xtype: 'textfield',
 			cls: 'np-ssearch-field',
 			itemId: 'search_fld',
 			hideLabel: true,
-			emptyText: this.searchEmptyText,
+			emptyText: me.searchEmptyText,
 			listeners: {
 				change: function(fld, newval, oldval)
 				{
-					this.fireEvent('searchchange', newval);
-				},
-				scope: this
+					me.fireEvent('searchchange', newval);
+				}
 			}
 		}];
-		this.callParent(arguments);
+		me.callParent(arguments);
 
-		this.on({
-			beforedestroy: this.onBeforeDestroy,
-			beforerender: this.onBeforeRender,
-			afterrender: this.onAfterRender,
-			folderupdate: this.onFolderUpdate,
+		me.on({
+			beforedestroy: me.onBeforeDestroy,
+			beforerender: me.onBeforeRender,
+			afterrender: me.onAfterRender,
+			folderupdate: me.onFolderUpdate,
 			searchchange: {
-				fn: this.onSearchChange,
+				fn: me.onSearchChange,
 				buffer: 500
 			},
 			filesdropped: function(view, files, ev)
 			{
-				this.uploadFileList(files);
+				me.uploadFileList(files);
 			}
 		});
 	},
     getState: function()
 	{
-		var state = this.callParent();
+		var me = this,
+			state = me.callParent();
 
-		state = this.addPropertyToState(state, 'viewType');
-		state = this.addPropertyToState(state, 'sortType');
-		state = this.addPropertyToState(state, 'sortDir');
+		state = me.addPropertyToState(state, 'viewType');
+		state = me.addPropertyToState(state, 'sortType');
+		state = me.addPropertyToState(state, 'sortDir');
 		return state;
 	},
 	onBeforeDestroy: function(me)
@@ -361,18 +349,15 @@ Ext.define('NetProfile.panel.FileBrowser', {
 				Ext.destroy(v);
 		});
 		if(me.ctxMenu)
-		{
 			me.ctxMenu.hide();
-			Ext.destroy(me.ctxMenu);
-			me.ctxMenu = null;
-		}
+		Ext.destroyMembers(me, 'ctxMenu', 'kmap');
 		return true;
 	},
 	onBeforeRender: function(me)
 	{
-		this.updateCheckItems(true);
-		this.renderView();
-		this.fireEvent('folderupdate', this);
+		me.updateCheckItems(true);
+		me.renderView();
+		me.fireEvent('folderupdate', me);
 		return true;
 	},
 	onAfterRender: function(me)
@@ -380,11 +365,31 @@ Ext.define('NetProfile.panel.FileBrowser', {
 		var el = me.getEl();
 
 		el.on({
-			drop: this.onDrop,
-			scope: this
+			drop: me.onDrop,
+			scope: me
 		});
-		el.dom.ondragenter = Ext.Function.bind(this.onDragTest, this);
-		el.dom.ondragover = Ext.Function.bind(this.onDragTest, this);
+		el.dom.ondragenter = Ext.bind(me.onDragTest, me);
+		el.dom.ondragover = Ext.bind(me.onDragTest, me);
+
+		me.kmap = new Ext.util.KeyMap({
+			target: me.getEl(),
+			binding: [{
+				key: Ext.event.Event.DELETE,
+				fn: me.deleteSelected,
+				scope: me
+			}, {
+				key: Ext.event.Event.F2,
+				fn: me.editSelected,
+				scope: me
+			}, {
+				key: 'r',
+				alt: true,
+				fn: function(key, ev)
+				{
+					me.store.reload();
+				}
+			}]
+		});
 	},
 	updateCheckItems: function(sup)
 	{
@@ -482,6 +487,8 @@ Ext.define('NetProfile.panel.FileBrowser', {
 						},
 						afteredit: function(ed, rec, val)
 						{
+							if(this.view)
+								this.view.focus();
 							this.store.sync();
 						},
 						itemcontextmenu: this.onItemContextMenu,
@@ -518,6 +525,8 @@ Ext.define('NetProfile.panel.FileBrowser', {
 						{
 							var me = this;
 
+							if(me.view)
+								me.view.focus();
 							me.store.sync({
 								// FIXME: Hack to make newly renamed files render properly
 								callback: function(batch, opts)
@@ -858,13 +867,61 @@ Ext.define('NetProfile.panel.FileBrowser', {
 		});
 		return true;
 	},
+	editSelected: function()
+	{
+		var me = this,
+			viewType = me.viewType,
+			sel = me.selectedRecords,
+			view = me.view,
+			plug = view.getPlugin('editor'),
+			node;
+
+		if(!plug || !sel || !sel.length || (sel.length > 1))
+			return;
+		sel = sel[0];
+		if(plug.recordFilter(sel) === false)
+			return;
+
+		switch(viewType)
+		{
+			case 'icon':
+			case 'list':
+				node = view.getNode(sel);
+				if(!node)
+					return;
+				node = me.selectEditable(node);
+				if(plug && node && node.length)
+				{
+					plug.startEdit(node[0], sel.get(plug.dataIndex));
+					plug.activeRecord = sel;
+				}
+				break;
+			case 'grid':
+				view = view.getView();
+				if(plug && view)
+					plug.startEdit(rec, view.getHeaderAtIndex(1));
+				break;
+			default:
+				break;
+		}
+	},
+	deleteSelected: function()
+	{
+		var me = this;
+
+		me.deleteRecords(me.selectedRecords, function()
+		{
+			me.selectedRecords = [];
+		});
+	},
 	deleteRecords: function(recs, onyes)
 	{
-		var delnum, can_del = true;
+		var me = this,
+			can_del = true,
+			delnum = recs.length;
 
-		if(this.folder && !this.folder.get('allow_write'))
+		if(me.folder && !me.folder.get('allow_write'))
 			return false;
-		delnum = recs.length;
 		Ext.Array.forEach(recs, function(r)
 		{
 			if(!r.get('allow_write'))
@@ -874,20 +931,19 @@ Ext.define('NetProfile.panel.FileBrowser', {
 			return false;
 
 		Ext.MessageBox.confirm(
-			(delnum > 1 ? this.deleteManyTipText : this.deleteTipText),
-			(delnum > 1 ? this.deleteManyMsgText : this.deleteMsgText),
+			(delnum > 1 ? me.deleteManyTipText : me.deleteTipText),
+			(delnum > 1 ? me.deleteManyMsgText : me.deleteMsgText),
 			function(btn)
 			{
 				if(btn === 'yes')
 				{
-					this.store.remove(recs);
-					this.store.sync();
+					me.store.remove(recs);
+					me.store.sync();
 					if(typeof(onyes) === 'function')
 						onyes(recs);
 				}
 				return true;
-			},
-			this
+			}
 		);
 		return true;
 	},
