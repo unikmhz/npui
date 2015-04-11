@@ -289,6 +289,7 @@ def file_mnt(request):
 		path=path,
 		username=request.user.login
 	)
+	resp.headerlist.append(('X-Frame-Options', 'SAMEORIGIN'))
 	resp.make_body()
 	return resp
 
