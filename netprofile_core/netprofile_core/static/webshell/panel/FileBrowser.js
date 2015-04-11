@@ -116,15 +116,17 @@ Ext.define('NetProfile.panel.FileBrowser', {
 					switch(this.viewType)
 					{
 						case 'icon':
+						case 'list':
 							plug = this.view.getPlugin('editor');
 							view = this.view.getNode(rec);
 							if(!view)
 								return false;
 							view = this.selectEditable(view);
-							if(plug && view)
-								plug.onClick(ev, view[0]);
-							break;
-						case 'list':
+							if(plug && view && view.length)
+							{
+								plug.startEdit(view[0], rec.get(plug.dataIndex));
+								plug.activeRecord = rec;
+							}
 							break;
 						case 'grid':
 							plug = this.view.getPlugin('editor');

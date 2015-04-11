@@ -59,6 +59,8 @@ Ext.define('NetProfile.view.LabelEditor', {
 	{
 		var me = this;
 
+		if(ev.button !== 0)
+			return true;
 		if(Ext.fly(ev.target).hasCls(me.labelSelector) && !me.editing && !ev.ctrlKey && !ev.shiftKey)
 		{
 			if(!view.getSelectionModel().isSelected(record))

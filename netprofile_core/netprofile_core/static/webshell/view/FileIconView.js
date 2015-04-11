@@ -72,6 +72,7 @@ Ext.define('NetProfile.view.FileIconView', {
 			ptype: 'dragselector'
 		}, {
 			ptype: 'labeleditor',
+			pluginId: 'editor',
 			dataIndex: 'fname',
 			recordFilter: Ext.bind(function(rec)
 			{
