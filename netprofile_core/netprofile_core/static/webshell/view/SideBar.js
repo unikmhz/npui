@@ -34,10 +34,11 @@ Ext.define('NetProfile.view.SideBar', {
 
 	initComponent: function()
 	{
-		var token;
+		var me = this,
+			token;
 
 		Ext.History.init();
-		this.applyState(Ext.state.Manager.getProvider().get(this.stateId));
+		me.applyState(Ext.state.Manager.getProvider().get(me.stateId));
 		token = Ext.History.getToken();
 		if(token)
 		{
@@ -45,15 +46,15 @@ Ext.define('NetProfile.view.SideBar', {
 			if(token && (token.length === 2))
 				token = token[0];
 			else
-				token = this.lastPanel;
+				token = me.lastPanel;
 		}
 		else
-			token = this.lastPanel;
+			token = me.lastPanel;
 
-		this.menus = {};
-		this.items = [];
-		this.store = Ext.create('NetProfile.store.Menu');
-		this.store.each(function(menu)
+		me.menus = {};
+		me.items = [];
+		me.store = Ext.create('NetProfile.store.Menu');
+		me.store.each(function(menu)
 		{
 			var mname, tree, cfg;
 
@@ -68,9 +69,9 @@ Ext.define('NetProfile.view.SideBar', {
 					ignoreRightMouseSelection: true
 				},
 				listeners: {
-					beforeselect: this.onMenuBeforeSelect,
-					select: this.onMenuSelect,
-					scope: this,
+					beforeselect: me.onMenuBeforeSelect,
+					select: me.onMenuSelect,
+					scope: me,
 					options: { menuId: mname }
 				},
 				useArrows: true,
@@ -83,9 +84,9 @@ Ext.define('NetProfile.view.SideBar', {
 			if(NetProfile.model.customMenu && (mname in NetProfile.model.customMenu))
 				NetProfile.model.customMenu[mname].setProxy(cfg.store.getProxy());
 
-			this.menus[mname] = tree;
+			me.menus[mname] = tree;
 
-			this.items.push({
+			me.items.push({
 				id: 'npmenu_' + mname,
 				layout: 'fit',
 				collapsible: true,
@@ -105,25 +106,25 @@ Ext.define('NetProfile.view.SideBar', {
 				listeners: {
 					expand: function(p)
 					{
-						this.lastPanel = p.id.split('_')[1];
-						this.saveState();
-					},
-					scope: this
+						me.lastPanel = p.id.split('_')[1];
+						me.saveState();
+					}
 				}
 			});
-		}, this);
-		this.callParent(arguments);
+		});
+		me.callParent(arguments);
 
-		this.on({
-			afterrender: this.onAfterRender,
-			scope: this
+		me.on({
+			afterrender: me.onAfterRender,
+			scope: me
 		});
 	},
     getState: function()
 	{
-		var state = this.callParent();
+		var me = this,
+			state = me.callParent();
 
-		state = this.addPropertyToState(state, 'lastPanel');
+		state = me.addPropertyToState(state, 'lastPanel');
 		return state;
 	},
 	onMenuBeforeSelect: function(row, record, idx, opts)
@@ -134,10 +135,11 @@ Ext.define('NetProfile.view.SideBar', {
 	},
 	onMenuSelect: function(row, record, idx, opts)
 	{
-		var tok_old, tok_new, toks, prec, menu;
+		var me = this,
+			tok_old, tok_new, toks, prec, menu;
 
-		menu = this.store.findRecord('name', opts.options.menuId);
-		Ext.Object.each(this.menus, function(k, m)
+		menu = me.store.findRecord('name', opts.options.menuId);
+		Ext.Object.each(me.menus, function(k, m)
 		{
 			if(opts.options.menuId === k)
 				return;
@@ -173,14 +175,13 @@ Ext.define('NetProfile.view.SideBar', {
 	},
 	onAfterRender: function()
 	{
+		var me = this;
+
 		Ext.History.on({
-			change: this.onHistoryChange,
-			scope: this
+			change: me.onHistoryChange,
+			scope: me
 		});
-		this.up('viewport').on('afterlayout', function()
-		{
-			this.onHistoryChange(Ext.History.getToken());
-		}, this, { single: true });
+		me.onHistoryChange(Ext.History.getToken());
 	},
 	doSelectMenuView: function(xview)
 	{
@@ -216,20 +217,19 @@ Ext.define('NetProfile.view.SideBar', {
 					mainbar.replaceWith(obj.getView(xid));
 				}
 				Ext.destroy(obj);
-			},
-			this
+			}
 		);
 		return true;
 	},
 	onHistoryChange: function(token)
 	{
 		var me = this,
-			pts, store, node, sub, item, menu;
+			pts, store, node, sub, menu, callback;
 
 		if(token)
 		{
 			pts = token.split(':');
-			if(pts.length != 2)
+			if(pts.length !== 2)
 				return true;
 			store = Ext.getStore('npstore_menu_' + pts[0]);
 			if(!store)
@@ -240,94 +240,38 @@ Ext.define('NetProfile.view.SideBar', {
 				menu.expand();
 			if(!node)
 			{
+				// TODO: need a more strict way of differentiating between IDs
+				//       and paths in history tokens.
 				sub = pts[1].split('/');
 				if(sub.length == 0)
 					return true;
-				item = sub.shift();
-				node = store.getNodeById(item);
-				if(!node)
-					return true;
-				if(sub.length > 0)
+				callback = function(node, store)
 				{
-					var rec_exp;
-
-					rec_exp = function(ch)
-					{
-						var find_id, find_node = null;
-
-						find_id = sub.shift();
-						Ext.Array.forEach(ch, function(item)
-						{
-							if(item.getId() == find_id)
-								find_node = item;
-						});
-						if(!find_node)
-							return;
-						if(sub.length > 0)
-						{
-							if(find_node.isExpanded())
-								rec_exp(find_node.childNodes);
-							else
-								find_node.expand(false, rec_exp);
-						}
-						else
-							me.doSelectNode(find_node, pts[0]);
-					};
-
-					if(node.isLoading())
-					{
-						store.on('load', function(st, xnode, recs)
-						{
-							if(node.isExpanded())
-								rec_exp(recs);
-							else
-								node.expand(false, rec_exp);
-							return true;
-						}, me, { single: true });
-						node.expand();
-					}
-					else if(node.isExpanded())
-						rec_exp(node.childNodes);
-					else
-						node.expand(false, rec_exp);
-				}
-				else
 					me.doSelectNode(node, pts[0]);
-				return true;
+				};
+				store.findNodeByPath(sub, callback);
 			}
-			me.doSelectNode(node, pts[0]);
+			else
+				me.doSelectNode(node, pts[0]);
 		}
-		else if(this.lastPanel)
+		else if(me.lastPanel)
 		{
-			menu = this.getComponent('npmenu_' + this.lastPanel);
+			menu = me.getComponent('npmenu_' + me.lastPanel);
 			if(menu)
 				menu.expand();
 		}
 		return true;
 	},
-	doSelectNode: function(node, menu)
+	doSelectNode: function(node, menuname)
 	{
-		var me = this,
-			path = node.getPath(),
-			tree, store, cb;
+		var me = this;
 
 		if(node.get('xview'))
 			me.doSelectMenuView(node.get('xview'));
 		if(node.get('xhandler'))
 			me.doSelectMenuHandler(node.get('xhandler'), node.getId());
-		if(menu)
-		{
-			tree = me.menus[menu];
-			store = tree.getStore();
-			if(store.isLoading())
-				store.on('load', function(store, records, succ)
-				{
-					if(succ)
-						this.selectPath(path);
-				}, tree, { single: true });
-			else
-				tree.selectPath(path);
-		}
+		if(menuname && (menuname in me.menus))
+			me.menus[menuname].getSelectionModel().select([node], false, true);
 	}
 });
 

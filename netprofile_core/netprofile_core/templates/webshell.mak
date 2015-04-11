@@ -678,7 +678,7 @@ Ext.require([
 	});
 % endif
 	Ext.define('NetProfile.store.menu.${menu.name}', {
-		extend: 'Ext.data.TreeStore',
+		extend: 'NetProfile.data.MenuTreeStore',
 		requires: 'NetProfile.model.MenuItem',
 % if len(menu.extra_fields) > 0:
 		model: 'NetProfile.model.customMenu.${menu.name}',
