@@ -77,7 +77,7 @@ Ext.define('NetProfile.view.SideBar', {
 				useArrows: true,
 				header: false,
 				border: false,
-				bodyCls: 'x-docked-noborder-top'
+				bodyBorder: false
 			}, menu.get('options') || {});
 			tree = Ext.create('Ext.tree.Panel', cfg);
 

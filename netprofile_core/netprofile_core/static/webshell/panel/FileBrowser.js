@@ -68,10 +68,13 @@ Ext.define('NetProfile.panel.FileBrowser', {
 
 	dragText: 'Move or attach files ({0})',
 
+	bytesText: 'B',
 	kibText: 'KiB',
 	mibText: 'MiB',
 	gibText: 'GiB',
 	tibText: 'TiB',
+	pibText: 'PiB',
+	eibText: 'EiB',
 
 	initComponent: function()
 	{
@@ -463,6 +466,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 					xtype: 'fileiconview',
 					region: 'center',
 					getMIME: this.getMIME,
+					getFileSize: Ext.bind(this.getFileSize, this),
 					store: this.store,
 					emptyText: this.emptyText,
 					listeners: {
@@ -491,6 +495,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 					xtype: 'fileiconview',
 					region: 'center',
 					getMIME: this.getMIME,
+					getFileSize: Ext.bind(this.getFileSize, this),
 					cls: 'np-file-lview',
 					useColumns: true,
 					browser: this,
@@ -587,7 +592,11 @@ Ext.define('NetProfile.panel.FileBrowser', {
 						dataIndex: 'size',
 						sortable: true,
 						align: 'right',
-						flex: 1
+						flex: 1,
+						renderer: function(size)
+						{
+							return me.getFileSize(size);
+						}
 					}, {
 						text: this.gridCreatedText,
 						dataIndex: 'ctime',
@@ -892,6 +901,36 @@ Ext.define('NetProfile.panel.FileBrowser', {
 			return mime;
 		}
 		return 'default';
+	},
+	getFileSize: function(size, factor)
+	{
+		var me = this,
+			sz = size,
+			factor = factor || 1.2,
+			suffixes = [
+				me.bytesText,
+				me.kibText,
+				me.mibText,
+				me.gibText,
+				me.tibText,
+				me.pibText,
+				me.eibText
+			],
+			suffix = me.bytesText,
+			idx = 0;
+
+		while(sz > (1024 * factor))
+		{
+			idx++;
+			if(!(idx in suffixes))
+				break;
+			sz /= 1024;
+			suffix = suffixes[idx];
+		}
+		sz = sz.toFixed(2);
+		if(sz.substr(-3) === '.00')
+			sz = sz.substr(0, sz.length - 3);
+		return sz + ' ' + suffix;
 	}
 });
 

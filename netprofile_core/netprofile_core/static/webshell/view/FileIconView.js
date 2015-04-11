@@ -15,6 +15,7 @@ Ext.define('NetProfile.view.FileIconView', {
 	useColumns: false,
 	browser: null,
 	getMIME: null,
+	getFileSize: null,
 	iconSize: 48,
 	cls: 'np-file-iview',
 	emptyText: 'Folder is empty',
@@ -164,8 +165,8 @@ Ext.define('NetProfile.view.FileIconView', {
 		data.fname = Ext.String.htmlEncode(data.fname);
 
 		qtip_cont.push(Ext.String.htmlEncode(data.descr ? data.descr : data.fname));
-		if(data.size)
-			qtip_cont.push(Ext.String.format(me.sizeText, data.size));
+		if(data.size && me.getFileSize)
+			qtip_cont.push(Ext.String.format(me.sizeText, me.getFileSize(data.size)));
 		if(data.mime)
 			qtip_cont.push(Ext.String.format(me.mimeTypeText, Ext.String.htmlEncode(data.mime.split(';')[0])));
 		if(qtip_cont.length)

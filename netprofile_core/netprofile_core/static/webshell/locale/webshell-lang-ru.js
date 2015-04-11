@@ -245,10 +245,13 @@ Ext.onReady(function()
 
 		dragText: 'Переместить или вложить файлы ({0})',
 
+		bytesText: 'байт',
 		kibText: 'Кбайт',
 		mibText: 'Мбайт',
 		gibText: 'Гбайт',
-		tibText: 'Тбайт'
+		tibText: 'Тбайт',
+		pibText: 'Пбайт',
+		eibText: 'Эбайт'
 	});
 	Ext.define('Ext.locale.ru.NetProfile.form.FileUpload', {
 		override: 'NetProfile.form.FileUpload',
