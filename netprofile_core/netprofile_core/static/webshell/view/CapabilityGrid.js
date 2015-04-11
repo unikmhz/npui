@@ -14,7 +14,7 @@ Ext.define('NetProfile.view.CapabilityGrid', {
 		'Ext.menu.*',
 		'Ext.toolbar.Paging',
 		'Ext.toolbar.TextItem',
-		'NetProfile.store.PrivCap',
+		'NetProfile.data.PrivCapStore',
 		'Ext.ux.window.CenterWindow'
 	],
 
@@ -158,7 +158,7 @@ Ext.define('NetProfile.view.CapabilityGrid', {
 
 		if(!this.store)
 		{
-			this.store = Ext.create('NetProfile.store.PrivCap', {
+			this.store = Ext.create('NetProfile.data.PrivCapStore', {
 				proxy: {
 					type: 'direct',
 					api: {
