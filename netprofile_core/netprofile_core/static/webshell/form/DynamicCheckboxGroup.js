@@ -90,6 +90,7 @@ Ext.define('NetProfile.form.DynamicCheckboxGroup', {
 			this.setValue(this.storedValues);
 			this.storedValues = null;
 		}
+		this.resetOriginalValue();
 		this.resumeLayouts(true);
 	},
 	getValue: function()
