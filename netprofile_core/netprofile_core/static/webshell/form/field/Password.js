@@ -37,10 +37,15 @@ Ext.define('NetProfile.form.field.Password', {
 	{
 		if((v === undefined) || (v === null) || (v == ''))
 		{
-			this.clearFlag = false;
+			this.clearFlag = true;
 			v = '• • •';
 		}
 		return this.callParent([v]);
+	},
+	resetOriginalValue: function()
+	{
+		this.setRawValue(null);
+		this.callParent(arguments);
 	},
 	getModelData: function()
 	{
