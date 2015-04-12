@@ -798,7 +798,7 @@ Ext.require([
 		autoSync: true
 	});
 	Ext.define('NetProfile.view.grid.${module}.${model}', {
-		extend: 'NetProfile.view.ModelGrid',
+		extend: 'NetProfile.grid.ModelGrid',
 		alias: 'widget.grid_${module}_${model}',
 		columns: ${mod.get_column_cfg(req) | n,jsone},
 		apiModule: '${module}',

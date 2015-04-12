@@ -103,8 +103,8 @@ Ext.onReady(function()
 		clearText: 'Сбросить'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.ModelGrid', {
-		override: 'NetProfile.view.ModelGrid',
+	Ext.define('Ext.locale.ru.NetProfile.grid.ModelGrid', {
+		override: 'NetProfile.grid.ModelGrid',
 		emptyText: 'По вашему запросу ничего не найдено.',
 		clearText: 'Сбросить',
 		clearTipText: 'Сбросить фильтры и порядок сортировки.',
