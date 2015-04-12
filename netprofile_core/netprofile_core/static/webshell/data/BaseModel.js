@@ -29,7 +29,7 @@ Ext.define('NetProfile.data.schema.Namer', {
 	}
 });
 
-Ext.define('NetProfile.model.Base', {
+Ext.define('NetProfile.data.BaseModel', {
 	extend: 'Ext.data.Model',
 	requires: [ 'NetProfile.data.schema.Namer' ],
 	schema: {

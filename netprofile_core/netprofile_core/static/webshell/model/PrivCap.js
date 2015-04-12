@@ -1,5 +1,5 @@
 Ext.define('NetProfile.model.PrivCap', {
-	extend: 'NetProfile.model.Base',
+	extend: 'NetProfile.data.BaseModel',
 	fields: [{
 		name: 'privid',
 		type: 'int',

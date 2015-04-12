@@ -28,7 +28,7 @@ Ext.require([
 % for i_ajs in res_ajs:
 	'${i_ajs}',
 % endfor
-	'NetProfile.model.Base',
+	'NetProfile.data.BaseModel',
 	'NetProfile.grid.CapabilityGrid',
 	'Ext.ux.form.MultiField',
 	'NetProfile.panel.Calendar'
@@ -777,7 +777,7 @@ Ext.require([
 		}
 	});
 	Ext.define('NetProfile.model.${module}.${model}', {
-		extend: 'NetProfile.model.Base',
+		extend: 'NetProfile.data.BaseModel',
 		fields: ${mod.get_reader_cfg() | n,jsone},
 		idProperty: '${mod.pk}',
 		proxy: {
