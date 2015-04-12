@@ -219,6 +219,21 @@ Ext.require([
 			return errs;
 		}
 	});
+	Ext.define('Ext.overrides.mod.BaseAsyncErrors', {
+		override: 'Ext.form.field.Base',
+		getErrors: function(value)
+		{
+			var errs, i;
+
+			errs = this.callParent(arguments);
+			if(this.asyncErrors && this.asyncErrors.length)
+				for(i in this.asyncErrors)
+				{
+					Ext.Array.push(errs, this.asyncErrors[i]);
+				}
+			return errs;
+		}
+	});
 	Ext.define('Ext.overrides.mod.ROTrigger', {
 		override: 'Ext.form.trigger.Trigger',
 		disableOnReadOnly: true,
