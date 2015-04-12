@@ -496,6 +496,11 @@ Ext.require([
 			me.unblockLoad();
 		}
 	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16023', {
+		override: 'Ext.form.field.ComboBox',
+		compatibility: '5.1.0.107',
+		checkChangeEvents: Ext.isIE ? ['change', 'propertychange', 'keyup'] : ['change', 'input', 'textInput', 'keyup', 'dragdrop']
+	});
 
 	Ext.define('NetProfile.data.field.IPv4', {
 		extend: 'Ext.data.field.Field',

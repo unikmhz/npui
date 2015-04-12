@@ -6,7 +6,7 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 	extend: 'Ext.form.field.Text',
 	alias: 'widget.modelselect',
 	requires: [
-		'Ext.ux.window.CenterWindow'
+		'NetProfile.window.CenterWindow'
 	],
 
 	chooseText: 'Choose an object',
@@ -62,7 +62,7 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 	},
 	onTriggerSelect: function()
 	{
-		var sel_win = Ext.create('Ext.ux.window.CenterWindow', {
+		var sel_win = Ext.create('NetProfile.window.CenterWindow', {
 //			animateTarget: this,
 			title: this.chooseText
 		});

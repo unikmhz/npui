@@ -6,6 +6,7 @@ Ext.define('NetProfile.tickets.controller.TicketGrid', {
 	extend: 'Ext.app.Controller',
 	requires: [
 		'Ext.menu.Menu',
+		'NetProfile.window.CenterWindow',
 		'NetProfile.tickets.panel.Scheduler'
 	],
 
@@ -58,7 +59,7 @@ Ext.define('NetProfile.tickets.controller.TicketGrid', {
 						cfg.schedulerId = parseInt(values['tschedid']);
 					if(values['ttplid'])
 						cfg.templateId = parseInt(values['ttplid']);
-					win = Ext.create('Ext.ux.window.CenterWindow', {
+					win = Ext.create('NetProfile.window.CenterWindow', {
 						title: this.scheduleText,
 						modal: true
 					});

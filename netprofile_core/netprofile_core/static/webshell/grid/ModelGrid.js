@@ -16,7 +16,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		'Ext.toolbar.TextItem',
 		'Ext.window.MessageBox',
 		'Ext.event.Event',
-		'Ext.ux.EnumColumn',
+		'NetProfile.grid.column.EnumColumn',
 		'Ext.ux.IPAddressColumn',
 		'NetProfile.form.field.DateTime',
 		'NetProfile.form.field.IPv4',
@@ -24,7 +24,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		'NetProfile.form.field.Password',
 		'Ext.ux.form.DynamicCheckboxGroup',
 		'Ext.ux.form.TinyMCETextArea',
-		'Ext.ux.window.CenterWindow',
+		'NetProfile.window.CenterWindow',
 		'NetProfile.form.field.ModelSelect',
 		'NetProfile.form.field.SimpleModelSelect',
 		'NetProfile.form.field.NullableComboBox',
@@ -495,7 +495,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 
 		if(!me.canCreate)
 			return false;
-		wiz_win = Ext.create('Ext.ux.window.CenterWindow', {
+		wiz_win = Ext.create('NetProfile.window.CenterWindow', {
 			title: me.addWindowText,
 			modal: true
 		});
@@ -540,7 +540,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 	},
 	spawnWizard: function(wname)
 	{
-		var wiz_win = Ext.create('Ext.ux.window.CenterWindow', {
+		var wiz_win = Ext.create('NetProfile.window.CenterWindow', {
 			title: 'FIXME',
 			modal: true
 		});

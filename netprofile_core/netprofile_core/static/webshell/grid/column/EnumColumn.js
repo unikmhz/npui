@@ -1,8 +1,8 @@
 /**
- * @class Ext.ux.EnumColumn
+ * @class NetProfile.grid.column.EnumColumn
  * @extends Ext.grid.column.Column
  */
-Ext.define('Ext.ux.EnumColumn', {
+Ext.define('NetProfile.grid.column.EnumColumn', {
     extend: 'Ext.grid.column.Column',
     alias: 'widget.enumcolumn',
 

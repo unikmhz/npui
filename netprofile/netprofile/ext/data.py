@@ -181,8 +181,6 @@ _COLUMN_XTYPE_MAP = {
 	Int32        : 'numbercolumn',
 	Int64        : 'numbercolumn', # ?
 	Integer      : 'numbercolumn',
-	IPv4Address  : 'ipaddrcolumn',
-	IPv6Address  : 'ipaddrcolumn',
 	IPv6Offset   : 'numbercolumn',
 	Money        : 'numbercolumn', # ?
 	NPBoolean    : 'checkcolumn',

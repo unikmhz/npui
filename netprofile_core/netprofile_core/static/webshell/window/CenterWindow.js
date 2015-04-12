@@ -1,4 +1,4 @@
-Ext.define('Ext.ux.window.CenterWindow', {
+Ext.define('NetProfile.window.CenterWindow', {
 	extend: 'Ext.window.Window',
 	alias: 'widget.centerwindow',
 	requires: [

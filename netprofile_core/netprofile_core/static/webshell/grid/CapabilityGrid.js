@@ -15,7 +15,7 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 		'Ext.toolbar.Paging',
 		'Ext.toolbar.TextItem',
 		'NetProfile.data.PrivCapStore',
-		'Ext.ux.window.CenterWindow'
+		'NetProfile.window.CenterWindow'
 	],
 
 	ownerId: null,
@@ -120,7 +120,7 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 					{
 						var acl_win, grid_cfg;
 
-						acl_win = Ext.create('Ext.ux.window.CenterWindow', {
+						acl_win = Ext.create('NetProfile.window.CenterWindow', {
 							title: this.textTipACL + ': ' + rec.get('name'),
 							modal: true
 						});
