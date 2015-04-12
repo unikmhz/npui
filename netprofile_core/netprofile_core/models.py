@@ -382,6 +382,45 @@ class UserState(DeclEnum):
 	active  = 'A', _('Active'),  20
 	deleted = 'D', _('Deleted'), 30
 
+def _validate_user_password(model, colname, values, req):
+	if colname not in values:
+		return
+	try:
+		uid = int(values['uid'])
+	except (KeyError, TypeError, ValueError):
+		return
+	sess = DBSession()
+	user = sess.query(User).get(uid)
+	if user is None:
+		return
+	newpwd = values[colname]
+	if newpwd is None:
+		return
+	secpol = user.effective_policy
+	if secpol is None:
+		return
+	ts = dt.datetime.now()
+	checkpw = secpol.check_new_password(req, user, newpwd, ts)
+	if checkpw is True:
+		return
+	loc = get_localizer(req)
+	errors = []
+	if 'pw_length_min' in checkpw:
+		errors.append(loc.translate(_('Password is too short')))
+	if 'pw_length_max' in checkpw:
+		errors.append(loc.translate(_('Password is too long')))
+	if 'pw_ctype_min' in checkpw:
+		errors.append(loc.translate(_('Password has not enough character types')))
+	if 'pw_ctype_max' in checkpw:
+		errors.append(loc.translate(_('Password has too many character types')))
+	if 'pw_dict_check' in checkpw:
+		errors.append(loc.translate(_('Password was found in a dictionary')))
+	if 'pw_hist_check' in checkpw:
+		errors.append(loc.translate(_('You used this password not too long ago')))
+	if 'pw_age_min' in checkpw:
+		errors.append(loc.translate(_('You\'ve just changed your password')))
+	return errors
+
 @implementer(IDAVFile, IDAVPrincipal)
 class User(Base):
 	"""
@@ -503,6 +542,7 @@ class User(Base):
 			'secret_value'  : True,
 			'editor_xtype'  : 'passwordfield',
 			'writer'        : 'change_password',
+			'validator'     : _validate_user_password,
 			'pass_request'  : True,
 			'ldap_attr'     : 'userPassword', # FIXME!
 			'ldap_value'    : 'ldap_password'
@@ -822,7 +862,7 @@ class User(Base):
 			checkpw = secpol.check_new_password(request, self, newpwd, ts)
 			if checkpw is not True:
 				# FIXME: error reporting
-				return
+				raise ValueError(checkpw)
 		reg = request.registry
 		hash_con = reg.settings.get('netprofile.auth.hash', 'sha1')
 		salt_len = int(reg.settings.get('netprofile.auth.salt_length', 4))

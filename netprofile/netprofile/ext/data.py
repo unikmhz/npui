@@ -35,6 +35,8 @@ import datetime as dt
 from dateutil.tz import tzlocal
 from dateutil.parser import parse as dparse
 from collections import (
+	defaultdict,
+	Iterable,
 	Mapping,
 	OrderedDict
 )
@@ -381,6 +383,10 @@ class ExtColumn(object):
 	@property
 	def writer(self):
 		return self.column.info.get('writer')
+
+	@property
+	def validator(self):
+		return self.column.info.get('validator')
 
 	@property
 	def pass_request(self):
@@ -993,6 +999,10 @@ class ExtPseudoColumn(ExtColumn):
 
 	@property
 	def writer(self):
+		return None
+
+	@property
+	def validator(self):
 		return None
 
 	@property
@@ -2121,7 +2131,16 @@ class ExtModel(object):
 		pkey = None
 		if (self.pk in values) and values[self.pk]:
 			pkey = cols[self.pk].parse_param(values[self.pk])
-		fields = {}
+		fields = defaultdict(list)
+		for name, col in cols.items():
+			valid = col.validator
+			if callable(valid) and (name in values):
+				vres = valid(self, name, values, request)
+				if vres:
+					if isinstance(vres, Iterable):
+						fields[name].extend(vres)
+					else:
+						fields[name].append(vres)
 		for index in self.u_idx:
 			has_all = True
 			has_defined = False
@@ -2149,8 +2168,6 @@ class ExtModel(object):
 			num = q.scalar()
 			if (num is not None) and (num > 0):
 				for ifld in index:
-					if ifld not in fields:
-						fields[ifld] = []
 					fields[ifld].append(loc.translate(_('This field must be unique.')))
 		request.run_hook('np.fields.validate', fields, values, request, self)
 		return {
