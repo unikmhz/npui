@@ -41,6 +41,23 @@ Ext.define('NetProfile.controller.FileFolders', {
 								selmod.select(rec);
 							}
 						});
+				},
+				canceledit: function(ed, ev)
+				{
+					var selmod = ed.grid.getSelectionModel(),
+						rec = ev.record,
+						prec = rec.parentNode,
+						is_sel = selmod.isSelected(rec);
+
+					if(is_sel)
+					{
+						if(prec)
+							selmod.select(prec);
+						else
+							selmod.deselectAll();
+					}
+					if(rec.phantom)
+						rec.remove();
 				}
 			}
 		});
