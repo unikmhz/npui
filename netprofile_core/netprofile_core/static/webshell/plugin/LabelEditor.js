@@ -1,8 +1,8 @@
 /**
- * @class NetProfile.view.LabelEditor
+ * @class NetProfile.plugin.LabelEditor
  * @extends Ext.Editor
  */
-Ext.define('NetProfile.view.LabelEditor', {
+Ext.define('NetProfile.plugin.LabelEditor', {
 	extend: 'Ext.Editor',
 	mixins: {
 		plugin: 'Ext.plugin.Abstract'

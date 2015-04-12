@@ -28,6 +28,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 		'NetProfile.form.field.ModelSelect',
 		'NetProfile.form.field.SimpleModelSelect',
 		'NetProfile.form.field.NullableComboBox',
+		'NetProfile.panel.Wizard',
 		'NetProfile.grid.filters.filter.Date',
 		'NetProfile.grid.filters.filter.Number',
 		'NetProfile.grid.filters.filter.List',
@@ -498,7 +499,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 			title: me.addWindowText,
 			modal: true
 		});
-		wiz = Ext.create('NetProfile.view.Wizard', {
+		wiz = Ext.create('NetProfile.panel.Wizard', {
 			stateful: false,
 			wizardCls: me.apiClass,
 			createInto: me.store,
@@ -543,7 +544,7 @@ Ext.define('NetProfile.view.ModelGrid', {
 			title: 'FIXME',
 			modal: true
 		});
-		var wiz = Ext.create('NetProfile.view.Wizard', {
+		var wiz = Ext.create('NetProfile.panel.Wizard', {
 			stateful: false,
 			wizardCls: this.apiClass,
 			createInto: this.store,

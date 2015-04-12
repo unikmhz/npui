@@ -1,15 +1,15 @@
-Ext.define('NetProfile.view.TopBar', {
+Ext.define('NetProfile.toolbar.MainToolbar', {
 	extend: 'Ext.toolbar.Toolbar',
-	alias: 'widget.topbar',
+	alias: 'widget.maintoolbar',
 	requires: [
 		'Ext.menu.Menu',
 		'Ext.container.ButtonGroup',
 		'Ext.form.*',
-		'NetProfile.view.Form',
-		'NetProfile.view.Wizard'
+		'NetProfile.form.Panel',
+		'NetProfile.panel.Wizard'
 	],
-	id: 'npws_topbar',
-	stateId: 'npws_topbar',
+	id: 'npws_maintoolbar',
+	stateId: 'npws_maintoolbar',
 	stateful: true,
 	collapsible: false,
 	height: 32,

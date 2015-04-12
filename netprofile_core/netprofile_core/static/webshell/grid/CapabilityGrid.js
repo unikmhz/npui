@@ -1,8 +1,8 @@
 /**
- * @class NetProfile.view.CapabilityGrid
+ * @class NetProfile.grid.CapabilityGrid
  * @extends Ext.grid.Panel
  */
-Ext.define('NetProfile.view.CapabilityGrid', {
+Ext.define('NetProfile.grid.CapabilityGrid', {
 	extend: 'Ext.grid.Panel',
 	alias: 'widget.capgrid',
 	requires: [
@@ -136,7 +136,7 @@ Ext.define('NetProfile.view.CapabilityGrid', {
 							grid_cfg.apiGet = this.apiGet.replace('Privilege', 'ACL');
 						if(this.apiSet)
 							grid_cfg.apiSet = this.apiSet.replace('Privilege', 'ACL');
-						acl_win.add(Ext.create('NetProfile.view.CapabilityGrid', grid_cfg));
+						acl_win.add(Ext.create('NetProfile.grid.CapabilityGrid', grid_cfg));
 						acl_win.show();
 					},
 					scope: this

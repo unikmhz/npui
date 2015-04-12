@@ -45,7 +45,7 @@ Ext.define('NetProfile.confgen.controller.ConfGen', {
 					NetProfile.showConsole();
 				}
 			},
-			'topbar' : {
+			'maintoolbar' : {
 				beforerender: function(tb, opts)
 				{
 					var menu, item;

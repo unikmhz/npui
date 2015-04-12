@@ -1,4 +1,4 @@
-Ext.define('NetProfile.view.SideBar', {
+Ext.define('NetProfile.panel.SideBar', {
 	extend: 'Ext.panel.Panel',
 	alias: 'widget.sidebar',
 	requires: [
@@ -8,7 +8,7 @@ Ext.define('NetProfile.view.SideBar', {
 		'Ext.util.History',
 		'Ext.state.Manager',
 		'Ext.layout.container.Accordion',
-		'NetProfile.view.TopBar'
+		'NetProfile.toolbar.MainToolbar'
 	],
 	id: 'npws_sidebar',
 	stateId: 'npws_sidebar',
@@ -26,7 +26,7 @@ Ext.define('NetProfile.view.SideBar', {
 	minHeight: 300,
 	items: [],
 	dockedItems: [{
-		xtype: 'topbar',
+		xtype: 'maintoolbar',
 		dock: 'top'
 	}],
 

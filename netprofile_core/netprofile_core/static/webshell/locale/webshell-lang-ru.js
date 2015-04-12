@@ -123,14 +123,14 @@ Ext.onReady(function()
 		chooseText: 'Выберите объект'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.PropBar', {
-		override: 'NetProfile.view.PropBar',
+	Ext.define('Ext.locale.ru.NetProfile.tab.PropBar', {
+		override: 'NetProfile.tab.PropBar',
 		recordText: 'Запись',
 		submitText: 'Отправить'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.TopBar', {
-		override: 'NetProfile.view.TopBar',
+	Ext.define('Ext.locale.ru.NetProfile.toolbar.MainToolbar', {
+		override: 'NetProfile.toolbar.MainToolbar',
 		toolsText: 'Инструменты',
 		toolsTipText: 'Различные второстепенные окна и настройки.',
 		logoutText: 'Выход',
@@ -140,16 +140,16 @@ Ext.onReady(function()
 		aboutText: 'О программе…'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.Form', {
-		override: 'NetProfile.view.Form',
+	Ext.define('Ext.locale.ru.NetProfile.form.Panel', {
+		override: 'NetProfile.form.Panel',
 		resetText: 'Сбросить',
 		resetTipText: 'Вернуть значения полей в этой форме к исходным.',
 		submitText: 'Сохранить',
 		submitTipText: 'Проверить и сохранить данные в этой форме.'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.Wizard', {
-		override: 'NetProfile.view.Wizard',
+	Ext.define('Ext.locale.ru.NetProfile.panel.Wizard', {
+		override: 'NetProfile.panel.Wizard',
 		btnPrevText: 'Назад',
 		btnNextText: 'Далее',
 		btnCancelText: 'Отмена',
@@ -273,8 +273,8 @@ Ext.onReady(function()
 		mimeTypeText: 'MIME тип: {0}'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.CapabilityGrid', {
-		override: 'NetProfile.view.CapabilityGrid',
+	Ext.define('Ext.locale.ru.NetProfile.grid.CapabilityGrid', {
+		override: 'NetProfile.grid.CapabilityGrid',
 
 		textName: 'Название',
 		textValue: 'Значение',

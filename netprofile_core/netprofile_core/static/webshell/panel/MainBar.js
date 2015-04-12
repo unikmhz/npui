@@ -1,8 +1,8 @@
-Ext.define('NetProfile.view.MainBar', {
+Ext.define('NetProfile.panel.MainBar', {
 	extend: 'Ext.panel.Panel',
 	alias: 'widget.mainbar',
 	requires: [
-		'NetProfile.view.PropBar'
+		'NetProfile.tab.PropBar'
 	],
 	id: 'npws_mainbar',
 	stateId: 'npws_mainbar',

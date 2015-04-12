@@ -1,7 +1,7 @@
 /**
  * Based on Ext.ux.DataView.DragSelector by Ed Spencer
  */
-Ext.define('NetProfile.view.DragSelector', {
+Ext.define('NetProfile.plugin.DragSelector', {
 	extend: 'Ext.plugin.Abstract',
 	requires: [
 		'Ext.dd.DragTracker',

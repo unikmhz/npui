@@ -1,5 +1,5 @@
 /**
- * @class NetProfile.view.Calendar
+ * @class NetProfile.panel.Calendar
  * @extends Extensible.calendar.CalendarPanel
  */
 
@@ -180,7 +180,7 @@ Ext.define('NetProfile.override.Extensible.calendar.form.field.CalendarCombo', {
 	}
 });
 
-Ext.define('NetProfile.view.Calendar', {
+Ext.define('NetProfile.panel.Calendar', {
 	extend: 'Extensible.calendar.CalendarPanel',
 	alias: 'widget.calendar',
 	requires: [

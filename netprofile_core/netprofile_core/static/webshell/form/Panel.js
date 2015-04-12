@@ -1,8 +1,8 @@
 /**
- * @class NetProfile.view.Form
+ * @class NetProfile.form.Panel
  * @extends Ext.form.Panel
  */
-Ext.define('NetProfile.view.Form', {
+Ext.define('NetProfile.form.Panel', {
 	extend: 'Ext.form.Panel',
 	alias: 'widget.npform',
 	requires: [

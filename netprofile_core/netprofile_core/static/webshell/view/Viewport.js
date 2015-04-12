@@ -2,9 +2,8 @@ Ext.define('NetProfile.view.Viewport', {
 	extend: 'Ext.container.Viewport',
 	requires: [
 		'Ext.layout.container.Border',
-		'NetProfile.view.TopBar',
-		'NetProfile.view.MainBar',
-		'NetProfile.view.SideBar',
+		'NetProfile.panel.MainBar',
+		'NetProfile.panel.SideBar',
 		'NetProfile.view.FileDownload'
 	],
 	id: 'npws_viewport',

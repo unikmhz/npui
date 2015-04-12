@@ -1,7 +1,7 @@
 /*
  * Based on Ext.ux.DataView.Draggable by Ed Spencer
  */
-Ext.define('NetProfile.view.Draggable', {
+Ext.define('NetProfile.plugin.Draggable', {
 	extend: 'Ext.plugin.Abstract',
     requires: [
 		'Ext.dd.DragZone'

@@ -29,9 +29,9 @@ Ext.require([
 	'${i_ajs}',
 % endfor
 	'NetProfile.model.Base',
-	'NetProfile.view.CapabilityGrid',
+	'NetProfile.grid.CapabilityGrid',
 	'Ext.ux.form.MultiField',
-	'NetProfile.view.Calendar'
+	'NetProfile.panel.Calendar'
 ], function()
 {
 	NetProfile.currentLocale = '${cur_loc}';

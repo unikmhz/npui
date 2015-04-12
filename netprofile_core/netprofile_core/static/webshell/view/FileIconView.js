@@ -7,9 +7,9 @@ Ext.define('NetProfile.view.FileIconView', {
 	alias: 'widget.fileiconview',
 	requires: [
 		'NetProfile.view.FileNavigationModel',
-		'NetProfile.view.LabelEditor',
-		'NetProfile.view.Draggable',
-		'NetProfile.view.DragSelector'
+		'NetProfile.plugin.LabelEditor',
+		'NetProfile.plugin.Draggable',
+		'NetProfile.plugin.DragSelector'
 	],
 
 	useColumns: false,

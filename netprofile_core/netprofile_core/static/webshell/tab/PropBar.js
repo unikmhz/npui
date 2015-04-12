@@ -1,4 +1,4 @@
-Ext.define('NetProfile.view.PropBar', {
+Ext.define('NetProfile.tab.PropBar', {
 	extend: 'Ext.tab.Panel',
 	alias: 'widget.propbar',
 	requires: [
