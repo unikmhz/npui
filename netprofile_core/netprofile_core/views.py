@@ -582,7 +582,7 @@ def ff_tree_create(params, request):
 			'allow_read'     : ff.can_read(user),
 			'allow_write'    : ff.can_write(user),
 			'allow_traverse' : ff.can_traverse(user),
-			'parent_write'   : ff.parent.can_write(user) if ff.parent else False
+			'parent_write'   : ff.parent.can_write(user) if ff.parent else user.root_writable
 		})
 		total += 1
 	return {
