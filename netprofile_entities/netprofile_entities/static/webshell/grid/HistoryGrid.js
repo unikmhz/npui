@@ -1,15 +1,15 @@
 /**
- * @class NetProfile.entities.view.HistoryGrid
+ * @class NetProfile.entities.grid.HistoryGrid
  * @extends Ext.grid.Panel
  */
-Ext.define('NetProfile.entities.view.HistoryGrid', {
+Ext.define('NetProfile.entities.grid.HistoryGrid', {
 	extend: 'Ext.grid.Panel',
 	alias: 'widget.historygrid',
 	requires: [
 		'Ext.grid.*',
 		'Ext.form.field.Number',
 		'Ext.form.field.Date',
-		'NetProfile.entities.store.EntityHistory'
+		'NetProfile.entities.data.EntityHistoryStore'
 	],
 
 	entityId: null,
@@ -180,7 +180,7 @@ Ext.define('NetProfile.entities.view.HistoryGrid', {
 
 		if(!this.store)
 		{
-			this.store = Ext.create('NetProfile.entities.store.EntityHistory', {
+			this.store = Ext.create('NetProfile.entities.data.EntityHistoryStore', {
 				proxy: {
 					type: 'direct',
 					api: {

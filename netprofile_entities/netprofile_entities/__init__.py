@@ -175,7 +175,7 @@ class Module(ModuleBase):
 
 	def get_autoload_js(self, request):
 		return (
-			'NetProfile.entities.view.HistoryGrid',
+			'NetProfile.entities.grid.HistoryGrid',
 		)
 
 	def get_css(self, request):

@@ -1,8 +1,8 @@
 /**
- * @class NetProfile.tickets.view.Scheduler
+ * @class NetProfile.tickets.panel.Scheduler
  * @extends Ext.panel.Panel
  */
-Ext.define('NetProfile.tickets.view.Scheduler', {
+Ext.define('NetProfile.tickets.panel.Scheduler', {
 	extend: 'Ext.panel.Panel',
 	alias: 'widget.scheduler',
 	requires: [

@@ -5,7 +5,8 @@
 Ext.define('NetProfile.tickets.controller.TicketGrid', {
 	extend: 'Ext.app.Controller',
 	requires: [
-		'Ext.menu.Menu'
+		'Ext.menu.Menu',
+		'NetProfile.tickets.panel.Scheduler'
 	],
 
 	fromTemplateText: 'From Template',
@@ -61,7 +62,7 @@ Ext.define('NetProfile.tickets.controller.TicketGrid', {
 						title: this.scheduleText,
 						modal: true
 					});
-					sched = Ext.create('NetProfile.tickets.view.Scheduler', cfg);
+					sched = Ext.create('NetProfile.tickets.panel.Scheduler', cfg);
 					win.add(sched);
 					win.show();
 

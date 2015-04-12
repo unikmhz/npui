@@ -1,4 +1,4 @@
-Ext.define('NetProfile.model.PrivCap', {
+Ext.define('NetProfile.data.PrivCapModel', {
 	extend: 'NetProfile.data.BaseModel',
 	fields: [{
 		name: 'privid',

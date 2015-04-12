@@ -1,11 +1,11 @@
 /**
- * @class NetProfile.entities.store.EntityHistory
+ * @class NetProfile.entities.data.EntityHistoryStore
  * @extends Ext.data.Store
  */
-Ext.define('NetProfile.entities.store.EntityHistory', {
+Ext.define('NetProfile.entities.data.EntityHistoryStore', {
 	extend: 'Ext.data.Store',
-	requires: 'NetProfile.entities.model.EntityHistory',
-	model: 'NetProfile.entities.model.EntityHistory',
+	requires: 'NetProfile.entities.data.EntityHistoryModel',
+	model: 'NetProfile.entities.data.EntityHistoryModel',
 	sorters: [{
 		direction: 'DESC',
 		property: 'time'
