@@ -17,7 +17,6 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		'Ext.window.MessageBox',
 		'Ext.event.Event',
 		'NetProfile.grid.column.EnumColumn',
-		'Ext.ux.IPAddressColumn',
 		'NetProfile.form.field.DateTime',
 		'NetProfile.form.field.IPv4',
 		'NetProfile.form.field.IPv6',
