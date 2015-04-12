@@ -179,7 +179,11 @@ Ext.define('NetProfile.menu.FileFolder', {
 	onDelete: function(item, ev)
 	{
 		var me = this,
-			rec = me.folder;
+			rec = me.folder,
+			store = me.tree.getStore(),
+			selmod = me.tree.getSelectionModel(),
+			is_sel = selmod.isSelected(rec),
+			prec = rec.parentNode;
 
 		Ext.MessageBox.confirm(
 			me.deleteFolderText,
@@ -187,10 +191,20 @@ Ext.define('NetProfile.menu.FileFolder', {
 			function(btn)
 			{
 				if(btn === 'yes')
-					rec.remove(true);
+				{
+					if(is_sel)
+					{
+						if(prec)
+							selmod.select(prec);
+						else
+							selmod.deselectAll(); // XXX: potential trouble
+					}
+					me.folder = null;
+					rec.remove();
+					store.sync();
+				}
 				return true;
-			},
-			me
+			}
 		);
 		me.fireEvent('delete', me, ev);
 	},

@@ -666,7 +666,7 @@ Ext.require([
 			{ name: 'text', type: 'string' },
 			{ name: 'order', type: 'int' },
 			{ name: 'leaf', type: 'boolean' },
-			{ name: 'iconCls', type: 'string' },
+			{ name: 'iconCls', type: 'string', persist: false },
 			{ name: 'xview', type: 'string' },
 			{ name: 'xhandler', type: 'string' }
 		]

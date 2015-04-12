@@ -27,11 +27,20 @@ Ext.define('NetProfile.controller.FileFolders', {
 				},
 				edit: function(ed, ev)
 				{
-					var st = ed.grid.getStore();
+					var st = ed.grid.getStore(),
+						selmod = ed.grid.getSelectionModel(),
+						rec;
 					if(!ev.record || !ev.record.get('parent_write'))
 						return false;
+					rec = ev.record;
 					if(st)
-						st.sync();
+						st.sync({
+							success: function(batch, opts)
+							{
+								selmod.deselectAll();
+								selmod.select(rec);
+							}
+						});
 				}
 			}
 		});
