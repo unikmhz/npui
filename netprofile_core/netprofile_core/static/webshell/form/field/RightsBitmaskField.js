@@ -1,8 +1,8 @@
 /**
- * @class Ext.ux.form.RightsBitmaskField
+ * @class NetProfile.form.field.RightsBitmaskField
  * @extends Ext.form.FieldContainer
  */
-Ext.define('Ext.ux.form.RightsBitmaskField', {
+Ext.define('NetProfile.form.field.RightsBitmaskField', {
 	extend: 'Ext.form.FieldContainer',
 	mixins: {
 		field: 'Ext.form.field.Field'

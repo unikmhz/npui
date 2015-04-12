@@ -194,6 +194,7 @@ Ext.define('NetProfile.grid.plugin.ExtraSearch', {
 			switch(fclass)
 			{
 				case 'Ext.form.field.ComboBox':
+				case 'NetProfile.form.field.NullableComboBox':
 					fld.suspendEvents();
 					if(value.hasOwnProperty(fname))
 						fld.select(value[fname]);
@@ -201,7 +202,7 @@ Ext.define('NetProfile.grid.plugin.ExtraSearch', {
 						fld.clearValue();
 					fld.resumeEvents();
 					break;
-				case 'Ext.ux.form.DynamicCheckboxGroup':
+				case 'NetProfile.form.DynamicCheckboxGroup':
 					fld.suspendEvents();
 					if(value.hasOwnProperty(fname))
 						fld.setValue(value[fname]);
@@ -233,11 +234,12 @@ Ext.define('NetProfile.grid.plugin.ExtraSearch', {
 			switch(fclass)
 			{
 				case 'Ext.form.field.ComboBox':
+				case 'NetProfile.form.field.NullableComboBox':
 					fld.suspendEvents();
 					fld.clearValue();
 					fld.resumeEvents();
 					break;
-				case 'Ext.ux.form.DynamicCheckboxGroup':
+				case 'NetProfile.form.DynamicCheckboxGroup':
 					fld.suspendEvents();
 					fld.setValue([]);
 					fld.resumeEvents();

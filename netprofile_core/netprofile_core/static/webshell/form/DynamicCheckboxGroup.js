@@ -1,4 +1,4 @@
-Ext.define('Ext.ux.form.DynamicCheckboxGroup', {
+Ext.define('NetProfile.form.DynamicCheckboxGroup', {
 	extend: 'Ext.form.CheckboxGroup',
 	alias: 'widget.dyncheckboxgroup',
 	requires: [

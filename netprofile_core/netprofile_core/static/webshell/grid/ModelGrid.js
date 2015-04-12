@@ -21,7 +21,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		'NetProfile.form.field.IPv4',
 		'NetProfile.form.field.IPv6',
 		'NetProfile.form.field.Password',
-		'Ext.ux.form.DynamicCheckboxGroup',
+		'NetProfile.form.DynamicCheckboxGroup',
 		'Ext.ux.form.TinyMCETextArea',
 		'NetProfile.window.CenterWindow',
 		'NetProfile.form.field.ModelSelect',

@@ -178,8 +178,8 @@ Ext.onReady(function()
 		deleteFolderVerboseText: 'Вы уверены что хотите удалить эту папку?'
 	});
 
-	Ext.define('Ext.locale.ru.ux.form.RightsBitmaskField', {
-		override: 'Ext.ux.form.RightsBitmaskField',
+	Ext.define('Ext.locale.ru.NetProfile.form.field.RightsBitmaskField', {
+		override: 'NetProfile.form.field.RightsBitmaskField',
 		ownerText: 'Владелец',
 		groupText: 'Группа',
 		otherText: 'Прочие',

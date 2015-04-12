@@ -1,8 +1,8 @@
 /**
- * @class Ext.ux.form.MultiFieldItem
+ * @class NetProfile.form.field.MultiFieldItem
  * @extends Ext.form.FieldContainer
  */
-Ext.define('Ext.ux.form.MultiFieldItem', {
+Ext.define('NetProfile.form.field.MultiFieldItem', {
 	extend: 'Ext.form.FieldContainer',
 	mixins: {
 		field: 'Ext.form.field.Field'

@@ -1,8 +1,8 @@
 /**
- * @class Ext.ux.form.WeekDayField
+ * @class NetProfile.form.field.WeekDayField
  * @extends Ext.form.FieldContainer
  */
-Ext.define('Ext.ux.form.WeekDayField', {
+Ext.define('NetProfile.form.field.WeekDayField', {
 	extend: 'Ext.form.FieldContainer',
 	mixins: {
 		field: 'Ext.form.field.Field'

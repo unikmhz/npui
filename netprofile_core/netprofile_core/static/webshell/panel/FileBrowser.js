@@ -15,7 +15,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 		'NetProfile.form.FileUpload',
 		'NetProfile.store.core.File',
 		'NetProfile.view.FileIconView',
-		'Ext.ux.form.RightsBitmaskField'
+		'NetProfile.form.field.RightsBitmaskField'
 	],
 
 	border: 0,

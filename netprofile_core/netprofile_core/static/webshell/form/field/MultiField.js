@@ -1,14 +1,14 @@
 /**
- * @class Ext.ux.form.MultiField
+ * @class NetProfile.form.field.MultiField
  * @extends Ext.form.FieldContainer
  */
-Ext.define('Ext.ux.form.MultiField', {
+Ext.define('NetProfile.form.field.MultiField', {
 	extend: 'Ext.form.FieldContainer',
 	mixins: {
 		field: 'Ext.form.field.Field'
 	},
 	requires: [
-		'Ext.ux.form.MultiFieldItem'
+		'NetProfile.form.field.MultiFieldItem'
 	],
 	alias: 'widget.multifield',
 
@@ -167,7 +167,7 @@ Ext.define('Ext.ux.form.MultiField', {
 
 		this.items.each(function(it)
 		{
-			if(it instanceof Ext.ux.form.MultiFieldItem)
+			if(it instanceof NetProfile.form.field.MultiFieldItem)
 			{
 				v = it.getValue();
 				if((v !== null) && (v !== undefined))
@@ -196,7 +196,7 @@ Ext.define('Ext.ux.form.MultiField', {
 
 		this.items.each(function(it)
 		{
-			if(it instanceof Ext.ux.form.MultiFieldItem)
+			if(it instanceof NetProfile.form.field.MultiFieldItem)
 			{
 				if(!it.isValid())
 					valid = false;
