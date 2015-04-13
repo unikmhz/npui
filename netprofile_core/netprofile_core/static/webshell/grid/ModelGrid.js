@@ -278,6 +278,36 @@ Ext.define('NetProfile.grid.ModelGrid', {
 						col.hidden = true;
 				});
 			},
+			afterrender: function(grid)
+			{
+				grid.mon(grid.getEl(), 'mousewheel', function(ev)
+				{
+					var st = grid.getStore(),
+						maxpg = Math.ceil(st.getTotalCount() / st.getPageSize()),
+						delta;
+
+					if(ev.altKey)
+					{
+						ev.stopEvent();
+						delta = ev.getWheelDelta();
+
+						if((delta > 0) && (st.currentPage > 1))
+						{
+							if(ev.ctrlKey)
+								st.loadPage(1);
+							else
+								st.previousPage();
+						}
+						else if((delta < 0) && (st.currentPage < maxpg))
+						{
+							if(ev.ctrlKey)
+								st.loadPage(maxpg);
+							else
+								st.nextPage();
+						}
+					}
+				});
+			},
 			selectionchange: function(sel, recs, opts)
 			{
 				if(this.selectRow) // FIXME: add a way to open objects from modelselect
@@ -324,45 +354,6 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		if(create_kmap)
 		{
 			kmap_binds = [{
-				key: Ext.event.Event.LEFT,
-				fn: function(kc, ev)
-				{
-					var st = this.getStore();
-
-					if(st && ev.ctrlKey)
-					{
-						ev.stopEvent();
-						if(st.currentPage > 1)
-						{
-							if(ev.shiftKey)
-								st.loadPage(1);
-							else
-								st.previousPage();
-						}
-					}
-				},
-				scope: this
-			}, {
-				key: Ext.event.Event.RIGHT,
-				fn: function(kc, ev)
-				{
-					var st = this.getStore(),
-						maxpg = Math.ceil(st.getTotalCount() / st.pageSize);
-
-					if(st && ev.ctrlKey)
-					{
-						ev.stopEvent();
-						if(st.currentPage < maxpg)
-						{
-							if(ev.shiftKey)
-								st.loadPage(maxpg);
-							else
-								st.nextPage();
-						}
-					}
-				},
-				scope: this
-			}, {
 				key: 'r',
 				fn: function(kc, ev)
 				{
