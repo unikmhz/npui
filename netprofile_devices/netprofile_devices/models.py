@@ -1036,7 +1036,10 @@ class Device(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='devices'
+		backref=backref(
+			'devices',
+			passive_deletes=True
+		)
 	)
 	created_by = relationship(
 		'User',

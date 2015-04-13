@@ -293,6 +293,7 @@ class Entity(Base):
 						ExternalWizardField('PhysicalEntity', 'name_family'),
 						ExternalWizardField('PhysicalEntity', 'name_given'),
 						ExternalWizardField('PhysicalEntity', 'name_middle'),
+						ExternalWizardField('PhysicalEntity', 'gender'),
 						id='ent_physical1', title=_('Physical entity properties'),
 						on_prev='generic'
 					),
@@ -367,7 +368,7 @@ class Entity(Base):
 	parent_id = Column(
 		'parentid',
 		UInt32(),
-		ForeignKey('entities_def.entityid', name='entities_def_fk_parentid', onupdate='CASCADE'),
+		ForeignKey('entities_def.entityid', name='entities_def_fk_parentid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('Parent entity ID'),
 		nullable=True,
 		default=None,
@@ -483,7 +484,8 @@ class Entity(Base):
 	__mapper_args__ = {
 		'polymorphic_identity' : 'entity',
 		'polymorphic_on'       : type,
-		'with_polymorphic'     : '*'
+		'with_polymorphic'     : '*',
+		'confirm_deleted_rows' : False
 	}
 
 	state = relationship(
@@ -493,7 +495,9 @@ class Entity(Base):
 	)
 	children = relationship(
 		'Entity',
-		backref=backref('parent', remote_side=[id])
+		backref=backref('parent', remote_side=[id]),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
 	created_by = relationship(
 		'User',
@@ -1384,7 +1388,7 @@ class PhysicalEntity(Entity):
 				'form_view'     : (
 					'nick', 'parent', 'state', 'flags', 'contractid',
 					'name_family', 'name_given', 'name_middle',
-#					'phones', 'addresses',
+					'gender',
 					'email', 'icq', 'homepage', 'birthdate',
 					'pass_series', 'pass_num', 'pass_issuedate', 'pass_issuedby',
 					'descr'
@@ -1410,12 +1414,9 @@ class PhysicalEntity(Entity):
 					Step(
 						'contractid',
 						'name_family', 'name_given', 'name_middle',
+						'gender',
 						id='ent_physical1', title=_('Physical entity properties')
 					),
-#					Step(
-#						'house', 'entrance', 'floor', 'flat',
-#						id='ent_physical2', title=_('Physical entity properties')
-#					),
 					Step(
 						'pass_series', 'pass_num', 'pass_issuedby', 'pass_issuedate',
 						'email', 'icq', 'homepage', 'birthdate',

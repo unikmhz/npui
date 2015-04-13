@@ -585,7 +585,10 @@ class StashIO(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='stash_ios'
+		backref=backref(
+			'stash_ios',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):
@@ -749,7 +752,10 @@ class StashOperation(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='stash_operations'
+		backref=backref(
+			'stash_operations',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):
@@ -973,7 +979,10 @@ class FuturePayment(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='stash_futures'
+		backref=backref(
+			'stash_futures',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):

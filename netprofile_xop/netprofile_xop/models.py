@@ -263,7 +263,10 @@ class ExternalOperation(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='external_operations'
+		backref=backref(
+			'external_operations',
+			passive_deletes=True
+		)
 	)
 	stash = relationship(
 		'Stash',

@@ -57,6 +57,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 	canDelete: false,
 	canExport: true,
 	border: 0,
+	scrollable: 'vertical',
 	extraActions: [],
 
 	emptyText: 'Sorry, but no items were found.',

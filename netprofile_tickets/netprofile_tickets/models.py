@@ -1126,7 +1126,11 @@ class Ticket(Base):
 		'Entity',
 		innerjoin=True,
 		lazy='joined',
-		backref='tickets'
+		backref=backref(
+			'tickets',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
 	)
 	state = relationship(
 		'TicketState',
