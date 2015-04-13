@@ -2567,7 +2567,8 @@ class FileFolder(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('User')
+			'header_string' : _('User'),
+			'editor_config' : { 'allowBlank' : False }
 		}
 	)
 	group_id = Column(
@@ -2579,7 +2580,8 @@ class FileFolder(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Group')
+			'header_string' : _('Group'),
+			'editor_config' : { 'allowBlank' : False }
 		}
 	)
 	rights = Column(
@@ -3258,7 +3260,8 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('User')
+			'header_string' : _('User'),
+			'editor_config' : { 'allowBlank' : False }
 		}
 	)
 	group_id = Column(
@@ -3270,7 +3273,8 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Group')
+			'header_string' : _('Group'),
+			'editor_config' : { 'allowBlank' : False }
 		}
 	)
 	rights = Column(
