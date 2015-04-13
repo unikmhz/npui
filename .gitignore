@@ -66,6 +66,7 @@ run-celery-worker.sh
 # NetProfile-specific
 README-NP.rst
 LICENSE.txt
+/netprofile_entities/netprofile_entities/static/img/flags
 !**/extjs/build/
 !**/extjs/build/packages/*/build/
 !**/extensible/lib/
