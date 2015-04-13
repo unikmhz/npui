@@ -280,7 +280,7 @@ Ext.define('NetProfile.panel.Calendar', {
 					{
 						store = NetProfile.StoreManager.getStore(
 							mod, cls,
-							null, true, true
+							null, true
 						);
 						if(!store)
 							return false;

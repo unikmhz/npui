@@ -76,7 +76,7 @@ Ext.define('NetProfile.view.FileDownload', {
 		var me = this,
 			store = NetProfile.StoreManager.getStore(
 				'core', 'File',
-				null, true, true
+				null, true
 			);
 
 		if(!store)

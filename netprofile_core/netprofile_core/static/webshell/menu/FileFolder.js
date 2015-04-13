@@ -127,7 +127,7 @@ Ext.define('NetProfile.menu.FileFolder', {
 			dp = NetProfile.view.grid.core.FileFolder.prototype.detailPane,
 			store = NetProfile.StoreManager.getStore(
 				'core', 'FileFolder',
-				null, true, true
+				null, true
 			),
 			is_ro = false,
 			ff = { __ffilter: [] };

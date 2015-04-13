@@ -71,7 +71,7 @@ Ext.define('NetProfile.controller.DataStores', {
 			}
 		}
 	},
-	getStore: function(module, model, grid, nocache, noautoload, static_extra)
+	getStore: function(module, model, grid, nocache, static_extra)
 	{
 		var me = this,
 			store,
@@ -101,8 +101,6 @@ Ext.define('NetProfile.controller.DataStores', {
 					type: module + '_' + model
 				}
 			};
-			if(noautoload)
-				store_cfg['autoLoad'] = false;
 			if(grid)
 			{
 				store_cfg['listeners']['beforeload'] = {

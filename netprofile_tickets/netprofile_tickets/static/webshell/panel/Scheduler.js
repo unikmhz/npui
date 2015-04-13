@@ -75,7 +75,7 @@ Ext.define('NetProfile.tickets.panel.Scheduler', {
 		var sched_store = NetProfile.StoreManager.getStore(
 			'tickets',
 			'TicketScheduler',
-			null, true, false
+			null, true
 		);
 		this.items = [{
 			xtype: 'datepicker',

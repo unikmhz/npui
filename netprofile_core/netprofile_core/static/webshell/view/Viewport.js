@@ -28,11 +28,6 @@ Ext.define('NetProfile.view.Viewport', {
 		region: 'south',
 		split: false,
 		xtype: 'filedownload'
-	}],
-
-	initComponent: function()
-	{
-		this.callParent(arguments);
-	}
+	}]
 });
 

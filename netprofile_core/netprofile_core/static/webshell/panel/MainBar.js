@@ -21,12 +21,8 @@ Ext.define('NetProfile.panel.MainBar', {
 	removeWidget: function()
 	{
 		if(this.mainWidget)
-		{
-			Ext.destroy(this.remove(this.mainWidget));
-			this.mainWidget = null;
-			return true;
-		}
-		return false;
+			this.remove(this.mainWidget, true);
+		this.mainWidget = null;
 	},
 	replaceWith: function(comp)
 	{

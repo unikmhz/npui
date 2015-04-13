@@ -23,7 +23,7 @@ Ext.define('NetProfile.form.field.SimpleModelSelect', {
 			this.store = NetProfile.StoreManager.getStore(
 				this.apiModule,
 				this.apiClass,
-				null, true, true,
+				null, true,
 				this.extraParams
 			);
 		}

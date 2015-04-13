@@ -259,6 +259,11 @@ Ext.define('NetProfile.grid.ModelGrid', {
 			},
 			beforerender: function(grid)
 			{
+				var st = this.getStore();
+
+				if(st && !st.isLoaded() && !st.isLoading())
+					st.load();
+
 				Ext.Array.forEach(this.columns, function(col)
 				{
 					if(grid.hideColumns && Ext.Array.contains(grid.hideColumns, col.dataIndex))
@@ -434,7 +439,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 				store = NetProfile.StoreManager.getStore(
 					api_mod,
 					api_class,
-					null, true, true
+					null, true
 				);
 			if(!store)
 				return false;

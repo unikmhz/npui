@@ -96,7 +96,7 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 			store = NetProfile.StoreManager.getStore(
 				this.apiModule,
 				this.apiClass,
-				null, true, true
+				null, true
 			),
 			hf = this.up('form').down('field[name=' + this.hiddenField + ']');
 
