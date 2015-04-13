@@ -164,7 +164,7 @@ Ext.define('NetProfile.entities.grid.HistoryGrid', {
 				text: this.expandAllText,
 				handler: function(btn, ev)
 				{
-					this.getPlugin('rowxp').expandAll();
+					this.setAllExpanders(true);
 				},
 				scope: this
 			}, {
@@ -172,7 +172,7 @@ Ext.define('NetProfile.entities.grid.HistoryGrid', {
 				text: this.collapseAllText,
 				handler: function(btn, ev)
 				{
-					this.getPlugin('rowxp').collapseAll();
+					this.setAllExpanders(false);
 				},
 				scope: this
 			}]
@@ -240,6 +240,22 @@ Ext.define('NetProfile.entities.grid.HistoryGrid', {
 		if(fld_num)
 			xp.maxnum = fld_num.getValue();
 		prx.extraParams = xp;
+	},
+	setAllExpanders: function(value)
+	{
+		var me = this,
+			store = me.getStore(),
+			plug = me.getPlugin('rowxp'),
+			records = store.getRange(),
+			len = records.length,
+			i, rec;
+
+		for(i = 0; i < len; i++)
+		{
+			rec = records[i];
+			if(plug.recordsExpanded[rec.internalId] !== value)
+				plug.toggleRow(i, rec);
+		}
 	}
 });
 
