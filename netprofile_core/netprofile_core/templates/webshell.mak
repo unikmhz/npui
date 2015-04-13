@@ -496,6 +496,29 @@ Ext.require([
 			me.unblockLoad();
 		}
 	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16347.filters', {
+		override: 'Ext.grid.filters.Filters',
+		compatibility: '5.1.0.107',
+		initColumns: function()
+		{
+			var grid = this.grid,
+				store = grid.getStore(),
+				columns = grid.columnManager.getColumns(),
+				len = columns.length,
+				i, column,
+				filter, filterCollection, block;
+
+			// We start with filters defined on any columns.
+			for(i = 0; i < len; i++)
+			{
+				column = columns[i];
+				filter = column.filter;
+
+				if(filter && !filter.isGridFilter)
+					this.createColumnFilter(column);
+			}
+		}
+	});
 	Ext.define('Ext.overrides.bugfix.EXTJS16023', {
 		override: 'Ext.form.field.ComboBox',
 		compatibility: '5.1.0.107',

@@ -8,7 +8,7 @@
  * @protected
  */
 Ext.define('NetProfile.grid.filters.filter.TriFilter', {
-    extend: 'Ext.grid.filters.filter.TriFilter',
+    extend: 'Ext.grid.filters.filter.Base',
 
     /**
      * @property {String[]} menuItems
@@ -89,6 +89,104 @@ Ext.define('NetProfile.grid.filters.filter.TriFilter', {
             // TODO: maybe call this.activate?
         }
     },
+
+    /**
+     * @private
+     * This method will be called when a column's menu trigger is clicked as well as when a filter is
+     * activated. Depending on the caller, the UI and the store will be synced.
+     */
+    activate: function (showingMenu) {
+        var me = this,
+            filters = this.filter,
+            fields = me.fields,
+            filter, field, operator, value;
+
+        if (me.preventFilterRemoval) {
+            return;
+        }
+
+        for (operator in filters) {
+            filter = filters[operator];
+            field = fields[operator];
+            value = filter.getValue();
+
+            if (value) {
+                field.setValue(value);
+				if(!showingMenu || me.active)
+                    field.up('menuitem').setChecked(true, /*suppressEvents*/ true);
+
+                // Note that we only want to add store filters when they've been removed, which means that when Filter.showMenu() is called
+                // we DO NOT want to add a filter as they've already been added!
+                if (!showingMenu) {
+                    me.addStoreFilter(filter);
+                }
+            }
+        }
+    },
+
+    /**
+     * @private
+     * This method will be called when a filter is deactivated. The UI and the store will be synced.
+     */
+    deactivate: function () {
+        var me = this,
+            filters = me.filter,
+			menuItem = me.owner && me.owner.activeFilterMenuItem,
+            f, filter;
+
+        if (!me.hasActiveFilter() || me.preventFilterRemoval) {
+            return;
+        }
+
+        me.preventFilterRemoval = true;
+
+        for (f in filters) {
+            filter = filters[f];
+
+            if (filter.getValue()) {
+                me.removeStoreFilter(filter);
+            }
+        }
+
+        me.preventFilterRemoval = false;
+    },
+
+    hasActiveFilter: function () {
+        var active = false,
+            filters = this.filter,
+            filterCollection = this.getGridStore().getFilters(),
+            prefix = this.getBaseIdPrefix(),
+            filter;
+
+        if (filterCollection.length) {
+            for (filter in filters) {
+                if (filterCollection.get(prefix + '-' + filter)) {
+                    active = true;
+                    break;
+                }
+            }
+        }
+
+        return active;
+    },
+
+    onFilterRemove: function (operator) {
+        var me = this,
+            value;
+
+        // Filters can be removed at any time, even before a column filter's menu has been created (i.e.,
+        // store.clearFilter()). So, only call setValue() if the menu has been created since that method
+        // assumes that menu fields exist.
+        if (!me.menu && !me.hasActiveFilter()) {
+            me.active = false;
+        } else if (me.menu) {
+            value = {};
+            value[operator] = null;
+            me.setValue(value);
+        }
+    },
+
+    onStateRestore: Ext.emptyFn,
 
     setValue: function (value) {
         var me = this,

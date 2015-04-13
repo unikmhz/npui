@@ -95,7 +95,15 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		if(this.plugins && this.plugins.length)
 			plugins = Ext.Array.clone(this.plugins);
 		else
-			plugins = [ 'gridfilters' ];
+			plugins = [{
+				ptype: 'gridfilters',
+				defaultFilterTypes: {
+					'boolean' : 'boolean',
+					'int'     : 'npnumber',
+					'date'    : 'npdate',
+					'number'  : 'npnumber'
+				}
+			}];
 		if(this.simpleSearch)
 			plugins.push({
 				ptype: 'simplesearch'
