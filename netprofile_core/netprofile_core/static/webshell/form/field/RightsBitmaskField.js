@@ -48,8 +48,13 @@ Ext.define('NetProfile.form.field.RightsBitmaskField', {
 	initComponent: function()
 	{
 		var me = this,
-			xval = (parseInt(me.value) & 0x01ff);
+			xval = (parseInt(me.value) & 0x01ff),
+			cbcfg;
 
+		cbcfg = Ext.apply({
+			disabled: !!me.disabled,
+			readOnly: !!me.readOnly
+		}, me.checkBoxCfg);
 		me.value = xval;
 		me.items = [
 			Ext.apply({}, me.hLabelCfg),
@@ -57,17 +62,17 @@ Ext.define('NetProfile.form.field.RightsBitmaskField', {
 			Ext.apply({ text: me.groupText }, me.vLabelCfg),
 			Ext.apply({ text: me.otherText }, me.vLabelCfg),
 			Ext.apply({ text: me.readText }, me.hLabelCfg),
-			Ext.apply({ itemId: 'u_r' }, me.checkBoxCfg),
-			Ext.apply({ itemId: 'g_r' }, me.checkBoxCfg),
-			Ext.apply({ itemId: 'o_r' }, me.checkBoxCfg),
+			Ext.apply({ itemId: 'u_r' }, cbcfg),
+			Ext.apply({ itemId: 'g_r' }, cbcfg),
+			Ext.apply({ itemId: 'o_r' }, cbcfg),
 			Ext.apply({ text: me.writeText }, me.hLabelCfg),
-			Ext.apply({ itemId: 'u_w' }, me.checkBoxCfg),
-			Ext.apply({ itemId: 'g_w' }, me.checkBoxCfg),
-			Ext.apply({ itemId: 'o_w' }, me.checkBoxCfg),
+			Ext.apply({ itemId: 'u_w' }, cbcfg),
+			Ext.apply({ itemId: 'g_w' }, cbcfg),
+			Ext.apply({ itemId: 'o_w' }, cbcfg),
 			Ext.apply({ text: (me.isDirectory ? me.traverseText : me.executeText) }, me.hLabelCfg),
-			Ext.apply({ itemId: 'u_x' }, me.checkBoxCfg),
-			Ext.apply({ itemId: 'g_x' }, me.checkBoxCfg),
-			Ext.apply({ itemId: 'o_x' }, me.checkBoxCfg)
+			Ext.apply({ itemId: 'u_x' }, cbcfg),
+			Ext.apply({ itemId: 'g_x' }, cbcfg),
+			Ext.apply({ itemId: 'o_x' }, cbcfg)
 		];
 		me.callParent(arguments);
 		Ext.Array.forEach(me.query('checkbox'), function(cb)

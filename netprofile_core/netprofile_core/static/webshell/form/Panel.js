@@ -171,7 +171,7 @@ Ext.define('NetProfile.form.Panel', {
 			me.remoteValidation = false;
 		me.removeAll(true);
 		if(typeof(data.ro) === 'boolean')
-			ro = me.readOnly = data.ro;
+			ro = me.readOnly = !!data.ro || (me.record && !!me.record.readOnly);
 		st.formdef[this.formCls] = data;
 		me.suspendLayouts();
 		Ext.Array.forEach(data.fields, function(fld)
@@ -234,7 +234,6 @@ Ext.define('NetProfile.form.Panel', {
 					}
 				});
 			}
-			ro = ro || !!me.record.readOnly;
 			me.suspendEvents();
 			me.getForm().loadRecord(me.record);
 			me.resumeEvents();
