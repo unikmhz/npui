@@ -69,7 +69,7 @@ Ext.define('NetProfile.tab.PropBar', {
 	clearState: function()
 	{
 		this.tabCache = {};
-		Ext.destroy(this.removeAll());
+		this.removeAll(true);
 	},
 	clearAll: function()
 	{
@@ -163,10 +163,11 @@ Ext.define('NetProfile.tab.PropBar', {
 	},
 	addRecordTab: function(module, model, cfg, record)
 	{
-		var tab, rec_name;
+		var rec_id = record.entityName + '.' + record.getId(),
+			tab, rec_name;
 
-		if(this.tabCache.hasOwnProperty(record.id))
-			tab = this.tabCache[record.id];
+		if(this.tabCache.hasOwnProperty(rec_id))
+			tab = this.tabCache[rec_id];
 		else
 		{
 			rec_name = record.get('__str__');
@@ -186,14 +187,14 @@ Ext.define('NetProfile.tab.PropBar', {
 					{
 						if(!comp.record)
 							return true;
-						if(ct.tabCache.hasOwnProperty(record.id))
-							delete ct.tabCache[record.id];
+						if(ct.tabCache.hasOwnProperty(rec_id))
+							delete ct.tabCache[rec_id];
 						return true;
 					},
 					scope: this
 				}
 			});
-			this.tabCache[record.id] = tab = this.add(cfg);
+			this.tabCache[rec_id] = tab = this.add(cfg);
 			tab.apiModule = module;
 			tab.apiClass = model;
 		}
