@@ -283,14 +283,17 @@ Ext.define('NetProfile.grid.ModelGrid', {
 			},
 			afterrender: function(grid)
 			{
-				grid.on('mousewheel', function(ev)
+				grid.on('wheel', function(ev)
 				{
 					var delta;
 
 					if(ev.altKey)
 					{
 						ev.stopEvent();
-						delta = ev.getWheelDelta();
+						if(Ext.isGecko)
+							delta = -ev.browserEvent.deltaY;
+						else
+							delta = ev.getWheelDelta();
 						if(ev.ctrlKey)
 							delta *= 1000;
 						grid._scrollDelta += delta;
