@@ -752,17 +752,25 @@ Ext.require([
 				allowSingle: false
 			}
 		},
+% if menu.custom_root:
+		root: ${menu.custom_root | n,jsone},
+% else:
 		root: {
 			expanded: true
 		},
+% endif
 		autoLoad: false,
 		autoSync: false,
+% else:
+% if menu.custom_root:
+		root: ${menu.custom_root | n,jsone},
 % else:
 		root: {
 			expanded: true,
 			id: 'top',
 			children: ${modules.get_menu_tree(req, menu.name) | n,jsone}
 		},
+% endif
 % endif
 		storeId: 'npstore_menu_${menu.name}'
 	});\

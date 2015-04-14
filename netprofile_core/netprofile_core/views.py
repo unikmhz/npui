@@ -289,8 +289,8 @@ def file_mnt(request):
 		path=path,
 		username=request.user.login
 	)
-	resp.headerlist.append(('X-Frame-Options', 'SAMEORIGIN'))
 	resp.make_body()
+	resp.headerlist.append(('X-Frame-Options', 'SAMEORIGIN'))
 	return resp
 
 @view_config(route_name='core.export', permission='USAGE')

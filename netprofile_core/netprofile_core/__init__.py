@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -43,7 +43,10 @@ from .dav import (
 	DAVPluginGroups
 )
 
-from pyramid.i18n import TranslationStringFactory
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
 
 _ = TranslationStringFactory('netprofile_core')
 
@@ -466,19 +469,14 @@ class Module(ModuleBase):
 
 		sess.add(admin)
 
-	def get_menus(self):
+	def get_menus(self, request):
+		loc = get_localizer(request)
 		return (
-			Menu('modules', title=_('Modules'), order=10),
-			Menu('users', title=_('Users'), order=20, direct='users', options={ # FIXME: add permission= ?
+			Menu('modules', title=loc.translate(_('Modules')), order=10),
+			Menu('users', title=loc.translate(_('Users')), order=20, direct='users', options={ # FIXME: add permission= ?
 				'disableSelection' : True
 			}),
-			Menu('folders', title=_('Folders'), order=30, direct='folders', permission='FILES_LIST', options={
-				'root'        : {
-					'id'       : 'root',
-					'text'     : _('Root Folder'),
-					'xhandler' : 'NetProfile.controller.FileBrowser',
-					'expanded' : True
-				},
+			Menu('folders', title=loc.translate(_('Folders')), order=30, direct='folders', permission='FILES_LIST', options={
 				'rootVisible' : True,
 				'hideHeaders' : True,
 				'columns'     : ({
@@ -509,9 +507,14 @@ class Module(ModuleBase):
 				{ 'name' : 'allow_write',    'type' : 'boolean' },
 				{ 'name' : 'allow_traverse', 'type' : 'boolean' },
 				{ 'name' : 'parent_write',   'type' : 'boolean' }
-			)),
-			Menu('settings', title=_('Settings'), order=40, direct='settings'),
-			Menu('admin', title=_('Administration'), order=50, permission='BASE_ADMIN')
+			), custom_root={
+				'id'       : 'root',
+				'text'     : loc.translate(_('Root Folder')),
+				'xhandler' : 'NetProfile.controller.FileBrowser',
+				'expanded' : True
+			}),
+			Menu('settings', title=loc.translate(_('Settings')), order=40, direct='settings'),
+			Menu('admin', title=loc.translate(_('Administration')), order=50, permission='BASE_ADMIN')
 		)
 
 	def get_js(self, request):

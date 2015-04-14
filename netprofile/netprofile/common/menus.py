@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: UI menu setup and handling
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,17 +28,7 @@ from __future__ import (
 )
 
 from pyramid.threadlocal import get_current_request
-from pyramid.i18n import (
-	TranslationString,
-	get_localizer
-)
-
-def _trans_deep(loc, node):
-	for k, v in node.items():
-		if isinstance(v, TranslationString):
-			node[k] = loc.translate(v)
-		if isinstance(v, dict):
-			_trans_deep(loc, v)
+from pyramid.i18n import get_localizer
 
 class Menu(object):
 	"""
@@ -53,8 +43,9 @@ class Menu(object):
 		self.url = kwargs.get('url')
 		self.options = kwargs.get('options')
 		self.extra_fields = kwargs.get('extra_fields', ())
+		self.custom_root = kwargs.get('custom_root')
 
-	def get_data(self, req):
+	def get_data(self):
 		ttl = self.title
 		opt = self.options
 		ret = {
@@ -65,15 +56,10 @@ class Menu(object):
 			'url'     : self.url,
 			'options' : opt
 		}
-		if req is not None:
-			loc = get_localizer(req)
-			_trans_deep(loc, ret)
 		if self.perm is not None:
 			ret['perm'] = self.perm
 		return ret
 
 	def __json__(self, req=None):
-		if req is None:
-			req = get_current_request()
-		return self.get_data(req)
+		return self.get_data()
 

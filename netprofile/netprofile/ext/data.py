@@ -2414,15 +2414,13 @@ class ExtBrowser(object):
 
 	def get_menu_data(self, request):
 		ret = []
-		for mname, menu in self.mmgr.menus.items():
+		for menu in self.mmgr.menu_generator(request):
 			if menu.perm and (not has_permission(menu.perm, request.context, request)):
 				continue
 			ret.append(menu)
 		return sorted(ret, key=lambda m: m.order)
 
 	def get_menu_tree(self, req, name):
-		if name not in self.mmgr.menus:
-			raise KeyError('Can\'t find menu \'%s\'' % name)
 		menu = []
 		external = {}
 		for module in self:
