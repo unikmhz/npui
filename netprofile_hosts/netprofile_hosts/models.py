@@ -137,7 +137,6 @@ class Host(Base):
 				'cap_delete'    : 'HOSTS_DELETE',
 				'menu_name'     : _('Hosts'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 10,
 				'menu_main'     : True,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : (
@@ -391,7 +390,6 @@ class HostGroup(Base):
 				'cap_delete'    : 'HOSTS_GROUPS_DELETE',
 				'menu_name'     : _('Host Groups'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'public'),
 				'form_view'     : (
@@ -544,7 +542,6 @@ class ServiceType(Base):
 				'cap_delete'    : 'SERVICES_TYPES_DELETE',
 				'menu_name'     : _('Service Types'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 20,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('abbrev', 'name', 'proto', 'port_start', 'port_end'),
 				'form_view'     : ('abbrev', 'name', 'proto', 'port_start', 'port_end', 'alias'),

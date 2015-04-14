@@ -90,7 +90,6 @@ class ServerType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Server Types'),
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name', 'descr'),
@@ -188,7 +187,6 @@ class Server(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Servers'),
-				'menu_order'    : 20,
 				'grid_view'     : ('host', 'type'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -306,7 +304,6 @@ class ServerParameter(Base):
 				'cap_delete'    : 'SRV_EDIT',
 
 				'menu_name'     : _('Server Parameters'),
-				'menu_order'    : 20,
 				'grid_view'     : ('server', 'name', 'value'),
 
 				'create_wizard' : SimpleWizard(title=_('Add new parameter'))

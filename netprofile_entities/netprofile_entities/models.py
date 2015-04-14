@@ -241,7 +241,6 @@ class Entity(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Entities'),
 				'menu_main'     : True,
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -662,7 +661,6 @@ class EntityState(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Entity States'),
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name', 'descr'),
@@ -724,7 +722,6 @@ class EntityFlagType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Entity Flags'),
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name', 'descr'),
@@ -1371,7 +1368,6 @@ class PhysicalEntity(Entity):
 
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Physical entities'),
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1643,7 +1639,6 @@ class LegalEntity(Entity):
 
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Legal entities'),
-				'menu_order'    : 20,
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1929,7 +1924,6 @@ class StructuralEntity(Entity):
 
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Structural entities'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -2026,7 +2020,6 @@ class ExternalEntity(Entity):
 
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('External entities'),
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(

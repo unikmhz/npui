@@ -140,7 +140,6 @@ class ExternalOperation(Base):
 				'menu_name'    : _('External Operations'),
 				'menu_main'	   : True,
 				'show_in_menu' : 'modules',
-				'menu_order'   : 50,
 				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' },),
 				'grid_view'    : ( 'provider', 'ts', 'entity', 'diff', 'state'),
 				'form_view'    : (
@@ -331,7 +330,6 @@ class ExternalOperationProvider(Base):
 				'cap_delete'   : 'STASHES_IOTYPES_DELETE',
 				'menu_name'     : _('Providers'),
 				'show_in_menu' : 'admin',
-				'menu_order'   : 50,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'sname', 'gwclass', 'enabled'),
 				'form_view'    : (

@@ -161,7 +161,6 @@ class TicketOrigin(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Origins'),
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name', 'descr'),
@@ -231,7 +230,6 @@ class TicketState(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket States'),
-				'menu_order'    : 20,
 				'default_sort'  : (
 					{ 'property': 'title' ,'direction': 'ASC' },
 					{ 'property': 'subtitle' ,'direction': 'ASC' }
@@ -408,7 +406,6 @@ class TicketStateTransition(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Transitions'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name', 'from_state', 'to_state'),
 				'form_view'     : ('name', 'from_state', 'to_state', 'reassign_to', 'descr'),
@@ -523,7 +520,6 @@ class TicketFlagType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Flags'),
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name', 'descr'),
@@ -844,7 +840,6 @@ class Ticket(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Tickets'),
 				'menu_main'     : True,
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'ctime' ,'direction': 'DESC' },),
 				'grid_view'     : (
 					'ticketid', 'entity', 'state',
@@ -1291,7 +1286,6 @@ class TicketTemplate(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Templates'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : (
@@ -1535,7 +1529,6 @@ class TicketChangeField(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Change Fields'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'easy_search'   : ('name',),
@@ -1876,7 +1869,6 @@ class TicketScheduler(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Schedulers'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : (

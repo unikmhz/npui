@@ -125,7 +125,6 @@ class Domain(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Domains'),
 				'menu_main'     : True,
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -428,7 +427,6 @@ class DomainAlias(Base):
 				'cap_delete'    : 'DOMAINS_DELETE',
 
 				'menu_name'     : _('Aliases'),
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -538,7 +536,6 @@ class DomainTXTRecord(Base):
 				'cap_edit'      : 'DOMAINS_EDIT',
 				'cap_delete'    : 'DOMAINS_EDIT',
 				'menu_name'     : _('TXT Records'),
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name', 'domain', 'value'),
 				'form_view'		: ('name', 'domain', 'ttl', 'vis', 'value'),
@@ -646,7 +643,6 @@ class DomainServiceType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Domain Service Types'),
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name', 'unique'),
 				'easy_search'   : ('name',),

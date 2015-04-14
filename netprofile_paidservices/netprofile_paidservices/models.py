@@ -128,7 +128,6 @@ class PaidServiceType(Base):
 				'menu_main'     : True,
 				'menu_name'     : _('Paid Services'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ( 'name', 'isum', 'qsum', 'qp_amount', 'qp_unit', 'qp_type'),
 				'form_view'     : (

@@ -196,7 +196,6 @@ class AccessEntity(Entity):
 
 				'show_in_menu' : 'modules',
 				'menu_name'    : _('Access Entities'),
-				'menu_order'   : 50,
 				'menu_parent'  : 'entities',
 				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'    : (
@@ -741,7 +740,6 @@ class AccessEntityLinkType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Link Types'),
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('ltid', 'name'),
 				'form_view'     : ('name', 'descr'),

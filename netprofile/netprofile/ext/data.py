@@ -1371,10 +1371,6 @@ class ExtModel(object):
 		return self.model.__table__.info.get('menu_name', self.model.__name__)
 
 	@property
-	def menu_order(self):
-		return self.model.__table__.info.get('menu_order', 10)
-
-	@property
 	def menu_section(self):
 		return self.model.__table__.info.get('menu_section')
 
