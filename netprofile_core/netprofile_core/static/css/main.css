@@ -29,6 +29,42 @@ h2
 	margin:10px 0;
 }
 
+div#splash
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	color: #fff;
+	background: #5080b0;
+	z-index: 1000;
+}
+
+div#splash div.splashcont
+{
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	width: 6cm;
+	height: 6cm;
+	margin-top: -3cm;
+	margin-left: -3cm;
+	text-align: center;
+}
+
+div#splash div.splashcont img
+{
+	width: 5cm;
+	height: 5cm;
+}
+
+div#splash div.splashcont h1
+{
+	font-family: helvetica,tahoma,verdana,sans-serif;
+	font-size: 18pt;
+}
+
 .x-action-col-icon
 {
 	display: inline-block;
@@ -79,23 +115,9 @@ h2
 	vertical-align: bottom;
 }
 
-.x-grid-checkheader, .x-boundlist-item .x-combo-check
+.np-valign-top
 {
-	height: 14px;
-	background-image: url('../img/unchecked.gif');
-	background-position: 50% -2px;
-	background-repeat: no-repeat;
-	background-color: transparent;
-}
-
-.x-grid-checkheader-checked, .x-boundlist-selected .x-combo-check
-{
-	background-image: url('../img/checked.gif');
-}
-
-.x-grid-checkheader-editor .x-form-cb-wrap
-{
-	text-align: center;
+	vertical-align: top;
 }
 
 .ux-timefield label, .ux-timefield input
@@ -109,35 +131,9 @@ h2
 	padding: 6px;
 }
 
-.ux-filtered-column
-{
-	font-style: italic;
-	font-weight: bold;
-}
-
-.ux-gridfilter-text-icon
+.x-grid-filters-find
 {
 	background-image: url(../img/find.png) !important;
-}
-
-.ux-rangemenu-icon
-{
-	margin-top: 0;
-}
-
-.ux-rangemenu-gt
-{
-	background-image: url(../img/greater_than.png) !important;
-}
-
-.ux-rangemenu-lt
-{
-	background-image: url(../img/less_than.png) !important;
-}
-
-.ux-rangemenu-eq
-{
-	background-image: url(../img/equals.png) !important;
 }
 
 .record-tab-hdl span.x-tab-icon
@@ -150,6 +146,16 @@ h2
 	padding-top: 2px;
 	height: 16px;
 	position: relative;
+}
+
+.np-file-iview, .np-file-lview
+{
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 
 .np-file-iview .x-view-empty, .np-file-lview .x-view-empty
@@ -238,12 +244,14 @@ a.np-file-wrap span
 {
 	width: 48px;
 	height: 48px;
+	pointer-events: none;
 }
 
 .np-file-lview .np-file-wrap .np-file-icon img
 {
 	width: 16px;
 	height: 16px;
+	pointer-events: none;
 }
 
 .np-file-iview .np-file-wrap span, .x-dd-drag-ghost .np-file-wrap span
@@ -307,7 +315,7 @@ a.np-file-wrap span
 
 .np-file-upload-cont .np-file-upload-close
 {
-	padding: 3px 0px;
+	padding: 3px 0px 3px 3px;
 }
 
 .np-console-icon
@@ -341,17 +349,15 @@ table.np-rights-tbl td.vlabel
 	min-width: 4em;
 }
 
-div.np-propbar-tabbar div.x-tab-bar-body
+div#npws_propbar div.np-subtab
 {
-	border-top-color: #dfe8f6;
-	border-left: 0;
-	border-right: 0;
+	border-left-width: 1px;
+	border-left-style: solid;
 }
 
-div.np-propbar-tabbar div.x-tab-bar-strip
+div#npws_propbar div.np-subtab div.x-tab-bar-body
 {
-	border-left: 0;
-	border-right: 0;
+	padding-top: 2px;
 }
 
 .x-tree-icon-parent
@@ -364,60 +370,14 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 	background-image: url(../img/folder_open.png);
 }
 
+.tinymce-hide-border
+{
+	border-width: 0px;
+}
+
 .x-cons-data strong
 {
 	font-weight: bold;
-}
-
-.msg .x-box-mc
-{
-	font-size: 14px;
-}
-
-#msg-div
-{
-	position: absolute;
-	left: 10px;
-	top: 10px;
-	width: 300px;
-	z-index: 20000;
-}
-
-#msg-div .msg
-{
-	border-radius: 8px;
-	-moz-border-radius: 8px;
-	background: #f6f6f6;
-	border: 2px solid #ccc;
-	margin-top: 2px;
-	padding: 10px 15px;
-	color: #555;
-}
-
-#msg-div .warning
-{
-	background: #fdff8b;
-	border: 2px solid #e61f00;
-	color: #e61f00;
-}
-
-#msg-div .error
-{
-	background: #cf0000;
-	border: 2px solid #fee;
-	color: #fff;
-}
-
-#msg-div .msg h3
-{
-	margin: 0 0 8px;
-	font-weight: bold;
-	font-size: 15px;
-}
-
-#msg-div .msg p
-{
-	margin: 0;
 }
 
 .ico-accept       { background-image: url(../img/accept.png) !important; }
@@ -438,6 +398,7 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 .ico-doc-ren      { background-image: url(../img/doc_rename.png) !important; }
 .ico-download     { background-image: url(../img/download.png) !important; }
 .ico-edit         { background-image: url(../img/edit.png) !important; }
+.ico-error        { background-image: url(../img/error.png) !important; }
 .ico-exit         { background-image: url(../img/exit.png) !important; }
 .ico-expand       { background-image: url(../img/expand.png) !important; }
 .ico-folder-del   { background-image: url(../img/folder_delete.png) !important; }
@@ -445,6 +406,7 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 .ico-folder-ren   { background-image: url(../img/folder_rename.png) !important; }
 .ico-folder-tree  { background-image: url(../img/folder_tree.png) !important; }
 .ico-find         { background-image: url(../img/find.png) !important; }
+.ico-find-plus    { background-image: url(../img/find_plus.png) !important; }
 .ico-first        { background-image: url(../img/first.png) !important; }
 .ico-home         { background-image: url(../img/home.png) !important; }
 .ico-info         { background-image: url(../img/info.png) !important; }
@@ -483,6 +445,7 @@ div.np-propbar-tabbar div.x-tab-bar-strip
 .ico-upload       { background-image: url(../img/upload.png) !important; }
 .ico-undo         { background-image: url(../img/undo.png) !important; }
 .ico-view         { background-image: url(../img/view.png) !important; }
+.ico-warning      { background-image: url(../img/warning.png) !important; }
 
 .ico-status-away    { background-image: url(../img/status_away.png) !important; }
 .ico-status-busy    { background-image: url(../img/status_busy.png) !important; }

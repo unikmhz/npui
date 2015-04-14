@@ -168,7 +168,6 @@ class DeviceTypeManufacturer(Base):
 				'cap_delete'    : 'DEVICETYPES_MANUFACTURERS_DELETE',
 				'menu_name'     : _('Manufacturers'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'sname' ,'direction': 'ASC' },),
 				'grid_view'     : ('sname', 'name'),
 				'form_view'     : ('sname', 'name', 'website'),
@@ -241,7 +240,6 @@ class DeviceFlagType(Base):
 				'cap_delete'    : 'DEVICES_FLAGTYPES_DELETE',
 				'menu_name'     : _('Device Flags'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name', 'descr'),
@@ -318,7 +316,6 @@ class DeviceTypeFlagType(Base):
 				'cap_delete'    : 'DEVICETYPES_FLAGTYPES_DELETE',
 				'menu_name'     : _('Type Flags'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 20,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name', 'descr'),
@@ -452,7 +449,6 @@ class DeviceTypeCategory(Base):
 				'cap_delete'    : 'DEVICETYPES_CATEGORIES_DELETE',
 				'menu_name'     : _('Categories'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name',),
@@ -508,7 +504,6 @@ class DeviceType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Types'),
-				'menu_order'    : 50,
 
 				#TODO HERE WIZARD AND VIEW CUSTOMIZATION
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
@@ -688,7 +683,6 @@ class SimpleDeviceType(DeviceType):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Simple Devices'),
-				'menu_order'    : 10,
 				'menu_parent'   : 'devicetype',
 
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
@@ -739,7 +733,6 @@ class NetworkDeviceType(DeviceType):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Network Devices'),
-				'menu_order'    : 20,
 				'menu_parent'   : 'devicetype',
 
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
@@ -838,7 +831,6 @@ class Device(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Devices'),
 				'menu_main'     : True,
-				'menu_order'    : 5,
 				'default_sort'  : ({ 'property': 'serial' ,'direction': 'ASC' },),
 				'grid_view'     : ('device_type', 'serial', 'place', 'entity', 'oper'),
 				'form_view'     : (
@@ -1036,7 +1028,10 @@ class Device(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='devices'
+		backref=backref(
+			'devices',
+			passive_deletes=True
+		)
 	)
 	created_by = relationship(
 		'User',
@@ -1236,7 +1231,6 @@ class SimpleDevice(Device):
 
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Simple Devices'),
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'serial' ,'direction': 'ASC' },),
 				'grid_view'     : ('device_type', 'serial', 'place', 'entity', 'oper'),
 				'form_view'     : (
@@ -1346,7 +1340,6 @@ class NetworkDevice(Device):
 
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Network Devices'),
-				'menu_order'    : 20,
 				'default_sort'  : ({ 'property': 'serial' ,'direction': 'ASC' },),
 				'grid_view'     : ('device_type', 'serial', 'place', 'entity', 'host', 'oper'),
 				'form_view'     : (

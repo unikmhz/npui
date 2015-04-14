@@ -64,7 +64,7 @@ FORM_DATA_KEYS = frozenset([
 
 # response to a file upload cannot be return as application/json, ExtDirect
 # defines a special html response body for this use case where the response
-# data is added to a textarea for faster JS-side decoding (since etxtarea text
+# data is added to a textarea for faster JS-side decoding (since textarea text
 # is not a DOM node)
 FORM_SUBMIT_RESPONSE_TPL = '<html><body><textarea>%s</textarea></body></html>'
 
@@ -72,6 +72,7 @@ def get_ext_csrf(request):
 	return request.headers.get('X-CSRFToken', '')
 
 def _mk_cb_key(action_name, method_name):
+	""" helper function to create a unique actions dict key """
 	return action_name + '#' + method_name
 
 class JsonReprEncoder(json.JSONEncoder):
@@ -79,6 +80,10 @@ class JsonReprEncoder(json.JSONEncoder):
 	A convenience wrapper for classes that support __json__().
 	"""
 	def default(self, obj):
+		if isinstance(obj, Response) and obj.content_type == 'application/json':
+			# return decoded response body in case it's an already
+			# rendered exception view
+			return json.loads(obj.unicode_body)
 		jr = getattr(obj, '__json__', None)
 		if jr is not None:
 			return jr()
@@ -105,10 +110,16 @@ class IExtDirectRouter(Interface):
 	"""
 	pass
 
+class AccessDeniedException(Exception):
+	"""
+	Marker exception for failed permission checks.
+	"""
+	pass
+
 @implementer(IExtDirectRouter)
 class ExtDirectRouter(object):
 	"""
-	Handle ExtDirect API respresentation and routing.
+	Handles ExtDirect API respresentation and routing.
 
 	The ExtDirectRouter accepts a number of arguments: ``app``,
 	``api_path``, ``router_path``, ``namespace``, ``descriptor``
@@ -163,7 +174,7 @@ class ExtDirectRouter(object):
 
 	def add_action(self, action_name, **settings):
 		"""
-		Register an action.
+		Registers an action.
 
 		``action_name``: Action name
 
@@ -372,7 +383,7 @@ class ExtDirectRouter(object):
 
 		try:
 			if not permission_ok:
-				raise Exception('Access denied')
+				raise AccessDeniedException('Access denied')
 			ret['result'] = callback(*params)
 		except Exception as e:
 			# Let a user defined view for specific exception prevent returning
@@ -401,7 +412,6 @@ class ExtDirectRouter(object):
 				# if pyramid_debugtoolbar is enabled, generate an interactive page
 				# and include the url to access it in the ext direct Exception response text
 				from pyramid_debugtoolbar.tbtools import get_traceback
-				from pyramid_debugtoolbar.utils import EXC_ROUTE_NAME
 				import sys
 				exc_history = request.exc_history
 				if exc_history is not None:
@@ -414,11 +424,11 @@ class ExtDirectRouter(object):
 					exc_history.tracebacks[tb.id] = tb
 
 					qs = {
-						'token' : exc_history.token,
-						'tb'    : str(tb.id)
+						'tb'    : str(tb.id),
+						'token' : request.registry.pdtb_token
 					}
-					msg = 'Exception: traceback url: %s'
-					exc_url = request.route_url(EXC_ROUTE_NAME, _query=qs)
+					msg = 'Exception: traceback URL: %s'
+					exc_url = request.route_url('debugtoolbar', subpath=('exception',), _query=qs)
 					exc_msg = msg % (exc_url)
 					ret['message'] = exc_msg
 		return ret
@@ -530,24 +540,23 @@ def is_form_submit(request):
 
 def parse_extdirect_form_submit(request):
 	"""
-	Extract ExtDirect remoting parameters from request
+	Extracts ExtDirect remoting parameters from request
 	which are provided by a form submission.
 	"""
 	params = request.params
 	action = params.get('extAction')
 	method = params.get('extMethod')
 	tid = params.get('extTID')
-	data = dict(
-		(key, value)
-		for (key, value) in params.items()
-		if key not in FORM_DATA_KEYS
-	)
+	data = dict()
+	for key in params:
+		if key not in FORM_DATA_KEYS:
+			data[key] = params[key]
 	return [(action, method, [data], tid)]
 
 
 def parse_extdirect_request(request):
 	"""
-	Extract ExtDirect remoting parameters from request
+	Extracts ExtDirect remoting parameters from request
 	which are provided by an AJAX request.
 	"""
 	body = request.body
@@ -566,7 +575,7 @@ def parse_extdirect_request(request):
 
 def api_view(request):
 	"""
-	Render the API.
+	Renders the API.
 	"""
 	extdirect = request.registry.getUtility(IExtDirectRouter)
 	body = extdirect.dump_api(request)
@@ -575,7 +584,7 @@ def api_view(request):
 
 def router_view(request):
 	"""
-	Render the result of an ExtDirect call.
+	Renders the result of an ExtDirect call.
 	"""
 	extdirect = request.registry.getUtility(IExtDirectRouter)
 	(body, is_form_data) = extdirect.route(request)

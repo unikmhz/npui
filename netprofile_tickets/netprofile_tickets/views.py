@@ -33,6 +33,7 @@ if PY3:
 else:
 	from cgi import escape as html_escape
 
+import collections
 import datetime as dt
 from dateutil.parser import parse as dparse
 
@@ -138,17 +139,20 @@ def dpane_tickets(model, request):
 		'layout' : {
 			'type'    : 'hbox',
 			'align'   : 'stretch',
-			'padding' : 4
+			'padding' : 0
 		},
 		'items' : [{
-			'xtype' : 'npform',
-			'flex'  : 2
+			'xtype'   : 'npform',
+			'flex'    : 2,
+			'padding' : '4 0 4 4'
 		}, {
-			'xtype' : 'splitter'
+			'xtype'   : 'splitter'
 		}, {
-			'xtype'  : 'tabpanel',
-			'flex'   : 3,
-			'items'  : tabs
+			'xtype'   : 'tabpanel',
+			'cls'     : 'np-subtab',
+			'border'  : False,
+			'flex'    : 3,
+			'items'   : tabs
 		}]
 	}
 	request.run_hook(
@@ -475,10 +479,18 @@ def _cal_calendars(cals, params, req):
 def _cal_events(evts, params, req):
 	if not has_permission('TICKETS_LIST', req.context, req):
 		return
+	# TODO: fancy permissions/ACLs
 	ts_from = params.get('startDate')
 	ts_to = params.get('endDate')
 	if (not ts_from) or (not ts_to):
 		return
+	cals = params.get('cals')
+	if cals:
+		if isinstance(cals, collections.Iterable):
+			if _cal['id'] not in cals:
+				return
+		else:
+			return
 	ts_from = dparse(ts_from).replace(hour=0, minute=0, second=0, microsecond=0)
 	ts_to = dparse(ts_to).replace(hour=23, minute=59, second=59, microsecond=999999)
 	sess = DBSession()
@@ -504,9 +516,6 @@ def _cal_events(evts, params, req):
 
 @register_hook('core.calendar.events.update')
 def _cal_events_update(params, req):
-	cal_id = params.get('CalendarId', '')
-	if cal_id != _cal['id']:
-		return
 	if 'EventId' not in params:
 		return
 	evtype, evid = params['EventId'].split('-')
@@ -515,6 +524,7 @@ def _cal_events_update(params, req):
 	evid = int(evid)
 	if not has_permission('TICKETS_UPDATE', req.context, req):
 		return
+	# TODO: fancy permissions/ACLs
 	sess = DBSession()
 	tkt = sess.query(Ticket).get(evid)
 	if tkt is None:
@@ -549,7 +559,7 @@ class ClientRootFactory(RootFactory):
 				return tkt
 			except NoResultFound:
 				raise KeyError('Invalid ticket ID')
-		except ValueError:
+		except (TypeError, ValueError):
 			pass
 		raise KeyError('Invalid URL')
 
@@ -568,7 +578,7 @@ def _tickets_upload_file(obj, mode, req, sess, tpldef):
 		return False
 	try:
 		ticket_id = int(req.POST.get('ticketid', ''))
-	except ValueError:
+	except (TypeError, ValueError):
 		return False
 	tkt = sess.query(Ticket).get(ticket_id)
 	if not tkt:
@@ -597,7 +607,7 @@ def _tickets_list_files(mode, req, sess, tpldef):
 		return False
 	try:
 		ticket_id = int(req.GET.get('ticketid', ''))
-	except ValueError:
+	except (TypeError, ValueError):
 		return False
 	tkt = sess.query(Ticket).get(ticket_id)
 	if not tkt:

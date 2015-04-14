@@ -2,7 +2,7 @@ Ext.define('NetProfile.controller.FileBrowser', {
 	extend: 'Ext.util.Observable',
 	requires: [
 		'NetProfile.store.core.FileFolder',
-		'NetProfile.view.FileBrowser'
+		'NetProfile.panel.FileBrowser'
 	],
 	statics: {
 		folderStore: null
@@ -36,9 +36,9 @@ Ext.define('NetProfile.controller.FileBrowser', {
 		if(!mainbar)
 			throw 'Unable to locate interface';
 		fb = mainbar.mainWidget;
-		if(!fb || !(fb instanceof NetProfile.view.FileBrowser))
+		if(!fb || !(fb instanceof NetProfile.panel.FileBrowser))
 		{
-			fb = Ext.create('NetProfile.view.FileBrowser', {
+			fb = Ext.create('NetProfile.panel.FileBrowser', {
 				region: 'center'
 			});
 			mainbar.replaceWith(fb);
@@ -51,7 +51,11 @@ Ext.define('NetProfile.controller.FileBrowser', {
 		}
 		st.folderStore.load({
 			params: {
-				__ffilter: { ffid: { eq: xid } }
+				__ffilter: [{
+					property: 'ffid',
+					operator: 'eq',
+					value:    xid
+				}]
 			},
 			callback: function(recs, op, success)
 			{

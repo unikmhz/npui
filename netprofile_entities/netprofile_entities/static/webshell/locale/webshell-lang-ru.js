@@ -1,7 +1,7 @@
 Ext.onReady(function()
 {
-	Ext.define('NetProfile.locale.ru.entities.view.HistoryGrid', {
-		override: 'NetProfile.entities.view.HistoryGrid',
+	Ext.define('NetProfile.locale.ru.entities.grid.HistoryGrid', {
+		override: 'NetProfile.entities.grid.HistoryGrid',
 		fromText: 'От',
 		toText: 'До',
 		numText: 'Макс.',

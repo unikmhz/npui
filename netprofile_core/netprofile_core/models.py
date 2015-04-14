@@ -267,7 +267,6 @@ class NPModule(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Modules'),
-				'menu_order'   : 40,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name', 'curversion', 'enabled'),
 				'easy_search'  : ('name',)
@@ -382,6 +381,45 @@ class UserState(DeclEnum):
 	active  = 'A', _('Active'),  20
 	deleted = 'D', _('Deleted'), 30
 
+def _validate_user_password(model, colname, values, req):
+	if colname not in values:
+		return
+	try:
+		uid = int(values['uid'])
+	except (KeyError, TypeError, ValueError):
+		return
+	sess = DBSession()
+	user = sess.query(User).get(uid)
+	if user is None:
+		return
+	newpwd = values[colname]
+	if newpwd is None:
+		return
+	secpol = user.effective_policy
+	if secpol is None:
+		return
+	ts = dt.datetime.now()
+	checkpw = secpol.check_new_password(req, user, newpwd, ts)
+	if checkpw is True:
+		return
+	loc = get_localizer(req)
+	errors = []
+	if 'pw_length_min' in checkpw:
+		errors.append(loc.translate(_('Password is too short')))
+	if 'pw_length_max' in checkpw:
+		errors.append(loc.translate(_('Password is too long')))
+	if 'pw_ctype_min' in checkpw:
+		errors.append(loc.translate(_('Password has not enough character types')))
+	if 'pw_ctype_max' in checkpw:
+		errors.append(loc.translate(_('Password has too many character types')))
+	if 'pw_dict_check' in checkpw:
+		errors.append(loc.translate(_('Password was found in a dictionary')))
+	if 'pw_hist_check' in checkpw:
+		errors.append(loc.translate(_('You used this password not too long ago')))
+	if 'pw_age_min' in checkpw:
+		errors.append(loc.translate(_('You\'ve just changed your password')))
+	return errors
+
 @implementer(IDAVFile, IDAVPrincipal)
 class User(Base):
 	"""
@@ -412,7 +450,6 @@ class User(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Users'),
-				'menu_order'   : 20,
 				'default_sort' : ({ 'property': 'login' ,'direction': 'ASC' },),
 				'grid_view'    : ('login', 'name_family', 'name_given', 'group', 'enabled', 'state', 'email'),
 				'form_view'    : (
@@ -503,6 +540,7 @@ class User(Base):
 			'secret_value'  : True,
 			'editor_xtype'  : 'passwordfield',
 			'writer'        : 'change_password',
+			'validator'     : _validate_user_password,
 			'pass_request'  : True,
 			'ldap_attr'     : 'userPassword', # FIXME!
 			'ldap_value'    : 'ldap_password'
@@ -822,7 +860,7 @@ class User(Base):
 			checkpw = secpol.check_new_password(request, self, newpwd, ts)
 			if checkpw is not True:
 				# FIXME: error reporting
-				return
+				raise ValueError(checkpw)
 		reg = request.registry
 		hash_con = reg.settings.get('netprofile.auth.hash', 'sha1')
 		salt_len = int(reg.settings.get('netprofile.auth.salt_length', 4))
@@ -1170,7 +1208,6 @@ class Group(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Groups'),
-				'menu_order'   : 30,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name', 'parent', 'security_policy', 'root_folder'),
 				'form_view'    : ('name', 'parent', 'security_policy', 'visible', 'assignable', 'root_folder'),
@@ -1464,7 +1501,6 @@ class Privilege(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Privileges'),
-				'menu_order'   : 40,
 				'default_sort' : ({ 'property': 'code' ,'direction': 'ASC' },),
 				'grid_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls'),
 				'form_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls', 'resclass'),
@@ -1676,7 +1712,6 @@ class GroupCapability(Capability,Base):
 
 #				'show_in_menu' : 'admin',
 				'menu_name'    : _('Group Capabilities'),
-#				'menu_order'   : 40,
 				'default_sort' : (),
 #				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
 			}
@@ -1713,7 +1748,6 @@ class UserCapability(Capability,Base):
 
 #				'show_in_menu' : 'admin',
 				'menu_name'    : _('User Capabilities'),
-#				'menu_order'   : 40,
 				'default_sort' : (),
 #				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
 			}
@@ -1934,7 +1968,6 @@ class SecurityPolicy(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Security Policies'),
-				'menu_order'   : 50,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size'),
 				'form_view'    : (
@@ -2527,7 +2560,8 @@ class FileFolder(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('User')
+			'header_string' : _('User'),
+			'editor_config' : { 'allowBlank' : False }
 		}
 	)
 	group_id = Column(
@@ -2539,7 +2573,8 @@ class FileFolder(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Group')
+			'header_string' : _('Group'),
+			'editor_config' : { 'allowBlank' : False }
 		}
 	)
 	rights = Column(
@@ -2634,21 +2669,26 @@ class FileFolder(Base):
 	@classmethod
 	def __augment_create__(cls, sess, obj, values, req):
 		u = req.user
+		root_ff = u.group.effective_root_folder
 		if 'parentid' in values:
-			if (values['parentid'] is None) and (not u.root_writable):
-				return False
-			try:
-				pid = int(values['parentid'])
-			except ValueError:
-				return False
-			parent = sess.query(FileFolder).get(pid)
-			if parent is None:
-				return False
-			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
-				return False
-			root_ff = u.group.effective_root_folder
-			if root_ff and (not parent.is_inside(root_ff)):
-				return False
+			pid = values['parentid']
+			if pid is None:
+				if not u.root_writable:
+					return False
+			else:
+				try:
+					pid = int(pid)
+				except (TypeError, ValueError):
+					return False
+				parent = sess.query(FileFolder).get(pid)
+				if parent is None:
+					return False
+				if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+					return False
+				if root_ff and (not parent.is_inside(root_ff)):
+					return False
+		elif root_ff or not u.root_writable:
+			return False
 		return True
 
 	@classmethod
@@ -2666,19 +2706,22 @@ class FileFolder(Base):
 		if (not root_ff) and (not u.root_writable):
 			return False
 		if 'parentid' in values:
-			if (values['parentid'] is None) and (not u.root_writable):
-				return False
-			try:
-				pid = int(values['parentid'])
-			except ValueError:
-				return False
-			new_parent = sess.query(FileFolder).get(pid)
-			if new_parent is None:
-				return False
-			if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
-				return False
-			if root_ff and (not new_parent.is_inside(root_ff)):
-				return False
+			pid = values['parentid']
+			if pid is None:
+				if not u.root_writable:
+					return False
+			else:
+				try:
+					pid = int(pid)
+				except (TypeError, ValueError):
+					return False
+				new_parent = sess.query(FileFolder).get(pid)
+				if new_parent is None:
+					return False
+				if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
+					return False
+				if root_ff and (not new_parent.is_inside(root_ff)):
+					return False
 		return True
 
 	@classmethod
@@ -3210,7 +3253,8 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('User')
+			'header_string' : _('User'),
+			'editor_config' : { 'allowBlank' : False }
 		}
 	)
 	group_id = Column(
@@ -3222,7 +3266,8 @@ class File(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Group')
+			'header_string' : _('Group'),
+			'editor_config' : { 'allowBlank' : False }
 		}
 	)
 	rights = Column(
@@ -3350,21 +3395,26 @@ class File(Base):
 	@classmethod
 	def __augment_create__(cls, sess, obj, values, req):
 		u = req.user
+		root_ff = u.group.effective_root_folder
 		if 'ffid' in values:
-			if (values['ffid'] is None) and (not u.root_writable):
-				return False
-			try:
-				ffid = int(values['ffid'])
-			except ValueError:
-				return False
-			parent = sess.query(FileFolder).get(ffid)
-			if parent is None:
-				return False
-			if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
-				return False
-			root_ff = u.group.effective_root_folder
-			if root_ff and (not parent.is_inside(root_ff)):
-				return False
+			ffid = values['ffid']
+			if ffid is None:
+				if not u.root_writable:
+					return False
+			else:
+				try:
+					ffid = int(ffid)
+				except (TypeError, ValueError):
+					return False
+				parent = sess.query(FileFolder).get(ffid)
+				if parent is None:
+					return False
+				if (not parent.can_write(u)) or (not parent.can_traverse_path(u)):
+					return False
+				if root_ff and (not parent.is_inside(root_ff)):
+					return False
+		elif root_ff or not u.root_writable:
+			return False
 		return True
 
 	@classmethod
@@ -3382,19 +3432,22 @@ class File(Base):
 		if (not root_ff) and (not u.root_writable):
 			return False
 		if 'ffid' in values:
-			if (values['ffid'] is None) and (not u.root_writable):
-				return False
-			try:
-				ffid = int(values['ffid'])
-			except ValueError:
-				return False
-			new_parent = sess.query(FileFolder).get(ffid)
-			if new_parent is None:
-				return False
-			if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
-				return False
-			if root_ff and (not new_parent.is_inside(root_ff)):
-				return False
+			ffid = values['ffid']
+			if ffid is None:
+				if not u.root_writable:
+					return False
+			else:
+				try:
+					ffid = int(ffid)
+				except (TypeError, ValueError):
+					return False
+				new_parent = sess.query(FileFolder).get(ffid)
+				if new_parent is None:
+					return False
+				if (not new_parent.can_write(u)) or (not new_parent.can_traverse_path(u)):
+					return False
+				if root_ff and (not new_parent.is_inside(root_ff)):
+					return False
 		return True
 
 	@classmethod
@@ -4231,7 +4284,6 @@ class Tag(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Tags'),
-				'menu_order'    : 60,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name', 'descr'),
 				'easy_search'   : ('name', 'descr'),
@@ -4300,7 +4352,6 @@ class LogType(Base):
 				'show_in_menu'  : 'admin',
 				'menu_section'  : _('Logging'),
 				'menu_name'     : _('Log Types'),
-				'menu_order'    : 81,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'easy_search'   : ('name',),
@@ -4352,7 +4403,6 @@ class LogAction(Base):
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Logging'),
 				'menu_name'    : _('Log Actions'),
-				'menu_order'   : 82,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name',),
 				'easy_search'  : ('name',),
@@ -4403,7 +4453,6 @@ class LogData(Base):
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Logging'),
 				'menu_name'    : _('Log Data'),
-				'menu_order'   : 80,
 				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' },),
 				'grid_view'    : ('ts', 'login', 'xtype', 'xaction', 'data'),
 				'easy_search'  : ('login', 'data'),
@@ -4515,7 +4564,6 @@ class NPSession(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('UI Sessions'),
-				'menu_order'   : 90,
 				'default_sort' : ({ 'property': 'lastts' ,'direction': 'DESC' },),
 				'grid_view'    : ('sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr'),
 				'easy_search'  : ('sname', 'login'),
@@ -4707,7 +4755,6 @@ class GlobalSettingSection(Base):
 				'show_in_menu'  : 'admin',
 				'menu_section'  : _('Settings'),
 				'menu_name'     : _('Global Setting Sections'),
-				'menu_order'    : 70,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('module', 'name', 'descr'),
 				'easy_search'   : ('name', 'descr'),
@@ -4790,7 +4837,6 @@ class UserSettingSection(Base):
 				'show_in_menu'  : 'admin',
 				'menu_section'  : _('Settings'),
 				'menu_name'     : _('User Setting Sections'),
-				'menu_order'    : 71,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('module', 'name', 'descr'),
 				'easy_search'   : ('name', 'descr'),
@@ -4991,7 +5037,6 @@ class GlobalSetting(Base, DynamicSetting):
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('Global Settings'),
-				'menu_order'   : 72,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'value', 'default'),
 				'easy_search'  : ('name', 'title'),
@@ -5182,7 +5227,6 @@ class UserSettingType(Base, DynamicSetting):
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('User Setting Types'),
-				'menu_order'   : 73,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'default'),
 				'easy_search'  : ('name', 'title'),
@@ -5355,7 +5399,6 @@ class UserSetting(Base):
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('User Settings'),
-				'menu_order'   : 74,
 				'default_sort' : (),
 				'grid_view'    : ('user', 'type', 'value'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
@@ -5451,7 +5494,6 @@ class DataCache(Base):
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('Data Cache'),
-				'menu_order'   : 80,
 				'default_sort' : (),
 				'grid_view'    : ('user', 'dcname'),
 				'form_view'    : ('user', 'dcname', 'dcvalue'),
@@ -5732,7 +5774,7 @@ def _wizfld_import_cal(fld, model, req, **kwargs):
 			'model'         : 'Extensible.calendar.data.CalendarModel',
 			'directFn'      : 'NetProfile.api.Calendar.cal_avail',
 			'totalProperty' : 'total',
-			'root'          : 'calendars'
+			'rootProperty'  : 'calendars'
 		},
 		'fieldLabel'     : _('Calendar'),
 		'tpl'            : '<tpl for="."><div class="x-boundlist-item">{Owner}: {Title}</div></tpl>'
@@ -5756,7 +5798,7 @@ def _wizcb_import_cal_submit(wiz, em, step, act, val, req):
 		style = int(val.get('style'))
 		if 0 < style <= len(_calendar_styles):
 			imp.style = style
-	except ValueError:
+	except (TypeError, ValueError):
 		pass
 	sess.add(imp)
 	return {

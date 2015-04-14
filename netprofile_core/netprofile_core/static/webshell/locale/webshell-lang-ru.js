@@ -1,9 +1,27 @@
 Ext.onReady(function()
 {
-	Ext.define('Ext.locale.ru.ux.DateTimePicker', {
-		override: 'Ext.ux.DateTimePicker',
-		todayText: 'Сейчас',
-		timeLabel: 'Время'
+	Ext.define('Ext.locale.ru.Date', {
+		override: 'Ext.Date',
+		defaultFormat: 'd.m.Y'
+	});
+	Ext.define('Ext.locale.ru.NetProfile.form.field.DateTime', {
+		override: 'NetProfile.form.field.DateTime',
+		format: 'd.m.Y H:i',
+		altFormats: 'Y-m-d H:i|Y-m-d H:i:s|Y-m-d\\TH:i:s|Y-m-d\\TH:i:sP|C', // FIXME
+		timeFormat: 'H:i'
+	});
+	Ext.define('Ext.locale.ru.picker.Date', {
+		override: 'Ext.picker.Date',
+		format: 'd.m.Y'
+	});
+	Ext.define('Ext.locale.ru.form.field.Date', {
+		override: 'Ext.form.field.Date',
+		format: 'd.m.Y'
+	});
+	Ext.define('Ext.locale.ru.NetProfile.picker.DateTime', {
+		override: 'NetProfile.picker.DateTime',
+		applyText: 'Применить',
+		cancelText: 'Отмена'
 	});
 
 	Ext.define('Ext.locale.ru.grid.RowEditor', {
@@ -24,68 +42,69 @@ Ext.onReady(function()
 		menuText: '<i>Действия</i>'
 	});
 
-	Ext.define('Ext.locale.ru.ux.grid.FiltersFeature', {
-		override: 'Ext.ux.grid.FiltersFeature',
+	Ext.define('Ext.locale.ru.grid.filters.Filters', {
+		override: 'Ext.grid.filters.Filters',
 		menuFilterText: 'Фильтры'
 	});
-	Ext.define('Ext.locale.ru.ux.grid.filter.BooleanFilter', {
-		override: 'Ext.ux.grid.filter.BooleanFilter',
+	Ext.define('Ext.locale.ru.grid.filters.filter.String', {
+		override: 'Ext.grid.filters.filter.String',
+		emptyText: 'Введите текст...'
+	});
+	Ext.define('Ext.locale.ru.grid.filters.filter.Boolean', {
+		override: 'Ext.grid.filters.filter.Boolean',
 		yesText: 'Да',
 		noText: 'Нет'
 	});
-	Ext.define('Ext.locale.ru.ux.grid.filter.DateFilter', {
-		override: 'Ext.ux.grid.filter.DateFilter',
-		afterText: 'Позднее',
-		beforeText: 'Раньше',
-		dateFormat: 'd.m.Y',
-		onText: 'В'
+	Ext.define('Ext.locale.ru.grid.filters.filter.Date', {
+		override: 'Ext.grid.filters.filter.Date',
+		config: {
+			fields: {
+				gt: { text: 'Позднее' },
+				lt: { text: 'Раньше' },
+				eq: { text: 'В' }
+			}
+		}
 	});
-	Ext.define('Ext.locale.ru.ux.grid.menu.ListMenu', {
-		override: 'Ext.ux.grid.menu.ListMenu',
+	Ext.define('Ext.locale.ru.NetProfile.grid.filters.filter.Date', {
+		override: 'NetProfile.grid.filters.filter.Date',
+		config: {
+			fields: {
+				ge: { text: 'Позднее' },
+				le: { text: 'Раньше' },
+				eq: { text: 'В' }
+			}
+		}
+	});
+	Ext.define('Ext.locale.ru.grid.filters.filter.List', {
+		override: 'Ext.grid.filters.filter.List',
 		loadingText: 'Загрузка...'
 	});
-	Ext.define('Ext.locale.ru.ux.grid.menu.RangeMenu', {
-		override: 'Ext.ux.grid.menu.RangeMenu',
-		fieldLabels: {
-			gt: 'Больше',
-			lt: 'Меньше',
-			eq: 'Равно'
-		},
-		menuItemCfgs: {
-			emptyText: 'Введите число...',
-			selectOnFocus: false,
-			width: 155
-		}
+	Ext.define('Ext.locale.ru.grid.filters.filter.Number', {
+		override: 'Ext.grid.filters.filter.Number',
+		emptyText: 'Введите число...'
 	});
-	Ext.define('Ext.locale.ru.ux.grid.menu.StringMenu', {
-		override: 'Ext.ux.grid.menu.StringMenu',
-		fieldLabels: {
-			contains: 'Содержит',
-			startswith: 'Начинается на',
-			endswith: 'Заканчивается на'
-		},
-		menuItemCfgs: {
-			emptyText: 'Введите фильтр...',
-			selectOnFocus: true,
-			width: 155
-		}
+	Ext.define('Ext.locale.ru.NetProfile.grid.filters.filter.Number', {
+		override: 'NetProfile.grid.filters.filter.Number',
+		emptyText: 'Введите число...'
 	});
-
-	Ext.define('Ext.locale.ru.ux.grid.SimpleSearchFeature', {
-		override: 'Ext.ux.grid.SimpleSearchFeature',
+	Ext.define('Ext.locale.ru.NetProfile.grid.filters.filter.IPv6', {
+		override: 'NetProfile.grid.filters.filter.IPv6',
+		emptyText: 'Введите адрес IPv6...'
+	});
+	Ext.define('Ext.locale.ru.NetProfile.grid.plugin.SimpleSearch', {
+		override: 'NetProfile.grid.plugin.SimpleSearch',
 		fieldEmptyText: 'Поиск...'
 	});
-
-	Ext.define('Ext.locale.ru.ux.grid.ExtraSearchFeature', {
-		override: 'Ext.ux.grid.ExtraSearchFeature',
+	Ext.define('Ext.locale.ru.NetProfile.grid.plugin.ExtraSearch', {
+		override: 'NetProfile.grid.plugin.ExtraSearch',
 		searchText: 'Поиск',
 		searchTipText: 'Дополнительные условия поиска.',
 		advSearchText: 'Расширенный поиск',
 		clearText: 'Сбросить'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.ModelGrid', {
-		override: 'NetProfile.view.ModelGrid',
+	Ext.define('Ext.locale.ru.NetProfile.grid.ModelGrid', {
+		override: 'NetProfile.grid.ModelGrid',
 		emptyText: 'По вашему запросу ничего не найдено.',
 		clearText: 'Сбросить',
 		clearTipText: 'Сбросить фильтры и порядок сортировки.',
@@ -99,19 +118,19 @@ Ext.onReady(function()
 		exportText: 'Экспорт'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.ModelSelect', {
-		override: 'NetProfile.view.ModelSelect',
+	Ext.define('Ext.locale.ru.NetProfile.form.field.ModelSelect', {
+		override: 'NetProfile.form.field.ModelSelect',
 		chooseText: 'Выберите объект'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.PropBar', {
-		override: 'NetProfile.view.PropBar',
+	Ext.define('Ext.locale.ru.NetProfile.tab.PropBar', {
+		override: 'NetProfile.tab.PropBar',
 		recordText: 'Запись',
 		submitText: 'Отправить'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.TopBar', {
-		override: 'NetProfile.view.TopBar',
+	Ext.define('Ext.locale.ru.NetProfile.toolbar.MainToolbar', {
+		override: 'NetProfile.toolbar.MainToolbar',
 		toolsText: 'Инструменты',
 		toolsTipText: 'Различные второстепенные окна и настройки.',
 		logoutText: 'Выход',
@@ -121,18 +140,16 @@ Ext.onReady(function()
 		aboutText: 'О программе…'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.Form', {
-		override: 'NetProfile.view.Form',
+	Ext.define('Ext.locale.ru.NetProfile.form.Panel', {
+		override: 'NetProfile.form.Panel',
 		resetText: 'Сбросить',
-		resetTipTitleText: 'Сбросить данные',
 		resetTipText: 'Вернуть значения полей в этой форме к исходным.',
 		submitText: 'Сохранить',
-		submitTipTitleText: 'Сохранить данные',
 		submitTipText: 'Проверить и сохранить данные в этой форме.'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.Wizard', {
-		override: 'NetProfile.view.Wizard',
+	Ext.define('Ext.locale.ru.NetProfile.panel.Wizard', {
+		override: 'NetProfile.panel.Wizard',
 		btnPrevText: 'Назад',
 		btnNextText: 'Далее',
 		btnCancelText: 'Отмена',
@@ -149,8 +166,8 @@ Ext.onReady(function()
 		btnSaveTipText: 'Проверить и сохранить ваши настройки'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.FileFolderContextMenu', {
-		override: 'NetProfile.view.FileFolderContextMenu',
+	Ext.define('Ext.locale.ru.NetProfile.menu.FileFolder', {
+		override: 'NetProfile.menu.FileFolder',
 		createText: 'Создать подпапку',
 		propText: 'Свойства',
 		renameText: 'Переименовать',
@@ -161,8 +178,8 @@ Ext.onReady(function()
 		deleteFolderVerboseText: 'Вы уверены что хотите удалить эту папку?'
 	});
 
-	Ext.define('Ext.locale.ru.ux.form.RightsBitmaskField', {
-		override: 'Ext.ux.form.RightsBitmaskField',
+	Ext.define('Ext.locale.ru.NetProfile.form.field.RightsBitmaskField', {
+		override: 'NetProfile.form.field.RightsBitmaskField',
 		ownerText: 'Владелец',
 		groupText: 'Группа',
 		otherText: 'Прочие',
@@ -172,17 +189,27 @@ Ext.onReady(function()
 		traverseText: 'Переход'
 	});
 
-	Ext.define('Ext.locale.ru.ux.form.field.IPv6', {
-		override: 'Ext.ux.form.field.IPv6',
+	Ext.define('Ext.locale.ru.NetProfile.form.field.IPv4', {
+		override: 'NetProfile.form.field.IPv4',
+		octetErrorText: 'Октет {0}: {1}',
+		blankText: 'Это поле не может быть пустым',
+		config: {
+			clearBtnCfg: {
+				tooltip: 'Очистить поле'
+			}
+		}
+	});
+	Ext.define('Ext.locale.ru.NetProfile.form.field.IPv6', {
+		override: 'NetProfile.form.field.IPv6',
 		invalidAddressText: 'Некорректный адрес IPv6'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.FileBrowser', {
-		override: 'NetProfile.view.FileBrowser',
+	Ext.define('Ext.locale.ru.NetProfile.panel.FileBrowser', {
+		override: 'NetProfile.panel.FileBrowser',
 
 		emptyText: 'Папка пуста',
 
-		viewText: 'Просмотр',
+		viewText: 'Вид',
 		viewAsIconsText: 'Иконки',
 		viewAsListText: 'Список',
 		viewAsGridText: 'Таблица',
@@ -205,13 +232,6 @@ Ext.onReady(function()
 
 		btnUploadText: 'Залить',
 
-		uploadTitleText: 'Заливка файлов',
-		uploadCloseText: 'Закрыть',
-		uploadAddText: 'Добавить',
-		uploadUploadText: 'Залить',
-		uploadRemoveText: 'Убрать',
-		uploadWaitMsg: 'Файлы заливаются...',
-
 		btnRenameText: 'Переименовать',
 		btnPropsText: 'Свойства',
 		btnDownloadText: 'Скачать',
@@ -223,14 +243,38 @@ Ext.onReady(function()
 		gridCreatedText: 'Создан',
 		gridModifiedText: 'Изменён',
 
+		dragText: 'Переместить или вложить файлы ({0})',
+
+		bytesText: 'байт',
 		kibText: 'Кбайт',
 		mibText: 'Мбайт',
 		gibText: 'Гбайт',
-		tibText: 'Тбайт'
+		tibText: 'Тбайт',
+		pibText: 'Пбайт',
+		eibText: 'Эбайт'
+	});
+	Ext.define('Ext.locale.ru.NetProfile.form.FileUpload', {
+		override: 'NetProfile.form.FileUpload',
+
+		titleText: 'Заливка файлов',
+		closeText: 'Закрыть',
+		addText: 'Добавить',
+		uploadText: 'Залить',
+		removeText: 'Убрать',
+		errorText: 'Ошибка заливки',
+
+		waitMsg: 'Файлы заливаются...',
+		clientInvalidMsg: 'Форма содержит некорректные данные и не может быть отправлена.',
+		connectFailureMsg: 'Ошибка соединения с сервером.',
+	});
+	Ext.define('Ext.locale.ru.NetProfile.view.FileIconView', {
+		override: 'NetProfile.view.FileIconView',
+		sizeText: 'Размер: {0}',
+		mimeTypeText: 'MIME тип: {0}'
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.view.CapabilityGrid', {
-		override: 'NetProfile.view.CapabilityGrid',
+	Ext.define('Ext.locale.ru.NetProfile.grid.CapabilityGrid', {
+		override: 'NetProfile.grid.CapabilityGrid',
 
 		textName: 'Название',
 		textValue: 'Значение',

@@ -163,7 +163,6 @@ class Stash(Base):
 				'menu_name'     : _('Stashes'),
 				'menu_main'     : True,
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('entity', 'name', 'amount', 'credit'),
 				'form_view'     : ('entity', 'name', 'amount', 'credit', 'alltime_min', 'alltime_max'),
@@ -288,7 +287,6 @@ class StashIOType(Base):
 				'cap_delete'    : 'STASHES_IOTYPES_DELETE',
 				'menu_name'     : _('Operation Types'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'class', 'type'),
 				'form_view'     : ('name', 'class', 'type', 'user_visible', 'oper_visible', 'oper_capability', 'descr'),
@@ -441,7 +439,6 @@ class StashIO(Base):
 				'cap_delete'    : '__NOPRIV__',
 				'menu_name'     : _('Operations'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'ts', 'direction': 'DESC' },),
 				'grid_view' : ('type', 'stash', 'entity', 'user', 'ts', 'diff'),
 				'form_view' : ('type', 'stash', 'entity', 'user', 'ts', 'diff', 'descr'),
@@ -480,7 +477,11 @@ class StashIO(Base):
 			'filter_type'   : 'list',
 			'editor_xtype'  : 'simplemodelselect',
 			'editor_config' : {
-				'extraParams' : { '__ffilter' : { 'oper_visible' : { 'eq' : True } } }
+				'extraParams' : { '__ffilter' : [{
+					'property' : 'oper_visible',
+					'operator' : 'eq',
+					'value'    : True
+				}]}
 			},
 			'column_flex'   : 2
 		}
@@ -581,7 +582,10 @@ class StashIO(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='stash_ios'
+		backref=backref(
+			'stash_ios',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):
@@ -745,7 +749,10 @@ class StashOperation(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='stash_operations'
+		backref=backref(
+			'stash_operations',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):
@@ -969,7 +976,10 @@ class FuturePayment(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='stash_futures'
+		backref=backref(
+			'stash_futures',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):

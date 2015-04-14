@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Module detection and loading
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -103,7 +103,7 @@ class ModuleBase(object):
 	def get_sql_data(cls, modobj, sess):
 		pass
 
-	def get_menus(self):
+	def get_menus(self, request):
 		return ()
 
 	def get_js(self, request):
@@ -165,7 +165,6 @@ class ModuleManager(object):
 		self.installed = None
 		self.loaded = {}
 		self.models = {}
-		self.menus = {}
 		if vhost is None:
 			sett = cfg.get_settings()
 			self.vhost = sett.get('netprofile.vhost', None)
@@ -258,8 +257,6 @@ class ModuleManager(object):
 		hm = self.cfg.registry.getUtility(IHookManager)
 		for model in mod.get_models():
 			self._import_model(moddef, model, mb, hm)
-		for menu in mod.get_menus():
-			self.menus[menu.name] = menu
 		return True
 
 	def load(self, moddef):
@@ -618,6 +615,15 @@ class ModuleManager(object):
 		for moddef, mod in self.loaded.items():
 			ret.extend(mod.get_task_imports())
 		return ret
+
+	def menu_generator(self, request):
+		"""
+		Generate all registered UI menu objects.
+		"""
+		for moddef, mod in self.loaded.items():
+			for menu in mod.get_menus(request):
+				menu.__moddef__ = moddef
+				yield menu
 
 def includeme(config):
 	"""

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -43,7 +43,10 @@ from .dav import (
 	DAVPluginGroups
 )
 
-from pyramid.i18n import TranslationStringFactory
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
 
 _ = TranslationStringFactory('netprofile_core')
 
@@ -466,19 +469,14 @@ class Module(ModuleBase):
 
 		sess.add(admin)
 
-	def get_menus(self):
+	def get_menus(self, request):
+		loc = get_localizer(request)
 		return (
-			Menu('modules', title=_('Modules'), order=10),
-			Menu('users', title=_('Users'), order=20, direct='users', options={ # FIXME: add permission= ?
+			Menu('modules', title=loc.translate(_('Modules')), order=10),
+			Menu('users', title=loc.translate(_('Users')), order=20, direct='users', options={ # FIXME: add permission= ?
 				'disableSelection' : True
 			}),
-			Menu('folders', title=_('Folders'), order=30, direct='folders', permission='FILES_LIST', options={
-				'root'        : {
-					'id'       : 'root',
-					'text'     : _('Root Folder'),
-					'xhandler' : 'NetProfile.controller.FileBrowser',
-					'expanded' : True
-				},
+			Menu('folders', title=loc.translate(_('Folders')), order=30, direct='folders', permission='FILES_LIST', options={
 				'rootVisible' : True,
 				'hideHeaders' : True,
 				'columns'     : ({
@@ -493,7 +491,7 @@ class Module(ModuleBase):
 					}
 				},),
 				'plugins'     : ({
-					'ptype'    : 'manualediting',
+					'ptype'    : 'cellediting',
 					'pluginId' : 'editor'
 				},),
 				'useArrows'   : False,
@@ -509,39 +507,54 @@ class Module(ModuleBase):
 				{ 'name' : 'allow_write',    'type' : 'boolean' },
 				{ 'name' : 'allow_traverse', 'type' : 'boolean' },
 				{ 'name' : 'parent_write',   'type' : 'boolean' }
-			)),
-			Menu('settings', title=_('Settings'), order=40, direct='settings'),
-			Menu('admin', title=_('Administration'), order=50, permission='BASE_ADMIN')
+			), custom_root={
+				'id'       : 'root',
+				'text'     : loc.translate(_('Root Folder')),
+				'xhandler' : 'NetProfile.controller.FileBrowser',
+				'expanded' : True
+			}),
+			Menu('settings', title=loc.translate(_('Settings')), order=40, direct='settings'),
+			Menu('admin', title=loc.translate(_('Administration')), order=50, permission='BASE_ADMIN')
 		)
 
 	def get_js(self, request):
 		if request.debug_enabled:
 			return (
-				'netprofile_core:static/extjs/ext-all-dev.js',
-				'netprofile_core:static/extensible/lib/extensible-all-debug.js',
-				'netprofile_core:static/tinymce/tiny_mce_src.js',
-				'netprofile_core:static/ipaddr/ipaddr.js',
-				'netprofile_core:static/sockjs/sockjs.js'
+				'netprofile_core:static/extern/extjs/build/ext-all-debug.js',
+				'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic-debug.js',
+				'netprofile_core:static/extern/extensible/lib/extensible-all-debug.js',
+				# TODO: Upstream doesn't distribute unminified source.
+				#       Might be a good idea to include it though.
+				'netprofile_core:static/extern/tinymce/tinymce.min.js',
+				'netprofile_core:static/extern/ipaddr/ipaddr.js',
+				'netprofile_core:static/extern/sockjs/sockjs.js'
 			)
 		return (
-			'netprofile_core:static/extjs/ext-all.js',
+			'netprofile_core:static/extern/extjs/build/ext-all.js',
+			'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic.js',
 			'netprofile_core:static/extensible/lib/extensible-all.js',
-			'netprofile_core:static/tinymce/tiny_mce.js',
-			'netprofile_core:static/ipaddr/ipaddr.min.js',
-			'netprofile_core:static/sockjs/sockjs.min.js'
+			'netprofile_core:static/extern/tinymce/tinymce.min.js',
+			'netprofile_core:static/extern/ipaddr/ipaddr.min.js',
+			'netprofile_core:static/extern/sockjs/sockjs.min.js'
 		)
 
 	def get_local_js(self, request, lang):
 		return (
-			'netprofile_core:static/extjs/locale/ext-lang-' + lang + '.js',
-			'netprofile_core:static/extensible/src/locale/extensible-lang-' + lang + '.js',
+			'netprofile_core:static/extern/extjs/build/packages/ext-locale/build/ext-locale-' + lang + '.js',
+			'netprofile_core:static/extern/extensible/src/locale/extensible-lang-' + lang + '.js',
 			'netprofile_core:static/webshell/locale/webshell-lang-' + lang + '.js'
 		)
 
 	def get_css(self, request):
+		if request.debug_enabled:
+			return (
+				'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all-debug.css',
+				'netprofile_core:static/extern/extensible/resources/css/extensible-all.css',
+				'netprofile_core:static/css/main.css'
+			)
 		return (
-			'netprofile_core:static/extjs/resources/css/ext-all.css',
-			'netprofile_core:static/extensible/resources/css/extensible-all.css',
+			'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all.css',
+			'netprofile_core:static/extern/extensible/resources/css/extensible-all.css',
 			'netprofile_core:static/css/main.css'
 		)
 

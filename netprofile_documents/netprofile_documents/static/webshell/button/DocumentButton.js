@@ -14,7 +14,7 @@ Ext.define('NetProfile.documents.button.DocumentButton', {
 	handler: function()
 	{
 		var me = this,
-			gen_panel = me.up('panel'),
+			gen_panel = me.up('menu'),
 			rec_panel = gen_panel.up('panel[cls~=record-tab]'),
 			doc_box, obj_id, doc_id;
 

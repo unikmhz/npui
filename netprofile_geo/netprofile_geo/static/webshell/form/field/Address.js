@@ -4,6 +4,9 @@
  */
 Ext.define('NetProfile.geo.form.field.Address', {
 	extend: 'Ext.form.FieldContainer',
+	mixins: {
+		field: 'Ext.form.field.Field'
+	},
 	alias: 'widget.address',
 	requires: [
 		'Ext.form.field.ComboBox',
@@ -50,16 +53,25 @@ Ext.define('NetProfile.geo.form.field.Address', {
 
 	initComponent: function()
 	{
-		var cfg,
-			me = this;
+		var me = this,
+			cfg;
 
-		this.stores = {};
-		this.items = [];
-		this._orig = {};
+		me.stores = {};
+		me.items = [];
+		me._orig = {};
 
-		this.addEvents('change');
-
-		Ext.Array.forEach(this._deps, function(stype)
+		if(me.value && Ext.isObject(me.value))
+		{
+			Ext.Array.forEach(me._deps, function(stype)
+			{
+				cfg = me._keys[stype];
+				if(cfg in me.value)
+					me['selected' + stype] = parseInt(me.value[cfg]);
+			});
+			me.storeOriginal();
+			delete me.value;
+		}
+		Ext.Array.forEach(me._deps, function(stype)
 		{
 			cfg = null;
 			if(me['display' + stype])
@@ -76,18 +88,24 @@ Ext.define('NetProfile.geo.form.field.Address', {
 					store: me.stores[stype],
 					autoSelect: false,
 					tpl: new Ext.XTemplate('<tpl for="."><li style="min-height: 22px;" class="x-boundlist-item" role="option">{__str__}</li></tpl>'),
+					value: me['selected' + stype],
+					autoLoadOnValue: true,
 					listeners: {
-						beforeselect: function(cb, recs, idx)
+						beforeselect: function(cb, record, idx)
 						{
 							this.storeOriginal();
 						},
-						select: function(cb, recs)
+						select: function(cb, record)
 						{
-							var sub;
+							var sub, name;
 
-							if(recs && recs.length)
+							if(record)
 							{
-								this['selected' + stype] = recs[0].getId();
+								name = record.get('__str__');
+								if(name)
+									this['selected' + stype] = record.getId();
+								else
+									this['selected' + stype] = null;
 								sub = this._getNextType(stype);
 								if(sub && this.stores[sub] && this.stores[sub].getCount())
 									this.stores[sub].reload();
@@ -114,15 +132,10 @@ Ext.define('NetProfile.geo.form.field.Address', {
 				me.items.push(cfg);
 		});
 
-		this.callParent();
+		me.callParent();
 	},
 	getSubValue: function(stype)
 	{
-		var cb;
-
-		cb = this.getComponent(stype);
-		if(cb)
-			return cb.getSubmitValue();
 		return this['selected' + stype];
 	},
 	setSubValue: function(stype, value)
@@ -143,12 +156,19 @@ Ext.define('NetProfile.geo.form.field.Address', {
 	},
 	clearSubValue: function(stype)
 	{
-		var cb;
+		var me = this,
+			oldval = me['selected' + stype],
+			sub = me._getNextType(stype),
+			cb;
 
-		this['selected' + stype] = null;
-		cb = this.getComponent(stype);
+		me['selected' + stype] = null;
+		cb = me.getComponent(stype);
 		if(cb)
+		{
 			cb.setValue(null);
+			if((oldval !== null) && sub && me.stores[sub] && me.stores[sub].getCount())
+				me.stores[sub].reload();
+		}
 	},
 	_getSubValuesBefore: function(stype)
 	{
@@ -168,11 +188,15 @@ Ext.define('NetProfile.geo.form.field.Address', {
 	},
 	_getFiltersBefore: function(stype)
 	{
-		var ret = {};
+		var ret = [];
 
 		Ext.Object.each(this._getSubValuesBefore(stype), function(k, v)
 		{
-			ret[k] = { eq: v };
+			ret.push({
+				property: k,
+				operator: 'eq',
+				value:    v
+			});
 		});
 		return ret;
 	},
@@ -201,23 +225,24 @@ Ext.define('NetProfile.geo.form.field.Address', {
 			autoLoad: false,
 			pageSize: -1,
 			listeners: {
-				beforeload: function(st, ops)
+				beforeload: function(st, oper)
 				{
-					ops.params = ops.params || {};
-					ops.params.__ffilter = this._getFiltersBefore(stype);
-					ops.params.__empty = true;
+					var params = oper.getParams() || {};
+
+					params.__ffilter = this._getFiltersBefore(stype);
+					params.__empty = true;
+					oper.setParams(params);
 				},
 				load: function(st, recs, succ)
 				{
-					var me = this,
-						cb, cbval,
-						recid = null;
+					var recid = null,
+						cb, cbval;
 
 					if(!succ)
 						return;
 					cb = this.getComponent(stype);
 					if(cb)
-						cbval = cb.getSubmitValue();
+						cbval = cb.getValue();
 					else
 						cbval = this['selected' + stype];
 					cbval = parseInt(cbval);
@@ -278,7 +303,7 @@ Ext.define('NetProfile.geo.form.field.Address', {
 			val = null,
 			notnull = false;
 
-		Ext.Array.forEach(this._deps, function(stype)
+		Ext.Array.forEach(me._deps, function(stype)
 		{
 			val = me.getSubValue(stype);
 			if(val !== null)
@@ -300,19 +325,15 @@ Ext.define('NetProfile.geo.form.field.Address', {
 	compareOriginal: function()
 	{
 		var me = this,
-			cur = this.getFlatValue(),
+			cur = me.getFlatValue(),
 			diff = false;
 
 		if(cur === null)
 			cur = {};
-		Ext.Object.each(this._keys, function(k, v)
-		{
-			if(cur[v] != me._orig[v])
-				diff = true;
-		});
+		diff = !Ext.Object.equals(cur, me._orig);
+		me._orig = cur;
 		if(diff)
-			this.fireEvent('change', this, this.getValue());
-		this._orig = cur;
+			me.fireEvent('change', me, me.getValue());
 	},
 	getValue: function()
 	{

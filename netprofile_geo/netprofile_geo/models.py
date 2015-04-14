@@ -128,7 +128,6 @@ class City(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Cities'),
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name', 'prefix'),
 				'easy_search'   : ('name',),
@@ -207,7 +206,6 @@ class District(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Districts'),
-				'menu_order'    : 50,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('city', 'name', 'prefix'),
 				'easy_search'   : ('name',),
@@ -291,7 +289,6 @@ class Street(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Streets'),
-				'menu_order'    : 60,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('city', 'district', 'name', 'prefix', 'suffix'),
 				'easy_search'   : ('name',),
@@ -427,7 +424,6 @@ class House(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Houses'),
-				'menu_order'   : 70,
 				'default_sort' : (), # FIXME: NEEDS CUSTOM SORTING
 				'grid_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
 				'form_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'house_groups', 'entrnum', 'postindex'),
@@ -563,19 +559,21 @@ class House(Base):
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
 		query = query.join(House.street).options(contains_eager(House.street))
-		flt = {}
+		flist = []
 		if '__filter' in params:
-			flt.update(params['__filter'])
+			flist.extend(params['__filter'])
 		if '__ffilter' in params:
-			flt.update(params['__ffilter'])
-		if ('districtid' in flt) and ('eq' in flt['districtid']) and flt['districtid']['eq']:
-			val = int(flt['districtid']['eq'])
-			if val > 0:
-				query = query.filter(Street.district_id == val)
-		elif ('cityid' in flt) and ('eq' in flt['cityid']) and flt['cityid']['eq']:
-			val = int(flt['cityid']['eq'])
-			if val > 0:
-				query = query.filter(Street.city_id == val)
+			flist.extend(params['__ffilter'])
+		for flt in flist:
+			prop = flt.get('property', None)
+			oper = flt.get('operator', None)
+			value = flt.get('value', None)
+			if prop == 'districtid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.filter(Street.district_id == int(value))
+			if prop == 'cityid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.filter(Street.city_id == int(value))
 		return query
 
 	@classmethod
@@ -622,7 +620,6 @@ class Place(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Places'),
-				'menu_order'   : 80,
 				'default_sort' : (), # FIXME: SEE HOUSES
 				'grid_view'    : ('house', 'number', 'name', 'entrance', 'floor', 'descr'),
 				'easy_search'  : ('number',),
@@ -731,7 +728,6 @@ class HouseGroup(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('House Groups'),
-				'menu_order'   : 90,
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'    : ('name', 'descr'),
 				'easy_search'  : ('name',),

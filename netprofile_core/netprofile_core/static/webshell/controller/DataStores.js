@@ -1,5 +1,8 @@
 Ext.define('NetProfile.controller.DataStores', {
 	extend: 'Ext.app.Controller',
+	requires: [
+		'Ext.data.operation.Read'
+	],
 	init: function()
 	{
 		this.stores = {};
@@ -10,8 +13,17 @@ Ext.define('NetProfile.controller.DataStores', {
 		this.control({
 			'button[cls~=np-data-export]': {
 				click: this.onDataExport
+			},
+			'checkcolumn' : {
+				beforecheckchange: this.onCheckColumn
 			}
 		});
+	},
+	onCheckColumn: function(col, idx, checked)
+	{
+		if(col.readOnly)
+			return false;
+		return true;
 	},
 	onDataExport: function(btn, ev, opts)
 	{
@@ -19,11 +31,12 @@ Ext.define('NetProfile.controller.DataStores', {
 			grid = form.up('grid'),
 			store = grid.getStore(),
 			proxy = store.getProxy(),
-			params, form_params, format;
+			oper, params, form_params, format;
 
 		if(!store.lastOptions)
 			return; // FIXME: report error
-		params = proxy.getParams(store.lastOptions) || {};
+		oper = new Ext.data.operation.Read(store.lastOptions);
+		params = proxy.getParams(oper);
 		if(store.lastExtraParams)
 			Ext.apply(params, store.lastExtraParams);
 		format = form.itemId;
@@ -45,16 +58,20 @@ Ext.define('NetProfile.controller.DataStores', {
 			{
 				rec = rec.record;
 				store = this.getStore();
-				store.proxy.extraParams = { __ffilter: {} };
+				store.proxy.extraParams = { __ffilter: [] };
 				if(this.extraParamRelProp)
 					val = rec.get(this.extraParamRelProp);
 				else
 					val = rec.get(this.extraParamProp);
-				store.proxy.extraParams.__ffilter[this.extraParamProp] = { eq: val };
+				store.proxy.extraParams.__ffilter.push({
+					property: this.extraParamProp,
+					operator: 'eq',
+					value:    val
+				});
 			}
 		}
 	},
-	getStore: function(module, model, grid, nocache, noautoload, static_extra)
+	getStore: function(module, model, grid, nocache, static_extra)
 	{
 		var me = this,
 			store,
@@ -84,8 +101,6 @@ Ext.define('NetProfile.controller.DataStores', {
 					type: module + '_' + model
 				}
 			};
-			if(noautoload)
-				store_cfg['autoLoad'] = false;
 			if(grid)
 			{
 				store_cfg['listeners']['beforeload'] = {
@@ -101,6 +116,18 @@ Ext.define('NetProfile.controller.DataStores', {
 				'NetProfile.store.' + module + '.' + model,
 				store_cfg
 			);
+
+			if(store.sorters && store.sorters.length)
+			{
+				store.initialSorters = [];
+				store.sorters.each(function(isort)
+				{
+					store.initialSorters.push({
+						'property'  : isort.getProperty(),
+						'direction' : isort.getDirection()
+					});
+				});
+			}
 		}
 		if(!store)
 			throw 'Unable to create store for ' + module + ' ' + model;
@@ -120,9 +147,6 @@ Ext.define('NetProfile.controller.DataStores', {
 				NetProfile.StoreManager.refreshRelated(module, model, rec.getId(), store);
 			return true;
 		});
-
-		if(store.sorters.getCount() > 0)
-			store.initialSorters = store.sorters.getRange();
 
 		if(!nocache)
 			this.stores[module][model] = store;
@@ -157,7 +181,6 @@ Ext.define('NetProfile.controller.DataStores', {
 				autoLoad: true,
 				autoSync: true,
 				remoteFilter: false,
-				remoteGroup: false,
 				remoteSort: false,
 				sorters: [{
 					direction: 'ASC',

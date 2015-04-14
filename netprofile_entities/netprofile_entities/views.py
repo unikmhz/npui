@@ -43,9 +43,14 @@ from .models import Entity
 
 _ = TranslationStringFactory('netprofile_entities')
 
-def dpane_entities(model, request):
-	loc = get_localizer(request)
-	tabs = [{
+@register_hook('core.dpanetabs.entities.Entity')
+@register_hook('core.dpanetabs.entities.PhysicalEntity')
+@register_hook('core.dpanetabs.entities.LegalEntity')
+@register_hook('core.dpanetabs.entities.StructuralEntity')
+@register_hook('core.dpanetabs.entities.ExternalEntity')
+def _dpane_entities(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.extend([{
 		'title'             : loc.translate(_('Addresses')),
 		'iconCls'           : 'ico-mod-address',
 		'xtype'             : 'grid_entities_Address',
@@ -96,44 +101,7 @@ def dpane_entities(model, request):
 		'title'             : loc.translate(_('History')),
 		'iconCls'           : 'ico-entity-history',
 		'xtype'             : 'historygrid'
-	}]
-	request.run_hook(
-		'core.dpanetabs.%s.%s' % (model.__parent__.moddef, model.name),
-		tabs, model, request
-	)
-	cont = {
-		'border' : 0,
-		'layout' : {
-			'type'    : 'hbox',
-			'align'   : 'stretch',
-			'padding' : 4
-		},
-		'items' : [{
-			'xtype'  : 'panel',
-			'autoScroll' : True,
-			'border' : 1,
-			'flex'   : 2,
-			'layout' : {
-				'type'  : 'vbox',
-				'align' : 'stretch'
-			},
-			'items'  : [{
-				'xtype'  : 'npform',
-				'border' : 0
-			}]
-		}, {
-			'xtype' : 'splitter'
-		}, {
-			'xtype'  : 'tabpanel',
-			'flex'   : 3,
-			'items'  : tabs
-		}]
-	}
-	request.run_hook(
-		'core.dpane.%s.%s' % (model.__parent__.moddef, model.name),
-		cont, model, request
-	)
-	return cont
+	}]);
 
 @register_hook('core.validators.CreateEntity')
 def new_entity_validator(ret, values, request):

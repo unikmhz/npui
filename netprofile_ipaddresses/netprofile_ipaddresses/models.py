@@ -120,7 +120,6 @@ class IPv4Address(Base):
 				'cap_delete'    : 'IPADDR_DELETE',
 				'menu_name'     : _('IPv4 Addresses'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 10,
 				'grid_view'     : (
 					'host',
 					MarkupColumn(
@@ -316,7 +315,6 @@ class IPv6Address(Base):
 				'cap_delete'    : 'IPADDR_DELETE',
 				'menu_name'     : _('IPv6 Addresses'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 20,
 				'grid_view'     : (
 					'host',
 					MarkupColumn(

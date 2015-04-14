@@ -112,7 +112,6 @@ class AccessSession(Base):
 				'menu_name'     : _('Sessions'),
 				'show_in_menu'  : 'modules',
 				'menu_main'     : True,
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'updatets', 'direction': 'DESC' },),
 				'grid_view'     : (
 					'nas', 'name',
@@ -366,7 +365,6 @@ class AccessSessionHistory(Base):
 				'cap_delete'    : '__NOPRIV__',
 				'menu_name'     : _('History'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'endts', 'direction': 'DESC' },),
 				'grid_view'     : (
 					'nas', 'name',

@@ -161,7 +161,6 @@ class TicketOrigin(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Origins'),
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name', 'descr'),
@@ -231,7 +230,6 @@ class TicketState(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket States'),
-				'menu_order'    : 20,
 				'default_sort'  : (
 					{ 'property': 'title' ,'direction': 'ASC' },
 					{ 'property': 'subtitle' ,'direction': 'ASC' }
@@ -408,7 +406,6 @@ class TicketStateTransition(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Transitions'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name', 'from_state', 'to_state'),
 				'form_view'     : ('name', 'from_state', 'to_state', 'reassign_to', 'descr'),
@@ -523,7 +520,6 @@ class TicketFlagType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Flags'),
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : ('name', 'descr'),
@@ -844,7 +840,6 @@ class Ticket(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Tickets'),
 				'menu_main'     : True,
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'ctime' ,'direction': 'DESC' },),
 				'grid_view'     : (
 					'ticketid', 'entity', 'state',
@@ -1126,7 +1121,11 @@ class Ticket(Base):
 		'Entity',
 		innerjoin=True,
 		lazy='joined',
-		backref='tickets'
+		backref=backref(
+			'tickets',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
 	)
 	state = relationship(
 		'TicketState',
@@ -1207,19 +1206,21 @@ class Ticket(Base):
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
-		flt = {}
+		flist = []
 		if '__filter' in params:
-			flt.update(params['__filter'])
+			flist.extend(params['__filter'])
 		if '__ffilter' in params:
-			flt.update(params['__ffilter'])
-		if ('parentid' in flt) and ('eq' in flt['parentid']):
-			val = int(flt['parentid']['eq'])
-			if val > 0:
-				query = query.join(TicketDependency, Ticket.id == TicketDependency.child_id).filter(TicketDependency.parent_id == val)
-		if ('childid' in flt) and ('eq' in flt['childid']):
-			val = int(flt['childid']['eq'])
-			if val > 0:
-				query = query.join(TicketDependency, Ticket.id == TicketDependency.parent_id).filter(TicketDependency.child_id == val)
+			flist.extend(params['__ffilter'])
+		for flt in flist:
+			prop = flt.get('property', None)
+			oper = flt.get('operator', None)
+			value = flt.get('value', None)
+			if prop == 'parentid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.join(TicketDependency, Ticket.id == TicketDependency.child_id).filter(TicketDependency.parent_id == int(value))
+			if prop == 'childid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.join(TicketDependency, Ticket.id == TicketDependency.parent_id).filter(TicketDependency.child_id == int(value))
 		# FIXME: check TICKETS_LIST_ARCHIVED, TICKETS_OWN_LIST, TICKETS_OWNGROUP_LIST and ACLs
 		return query
 
@@ -1285,7 +1286,6 @@ class TicketTemplate(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Templates'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : (
@@ -1529,7 +1529,6 @@ class TicketChangeField(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Change Fields'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'easy_search'   : ('name',),
@@ -1870,7 +1869,6 @@ class TicketScheduler(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Schedulers'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : (

@@ -16,16 +16,20 @@
 	</div>
 % endif
 	<div class="elem">
-		<label for="user">${_('User Name')}</label><br />
-		<input type="text" class="text x-form-field x-form-required-field x-form-text" id="user" name="user" value="" size="28" maxlength="254" tabindex="1" style="width: 100%;" autocomplete="off" />
+		<label for="user" class="x-form-item-label x-form-item-label-default x-unselectable">${_('User Name')}</label>
+		<div class="x-form-text-wrap x-form-text-wrap-default">
+			<input type="text" class="text x-form-field x-form-text x-form-text-default" id="user" name="user" value="" size="28" maxlength="254" tabindex="1" autocomplete="off" />
+		</div>
 	</div>
 	<div class="elem">
-		<label for="pass">${_('Password')}</label><br />
-		<input type="password" class="text x-form-field x-form-required-field x-form-text" id="pass" name="pass" value="" size="28" maxlength="254" tabindex="2" style="width: 100%;" autocomplete="off" />
+		<label for="pass" class="x-form-item-label x-form-item-label-default x-unselectable">${_('Password')}</label>
+		<div class="x-form-text-wrap x-form-text-wrap-default">
+			<input type="password" class="text x-form-field x-form-text x-form-text-default" id="pass" name="pass" value="" size="28" maxlength="254" tabindex="2" autocomplete="off" />
+		</div>
 	</div>
 	<div class="elem">
-		<label for="__locale">${_('Language')}</label><br />
-		<select class="text" id="__locale" name="__locale" tabindex="3" style="width: 100%;" autocomplete="off">
+		<label for="__locale" class="x-form-item-label x-form-item-label-default x-unselectable">${_('Language')}</label>
+		<select class="text" id="__locale" name="__locale" tabindex="3" class="x-form-field x-form-text x-form-text-default" autocomplete="off">
 % for lang in req.locales:
 			<option label="${'%s [%s]' % (req.locales[lang].english_name, req.locales[lang].display_name)}" value="${lang}"\
 % if lang == cur_loc:

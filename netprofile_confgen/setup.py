@@ -63,8 +63,9 @@ setup(
 		]
 	},
 	message_extractors={'.' : [
-		('**.py', 'lingua_python', None),
-		('**.pt', 'lingua_xml', None)
+		('**.py', 'python', None),
+		('**.pt', 'xml', None),
+		('**.mak', 'mako', None)
 	]}
 )
 

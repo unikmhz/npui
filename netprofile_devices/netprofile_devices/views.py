@@ -112,7 +112,7 @@ _ = TranslationStringFactory('netprofile_devices')
 # 		},
 # 		'items' : [{
 # 			'xtype'  : 'panel',
-# 			'autoScroll' : True,
+# 			'scrollable' : 'vertical',
 # 			'border' : 1,
 # 			'flex'   : 2,
 # 			'layout' : {

@@ -289,7 +289,7 @@ class Module(ModuleBase):
 
 	def get_autoload_js(self, request):
 		return (
-			'Ext.ux.form.WeekDayField',
+			'NetProfile.form.field.WeekDayField',
 		)
 
 	def get_controllers(self, request):

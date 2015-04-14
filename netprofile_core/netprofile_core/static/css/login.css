@@ -37,6 +37,12 @@ div.elem
 	text-align: left;
 }
 
+div.elem div.x-form-text-wrap, div.elem select
+{
+	width: 100%;
+	display: block;
+}
+
 div.errmsg
 {
 	color: #d73600;

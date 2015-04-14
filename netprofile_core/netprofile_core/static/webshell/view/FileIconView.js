@@ -6,61 +6,60 @@ Ext.define('NetProfile.view.FileIconView', {
 	extend: 'Ext.view.View',
 	alias: 'widget.fileiconview',
 	requires: [
-		'Ext.util.KeyNav',
-		'Ext.ux.view.DragSelector',
-		'Ext.ux.view.LabelEditor',
-		'Ext.ux.view.Draggable'
+		'NetProfile.view.FileNavigationModel',
+		'NetProfile.plugin.LabelEditor',
+		'NetProfile.plugin.Draggable',
+		'NetProfile.plugin.DragSelector'
 	],
-	mixins: {
-		draggable: 'Ext.ux.view.Draggable'
-	},
 
 	useColumns: false,
 	browser: null,
 	getMIME: null,
+	getFileSize: null,
 	iconSize: 48,
 	cls: 'np-file-iview',
 	emptyText: 'Folder is empty',
+	sizeText: 'Size: {0}',
+	mimeTypeText: 'MIME type: {0}',
 
 	itemSelector: 'div.np-file-wrap',
 	overItemCls: 'x-file-item-over',
+	deferInitialRefresh: true,
 	multiSelect: true,
 	trackOver: true,
-	autoScroll: true,
+	scrollable: 'vertical',
+	navigationModel: {
+		type: 'file'
+	},
 
 	iconTpl: [
 		'<tpl for=".">',
-			'<div class="np-file-wrap" id="file_{fileid}">',
-				'<div class="np-file-icon"><img src="{staticURL}/static/core/img/mime/{iconSz}/{mime_img}.png" title="{fname}" onerror=\'this.onerror = null; this.src="{staticURL}/static/core/img/mime/{iconSz}/default.png"\' /></div>',
-				'<span class="x-editable" title="{fname}">{fname}</span>',
+			'<div class="np-file-wrap" data-qtitle="{fname}" data-qtip="{qtip}" id="file_{fileid}">',
+				'<div class="np-file-icon"><img src="{staticURL}/static/core/img/mime/{iconSz}/{mime_img}.png" onerror=\'this.onerror = null; this.src="{staticURL}/static/core/img/mime/{iconSz}/default.png"\' /></div>',
+				'<span class="x-editable">{fname}</span>',
 			'</div>',
 		'</tpl>',
 		'<div class="x-clear"></div>'
 	],
 	columnTpl: [
 		'<tpl for=".">',
-			'<div class="np-file-wrap" id="file_{fileid}" style="left: {[ Math.floor((xindex - 1) / values.maxItems) * 202 ]}px; top: {[ ((xindex - 1) % values.maxItems) * 21 ]}px;">',
-				'<div class="np-file-icon"><img src="{staticURL}/static/core/img/mime/{iconSz}/{mime_img}.png" title="{fname}" onerror=\'this.onerror = null; this.src="{staticURL}/static/core/img/mime/{iconSz}/default.png"\' /></div>',
-				'<span class="x-editable" title="{fname}">{fname}</span>',
+			'<div class="np-file-wrap" data-qtitle="{fname}" data-qtip="{qtip}" id="file_{fileid}" style="left: {[ Math.floor((xindex - 1) / values.maxItems) * 202 ]}px; top: {[ ((xindex - 1) % values.maxItems) * 21 ]}px;">',
+				'<div class="np-file-icon"><img src="{staticURL}/static/core/img/mime/{iconSz}/{mime_img}.png" onerror=\'this.onerror = null; this.src="{staticURL}/static/core/img/mime/{iconSz}/default.png"\' /></div>',
+				'<span class="x-editable">{fname}</span>',
 			'</div>',
 		'</tpl>'
 	],
 
 	initComponent: function()
 	{
-		if(this.useColumns)
-			this.tpl = this.columnTpl;
+		var me = this;
+
+		if(me.useColumns)
+			me.tpl = me.columnTpl;
 		else
-			this.tpl = this.iconTpl;
-		this.plugins = [
-			Ext.create('Ext.ux.view.DragSelector', { pluginId: 'dragsel' }),
-			Ext.create('Ext.ux.view.LabelEditor', {
-				dataIndex: 'fname',
-				pluginId: 'editor'
-			})
-		];
-		this.emptyText = '<div class="x-view-empty">' + this.emptyText + '</div>';
-		this.mixins.draggable.init(this, {
+			me.tpl = me.iconTpl;
+		me.plugins = [{
+			ptype: 'draggable',
 			ddConfig: {
 				ddGroup: 'ddFile'
 			},
@@ -70,12 +69,44 @@ Ext.define('NetProfile.view.FileIconView', {
 					'<div>{fname}</div>',
 				'</tpl>'
 			]
+		}, {
+			ptype: 'dragselector'
+		}, {
+			ptype: 'labeleditor',
+			pluginId: 'editor',
+			dataIndex: 'fname',
+			recordFilter: Ext.bind(function(rec)
+			{
+				if(this.folder && !this.folder.get('allow_write'))
+					return false;
+				if(!rec.get('allow_write'))
+					return false;
+				return true;
+			}, me)
+		}];
+		me.emptyText = '<div class="x-view-empty">' + me.emptyText + '</div>';
+		me.callParent(arguments);
+		if(me.useColumns)
+			me.on('resize', me.onResize, me);
+		me.on({
+			scope: me,
+			afterrender: me.onAfterRender
 		});
-		this.nav = null;
-		this.callParent(arguments);
-		if(this.useColumns)
-			this.on('resize', this.onResize, this);
-		this.on('afterrender', this.onAfterRender);
+	},
+	itemsInGroup: function()
+	{
+		var me = this,
+			reg = me.getViewRegion(),
+			sbar = Ext.getScrollbarSize(),
+			len;
+
+		if(me.useColumns)
+		{
+			len = reg.bottom - reg.top - sbar.height - 2;
+			return Math.floor(len / 21);
+		}
+		len = reg.right - reg.left - sbar.width;
+		return Math.floor(len / 103);
 	},
 	onAfterRender: function(me)
 	{
@@ -116,7 +147,7 @@ Ext.define('NetProfile.view.FileIconView', {
 		}
 		ev.preventDefault();
 	},
-	onResize: function(view, w, h, oldw, oldh)
+	onResize: function(w, h, oldw, oldh)
 	{
 		if(!oldw || !oldh)
 			return;
@@ -124,16 +155,24 @@ Ext.define('NetProfile.view.FileIconView', {
 	},
 	prepareData: function(data)
 	{
-		if(this.useColumns)
-		{
-			data.maxHeight = this.browser.body.getHeight() - Ext.getScrollbarSize().height - 2;
-			data.maxItems = Math.floor(data.maxHeight / 21);
-		}
-		data.iconSz = this.iconSize;
+		var me = this,
+			qtip_cont = [];
+
+		data.maxItems = me.itemsInGroup();
+		data.iconSz = me.iconSize;
 		data.baseURL = NetProfile.baseURL;
 		data.staticURL = NetProfile.staticURL;
-		if(data.mime && this.getMIME)
-			data.mime_img = this.getMIME(data.mime);
+		data.fname = Ext.String.htmlEncode(data.fname);
+
+		qtip_cont.push(Ext.String.htmlEncode(data.descr ? data.descr : data.fname));
+		if(data.size && me.getFileSize)
+			qtip_cont.push(Ext.String.format(me.sizeText, me.getFileSize(data.size)));
+		if(data.mime)
+			qtip_cont.push(Ext.String.format(me.mimeTypeText, Ext.String.htmlEncode(data.mime.split(';')[0])));
+		if(qtip_cont.length)
+			data.qtip = qtip_cont.join('<br />');
+		if(data.mime && me.getMIME)
+			data.mime_img = me.getMIME(data.mime);
 
 		return data;
 	}

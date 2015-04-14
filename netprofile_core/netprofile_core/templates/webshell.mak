@@ -23,14 +23,15 @@ Ext.require([
 	'Ext.menu.*',
 	'Ext.state.*',
 	'Ext.util.Cookies',
+	'Ext.util.LocalStorage',
 	'Ext.Ajax',
 % for i_ajs in res_ajs:
 	'${i_ajs}',
 % endfor
-	'NetProfile.model.Basic',
-	'NetProfile.view.CapabilityGrid',
-	'Ext.ux.form.MultiField',
-	'NetProfile.view.Calendar'
+	'NetProfile.data.BaseModel',
+	'NetProfile.grid.CapabilityGrid',
+	'NetProfile.form.field.MultiField',
+	'NetProfile.panel.Calendar'
 ], function()
 {
 	NetProfile.currentLocale = '${cur_loc}';
@@ -43,6 +44,7 @@ Ext.require([
 	NetProfile.rootFolder = ${req.user.get_root_folder() | n,jsone};
 	NetProfile.baseURL = '${req.host_url}';
 	NetProfile.staticURL = '${req.host_url}';
+	NetProfile.state = null;
 	NetProfile.rtURL = '//${rt_host}:${rt_port}';
 	NetProfile.rtSocket = null;
 	NetProfile.rtSocketReady = false;
@@ -76,45 +78,35 @@ Ext.require([
 		}
 	};
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
-	Ext.Ajax.defaultHeaders = Ext.apply(Ext.Ajax.defaultHeaders || {}, {
+	Ext.Ajax.setDefaultHeaders({
 		'X-CSRFToken': '${req.get_csrf()}'
 	});
 	NetProfile.msg = function()
 	{
-		var msgCt;
-
-		function createBox(t, s, cls)
+		function getMsg(cls, delay, title, args)
 		{
-			return '<div class="msg ' + cls + '"><h3>' + t + '</h3><p>' + s + '</p></div>';
-		}
-
-		function getMsg(cls, title, args)
-		{
-			if(!msgCt)
-				msgCt = Ext.DomHelper.insertFirst(document.body, { id: 'msg-div' }, true);
-			var s = Ext.String.format.apply(String, args);
-			var m = Ext.DomHelper.append(msgCt, createBox(title, s, cls), true);
-			m.hide();
-			m.slideIn('t').ghost('t', { delay: 1250, remove: true });
+			return Ext.toast({
+				html: Ext.String.format.apply(Ext.String, args),
+				title: title,
+				minWidth: 200,
+				align: 'br',
+				autoCloseDelay: delay,
+				iconCls: cls
+			});
 		}
 
 		return {
 			notify: function(title, fmt)
 			{
-				return getMsg('', title, Array.prototype.slice.call(arguments, 1));
+				return getMsg('ico-info', 3000, title, Ext.Array.slice(arguments, 1));
 			},
 			warn: function(title, fmt)
 			{
-				return getMsg('warning', title, Array.prototype.slice.call(arguments, 1));
+				return getMsg('ico-warning', 4500, title, Ext.Array.slice(arguments, 1));
 			},
 			err: function(title, fmt)
 			{
-				return getMsg('error', title, Array.prototype.slice.call(arguments, 1));
-			},
-			init: function()
-			{
-				if(!msgCt)
-					msgCt = Ext.DomHelper.insertFirst(document.body, { id: 'msg-div' }, true);
+				return getMsg('ico-error', 6000, title, Ext.Array.slice(arguments, 1));
 			}
 		};
 	}();
@@ -195,7 +187,7 @@ Ext.require([
 		pbar.show();
 	};
 
-	Ext.define('Ext.data.ConnectionNPOver', {
+	Ext.define('Ext.overrides.mod.AcceptFormData', {
 		override: 'Ext.data.Connection',
 		setOptions: function(opt, scope)
 		{
@@ -212,7 +204,22 @@ Ext.require([
 			return res;
 		}
 	});
-	Ext.define('Ext.form.field.BaseErrors', {
+	Ext.define('Ext.overrides.mod.FieldAsyncErrors', {
+		override: 'Ext.form.field.Field',
+		getErrors: function(value)
+		{
+			var errs, i;
+
+			errs = this.callParent(arguments);
+			if(this.asyncErrors && this.asyncErrors.length)
+				for(i in this.asyncErrors)
+				{
+					Ext.Array.push(errs, this.asyncErrors[i]);
+				}
+			return errs;
+		}
+	});
+	Ext.define('Ext.overrides.mod.BaseAsyncErrors', {
 		override: 'Ext.form.field.Base',
 		getErrors: function(value)
 		{
@@ -227,10 +234,302 @@ Ext.require([
 			return errs;
 		}
 	});
+	Ext.define('Ext.overrides.mod.ROTrigger', {
+		override: 'Ext.form.trigger.Trigger',
+		disableOnReadOnly: true,
+		onClick: function()
+		{
+			var me = this,
+				args = arguments,
+				e = me.clickRepeater ? args[1] : args[0],
+				handler = me.handler,
+				field = me.field;
 
-	Ext.data.Types.IPV4 = {
-		type: 'ipv4',
-		convert: function(value, record)
+			if(handler && (!field.readOnly || !me.disableOnReadOnly) && me.isFieldEnabled())
+				Ext.callback(me.handler, me.scope, [field, me, e], 0, field);
+		}
+	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16183.menu', {
+		override: 'Ext.menu.Menu',
+		compatibility: '5.1.0.107',
+		onFocusLeave: function(e)
+		{
+			var me = this;
+
+			me.callSuper([e]);
+			me.mixins.focusablecontainer.onFocusLeave.call(me, e);
+			if(me.floating)
+				me.hide();
+		},
+		beforeShow: function()
+		{
+			var me = this,
+				activeEl, viewHeight;
+
+			// Constrain the height to the containing element's viewable area
+			if(me.floating)
+			{
+				if(!me.parentMenu && !me.allowOtherMenus)
+					Ext.menu.Manager.hideAll();
+				// Only register a focusAnchor to return to on hide if the active element is not the document
+				// If there's no focusAnchor, we return to the ownerCmp, or first focusable ancestor.
+				activeEl = Ext.Element.getActiveElement();
+				me.focusAnchor = activeEl === document.body ? null : activeEl;
+
+				me.savedMaxHeight = me.maxHeight;
+				viewHeight = me.container.getViewSize().height;
+				me.maxHeight = Math.min(me.maxHeight || viewHeight, viewHeight);
+			}
+
+			me.callSuper(arguments);
+
+			// Add a touch start listener to check for taps outside the menu.
+			// iOS in particular does not trigger blur on document tap, so
+			// we have to check for taps outside this menu.
+			if(Ext.supports.Touch)
+			{
+				me.tapListener = Ext.getBody().on({
+					touchstart: me.onBodyTap,
+					scope: me,
+					destroyable: true
+				});
+			}
+		},
+		afterShow: function()
+		{
+			var me = this;
+
+			me.callSuper(arguments);
+			Ext.menu.Manager.onShow(me);
+
+			// Restore configured maxHeight
+			if(me.floating && me.autoFocus)
+			{
+				me.maxHeight = me.savedMaxHeight;
+				me.focus();
+			}
+		},
+		onHide: function(animateTarget, cb, scope)
+		{
+			var me = this,
+				focusTarget;
+
+			// If we contain focus just before element hide, move it elsewhere before hiding
+			if(me.el.contains(Ext.Element.getActiveElement()))
+			{
+				// focusAnchor was the active element before this menu was shown.
+				focusTarget = me.focusAnchor || me.ownerCmp || me.up(':focusable');
+
+				// Component hide processing will focus the "previousFocus" element.
+				if(focusTarget)
+					me.previousFocus = focusTarget;
+			}
+			this.callSuper([animateTarget, cb, scope]);
+			Ext.menu.Manager.onHide(me);
+		}
+	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16183.menuMgr', {
+		override: 'Ext.menu.Manager',
+		compatibility: '5.1.0.107',
+		visible: [],
+		onShow: function(menu)
+		{
+			if(menu.floating)
+				Ext.Array.include(this.visible, menu);
+		},
+		onHide: function(menu)
+		{
+			if(menu.floating)
+				Ext.Array.remove(this.visible, menu);
+		},
+		hideAll: function()
+		{
+			var allMenus = this.visible,
+				len = allMenus.length,
+				i,
+				result = false;
+
+			for(i = 0; i < len; i++)
+			{
+				allMenus[i].hide();
+				result = true;
+			}
+			return result;
+		},
+		checkActiveMenus: function(e)
+		{
+			var allMenus = this.visible,
+				len = allMenus.length,
+				i, menu;
+
+			for(i = 0; i < len; ++i)
+			{
+				menu = allMenus[i];
+				if(!menu.containsFocus && !menu.owns(e))
+					menu.hide();
+			}
+		}
+	});
+	Ext.onReady(function()
+	{
+		Ext.getDoc().on('mousedown', Ext.menu.Manager.checkActiveMenus, Ext.menu.Manager);
+	});
+	Ext.define('Ext.overrides.bugfix.EXTJS15525', {
+		override: 'Ext.util.Collection',
+		compatibility: '5.1.0.107',
+		updateKey: function (item, oldKey) {
+			var me = this,
+				map = me.map,
+				indices = me.indices,
+				source = me.getSource(),
+				newKey;
+
+			if (source && !source.updating) {
+				// If we are being told of the key change and the source has the same idea
+				// on keying the item, push the change down instead.
+				source.updateKey(item, oldKey);
+			}
+			// If there *is* an existing item by the oldKey and the key yielded by the new item is different from the oldKey...
+			else if (map[oldKey] && (newKey = me.getKey(item)) !== oldKey) {
+				if (oldKey in map || map[newKey] !== item) {
+					if (oldKey in map) {
+						//<debug>
+						if (map[oldKey] !== item) {
+							Ext.Error.raise('Incorrect oldKey "' + oldKey +
+											'" for item with newKey "' + newKey + '"');
+						}
+						//</debug>
+
+						delete map[oldKey];
+					}
+
+					// We need to mark ourselves as updating so that observing collections
+					// don't reflect the updateKey back to us (see above check) but this is
+					// not really a normal update cycle so we don't call begin/endUpdate.
+					me.updating++;
+
+					me.generation++;
+					map[newKey] = item;
+					if (indices) {
+						indices[newKey] = indices[oldKey];
+						delete indices[oldKey];
+					}
+
+					me.notify('updatekey', [{
+						item: item,
+						newKey: newKey,
+						oldKey: oldKey
+					}]);
+
+					me.updating--;
+				}
+			}
+		}
+	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16166', {
+		override: 'Ext.view.View',
+		compatibility: '5.1.0.107',
+		handleEvent: function(e) {
+			var me = this,
+				isKeyEvent = me.keyEventRe.test(e.type),
+				nm = me.getNavigationModel();
+
+			e.view = me;
+
+			if (isKeyEvent) {
+				e.item = nm.getItem();
+				e.record = nm.getRecord();
+			}
+
+			// If the key event was fired programatically, it will not have triggered the focus
+			// so the NavigationModel will not have this information.
+			if (!e.item) {
+				e.item = e.getTarget(me.itemSelector);
+			}
+			if (e.item && !e.record) {
+				e.record = me.getRecord(e.item);
+			}
+
+			if (me.processUIEvent(e) !== false) {
+				me.processSpecialEvent(e);
+			}
+
+			// We need to prevent default action on navigation keys
+			// that can cause View element scroll unless the event is from an input field.
+			// We MUST prevent browser's default action on SPACE which is to focus the event's target element.
+			// Focusing causes the browser to attempt to scroll the element into view.
+
+			if (isKeyEvent && !Ext.fly(e.target).isInputField()) {
+				if (e.getKey() === e.SPACE || e.isNavKeyPress(true)) {
+					e.preventDefault();
+				}
+			}
+		}
+	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16347', {
+		override: 'Ext.data.AbstractStore',
+		compatibility: '5.1.0.107',
+		applyState: function(state)
+		{
+			var me = this,
+				sorters = me.getSorters(),
+				filters = me.getFilters(),
+				stateSorters = state.sorters,
+				stateFilters = state.filters,
+				stateGrouper = state.grouper;
+
+			me.blockLoad();
+			if(stateSorters)
+			{
+				sorters.replaceAll(stateSorters);
+			}
+			if(stateFilters)
+			{
+				// We found persisted filters so let's save stateful filters from this point forward.
+				me.saveStatefulFilters = true;
+				filters.replaceAll(stateFilters);
+			}
+			if(stateGrouper)
+			{
+				this.setGrouper(stateGrouper);
+			}
+			me.unblockLoad();
+		}
+	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16347.filters', {
+		override: 'Ext.grid.filters.Filters',
+		compatibility: '5.1.0.107',
+		initColumns: function()
+		{
+			var grid = this.grid,
+				store = grid.getStore(),
+				columns = grid.columnManager.getColumns(),
+				len = columns.length,
+				i, column,
+				filter, filterCollection, block;
+
+			// We start with filters defined on any columns.
+			for(i = 0; i < len; i++)
+			{
+				column = columns[i];
+				filter = column.filter;
+
+				if(filter && !filter.isGridFilter)
+					this.createColumnFilter(column);
+			}
+		}
+	});
+	Ext.define('Ext.overrides.bugfix.EXTJS16023', {
+		override: 'Ext.form.field.ComboBox',
+		compatibility: '5.1.0.107',
+		checkChangeEvents: Ext.isIE ? ['change', 'propertychange', 'keyup'] : ['change', 'input', 'textInput', 'keyup', 'dragdrop']
+	});
+
+	Ext.define('NetProfile.data.field.IPv4', {
+		extend: 'Ext.data.field.Field',
+		alias: 'data.field.ipv4',
+		isIPField: true,
+		convert: function(value)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
 				return null;
@@ -238,11 +537,11 @@ Ext.require([
 			{
 				if(value instanceof ipaddr.IPv4)
 					return value;
-				throw "Supplied with an unknown object type";
+				throw 'Supplied with an unknown object type';
 			}
 			return ipaddr.IPv4.parse(value);
 		},
-		serialize: function(value, record)
+		serialize: function(value)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
 				return null;
@@ -253,11 +552,17 @@ Ext.require([
 		sortType: function(t)
 		{
 			return t.toInteger();
+		},
+		getType: function()
+		{
+			return 'ipv4';
 		}
-	};
-	Ext.data.Types.IPV6 = {
-		type: 'ipv6',
-		convert: function(value, record)
+	});
+	Ext.define('NetProfile.data.field.IPv6', {
+		extend: 'Ext.data.field.Field',
+		alias: 'data.field.ipv6',
+		isIPField: true,
+		convert: function(value)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
 				return null;
@@ -265,7 +570,7 @@ Ext.require([
 			{
 				if(value instanceof ipaddr.IPv6)
 					return value;
-				throw "Supplied with an unknown object type";
+				throw 'Supplied with an unknown object type';
 			}
 			if(Ext.isArray(value) && (value.length == 16))
 			{
@@ -279,7 +584,7 @@ Ext.require([
 			}
 			return ipaddr.IPv6.parse(value);
 		},
-		serialize: function(value, record)
+		serialize: function(value)
 		{
 			if((value === null) || (value === undefined) || (value === ''))
 				return null;
@@ -290,8 +595,12 @@ Ext.require([
 		sortType: function(t)
 		{
 			return t.toByteArray();
+		},
+		getType: function()
+		{
+			return 'ipv6';
 		}
-	};
+	});
 
 	Ext.apply(Ext.data.validations, {
 		rangeMessage: 'is out of range',
@@ -331,7 +640,7 @@ Ext.require([
 	});
 
 	Ext.define('NetProfile.model.ConsoleMessage', {
-		extend: 'NetProfile.model.Basic',
+		extend: 'Ext.data.Model',
 		fields: [
 			{ name: 'id',   type: 'auto' },
 			{ name: 'ts',   type: 'date', dateFormat: 'c' },
@@ -380,7 +689,7 @@ Ext.require([
 			{ name: 'text', type: 'string' },
 			{ name: 'order', type: 'int' },
 			{ name: 'leaf', type: 'boolean' },
-			{ name: 'iconCls', type: 'string' },
+			{ name: 'iconCls', type: 'string', persist: false },
 			{ name: 'xview', type: 'string' },
 			{ name: 'xhandler', type: 'string' }
 		]
@@ -412,7 +721,7 @@ Ext.require([
 	});
 % endif
 	Ext.define('NetProfile.store.menu.${menu.name}', {
-		extend: 'Ext.data.TreeStore',
+		extend: 'NetProfile.data.MenuTreeStore',
 		requires: 'NetProfile.model.MenuItem',
 % if len(menu.extra_fields) > 0:
 		model: 'NetProfile.model.customMenu.${menu.name}',
@@ -431,23 +740,30 @@ Ext.require([
 			},
 			reader: {
 				type: 'json',
-				root: 'records',
+				rootProperty: 'records',
 				messageProperty: 'message',
 				successProperty: 'success',
 				totalProperty: 'total'
 			},
 			writer: {
 				type: 'json',
-				root: 'records',
+				rootProperty: 'records',
 				writeAllFields: true,
 				allowSingle: false
 			}
 		},
+% if menu.custom_root:
+		root: ${menu.custom_root | n,jsone},
+% else:
 		root: {
 			expanded: true
 		},
+% endif
 		autoLoad: false,
 		autoSync: false,
+% else:
+% if menu.custom_root:
+		root: ${menu.custom_root | n,jsone},
 % else:
 		root: {
 			expanded: true,
@@ -455,12 +771,12 @@ Ext.require([
 			children: ${modules.get_menu_tree(req, menu.name) | n,jsone}
 		},
 % endif
+% endif
 		storeId: 'npstore_menu_${menu.name}'
 	});\
 </%np:limit>\
 % endfor
 
-	Ext.require('NetProfile.view.Viewport');
 % for module in modules:
 % for model in modules[module]:
 <% mod = modules[module][model] %>
@@ -484,23 +800,22 @@ Ext.require([
 			type: 'json',
 			idProperty: '${mod.pk}',
 			messageProperty: 'message',
-			root: 'records',
+			rootProperty: 'records',
 			successProperty: 'success',
 			totalProperty: 'total'
 		},
 		writer: {
 			type: 'json',
-			root: 'records',
+			rootProperty: 'records',
 			writeAllFields: false,
+			clientIdProperty: '_clid',
 			allowSingle: false
 		}
 	});
 	Ext.define('NetProfile.model.${module}.${model}', {
-		extend: 'NetProfile.model.Basic',
+		extend: 'NetProfile.data.BaseModel',
 		fields: ${mod.get_reader_cfg() | n,jsone},
-		associations: ${mod.get_related_cfg() | n,jsone},
 		idProperty: '${mod.pk}',
-		clientIdProperty: '_clid',
 		proxy: {
 			type: '${module}_${model}'
 		}
@@ -513,14 +828,13 @@ Ext.require([
 		sorters: ${mod.default_sort | n,jsone},
 		pageSize: NetProfile.userSettings.datagrid_perpage,
 		remoteFilter: true,
-		remoteGroup: true,
 		remoteSort: true,
 		storeId: 'npstore_${module}_${model}',
-		autoLoad: true,
+		autoLoad: false,
 		autoSync: true
 	});
 	Ext.define('NetProfile.view.grid.${module}.${model}', {
-		extend: 'NetProfile.view.ModelGrid',
+		extend: 'NetProfile.grid.ModelGrid',
 		alias: 'widget.grid_${module}_${model}',
 		columns: ${mod.get_column_cfg(req) | n,jsone},
 		apiModule: '${module}',
@@ -537,195 +851,221 @@ Ext.require([
 		canCreate: false,
 % endif
 		canEdit: <%np:jscap code="${mod.cap_edit}" />,
-		canDelete: <%np:jscap code="${mod.cap_delete}" />
+		canDelete: <%np:jscap code="${mod.cap_delete}" />,
+		canExport: ${'false' if (mod.export_view is None) else 'true'}
 	});
 % endfor
 % endfor
 
+	// Choose supported state storage
+	if(Ext.util.LocalStorage.supported)
+		NetProfile.state = new Ext.state.LocalStorageProvider({
+			prefix: 'np' + NetProfile.currentUserId + '_'
+		});
+	else
+		NetProfile.state = new Ext.state.CookieProvider({
+			prefix: 'np' + NetProfile.currentUserId + '_'
+		});
+	var state_loaded = NetProfile.state.get('loaded');
 
-Ext.application({
-	name: 'NetProfile',
-	appFolder: 'static/core/webshell',
-	autoCreateViewport: false,
-
-	models: [],
-	stores: [],
-	controllers: [
-		'NetProfile.controller.DataStores',
-		'NetProfile.controller.Users',
-		'NetProfile.controller.FileAttachments',
-% for cont in res_ctl:
-		'${cont}',
-% endfor
-		'NetProfile.controller.FileFolders'
-	],
-
-	launch: function()
+	Ext.onReady(function()
 	{
-		var state_prov = null,
-			state_loaded = false,
-			rt_sock = null;
-
-		Ext.onReady(NetProfile.msg.init, NetProfile.msg);
-		if('localStorage' in window && window['localStorage'] !== null)
-		{
-			state_prov = new Ext.state.LocalStorageProvider({
-				prefix: 'nps_'
-			});
-		}
-		else
-		{
-			state_prov = new Ext.state.CookieProvider({
-				prefix: 'nps_'
-			});
-		}
-
-		Ext.state.Manager.setProvider(state_prov);
-		state_loaded = state_prov.get('loaded');
-
-		var npp = Ext.direct.Manager.getProvider('netprofile-provider');
-		npp.on('exception', function(p, e)
-		{
-			if(e && e.message)
-			{
-% if req.debug_enabled:
-				Ext.log.error(e.message);
-% endif
-				NetProfile.msg.err('${_('Error')}', '{0}', e.message);
-			}
+		Ext.tip.QuickTipManager.init();
+		Ext.apply(Ext.tip.QuickTipManager.getQuickTip(), {
+			anchorToTarget: false,
+			anchor: 'right',
+			anchorOffset: 12,
+			trackMouse: true,
+			constraintInsets: '-8 -8 -8 -8',
+			showDelay: 650,
+			hideDelay: 0
 		});
-		npp.on('data', function(p, e)
-		{
-			if(e.result && !e.result.success)
-			{
-				if(e.result.message)
-				{
-% if req.debug_enabled:
-					Ext.log.warn(e.result.message);
-					if(e.result.stacktrace)
-						Ext.log.info(e.result.stacktrace);
-% endif
-					NetProfile.msg.warn('${_('Warning')}', '{0}', e.result.message);
-				}
-			}
-		});
+	});
 
-		if(NetProfile.rtURL)
-		{
-			rt_sock = SockJS(NetProfile.rtURL + '/sock');
-			rt_sock.onopen = function()
-			{
-% if req.debug_enabled:
-				Ext.log.info('SockJS connected');
-% endif
-				var msg = {
-					type:    'auth',
-					user:    NetProfile.currentUser,
-					uid:     NetProfile.currentUserId,
-					session: NetProfile.currentSession
-				};
-				rt_sock.send(Ext.JSON.encode(msg));
-			};
-			rt_sock.onmessage = function(ev)
-			{
-				ev.data = Ext.JSON.decode(ev.data);
-% if req.debug_enabled:
-				Ext.log.info({ dump: ev }, 'SockJS event received');
-% endif
-				if(typeof(ev.data.type) !== 'string')
-					return;
-				switch(ev.data.type)
-				{
-					case 'user_enters':
-					case 'user_leaves':
-						var uid = ev.data.uid,
-							obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
-						if(!obj)
-							return;
-						if(ev.data.type === 'user_enters')
-							obj.set('iconCls', 'ico-status-online');
-						else
-							obj.set('iconCls', 'ico-status-offline');
-						break;
-					case 'user_list':
-						var u, uid, obj;
-						NetProfile.rtSocketReady = true;
-						NetProfile.rtActiveUIDs = ev.data.users;
-						for(u in ev.data.users)
-						{
-							uid = ev.data.users[u];
-							obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
-							if(!obj)
-								continue;
-							obj.set('iconCls', 'ico-status-online');
-						}
-						break;
-					case 'direct':
-						var store = NetProfile.StoreManager.getConsoleStore(ev.data.msgtype, ev.data.fromid),
-							rec;
-						if(store)
-						{
-							rec = Ext.create('NetProfile.model.ConsoleMessage');
-							rec.set('ts', new Date(ev.data.ts));
-							if(ev.data.fromstr)
-								rec.set('from', ev.data.fromstr);
-							if(ev.data.bodytype)
-								rec.set('bodytype', ev.data.bodytype);
-							if(ev.data.msg)
-								rec.set('data', ev.data.msg);
-							store.add(rec);
-						}
-						break;
-					case 'task_result':
-						var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
-							rec;
-						if(store)
-						{
-							rec = Ext.create('NetProfile.model.ConsoleMessage');
-							rec.set('ts', new Date(ev.data.ts));
-							rec.set('bodytype', 'task_result');
-							rec.set('data', ev.data.value);
-							store.add(rec);
-						}
-						NetProfile.showConsole();
-						break;
-					case 'task_error':
-						var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
-							rec;
-						if(store)
-						{
-							rec = Ext.create('NetProfile.model.ConsoleMessage');
-							rec.set('ts', new Date(ev.data.ts));
-							rec.set('bodytype', 'task_error');
-							rec.set('data', [ev.data.errno, ev.data.value]);
-							store.add(rec);
-						}
-						NetProfile.showConsole();
-						break;
-				}
-			};
-			NetProfile.rtSocket = rt_sock;
-		}
+	Ext.define('NetProfile.main.Application', {
+		extend: 'Ext.app.Application',
+		name: 'NetProfile',
+		appFolder: 'static/core/webshell',
+		mainView: 'Viewport',
 
-		if(state_loaded !== 'OK')
+		models: [],
+		views: ['Viewport'],
+		stores: [],
+		controllers: [
+			'NetProfile.controller.DataStores',
+			'NetProfile.controller.Users',
+			'NetProfile.controller.FileAttachments',
+% for cont in res_ctl:
+			'${cont}',
+% endfor
+			'NetProfile.controller.FileFolders'
+		],
+
+		init: function(app)
 		{
-			NetProfile.api.DataCache.load_ls(function(data, res)
+			var rt_sock = null,
+				direct_provider;
+
+			// Init state storage
+			Ext.state.Manager.setProvider(NetProfile.state);
+
+			// Init ExtDirect remoting provider
+			direct_provider = Ext.direct.Manager.getProvider('netprofile-provider');
+			direct_provider.on('exception', function(p, e)
 			{
-				if(data && data.state && data.success)
+				if(e && e.message)
 				{
-					Ext.Object.each(data.state, function(k, v)
+% if req.debug_enabled:
+					Ext.log.error(e.message);
+% endif
+					NetProfile.msg.err('${_('Error')}', '{0}', e.message);
+				}
+			});
+			direct_provider.on('data', function(p, e)
+			{
+				if(e.result && !e.result.success)
+				{
+					if(e.result.message)
 					{
-						state_prov.set(k, v);
-					});
+% if req.debug_enabled:
+						Ext.log.warn(e.result.message);
+						if(e.result.stacktrace)
+							Ext.log.info(e.result.stacktrace);
+% endif
+						NetProfile.msg.warn('${_('Warning')}', '{0}', e.result.message);
+					}
 				}
-				state_prov.set('loaded', 'OK');
-				Ext.create('NetProfile.view.Viewport', {});
 			});
+
+			// Init SockJS connection to realtime server
+			// TODO: move this to a separate component
+			if(NetProfile.rtURL)
+			{
+				rt_sock = SockJS(NetProfile.rtURL + '/sock');
+				rt_sock.onopen = function()
+				{
+% if req.debug_enabled:
+					Ext.log.info('SockJS connected');
+% endif
+					var msg = {
+						type:    'auth',
+						user:    NetProfile.currentUser,
+						uid:     NetProfile.currentUserId,
+						session: NetProfile.currentSession
+					};
+					rt_sock.send(Ext.JSON.encode(msg));
+				};
+				rt_sock.onmessage = function(ev)
+				{
+					ev.data = Ext.JSON.decode(ev.data);
+% if req.debug_enabled:
+					Ext.log.info({ dump: ev }, 'SockJS event received');
+% endif
+					if(typeof(ev.data.type) !== 'string')
+						return;
+					switch(ev.data.type)
+					{
+						case 'user_enters':
+						case 'user_leaves':
+							var uid = ev.data.uid,
+								obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
+							if(!obj)
+								return;
+							if(ev.data.type === 'user_enters')
+								obj.set('iconCls', 'ico-status-online');
+							else
+								obj.set('iconCls', 'ico-status-offline');
+							break;
+						case 'user_list':
+							var u, uid, obj;
+							NetProfile.rtSocketReady = true;
+							NetProfile.rtActiveUIDs = ev.data.users;
+							for(u in ev.data.users)
+							{
+								uid = ev.data.users[u];
+								obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
+								if(!obj)
+									continue;
+								obj.set('iconCls', 'ico-status-online');
+							}
+							break;
+						case 'direct':
+							var store = NetProfile.StoreManager.getConsoleStore(ev.data.msgtype, ev.data.fromid),
+								rec;
+							if(store)
+							{
+								rec = Ext.create('NetProfile.model.ConsoleMessage');
+								rec.set('ts', new Date(ev.data.ts));
+								if(ev.data.fromstr)
+									rec.set('from', ev.data.fromstr);
+								if(ev.data.bodytype)
+									rec.set('bodytype', ev.data.bodytype);
+								if(ev.data.msg)
+									rec.set('data', ev.data.msg);
+								store.add(rec);
+							}
+							break;
+						case 'task_result':
+							var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
+								rec;
+							if(store)
+							{
+								rec = Ext.create('NetProfile.model.ConsoleMessage');
+								rec.set('ts', new Date(ev.data.ts));
+								rec.set('bodytype', 'task_result');
+								rec.set('data', ev.data.value);
+								store.add(rec);
+							}
+							NetProfile.showConsole();
+							break;
+						case 'task_error':
+							var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
+								rec;
+							if(store)
+							{
+								rec = Ext.create('NetProfile.model.ConsoleMessage');
+								rec.set('ts', new Date(ev.data.ts));
+								rec.set('bodytype', 'task_error');
+								rec.set('data', [ev.data.errno, ev.data.value]);
+								store.add(rec);
+							}
+							NetProfile.showConsole();
+							break;
+					}
+				};
+				NetProfile.rtSocket = rt_sock;
+			}
+		},
+		launch: function(profile)
+		{
+			var spl = Ext.get('splash');
+
+			if(spl)
+				spl.fadeOut({
+					opacity: 0,
+					delay: 300,
+					duration: 400,
+					easing: 'easeIn',
+					remove: true,
+					useDisplay: true
+				});
+			return true;
 		}
-		else
-			Ext.create('NetProfile.view.Viewport', {});
-	}
-});
+	});
+
+	if(state_loaded !== 'OK')
+		NetProfile.api.DataCache.load_ls(function(data, res)
+		{
+			if(data && data.state && data.success)
+				Ext.Object.each(data.state, function(k, v)
+				{
+					NetProfile.state.set(k, v);
+				});
+			NetProfile.state.set('loaded', 'OK');
+			Ext.application('NetProfile.main.Application');
+		});
+	else
+		Ext.application('NetProfile.main.Application');
 
 });
 

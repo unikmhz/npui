@@ -174,7 +174,6 @@ class BillingPeriod(Base):
 				'cap_delete'    : 'RATES_EDIT',
 				'menu_name'     : _('Billing Periods'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 50,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'form_view'     : (
@@ -337,7 +336,6 @@ class DestinationSet(Base):
 				'cap_delete'    : 'RATES_DS_DELETE',
 				'menu_name'    : _('Destination Sets'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'easy_search'   : ('name',),
@@ -550,7 +548,6 @@ class FilterSet(Base):
 				'cap_delete'    : 'RATES_FS_DELETE',
 				'menu_name'     : _('Filter Sets'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name',),
 				'easy_search'   : ('name',),
@@ -725,7 +722,6 @@ class Rate(Base):
 				'menu_name'     : _('Payment Rates'),
 				'show_in_menu'  : 'modules',
 				'menu_main'     : True,
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'class', 'type', 'qp_amount', 'qp_unit', 'qsum'),
 				'form_view'     : (
@@ -1143,7 +1139,6 @@ class RateClass(Base):
 				'cap_delete'    : 'RATES_CLASSES_DELETE',
 				'menu_name'    : _('Classes'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 20,
 				'default_sort' : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view' : ('name',),
 				'form_view' : ('name', 'descr'),
@@ -1283,7 +1278,6 @@ class RateModifierType(Base):
 				'cap_delete'    : 'RATES_DELETE',
 				'menu_name'     : _('Rate Modifiers'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 60,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'enabled'),
 				'form_view'     : (
