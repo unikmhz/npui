@@ -2278,7 +2278,6 @@ class ExtModel(object):
 			ret = {
 				'id'      : xname,
 				'text'    : loc.translate(self.menu_name),
-				'order'   : self.menu_order,
 				'leaf'    : True,
 				'iconCls' : 'ico-mod-%s' % xname,
 				'xview'   : 'grid_%s_%s' % (self.__parent__.moddef, self.name)
@@ -2373,18 +2372,16 @@ class ExtModuleBrowser(object):
 			pnode['expanded'] = True
 			if 'children' not in pnode:
 				pnode['children'] = []
-			pnode['children'].extend(sorted(orphans, key=lambda v: v['order']))
+			pnode['children'].extend(orphans)
 		for sect in sch:
 			ss = sch[sect]
-			ss['children'] = sorted(ss['children'], key=lambda mt: mt['order'])
-			ss['order'] = sum([i['order'] for i in ss['children']]) // len(ss['children'])
 			ch.append(ss)
 		if (len(ch) > 0) or menu_main:
 			ret = {
 				'id'       : self.moddef,
 				'text'     : loc.translate(self.mmgr.loaded[self.moddef].name),
 				'expanded' : True,
-				'children' : sorted(ch, key=lambda mt: mt['order']),
+				'children' : ch,
 				'iconCls'  : 'ico-module'
 			}
 			if menu_main:
@@ -2456,11 +2453,14 @@ class ExtBrowser(object):
 				pnode['expanded'] = True
 				if 'children' not in pnode:
 					pnode['children'] = []
-				pnode['children'].extend(sorted(external[mid], key=lambda v: v['order']))
+				pnode['children'].extend(external[mid])
 
 		req.run_hook('np.menu', name, menu, req, self)
 
-		return menu
+		for item in menu:
+			if 'children' in item:
+				item['children'] = sorted(item['children'], key=lambda mt: mt['text'])
+		return sorted(menu, key=lambda mt: mt['text'])
 
 	def get_export_menu(self, req):
 		return tuple(fmt.export_panel(req, name) for name, fmt in sorted(self.mmgr.get_export_formats().items(), key=lambda x: x[0]))

@@ -1383,11 +1383,10 @@ def _menu_custom(name, menu, req, extb):
 	if name != 'modules':
 		return
 	loc = get_localizer(req)
-	menu.insert(0, {
+	menu.append({
 		'leaf'     : False,
 		'expanded' : True,
 		'xview'    : 'calendar',
-		'order'    : 1,
 		'iconCls'  : 'ico-mod-calendar',
 		'text'     : loc.translate(_('Events')),
 		'id'       : 'event',
