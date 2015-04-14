@@ -4,6 +4,9 @@
  */
 Ext.define('NetProfile.geo.form.field.Address', {
 	extend: 'Ext.form.FieldContainer',
+	mixins: {
+		field: 'Ext.form.field.Field'
+	},
 	alias: 'widget.address',
 	requires: [
 		'Ext.form.field.ComboBox',
@@ -153,12 +156,19 @@ Ext.define('NetProfile.geo.form.field.Address', {
 	},
 	clearSubValue: function(stype)
 	{
-		var cb;
+		var me = this,
+			oldval = me['selected' + stype],
+			sub = me._getNextType(stype),
+			cb;
 
-		this['selected' + stype] = null;
-		cb = this.getComponent(stype);
+		me['selected' + stype] = null;
+		cb = me.getComponent(stype);
 		if(cb)
+		{
 			cb.setValue(null);
+			if((oldval !== null) && sub && me.stores[sub] && me.stores[sub].getCount())
+				me.stores[sub].reload();
+		}
 	},
 	_getSubValuesBefore: function(stype)
 	{
