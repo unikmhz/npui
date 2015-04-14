@@ -251,6 +251,9 @@ Ext.define('NetProfile.grid.ModelGrid', {
 			displayInfo: NetProfile.userSettings.datagrid_showrange
 		});
 
+		this._scrollDelta = 0;
+		this.scrollPager = new Ext.util.DelayedTask(this.onPageScroll, this);
+
 		this.on({
 			beforedestroy: function(grid)
 			{
@@ -280,33 +283,20 @@ Ext.define('NetProfile.grid.ModelGrid', {
 			},
 			afterrender: function(grid)
 			{
-				grid.mon(grid.getEl(), 'mousewheel', function(ev)
+				grid.on('mousewheel', function(ev)
 				{
-					var st = grid.getStore(),
-						maxpg = Math.ceil(st.getTotalCount() / st.getPageSize()),
-						delta;
+					var delta;
 
 					if(ev.altKey)
 					{
 						ev.stopEvent();
 						delta = ev.getWheelDelta();
-
-						if((delta > 0) && (st.currentPage > 1))
-						{
-							if(ev.ctrlKey)
-								st.loadPage(1);
-							else
-								st.previousPage();
-						}
-						else if((delta < 0) && (st.currentPage < maxpg))
-						{
-							if(ev.ctrlKey)
-								st.loadPage(maxpg);
-							else
-								st.nextPage();
-						}
+						if(ev.ctrlKey)
+							delta *= 1000;
+						grid._scrollDelta += delta;
+						grid.scrollPager.delay(70);
 					}
-				});
+				}, grid, { element: 'body' });
 			},
 			selectionchange: function(sel, recs, opts)
 			{
@@ -400,6 +390,31 @@ Ext.define('NetProfile.grid.ModelGrid', {
 				target: Ext.getBody(),
 				binding: kmap_binds
 			});
+		}
+	},
+	onPageScroll: function()
+	{
+		var me = this,
+			store = me.getStore(),
+			curpg = store.currentPage,
+			maxpg = Math.ceil(store.getTotalCount() / store.getPageSize()),
+			delta = me._scrollDelta || 0;
+
+		me._scrollDelta = 0;
+
+		if((delta > 0) && (curpg > 1))
+		{
+			if(delta >= 1000)
+				store.loadPage(1);
+			else
+				store.previousPage();
+		}
+		else if((delta < 0) && (curpg < maxpg))
+		{
+			if(delta <= -1000)
+				store.loadPage(maxpg);
+			else
+				store.nextPage();
 		}
 	},
 	onPressReset: function()
