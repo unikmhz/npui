@@ -2325,78 +2325,6 @@ class ExtModuleBrowser(object):
 	def __iter__(self):
 		return iter(self.mmgr.models[self.moddef])
 
-	def get_menu_tree(self, req, name):
-		ch = []
-		sch = {}
-		och = {}
-		menu_main = None
-		id_cache = {}
-		loc = get_localizer(req)
-		for model in self:
-			em = self[model]
-			cap = em.cap_menu
-			if cap and (not has_permission(cap, req.context, req)):
-				continue
-			mt = em.get_menu_tree(req, name)
-			if mt:
-				id_cache[mt['id']] = mt
-				if mt.get('main'):
-					del mt['main']
-					menu_main = mt
-					continue
-				if 'section' in mt:
-					sect = mt['section']
-					if sect not in sch:
-						sch[sect] = {
-							'text'     : loc.translate(sect),
-							'expanded' : True,
-							'children' : [],
-							'iconCls'  : 'ico-module'
-						}
-					sch[sect]['children'].append(mt)
-				elif 'parent' in mt:
-					parent = mt['parent']
-					del mt['parent']
-					if parent not in och:
-						och[parent] = []
-					och[parent].append(mt)
-				else:
-					ch.append(mt)
-		ext_children = {}
-		for parent, orphans in och.items():
-			if parent not in id_cache:
-				ext_children[parent] = orphans
-				continue
-			pnode = id_cache[parent]
-			pnode['leaf'] = False
-			pnode['expanded'] = True
-			if 'children' not in pnode:
-				pnode['children'] = []
-			pnode['children'].extend(orphans)
-		for sect in sch:
-			ss = sch[sect]
-			ch.append(ss)
-		if (len(ch) > 0) or menu_main:
-			ret = {
-				'id'       : self.moddef,
-				'text'     : loc.translate(self.mmgr.loaded[self.moddef].name),
-				'expanded' : True,
-				'children' : ch,
-				'iconCls'  : 'ico-module'
-			}
-			if menu_main:
-				ret.update({
-					'iconCls' : menu_main['iconCls'],
-					'xview'   : menu_main['xview']
-				})
-				if 'children' in menu_main:
-					ret['children'].extend(menu_main['children'])
-			if len(ext_children) > 0:
-				ret['external'] = ext_children
-			return ret
-		if len(ext_children) > 0:
-			return { 'external' : ext_children }
-
 class ExtBrowser(object):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
@@ -2418,48 +2346,97 @@ class ExtBrowser(object):
 		return sorted(ret, key=lambda m: m.order)
 
 	def get_menu_tree(self, req, name):
+		loc = get_localizer(req)
 		menu = []
-		external = {}
+		id_cache = {}
+		module_mains = {}
+		module_sections = defaultdict(dict)
+		module_children = defaultdict(list)
+		direct_children = defaultdict(list)
+
 		for module in self:
-			em = self[module]
-			mt = em.get_menu_tree(req, name)
-			if mt:
-				if 'external' in mt:
-					for mid, mitems in mt['external'].items():
-						if mid not in external:
-							external[mid] = []
-						external[mid].extend(mitems)
-					del mt['external']
-				if len(mt) > 0:
-					menu.append(mt)
+			extmodule = self[module]
+			for model in extmodule:
+				em = extmodule[model]
 
-		def find_node_by_id(menu, mid):
-			for item in menu:
-				if 'id' not in item:
+				cap = em.cap_menu
+				if cap and (not has_permission(cap, req.context, req)):
 					continue
-				if item['id'] == mid:
-					return item
-			for item in menu:
-				if 'children' not in item:
-					continue
-				recurse = find_node_by_id(item['children'], mid)
-				if recurse:
-					return recurse
 
-		for mid in external:
-			pnode = find_node_by_id(menu, mid)
-			if pnode:
-				pnode['leaf'] = False
-				pnode['expanded'] = True
-				if 'children' not in pnode:
-					pnode['children'] = []
-				pnode['children'].extend(external[mid])
+				item = em.get_menu_tree(req, name)
+				if not item:
+					continue
+
+				id_cache[item['id']] = item
+
+				if item.get('main'):
+					del item['main']
+					module_mains[module] = item
+					continue
+				if 'section' in item:
+					sect_name = item['section']
+					del item['section']
+					sections = module_sections[module]
+					if sect_name not in sections:
+						sections[sect_name] = {
+							'text'     : loc.translate(sect_name),
+							'expanded' : True,
+							'children' : [],
+							'iconCls'  : 'ico-module' # TODO: make this customizable
+						}
+					sections[sect_name]['children'].append(item)
+				elif 'parent' in item:
+					parent = item['parent']
+					del item['parent']
+					direct_children[parent].append(item)
+				else:
+					module_children[module].append(item)
+
+		for parent_id, items in direct_children.items():
+			if parent_id not in id_cache:
+				continue
+			parent = id_cache[parent_id]
+			if 'children' not in parent:
+				parent['children'] = []
+			if 'expanded' not in parent:
+				parent['expanded'] = True
+			if 'leaf' in parent:
+				del parent['leaf']
+			parent['children'].extend(sorted(items, key=lambda mt: mt['text']))
+
+		# TODO: implement per-user (or global) storable weights, and use them
+		#       in addition to these lambdas
+
+		for module in self:
+			children = module_children[module]
+			if module in module_mains:
+				module_menu = module_mains[module]
+				if 'leaf' in module_menu:
+					del module_menu['leaf']
+				module_menu['expanded'] = True
+			else:
+				module_menu = {
+					'id'       : module,
+					'text'     : loc.translate(self.mmgr.loaded[module].name),
+					'expanded' : True,
+					'iconCls'  : 'ico-module' # TODO: make this customizable
+				}
+
+			for sect in module_sections[module].values():
+				sect['children'] = sorted(sect['children'], key=lambda mt: mt['text'])
+				children.append(sect)
+
+			if module in direct_children:
+				children.extend(direct_children[module])
+
+			if (len(children) > 0) or (module in module_mains):
+				if 'children' not in module_menu:
+					module_menu['children'] = []
+				module_menu['children'].extend(children)
+				module_menu['children'] = sorted(module_menu['children'], key=lambda mt: mt['text'])
+				menu.append(module_menu)
 
 		req.run_hook('np.menu', name, menu, req, self)
-
-		for item in menu:
-			if 'children' in item:
-				item['children'] = sorted(item['children'], key=lambda mt: mt['text'])
 		return sorted(menu, key=lambda mt: mt['text'])
 
 	def get_export_menu(self, req):
