@@ -56,7 +56,7 @@ Ext.define('NetProfile.tab.PropBar', {
 					if(at && ev.altKey)
 					{
 						ev.stopEvent();
-						if(ev.shiftKey)
+						if(ev.ctrlKey)
 							this.clearAll();
 						else
 							this.clear(at);
