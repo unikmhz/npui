@@ -22,10 +22,13 @@ netprofile_core/netprofile_core/static/extern/extjs/build/packages/ext-theme-cla
 netprofile_core/netprofile_core/static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all-rtl_01.css binary
 netprofile_core/netprofile_core/static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all-rtl_02.css binary
 netprofile_core/netprofile_core/static/extern/extjs/build/packages/sencha-charts/build/sencha-charts.js binary
-**/*.min.js binary
-**/*.min.css binary
+*.min.js binary
+*.min.css binary
+
+# Language hints for GitHub
+*.mak linguist-language=Mako
 
 # Documentation hints for GitHub
-**/README.rst linguist-documentation
-**/INSTALL.rst linguist-documentation
+README.rst linguist-documentation
+INSTALL.rst linguist-documentation
 
