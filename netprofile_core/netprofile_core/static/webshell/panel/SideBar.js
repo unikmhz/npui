@@ -69,6 +69,7 @@ Ext.define('NetProfile.panel.SideBar', {
 					ignoreRightMouseSelection: true
 				},
 				listeners: {
+					afterlayout: me.onMenuAfterLayout,
 					beforeselect: me.onMenuBeforeSelect,
 					select: me.onMenuSelect,
 					scope: me,
@@ -126,6 +127,20 @@ Ext.define('NetProfile.panel.SideBar', {
 
 		state = me.addPropertyToState(state, 'lastPanel');
 		return state;
+	},
+	onMenuAfterLayout: function(tree, layout)
+	{
+		var sel = tree.getSelectionModel().getSelection(),
+			view = tree.getView(),
+			el;
+
+		if(sel && (sel.length === 1))
+		{
+			sel = sel[0];
+			el = view.getNode(sel);
+			if(el)
+				el.scrollIntoView();
+		}
 	},
 	onMenuBeforeSelect: function(row, record, idx, opts)
 	{
