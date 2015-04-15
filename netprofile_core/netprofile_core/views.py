@@ -274,21 +274,30 @@ def file_ul(request):
 
 @view_config(route_name='core.file.mount', permission='FILES_LIST')
 def file_mnt(request):
-	ff_id = 0
-	try:
-		ff_id = int(request.matchdict.get('ffid', 0))
-	except (TypeError, ValueError):
-		pass
-	sess = DBSession()
-	ff = sess.query(FileFolder).get(ff_id)
-	if not ff.allow_traverse(request):
-		raise HTTPForbidden()
-	path = '/'.join(ff.get_uri()[1:] + [''])
-	resp = DAVMountResponse(
-		request=request,
-		path=path,
-		username=request.user.login
-	)
+	ff_id = request.matchdict.get('ffid')
+	if ff_id == 'root':
+		if not request.user.root_readable:
+			raise HTTPForbidden()
+		resp = DAVMountResponse(
+			request=request,
+			path='/',
+			username=request.user.login
+		)
+	else:
+		try:
+			ff_id = int(ff_id)
+		except (TypeError, ValueError):
+			raise HTTPNotFound()
+		sess = DBSession()
+		ff = sess.query(FileFolder).get(ff_id)
+		if not ff.allow_traverse(request):
+			raise HTTPForbidden()
+		path = '/'.join(ff.get_uri()[1:] + [''])
+		resp = DAVMountResponse(
+			request=request,
+			path=path,
+			username=request.user.login
+		)
 	resp.make_body()
 	resp.headerlist.append(('X-Frame-Options', 'SAMEORIGIN'))
 	return resp
