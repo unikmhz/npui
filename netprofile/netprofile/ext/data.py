@@ -956,13 +956,18 @@ class ExtColumn(object):
 				'format' : '0'
 			})
 		if issubclass(typecls, _DATE_SET):
+			def_width = 80
 			# FIXME: configurable formats
 			if issubclass(typecls, (DateTime, TIMESTAMP)):
 				conf['format'] = loc.translate(_('Y-m-d H:i:s'))
+				def_width = 115
 			if issubclass(typecls, Date):
 				conf['format'] = loc.translate(_('Y-m-d'))
 			if issubclass(typecls, Time):
 				conf['format'] = loc.translate(_('H:i:s'))
+				def_width = 70
+			if 'width' not in conf:
+				conf['width'] = def_width
 		if filter_conf:
 			conf['filter'] = filter_conf
 		if typecls is DeclEnumType:
@@ -1415,6 +1420,10 @@ class ExtModel(object):
 		return self.model.__table__.info.get('wizards')
 
 	@property
+	def grid_hidden(self):
+		return self.model.__table__.info.get('grid_hidden', ())
+
+	@property
 	def grid_view(self):
 		return self.model.__table__.info.get('grid_view', ())
 
@@ -1521,6 +1530,7 @@ class ExtModel(object):
 
 	def get_column_cfg(self, req):
 		ret = []
+		hidden = self.grid_hidden
 		try:
 			cols = self.model.__table__.info['grid_view']
 		except KeyError:
@@ -1528,6 +1538,8 @@ class ExtModel(object):
 		for col in cols:
 			cdef = self.get_column(col).get_column_cfg(req)
 			if cdef is not None:
+				if col in hidden:
+					cdef['hidden'] = True
 				ret.append(cdef)
 		return ret
 

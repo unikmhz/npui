@@ -268,7 +268,8 @@ class NPModule(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Modules'),
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name', 'curversion', 'enabled'),
+				'grid_view'    : ('npmodid', 'name', 'curversion', 'enabled'),
+				'grid_hidden'  : ('npmodid',),
 				'easy_search'  : ('name',)
 			}
 		}
@@ -290,7 +291,8 @@ class NPModule(Base):
 		nullable=False,
 		default=None,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	current_version = Column(
@@ -301,7 +303,8 @@ class NPModule(Base):
 		default='0.0.1',
 		server_default='0.0.1',
 		info={
-			'header_string' : _('Version')
+			'header_string' : _('Version'),
+			'column_flex'   : 1
 		}
 	)
 	enabled = Column(
@@ -451,7 +454,8 @@ class User(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Users'),
 				'default_sort' : ({ 'property': 'login' ,'direction': 'ASC' },),
-				'grid_view'    : ('login', 'name_family', 'name_given', 'group', 'enabled', 'state', 'email'),
+				'grid_view'    : ('uid', 'login', 'name_family', 'name_given', 'name_middle', 'manager', 'group', 'enabled', 'state', 'security_policy', 'email'),
+				'grid_hidden'  : ('uid', 'name_middle', 'manager', 'security_policy'),
 				'form_view'    : (
 					'login', 'name_family', 'name_given', 'name_middle',
 					'title', 'group', 'secondary_groups', 'enabled',
@@ -492,7 +496,8 @@ class User(Base):
 		info={
 			'header_string' : _('Group'),
 			'filter_type'   : 'list',
-			'ldap_attr'     : 'gidNumber'
+			'ldap_attr'     : 'gidNumber',
+			'column_flex'   : 2
 		}
 	)
 	security_policy_id = Column(
@@ -504,7 +509,8 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Security Policy')
+			'header_string' : _('Security Policy'),
+			'column_flex'   : 2
 		}
 	)
 	state = Column(
@@ -527,7 +533,8 @@ class User(Base):
 			'header_string' : _('Username'),
 			'writer'        : 'change_login',
 			'pass_request'  : True,
-			'ldap_attr'     : ('uid', 'xmozillanickname', 'gecos', 'displayName')
+			'ldap_attr'     : ('uid', 'xmozillanickname', 'gecos', 'displayName'),
+			'column_flex'   : 2
 		}
 	)
 	password = Column(
@@ -578,7 +585,8 @@ class User(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Family Name'),
-			'ldap_attr'     : ('sn', 'cn') # FIXME: move 'cn' to dynamic attr
+			'ldap_attr'     : ('sn', 'cn'), # FIXME: move 'cn' to dynamic attr
+			'column_flex'   : 3
 		}
 	)
 	name_given = Column(
@@ -589,7 +597,8 @@ class User(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Given Name'),
-			'ldap_attr'     : 'givenName'
+			'ldap_attr'     : 'givenName',
+			'column_flex'   : 3
 		}
 	)
 	name_middle = Column(
@@ -600,7 +609,8 @@ class User(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Middle Name'),
-			'ldap_attr'     : 'initials' # FIXME?
+			'ldap_attr'     : 'initials', # FIXME?
+			'column_flex'   : 3
 		}
 	)
 	title = Column(
@@ -623,7 +633,8 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Manager')
+			'header_string' : _('Manager'),
+			'column_flex'   : 2
 		}
 	)
 	email = Column(
@@ -635,7 +646,8 @@ class User(Base):
 		info={
 			'header_string' : _('E-mail'),
 			'vtype'         : 'email',
-			'ldap_attr'     : 'mail'
+			'ldap_attr'     : 'mail',
+			'column_flex'   : 2
 		}
 	)
 	ip_address = Column(
@@ -1209,7 +1221,8 @@ class Group(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Groups'),
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name', 'parent', 'security_policy', 'root_folder'),
+				'grid_view'    : ('gid', 'name', 'parent', 'security_policy', 'root_folder'),
+				'grid_hidden'  : ('gid',),
 				'form_view'    : ('name', 'parent', 'security_policy', 'visible', 'assignable', 'root_folder'),
 				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
@@ -1248,7 +1261,8 @@ class Group(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Parent'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 3
 		}
 	)
 	security_policy_id = Column(
@@ -1261,7 +1275,8 @@ class Group(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Security Policy'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
 	name = Column(
@@ -1270,7 +1285,8 @@ class Group(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Name'),
-			'ldap_attr'     : 'cn'
+			'ldap_attr'     : 'cn',
+			'column_flex'   : 3
 		}
 	)
 	visible = Column(
@@ -1303,7 +1319,8 @@ class Group(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Root Folder'),
-			'filter_type'   : 'none'
+			'filter_type'   : 'none',
+			'column_flex'   : 2
 		}
 	)
 	secondary_usermap = relationship(
@@ -1502,7 +1519,8 @@ class Privilege(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Privileges'),
 				'default_sort' : ({ 'property': 'code' ,'direction': 'ASC' },),
-				'grid_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls'),
+				'grid_view'    : ('privid', 'module', 'code', 'name', 'guestvalue', 'hasacls', 'canbeset'),
+				'grid_hidden'  : ('privid', 'canbeset'),
 				'form_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls', 'resclass'),
 				'easy_search'  : ('code', 'name'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
@@ -1533,7 +1551,8 @@ class Privilege(Base):
 		server_default=text('1'),
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
 	can_be_set = Column(
@@ -1552,7 +1571,8 @@ class Privilege(Base):
 		Comment('Privilege code'),
 		nullable=False,
 		info={
-			'header_string' : _('Code')
+			'header_string' : _('Code'),
+			'column_flex'   : 2
 		}
 	)
 	name = Column(
@@ -1560,7 +1580,8 @@ class Privilege(Base):
 		Comment('Privilege name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	guest_value = Column(
@@ -1969,7 +1990,8 @@ class SecurityPolicy(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Security Policies'),
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size'),
+				'grid_view'    : ('secpolid', 'name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size', 'sess_timeout'),
+				'grid_hidden'  : ('secpolid', 'sess_timeout'),
 				'form_view'    : (
 					'name', 'descr',
 					'pw_length_min', 'pw_length_max',
@@ -2000,7 +2022,8 @@ class SecurityPolicy(Base):
 		Comment('Security policy name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	pw_length_min = Column(
@@ -2520,7 +2543,8 @@ class FileFolder(Base):
 
 				'menu_name'    : _('Folders'),
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name', 'ctime', 'mtime'),
+				'grid_view'    : ('ffid', 'name', 'parent', 'ctime', 'mtime'),
+				'grid_hidden'  : ('ffid', 'parent'),
 				'form_view'    : ('name', 'user', 'group', 'rights', 'ctime', 'mtime', 'descr'),
 				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
@@ -3195,7 +3219,8 @@ class File(Base):
 
 				'menu_name'    : _('Files'),
 				'default_sort' : ({ 'property': 'fname' ,'direction': 'ASC' },),
-				'grid_view'    : ('folder', 'fname', 'size', 'ctime', 'mtime'),
+				'grid_view'    : ('fileid', 'folder', 'fname', 'size', 'ctime', 'mtime'),
+				'grid_hidden'  : ('fileid',),
 				'form_view'    : ('fname', 'folder', 'size', 'user', 'group', 'rights', 'ctime', 'mtime', 'name', 'descr'),
 				'easy_search'  : ('fname', 'name'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
@@ -4285,7 +4310,8 @@ class Tag(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Tags'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name', 'descr'),
+				'grid_view'     : ('tagid', 'name', 'descr'),
+				'grid_hidden'   : ('tagid',),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -4313,7 +4339,8 @@ class Tag(Base):
 		Comment('Tag name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
 	description = Column(
@@ -4324,7 +4351,8 @@ class Tag(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Description')
+			'header_string' : _('Description'),
+			'column_flex'   : 3
 		}
 	)
 
@@ -4353,7 +4381,8 @@ class LogType(Base):
 				'menu_section'  : _('Logging'),
 				'menu_name'     : _('Log Types'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('ltid', 'name'),
+				'grid_hidden'   : ('ltid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -4375,7 +4404,8 @@ class LogType(Base):
 		Comment('Log entry type name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -4404,7 +4434,8 @@ class LogAction(Base):
 				'menu_section' : _('Logging'),
 				'menu_name'    : _('Log Actions'),
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name',),
+				'grid_view'    : ('laid', 'name'),
+				'grid_hidden'  : ('laid',),
 				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -4426,7 +4457,8 @@ class LogAction(Base):
 		Comment('Log action name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -4454,7 +4486,8 @@ class LogData(Base):
 				'menu_section' : _('Logging'),
 				'menu_name'    : _('Log Data'),
 				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' },),
-				'grid_view'    : ('ts', 'login', 'xtype', 'xaction', 'data'),
+				'grid_view'    : ('logid', 'ts', 'login', 'xtype', 'xaction', 'data'),
+				'grid_hidden'  : ('logid',),
 				'easy_search'  : ('login', 'data'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -4519,7 +4552,8 @@ class LogData(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Data')
+			'header_string' : _('Data'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -4565,7 +4599,8 @@ class NPSession(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('UI Sessions'),
 				'default_sort' : ({ 'property': 'lastts' ,'direction': 'DESC' },),
-				'grid_view'    : ('sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr'),
+				'grid_view'    : ('npsid', 'sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr'),
+				'grid_hidden'  : ('npsid', 'sname'),
 				'easy_search'  : ('sname', 'login'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -4588,7 +4623,8 @@ class NPSession(Base):
 		Comment('NP session hash'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	user_id = Column(
@@ -4601,7 +4637,8 @@ class NPSession(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('User'),
-			'filter_type'   : 'none'
+			'filter_type'   : 'none',
+			'column_flex'   : 1
 		}
 	)
 	login = Column(
@@ -4611,7 +4648,8 @@ class NPSession(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Username')
+			'header_string' : _('Username'),
+			'column_flex'   : 1
 		}
 	)
 	start_time = Column(
@@ -4655,7 +4693,8 @@ class NPSession(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('IPv6 Address')
+			'header_string' : _('IPv6 Address'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -4756,7 +4795,8 @@ class GlobalSettingSection(Base):
 				'menu_section'  : _('Settings'),
 				'menu_name'     : _('Global Setting Sections'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('module', 'name', 'descr'),
+				'grid_view'     : ('npgssid', 'module', 'name', 'descr'),
+				'grid_hidden'   : ('npgssid',),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -4783,7 +4823,8 @@ class GlobalSettingSection(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
@@ -4791,7 +4832,8 @@ class GlobalSettingSection(Base):
 		Comment('Global parameter section name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	description = Column(
@@ -4802,7 +4844,8 @@ class GlobalSettingSection(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Description')
+			'header_string' : _('Description'),
+			'column_flex'   : 2
 		}
 	)
 
@@ -4838,7 +4881,8 @@ class UserSettingSection(Base):
 				'menu_section'  : _('Settings'),
 				'menu_name'     : _('User Setting Sections'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('module', 'name', 'descr'),
+				'grid_view'     : ('npussid', 'module', 'name', 'descr'),
+				'grid_hidden'   : ('npussid',),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -4865,7 +4909,8 @@ class UserSettingSection(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
@@ -4873,7 +4918,8 @@ class UserSettingSection(Base):
 		Comment('User parameter section name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	description = Column(
@@ -4884,7 +4930,8 @@ class UserSettingSection(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Description')
+			'header_string' : _('Description'),
+			'column_flex'   : 2
 		}
 	)
 
@@ -5038,7 +5085,8 @@ class GlobalSetting(Base, DynamicSetting):
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('Global Settings'),
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'value', 'default'),
+				'grid_view'    : ('npglobid', 'module', 'section', 'name', 'title', 'type', 'value', 'default'),
+				'grid_hidden'  : ('npglobid',),
 				'easy_search'  : ('name', 'title'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -5063,7 +5111,8 @@ class GlobalSetting(Base, DynamicSetting):
 		nullable=False,
 		info={
 			'header_string' : _('Section'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
 	module_id = Column(
@@ -5074,7 +5123,8 @@ class GlobalSetting(Base, DynamicSetting):
 		nullable=False,
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
 	name = Column(
@@ -5082,7 +5132,8 @@ class GlobalSetting(Base, DynamicSetting):
 		Comment('Global parameter name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
 	title = Column(
@@ -5090,7 +5141,8 @@ class GlobalSetting(Base, DynamicSetting):
 		Comment('Global parameter title'),
 		nullable=False,
 		info={
-			'header_string' : _('Title')
+			'header_string' : _('Title'),
+			'column_flex'   : 3
 		}
 	)
 	type = Column(
@@ -5100,7 +5152,8 @@ class GlobalSetting(Base, DynamicSetting):
 		default='text',
 		server_default='text',
 		info={
-			'header_string' : _('Type')
+			'header_string' : _('Type'),
+			'column_flex'   : 1
 		}
 	)
 	value = Column(
@@ -5108,7 +5161,8 @@ class GlobalSetting(Base, DynamicSetting):
 		Comment('Global parameter current value'),
 		nullable=False,
 		info={
-			'header_string' : _('Value')
+			'header_string' : _('Value'),
+			'column_flex'   : 3
 		}
 	)
 	default = Column(
@@ -5117,7 +5171,8 @@ class GlobalSetting(Base, DynamicSetting):
 		nullable=True,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Default')
+			'header_string' : _('Default'),
+			'column_flex'   : 3
 		}
 	)
 	options = Column(
@@ -5228,7 +5283,8 @@ class UserSettingType(Base, DynamicSetting):
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('User Setting Types'),
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('module', 'section', 'name', 'title', 'type', 'default'),
+				'grid_view'    : ('npustid', 'module', 'section', 'name', 'title', 'type', 'default', 'clientok'),
+				'grid_hidden'  : ('npustid', 'clientok'),
 				'easy_search'  : ('name', 'title'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
@@ -5253,7 +5309,8 @@ class UserSettingType(Base, DynamicSetting):
 		nullable=False,
 		info={
 			'header_string' : _('Section'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
 	module_id = Column(
@@ -5264,7 +5321,8 @@ class UserSettingType(Base, DynamicSetting):
 		nullable=False,
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
 	name = Column(
@@ -5272,7 +5330,8 @@ class UserSettingType(Base, DynamicSetting):
 		Comment('User parameter name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
 	title = Column(
@@ -5280,7 +5339,8 @@ class UserSettingType(Base, DynamicSetting):
 		Comment('User parameter title'),
 		nullable=False,
 		info={
-			'header_string' : _('Title')
+			'header_string' : _('Title'),
+			'column_flex'   : 3
 		}
 	)
 	type = Column(
@@ -5290,7 +5350,8 @@ class UserSettingType(Base, DynamicSetting):
 		default='text',
 		server_default='text',
 		info={
-			'header_string' : _('Type')
+			'header_string' : _('Type'),
+			'column_flex'   : 1
 		}
 	)
 	default = Column(
@@ -5299,7 +5360,8 @@ class UserSettingType(Base, DynamicSetting):
 		nullable=True,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Default')
+			'header_string' : _('Default'),
+			'column_flex'   : 3
 		}
 	)
 	options = Column(
@@ -5400,7 +5462,8 @@ class UserSetting(Base):
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('User Settings'),
 				'default_sort' : (),
-				'grid_view'    : ('user', 'type', 'value'),
+				'grid_view'    : ('npusid', 'user', 'type', 'value'),
+				'grid_hidden'  : ('npusid',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 				'extra_search' : (
 					SelectFilter('section', _filter_section,
@@ -5432,7 +5495,8 @@ class UserSetting(Base):
 		nullable=False,
 		info={
 			'header_string' : _('User'),
-			'filter_type'   : 'none'
+			'filter_type'   : 'none',
+			'column_flex'   : 1
 		}
 	)
 	type_id = Column(
@@ -5443,7 +5507,8 @@ class UserSetting(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	value = Column(
@@ -5451,7 +5516,8 @@ class UserSetting(Base):
 		Comment('User parameter current value'),
 		nullable=False,
 		info={
-			'header_string' : _('Value')
+			'header_string' : _('Value'),
+			'column_flex'   : 2
 		}
 	)
 
@@ -5495,7 +5561,8 @@ class DataCache(Base):
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('Data Cache'),
 				'default_sort' : (),
-				'grid_view'    : ('user', 'dcname'),
+				'grid_view'    : ('dcid', 'user', 'dcname'),
+				'grid_hidden'  : ('dcid',),
 				'form_view'    : ('user', 'dcname', 'dcvalue'),
 				'easy_search'  : ('dcname',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
@@ -5520,7 +5587,8 @@ class DataCache(Base):
 		Comment('Data cache owner'),
 		nullable=False,
 		info={
-			'header_string' : _('User')
+			'header_string' : _('User'),
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
@@ -5529,7 +5597,8 @@ class DataCache(Base):
 		Comment('Data cache name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	value = Column(
@@ -5605,7 +5674,8 @@ class Calendar(Base):
 			'info'          : {
 				'menu_name'     : _('My Calendars'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name', 'group', 'group_access', 'global_access'),
+				'grid_view'     : ('calid', 'name', 'user', 'group', 'group_access', 'global_access'),
+				'grid_hidden'   : ('calid', 'user'),
 				'form_view'     : ('name', 'group', 'group_access', 'global_access', 'style', 'descr'),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -5822,6 +5892,7 @@ class CalendarImport(Base):
 				'menu_name'     : _('Other Calendars'),
 				'default_sort'  : ({ 'property': 'calid' ,'direction': 'ASC' },),
 				'grid_view'     : (
+					'calimpid',
 					'calendar',
 					MarkupColumn(
 						name='real_name',
@@ -5830,6 +5901,7 @@ class CalendarImport(Base):
 						template='{real_name}'
 					)
 				),
+				'grid_hidden'   : ('calimpid',),
 				'form_view'     : ('calendar', 'name', 'style'),
 				'easy_search'   : ('name',),
 				'extra_data'    : ('real_name',),
@@ -5958,7 +6030,8 @@ class Event(Base):
 			'info'          : {
 				'menu_name'     : _('Events'),
 				'default_sort'  : ({ 'property': 'dtstart' ,'direction': 'DESC' },),
-				'grid_view'     : ('user', 'calendar', 'summary', 'dtstart', 'dtend'),
+				'grid_view'     : ('evid', 'user', 'calendar', 'summary', 'ctime', 'mtime', 'dtstart', 'dtend'),
+				'grid_hidden'   : ('evid', 'ctime', 'mtime'),
 				'form_view'     : (
 					'user', 'calendar', 'summary',
 					'dtstart', 'dtend', 'allday',
