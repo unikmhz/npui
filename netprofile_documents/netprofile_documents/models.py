@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Documents module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -101,7 +101,8 @@ class Document(Base):
 				'menu_name'     : _('Documents'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('code', 'name', 'type'),
+				'grid_view'     : ('docid', 'code', 'name', 'type'),
+				'grid_hidden'   : ('docid',),
 				'form_view'     : ('code', 'name', 'type', 'external', 'body', 'descr'),
 				'easy_search'   : ('code', 'name'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_wide_content'),
@@ -237,7 +238,8 @@ class DocumentBundle(Base):
 				'menu_name'     : _('Bundles'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('dbid', 'name'),
+				'grid_hidden'   : ('dbid',),
 				'form_view'     : ('name',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -302,7 +304,8 @@ class DocumentBundleMapping(Base):
 				'cap_delete'    : 'DOCUMENTS_BUNDLES_EDIT',
 				'menu_name'     : _('Bundle Contents'),
 				'default_sort'  : ({ 'property': 'order', 'direction': 'ASC' },),
-				'grid_view'     : ('bundle', 'document', 'order', 'copies'),
+				'grid_view'     : ('dbbid', 'bundle', 'document', 'order', 'copies'),
+				'grid_hidden'   : ('dbbid',),
 				'form_view'     : ('bundle', 'document', 'order', 'copies'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new document to the bundle'))

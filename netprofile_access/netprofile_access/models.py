@@ -209,8 +209,10 @@ class AccessEntity(Entity):
 						cell_class='np-nopad',
 						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
+					'entityid',
 					'nick', 'stash', 'rate'
 				),
+				'grid_hidden'  : ('entityid',),
 				'form_view'    : (
 					'nick', 'parent', 'state', 'flags',
 					'password', 'stash', 'rate', 'next_rate', #'alias_of',
@@ -504,7 +506,8 @@ class PerUserRateModifier(Base):
 				'cap_delete'    : 'ENTITIES_EDIT', # FIXME
 				'menu_name'     : _('Rate Modifiers'),
 				'default_sort'  : ({ 'property': 'l_ord', 'direction': 'ASC' },),
-				'grid_view'     : ('entity', 'rate', 'type', 'enabled', 'l_ord'),
+				'grid_view'     : ('rmid', 'entity', 'rate', 'type', 'enabled', 'l_ord'),
+				'grid_hidden'   : ('rmid',),
 				'create_wizard' : SimpleWizard(title=_('Add new rate modifier'))
 			}
 		}
@@ -528,7 +531,8 @@ class PerUserRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	entity_id = Column(
@@ -539,7 +543,8 @@ class PerUserRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Account'),
-			'filter_type'   : 'none'
+			'filter_type'   : 'none',
+			'column_flex'   : 1
 		}
 	)
 	rate_id = Column(
@@ -552,7 +557,8 @@ class PerUserRateModifier(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Rate'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	creation_time = Column(
@@ -642,7 +648,8 @@ class AccessBlock(Base):
 
 				'menu_name'     : _('Access Blocks'),
 				'default_sort'  : ({ 'property': 'startts' ,'direction': 'ASC' },),
-				'grid_view'     : ('entity', 'startts', 'endts', 'bstate'),
+				'grid_view'     : ('abid', 'entity', 'startts', 'endts', 'bstate'),
+				'grid_hidden'   : ('abid',),
 				'form_view'     : ('entity', 'startts', 'endts', 'bstate', 'oldstate'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new access block'))
@@ -742,6 +749,7 @@ class AccessEntityLinkType(Base):
 				'menu_name'     : _('Link Types'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('ltid', 'name'),
+				'grid_hidden'   : ('ltid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -806,7 +814,8 @@ class AccessEntityLink(Base):
 
 				'menu_name'     : _('Links'),
 				'default_sort'  : ({ 'property': 'ltid' ,'direction': 'ASC' },),
-				'grid_view'     : ('entity', 'type', 'ts', 'value'),
+				'grid_view'     : ('lid', 'entity', 'type', 'ts', 'value'),
+				'grid_hidden'   : ('lid',),
 				'easy_search'   : ('value',),
 				'create_wizard' : SimpleWizard(title=_('Add new link'))
 			}

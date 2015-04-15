@@ -91,7 +91,8 @@ class ServerType(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Server Types'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('srvtypeid', 'name'),
+				'grid_hidden'   : ('srvtypeid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -187,7 +188,8 @@ class Server(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Servers'),
-				'grid_view'     : ('host', 'type'),
+				'grid_view'     : ('srvid', 'host', 'type'),
+				'grid_hidden'   : ('srvid',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : SimpleWizard(title=_('Add new server')),
@@ -304,7 +306,8 @@ class ServerParameter(Base):
 				'cap_delete'    : 'SRV_EDIT',
 
 				'menu_name'     : _('Server Parameters'),
-				'grid_view'     : ('server', 'name', 'value'),
+				'grid_view'     : ('srvparamid', 'server', 'name', 'value'),
+				'grid_hidden'   : ('srvparamid',),
 
 				'create_wizard' : SimpleWizard(title=_('Add new parameter'))
 			}

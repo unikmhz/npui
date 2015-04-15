@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Paid Service module - Models
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -129,7 +129,8 @@ class PaidServiceType(Base):
 				'menu_name'     : _('Paid Services'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ( 'name', 'isum', 'qsum', 'qp_amount', 'qp_unit', 'qp_type'),
+				'grid_view'     : ('paidid', 'name', 'isum', 'qsum', 'qp_amount', 'qp_unit', 'qp_type', 'sp_amount'),
+				'grid_hidden'   : ('paidid', 'sp_amount'),
 				'form_view'     : (
 					'name', 'isum', 'qsum',
 					'qp_amount', 'qp_unit', 'qp_type', 'qp_order', 'sp_amount',
@@ -327,7 +328,8 @@ class PaidService(Base):
 				'cap_edit'      : 'PAIDSERVICES_EDIT',
 				'cap_delete'    : 'PAIDSERVICES_DELETE',
 				'default_sort'  : ({ 'property': 'qpend', 'direction': 'DESC' },),
-				'grid_view'     : ('entity', 'stash', 'type', 'active', 'qpend'),
+				'grid_view'     : ('epid', 'entity', 'stash', 'type', 'active', 'qpend'),
+				'grid_hidden'   : ('epid',),
 				'form_view'     : (
 				),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')

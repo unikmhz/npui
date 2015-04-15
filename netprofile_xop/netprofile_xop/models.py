@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: XOP module - Models
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -141,7 +141,8 @@ class ExternalOperation(Base):
 				'menu_main'	   : True,
 				'show_in_menu' : 'modules',
 				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' },),
-				'grid_view'    : ( 'provider', 'ts', 'entity', 'diff', 'state'),
+				'grid_view'    : ('xopid', 'provider', 'ts', 'entity', 'diff', 'state'),
+				'grid_hidden'  : ('xopid',),
 				'form_view'    : (
 					'provider', 'ts', 'entity', 'diff', 'state',
 					'stash', 'extid', 'eacct'
@@ -323,22 +324,23 @@ class ExternalOperationProvider(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_XOP',
-				'cap_read'     : 'STASHES_IO',
-				'cap_create'   : 'STASHES_IOTYPES_CREATE',
-				'cap_edit'     : 'STASHES_IOTYPES_EDIT',
-				'cap_delete'   : 'STASHES_IOTYPES_DELETE',
+				'cap_menu'      : 'BASE_XOP',
+				'cap_read'      : 'STASHES_IO',
+				'cap_create'    : 'STASHES_IOTYPES_CREATE',
+				'cap_edit'      : 'STASHES_IOTYPES_EDIT',
+				'cap_delete'    : 'STASHES_IOTYPES_DELETE',
 				'menu_name'     : _('Providers'),
-				'show_in_menu' : 'admin',
+				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'sname', 'gwclass', 'enabled'),
-				'form_view'    : (
+				'grid_view'     : ('xoppid', 'name', 'sname', 'gwclass', 'enabled'),
+				'grid_hidden'   : ('xoppid',),
+				'form_view'     : (
 					'uri', 'name', 'sname', 'gwclass', 'enabled',
 					'accesslist', 'io_type', 'mindiff', 'maxdiff', 'authmethod',
 					'authopts', 'authuser', 'authpass', 'descr'
 				),
 				'create_wizard' : SimpleWizard(title=_('Add new provider')),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)

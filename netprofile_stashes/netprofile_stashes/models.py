@@ -164,7 +164,8 @@ class Stash(Base):
 				'menu_main'     : True,
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('entity', 'name', 'amount', 'credit'),
+				'grid_view'     : ('stashid', 'entity', 'name', 'amount', 'credit'),
+				'grid_hidden'   : ('stashid',),
 				'form_view'     : ('entity', 'name', 'amount', 'credit', 'alltime_min', 'alltime_max'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -440,8 +441,9 @@ class StashIO(Base):
 				'menu_name'     : _('Operations'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'ts', 'direction': 'DESC' },),
-				'grid_view' : ('type', 'stash', 'entity', 'user', 'ts', 'diff'),
-				'form_view' : ('type', 'stash', 'entity', 'user', 'ts', 'diff', 'descr'),
+				'grid_view'     : ('sioid', 'type', 'stash', 'entity', 'user', 'ts', 'diff'),
+				'grid_hidden'   : ('sioid',),
+				'form_view'     : ('type', 'stash', 'entity', 'user', 'ts', 'diff', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : Wizard(
@@ -791,8 +793,9 @@ class FuturePayment(Base):
 				# TODO: APPROVE/CANCEL
 				'menu_name'     : _('Promised Payments'),
 				'default_sort'  : ({ 'property': 'ctime', 'direction': 'DESC' },),
-				'grid_view' : ('entity', 'stash', 'diff', 'state', 'ctime'),
-				'form_view' : (
+				'grid_view'     : ('futureid', 'entity', 'stash', 'diff', 'state', 'ctime'),
+				'grid_hidden'   : ('futureid',),
+				'form_view'     : (
 					'entity', 'stash', 'diff',
 					'state', 'origin',
 					'ctime', 'cby',

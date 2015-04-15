@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Rates module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -175,7 +175,8 @@ class BillingPeriod(Base):
 				'menu_name'     : _('Billing Periods'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('bperiodid', 'name'),
+				'grid_hidden'   : ('bperiodid',),
 				'form_view'     : (
 					'name',
 					'start_month', 'start_mday', 'start_wday',
@@ -337,7 +338,8 @@ class DestinationSet(Base):
 				'menu_name'    : _('Destination Sets'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('dsid', 'name'),
+				'grid_hidden'   : ('dsid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new accounting destination set'))
@@ -396,7 +398,8 @@ class Destination(Base):
 				'cap_delete'    : 'RATES_DS_EDIT',
 				'menu_name'    : _('Destinations'),
 				'default_sort'  : ({ 'property': 'l_ord', 'direction': 'ASC' },),
-				'grid_view'     : ('set', 'name', 'type', 'mt', 'match', 'l_ord', 'active'),
+				'grid_view'     : ('destid', 'set', 'name', 'type', 'mt', 'match', 'l_ord', 'active'),
+				'grid_hidden'   : ('destid',),
 				'form_view'     : (
 					'set', 'name', 'type',
 					'active', 'l_ord',
@@ -428,7 +431,8 @@ class Destination(Base):
 		default=DestinationType.normal,
 		server_default=DestinationType.normal,
 		info={
-			'header_string' : _('Type')
+			'header_string' : _('Type'),
+			'column_flex'   : 1
 		}
 	)
 	match_type = Column(
@@ -439,7 +443,8 @@ class Destination(Base):
 		default=DestinationMatchType.prefix,
 		server_default=DestinationMatchType.prefix,
 		info={
-			'header_string' : _('Match Type')
+			'header_string' : _('Match Type'),
+			'column_flex'   : 1
 		}
 	)
 	set_id = Column(
@@ -450,7 +455,8 @@ class Destination(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Set'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
 	name = Column(
@@ -458,7 +464,8 @@ class Destination(Base):
 		Comment('Destination name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	active = Column(
@@ -549,7 +556,8 @@ class FilterSet(Base):
 				'menu_name'     : _('Filter Sets'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('fsid', 'name'),
+				'grid_hidden'   : ('fsid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new accounting filter set'))
@@ -604,8 +612,9 @@ class Filter(Base):
 				'cap_create'    : 'RATES_FS_EDIT',
 				'cap_edit'      : 'RATES_FS_EDIT',
 				'cap_delete'    : 'RATES_FS_EDIT',
-				'menu_name'    : _('Filters'),
-				'grid_view'     : ('set', 'porttype', 'servicetype', 'frproto', 'tuntype', 'tunmedium'),
+				'menu_name'     : _('Filters'),
+				'grid_view'     : ('fid', 'set', 'porttype', 'servicetype', 'frproto', 'tuntype', 'tunmedium'),
+				'grid_hidden'   : ('fid',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new filter'))
 			}
@@ -630,7 +639,8 @@ class Filter(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Set'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 3
 		}
 	)
 	nas_port_type = Column(
@@ -641,7 +651,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'NAS-Port-Type'
+			'header_string' : 'NAS-Port-Type',
+			'column_flex'   : 1
 		}
 	)
 	service_type = Column(
@@ -652,7 +663,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Service-Type'
+			'header_string' : 'Service-Type',
+			'column_flex'   : 1
 		}
 	)
 	framed_protocol = Column(
@@ -663,7 +675,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Framed-Protocol'
+			'header_string' : 'Framed-Protocol',
+			'column_flex'   : 1
 		}
 	)
 	tunnel_type = Column(
@@ -674,7 +687,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Tunnel-Type'
+			'header_string' : 'Tunnel-Type',
+			'column_flex'   : 1
 		}
 	)
 	tunnel_medium_type = Column(
@@ -685,7 +699,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Tunnel-Medium-Type'
+			'header_string' : 'Tunnel-Medium-Type',
+			'column_flex'   : 1
 		}
 	)
 
@@ -723,7 +738,8 @@ class Rate(Base):
 				'show_in_menu'  : 'modules',
 				'menu_main'     : True,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'class', 'type', 'qp_amount', 'qp_unit', 'qsum'),
+				'grid_view'     : ('rateid', 'name', 'class', 'type', 'qp_amount', 'qp_unit', 'qsum'),
+				'grid_hidden'   : ('rateid',),
 				'form_view'     : (
 					'name', 'class', 'type',
 					'polled', 'abf', 'usersel',
@@ -1137,12 +1153,13 @@ class RateClass(Base):
 				'cap_create'    : 'RATES_CLASSES_CREATE',
 				'cap_edit'      : 'RATES_CLASSES_EDIT',
 				'cap_delete'    : 'RATES_CLASSES_DELETE',
-				'menu_name'    : _('Classes'),
+				'menu_name'     : _('Classes'),
 				'show_in_menu'  : 'modules',
-				'default_sort' : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view' : ('name',),
-				'form_view' : ('name', 'descr'),
-				'easy_search' : ('name',),
+				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
+				'grid_view'     : ('rcid', 'name'),
+				'grid_hidden'   : ('rcid',),
+				'form_view'     : ('name', 'descr'),
+				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new rate class'))
 			}
@@ -1220,7 +1237,8 @@ class EntityTypeRateClass(Base):
 				'cap_delete'    : 'RATES_CLASSES_EDIT',
 				'menu_name'     : _('Entity Type Mappings'),
 				'default_sort'  : ({ 'property': 'etype', 'direction': 'ASC' },),
-				'grid_view'     : ('class', 'etype'),
+				'grid_view'     : ('rcmapid', 'class', 'etype'),
+				'grid_hidden'   : ('rcmapid',),
 				'form_view'     : ('class', 'etype'),
 				'easy_search'   : ('etype',),
 				'create_wizard' : SimpleWizard(title=_('Add new mapping'))
@@ -1245,7 +1263,8 @@ class EntityTypeRateClass(Base):
 		Comment('Rate class ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Class')
+			'header_string' : _('Class'),
+			'column_flex'   : 1
 		}
 	)
 	entity_type = Column(
@@ -1254,7 +1273,8 @@ class EntityTypeRateClass(Base):
 		Comment('Entity type'),
 		nullable=False,
 		info={
-			'header_string' : _('Entity Type')
+			'header_string' : _('Entity Type'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -1279,7 +1299,8 @@ class RateModifierType(Base):
 				'menu_name'     : _('Rate Modifiers'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'enabled'),
+				'grid_view'     : ('rmtid', 'name', 'enabled'),
+				'grid_hidden'   : ('rmtid',),
 				'form_view'     : (
 					'name', 'enabled', 'descr',
 					'billing_period',
@@ -1461,7 +1482,8 @@ class GlobalRateModifier(Base):
 				'cap_delete'    : 'RATES_EDIT',
 				'menu_name'     : _('Rate Modifiers'),
 				'default_sort'  : ({ 'property': 'l_ord', 'direction': 'ASC' },),
-				'grid_view'     : ('rate', 'type', 'enabled', 'l_ord'),
+				'grid_view'     : ('rmid', 'rate', 'type', 'enabled', 'l_ord'),
+				'grid_hidden'   : ('rmid',),
 				'create_wizard' : SimpleWizard(title=_('Add new rate modifier'))
 			}
 		}
@@ -1485,7 +1507,8 @@ class GlobalRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	rate_id = Column(
@@ -1496,7 +1519,8 @@ class GlobalRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Rate'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	creation_time = Column(

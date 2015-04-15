@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Documents module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -45,6 +45,20 @@ from .models import (
 )
 
 _ = TranslationStringFactory('netprofile_documents')
+
+@register_hook('core.dpanetabs.documents.DocumentBundle')
+def _dpane_docbundle_documents(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Contents')),
+		'iconCls'           : 'ico-mod-document',
+		'xtype'             : 'grid_documents_DocumentBundleMapping',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('bundle',),
+		'extraParamProp'    : 'dbid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
 
 @register_hook('core.dpane.entities.Entity')
 @register_hook('core.dpane.entities.PhysicalEntity')

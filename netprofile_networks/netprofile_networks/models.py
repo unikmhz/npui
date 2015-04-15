@@ -125,7 +125,8 @@ class Network(Base):
 				'menu_main'     : True,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : (
-					'name', 'ipaddr', 'ip6addr',
+					'netid',
+					'name', 'domain', 'group', 'ipaddr', 'ip6addr',
 					MarkupColumn(
 						name='state',
 						header_string=_('State'),
@@ -134,6 +135,7 @@ class Network(Base):
 						column_resizable=False
 					)
 				),
+				'grid_hidden'   : ('netid', 'domain', 'group'),
 				'form_view'     : (
 					'name', 'domain', 'group',
 					'management_device',
@@ -193,7 +195,8 @@ class Network(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	management_device_id = Column(
@@ -416,7 +419,8 @@ class NetworkGroup(Base):
 				'menu_name'     : _('Groups'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'descr'),
+				'grid_view'     : ('netgid', 'name', 'descr'),
+				'grid_hidden'   : ('netgid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -479,7 +483,8 @@ class NetworkServiceType(Base):
 				'menu_name'     : _('Services'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'unique'),
+				'grid_view'     : ('hltypeid', 'name', 'unique'),
+				'grid_hidden'   : ('hltypeid',),
 				'form_view'     : ('name', 'unique'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -546,7 +551,8 @@ class NetworkService(Base):
 				'cap_edit'      : 'NETS_EDIT',
 				'cap_delete'    : 'NETS_EDIT',
 				'menu_name'     : _('Services'),
-				'grid_view'     : ('network', 'host', 'type'),
+				'grid_view'     : ('nhid', 'network', 'host', 'type'),
+				'grid_hidden'   : ('nhid',),
 				'form_view'     : ('network', 'host', 'type'),
 				'create_wizard' : SimpleWizard(title=_('Add new network service'))
 			}
@@ -630,7 +636,8 @@ class RoutingTable(Base):
 				'menu_name'     : _('Routing Tables'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('rtid', 'name'),
+				'grid_hidden'   : ('rtid',),
 				'form_view'     : ('name',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -688,7 +695,8 @@ class RoutingTableEntry(Base):
 				'cap_edit'      : 'NETS_EDIT',
 				'cap_delete'    : 'NETS_EDIT',
 				'menu_name'     : _('Routing Table Entries'),
-				'grid_view'     : ('table', 'net', 'cidr', 'next_hop'),
+				'grid_view'     : ('rtbid', 'table', 'net', 'cidr', 'next_hop'),
+				'grid_hidden'   : ('rtbid',),
 				'form_view'     : ('table', 'net', 'cidr', 'next_hop'),
 				'create_wizard' : SimpleWizard(title=_('Add new IPv4 routing table entry'))
 			}

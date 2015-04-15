@@ -5441,7 +5441,9 @@ class UserSetting(Base):
 
 	@classmethod
 	def _filter_section(cls, query, value):
-		return query.join(UserSettingType, UserSettingSection).filter(UserSettingSection.id == value)
+		if isinstance(value, int):
+			return query.join(UserSettingType, UserSettingSection).filter(UserSettingSection.id == value)
+		return query
 
 	__tablename__ = 'np_usersettings_def'
 	__table_args__ = (

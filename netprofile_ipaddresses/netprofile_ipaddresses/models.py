@@ -121,6 +121,7 @@ class IPv4Address(Base):
 				'menu_name'     : _('IPv4 Addresses'),
 				'show_in_menu'  : 'modules',
 				'grid_view'     : (
+					'ipaddrid',
 					'host',
 					MarkupColumn(
 						name='offset',
@@ -131,6 +132,7 @@ class IPv4Address(Base):
 					),
 					'hwaddr', 'vis', 'owned', 'inuse'
 				),
+				'grid_hidden'   : ('ipaddrid',),
 				'form_view'     : (
 					'host', 'network', 'offset',
 					'hwaddr', 'ttl', 'pool',
@@ -316,6 +318,7 @@ class IPv6Address(Base):
 				'menu_name'     : _('IPv6 Addresses'),
 				'show_in_menu'  : 'modules',
 				'grid_view'     : (
+					'ip6addrid',
 					'host',
 					MarkupColumn(
 						name='offset',
@@ -326,6 +329,7 @@ class IPv6Address(Base):
 					),
 					'hwaddr', 'vis', 'owned', 'inuse'
 				),
+				'grid_hidden'   : ('ip6addrid',),
 				'form_view'     : (
 					'host', 'network', 'offset',
 					'hwaddr', 'ttl', 'pool',

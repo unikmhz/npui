@@ -140,6 +140,7 @@ class Host(Base):
 				'menu_main'     : True,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : (
+					'hostid',
 					MarkupColumn(
 						name='name',
 						header_string=_('Name'),
@@ -147,8 +148,9 @@ class Host(Base):
 						column_flex=3,
 						sortable=True
 					),
-					'group', 'entity'
+					'domain', 'group', 'entity'
 				),
+				'grid_hidden'   : ('hostid', 'domain'),
 				'form_view'     : (
 					'name', 'domain',
 					'group', 'entity',
@@ -210,7 +212,8 @@ class Host(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Domain'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
 	name = Column(
@@ -391,7 +394,8 @@ class HostGroup(Base):
 				'menu_name'     : _('Host Groups'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'public'),
+				'grid_view'     : ('hgid', 'name', 'public'),
+				'grid_hidden'   : ('hgid',),
 				'form_view'     : (
 					'name', 'public',
 					'startoffset', 'endoffset',
@@ -543,7 +547,8 @@ class ServiceType(Base):
 				'menu_name'     : _('Service Types'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('abbrev', 'name', 'proto', 'port_start', 'port_end'),
+				'grid_view'     : ('stid', 'abbrev', 'name', 'proto', 'port_start', 'port_end'),
+				'grid_hidden'   : ('stid',),
 				'form_view'     : ('abbrev', 'name', 'proto', 'port_start', 'port_end', 'alias'),
 				'easy_search'   : ('abbrev', 'name'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -576,7 +581,8 @@ class ServiceType(Base):
 		Comment('Service type name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	protocol = Column(
@@ -676,7 +682,8 @@ class Service(Base):
 				'cap_edit'      : 'SERVICES_EDIT',
 				'cap_delete'    : 'SERVICES_DELETE',
 				'menu_name'     : _('Service Types'),
-				'grid_view'     : ('host', 'domain', 'type', 'priority', 'weight', 'vis'),
+				'grid_view'     : ('sid', 'host', 'domain', 'type', 'priority', 'weight', 'vis'),
+				'grid_hidden'   : ('sid',),
 				'form_view'     : ('host', 'domain', 'type', 'priority', 'weight', 'vis'),
 				'create_wizard' : SimpleWizard(title=_('Add new service'))
 			}

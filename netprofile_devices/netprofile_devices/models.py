@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module - Models
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 # © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -169,7 +169,8 @@ class DeviceTypeManufacturer(Base):
 				'menu_name'     : _('Manufacturers'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'sname' ,'direction': 'ASC' },),
-				'grid_view'     : ('sname', 'name'),
+				'grid_view'     : ('dtmid', 'sname', 'name'),
+				'grid_hidden'   : ('dtmid',),
 				'form_view'     : ('sname', 'name', 'website'),
 				'easy_search'   : ('sname', 'name'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -241,7 +242,8 @@ class DeviceFlagType(Base):
 				'menu_name'     : _('Device Flags'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('dftid', 'name'),
+				'grid_hidden'   : ('dftid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -317,7 +319,8 @@ class DeviceTypeFlagType(Base):
 				'menu_name'     : _('Type Flags'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('dtftid', 'name'),
+				'grid_hidden'   : ('dtftid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -450,7 +453,8 @@ class DeviceTypeCategory(Base):
 				'menu_name'     : _('Categories'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('dtcid', 'name'),
+				'grid_hidden'   : ('dtcid',),
 				'form_view'     : ('name',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -507,7 +511,8 @@ class DeviceType(Base):
 
 				#TODO HERE WIZARD AND VIEW CUSTOMIZATION
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('category', 'manufacturer', 'name'),
+				'grid_view'     : ('dtid', 'category', 'manufacturer', 'name'),
+				'grid_hidden'   : ('dtid',),
 				'form_view'     : ('category', 'manufacturer', 'name', 'descr', 'flags'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -686,7 +691,8 @@ class SimpleDeviceType(DeviceType):
 				'menu_parent'   : 'devicetype',
 
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('category', 'manufacturer', 'name'),
+				'grid_view'     : ('dtid', 'category', 'manufacturer', 'name'),
+				'grid_hidden'   : ('dtid',),
 				'form_view'     : ('category', 'manufacturer', 'name', 'descr', 'flags'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -736,7 +742,8 @@ class NetworkDeviceType(DeviceType):
 				'menu_parent'   : 'devicetype',
 
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('category', 'manufacturer', 'name', 'manageable', 'modular'),
+				'grid_view'     : ('dtid', 'category', 'manufacturer', 'name', 'manageable', 'modular'),
+				'grid_hidden'   : ('dtid',),
 				'form_view'     : (
 					'category', 'manufacturer',
 					'name', 'descr', 'flags',
@@ -832,7 +839,8 @@ class Device(Base):
 				'menu_name'     : _('Devices'),
 				'menu_main'     : True,
 				'default_sort'  : ({ 'property': 'serial' ,'direction': 'ASC' },),
-				'grid_view'     : ('device_type', 'serial', 'place', 'entity', 'oper'),
+				'grid_view'     : ('did', 'device_type', 'serial', 'place', 'entity', 'oper'),
+				'grid_hidden'   : ('did',),
 				'form_view'     : (
 					'device_type', 'serial',
 					'place', 'entity', 'oper',
@@ -1232,7 +1240,8 @@ class SimpleDevice(Device):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Simple Devices'),
 				'default_sort'  : ({ 'property': 'serial' ,'direction': 'ASC' },),
-				'grid_view'     : ('device_type', 'serial', 'place', 'entity', 'oper'),
+				'grid_view'     : ('did', 'device_type', 'serial', 'place', 'entity', 'oper'),
+				'grid_hidden'   : ('did',),
 				'form_view'     : (
 					'device_type', 'serial',
 					'place', 'entity', 'oper',
@@ -1341,7 +1350,8 @@ class NetworkDevice(Device):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Network Devices'),
 				'default_sort'  : ({ 'property': 'serial' ,'direction': 'ASC' },),
-				'grid_view'     : ('device_type', 'serial', 'place', 'entity', 'host', 'oper'),
+				'grid_view'     : ('did', 'device_type', 'serial', 'place', 'entity', 'host', 'oper'),
+				'grid_hidden'   : ('did',),
 				'form_view'     : (
 					'device_type', 'serial',
 					'place', 'entity', 'host', 'oper',

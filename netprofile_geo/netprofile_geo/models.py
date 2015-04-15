@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -129,7 +129,8 @@ class City(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Cities'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name', 'prefix'),
+				'grid_view'     : ('cityid', 'name', 'prefix'),
+				'grid_hidden'   : ('cityid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -154,7 +155,8 @@ class City(Base):
 		Comment('City name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	prefix = Column(
@@ -164,7 +166,8 @@ class City(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Prefix')
+			'header_string' : _('Prefix'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -207,7 +210,8 @@ class District(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Districts'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('city', 'name', 'prefix'),
+				'grid_view'     : ('districtid', 'city', 'name', 'prefix'),
+				'grid_hidden'   : ('districtid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -235,7 +239,8 @@ class District(Base):
 		nullable=False,
 		info={
 			'header_string' : _('City'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
@@ -243,7 +248,8 @@ class District(Base):
 		Comment('District name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	prefix = Column(
@@ -253,7 +259,8 @@ class District(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Prefix')
+			'header_string' : _('Prefix'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -290,7 +297,8 @@ class Street(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Streets'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('city', 'district', 'name', 'prefix', 'suffix'),
+				'grid_view'     : ('streetid', 'city', 'district', 'name', 'prefix', 'suffix'),
+				'grid_hidden'   : ('streetid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -318,7 +326,8 @@ class Street(Base):
 		nullable=False,
 		info={
 			'header_string' : _('City'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	district_id = Column(
@@ -331,7 +340,8 @@ class Street(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('District'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
@@ -339,7 +349,8 @@ class Street(Base):
 		Comment('Street name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
 	prefix = Column(
@@ -416,20 +427,21 @@ class House(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_GEO',
-				'cap_read'     : 'GEO_LIST',
-				'cap_create'   : 'GEO_CREATE',
-				'cap_edit'     : 'GEO_EDIT',
-				'cap_delete'   : 'GEO_DELETE',
+				'cap_menu'      : 'BASE_GEO',
+				'cap_read'      : 'GEO_LIST',
+				'cap_create'    : 'GEO_CREATE',
+				'cap_edit'      : 'GEO_EDIT',
+				'cap_delete'    : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : _('Houses'),
-				'default_sort' : (), # FIXME: NEEDS CUSTOM SORTING
-				'grid_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
-				'form_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'house_groups', 'entrnum', 'postindex'),
-				'easy_search'  : ('number',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
-				'extra_search' : (
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Houses'),
+				'default_sort'  : (), # FIXME: NEEDS CUSTOM SORTING
+				'grid_view'     : ('houseid', 'street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
+				'grid_hidden'   : ('houseid',),
+				'form_view'     : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'house_groups', 'entrnum', 'postindex'),
+				'easy_search'   : ('number',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'extra_search'  : (
 					CheckboxGroupFilter('hg', _filter_hgroup,
 						title=_('House Group'),
 						data='NetProfile.store.geo.HouseGroup',
@@ -469,7 +481,8 @@ class House(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Street'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	number = Column(
@@ -612,18 +625,19 @@ class Place(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_GEO',
-				'cap_read'     : 'GEO_LIST',
-				'cap_create'   : 'GEO_CREATE',
-				'cap_edit'     : 'GEO_EDIT',
-				'cap_delete'   : 'GEO_DELETE',
+				'cap_menu'      : 'BASE_GEO',
+				'cap_read'      : 'GEO_LIST',
+				'cap_create'    : 'GEO_CREATE',
+				'cap_edit'      : 'GEO_EDIT',
+				'cap_delete'    : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : _('Places'),
-				'default_sort' : (), # FIXME: SEE HOUSES
-				'grid_view'    : ('house', 'number', 'name', 'entrance', 'floor', 'descr'),
-				'easy_search'  : ('number',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Places'),
+				'default_sort'  : (), # FIXME: SEE HOUSES
+				'grid_view'     : ('placeid', 'house', 'number', 'name', 'entrance', 'floor', 'descr'),
+				'grid_hidden'   : ('placeid',),
+				'easy_search'   : ('number',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : SimpleWizard(title=_('Add new place'))
 			}
@@ -649,7 +663,8 @@ class Place(Base):
 		nullable=False,
 		info={
 			'header_string' : _('House'),
-			'filter_type'   : 'none'
+			'filter_type'   : 'none',
+			'column_flex'   : 1
 		}
 	)
 	number = Column(
@@ -720,18 +735,19 @@ class HouseGroup(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_GEO',
-				'cap_read'     : 'GEO_LIST',
-				'cap_create'   : 'GEO_CREATE',
-				'cap_edit'     : 'GEO_EDIT',
-				'cap_delete'   : 'GEO_DELETE',
+				'cap_menu'      : 'BASE_GEO',
+				'cap_read'      : 'GEO_LIST',
+				'cap_create'    : 'GEO_CREATE',
+				'cap_edit'      : 'GEO_EDIT',
+				'cap_delete'    : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : _('House Groups'),
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name', 'descr'),
-				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('House Groups'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('ahgid', 'name', 'descr'),
+				'grid_hidden'   : ('ahgid',),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : SimpleWizard(title=_('Add new house group'))
 			}
@@ -754,7 +770,8 @@ class HouseGroup(Base):
 		Comment('House group name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	description = Column(
@@ -765,7 +782,8 @@ class HouseGroup(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Description')
+			'header_string' : _('Description'),
+			'column_flex'   : 1
 		}
 	)
 	mappings = relationship(

@@ -162,7 +162,8 @@ class TicketOrigin(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Origins'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('toid', 'name'),
+				'grid_hidden'   : ('toid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -235,9 +236,11 @@ class TicketState(Base):
 					{ 'property': 'subtitle' ,'direction': 'ASC' }
 				),
 				'grid_view'     : (
+					'tstid',
 					'title', 'subtitle',
 					'flow', 'is_start', 'is_end'
 				),
+				'grid_hidden'   : ('tstid',),
 				'form_view'     : (
 					'title', 'subtitle',
 					'flow', 'is_start', 'is_end', 'allow_client',
@@ -407,7 +410,8 @@ class TicketStateTransition(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Transitions'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name', 'from_state', 'to_state'),
+				'grid_view'     : ('ttrid', 'name', 'from_state', 'to_state'),
+				'grid_hidden'   : ('ttrid',),
 				'form_view'     : ('name', 'from_state', 'to_state', 'reassign_to', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -521,7 +525,8 @@ class TicketFlagType(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Flags'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('tftid', 'name'),
+				'grid_hidden'   : ('tftid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -661,7 +666,8 @@ class TicketFile(Base):
 				'cap_delete'    : 'FILES_ATTACH_2TICKETS',
 
 				'menu_name'     : _('Files'),
-				'grid_view'     : ('ticket', 'file'),
+				'grid_view'     : ('tfid', 'ticket', 'file'),
+				'grid_hidden'   : ('tfid',),
 
 				'create_wizard' : SimpleWizard(title=_('Attach file'))
 			}
@@ -685,7 +691,8 @@ class TicketFile(Base):
 		Comment('Ticket ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Ticket')
+			'header_string' : _('Ticket'),
+			'column_flex'   : 1
 		}
 	)
 	file_id = Column(
@@ -695,7 +702,8 @@ class TicketFile(Base):
 		Comment('File ID'),
 		nullable=False,
 		info={
-			'header_string' : _('File')
+			'header_string' : _('File'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -845,6 +853,7 @@ class Ticket(Base):
 					'ticketid', 'entity', 'state',
 					'assigned_time', 'assigned_group', 'name'
 				),
+				'grid_hidden'   : ('ticketid',),
 				'form_view'     : (
 					'entity', 'name', 'state', 'flags', 'origin',
 					'assigned_user', 'assigned_group', 'assigned_time', 'dur',
@@ -925,7 +934,8 @@ class Ticket(Base):
 		info={
 			'header_string' : _('Entity'),
 			'filter_type'   : 'none',
-			'write_cap'     : 'TICKETS_CHANGE_ENTITY'
+			'write_cap'     : 'TICKETS_CHANGE_ENTITY',
+			'column_flex'   : 1
 		}
 	)
 	state_id = Column(
@@ -936,7 +946,8 @@ class Ticket(Base):
 		nullable=False,
 		info={
 			'header_string' : _('State'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	origin_id = Column(
@@ -961,7 +972,8 @@ class Ticket(Base):
 		info={
 			'header_string' : _('User'),
 			'filter_type'   : 'list',
-			'write_cap'     : 'TICKETS_CHANGE_UID'
+			'write_cap'     : 'TICKETS_CHANGE_UID',
+			'column_flex'   : 1
 		}
 	)
 	assigned_group_id = Column(
@@ -975,7 +987,8 @@ class Ticket(Base):
 		info={
 			'header_string' : _('Group'),
 			'filter_type'   : 'list',
-			'write_cap'     : 'TICKETS_CHANGE_GID'
+			'write_cap'     : 'TICKETS_CHANGE_GID',
+			'column_flex'   : 1
 		}
 	)
 	assigned_time = Column(
@@ -1027,7 +1040,8 @@ class Ticket(Base):
 		Comment('Ticket name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
 	description = Column(
@@ -1038,7 +1052,8 @@ class Ticket(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Description')
+			'header_string' : _('Description'),
+			'column_flex'   : 3
 		}
 	)
 	creation_time = Column(
@@ -1287,7 +1302,8 @@ class TicketTemplate(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Templates'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('ttplid', 'name'),
+				'grid_hidden'   : ('ttplid',),
 				'form_view'     : (
 					'name',
 					'tpl_name', 'tpl_descr',
@@ -1530,7 +1546,8 @@ class TicketChangeField(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Change Fields'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('tcfid', 'name'),
+				'grid_hidden'   : ('tcfid',),
 				'easy_search'   : ('name',),
 
 				'create_wizard' : SimpleWizard(title=_('Add new change field'))
@@ -1870,7 +1887,8 @@ class TicketScheduler(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Schedulers'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('tschedid', 'name'),
+				'grid_hidden'   : ('tschedid',),
 				'form_view'     : (
 					'name',
 					'sim_user', 'sim_group', 'ov_dur',
@@ -2135,7 +2153,8 @@ class TicketSchedulerUserAssignment(Base):
 				'cap_delete'    : 'BASE_ADMIN',
 
 				'menu_name'     : _('Scheduler Assignments for Users'),
-				'grid_view'     : ('user', 'scheduler'),
+				'grid_view'     : ('tschedassid', 'user', 'scheduler'),
+				'grid_hidden'   : ('tschedassid',),
 
 				'create_wizard' : SimpleWizard(title=_('Add new scheduling assignment'))
 			}
@@ -2159,7 +2178,8 @@ class TicketSchedulerUserAssignment(Base):
 		Comment('User ID'),
 		nullable=False,
 		info={
-			'header_string' : _('User')
+			'header_string' : _('User'),
+			'column_flex'   : 1
 		}
 	)
 	scheduler_id = Column(
@@ -2169,7 +2189,8 @@ class TicketSchedulerUserAssignment(Base):
 		Comment('Ticket scheduler ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Scheduler')
+			'header_string' : _('Scheduler'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -2206,7 +2227,8 @@ class TicketSchedulerGroupAssignment(Base):
 				'cap_delete'    : 'BASE_ADMIN',
 
 				'menu_name'     : _('Scheduler Assignments for Groups'),
-				'grid_view'     : ('group', 'scheduler'),
+				'grid_view'     : ('tschedassid', 'group', 'scheduler'),
+				'grid_hidden'   : ('tschedassid',),
 
 				'create_wizard' : SimpleWizard(title=_('Add new scheduling assignment'))
 			}
@@ -2230,7 +2252,8 @@ class TicketSchedulerGroupAssignment(Base):
 		Comment('Group ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Group')
+			'header_string' : _('Group'),
+			'column_flex'   : 1
 		}
 	)
 	scheduler_id = Column(
@@ -2240,7 +2263,8 @@ class TicketSchedulerGroupAssignment(Base):
 		Comment('Ticket scheduler ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Scheduler')
+			'header_string' : _('Scheduler'),
+			'column_flex'   : 1
 		}
 	)
 

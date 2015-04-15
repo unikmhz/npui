@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module - Views
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -39,7 +39,7 @@ _ = TranslationStringFactory('netprofile_geo')
 @register_hook('core.dpanetabs.geo.City')
 def _dpane_city_districts(tabs, model, req):
 	loc = get_localizer(req)
-	tabs.append({
+	tabs.extend(({
 		'title'             : loc.translate(_('Districts')),
 		'iconCls'           : 'ico-mod-district',
 		'xtype'             : 'grid_geo_District',
@@ -48,7 +48,16 @@ def _dpane_city_districts(tabs, model, req):
 		'hideColumns'       : ('city',),
 		'extraParamProp'    : 'cityid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	})
+	}, {
+		'title'             : loc.translate(_('Streets')),
+		'iconCls'           : 'ico-mod-street',
+		'xtype'             : 'grid_geo_Street',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('city',),
+		'extraParamProp'    : 'cityid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}))
 
 @register_hook('core.dpanetabs.geo.District')
 def _dpane_district_streets(tabs, model, req):

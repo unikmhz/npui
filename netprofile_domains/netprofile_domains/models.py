@@ -127,10 +127,12 @@ class Domain(Base):
 				'menu_main'     : True,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : (
+					'domainid',
 					MarkupColumn(
 						name='name',
 						header_string=_('Name'),
 						template='{__str__}',
+						column_flex=1,
 						sortable=True
 					),
 					'parent',
@@ -143,6 +145,7 @@ class Domain(Base):
 						column_resizable=False
 					)
 				),
+				'grid_hidden'   : ('domainid',),
 				'form_view'		: (
 					'name', 'parent',
 					'enabled', 'public', 'signed',
@@ -184,7 +187,8 @@ class Domain(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Parent')
+			'header_string' : _('Parent'),
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
@@ -429,15 +433,18 @@ class DomainAlias(Base):
 				'menu_name'     : _('Aliases'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : (
+					'daid',
 					MarkupColumn(
 						name='name',
 						header_string=_('Name'),
 						template='{__str__}',
+						column_flex=1,
 						sortable=True
 					),
 					'parent',
 					'domain'
 				),
+				'grid_hidden'   : ('daid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -466,7 +473,8 @@ class DomainAlias(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Parent')
+			'header_string' : _('Parent'),
+			'column_flex'   : 1
 		}
 	)
 	domain_id = Column(
@@ -537,7 +545,8 @@ class DomainTXTRecord(Base):
 				'cap_delete'    : 'DOMAINS_EDIT',
 				'menu_name'     : _('TXT Records'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name', 'domain', 'value'),
+				'grid_view'     : ('txtrrid', 'name', 'domain', 'value'),
+				'grid_hidden'   : ('txtrrid',),
 				'form_view'		: ('name', 'domain', 'ttl', 'vis', 'value'),
 				'easy_search'   : ('name', 'value'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -567,7 +576,8 @@ class DomainTXTRecord(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Domain')
+			'header_string' : _('Domain'),
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
@@ -575,7 +585,8 @@ class DomainTXTRecord(Base):
 		Comment('Text record name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	ttl = Column(
@@ -604,7 +615,8 @@ class DomainTXTRecord(Base):
 		Comment('Text record value'),
 		nullable=False,
 		info={
-			'header_string' : _('Value')
+			'header_string' : _('Value'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -644,7 +656,8 @@ class DomainServiceType(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Domain Service Types'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name', 'unique'),
+				'grid_view'     : ('hltypeid', 'name', 'unique'),
+				'grid_hidden'   : ('hltypeid',),
 				'easy_search'   : ('name',),
 
 				'create_wizard' : SimpleWizard(title=_('Add new type'))
@@ -668,7 +681,8 @@ class DomainServiceType(Base):
 		Comment('Domains-hosts linkage type name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	unique = Column(

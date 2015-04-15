@@ -361,7 +361,12 @@ def dpane_simple(model, request):
 			'items'   : tabs
 		}))
 	else:
-		cont['items'][0]['padding'] = '4'
+		cont['items'][0].update({
+			'padding'  : '4',
+			'defaults' : {
+				'anchor' : '50%'
+			}
+		})
 	request.run_hook(
 		'core.dpane.%s.%s' % (model.__parent__.moddef, model.name),
 		cont, model, request
