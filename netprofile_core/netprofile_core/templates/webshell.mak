@@ -683,11 +683,10 @@ Ext.require([
 		]
 	});
 	Ext.define('NetProfile.model.MenuItem', {
-		extend: 'Ext.data.Model',
+		extend: 'Ext.data.TreeModel',
 		fields: [
 			{ name: 'id', type: 'string' },
 			{ name: 'text', type: 'string' },
-			{ name: 'order', type: 'int' },
 			{ name: 'leaf', type: 'boolean' },
 			{ name: 'iconCls', type: 'string', persist: false },
 			{ name: 'xview', type: 'string' },
@@ -705,11 +704,10 @@ Ext.require([
 <%np:limit cap="${menu.perm}">\
 % if len(menu.extra_fields) > 0:
 	Ext.define('NetProfile.model.customMenu.${menu.name}', {
-		extend: 'Ext.data.Model',
+		extend: 'Ext.data.TreeModel',
 		fields: [
 			{ name: 'id', type: 'string' },
 			{ name: 'text', type: 'string' },
-			{ name: 'order', type: 'int' },
 			{ name: 'leaf', type: 'boolean' },
 			{ name: 'iconCls', type: 'string' },
 % for xf in menu.extra_fields:
