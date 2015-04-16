@@ -752,7 +752,8 @@ class User(Base):
 	)
 	sessions = relationship(
 		'NPSession',
-		backref='user'
+		backref='user',
+		passive_deletes=True
 	)
 	calendars = relationship(
 		'Calendar',
@@ -940,8 +941,9 @@ class User(Base):
 			ret[priv][res] = self.acls[(priv, res)]
 		return ret
 
-	def generate_session(self, req, sname):
-		now = dt.datetime.now()
+	def generate_session(self, req, sname, now=None):
+		if now is None:
+			now = dt.datetime.now()
 		npsess = NPSession(
 			user=self,
 			login=self.login,
@@ -958,6 +960,9 @@ class User(Base):
 					npsess.ipv6_address = ip
 			except ValueError:
 				pass
+		secpol = self.effective_policy
+		if secpol and (not secpol.check_new_session(req, self, npsess, now)):
+			return None
 		return npsess
 
 	def group_vector(self):
@@ -2196,6 +2201,18 @@ class SecurityPolicy(Base):
 		backref='security_policy'
 	)
 
+	@property
+	def net_whitelist_acl(self):
+		if not self.net_whitelist:
+			return None
+		nets = []
+		for ace in self.net_whitelist.split(';'):
+			try:
+				nets.append(ipaddr.IPNetwork(ace.strip()))
+			except ValueError:
+				pass
+		return nets
+
 	def check_new_password(self, req, user, pwd, ts):
 		err = []
 		if self.pw_length_min and (len(pwd) < self.pw_length_min):
@@ -2289,11 +2306,36 @@ class SecurityPolicy(Base):
 				timestamp=ts
 			))
 
-	def check_new_session(self, req, user, npsess, ts):
-		pass
+	def check_new_session(self, req, user, npsess, ts=None):
+		if ts is None:
+			ts = dt.datetime.now()
+		addr = npsess.ip_address or npsess.ipv6_address
+		acl = self.net_whitelist_acl
+		if addr and acl:
+			for net in acl:
+				if addr in net:
+					break
+			else:
+				return False
+		return True
 
-	def check_old_session(self, req, user, npsess, ts):
-		pass
+	def check_old_session(self, req, user, npsess, ts=None):
+		if ts is None:
+			ts = dt.datetime.now()
+		if self.sess_timeout and npsess.last_time and (self.sess_timeout >= 30):
+			delta = ts - npsess.last_time
+			if delta.total_seconds() > self.sess_timeout:
+				return False
+		# TODO: check for changed IP address
+		addr = npsess.ip_address or npsess.ipv6_address
+		acl = self.net_whitelist_acl
+		if addr and acl:
+			for net in acl:
+				if addr in net:
+					break
+			else:
+				return False
+		return True
 
 	def __str__(self):
 		return '%s' % str(self.name)
@@ -4714,6 +4756,19 @@ class NPSession(Base):
 		if upt is None:
 			upt = dt.datetime.now()
 		self.last_time = upt
+
+	def check_request(self, req, ts=None):
+		user = req.user
+		if user != self.user:
+			return False
+		if not user.enabled:
+			return False
+		if user.state != UserState.active:
+			return False
+		secpol = user.effective_policy
+		if secpol and (not secpol.check_old_session(req, user, self, ts)):
+			return False
+		return True
 
 class PasswordHistory(Base):
 	"""
