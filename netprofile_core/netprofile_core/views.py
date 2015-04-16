@@ -46,7 +46,6 @@ from pyramid.view import (
 )
 from pyramid.security import (
 	authenticated_userid,
-	forget,
 	remember
 )
 from pyramid.httpexceptions import (
@@ -65,6 +64,7 @@ from sqlalchemy.orm import undefer
 
 from netprofile import locale_neg
 from netprofile import PY3
+from netprofile.common.auth import auth_remove
 from netprofile.common.util import make_config_dict
 from netprofile.common.modules import IModuleManager
 from netprofile.common.hooks import register_hook
@@ -131,12 +131,17 @@ def do_notfound(request):
 		'cur_loc' : lang
 	}
 
-@forbidden_view_config(vhost='MAIN')
+@forbidden_view_config(vhost='MAIN', renderer='netprofile_core:templates/403.mak')
 def do_forbidden(request):
-	if authenticated_userid(request):
-		return HTTPForbidden()
-	loc = request.route_url('core.login', _query=(('next', request.path),))
-	return HTTPSeeOther(location=loc)
+	mmgr = request.registry.getUtility(IModuleManager)
+	lang = get_locale_name(request)
+	request.response.status_code = 403
+	return {
+		'res_css' : mmgr.get_css(request),
+		'res_js'  : mmgr.get_js(request),
+		'res_ljs' : mmgr.get_local_js(request, lang),
+		'cur_loc' : lang
+	}
 
 @view_config(route_name='core.login', renderer='netprofile_core:templates/login.mak')
 def do_login(request):
@@ -189,15 +194,7 @@ def do_noop(request):
 
 @view_config(route_name='core.logout')
 def do_logout(request):
-	if 'auth.acls' in request.session:
-		del request.session['auth.acls']
-	if 'auth.settings' in request.session:
-		del request.session['auth.settings']
-	headers = forget(request)
-	request.session.invalidate()
-	request.session.new_csrf_token()
-	loc = request.route_url('core.login')
-	return HTTPFound(location=loc, headers=headers)
+	return auth_remove(request, 'core.login')
 
 @view_config(route_name='core.js.webshell', renderer='netprofile_core:templates/webshell.mak', permission='USAGE')
 def js_webshell(request):
@@ -225,6 +222,14 @@ def wellknown_redirect(request):
 	if svc in ('dav', 'webdav', 'caldav', 'carddav'):
 		return HTTPFound(location=request.route_url('core.dav', traverse=()))
 	return HTTPNotFound()
+
+# No authentication!
+@view_config(route_name='core.logout.direct', renderer='json')
+def do_logout_extdirect(request):
+	return {
+		'type' : 'event',
+		'name' : 'sesstimeout'
+	}
 
 @view_config(route_name='core.file.download', permission='FILES_LIST')
 def file_dl(request):

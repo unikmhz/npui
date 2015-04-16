@@ -34,10 +34,29 @@ import time
 
 from zope.interface import implementer
 from pyramid.interfaces import IAuthenticationPolicy
+from pyramid.httpexceptions import HTTPFound
 from pyramid.security import (
 	Authenticated,
-	Everyone
+	Everyone,
+	forget
 )
+
+def auth_add(request):
+	pass
+
+def auth_remove(request, route_name):
+	sess = request.session
+	# TODO: add hook here
+	if sess:
+		if 'auth.acls' in sess:
+			del sess['auth.acls']
+		if 'auth.settings' in sess:
+			del sess['auth.settings']
+		sess.invalidate()
+		sess.new_csrf_token()
+	headers = forget(request)
+	loc = request.route_url(route_name)
+	return HTTPFound(location=loc, headers=headers)
 
 class PluginPolicySelected(object):
 	def __init__(self, request, policy):

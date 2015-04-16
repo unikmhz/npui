@@ -62,6 +62,7 @@ class Module(ModuleBase):
 		cfg.add_route('core.home', '/', vhost='MAIN')
 		cfg.add_route('core.login', '/login', vhost='MAIN')
 		cfg.add_route('core.logout', '/logout', vhost='MAIN')
+		cfg.add_route('core.logout.direct', '/directlogout', vhost='MAIN')
 		cfg.add_traverser(DAVTraverser, DAVRoot)
 		cfg.add_route('core.dav', '/dav*traverse', factory='netprofile.dav.DAVRoot', vhost='MAIN')
 		cfg.add_route('core.wellknown', '/.well-known/*service', vhost='MAIN')

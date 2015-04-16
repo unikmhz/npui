@@ -49,7 +49,6 @@ from pyramid.authentication import (
 	SessionAuthenticationPolicy
 )
 from pyramid.authorization import ACLAuthorizationPolicy
-from pyramid.httpexceptions import HTTPSeeOther
 
 from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
@@ -57,7 +56,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from netprofile.common.auth import (
 	DigestAuthenticationPolicy,
 	PluginAuthenticationPolicy,
-	PluginPolicySelected
+	PluginPolicySelected,
+	auth_remove
 )
 from netprofile.db.connection import DBSession
 from netprofile.db.clauses import SetVariable
@@ -227,17 +227,17 @@ def _auth_to_db(event):
 		sess.execute(SetVariable('accesslogin', '[GUEST]'))
 
 def _goto_login(request):
-	# TODO: check matched route name for ExtDirect, and add redirect to "goto login" ExtDirect handler instead
-	#       (request.matched_route.name == 'extrouter')
-	loc = request.route_url('core.login')
-	raise HTTPSeeOther(location=loc)
+	if request.matched_route:
+		if request.matched_route.name == 'extrouter':
+			raise auth_remove(request, 'core.logout.direct')
+	raise auth_remove(request, 'core.login')
 
 def _check_session(event):
 	request = event.request
 	if not isinstance(event.policy, SessionAuthenticationPolicy):
 		return
 	user = request.user
-	if request.matched_route and (request.matched_route.name in ('core.login', 'debugtoolbar')):
+	if request.matched_route and (request.matched_route.name in ('core.login', 'debugtoolbar', 'core.logout.direct', 'core.wellknown')):
 		return
 	if not user:
 		_goto_login(request)

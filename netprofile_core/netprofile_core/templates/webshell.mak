@@ -908,6 +908,13 @@ Ext.require([
 			Ext.state.Manager.setProvider(NetProfile.state);
 
 			// Init ExtDirect remoting provider
+			Ext.direct.Manager.on('sesstimeout', function(ev)
+			{
+% if req.debug_enabled:
+				Ext.log.info('Session timeout, reloading window');
+% endif
+				window.location.reload();
+			});
 			direct_provider = Ext.direct.Manager.getProvider('netprofile-provider');
 			direct_provider.on('exception', function(p, e)
 			{
