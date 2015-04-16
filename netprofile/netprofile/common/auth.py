@@ -38,11 +38,21 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.security import (
 	Authenticated,
 	Everyone,
-	forget
+	forget,
+	remember
 )
 
-def auth_add(request):
-	pass
+def auth_add(request, login, route_name):
+	sess = request.session
+	# TODO: add hook here
+	if sess:
+		if 'auth.acls' in sess:
+			del sess['auth.acls']
+		if 'auth.settings' in sess:
+			del sess['auth.settings']
+	headers = remember(request, login)
+	loc = request.route_url(route_name)
+	return HTTPFound(location=loc, headers=headers)
 
 def auth_remove(request, route_name):
 	sess = request.session

@@ -9,7 +9,6 @@
 <div id="login_outer">
 	<img alt="NetProfile" src="${req.static_url('netprofile_core:static/img/nplogo.png')}" />
 	<input type="hidden" id="csrf" name="csrf" value="${req.get_csrf()}" />
-	<input type="hidden" name="next" value="${next}" />
 % if failed:
 	<div class="elem errmsg">
 		${_('Authentication failed.')}

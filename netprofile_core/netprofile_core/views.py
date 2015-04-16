@@ -44,10 +44,7 @@ from pyramid.view import (
 	notfound_view_config,
 	view_config
 )
-from pyramid.security import (
-	authenticated_userid,
-	remember
-)
+from pyramid.security import authenticated_userid
 from pyramid.httpexceptions import (
 	HTTPForbidden,
 	HTTPFound,
@@ -64,7 +61,10 @@ from sqlalchemy.orm import undefer
 
 from netprofile import locale_neg
 from netprofile import PY3
-from netprofile.common.auth import auth_remove
+from netprofile.common.auth import (
+	auth_add,
+	auth_remove
+)
 from netprofile.common.util import make_config_dict
 from netprofile.common.modules import IModuleManager
 from netprofile.common.hooks import register_hook
@@ -145,11 +145,8 @@ def do_forbidden(request):
 
 @view_config(route_name='core.login', renderer='netprofile_core:templates/login.mak')
 def do_login(request):
-	nxt = request.params.get('next')
-	if (not nxt) or (not nxt.startswith('/')):
-		nxt = request.route_url('core.home')
 	if authenticated_userid(request):
-		return HTTPFound(location=nxt)
+		return HTTPFound(location=request.route_url('core.home'))
 	login = ''
 	did_fail = False
 	cur_locale = locale_neg(request)
@@ -166,19 +163,13 @@ def do_login(request):
 			q = sess.query(User).filter(User.state == UserState.active).filter(User.enabled == True).filter(User.login == login)
 			for user in q:
 				if user.check_password(passwd, hash_con, salt_len):
-					headers = remember(request, login)
-					if 'auth.acls' in request.session:
-						del request.session['auth.acls']
-					if 'auth.settings' in request.session:
-						del request.session['auth.settings']
-					return HTTPFound(location=nxt, headers=headers)
+					return auth_add(request, login, 'core.home')
 		did_fail = True
 
 	mmgr = request.registry.getUtility(IModuleManager)
 
 	return {
 		'login'   : login,
-		'next'    : nxt,
 		'failed'  : did_fail,
 		'res_css' : mmgr.get_css(request),
 		'res_js'  : mmgr.get_js(request),
