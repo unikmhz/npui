@@ -353,6 +353,7 @@ class ExtDirectRouter(object):
 			'tid'    : trans_id,
 			'action' : action_name,
 			'method' : method_name,
+			'sto'    : request.user.sess_timeout if request.user else None,
 			'result' : None
 		}
 

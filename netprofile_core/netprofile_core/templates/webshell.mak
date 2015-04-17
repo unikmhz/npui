@@ -23,6 +23,7 @@ Ext.require([
 	'Ext.menu.*',
 	'Ext.state.*',
 	'Ext.util.Cookies',
+	'Ext.util.DelayedTask',
 	'Ext.util.LocalStorage',
 	'Ext.Ajax',
 % for i_ajs in res_ajs:
@@ -37,7 +38,10 @@ Ext.require([
 	NetProfile.currentLocale = '${cur_loc}';
 	NetProfile.currentUser = '${req.user.login}';
 	NetProfile.currentUserId = ${req.user.id};
+% if req.np_session:
 	NetProfile.currentSession = '${str(req.np_session)}';
+	NetProfile.currentSessionTimeout = ${req.user.sess_timeout | n,jsone};
+% endif
 	NetProfile.userSettings = ${req.user.client_settings(req) | n,jsone};
 	NetProfile.userCapabilities = ${req.user.flat_privileges | n,jsone};
 	NetProfile.userACLs = ${req.user.client_acls(req) | n,jsone};
@@ -928,6 +932,9 @@ Ext.require([
 			});
 			direct_provider.on('data', function(p, e)
 			{
+				if(e.sto)
+				{
+				}
 				if(e.result && !e.result.success)
 				{
 					if(e.result.message)

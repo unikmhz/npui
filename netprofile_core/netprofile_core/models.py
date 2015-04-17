@@ -890,6 +890,16 @@ class User(Base):
 			secpol.after_new_password(request, self, newpwd, ts)
 
 	@property
+	def sess_timeout(self):
+		secpol = self.effective_policy
+		if not secpol:
+			return None
+		sto = secpol.sess_timeout
+		if (not sto) or (sto < 30):
+			return None
+		return sto
+
+	@property
 	def flat_privileges(self):
 		gpriv = self.group.flat_privileges
 		for sg in self.secondary_groups:
@@ -4739,6 +4749,23 @@ class NPSession(Base):
 			'column_flex'   : 1
 		}
 	)
+
+	@property
+	def end_time(self):
+		lastts = self.last_time
+		if not lastts:
+			return None
+		user = self.user
+		if not user:
+			return None
+		secpol = user.effective_policy
+		if not secpol:
+			return None
+		sto = secpol.sess_timeout
+		if (not sto) or (sto < 30):
+			return None
+		et = lastts + dt.timedelta(seconds=sto)
+		return et.replace(microsecond=0)
 
 	@classmethod
 	def __augment_pg_query__(cls, sess, query, params, req):
