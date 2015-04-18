@@ -114,6 +114,14 @@ Ext.require([
 			}
 		};
 	}();
+	NetProfile.onSessionTimeout = function()
+	{
+% if req.debug_enabled:
+		Ext.log.info('Session timeout, reloading window');
+% endif
+		window.location.reload();
+	};
+	NetProfile.sessionTimeoutTask = new Ext.util.DelayedTask(NetProfile.onSessionTimeout, NetProfile);
 
 	NetProfile.cap = function(capname)
 	{
@@ -914,11 +922,10 @@ Ext.require([
 			// Init ExtDirect remoting provider
 			Ext.direct.Manager.on('sesstimeout', function(ev)
 			{
-% if req.debug_enabled:
-				Ext.log.info('Session timeout, reloading window');
-% endif
-				window.location.reload();
+				NetProfile.onSessionTimeout();
 			});
+			if(NetProfile.currentSessionTimeout)
+				NetProfile.sessionTimeoutTask.delay((NetProfile.currentSessionTimeout + 3) * 1000);
 			direct_provider = Ext.direct.Manager.getProvider('netprofile-provider');
 			direct_provider.on('exception', function(p, e)
 			{
@@ -934,6 +941,8 @@ Ext.require([
 			{
 				if(e.sto)
 				{
+					NetProfile.currentSessionTimeout = e.sto;
+					NetProfile.sessionTimeoutTask.delay((NetProfile.currentSessionTimeout + 3) * 1000);
 				}
 				if(e.result && !e.result.success)
 				{
