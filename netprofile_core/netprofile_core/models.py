@@ -836,7 +836,7 @@ class User(Base):
 	def ldap_password(self, settings):
 		pw = getattr(self, 'mod_pw', False)
 		if not pw:
-			raise ValueError
+			raise ValueError('Temporary plaintext password was not found')
 		salt = self.generate_salt(4).encode()
 		ctx = hashlib.sha1()
 		ctx.update(pw.encode())
@@ -888,6 +888,16 @@ class User(Base):
 			self.a1_hash = self.generate_a1hash(realm)
 		if secpol:
 			secpol.after_new_password(request, self, newpwd, ts)
+		if request.user == self:
+			request.session['sess.nextcheck'] = ts
+			request.session['sess.pwage'] = 'ok'
+
+	@property
+	def last_password_change(self):
+		return DBSession().query(PasswordHistory)\
+			.filter(PasswordHistory.user == self)\
+			.order_by(PasswordHistory.timestamp.desc())\
+			.first()
 
 	@property
 	def sess_timeout(self):
@@ -2327,8 +2337,10 @@ class SecurityPolicy(Base):
 					break
 			else:
 				return False
-		# TODO: make timer configurable
-		req.session['sess.check'] = 10
+		# Heavyweight checks
+		if not self.check_password_age(req, user, npsess, ts):
+			return False
+		req.session['sess.nextcheck'] = _sess_nextcheck(req, ts)
 		return True
 
 	def check_old_session(self, req, user, npsess, ts=None):
@@ -2347,15 +2359,48 @@ class SecurityPolicy(Base):
 					break
 			else:
 				return False
-		req.session['sess.check'] -= 1
-		if req.session['sess.check'] <= 0:
-			# Place for heavy checks (password age etc.)
-			# TODO: make timer configurable
-			req.session['sess.check'] = 10
+		if 'sess.nextcheck' in req.session:
+			nextcheck = req.session['sess.nextcheck']
+		else:
+			nextcheck = req.session['sess.nextcheck'] = _sess_nextcheck(req, ts)
+		if nextcheck < ts:
+			# Heavyweight checks
+			if not self.check_password_age(req, user, npsess, ts):
+				return False
+			req.session['sess.nextcheck'] = _sess_nextcheck(req, ts)
+		return True
+
+	def check_password_age(self, req, user, npsess, ts):
+		last_pwh = user.last_password_change
+		if last_pwh:
+			days = (ts - last_pwh.timestamp).days
+			if days > self.pw_age_max:
+				if self.pw_age_action == SecurityPolicyOnExpire.drop:
+					return False
+				req.session['sess.pwage'] = 'force'
+			elif self.pw_age_warndays:
+				days_left = self.pw_age_max - days
+				if days_left < self.pw_age_warndays:
+					req.session['sess.pwage'] = 'warn'
+					npsess.pw_days_left = days_left
+				else:
+					req.session['sess.pwage'] = 'ok'
+			else:
+				req.session['sess.pwage'] = 'ok'
+		else:
+			req.session['sess.pwage'] = 'ok'
 		return True
 
 	def __str__(self):
 		return '%s' % str(self.name)
+
+def _sess_nextcheck(req, ts):
+	cfg = req.registry.settings
+	try:
+		secs = int(cfg.get('netprofile.auth.session_check_period', 1800))
+	except (TypeError, ValueError):
+		secs = 1800
+	return ts + dt.timedelta(seconds=secs)
 
 class DAVLock(Base):
 	"""
