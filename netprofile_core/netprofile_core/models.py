@@ -2327,6 +2327,8 @@ class SecurityPolicy(Base):
 					break
 			else:
 				return False
+		# TODO: make timer configurable
+		req.session['sess.check'] = 10
 		return True
 
 	def check_old_session(self, req, user, npsess, ts=None):
@@ -2345,6 +2347,11 @@ class SecurityPolicy(Base):
 					break
 			else:
 				return False
+		req.session['sess.check'] -= 1
+		if req.session['sess.check'] <= 0:
+			# Place for heavy checks (password age etc.)
+			# TODO: make timer configurable
+			req.session['sess.check'] = 10
 		return True
 
 	def __str__(self):
