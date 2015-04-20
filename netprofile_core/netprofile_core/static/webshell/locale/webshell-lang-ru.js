@@ -150,10 +150,12 @@ Ext.onReady(function()
 
 	Ext.define('Ext.locale.ru.NetProfile.panel.Wizard', {
 		override: 'NetProfile.panel.Wizard',
-		btnPrevText: 'Назад',
-		btnNextText: 'Далее',
-		btnCancelText: 'Отмена',
-		btnSubmitText: 'Готово'
+		config: {
+			cancelBtnCfg: { text: 'Отмена' },
+			prevBtnCfg: { text: 'Назад' },
+			nextBtnCfg: { text: 'Далее' },
+			submitBtnCfg: { text: 'Готово' }
+		}
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.controller.UserSettingsForm', {

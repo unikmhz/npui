@@ -12,109 +12,137 @@ Ext.define('NetProfile.panel.Wizard', {
 		'NetProfile.form.field.Password',
 		'NetProfile.form.WizardPane'
 	],
-	layout: 'card',
-	border: 0,
-	api: null,
-	wizardName: null,
-	submitApi: 'create',
-	createApi: 'get_create_wizard',
-	resetOnClose: false,
-	extraParams: null,
-	extraParamProp: null,
-	extraParamRelProp: null,
-	actionApi: null,
-	validateApi: null,
-	wizardCls: null,
-	createInto: null,
-//	doValidation: true, do we need this global flag???
 
-	btnPrevText: 'Prev',
-	btnNextText: 'Next',
-	btnCancelText: 'Cancel',
-	btnSubmitText: 'Submit',
+	config: {
+		layout: 'card',
+		border: 0,
+		api: null,
+		createInto: null,
+		resetOnClose: false,
+
+		wizardName: null,
+		wizardCls: null,
+		submitApi: 'create',
+		createApi: 'get_create_wizard',
+		actionApi: null,
+		validateApi: null,
+
+		extraParams: null,
+		extraParamProp: null,
+		extraParamRelProp: null,
+
+		showSubmit: true,
+		showCancel: true,
+		showNavigation: true,
+
+		cancelBtnCfg: {
+			text: 'Cancel',
+			iconCls: 'ico-cancel'
+		},
+		prevBtnCfg: {
+			text: 'Prev',
+			iconCls: 'ico-prev',
+			disabled: true
+		},
+		nextBtnCfg: {
+			text: 'Next',
+			iconCls: 'ico-next',
+			disabled: true
+		},
+		submitBtnCfg: {
+			text: 'Submit',
+			iconCls: 'ico-accept',
+			disabled: true
+		}
+	},
 
 	initComponent: function()
 	{
-		this.bbar = [{
-			itemId: 'act_cancel',
-			text: this.btnCancelText,
-			iconCls: 'ico-cancel',
-			handler: function(btn)
+		var me = this;
+
+		me.bbar = [];
+		if(me.showCancel)
+			me.bbar.push(Ext.apply({
+				itemId: 'act_cancel',
+				handler: 'onCancel',
+				scope: me
+			}, me.cancelBtnCfg));
+		if(me.showNavigation || me.showSubmit)
+			me.bbar.push('->');
+		if(me.showNavigation)
+			me.bbar.push(Ext.apply({
+				itemId: 'goto_prev',
+				handler: 'onPrevious',
+				scope: me
+			}, me.prevBtnCfg), Ext.apply({
+				itemId: 'goto_next',
+				handler: 'onNext',
+				scope: me
+			}, me.nextBtnCfg));
+		if(me.showSubmit)
+			me.bbar.push(Ext.apply({
+				itemId: 'act_submit',
+				handler: 'onSubmit',
+				scope: me
+			}, me.submitBtnCfg));
+
+		me.callParent();
+
+		me.on('beforerender', me.loadWizard, me);
+		me.on('fieldchanged', me.remoteValidate, me, { buffer: 500 });
+	},
+	onCancel: function(btn)
+	{
+		this.close();
+		return true;
+	},
+	onPrevious: function(btn)
+	{
+		return this.update('prev');
+	},
+	onNext: function(btn)
+	{
+		return this.update('next');
+	},
+	onSubmit: function(btn)
+	{
+		var me = this,
+			layout = me.getLayout(),
+			curpane = layout.getActiveItem(),
+			args;
+
+		if(!me.validate())
+			return false;
+		if(curpane.allowSubmit && me.api && me.api.action)
+		{
+			args = [
+				curpane.itemId,
+				'submit',
+				me.getValues(),
+				me.actionCallback.bind(me)
+			];
+			if(me.wizardName)
+				args.unshift(me.wizardName);
+			me.api.action.apply(me.api, args);
+			return true;
+		}
+		else if(me.createInto)
+		{
+			if(me.createInto.add(me.getValues()))
 			{
-				this.close();
+				me.close();
 				return true;
-			},
-			scope: this
-		}, '->', {
-			itemId: 'goto_prev',
-			text: this.btnPrevText,
-			iconCls: 'ico-prev',
-			disabled: true,
-			handler: function(btn)
-			{
-				return this.update('prev');
-			},
-			scope: this
-		}, {
-			itemId: 'goto_next',
-			text: this.btnNextText,
-			iconCls: 'ico-next',
-			disabled: true,
-			handler: function(btn)
-			{
-				return this.update('next');
-			},
-			scope: this
-		}, {
-			itemId: 'act_submit',
-			text: this.btnSubmitText,
-			iconCls: 'ico-accept',
-			disabled: true,
-			handler: function(btn)
-			{
-				var layout = this.getLayout(),
-					curpane = layout.getActiveItem();
-
-				if(!this.validate())
-					return false;
-				if(curpane.allowSubmit && this.api && this.api.action)
-				{
-					var args = [
-						curpane.itemId,
-						'submit',
-						this.getValues(),
-						this.actionCallback.bind(this)
-					];
-					if(this.wizardName)
-						args.unshift(this.wizardName);
-					this.api.action.apply(this.api, args);
-					return true;
-				}
-				else if(this.createInto)
-				{
-					if(this.createInto.add(this.getValues()))
-					{
-						this.close();
-						return true;
-					}
-				}
-				else if(this.api.submit)
-				{
-					this.api.submit(
-						this.getValues(),
-						this.actionCallback.bind(this)
-					);
-					return true;
-				}
-				return false;
-			},
-			scope: this
-		}];
-
-		this.callParent();
-
-		this.on('beforerender', this.loadWizard, this);
-		this.on('fieldchanged', this.remoteValidate, this, { buffer: 500 });
+			}
+		}
+		else if(me.api.submit)
+		{
+			me.api.submit(
+				me.getValues(),
+				me.actionCallback.bind(me)
+			);
+			return true;
+		}
+		return false;
 	},
 	getDirectAction: function()
 	{
@@ -236,7 +264,7 @@ Ext.define('NetProfile.panel.Wizard', {
 	{
 		var me = this,
 			layout = me.getLayout(),
-			pane;
+			pane, method;
 
 		if(!data || !data.success || !data.action)
 		{
@@ -290,6 +318,12 @@ Ext.define('NetProfile.panel.Wizard', {
 				default:
 					break;
 			}
+		if('exec' in data.action)
+		{
+			method = data.action['exec'];
+			if(method in me)
+				me[method](data);
+		}
 		return false;
 	},
 	update: function(dir)
@@ -340,9 +374,13 @@ Ext.define('NetProfile.panel.Wizard', {
 				}
 			}
 		}
-		tbar.getComponent('goto_prev').setDisabled(!layout.getPrev() && !curpane.remotePrev);
-		tbar.getComponent('goto_next').setDisabled((!layout.getNext() && !curpane.remoteNext) || curpane.allowSubmit);
-		tbar.getComponent('act_submit').setDisabled(layout.getNext() && !curpane.allowSubmit);
+		if(me.showNavigation)
+		{
+			tbar.getComponent('goto_prev').setDisabled(!layout.getPrev() && !curpane.remotePrev);
+			tbar.getComponent('goto_next').setDisabled((!layout.getNext() && !curpane.remoteNext) || curpane.allowSubmit);
+		}
+		if(me.showSubmit)
+			tbar.getComponent('act_submit').setDisabled(layout.getNext() && !curpane.allowSubmit);
 
 		return true;
 	},
@@ -403,10 +441,17 @@ Ext.define('NetProfile.panel.Wizard', {
 	},
 	close: function()
 	{
-		if(this.resetOnClose)
-			this.loadWizard();
+		var me = this,
+			win;
+
+		if(me.resetOnClose)
+			me.loadWizard();
 		else
-			this.up('window').close();
+		{
+			win = me.up('window');
+			if(win)
+				win.close();
+		}
 		return true;
 	},
 	submit: function()

@@ -4,6 +4,7 @@ Ext.define('NetProfile.form.field.Password', {
 
 	config: {
 		inputType: 'password',
+		emptyValue: '• • •',
 		selectOnFocus: true,
 		triggers: {
 			clear: {
@@ -38,7 +39,7 @@ Ext.define('NetProfile.form.field.Password', {
 		if((v === undefined) || (v === null) || (v == ''))
 		{
 			this.clearFlag = true;
-			v = '• • •';
+			v = this.emptyValue;
 		}
 		return this.callParent([v]);
 	},
@@ -55,7 +56,7 @@ Ext.define('NetProfile.form.field.Password', {
 		val = this.getRawValue();
 		if(this.clearFlag)
 			ret[this.name] = null;
-		else if(val != '• • •')
+		else if(val != this.emptyValue)
 			ret[this.name] = val;
 		ret[this.name + '_clear'] = this.clearFlag;
 		return ret;
