@@ -237,8 +237,12 @@ def _check_session(event):
 	if not isinstance(event.policy, SessionAuthenticationPolicy):
 		return
 	user = request.user
-	if request.matched_route and (request.matched_route.name in ('core.login', 'debugtoolbar', 'core.logout.direct', 'core.wellknown')):
-		return
+	route_name = None
+	if request.matched_route:
+		route_name = request.matched_route.name
+		# TODO: unhardcode excluded routes
+		if route_name in ('core.login', 'debugtoolbar', 'core.logout.direct', 'core.wellknown'):
+			return
 	if not user:
 		_goto_login(request)
 	settings = request.registry.settings
@@ -265,8 +269,14 @@ def _check_session(event):
 
 		if oldsess and (not npsess.check_request(request, now)):
 			_goto_login(request)
-		npsess.update_time(now)
 
+		pw_age = request.session.get('sess.pwage', 'ok')
+		if pw_age == 'force':
+			# TODO: unhardcode excluded routes
+			if route_name not in ('extrouter', 'extapi', 'core.home', 'core.js.webshell'):
+				_goto_login(request)
+
+		npsess.update_time(now)
 		request.np_session = npsess
 	else:
 		_goto_login(request)
