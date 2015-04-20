@@ -22,12 +22,15 @@ Ext.require([
 	'Ext.tip.*',
 	'Ext.menu.*',
 	'Ext.state.*',
+	'Ext.Component',
+	'Ext.container.Container',
+	'Ext.button.Button',
 	'Ext.util.Cookies',
 	'Ext.util.DelayedTask',
 	'Ext.util.LocalStorage',
 	'Ext.Ajax',
 % for i_ajs in res_ajs:
-	'${i_ajs}',
+	${i_ajs | jsone},
 % endfor
 	'NetProfile.data.BaseModel',
 	'NetProfile.grid.CapabilityGrid',
@@ -35,19 +38,19 @@ Ext.require([
 	'NetProfile.panel.Calendar'
 ], function()
 {
-	NetProfile.currentLocale = '${cur_loc}';
-	NetProfile.currentUser = '${req.user.login}';
-	NetProfile.currentUserId = ${req.user.id};
+	NetProfile.currentLocale = ${cur_loc | jsone};
+	NetProfile.currentUser = ${req.user.login | jsone};
+	NetProfile.currentUserId = ${req.user.id | n,jsone};
 % if req.np_session:
-	NetProfile.currentSession = '${str(req.np_session)}';
+	NetProfile.currentSession = ${str(req.np_session) | jsone};
 	NetProfile.currentSessionTimeout = ${req.user.sess_timeout | n,jsone};
 % endif
 	NetProfile.userSettings = ${req.user.client_settings(req) | n,jsone};
 	NetProfile.userCapabilities = ${req.user.flat_privileges | n,jsone};
 	NetProfile.userACLs = ${req.user.client_acls(req) | n,jsone};
 	NetProfile.rootFolder = ${req.user.get_root_folder() | n,jsone};
-	NetProfile.baseURL = '${req.host_url}';
-	NetProfile.staticURL = '${req.host_url}';
+	NetProfile.baseURL = ${req.host_url | jsone};
+	NetProfile.staticURL = ${req.host_url | jsone};
 	NetProfile.state = null;
 	NetProfile.rtURL = '//${rt_host}:${rt_port}';
 	NetProfile.rtSocket = null;
@@ -83,7 +86,7 @@ Ext.require([
 	};
 	Ext.direct.Manager.addProvider(NetProfile.api.Descriptor);
 	Ext.Ajax.setDefaultHeaders({
-		'X-CSRFToken': '${req.get_csrf()}'
+		'X-CSRFToken': ${req.get_csrf() | jsone}
 	});
 	NetProfile.msg = function()
 	{
@@ -177,20 +180,20 @@ Ext.require([
 
 		tab = pbar.addConsoleTab(str_id, {
 			xtype: 'grid',
-			title: '${_('System Console')}',
+			title: ${_('System Console') | jsone},
 			iconCls: 'ico-console',
 			store: store,
 			viewConfig: {
 				preserveScrollOnRefresh: true
 			},
 			columns: [{
-				text: 'Date',
+				text: ${_('Date') | jsone},
 				dataIndex: 'ts',
 				width: 120,
 				xtype: 'datecolumn',
 				format: Ext.util.Format.dateFormat + ' H:i:s'
 			}, {
-				text: 'Message',
+				text: ${_('Message') | jsone},
 				dataIndex: 'data',
 				flex: 1,
 				sortable: false,
@@ -940,7 +943,7 @@ Ext.require([
 			'NetProfile.controller.Users',
 			'NetProfile.controller.FileAttachments',
 % for cont in res_ctl:
-			'${cont}',
+			${cont | jsone},
 % endfor
 			'NetProfile.controller.FileFolders'
 		],
@@ -968,7 +971,7 @@ Ext.require([
 % if req.debug_enabled:
 					Ext.log.error(e.message);
 % endif
-					NetProfile.msg.err('${_('Error')}', '{0}', e.message);
+					NetProfile.msg.err(${_('Error') | jsone}, '{0}', e.message);
 				}
 			});
 			direct_provider.on('data', function(p, e)
@@ -987,7 +990,7 @@ Ext.require([
 						if(e.result.stacktrace)
 							Ext.log.info(e.result.stacktrace);
 % endif
-						NetProfile.msg.warn('${_('Warning')}', '{0}', e.result.message);
+						NetProfile.msg.warn(${_('Warning') | jsone}, '{0}', e.result.message);
 					}
 				}
 			});
@@ -1096,9 +1099,45 @@ Ext.require([
 				NetProfile.rtSocket = rt_sock;
 			}
 		},
+		showStartupMessages: function()
+		{
+% if pw_age == 'warn':
+			Ext.toast({
+				title: ${_('Please change your password') | jsone},
+				minWidth: 300,
+				align: 'br',
+				autoCloseDelay: 5000,
+				iconCls: 'ico-lock',
+				layout: {
+					type: 'vbox',
+					align: 'stretch'
+				},
+				items: [{
+					xtype: 'component',
+					html: Ext.String.format(
+						${_('Your current password will expire in approximately {0}. Please change it as soon as possible.') | jsone},
+						${req.localizer.pluralize(_('${num} day'), _('${num} days'), pw_days, domain='netprofile_core', mapping={ 'num' : pw_days }) | jsone}
+					)
+				}, {
+					xtype: 'container',
+					padding: '6 0 0 0',
+					layout: {
+						type: 'hbox',
+						pack: 'end'
+					},
+					items: [{
+						xtype: 'button',
+						iconCls: 'ico-lock',
+						text: ${_('Change now') | jsone}
+					}]
+				}]
+			});
+% endif
+		},
 		launch: function(profile)
 		{
-			var spl = Ext.get('splash');
+			var me = this,
+				spl = Ext.get('splash');
 
 			if(spl)
 				spl.fadeOut({
@@ -1107,8 +1146,12 @@ Ext.require([
 					duration: 400,
 					easing: 'easeIn',
 					remove: true,
-					useDisplay: true
+					useDisplay: true,
+					callback: 'showStartupMessages',
+					scope: me
 				});
+			else
+				me.showStartupMessages();
 			return true;
 		}
 	});

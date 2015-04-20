@@ -1,13 +1,13 @@
 ## -*- coding: utf-8 -*-
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="${cur_loc}">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="${cur_loc | h}">
 <head>
 	<meta charset="UTF-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1" />
 	<meta name="referrer" content="none" />
 	<meta name="keywords" content="netprofile" />
 	<meta name="description" content="NetProfile administrative UI" />
-	<title>NetProfile :: <%block name="title">${_('Home')}</%block></title>
+	<title>NetProfile :: <%block name="title">${_('Home') | h}</%block></title>
 	<link rel="shortcut icon" href="${req.static_url('netprofile_core:static/favicon.ico')}" />
 
 % for i_css in res_css:

@@ -12,7 +12,7 @@
 	</form>
 
 	<div id="splash"><div class="splashcont">
-		<img src="${req.static_url('netprofile_core:static/img/loading-bars.svg')}" alt="${_('Please wait while the application is loading…')}" />
-		<h1>${_('Loading…')}</h1>
+		<img src="${req.static_url('netprofile_core:static/img/loading-bars.svg')}" alt="${_('Please wait while the application is loading…') | h}" />
+		<h1>${_('Loading…') | h}</h1>
 	</div></div>
 
