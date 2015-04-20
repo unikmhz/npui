@@ -69,7 +69,13 @@ from netprofile.common.util import make_config_dict
 from netprofile.common.modules import IModuleManager
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
+from netprofile.ext.data import ExtModel
 from netprofile.ext.direct import extdirect_method
+from netprofile.ext.wizards import (
+	ExtJSWizardField,
+	Step,
+	Wizard
+)
 from netprofile.dav import DAVMountResponse
 
 from .models import (
@@ -90,7 +96,8 @@ from .models import (
 	UserSettingType,
 	UserState,
 
-	F_DEFAULT_FILES
+	F_DEFAULT_FILES,
+	secpol_errors
 )
 
 from pyramid.i18n import (
@@ -199,6 +206,7 @@ def js_webshell(request):
 		'res_ctl' : mmgr.get_controllers(request),
 		'rt_host' : rtcfg.get('host', 'localhost'),
 		'rt_port' : rtcfg.get('port', 8808),
+		'pw_age'  : request.session.get('sess.pwage', 'ok'),
 		'modules' : mmgr.get_module_browser()
 	}
 
@@ -326,6 +334,104 @@ def data_export(request):
 		raise ValueError('No export format specified')
 	fmt = mmgr.get_export_format(fmt)
 	return fmt.export(model, json.loads(params), request)
+
+@extdirect_method('User', 'get_chpass_wizard', request_as_last_param=True, permission='USAGE')
+def dyn_user_chpass_wizard(request):
+	sess = DBSession()
+	loc = get_localizer(request)
+	model = ExtModel(User)
+	user = request.user
+	wiz = Wizard(
+		Step(
+			ExtJSWizardField({
+				'xtype'      : 'passwordfield',
+				'name'       : 'oldpass',
+				'allowBlank' : False,
+				'triggers'   : None,
+				'fieldLabel' : loc.translate(_('Old password')),
+				'maxLength'  : 255,
+				'value'      : '',
+				'emptyValue' : ''
+			}),
+			ExtJSWizardField({
+				'xtype'      : 'passwordfield',
+				'name'       : 'newpass1',
+				'allowBlank' : False,
+				'triggers'   : None,
+				'fieldLabel' : loc.translate(_('New password')),
+				'maxLength'  : 255,
+				'value'      : '',
+				'emptyValue' : ''
+			}),
+			ExtJSWizardField({
+				'xtype'      : 'passwordfield',
+				'name'       : 'newpass2',
+				'allowBlank' : False,
+				'triggers'   : None,
+				'fieldLabel' : loc.translate(_('Repeat password')),
+				'maxLength'  : 255,
+				'value'      : '',
+				'emptyValue' : ''
+			})
+		),
+		title=_('Change your password'),
+		validator='ChangePassword'
+	)
+	return {
+		'success' : True,
+		'fields'  : wiz.get_cfg(model, request, use_defaults=True)
+	}
+
+@extdirect_method('User', 'change_password', request_as_last_param=True, permission='USAGE')
+def dyn_user_chpass_submit(values, request):
+	user = request.user
+	cfg = request.registry.settings
+	hash_con = cfg.get('netprofile.auth.hash', 'sha1')
+	salt_len = int(cfg.get('netprofile.auth.salt_length', 4))
+	old_pass = values.get('oldpass')
+	new_pass1 = values.get('newpass1')
+	new_pass2 = values.get('newpass2')
+	if (not old_pass) or (not user.check_password(old_pass, hash_con, salt_len)):
+		raise ValueError('Old password is invalid')
+	if (not new_pass1) or (not new_pass2) or (new_pass1 != new_pass2):
+		raise ValueError('New password is invalid')
+	secpol = user.effective_policy
+	if secpol:
+		if secpol.check_new_password(request, user, new_pass1, dt.datetime.now()) is not True:
+			raise ValueError('New password is invalid')
+	user.change_password(new_pass1, values, request)
+
+	return {
+		'success' : True,
+		'action'  : { 'exec' : 'onCancel' }
+	}
+
+@register_hook('core.validators.ChangePassword')
+def dyn_user_chpass_validate(ret, values, request):
+	loc = get_localizer(request)
+	errors = defaultdict(list)
+	user = request.user
+	cfg = request.registry.settings
+	hash_con = cfg.get('netprofile.auth.hash', 'sha1')
+	salt_len = int(cfg.get('netprofile.auth.salt_length', 4))
+	old_pass = values.get('oldpass')
+	new_pass1 = values.get('newpass1')
+	new_pass2 = values.get('newpass2')
+	if (not old_pass) or (not user.check_password(old_pass, hash_con, salt_len)):
+		errors['oldpass'].append(loc.translate(_('Old password is invalid.')))
+	if not new_pass1:
+		errors['newpass1'].append(loc.translate(_('New password can\'t be empty.')))
+	if not new_pass2:
+		errors['newpass2'].append(loc.translate(_('New password can\'t be empty.')))
+	if new_pass1 != new_pass2:
+		errors['newpass2'].append(loc.translate(_('Entered passwords differ.')))
+	if new_pass1:
+		secpol = user.effective_policy
+		if secpol:
+			checkpw = secpol.check_new_password(request, user, new_pass1, dt.datetime.now())
+			if checkpw is not True:
+				errors['newpass1'].extend(secpol_errors(checkpw, loc))
+	ret['errors'].update(errors)
 
 def dpane_simple(model, request):
 	tabs = []

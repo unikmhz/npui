@@ -406,21 +406,24 @@ def _validate_user_password(model, colname, values, req):
 	if checkpw is True:
 		return
 	loc = get_localizer(req)
+	return secpol_errors(checkpw, loc)
+
+def secpol_errors(checkpw, loc):
 	errors = []
 	if 'pw_length_min' in checkpw:
-		errors.append(loc.translate(_('Password is too short')))
+		errors.append(loc.translate(_('Password is too short.')))
 	if 'pw_length_max' in checkpw:
-		errors.append(loc.translate(_('Password is too long')))
+		errors.append(loc.translate(_('Password is too long.')))
 	if 'pw_ctype_min' in checkpw:
-		errors.append(loc.translate(_('Password has not enough character types')))
+		errors.append(loc.translate(_('Password has not enough character types.')))
 	if 'pw_ctype_max' in checkpw:
-		errors.append(loc.translate(_('Password has too many character types')))
+		errors.append(loc.translate(_('Password has too many character types.')))
 	if 'pw_dict_check' in checkpw:
-		errors.append(loc.translate(_('Password was found in a dictionary')))
+		errors.append(loc.translate(_('Password was found in a dictionary.')))
 	if 'pw_hist_check' in checkpw:
-		errors.append(loc.translate(_('You used this password not too long ago')))
+		errors.append(loc.translate(_('You used this password not too long ago.')))
 	if 'pw_age_min' in checkpw:
-		errors.append(loc.translate(_('You\'ve just changed your password')))
+		errors.append(loc.translate(_('You\'ve just changed your password.')))
 	return errors
 
 @implementer(IDAVFile, IDAVPrincipal)
@@ -2337,7 +2340,7 @@ class SecurityPolicy(Base):
 					break
 			else:
 				return False
-		# Heavyweight checks
+		# Expensive checks
 		if not self.check_password_age(req, user, npsess, ts):
 			return False
 		req.session['sess.nextcheck'] = _sess_nextcheck(req, ts)
@@ -2364,7 +2367,7 @@ class SecurityPolicy(Base):
 		else:
 			nextcheck = req.session['sess.nextcheck'] = _sess_nextcheck(req, ts)
 		if nextcheck < ts:
-			# Heavyweight checks
+			# Expensive checks
 			if not self.check_password_age(req, user, npsess, ts):
 				return False
 			req.session['sess.nextcheck'] = _sess_nextcheck(req, ts)

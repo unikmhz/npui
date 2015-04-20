@@ -88,23 +88,8 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 			tooltip: { text: this.logoutTipText, title: this.logoutText },
 			handler: function()
 			{
-				var sp = Ext.state.Manager.getProvider();
-				if(sp && sp.state)
-				{
-					NetProfile.api.DataCache.save_ls(sp.state, function(data, res)
-					{
-						Ext.Object.getKeys(sp.state).forEach(function(k)
-						{
-							sp.clear(k);
-						});
-						sp.clear('loaded');
-						window.location.href = '/logout';
-					}.bind(this));
-				}
-				else
-					window.location.href = '/logout';
-			},
-			scope: this
+				NetProfile.logOut(true);
+			}
 		}];
 		this.callParent(arguments);
 	}

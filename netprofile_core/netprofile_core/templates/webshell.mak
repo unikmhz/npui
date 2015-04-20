@@ -137,6 +137,36 @@ Ext.require([
 			return NetProfile.cap(capname);
 		return NetProfile.userACLs[capname][resid];
 	};
+	NetProfile.logOut = function(save_state)
+	{
+		var sp = Ext.state.Manager.getProvider();
+		if(sp && sp.state)
+		{
+			if(save_state)
+			{
+				NetProfile.api.DataCache.save_ls(sp.state, function(data, res)
+				{
+					Ext.Object.each(sp.state, function(k)
+					{
+						sp.clear(k);
+					});
+					sp.clear('loaded');
+					window.location.href = '/logout';
+				});
+			}
+			else
+			{
+				Ext.Object.each(sp.state, function(k)
+				{
+					sp.clear(k);
+				});
+				sp.clear('loaded');
+				window.location.href = '/logout';
+			}
+		}
+		else
+			window.location.href = '/logout';
+	};
 
 	NetProfile.showConsole = function()
 	{
@@ -897,9 +927,13 @@ Ext.require([
 		name: 'NetProfile',
 		appFolder: 'static/core/webshell',
 		mainView: 'Viewport',
+		// TODO: defaultToken: 'dashboard',
 
 		models: [],
-		views: ['Viewport'],
+		views: [
+			'ChangePassword',
+			'Viewport'
+		],
 		stores: [],
 		controllers: [
 			'NetProfile.controller.DataStores',
@@ -957,6 +991,11 @@ Ext.require([
 					}
 				}
 			});
+
+% if pw_age != 'ok':
+			app.setMainView('ChangePassword');
+			NetProfile.rtURL = null;
+% endif
 
 			// Init SockJS connection to realtime server
 			// TODO: move this to a separate component
