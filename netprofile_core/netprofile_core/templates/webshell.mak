@@ -1116,7 +1116,7 @@ Ext.require([
 					xtype: 'component',
 					html: Ext.String.format(
 						${_('Your current password will expire in approximately {0}. Please change it as soon as possible.') | jsone},
-						${req.localizer.pluralize(_('${num} day'), _('${num} days'), pw_days, domain='netprofile_core', mapping={ 'num' : pw_days }) | jsone}
+						${req.localizer.pluralize('${num} day', '${num} days', pw_days, domain='netprofile_core', mapping={ 'num' : pw_days }) | jsone}
 					)
 				}, {
 					xtype: 'container',
