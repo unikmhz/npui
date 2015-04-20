@@ -992,7 +992,7 @@ Ext.require([
 				}
 			});
 
-% if pw_age != 'ok':
+% if pw_age == 'force':
 			app.setMainView('ChangePassword');
 			NetProfile.rtURL = null;
 % endif

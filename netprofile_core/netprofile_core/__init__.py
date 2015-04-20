@@ -50,10 +50,6 @@ from pyramid.i18n import (
 
 _ = TranslationStringFactory('netprofile_core')
 
-def _int_fileid(info, request):
-	info['match']['fileid'] = int(info['match']['fileid'])
-	return True
-
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
@@ -78,9 +74,7 @@ class Module(ModuleBase):
 	def add_routes(self, config):
 		config.add_route('core.noop', '/noop', vhost='MAIN')
 		config.add_route('core.js.webshell', '/js/webshell', vhost='MAIN')
-		config.add_route('core.file.download', '/file/dl/{fileid:\d+}*filename',
-				vhost='MAIN',
-				custom_predicates=(_int_fileid,))
+		config.add_route('core.file.download', '/file/dl/{fileid:\d+}*filename', vhost='MAIN')
 		config.add_route('core.file.upload', '/file/ul', vhost='MAIN')
 		config.add_route('core.file.mount', '/file/mount/{ffid:\d+|root}*filename', vhost='MAIN')
 		config.add_route('core.export', '/file/export/{module:[\w_.-]+}/{model:[\w_.-]+}', vhost='MAIN')

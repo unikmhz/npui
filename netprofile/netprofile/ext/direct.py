@@ -184,6 +184,8 @@ class ExtDirectRouter(object):
 		``callback``: The callback to execute upon client request
 		``numargs``: Number of arguments passed to the wrapped callable
 		``accepts_files``: If true, this action will be declared as formHandler in API
+		``session_checks``: If false, checks for session- and login-related errors will not
+			be performed
 		``permission``: The permission needed to execute the wrapped callable
 		``request_as_last_param``: If true, the wrapped callable will receive a request object
 			as last argument
@@ -348,6 +350,7 @@ class ExtDirectRouter(object):
 			params = list()
 		settings = self.get_method(action_name, method_name)
 		permission = settings.get('permission', None)
+		session_checks = settings.get('session_checks', True)
 		ret = {
 			'type'   : 'rpc',
 			'tid'    : trans_id,
@@ -360,7 +363,11 @@ class ExtDirectRouter(object):
 		callback = settings['callback']
 
 		append_request = settings.get('request_as_last_param', False)
+		session_ok = True
 		permission_ok = True
+		if session_checks:
+			if request.session.get('sess.pwage', 'ok') != 'ok':
+				session_ok = False
 		if hasattr(callback, '__self__'):
 			if isinstance(callback.__self__, ExtModel):
 				instance = callback.__self__
@@ -383,7 +390,7 @@ class ExtDirectRouter(object):
 			params.append(request)
 
 		try:
-			if not permission_ok:
+			if (not permission_ok) or (not session_ok):
 				raise AccessDeniedException('Access denied')
 			ret['result'] = callback(*params)
 		except Exception as e:
@@ -464,12 +471,14 @@ class extdirect_method(object):
 				method_name=None,
 				permission=None,
 				accepts_files=False,
+				session_checks=True,
 				request_as_last_param=False):
 		self._settings = dict(
 			action = action,
 			method_name = method_name,
 			permission = permission,
 			accepts_files = accepts_files,
+			session_checks = session_checks,
 			request_as_last_param = request_as_last_param,
 			original_name = None
 		)
@@ -625,11 +634,11 @@ def includeme(config):
 	config.registry.registerUtility(extd, IExtDirectRouter)
 
 	api_view_perm = settings.get('netprofile.ext.direct.api_view_permission')
-	config.add_route('extapi', extd.api_path)
+	config.add_route('extapi', extd.api_path, vhost='MAIN')
 	config.add_view(api_view, route_name='extapi', permission=api_view_perm)
 
 	router_view_perm = settings.get('netprofile.ext.direct.router_view_permission')
-	config.add_route('extrouter', extd.router_path)
+	config.add_route('extrouter', extd.router_path, vhost='MAIN')
 	config.add_view(router_view, route_name='extrouter', permission=router_view_perm)
 
 	config.scan()

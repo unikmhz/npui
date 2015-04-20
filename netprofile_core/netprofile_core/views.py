@@ -232,7 +232,10 @@ def do_logout_extdirect(request):
 
 @view_config(route_name='core.file.download', permission='FILES_LIST')
 def file_dl(request):
-	file_id = request.matchdict.get('fileid', 0)
+	try:
+		file_id = int(request.matchdict.get('fileid', 0))
+	except (TypeError, ValueError):
+		raise KeyError('Invalid file ID')
 	if file_id <= 0:
 		raise KeyError('Invalid file ID')
 	sess = DBSession()
@@ -335,7 +338,7 @@ def data_export(request):
 	fmt = mmgr.get_export_format(fmt)
 	return fmt.export(model, json.loads(params), request)
 
-@extdirect_method('User', 'get_chpass_wizard', request_as_last_param=True, permission='USAGE')
+@extdirect_method('User', 'get_chpass_wizard', request_as_last_param=True, permission='USAGE', session_checks=False)
 def dyn_user_chpass_wizard(request):
 	sess = DBSession()
 	loc = get_localizer(request)
@@ -374,15 +377,15 @@ def dyn_user_chpass_wizard(request):
 				'emptyValue' : ''
 			})
 		),
-		title=_('Change your password'),
 		validator='ChangePassword'
 	)
 	return {
 		'success' : True,
-		'fields'  : wiz.get_cfg(model, request, use_defaults=True)
+		'fields'  : wiz.get_cfg(model, request, use_defaults=True),
+		'title'   : loc.translate(_('Change your password'))
 	}
 
-@extdirect_method('User', 'change_password', request_as_last_param=True, permission='USAGE')
+@extdirect_method('User', 'change_password', request_as_last_param=True, permission='USAGE', session_checks=False)
 def dyn_user_chpass_submit(values, request):
 	user = request.user
 	cfg = request.registry.settings
@@ -540,7 +543,7 @@ def localstorage_load(request):
 		'message' : 'No such user or anonymous'
 	}
 
-@extdirect_method('CustomValidator', 'validate', request_as_last_param=True, permission='USAGE')
+@extdirect_method('CustomValidator', 'validate', request_as_last_param=True, permission='USAGE', session_checks=False)
 def custom_valid(name, values, request):
 	ret = {
 		'success' : True,

@@ -894,6 +894,8 @@ class User(Base):
 		if request.user == self:
 			request.session['sess.nextcheck'] = ts
 			request.session['sess.pwage'] = 'ok'
+			if 'sess.pwdays' in request.session:
+				del request.session['sess.pwdays']
 
 	@property
 	def last_password_change(self):
@@ -2385,7 +2387,7 @@ class SecurityPolicy(Base):
 				days_left = self.pw_age_max - days
 				if days_left < self.pw_age_warndays:
 					req.session['sess.pwage'] = 'warn'
-					npsess.pw_days_left = days_left
+					req.session['sess.pwdays'] = days_left
 				else:
 					req.session['sess.pwage'] = 'ok'
 			else:
