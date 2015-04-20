@@ -366,7 +366,7 @@ class ExtDirectRouter(object):
 		session_ok = True
 		permission_ok = True
 		if session_checks:
-			if request.session.get('sess.pwage', 'ok') != 'ok':
+			if request.session.get('sess.pwage') in ('force', 'drop'):
 				session_ok = False
 		if hasattr(callback, '__self__'):
 			if isinstance(callback.__self__, ExtModel):
