@@ -35,6 +35,8 @@ Ext.require([
 	'NetProfile.data.BaseModel',
 	'NetProfile.grid.CapabilityGrid',
 	'NetProfile.form.field.MultiField',
+	'NetProfile.window.CenterWindow',
+	'NetProfile.panel.Wizard',
 	'NetProfile.panel.Calendar'
 ], function()
 {
@@ -96,6 +98,7 @@ Ext.require([
 				html: Ext.String.format.apply(Ext.String, args),
 				title: title,
 				minWidth: 200,
+				maxWidth: 450,
 				align: 'br',
 				autoCloseDelay: delay,
 				iconCls: cls
@@ -169,6 +172,28 @@ Ext.require([
 		}
 		else
 			window.location.href = '/logout';
+	};
+	NetProfile.changePassword = function()
+	{
+		var win;
+
+		win = Ext.create('NetProfile.window.CenterWindow', {
+			iconCls: 'ico-lock',
+			items: [{
+				xtype: 'npwizard',
+				shrinkWrap: true,
+				showNavigation: false,
+				wizardCls: 'User',
+				createApi: 'get_chpass_wizard',
+				submitApi: 'change_password',
+				validateApi: 'ChangePassword',
+				afterSubmit: function(data)
+				{
+					NetProfile.logOut(false);
+				}
+			}],
+		});
+		win.show();
 	};
 
 	NetProfile.showConsole = function()
@@ -1104,7 +1129,8 @@ Ext.require([
 % if pw_age == 'warn':
 			Ext.toast({
 				title: ${_('Please change your password') | jsone},
-				minWidth: 300,
+				minWidth: 200,
+				maxWidth: 450,
 				align: 'br',
 				autoCloseDelay: 5000,
 				iconCls: 'ico-lock',
@@ -1128,7 +1154,11 @@ Ext.require([
 					items: [{
 						xtype: 'button',
 						iconCls: 'ico-lock',
-						text: ${_('Change now') | jsone}
+						text: ${_('Change now') | jsone},
+						handler: function()
+						{
+							NetProfile.changePassword();
+						}
 					}]
 				}]
 			});

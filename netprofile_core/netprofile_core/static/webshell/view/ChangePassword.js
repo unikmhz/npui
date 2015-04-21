@@ -29,6 +29,10 @@ Ext.define('NetProfile.view.ChangePassword', {
 					title: NetProfile.toolbar.MainToolbar.prototype.logoutText
 				}
 			},
+			afterSubmit: function(data)
+			{
+				NetProfile.logOut(false);
+			},
 			onCancel: function(btn)
 			{
 				NetProfile.logOut(false);

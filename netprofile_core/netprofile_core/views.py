@@ -407,7 +407,7 @@ def dyn_user_chpass_submit(values, request):
 
 	return {
 		'success' : True,
-		'action'  : { 'exec' : 'onCancel' }
+		'action'  : { 'exec' : 'afterSubmit' }
 	}
 
 @register_hook('core.validators.ChangePassword')
