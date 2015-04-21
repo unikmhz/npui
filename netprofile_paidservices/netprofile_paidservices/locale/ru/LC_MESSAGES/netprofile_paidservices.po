@@ -9,16 +9,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_paidservices 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-14 03:50+0300\n"
-"PO-Revision-Date: 2014-07-29 05:40+0300\n"
+"POT-Creation-Date: 2015-04-21 21:34+0300\n"
+"PO-Revision-Date: 2015-04-21 21:34+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.0-dev\n"
+"X-Generator: Poedit 1.5.5\n"
 
 #: netprofile_paidservices/__init__.py:138
 #: netprofile_paidservices/models.py:129 netprofile_paidservices/views.py:67
@@ -42,7 +43,7 @@ msgstr "Одноразовая"
 msgid "Add new type"
 msgstr "Добавить новый тип"
 
-#: netprofile_paidservices/models.py:154 netprofile_paidservices/models.py:346
+#: netprofile_paidservices/models.py:154 netprofile_paidservices/models.py:347
 msgid "ID"
 msgstr "ID"
 
@@ -94,31 +95,30 @@ msgstr "Обратный вызов при невозможности списа
 msgid "Callback on Linked Rate"
 msgstr "Обратный вызов для связанного тарифа"
 
-#: netprofile_paidservices/models.py:293 netprofile_paidservices/models.py:440
+#: netprofile_paidservices/models.py:293 netprofile_paidservices/models.py:441
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_paidservices/models.py:356
+#: netprofile_paidservices/models.py:357
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_paidservices/models.py:370
+#: netprofile_paidservices/models.py:371
 msgid "Access Entity"
 msgstr "Учётная запись"
 
-#: netprofile_paidservices/models.py:384
+#: netprofile_paidservices/models.py:385
 msgid "Host"
 msgstr "Хост"
 
-#: netprofile_paidservices/models.py:396 netprofile_paidservices/models.py:407
+#: netprofile_paidservices/models.py:397 netprofile_paidservices/models.py:408
 msgid "Stash"
 msgstr "Счёт"
 
-#: netprofile_paidservices/models.py:418
+#: netprofile_paidservices/models.py:419
 msgid "Active"
 msgstr "Активна"
 
-#: netprofile_paidservices/models.py:429
+#: netprofile_paidservices/models.py:430
 msgid "Ends"
 msgstr "Заканчивается"
-

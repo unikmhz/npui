@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-14 03:35+0300\n"
-"PO-Revision-Date: 2015-04-14 03:38+0300\n"
+"POT-Creation-Date: 2015-04-21 21:22+0300\n"
+"PO-Revision-Date: 2015-04-21 21:23+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
@@ -24,8 +24,7 @@ msgstr ""
 msgid "Access"
 msgstr "Учётные записи"
 
-#: netprofile_access/models.py:148 netprofile_access/models.py:236
-#| msgid "Access Entities"
+#: netprofile_access/models.py:148 netprofile_access/models.py:237
 msgid "Access entity properties"
 msgstr "Свойства учётной записи"
 
@@ -73,182 +72,181 @@ msgstr "Истекла"
 msgid "Access Entities"
 msgstr "Учётные записи"
 
-#: netprofile_access/models.py:206
+#: netprofile_access/models.py:205
 msgid "Entity icon"
 msgstr "Иконка объекта"
 
-#: netprofile_access/models.py:208
+#: netprofile_access/models.py:207
 msgid "Icon"
 msgstr "Иконка"
 
-#: netprofile_access/models.py:232
+#: netprofile_access/models.py:233
 msgid "Generic entity properties"
 msgstr "Общие свойства объекта"
 
-#: netprofile_access/models.py:238
-#| msgid "Add new access block"
+#: netprofile_access/models.py:239
 msgid "Add new access entity"
 msgstr "Добавить новую учётную запись"
 
-#: netprofile_access/models.py:254 netprofile_access/models.py:521
-#: netprofile_access/models.py:661 netprofile_access/models.py:762
-#: netprofile_access/models.py:825
+#: netprofile_access/models.py:255 netprofile_access/models.py:523
+#: netprofile_access/models.py:667 netprofile_access/models.py:768
+#: netprofile_access/models.py:832
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_access/models.py:262
+#: netprofile_access/models.py:263
 #: netprofile_access/templates/client_login.mak:19
 #: netprofile_access/templates/client_register.mak:80
 msgid "Password"
 msgstr "Пароль"
 
-#: netprofile_access/models.py:274
+#: netprofile_access/models.py:275
 msgid "Stash"
 msgstr "Счёт"
 
-#: netprofile_access/models.py:285 netprofile_access/models.py:555
+#: netprofile_access/models.py:286 netprofile_access/models.py:559
 msgid "Rate"
 msgstr "Тариф"
 
-#: netprofile_access/models.py:298
+#: netprofile_access/models.py:299
 msgid "Alias Of"
 msgstr "Псевдоним"
 
-#: netprofile_access/models.py:311
+#: netprofile_access/models.py:312
 #: netprofile_access/templates/client_block_chrate.mak:13
 #: netprofile_access/templates/client_block_chrate.mak:26
 msgid "Next Rate"
 msgstr "Следующий тариф"
 
-#: netprofile_access/models.py:323
+#: netprofile_access/models.py:324
 msgid "IPv4 Address"
 msgstr "Адрес IPv4"
 
-#: netprofile_access/models.py:335
+#: netprofile_access/models.py:336
 msgid "IPv6 Address"
 msgstr "Адрес IPv6"
 
-#: netprofile_access/models.py:346
+#: netprofile_access/models.py:347
 msgid "Used Ingress"
 msgstr "Использовано входящего"
 
-#: netprofile_access/models.py:357
+#: netprofile_access/models.py:358
 msgid "Used Egress"
 msgstr "Использовано исходящего"
 
-#: netprofile_access/models.py:368
+#: netprofile_access/models.py:369
 msgid "Used Seconds"
 msgstr "Использовано секунд"
 
-#: netprofile_access/models.py:379
+#: netprofile_access/models.py:380
 msgid "Ends"
 msgstr "Заканчивается"
 
-#: netprofile_access/models.py:390
+#: netprofile_access/models.py:391
 msgid "Access Code"
 msgstr "Код доступа"
 
-#: netprofile_access/models.py:402
+#: netprofile_access/models.py:403
 msgid "Ingress Policy"
 msgstr "Входящая политика"
 
-#: netprofile_access/models.py:413
+#: netprofile_access/models.py:414
 msgid "Egress Policy"
 msgstr "Исходящая политика"
 
-#: netprofile_access/models.py:424
+#: netprofile_access/models.py:425
 msgid "Check Blocks"
 msgstr "Проверять блокировки"
 
-#: netprofile_access/models.py:435
+#: netprofile_access/models.py:436
 msgid "Check Services"
 msgstr "Проверять услуги"
 
-#: netprofile_access/models.py:506 netprofile_access/views.py:777
+#: netprofile_access/models.py:507 netprofile_access/views.py:777
 msgid "Rate Modifiers"
 msgstr "Модификаторы тарифов"
 
-#: netprofile_access/models.py:509
+#: netprofile_access/models.py:511
 msgid "Add new rate modifier"
 msgstr "Добавить новый модификатор тарифов"
 
-#: netprofile_access/models.py:531 netprofile_access/models.py:846
+#: netprofile_access/models.py:533 netprofile_access/models.py:853
 msgid "Type"
 msgstr "Тип"
 
-#: netprofile_access/models.py:542 netprofile_access/models.py:671
+#: netprofile_access/models.py:545 netprofile_access/models.py:677
 msgid "Account"
 msgstr "Учётная запись"
 
-#: netprofile_access/models.py:567
+#: netprofile_access/models.py:572
 msgid "Created"
 msgstr "Создан"
 
-#: netprofile_access/models.py:578
+#: netprofile_access/models.py:583
 msgid "Enabled"
 msgstr "Включен"
 
-#: netprofile_access/models.py:589
+#: netprofile_access/models.py:594
 msgid "Lookup Order"
 msgstr "Порядок поиска"
 
-#: netprofile_access/models.py:644 netprofile_access/views.py:786
+#: netprofile_access/models.py:649 netprofile_access/views.py:786
 msgid "Access Blocks"
 msgstr "Блокировки"
 
-#: netprofile_access/models.py:649
+#: netprofile_access/models.py:655
 msgid "Add new access block"
 msgstr "Добавить новую блокировку"
 
-#: netprofile_access/models.py:683
+#: netprofile_access/models.py:689
 msgid "Start"
 msgstr "Начало"
 
-#: netprofile_access/models.py:693
+#: netprofile_access/models.py:699
 msgid "End"
 msgstr "Конец"
 
-#: netprofile_access/models.py:705
+#: netprofile_access/models.py:711
 msgid "State"
 msgstr "Состояние"
 
-#: netprofile_access/models.py:716
+#: netprofile_access/models.py:722
 msgid "Access State"
 msgstr "Статус уч. записи"
 
-#: netprofile_access/models.py:743
+#: netprofile_access/models.py:749
 msgid "Link Types"
 msgstr "Типы связей"
 
-#: netprofile_access/models.py:750
+#: netprofile_access/models.py:756
 msgid "Add new link type"
 msgstr "Добавить новый тип связей"
 
-#: netprofile_access/models.py:770
+#: netprofile_access/models.py:776
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_access/models.py:782
+#: netprofile_access/models.py:788
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_access/models.py:809 netprofile_access/views.py:795
+#: netprofile_access/models.py:815 netprofile_access/views.py:795
 msgid "Links"
 msgstr "Связи"
 
-#: netprofile_access/models.py:813
+#: netprofile_access/models.py:820
 msgid "Add new link"
 msgstr "Добавить новую связь"
 
-#: netprofile_access/models.py:835
+#: netprofile_access/models.py:842
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_access/models.py:858
+#: netprofile_access/models.py:865
 msgid "Timestamp"
 msgstr "Время"
 
-#: netprofile_access/models.py:867
+#: netprofile_access/models.py:874
 msgid "Value"
 msgstr "Значение"
 

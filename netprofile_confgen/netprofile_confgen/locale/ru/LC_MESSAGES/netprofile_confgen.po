@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_confgen 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-14 03:38+0300\n"
-"PO-Revision-Date: 2015-04-14 03:42+0300\n"
+"POT-Creation-Date: 2015-04-21 21:23+0300\n"
+"PO-Revision-Date: 2015-04-21 21:24+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
@@ -75,7 +75,6 @@ msgid "Type"
 msgstr "Тип"
 
 #: netprofile_confgen/models.py:308
-#| msgid "Server Types"
 msgid "Server Parameters"
 msgstr "Параметры сервера"
 
@@ -84,7 +83,6 @@ msgid "Add new parameter"
 msgstr "Добавить новый параметр"
 
 #: netprofile_confgen/models.py:334
-#| msgid "Servers"
 msgid "Server"
 msgstr "Сервер"
 
