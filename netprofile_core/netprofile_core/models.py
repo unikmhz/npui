@@ -2029,7 +2029,8 @@ class SecurityPolicy(Base):
 					'pw_dict_check', 'pw_dict_name',
 					'pw_hist_check', 'pw_hist_size',
 					'pw_age_min', 'pw_age_max', 'pw_age_warndays', 'pw_age_warnmail', 'pw_age_action',
-					'net_whitelist', 'sess_timeout'
+					'net_whitelist', 'sess_timeout',
+					'sess_window_ipv4', 'sess_window_ipv6'
 				),
 				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
@@ -2206,6 +2207,26 @@ class SecurityPolicy(Base):
 			'header_string' : _('Session Timeout')
 		}
 	)
+	sess_window_ipv4 = Column(
+		UInt8(),
+		Comment('Allow IPv4 source addresses to migrate within this mask'),
+		nullable=True,
+		default=32,
+		server_default=text('32'),
+		info={
+			'header_string' : _('IPv4 Session Window')
+		}
+	)
+	sess_window_ipv6 = Column(
+		UInt8(),
+		Comment('Allow IPv6 source addresses to migrate within this mask'),
+		nullable=True,
+		default=128,
+		server_default=text('128'),
+		info={
+			'header_string' : _('IPv6 Session Window')
+		}
+	)
 	description = Column(
 		'descr',
 		UnicodeText(),
@@ -2355,8 +2376,30 @@ class SecurityPolicy(Base):
 			delta = ts - npsess.last_time
 			if delta.total_seconds() > self.sess_timeout:
 				return False
-		# TODO: check for changed IP address
 		addr = npsess.ip_address or npsess.ipv6_address
+		if req.remote_addr is not None:
+			try:
+				remote_addr = ipaddr.IPAddress(req.remote_addr)
+			except ValueError:
+				return False
+			if isinstance(remote_addr, ipaddr.IPv4Address) and self.sess_window_ipv4:
+				if not isinstance(addr, ipaddr.IPv4Address):
+					return False
+				try:
+					window = ipaddr.IPv4Network('%s/%d' % (str(addr), self.sess_window_ipv4))
+				except ValueError:
+					return False
+				if remote_addr not in window:
+					return False
+			elif isinstance(remote_addr, ipaddr.IPv6Address) and self.sess_window_ipv6:
+				if not isinstance(addr, ipaddr.IPv6Address):
+					return False
+				try:
+					window = ipaddr.IPv6Network('%s/%d' % (str(addr), self.sess_window_ipv6))
+				except ValueError:
+					return False
+				if remote_addr not in window:
+					return False
 		acl = self.net_whitelist_acl
 		if addr and acl:
 			for net in acl:
