@@ -116,11 +116,14 @@ def setup_config(settings):
 	DBSession.configure(bind=engine)
 	cache.cache = cache.configure_cache(settings)
 
-	return Configurator(
+	config = Configurator(
 		settings=settings,
 		root_factory=RootFactory,
 		locale_negotiator=locale_neg
 	)
+	config.add_route_predicate('vhost', VHostPredicate)
+	config.add_view_predicate('vhost', VHostPredicate)
+	return config
 
 def main(global_config, **settings):
 	"""
@@ -140,8 +143,6 @@ def main(global_config, **settings):
 		'netprofile.common.subscribers.on_response',
 		'pyramid.events.NewResponse'
 	)
-	config.add_route_predicate('vhost', VHostPredicate)
-	config.add_view_predicate('vhost', VHostPredicate)
 	config.add_request_method(get_locales, str('locales'), reify=True)
 	config.add_request_method(get_current_locale, str('current_locale'), reify=True)
 	config.add_request_method(get_debug, str('debug_enabled'), reify=True)
