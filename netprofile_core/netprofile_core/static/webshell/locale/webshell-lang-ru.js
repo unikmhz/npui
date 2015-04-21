@@ -135,6 +135,7 @@ Ext.onReady(function()
 		toolsTipText: 'Различные второстепенные окна и настройки.',
 		logoutText: 'Выход',
 		logoutTipText: 'Выйти из системы.',
+		chPassText: 'Изменить пароль',
 		chLangText: 'Переключение языка',
 		showConsoleText: 'Показать консоль',
 		aboutText: 'О программе…'

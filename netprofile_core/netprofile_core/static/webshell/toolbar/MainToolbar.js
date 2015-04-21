@@ -18,6 +18,7 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 	toolsTipText: 'Various tools and windows',
 	logoutText: 'Log out',
 	logoutTipText: 'Log out of the application and return to login screen.',
+	chPassText: 'Change password',
 	chLangText: 'Change language',
 	showConsoleText: 'Show console',
 	aboutText: 'About…',
@@ -38,6 +39,14 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 					{
 					}
 				}, '-', {
+					xtype: 'menuitem',
+					iconCls: 'ico-lock',
+					text: this.chPassText,
+					handler: function(el, ev)
+					{
+						NetProfile.changePassword();
+					}
+				}, {
 					xtype: 'menuitem',
 					showSeparator: false,
 					iconCls: 'ico-locale',
