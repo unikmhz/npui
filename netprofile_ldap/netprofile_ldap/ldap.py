@@ -58,26 +58,22 @@ _ldap_active = False
 #	def connection(self, login=None, pwd=None):
 #		return self.pool.connection(login, pwd)
 
-def _gen_search_attrs(em, settings):
-	attrs = []
+def _get_base(em, settings):
 	sname = _LDAP_ORM_CFG % (em.name, 'base')
-	if sname not in settings:
-		sname = _LDAP_ORM_CFG % ('default', 'base')
-	attrs.append(settings.get(sname))
+	if sname in settings:
+		return settings.get(sname)
+	return settings.get(_LDAP_ORM_CFG % ('default', 'base'))
 
+def _get_scope(em, settings):
 	sname = _LDAP_ORM_CFG % (em.name, 'scope')
 	if sname not in settings:
 		sname = _LDAP_ORM_CFG % ('default', 'scope')
-	val = settings.get(sname, 'base')
-	if val == 'base':
-		val = ldap3.BASE
-	elif val == 'one':
-		val = ldap3.LEVEL
+	val = settings.get(sname)
+	if val == 'one':
+		return ldap3.LEVEL
 	elif val == 'sub':
-		val = ldap3.SUBTREE
-	attrs.append(val)
-
-	return attrs
+		return ldap3.SUBTREE
+	return ldap3.BASE
 
 def _gen_attrlist(cols, settings, info):
 	object_classes = info.get('ldap_classes')
@@ -106,11 +102,11 @@ def _gen_attrlist(cols, settings, info):
 			else:
 				# TODO: handle multiple values
 				val = getattr(tgt, prop.key)
-			# FIXME: rewrite bytes/str handling for ldap3
-			if (not isinstance(val, bytes)) and (val is not None):
-				if not isinstance(val, str):
-					val = str(val)
-				val = val.encode()
+#			# FIXME: rewrite bytes/str handling for ldap3
+#			if (not isinstance(val, bytes)) and (val is not None):
+#				if not isinstance(val, str):
+#					val = str(val)
+#				val = val.encode()
 			if isinstance(ldap_attr, (list, tuple)):
 				for la in ldap_attr:
 					attrs[la] = [val]
@@ -158,7 +154,8 @@ def _gen_ldap_object_rdn(em, rdn_col):
 	return _ldap_object_rdn
 
 def _gen_ldap_object_load(em, info, settings):
-	attrs = _gen_search_attrs(em, settings)
+	base = _get_base(em, settings)
+	scope = _get_scope(em, settings)
 	rdn_attr = info.get('ldap_rdn')
 	object_classes = info.get('ldap_classes')
 	object_classes = '(objectClass=' + ')(objectClass='.join(object_classes) + ')'
@@ -168,51 +165,56 @@ def _gen_ldap_object_load(em, info, settings):
 		rdn = get_rdn(tgt)
 		flt = '(&(%s)%s)' % (rdn, object_classes)
 		with LDAPConn as lc:
-			ret = lc.search_s(attrs[0], attrs[1], flt)
-		if isinstance(ret, list) and (len(ret) > 0):
+			ret = lc.search(base, flt, search_scope=scope, attributes=ldap3.ALL_ATTRIBUTES)
+			# FIXME: check for errors
+			ret, status = lc.get_response(ret)
+		if isinstance(ret, list) and (len(ret) == 1):
 			tgt._ldap_data = ret[0]
 	return _ldap_object_load
 
 def _gen_ldap_object_store(em, info, settings):
 	cols = em.get_read_columns()
-	cfg = _gen_search_attrs(em, settings)
+	base = _get_base(em, settings)
 	rdn_attr = info.get('ldap_rdn')
 	get_attrlist = _gen_attrlist(cols, settings, info)
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
 	def _ldap_object_store(mapper, conn, tgt):
 		attrs = get_attrlist(tgt)
-		dn = '%s,%s' % (get_rdn(tgt), cfg[0])
+		dn = '%s,%s' % (get_rdn(tgt), base)
 		ldap_data = getattr(tgt, '_ldap_data', False)
 		with LDAPConn as lc:
 			if ldap_data:
-				if dn != ldap_data[0]:
-					lc.rename_s(ldap_data[0], dn)
-					tgt._ldap_data = ldap_data = (dn, ldap_data[1])
+				if dn != ldap_data['dn']:
+					lc.rename_s(ldap_data['dn'], dn)
+					ldap_data['dn'] = dn
 				xattrs = []
 				del_attrs = []
 				for attr in attrs:
 					val = attrs[attr]
 					if val is None:
-						if attr in ldap_data[1]:
+						if attr in ldap_data['attributes']:
 							xattrs.append((ldap.MOD_DELETE, attr, val))
 						del_attrs.append(attr)
 					else:
 						xattrs.append((ldap.MOD_REPLACE, attr, val))
 				for attr in del_attrs:
 					del attrs[attr]
-				lc.modify_s(ldap_data[0], xattrs)
-				tgt._ldap_data[1].update(attrs)
+				lc.modify_s(dn, xattrs)
+				tgt._ldap_data['attributes'].update(attrs)
 			else:
 				lc.add_s(dn, list(attrs.items()))
-				tgt._ldap_data = (dn, attrs)
+				tgt._ldap_data = {
+					'dn'         : dn,
+					'attributes' : attrs
+				}
 	return _ldap_object_store
 
 def _gen_ldap_object_delete(em, info, settings):
-	cfg = _gen_search_attrs(em, settings)
+	base = _get_base(em, settings)
 	rdn_attr = info.get('ldap_rdn')
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
 	def _ldap_object_delete(mapper, conn, tgt):
-		dn = '%s,%s' % (get_rdn(tgt), cfg[0])
+		dn = '%s,%s' % (get_rdn(tgt), base)
 		with LDAPConn as lc:
 			lc.delete_s(dn)
 	return _ldap_object_delete
@@ -315,6 +317,7 @@ def includeme(config):
 
 	server = ldap3.Server(ldap_host, tls=tls, **server_opts)
 	LDAPConn = ldap3.Connection(server, client_strategy=ldap3.REUSABLE, **conn_opts)
+	LDAPConn.open()
 
 	def get_system_ldap(request):
 		return LDAPConn

@@ -54,8 +54,6 @@ setup(
 	entry_points="""\
 		[netprofile.modules]
 		ldap = netprofile_ldap:Module
-		[console_scripts]
-		np_gen_ldif = netprofile_ldap.scripts.genldif:main
 	""",
 	message_extractors={'.' : [
 		('**.py', 'python', None),
