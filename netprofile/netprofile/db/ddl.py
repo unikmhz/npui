@@ -339,7 +339,7 @@ class DropFunction(DDLElement):
 def visit_drop_function_pgsql(element, compiler, **kw):
 	func = element.func
 	name = func.name
-	return 'DROP FUNCTION %s' % (
+	return 'DROP FUNCTION IF EXISTS %s' % (
 		compiler.sql_compiler.preparer.quote(name),
 	)
 
@@ -348,7 +348,7 @@ def visit_drop_function(element, compiler, **kw):
 	func = element.func
 	name = func.name
 	is_proc = func.is_procedure
-	return 'DROP %s %s' % (
+	return 'DROP %s IF EXISTS %s' % (
 		'PROCEDURE' if is_proc else 'FUNCTION',
 		compiler.sql_compiler.preparer.quote(name)
 	)
@@ -461,7 +461,9 @@ def visit_create_view(element, compiler, **kw):
 	if isinstance(sel, Query):
 		ctx = sel._compile_context()
 		ctx.statement.use_labels = True
-		conn = sel.session.connection(mapper=sel._mapper_zero_or_none(), clause=ctx.statement)
+		# conn = sel.session.connection(mapper=sel._mapper_zero_or_none(), clause=ctx.statement) # Doesn't work for me =)
+		#	- error: 'Query' object has no attribute 'mapper_zero_or_none'
+		conn = sel.session.connection(clause=ctx.statement)
 		sel = ctx.statement.compile(conn, compile_kwargs={ 'literal_binds': True })
 	else:
 		sel = compiler.sql_compiler.process(sel, literal_binds=True)
