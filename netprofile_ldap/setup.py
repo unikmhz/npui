@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 
 from setuptools import setup, find_packages
@@ -9,8 +12,7 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 requires = [
 	'setuptools',
 	'netprofile >= 0.3',
-	'python-ldap',
-	'ldappool'
+	'ldap3'
 ]
 
 setup(

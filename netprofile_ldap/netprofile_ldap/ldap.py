@@ -1,5 +1,24 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+#
+# NetProfile: LDAP module
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+#
+# This file is part of NetProfile.
+# NetProfile is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Affero General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# NetProfile is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General
+# Public License along with NetProfile. If not, see
+# <http://www.gnu.org/licenses/>.
 
 from __future__ import (
 	unicode_literals,
@@ -8,18 +27,17 @@ from __future__ import (
 	division
 )
 
-import ldap
+import ldap3
+import ssl
 from sqlalchemy import event
-from ldappool import ConnectionManager
-from pyramid.settings import asbool
-#from pyramid.threadlocal import get_current_request
-#from netprofile.ext.data import ExtModel
-#from netprofile.common.modules import IModuleManager
+from pyramid.settings import (
+	asbool,
+	aslist
+)
 from netprofile.common.hooks import register_hook
+from netprofile.common.util import make_config_dict
 
-# _ = TranslationStringFactory('netprofile_ldap')
-
-LDAPPool = None
+LDAPConn = None
 
 _LDAP_ORM_CFG = 'netprofile.ldap.orm.%s.%s'
 _ldap_active = False
@@ -32,13 +50,13 @@ _ldap_active = False
 # ldap_attr (can be a list)
 # ldap_value (can be a callable)
 
-class LDAPConnector(object):
-	def __init__(self, pool, req):
-		self.pool = pool
-		self.req = req
-
-	def connection(self, login=None, pwd=None):
-		return self.pool.connection(login, pwd)
+#class LDAPConnector(object):
+#	def __init__(self, pool, req):
+#		self.pool = pool
+#		self.req = req
+#
+#	def connection(self, login=None, pwd=None):
+#		return self.pool.connection(login, pwd)
 
 def _gen_search_attrs(em, settings):
 	attrs = []
@@ -52,11 +70,11 @@ def _gen_search_attrs(em, settings):
 		sname = _LDAP_ORM_CFG % ('default', 'scope')
 	val = settings.get(sname, 'base')
 	if val == 'base':
-		val = ldap.SCOPE_BASE
+		val = ldap3.BASE
 	elif val == 'one':
-		val = ldap.SCOPE_ONELEVEL
+		val = ldap3.LEVEL
 	elif val == 'sub':
-		val = ldap.SCOPE_SUBTREE
+		val = ldap3.SUBTREE
 	attrs.append(val)
 
 	return attrs
@@ -65,10 +83,8 @@ def _gen_attrlist(cols, settings, info):
 	object_classes = info.get('ldap_classes')
 	def _attrlist(tgt):
 		attrs = {
-			'objectClass' : []
+			'objectClass' : object_classes
 		}
-		for oc in object_classes:
-			attrs['objectClass'].append(oc.encode())
 		for cname, col in cols.items():
 			try:
 				ldap_attr = col.column.info['ldap_attr']
@@ -90,6 +106,7 @@ def _gen_attrlist(cols, settings, info):
 			else:
 				# TODO: handle multiple values
 				val = getattr(tgt, prop.key)
+			# FIXME: rewrite bytes/str handling for ldap3
 			if (not isinstance(val, bytes)) and (val is not None):
 				if not isinstance(val, str):
 					val = str(val)
@@ -150,7 +167,7 @@ def _gen_ldap_object_load(em, info, settings):
 		ret = None
 		rdn = get_rdn(tgt)
 		flt = '(&(%s)%s)' % (rdn, object_classes)
-		with LDAPPool.connection() as lc:
+		with LDAPConn as lc:
 			ret = lc.search_s(attrs[0], attrs[1], flt)
 		if isinstance(ret, list) and (len(ret) > 0):
 			tgt._ldap_data = ret[0]
@@ -166,7 +183,7 @@ def _gen_ldap_object_store(em, info, settings):
 		attrs = get_attrlist(tgt)
 		dn = '%s,%s' % (get_rdn(tgt), cfg[0])
 		ldap_data = getattr(tgt, '_ldap_data', False)
-		with LDAPPool.connection() as lc:
+		with LDAPConn as lc:
 			if ldap_data:
 				if dn != ldap_data[0]:
 					lc.rename_s(ldap_data[0], dn)
@@ -196,7 +213,7 @@ def _gen_ldap_object_delete(em, info, settings):
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
 	def _ldap_object_delete(mapper, conn, tgt):
 		dn = '%s,%s' % (get_rdn(tgt), cfg[0])
-		with LDAPPool.connection() as lc:
+		with LDAPConn as lc:
 			lc.delete_s(dn)
 	return _ldap_object_delete
 
@@ -216,31 +233,91 @@ def _proc_model_ldap(mmgr, model):
 	event.listen(model.model, 'after_delete', _gen_ldap_object_delete(model, info, settings))
 
 def includeme(config):
-	global _ldap_active, LDAPPool
+	global _ldap_active, LDAPConn
 
 	settings = config.registry.settings
-	ldap_cfg = {}
-	ldap_names = (
-		'uri', 'bind', 'passwd',
-		'size', 'retry_max', 'retry_delay',
-		'use_tls', 'timeout', 'use_pool'
-	)
-	for name in ldap_names:
-		qname = 'netprofile.ldap.connection.%s' % name
-		value = settings.get(qname, None)
-		if value is not None:
-			if name in {'size', 'retry_max', 'timeout'}:
-				value = int(value)
-			elif name == 'retry_delay':
-				value = float(value)
-			elif name in {'use_tls', 'use_pool'}:
-				value = asbool(value)
-			ldap_cfg[name] = value
+	conn_cfg = make_config_dict(settings, 'netprofile.ldap.connection.')
+	ssl_cfg = make_config_dict(conn_cfg, 'ssl.')
+	auth_cfg = make_config_dict(conn_cfg, 'auth.')
 
-	LDAPPool = ConnectionManager(**ldap_cfg)
+	ldap_host = None
+	server_opts = {}
+	tls_opts = {}
+	conn_opts = { 'lazy' : True }
+
+	if 'uri' in conn_cfg:
+		ldap_host = conn_cfg['uri']
+	elif 'host' in conn_cfg:
+		ldap_host = conn_cfg['host']
+
+	if 'port' in conn_cfg:
+		server_opts['port'] = conn_cfg['port']
+	if 'protocol' in conn_cfg:
+		conn_opts['version'] = conn_cfg['protocol']
+	if 'type' in auth_cfg:
+		value = auth_cfg['type']
+		proc = None
+		if value in ('anon', 'anonymous'):
+			proc = ldap3.AUTH_ANONYMOUS
+		elif value == 'simple':
+			proc = ldap3.AUTH_SIMPLE
+		elif value == 'sasl':
+			proc = ldap3.AUTH_SASL
+		elif value == 'ntlm':
+			proc = ldap3.NTLM
+		if proc:
+			conn_opts['authentication'] = proc
+	if ('user' in auth_cfg) and ('password' in auth_cfg):
+		conn_opts['user'] = auth_cfg['user']
+		conn_opts['password'] = auth_cfg['password']
+		if 'authentication' not in conn_opts:
+			conn_opts['authentication'] = ldap3.AUTH_SIMPLE
+		bind = None
+		bind_cfg = auth_cfg.get('bind')
+		if bind_cfg == 'none':
+			bind = ldap3.AUTO_BIND_NONE
+		elif bind_cfg == 'no-tls':
+			bind = ldap3.AUTO_BIND_NO_TLS
+		elif bind_cfg == 'tls-before-bind':
+			bind = ldap3.AUTO_BIND_TLS_BEFORE_BIND
+		elif bind_cfg == 'tls-after-bind':
+			bind = ldap3.AUTO_BIND_TLS_AFTER_BIND
+		if bind:
+			conn_opts['auto_bind'] = bind
+
+	if ('key.file' in ssl_cfg) and ('cert.file' in ssl_cfg):
+		tls_opts['local_private_key_file'] = ssl_cfg['key.file']
+		tls_opts['local_certificate_file'] = ssl_cfg['cert.file']
+	# TODO: version= in tls_opts
+	if 'validate' in ssl_cfg:
+		value = ssl_cfg['validate']
+		if value == 'none':
+			tls_opts['validate'] = ssl.CERT_NONE
+		elif value == 'optional':
+			tls_opts['validate'] = ssl.CERT_OPTIONAL
+		elif value == 'required':
+			tls_opts['validate'] = ssl.CERT_REQUIRED
+	if 'ca.file' in ssl_cfg:
+		tls_opts['ca_certs_file'] = ssl_cfg['ca.file']
+	if 'altnames' in ssl_cfg:
+		tls_opts['valid_names'] = aslist(ssl_cfg['altnames'])
+	if 'ca.path' in ssl_cfg:
+		tls_opts['ca_certs_path'] = ssl_cfg['ca.path']
+	if 'ca.data' in ssl_cfg:
+		tls_opts['ca_certs_data'] = ssl_cfg['ca.data']
+	if 'key.password' in ssl_cfg:
+		tls_opts['local_private_key_password'] = ssl_cfg['key.password']
+
+	tls = None
+	if len(tls_opts):
+		tls = ldap3.Tls(**tls_opts)
+		server_opts['use_ssl'] = True
+
+	server = ldap3.Server(ldap_host, tls=tls, **server_opts)
+	LDAPConn = ldap3.Connection(server, client_strategy=ldap3.REUSABLE, **conn_opts)
 
 	def get_system_ldap(request):
-		return LDAPConnector(LDAPPool, request)
+		return LDAPConn
 	config.add_request_method(get_system_ldap, str('ldap'), reify=True)
 
 	_ldap_active = True
