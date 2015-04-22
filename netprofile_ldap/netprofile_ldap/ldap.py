@@ -50,14 +50,6 @@ _ldap_active = False
 # ldap_attr (can be a list)
 # ldap_value (can be a callable)
 
-#class LDAPConnector(object):
-#	def __init__(self, pool, req):
-#		self.pool = pool
-#		self.req = req
-#
-#	def connection(self, login=None, pwd=None):
-#		return self.pool.connection(login, pwd)
-
 def _get_base(em, settings):
 	sname = _LDAP_ORM_CFG % (em.name, 'base')
 	if sname in settings:
@@ -79,7 +71,7 @@ def _gen_attrlist(cols, settings, info):
 	object_classes = info.get('ldap_classes')
 	def _attrlist(tgt):
 		attrs = {
-			'objectClass' : object_classes
+			'objectClass' : list(object_classes)
 		}
 		for cname, col in cols.items():
 			try:
@@ -102,11 +94,6 @@ def _gen_attrlist(cols, settings, info):
 			else:
 				# TODO: handle multiple values
 				val = getattr(tgt, prop.key)
-#			# FIXME: rewrite bytes/str handling for ldap3
-#			if (not isinstance(val, bytes)) and (val is not None):
-#				if not isinstance(val, str):
-#					val = str(val)
-#				val = val.encode()
 			if isinstance(ldap_attr, (list, tuple)):
 				for la in ldap_attr:
 					attrs[la] = [val]
@@ -165,11 +152,7 @@ def _gen_ldap_object_load(em, info, settings):
 		rdn = get_rdn(tgt)
 		flt = '(&(%s)%s)' % (rdn, object_classes)
 		with LDAPConn as lc:
-			ret = lc.search(base, flt, search_scope=scope, attributes=ldap3.ALL_ATTRIBUTES)
-			# FIXME: check for errors
-			ret, status = lc.get_response(ret)
-		if isinstance(ret, list) and (len(ret) == 1):
-			tgt._ldap_data = ret[0]
+			tgt._ldap_data = lc.search(base, flt, search_scope=scope, attributes=ldap3.ALL_ATTRIBUTES)
 	return _ldap_object_load
 
 def _gen_ldap_object_store(em, info, settings):
@@ -180,29 +163,50 @@ def _gen_ldap_object_store(em, info, settings):
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
 	def _ldap_object_store(mapper, conn, tgt):
 		attrs = get_attrlist(tgt)
-		dn = '%s,%s' % (get_rdn(tgt), base)
-		ldap_data = getattr(tgt, '_ldap_data', False)
+		rdn = get_rdn(tgt)
+		dn = '%s,%s' % (rdn, base)
+		ldap_data = getattr(tgt, '_ldap_data', None)
 		with LDAPConn as lc:
+			if isinstance(ldap_data, int):
+				# FIXME: check for errors
+				ret, status = lc.get_response(ldap_data)
+				if len(ret):
+					tgt._ldap_data = ldap_data = ret[0]
+				else:
+					tgt._ldap_data = ldap_data = None
 			if ldap_data:
 				if dn != ldap_data['dn']:
-					lc.rename_s(ldap_data['dn'], dn)
+					# TODO: add code to handle moving objects to different bases (new_superior=)
+					ret = lc.modify_dn(ldap_data['dn'], rdn, delete_old_dn=True)
+					# FIXME: check for errors
+					ret, status = lc.get_response(ret)
 					ldap_data['dn'] = dn
-				xattrs = []
+				xattrs = {}
 				del_attrs = []
 				for attr in attrs:
-					val = attrs[attr]
-					if val is None:
-						if attr in ldap_data['attributes']:
-							xattrs.append((ldap.MOD_DELETE, attr, val))
+					old_val = ldap_data['attributes'].get(attr)
+					new_val = attrs[attr]
+					if new_val is None:
+						if old_val:
+							xattrs[attr] = (ldap3.MODIFY_DELETE, old_val)
 						del_attrs.append(attr)
 					else:
-						xattrs.append((ldap.MOD_REPLACE, attr, val))
+						xattrs[attr] = (ldap3.MODIFY_REPLACE, new_val)
 				for attr in del_attrs:
 					del attrs[attr]
-				lc.modify_s(dn, xattrs)
+				ret = lc.modify(dn, xattrs)
+				# FIXME: check for errors
+				ret, status = lc.get_response(ret)
 				tgt._ldap_data['attributes'].update(attrs)
 			else:
-				lc.add_s(dn, list(attrs.items()))
+				xattrs = {}
+				for attr in attrs:
+					new_val = attrs[attr]
+					if new_val is not None:
+						xattrs[attr] = new_val
+				ret = lc.add(dn, attributes=xattrs)
+				# FIXME: check for errors
+				ret, status = lc.get_response(ret)
 				tgt._ldap_data = {
 					'dn'         : dn,
 					'attributes' : attrs
@@ -216,7 +220,9 @@ def _gen_ldap_object_delete(em, info, settings):
 	def _ldap_object_delete(mapper, conn, tgt):
 		dn = '%s,%s' % (get_rdn(tgt), base)
 		with LDAPConn as lc:
-			lc.delete_s(dn)
+			ret = lc.delete(dn)
+			# FIXME: check for errors
+			ret, status = lc.get_response(ret)
 	return _ldap_object_delete
 
 @register_hook('np.model.load')
