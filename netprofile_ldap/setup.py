@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 
 from setuptools import setup, find_packages
@@ -9,8 +12,7 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 requires = [
 	'setuptools',
 	'netprofile >= 0.3',
-	'python-ldap',
-	'ldappool'
+	'ldap3'
 ]
 
 setup(
@@ -49,12 +51,14 @@ setup(
 	zip_safe=False,
 	test_suite='netprofile_ldap',
 	install_requires=requires,
-	entry_points="""\
-		[netprofile.modules]
-		ldap = netprofile_ldap:Module
-		[console_scripts]
-		np_gen_ldif = netprofile_ldap.scripts.genldif:main
-	""",
+	entry_points={
+		'netprofile.modules' : [
+			'ldap = netprofile_ldap:Module'
+		],
+		'netprofile.cli.commands' : [
+			'ldif create = netprofile_ldap.cli:CreateLDIF'
+		]
+	},
 	message_extractors={'.' : [
 		('**.py', 'python', None),
 		('**.pt', 'xml', None),

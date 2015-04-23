@@ -827,14 +827,14 @@ class User(Base):
 
 	def ldap_status(self, settings):
 		if self.state == UserState.pending:
-			return b'noaccess'
+			return 'noaccess'
 		elif self.state == UserState.active:
 			if self.enabled:
-				return b'active'
+				return 'active'
 			else:
-				return b'disabled'
+				return 'disabled'
 		else:
-			return b'deleted'
+			return 'deleted'
 
 	def ldap_password(self, settings):
 		pw = getattr(self, 'mod_pw', False)
@@ -844,7 +844,7 @@ class User(Base):
 		ctx = hashlib.sha1()
 		ctx.update(pw.encode())
 		ctx.update(salt)
-		return b'{SSHA}' + base64.b64encode(ctx.digest() + salt)
+		return '{SSHA}' + base64.b64encode(ctx.digest() + salt).decode()
 
 	def generate_a1hash(self, realm):
 		ctx = hashlib.md5()
@@ -1105,12 +1105,12 @@ class User(Base):
 			groupset.add(g)
 		dnlist = []
 		for g in groupset:
-			dnlist.append(get_dn(g, settings).encode())
+			dnlist.append(get_dn(g, settings))
 		ret = {}
 		if self.login:
-			ret['homeDirectory'] = ('/home/%s' % self.login).encode()
+			ret['homeDirectory'] = '/home/%s' % (self.login,)
 		if 'netprofile.ldap.orm.User.default_shell' in settings:
-			ret['loginShell'] = settings['netprofile.ldap.orm.User.default_shell'].encode()
+			ret['loginShell'] = settings['netprofile.ldap.orm.User.default_shell']
 		if len(dnlist) > 0:
 			ret['memberOf'] = dnlist
 		return ret
@@ -1460,14 +1460,10 @@ class Group(Base):
 			userset.add(u)
 		dnlist = []
 		for u in userset:
-			dnlist.append(get_dn(u, settings).encode())
+			dnlist.append(get_dn(u, settings))
 		ret = {}
 		if len(dnlist) > 0:
 			ret['uniqueMember'] = dnlist
-#		if self.login:
-#			ret['homeDirectory'] = ('/home/%s' % self.login).encode()
-#		if 'netprofile.ldap.orm.User.default_shell' in settings:
-#			ret['loginShell'] = settings['netprofile.ldap.orm.User.default_shell'].encode()
 		return ret
 
 	def get_uri(self):
