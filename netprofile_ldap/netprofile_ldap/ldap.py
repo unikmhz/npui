@@ -40,15 +40,6 @@ from netprofile.common.util import make_config_dict
 LDAPConn = None
 
 _LDAP_ORM_CFG = 'netprofile.ldap.orm.%s.%s'
-_ldap_active = False
-
-# model-level:
-# ldap_classes
-# ldap_rdn
-
-# column-level:
-# ldap_attr (can be a list)
-# ldap_value (can be a callable)
 
 def _get_base(em, settings):
 	sname = _LDAP_ORM_CFG % (em.name, 'base')
@@ -92,16 +83,17 @@ def _gen_attrlist(cols, settings, info):
 				except ValueError:
 					continue
 			else:
-				# TODO: handle multiple values
 				val = getattr(tgt, prop.key)
+			if not isinstance(val, (list, tuple)):
+				if val == '':
+					val = None
+				if val is not None:
+					val = [val]
 			if isinstance(ldap_attr, (list, tuple)):
 				for la in ldap_attr:
-					attrs[la] = [val]
+					attrs[la] = val
 			else:
-				if val is None:
-					attrs[ldap_attr] = None
-				else:
-					attrs[ldap_attr] = [val]
+				attrs[ldap_attr] = val
 		extra = getattr(tgt, 'ldap_attrs', None)
 		if extra and callable(extra):
 			attrs.update(extra(settings))
@@ -227,7 +219,7 @@ def _gen_ldap_object_delete(em, info, settings):
 
 @register_hook('np.model.load')
 def _proc_model_ldap(mmgr, model):
-	if not _ldap_active:
+	if not LDAPConn:
 		return
 	info = model.model.__table__.info
 	if ('ldap_classes' not in info) or ('ldap_rdn' not in info):
@@ -328,8 +320,6 @@ def includeme(config):
 	def get_system_ldap(request):
 		return LDAPConn
 	config.add_request_method(get_system_ldap, str('ldap'), reify=True)
-
-	_ldap_active = True
 
 	config.scan()
 

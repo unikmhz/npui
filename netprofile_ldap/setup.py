@@ -51,10 +51,14 @@ setup(
 	zip_safe=False,
 	test_suite='netprofile_ldap',
 	install_requires=requires,
-	entry_points="""\
-		[netprofile.modules]
-		ldap = netprofile_ldap:Module
-	""",
+	entry_points={
+		'netprofile.modules' : [
+			'ldap = netprofile_ldap:Module'
+		],
+		'netprofile.cli.commands' : [
+			'ldif create = netprofile_ldap.cli:CreateLDIF'
+		]
+	},
 	message_extractors={'.' : [
 		('**.py', 'python', None),
 		('**.pt', 'xml', None),
