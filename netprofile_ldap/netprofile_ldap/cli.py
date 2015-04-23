@@ -29,6 +29,7 @@ from __future__ import (
 
 import ldap3
 import logging
+import tempfile
 
 from cliff.command import Command
 
@@ -68,6 +69,7 @@ class CreateLDIF(Command):
 		browser = mm.get_module_browser()
 
 		LDAPConn = ldap3.Connection(None, client_strategy=ldap3.LDIF)
+		LDAPConn.stream = tempfile.TemporaryFile(mode='w+t')
 
 		with LDAPConn as lc:
 			for module in browser:
@@ -86,5 +88,6 @@ class CreateLDIF(Command):
 						attrs = get_attrlist(obj)
 						attrs = dict((k, v) for k, v in attrs.items() if v is not None)
 						lc.add(dn, attributes=attrs)
-			self.app.stdout.write(lc.stream.getvalue())
+			lc.stream.seek(0)
+			self.app.stdout.write(lc.stream.read())
 
