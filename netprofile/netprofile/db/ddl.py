@@ -459,10 +459,10 @@ def visit_create_view(element, compiler, **kw):
 	if callable(sel):
 		sel = sel()
 	if isinstance(sel, Query):
-		ctx = sel._compile_context()
-		ctx.statement.use_labels = True
-		conn = sel.session.connection(mapper=sel._mapper_zero_or_none(), clause=ctx.statement)
-		sel = ctx.statement.compile(conn, compile_kwargs={ 'literal_binds': True })
+		sel = sel.statement.compile(
+			compile_kwargs={ 'literal_binds' : True },
+			dialect=compiler.dialect
+		)
 	else:
 		sel = compiler.sql_compiler.process(sel, literal_binds=True)
 	if element.check:
