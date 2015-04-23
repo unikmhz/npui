@@ -33,15 +33,11 @@ import tempfile
 
 from cliff.command import Command
 
-from pyramid.i18n import TranslationStringFactory
-
 from netprofile_ldap.ldap import (
 	_gen_attrlist,
 	_gen_ldap_object_rdn,
 	_get_base
 )
-
-_ = TranslationStringFactory('netprofile_ldap')
 
 class CreateLDIF(Command):
 	"""
@@ -90,4 +86,5 @@ class CreateLDIF(Command):
 						lc.add(dn, attributes=attrs)
 			lc.stream.seek(0)
 			self.app.stdout.write(lc.stream.read())
+			lc.stream.close()
 

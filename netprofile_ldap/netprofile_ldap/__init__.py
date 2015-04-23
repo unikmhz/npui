@@ -29,17 +29,12 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 
-from pyramid.i18n import TranslationStringFactory
-
-_ = TranslationStringFactory('netprofile_ldap')
-
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
-		mmgr.cfg.add_translation_dirs('netprofile_ldap:locale/')
 		mmgr.cfg.scan()
 
 	@property
 	def name(self):
-		return _('LDAP')
+		return 'LDAP'
 
