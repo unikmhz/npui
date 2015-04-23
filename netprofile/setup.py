@@ -17,7 +17,7 @@ requires = [
 	'dogpile.cache >= 0.4.1',
 	'repoze.tm2',
 
-	'SQLAlchemy >= 0.9',
+	'SQLAlchemy >= 1.0',
 	'zope.sqlalchemy',
 	'transaction',
 
