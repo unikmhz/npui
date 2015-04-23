@@ -318,7 +318,7 @@ def _pdf_style_sheet(cfg):
 		for name in custom_ss:
 			pass # FIXME: write this
 
-	logger.info('Loaded preconfigured PDF fonts and styles.')
+	logger.debug('Loaded preconfigured PDF fonts and styles.')
 	return ss
 
 def _get_pdfss(req):
