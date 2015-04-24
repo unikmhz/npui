@@ -60,7 +60,10 @@ from netprofile.common.auth import (
 	auth_remove
 )
 from netprofile.db.connection import DBSession
-from netprofile.db.clauses import SetVariable
+from netprofile.db.clauses import (
+	SetVariable,
+	SetVariables
+)
 from .models import (
 	NPSession,
 	Privilege,
@@ -218,13 +221,27 @@ def _auth_to_db(event):
 	user = request.user
 
 	if user:
-		sess.execute(SetVariable('accessuid', user.id))
-		sess.execute(SetVariable('accessgid', user.group_id))
-		sess.execute(SetVariable('accesslogin', user.login))
+		try:
+			sess.execute(SetVariables(
+				accessuid=user.id,
+				accessgid=user.group_id,
+				accesslogin=user.login
+			))
+		except NotImplementedError:
+			sess.execute(SetVariable('accessuid', user.id))
+			sess.execute(SetVariable('accessgid', user.group_id))
+			sess.execute(SetVariable('accesslogin', user.login))
 	else:
-		sess.execute(SetVariable('accessuid', 0))
-		sess.execute(SetVariable('accessgid', 0))
-		sess.execute(SetVariable('accesslogin', '[GUEST]'))
+		try:
+			sess.execute(SetVariables(
+				accessuid=0,
+				accessgid=0,
+				accesslogin='[GUEST]'
+			))
+		except NotImplementedError:
+			sess.execute(SetVariable('accessuid', 0))
+			sess.execute(SetVariable('accessgid', 0))
+			sess.execute(SetVariable('accesslogin', '[GUEST]'))
 
 def _goto_login(request):
 	if request.matched_route:

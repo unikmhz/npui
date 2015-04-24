@@ -44,7 +44,10 @@ from pyramid.settings import asbool
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.db.connection import DBSession
-from netprofile.db.clauses import SetVariable
+from netprofile.db.clauses import (
+	SetVariable,
+	SetVariables
+)
 
 def get_user(request):
 	sess = DBSession()
@@ -74,12 +77,16 @@ def _auth_to_db(event):
 	sess = DBSession()
 	user = request.user
 
-	sess.execute(SetVariable('accessuid', 0))
-	sess.execute(SetVariable('accessgid', 0))
-	if user:
-		sess.execute(SetVariable('accesslogin', '[ACCESS:%s]' % user.nick))
-	else:
-		sess.execute(SetVariable('accesslogin', '[ACCESS:GUEST]'))
+	db_vars = {
+		'accessuid'   : 0,
+		'accessgid'   : 0,
+		'accesslogin' : '[ACCESS:%s]' % (user.nick,) if user else '[ACCESS:GUEST]'
+	}
+	try:
+		sess.execute(SetVariables(**db_vars))
+	except NotImplementedError:
+		for vname in db_vars:
+			sess.execute(SetVariable(vname, db_vars[vname]))
 
 def _new_response(event):
 	request = event.request
