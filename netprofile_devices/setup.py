@@ -51,10 +51,11 @@ setup(
 	zip_safe=False,
 	test_suite='netprofile_devices',
 	install_requires=requires,
-	entry_points="""\
-		[netprofile.modules]
-		devices = netprofile_devices:Module
-	""",
+	entry_points={
+		'netprofile.modules' : [
+			'devices = netprofile_devices:Module'
+		]
+	},
 	message_extractors={'.' : [
 		('**.py', 'python', None),
 		('**.pt', 'xml', None),

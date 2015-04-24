@@ -675,7 +675,7 @@ class SimpleDeviceType(DeviceType):
 	__tablename__ = 'devices_types_simple'
 	__table_args__ = (
 		Comment('Simple device types'),
-		#TODO Trigger('after', 'delete', 't_devices_types_simple_ad'),
+		Trigger('after', 'delete', 't_devices_types_simple_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -726,7 +726,7 @@ class NetworkDeviceType(DeviceType):
 	__tablename__ = 'devices_types_network'
 	__table_args__ = (
 		Comment('Network device types'),
-		#TODO Trigger('after', 'delete', 't_devices_types_network_ad'),
+		Trigger('after', 'delete', 't_devices_types_network_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -824,6 +824,11 @@ class Device(Base):
 		Index('devices_def_i_cby', 'cby'),
 		Index('devices_def_i_mby', 'mby'),
 		Index('devices_def_i_iby', 'iby'),
+		Trigger('before', 'insert', 't_devices_def_bi'),
+		Trigger('before', 'update', 't_devices_def_bu'),
+		Trigger('after', 'insert', 't_devices_def_ai'),
+		Trigger('after', 'update', 't_devices_def_au'),
+		Trigger('after', 'delete', 't_devices_def_ad'),
 		{
 			#TODO THIS SECTION
 			'mysql_engine'  : 'InnoDB',
@@ -1225,7 +1230,7 @@ class SimpleDevice(Device):
 	__tablename__ = 'devices_simple'
 	__table_args__ = (
 		Comment('Simple devices'),
-		#TODO Trigger('after', 'delete', 't_devices_simple_ad'),
+		Trigger('after', 'delete', 't_devices_simple_ad'),
 		{
 			#TODO THIS SECTION
 			'mysql_engine'  : 'InnoDB',
@@ -1336,7 +1341,7 @@ class NetworkDevice(Device):
 	__tablename__ = 'devices_network'
 	__table_args__ = (
 		Comment('Network devices'),
-		#TODO Trigger('after', 'delete', 't_devices_network_ad'),
+		Trigger('after', 'delete', 't_devices_network_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1487,6 +1492,8 @@ class NetworkDevice(Device):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('SNMPv3 Authentication Passphrase'),
+			'secret_value'  : True,
+			'editor_xtype'  : 'passwordfield',
 			'read_cap'      : 'DEVICES_PASSWORDS',
 			'write_cap'     : 'DEVICES_PASSWORDS'
 		}
@@ -1513,6 +1520,8 @@ class NetworkDevice(Device):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('SNMPv3 Privacy Passphrase'),
+			'secret_value'  : True,
+			'editor_xtype'  : 'passwordfield',
 			'read_cap'      : 'DEVICES_PASSWORDS',
 			'write_cap'     : 'DEVICES_PASSWORDS'
 		}
@@ -1552,6 +1561,8 @@ class NetworkDevice(Device):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Management Password'),
+			'secret_value'  : True,
+			'editor_xtype'  : 'passwordfield',
 			'read_cap'      : 'DEVICES_PASSWORDS',
 			'write_cap'     : 'DEVICES_PASSWORDS'
 		}
@@ -1565,6 +1576,8 @@ class NetworkDevice(Device):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Management Enable Password'),
+			'secret_value'  : True,
+			'editor_xtype'  : 'passwordfield',
 			'read_cap'      : 'DEVICES_PASSWORDS',
 			'write_cap'     : 'DEVICES_PASSWORDS'
 		}
