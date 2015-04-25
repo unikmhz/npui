@@ -495,7 +495,6 @@ class DeviceType(Base):
 		Comment('Device types'),
 		Index('devices_types_def_u_dt', 'dtmid', 'name', unique=True),
 		Index('devices_types_def_i_dtcid', 'dtcid'),
-		#TODO ADD TRIGGERS HERE
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -509,7 +508,6 @@ class DeviceType(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Types'),
 
-				#TODO HERE WIZARD AND VIEW CUSTOMIZATION
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('dtid', 'category', 'manufacturer', 'name'),
 				'grid_hidden'   : ('dtid',),
@@ -626,42 +624,6 @@ class DeviceType(Base):
 		creator=lambda v: DeviceTypeFile(file=v)
 	)
 
-	# @classmethod
-	# def __augment_result__(cls, sess, res, params, req):
-	# 	#TODO THIS SECTION
-	# 	populate_related(
-	# 		res, 'dtmid', 'manufacturer', DeviceTypeManufacturer,
-	# 		sess.query(DeviceTypeManufacturer)
-	# 	)
-	# 	populate_related(
-	# 		res, 'dtcid', 'category', DeviceTypeCategory,
-	# 		sess.query(DeviceTypeCategory)
-	# 	)
-	# 	populate_related_list(
-	# 		res, 'id', 'flagmap', DeviceTypeFlag,
-	# 		sess.query(DeviceTypeFlag),
-	# 		None, 'device_type_id'
-	# 	)
-	# 	return res
-	#
-	# def template_vars(self, req):
-	# 	#TODO THIS SECTION
-	# 	return {
-	# 		'id'          : self.id,
-	# 		'manufacturer': {
-	# 			'id'	: self.dtmid,
-	# 			'name'	: str(self.manufacturer)
-	# 		},
-	# 		'category': {
-	# 			'id'	: self.dtcid,
-	# 			'name'	: str(self.category)
-	# 		},
-	# 		'flags'       : [(ft.id, ft.name) for ft in self.flags],
-	# 		'type'		: self.type,
-	# 		'name'		: self.name,
-	# 		'descr'		: self.descr
-	# 	}
-
 	def __str__(self):
 		return '%s %s' % (
 			str(self.manufacturer.short_name or self.manufacturer.name),
@@ -714,10 +676,6 @@ class SimpleDeviceType(DeviceType):
 			'header_string' : _('ID')
 		}
 	)
-
-	#TODO THIS SECTION
-	# def grid_icon(self, req):
-	# 	return req.static_url('netprofile_entities:static/img/structural.png')
 
 class NetworkDeviceType(DeviceType):
 	"""
@@ -830,7 +788,6 @@ class Device(Base):
 		Trigger('after', 'update', 't_devices_def_au'),
 		Trigger('after', 'delete', 't_devices_def_ad'),
 		{
-			#TODO THIS SECTION
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
@@ -844,7 +801,19 @@ class Device(Base):
 				'menu_name'     : _('Devices'),
 				'menu_main'     : True,
 				'default_sort'  : ({ 'property': 'serial' ,'direction': 'ASC' },),
-				'grid_view'     : ('did', 'device_type', 'serial', 'place', 'entity', 'oper'),
+				'grid_view'     : (
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						help_text=_('Device icon'),
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="{grid_icon}" />'
+					),
+					'did', 'device_type', 'serial', 'place', 'entity', 'oper'
+				),
 				'grid_hidden'   : ('did',),
 				'form_view'     : (
 					'device_type', 'serial',
@@ -855,7 +824,7 @@ class Device(Base):
 					'descr'
 				),
 				'easy_search'   : ('serial',),
-				# 'extra_data'    : ('grid_icon',),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 #				'create_wizard' : SimpleWizard(title=_('Add new device'))
 			}
@@ -1079,79 +1048,8 @@ class Device(Base):
 		creator=lambda v: DeviceFlag(type=v)
 	)
 
-	# @classmethod
-	# def __augment_result__(cls, sess, res, params, req):
-	# 	#TODO THIS SECTION
-	# 	from netprofile_geo.models import Place
-	# 	from netprofile_entities.models import Entity
-	#
-	# 	populate_related(
-	# 		res, 'dtid', 'device_type', DeviceType,
-	# 		sess.query(DeviceType)
-	# 	)
-	# 	populate_related(
-	# 		res, 'placeid', 'place', Place,
-	# 		sess.query(Place)
-	# 	)
-	# 	populate_related(
-	# 		res, 'entityid', 'entity', Entity,
-	# 		sess.query(Entity)
-	# 	)
-	# 	#TODO user cby,mby,iby add
-	#
-	# 	populate_related_list(
-	# 		res, 'id', 'flagmap', DeviceFlag,
-	# 		sess.query(DeviceFlag),
-	# 		None, 'device_id'
-	# 	)
-	# 	return res
-	#
-	# @property
-	# def data(self):
-	# 	#TODO THIS SECTION
-	# 	return {
-	# 		'flags' : [(ft.id, ft.name) for ft in self.flags]
-	# 	}
-	#
-	# def template_vars(self, req):
-	# 	#TODO THIS SECTION
-	# 	return {
-	# 		'id'          : self.id,
-	# 		'serial'      : self.serial,
-	# 		'device_type' : {
-	# 			'id'   : self.dtid,
-	# 			'name' : str(self.device_type)
-	# 		},
-	# 		'type'        : self.dtype,
-	# 		'oper'        : self.oper,
-	# 		'place'       : {
-	# 			'id'	: self.placeid,
-	# 			'name'  : str(self.place)
-	# 		},
-	# 		'entity'       : {
-	# 			'id'	: self.entityid,
-	# 			'name'  : str(self.entity)
-	# 		},
-	# 		'ctime'		: self.ctime,
-	# 		'mtime'		: self.mtime,
-	# 		'itime'		: self.itime,
-	# 		'created_by'	: {
-	# 			'id'	: self.created_by_id,
-	# 			'name'  : str(self.created_by)
-	# 		},
-	# 		'modified_by'	: {
-	# 			'id'	: self.modified_by_id,
-	# 			'name'  : str(self.modified_by)
-	# 		},
-	# 		'installed_by'	: {
-	# 			'id'	: self.installed_by_id,
-	# 			'name'  : str(self.installed_by)
-	# 		},
-	# 		'description' : self.descr
-	# 	}
-
-	# def grid_icon(self, req):
-	# 	return req.static_url('netprofile_devices:static/img/device.png')
+	def grid_icon(self, req):
+		return req.static_url('netprofile_devices:static/img/device.png')
 
 	def __str__(self):
 		if self.serial:
@@ -1174,7 +1072,6 @@ class DeviceFlag(Base):
 		Index('devices_flags_def_u_df', 'did', 'dftid', unique=True),
 		Index('devices_flags_def_i_dftid', 'dftid'),
 		{
-			#TODO THIS SECTION
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
@@ -1232,7 +1129,6 @@ class SimpleDevice(Device):
 		Comment('Simple devices'),
 		Trigger('after', 'delete', 't_devices_simple_ad'),
 		{
-			#TODO THIS SECTION
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
@@ -1245,7 +1141,19 @@ class SimpleDevice(Device):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Simple Devices'),
 				'default_sort'  : ({ 'property': 'serial' ,'direction': 'ASC' },),
-				'grid_view'     : ('did', 'device_type', 'serial', 'place', 'entity', 'oper'),
+				'grid_view'     : (
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						help_text=_('Device icon'),
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="{grid_icon}" />'
+					),
+					'did', 'device_type', 'serial', 'place', 'entity', 'oper'
+				),
 				'grid_hidden'   : ('did',),
 				'form_view'     : (
 					'device_type', 'serial',
@@ -1256,7 +1164,7 @@ class SimpleDevice(Device):
 					'descr'
 				),
 				'easy_search'   : ('serial',),
-				# 'extra_data'    : ('grid_icon',),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new simple device'))
 			}
@@ -1277,21 +1185,8 @@ class SimpleDevice(Device):
 		}
 	)
 
-	#TODO THIS SECTION
-	# @property
-	# def data(self):
-	# 	ret = super(SimpleDeviceType, self).data
-	#
-	# 	ret['addrs'] = []
-	# 	ret['phones'] = []
-	# 	for obj in self.addresses:
-	# 		ret['addrs'].append(str(obj))
-	# 	for obj in self.phones:
-	# 		ret['phones'].append(obj.data)
-	# 	return ret
-	#
-	# def grid_icon(self, req):
-	# 	return req.static_url('netprofile_devices:static/img/simple.png')
+	def grid_icon(self, req):
+		return req.static_url('netprofile_devices:static/img/device_simple.png')
 
 class SNMPTypeField(DeclEnum):
 	"""
@@ -1355,7 +1250,19 @@ class NetworkDevice(Device):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Network Devices'),
 				'default_sort'  : ({ 'property': 'serial' ,'direction': 'ASC' },),
-				'grid_view'     : ('did', 'device_type', 'serial', 'place', 'entity', 'host', 'oper'),
+				'grid_view'     : (
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						help_text=_('Device icon'),
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="{grid_icon}" />'
+					),
+					'did', 'device_type', 'serial', 'place', 'entity', 'host', 'oper'
+				),
 				'grid_hidden'   : ('did',),
 				'form_view'     : (
 					'device_type', 'serial',
@@ -1371,7 +1278,7 @@ class NetworkDevice(Device):
 					'descr'
 				),
 				'easy_search'   : ('serial',),
-				# 'extra_data'    : ('grid_icon',),
+				'extra_data'    : ('grid_icon',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new network device'))
 			}
@@ -1589,6 +1496,9 @@ class NetworkDevice(Device):
 		backref='network_devices'
 	)
 
+	def grid_icon(self, req):
+		return req.static_url('netprofile_devices:static/img/device_network.png')
+
 	def __str__(self):
 		if self.host:
 			return '%s: %s' % (
@@ -1596,9 +1506,6 @@ class NetworkDevice(Device):
 				str(self.host)
 			)
 		return super(NetworkDevice, self).__str__()
-
-	# def grid_icon(self, req):
-	# 	return req.static_url('netprofile_devices:static/img/network.png')
 
 class DeviceTypeFile(Base):
 	"""
