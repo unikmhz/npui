@@ -57,6 +57,7 @@ __all__ = [
 ]
 
 import datetime as dt
+import snimpy.manager
 
 from sqlalchemy import (
 	Column,
@@ -1216,9 +1217,10 @@ class SNMPV3PrivProtoField(DeclEnum):
 	SNMP privacy protocol ENUM.
 	"""
 	des    = 'DES',    _('DES'),    10
-	aes128 = 'AES128', _('AES128'), 20
-	aes192 = 'AES192', _('AES192'), 30
-	aes256 = 'AES256', _('AES256'), 40
+	des3   = '3DES',   _('3DES'),   20
+	aes128 = 'AES128', _('AES128'), 30
+	aes192 = 'AES192', _('AES192'), 40
+	aes256 = 'AES256', _('AES256'), 50
 
 class SNMPV3MgmtTypeField(DeclEnum):
 	"""
@@ -1495,6 +1497,63 @@ class NetworkDevice(Device):
 		innerjoin=True,
 		backref='network_devices'
 	)
+
+	def snmp_context(self, req, is_rw=False):
+		snmp_type = self.snmp_type
+		if snmp_type is None:
+			raise RuntimeError('SNMP is not configured for a device')
+		host = self.host
+		# TODO: Make prefer-v4 / prefer-v6 configurable
+		# TODO: Provide finer-grained control of chosen addresses
+		# TODO: allow specifying custom SNMP port
+		# TODO: allow configuring snimpy parameters:
+		#       cache, none, timeout, retries
+		if not host:
+			raise RuntimeError('Can\'t find host to connect to')
+		if len(host.ipv4_addresses):
+			addr = str(host.ipv4_addresses[0])
+		elif len(host.ipv6_addresses):
+			addr = str(host.ipv6_addresses[0])
+		else:
+			addr = str(host)
+
+		kwargs = {
+			'host' : addr
+		}
+		if snmp_type == SNMPTypeField.v3:
+			if self.snmp_v3_user is None:
+				raise RuntimeError('SNMPv3 secName is unset')
+			kwargs.update(
+				version=3,
+				secname=self.snmp_v3_user
+			)
+			if self.snmp_v3_scheme in (SNMPV3SchemeField.authNoPriv, SNMPV3SchemeField.authPriv):
+				if self.snmp_v3_auth_protocol is None:
+					raise RuntimeError('SNMPv3 authProtocol is unset')
+				if self.snmp_v3_auth_passphrase is None:
+					raise RuntimeError('SNMPv3 authPassword is unset')
+				kwargs.update(
+					authprotocol=self.snmp_v3_auth_protocol.value,
+					authpassword=self.snmp_v3_auth_passphrase
+				)
+			if self.snmp_v3_scheme == SNMPV3SchemeField.authPriv:
+				if self.snmp_v3_privacy_protocol is None:
+					raise RuntimeError('SNMPv3 privProtocol is unset')
+				if self.snmp_v3_privacy_passphrase is None:
+					raise RuntimeError('SNMPv3 privPassword is unset')
+				kwargs.update(
+					privprotocol=self.snmp_v3_privacy_protocol.value,
+					privpassword=self.snmp_v3_privacy_passphrase
+				)
+		else:
+			comm = self.snmp_rw_community if is_rw else self.snmp_ro_community
+			if comm is None:
+				raise RuntimeError('Appropriate community is not set')
+			kwargs.update(
+				version=1 if (snmp_type == SNMPTypeField.v1) else 2,
+				community=comm
+			)
+		return snimpy.manager.Manager(**kwargs)
 
 	def grid_icon(self, req):
 		return req.static_url('netprofile_devices:static/img/device_network.png')

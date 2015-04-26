@@ -12,7 +12,9 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 requires = [
 	'setuptools',
 	'netprofile_entities >= 0.3',
-	'netprofile_hosts >= 0.3'
+	'netprofile_hosts >= 0.3',
+
+	'snimpy'
 ]
 
 setup(
