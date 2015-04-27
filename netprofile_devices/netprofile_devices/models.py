@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
-# NetProfile: Entities module - Models
+# NetProfile: Devices module - Models
 # © Copyright 2013-2015 Alex 'Unik' Unigovsky
 # © Copyright 2014 Sergey Dikunov
 #
@@ -58,6 +58,7 @@ __all__ = [
 
 import datetime as dt
 import snimpy.manager
+import pkg_resources
 
 from sqlalchemy import (
 	Column,
@@ -1498,6 +1499,19 @@ class NetworkDevice(Device):
 		backref='network_devices'
 	)
 
+	def get_handler(self, req):
+		devtype = self.type
+		if not devtype:
+			return None
+		hdlname = devtype.handler
+		if not hdlname:
+			return None
+		itp = list(pkg_resources.iter_entry_points('netprofile.devices.handlers', hdlname))
+		if len(itp) == 0:
+			return None
+		cls = itp[0].load()
+		return cls(devtype, self, req)
+
 	def snmp_context(self, req, is_rw=False):
 		snmp_type = self.snmp_type
 		if snmp_type is None:
@@ -1548,7 +1562,7 @@ class NetworkDevice(Device):
 		else:
 			comm = self.snmp_rw_community if is_rw else self.snmp_ro_community
 			if comm is None:
-				raise RuntimeError('Appropriate community is not set')
+				raise RuntimeError('Appropriate SNMP community string is not set')
 			kwargs.update(
 				version=1 if (snmp_type == SNMPTypeField.v1) else 2,
 				community=comm

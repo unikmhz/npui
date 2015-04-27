@@ -56,6 +56,9 @@ setup(
 	entry_points={
 		'netprofile.modules' : [
 			'devices = netprofile_devices:Module'
+		],
+		'netprofile.devices.handlers' : [
+			'default = netprofile_devices.handlers:NetworkDeviceHandler'
 		]
 	},
 	message_extractors={'.' : [
