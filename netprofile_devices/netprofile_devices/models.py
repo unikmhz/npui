@@ -1569,6 +1569,16 @@ class NetworkDevice(Device):
 			)
 		return snimpy.manager.Manager(**kwargs)
 
+	@property
+	def snmp_has_rw_context(self):
+		if self.snmp_type not in (SNMPTypeField.v1, SNMPTypeField.v2c):
+			return False
+		if not self.snmp_rw_community:
+			return False
+		if self.snmp_rw_community == self.snmp_ro_community:
+			return False
+		return True
+
 	def grid_icon(self, req):
 		return req.static_url('netprofile_devices:static/img/device_network.png')
 

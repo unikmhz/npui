@@ -27,9 +27,23 @@ from __future__ import (
 	division
 )
 
+import snimpy.manager
+
+from pyramid.decorator import reify
+
 class NetworkDeviceHandler(object):
 	def __init__(self, devtype, dev, req):
 		self.type = devtype
 		self.dev = dev
 		self.req = req
+
+	@reify
+	def snmp_ro(self):
+		return self.dev.snmp_context(req)
+
+	@reify
+	def snmp_rw(self):
+		if not self.dev.snmp_has_rw_context:
+			return self.snmp_ro
+		return self.dev.snmp_context(req, is_rw=True)
 
