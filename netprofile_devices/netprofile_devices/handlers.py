@@ -27,8 +27,6 @@ from __future__ import (
 	division
 )
 
-import snimpy.manager
-
 from pyramid.decorator import reify
 
 class NetworkDeviceHandler(object):

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Devices module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 # © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -27,6 +27,10 @@ from __future__ import (
 	absolute_import,
 	division
 )
+
+import os
+import pkg_resources
+import snimpy.mib
 
 from netprofile.common.modules import ModuleBase
 
@@ -196,16 +200,6 @@ class Module(ModuleBase):
 		except NoResultFound:
 			pass
 
-		#TODO sess.add(models.EntityState(
-		# 	name='Default',
-		# 	description='Default entity state. You can safely rename and/or delete it if you wish.'
-		# ))
-
-	#TODO def get_local_js(self, request, lang):
-	# 	return (
-	# 		'netprofile_devices:static/webshell/locale/webshell-lang-' + lang + '.js',
-	# 	)
-
 	def get_css(self, request):
 		return (
 			'netprofile_devices:static/css/main.css',
@@ -214,4 +208,15 @@ class Module(ModuleBase):
 	@property
 	def name(self):
 		return _('Devices')
+
+def includeme(config):
+	"""
+	For inclusion by Pyramid.
+	"""
+	dist = pkg_resources.get_distribution('netprofile_devices')
+	if dist:
+		new_path = os.path.join(dist.location, 'netprofile_devices', 'mibs')
+		if os.path.isdir(new_path):
+			cur_path = snimpy.mib.path()
+			snimpy.mib.path(new_path + ':' + cur_path)
 
