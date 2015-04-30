@@ -27,7 +27,18 @@ from __future__ import (
 	division
 )
 
+import snimpy.manager as mgr
+
 from pyramid.decorator import reify
+
+class TableProxy(object):
+	def __init__(self, hdl, table, idx):
+		self._hdl = hdl
+		self._table = table
+		self._idx = idx
+
+	def __getattr__(self, attr):
+		return getattr(self._hdl.snmp_ro, attr)[self._idx]
 
 class NetworkDeviceHandler(object):
 	def __init__(self, devtype, dev, req):
@@ -37,11 +48,18 @@ class NetworkDeviceHandler(object):
 
 	@reify
 	def snmp_ro(self):
-		return self.dev.snmp_context(req)
+		return self.dev.snmp_context(self.req)
 
 	@reify
 	def snmp_rw(self):
 		if not self.dev.snmp_has_rw_context:
 			return self.snmp_ro
-		return self.dev.snmp_context(req, is_rw=True)
+		return self.dev.snmp_context(self.req, is_rw=True)
+
+	@property
+	def interfaces(self):
+		mgr.load('IF-MIB')
+		tbl = self.snmp_ro.ifIndex.proxy.table
+		for idx in self.snmp_ro.ifIndex:
+			yield TableProxy(self, tbl, idx)
 

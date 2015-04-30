@@ -1500,8 +1500,8 @@ class NetworkDevice(Device):
 	)
 
 	def get_handler(self, req):
-		devtype = self.type
-		if not devtype:
+		devtype = self.device_type
+		if devtype is None:
 			return None
 		hdlname = devtype.handler
 		if not hdlname:
