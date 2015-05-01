@@ -626,6 +626,12 @@ class DeviceType(Base):
 		creator=lambda v: DeviceTypeFile(file=v)
 	)
 
+	def has_flag(self, name):
+		for flag in self.flags:
+			if flag.name == name:
+				return True
+		return False
+
 	def __str__(self):
 		return '%s %s' % (
 			str(self.manufacturer.short_name or self.manufacturer.name),
@@ -1052,6 +1058,12 @@ class Device(Base):
 
 	def grid_icon(self, req):
 		return req.static_url('netprofile_devices:static/img/device.png')
+
+	def has_flag(self, name):
+		for flag in self.flags:
+			if flag.name == name:
+				return True
+		return False
 
 	def __str__(self):
 		if self.serial:
