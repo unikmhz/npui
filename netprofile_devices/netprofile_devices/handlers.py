@@ -63,3 +63,17 @@ class NetworkDeviceHandler(object):
 		for idx in self.snmp_ro.ifIndex:
 			yield TableProxy(self, tbl, idx)
 
+	@property
+	def base_ports(self):
+		mgr.load('BRIDGE-MIB')
+		tbl = self.snmp_ro.dot1dBasePort.proxy.table
+		for baseport in self.snmp_ro.dot1dBasePort:
+			yield TableProxy(self, tbl, baseport)
+
+	@property
+	def vlans(self):
+		mgr.load('Q-BRIDGE-MIB')
+		tbl = self.snmp_ro.dot1qVlanFdbId.proxy.table
+		for timemark, vlanid in self.snmp_ro.dot1qVlanFdbId:
+			yield TableProxy(self, tbl, (timemark, vlanid))
+
