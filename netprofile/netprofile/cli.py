@@ -41,6 +41,8 @@ from sqlalchemy.exc import ProgrammingError
 
 from netprofile.common.modules import ModuleError
 
+import pkg_resources
+
 _ = TranslationStringFactory('netprofile')
 
 class ListModules(Lister):
@@ -112,8 +114,71 @@ class ShowModule(ShowOne):
 
 	log = logging.getLogger(__name__)
 
+	def get_parser(self, prog_name):
+		parser = super(ShowModule, self).get_parser(prog_name)
+		parser.add_argument(
+			'name',
+			help='Name of the module to inspect.'
+		)
+		return parser
+
 	def take_action(self, args):
-		raise RuntimeError('Not implemented.')
+		loc = self.app.locale
+
+		columns = (
+			loc.translate(_('Module')),
+			loc.translate(_('Summary')),
+			loc.translate(_('Homepage')),
+			loc.translate(_('Author')),
+			loc.translate(_('E-Mail')),
+			loc.translate(_('License')),
+			loc.translate(_('Location')),
+			loc.translate(_('Version'))
+		)
+		data = [None]*len(columns)
+
+		mm = self.app.mm
+		if len(mm.modules) > 0:
+			mm.rescan()
+		else:
+			mm.scan()
+
+		mod = args.name.lower()
+		if mod not in mm.modules:
+			raise RuntimeError('Seems like module \'%s\' does not exist.' % args.name)
+
+		modcode = mm.modules[mod].module_name
+		data[0] = modcode
+
+		'''
+		Probably not the best method to get metadata, but it works.
+		Needs pkg_resources to be imported.
+		'''
+		pkg = next(pkg_resources.find_distributions(modcode, only=True))
+		#pkg = pkg_resources.get_distribution(modcode)
+
+		if not pkg or not pkg.has_metadata(pkg_resources.Distribution.PKG_INFO):
+			raise RuntimeError('PKG-INFO not found')
+
+		for line in pkg.get_metadata_lines(pkg_resources.Distribution.PKG_INFO):
+			if ': ' in line:
+				(k, v) = line.split(': ', 1)
+				if k == "Summary":
+					data[1] = v
+				elif k == "Home-page":
+					data[2] = v
+				elif k == "Author":
+					data[3] = v
+				elif k == "Author-email":
+					data[4] = v
+				elif k == "License":
+					data[5] = v
+
+		data[6] = pkg.location
+		data[7] = pkg.parsed_version
+
+		self.app.hooks.run_hook('np.cli.module.show', self.app, columns, data)
+		return (columns, data)
 
 class InstallModule(Command):
 	"""
