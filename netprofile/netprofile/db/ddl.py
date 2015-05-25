@@ -339,7 +339,7 @@ class DropFunction(DDLElement):
 def visit_drop_function_pgsql(element, compiler, **kw):
 	func = element.func
 	name = func.name
-	return 'DROP FUNCTION IF EXISTS %s' % (
+	return 'DROP FUNCTION %s' % (
 		compiler.sql_compiler.preparer.quote(name),
 	)
 
@@ -348,7 +348,7 @@ def visit_drop_function(element, compiler, **kw):
 	func = element.func
 	name = func.name
 	is_proc = func.is_procedure
-	return 'DROP %s IF EXISTS %s' % (
+	return 'DROP %s %s' % (
 		'PROCEDURE' if is_proc else 'FUNCTION',
 		compiler.sql_compiler.preparer.quote(name)
 	)

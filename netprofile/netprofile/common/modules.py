@@ -433,7 +433,6 @@ class ModuleManager(object):
 		get_sql_functions = getattr(modcls, 'get_sql_functions', None)
 		if callable(get_sql_functions):
 			for func in get_sql_functions():
-				sess.execute(func.drop())
 				sess.execute(func.create(moddef))
 
 		get_sql_views = getattr(modcls, 'get_sql_views', None)
