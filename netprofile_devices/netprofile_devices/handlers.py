@@ -72,8 +72,14 @@ class NetworkDeviceHandler(object):
 
 	@property
 	def vlans(self):
-		mgr.load('Q-BRIDGE-MIB')
-		tbl = self.snmp_ro.dot1qVlanFdbId.proxy.table
-		for timemark, vlanid in self.snmp_ro.dot1qVlanFdbId:
-			yield TableProxy(self, tbl, (timemark, vlanid))
+		if self.type.has_flag('SNMP: CISCO-VTP-MIB'):
+			mgr.load('CISCO-VTP-MIB')
+			tbl = self.snmp_ro.vtpVlanState.proxy.table
+			for mgmtid, vlanid in self.snmp_ro.vtpVlanState:
+				yield TableProxy(self, tbl, (mgmtid, vlanid))
+		else:
+			mgr.load('Q-BRIDGE-MIB')
+			tbl = self.snmp_ro.dot1qVlanFdbId.proxy.table
+			for timemark, vlanid in self.snmp_ro.dot1qVlanFdbId:
+				yield TableProxy(self, tbl, (timemark, vlanid))
 
