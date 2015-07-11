@@ -177,6 +177,7 @@ class AccessEntity(Entity):
 		Comment('Access entities'),
 		Index('entities_access_i_stashid', 'stashid'),
 		Index('entities_access_i_rateid', 'rateid'),
+		Index('entities_access_i_aliasid', 'aliasid'),
 		Index('entities_access_i_ipaddrid', 'ipaddrid'),
 		Index('entities_access_i_ip6addrid', 'ip6addrid'),
 		Index('entities_access_i_nextrateid', 'nextrateid'),
