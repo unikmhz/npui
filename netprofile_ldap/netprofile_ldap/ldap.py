@@ -155,11 +155,13 @@ def _gen_ldap_object_store(em, info, settings, hm):
 	base = _get_base(em, settings)
 	rdn_attr = info.get('ldap_rdn')
 	get_attrlist = _gen_attrlist(cols, settings, info)
+	hook_name = 'ldap.attrs.%s.%s' % (em.model.__moddef__, em.name)
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
 	def _ldap_object_store(mapper, conn, tgt):
 		attrs = get_attrlist(tgt)
 		rdn = get_rdn(tgt)
 		dn = '%s,%s' % (rdn, base)
+		hm.run_hook(hook_name, tgt, dn, attrs)
 		ldap_data = getattr(tgt, '_ldap_data', None)
 		with LDAPConn as lc:
 			if isinstance(ldap_data, int):
