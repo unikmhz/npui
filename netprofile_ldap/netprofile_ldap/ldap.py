@@ -34,7 +34,10 @@ from pyramid.settings import (
 	asbool,
 	aslist
 )
-from netprofile.common.hooks import register_hook
+from netprofile.common.hooks import (
+	IHookManager,
+	register_hook
+)
 from netprofile.common.util import make_config_dict
 
 LDAPConn = None
@@ -132,7 +135,7 @@ def _gen_ldap_object_rdn(em, rdn_col):
 		return '%s=%s' % (ldap_attr, getattr(tgt, prop.key))
 	return _ldap_object_rdn
 
-def _gen_ldap_object_load(em, info, settings):
+def _gen_ldap_object_load(em, info, settings, hm):
 	base = _get_base(em, settings)
 	scope = _get_scope(em, settings)
 	rdn_attr = info.get('ldap_rdn')
@@ -147,7 +150,7 @@ def _gen_ldap_object_load(em, info, settings):
 			tgt._ldap_data = lc.search(base, flt, search_scope=scope, attributes=ldap3.ALL_ATTRIBUTES)
 	return _ldap_object_load
 
-def _gen_ldap_object_store(em, info, settings):
+def _gen_ldap_object_store(em, info, settings, hm):
 	cols = em.get_read_columns()
 	base = _get_base(em, settings)
 	rdn_attr = info.get('ldap_rdn')
@@ -205,7 +208,7 @@ def _gen_ldap_object_store(em, info, settings):
 				}
 	return _ldap_object_store
 
-def _gen_ldap_object_delete(em, info, settings):
+def _gen_ldap_object_delete(em, info, settings, hm):
 	base = _get_base(em, settings)
 	rdn_attr = info.get('ldap_rdn')
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
@@ -225,12 +228,14 @@ def _proc_model_ldap(mmgr, model):
 	if ('ldap_classes' not in info) or ('ldap_rdn' not in info):
 		return
 
-	settings = mmgr.cfg.registry.settings
+	registry = mmgr.cfg.registry
+	settings = registry.settings
+	hm = registry.getUtility(IHookManager)
 
-	event.listen(model.model, 'load', _gen_ldap_object_load(model, info, settings))
-	event.listen(model.model, 'after_insert', _gen_ldap_object_store(model, info, settings))
-	event.listen(model.model, 'after_update', _gen_ldap_object_store(model, info, settings))
-	event.listen(model.model, 'after_delete', _gen_ldap_object_delete(model, info, settings))
+	event.listen(model.model, 'load', _gen_ldap_object_load(model, info, settings, hm))
+	event.listen(model.model, 'after_insert', _gen_ldap_object_store(model, info, settings, hm))
+	event.listen(model.model, 'after_update', _gen_ldap_object_store(model, info, settings, hm))
+	event.listen(model.model, 'after_delete', _gen_ldap_object_delete(model, info, settings, hm))
 
 def includeme(config):
 	global _ldap_active, LDAPConn
