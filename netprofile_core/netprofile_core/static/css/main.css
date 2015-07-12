@@ -473,6 +473,7 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-mod-securitypolicy       { background-image: url(../img/lock.png) !important; }
 .ico-mod-tag                  { background-image: url(../img/tag_blue.png) !important; }
 .ico-mod-user                 { background-image: url(../img/user.png) !important; }
+.ico-mod-usercommunicationchannel { background-image: url(../img/comm.png) !important; }
 .ico-mod-usersetting          { background-image: url(../img/item.png) !important; }
 .ico-mod-usersettingsection   { background-image: url(../img/item_group.png) !important; }
 .ico-mod-usersettingtype      { background-image: url(../img/item_sel.png) !important; }

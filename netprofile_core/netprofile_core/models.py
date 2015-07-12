@@ -65,6 +65,7 @@ __all__ = [
 	'CalendarImport',
 	'Event',
 	'CommunicationType',
+	'UserCommunicationChannel',
 
 	'HWAddrHexIEEEFunction',
 	'HWAddrHexLinuxFunction',
@@ -819,6 +820,12 @@ class User(Base):
 	)
 	events = relationship(
 		'Event',
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	comm_channels = relationship(
+		'UserCommunicationChannel',
 		backref=backref('user', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
@@ -2507,6 +2514,7 @@ class CommunicationType(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				# FIXME
+				'cap_menu'      : 'BASE_ADMIN',
 				# no read cap
 				'cap_create'    : 'BASE_ADMIN',
 				'cap_edit'      : 'BASE_ADMIN',
@@ -2592,13 +2600,20 @@ class CommunicationType(Base):
 	description = Column(
 		'descr',
 		UnicodeText(),
-		Comment('Data field type description'),
+		Comment('Communication channel type description'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Description')
 		}
+	)
+
+	user_channels = relationship(
+		'UserCommunicationChannel',
+		backref=backref('type', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
 	)
 
 	def __str__(self):
@@ -2614,6 +2629,133 @@ class CommunicationType(Base):
 		else:
 			addr = urllib.quote(addr.encode(), '')
 		return self.uri_format.format(proto=self.uri_protocol, address=addr)
+
+class UserCommunicationChannel(Base):
+	"""
+	Users' communication channel links.
+	"""
+	__tablename__ = 'users_comms'
+	__table_args__ = (
+		Comment('User communication channels'),
+		Index('users_comms_i_commtid', 'commtid'),
+		Index('users_comms_i_uid', 'uid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_read'      : 'USERS_LIST',
+				'cap_create'    : 'USERS_EDIT',
+				'cap_edit'      : 'USERS_EDIT',
+				'cap_delete'    : 'USERS_EDIT',
+
+				'menu_name'     : _('User Communications'),
+				'default_sort'  : ({ 'property': 'commtid' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					'ucommid',
+					MarkupColumn(
+						header_string='&nbsp;',
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="{grid_icon}" />'
+					),
+					'type', 'user', 'primary',
+					MarkupColumn(
+						name='value',
+						header_string=_('Value'),
+						column_flex=3,
+						template='<a href="{uri}">{value}</a>'
+					)
+				),
+				'grid_hidden'   : ('ucommid',),
+				'form_view'     : ('type', 'user', 'primary', 'value', 'descr'),
+				'extra_data'    : ('grid_icon', 'uri'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new communication channel'))
+			}
+		}
+	)
+	id = Column(
+		'ucommid',
+		UInt32(),
+		Sequence('users_comms_ucommid_seq'),
+		Comment('User communication channel ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	type_id = Column(
+		'commtid',
+		UInt32(),
+		ForeignKey('comms_types.commtid', name='users_comms_fk_commtid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Communication channel type ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Type'),
+			'column_flex'   : 2,
+			'filter_type'   : 'list',
+			'editor_xtype'  : 'simplemodelselect'
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='users_comms_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'column_flex'   : 2,
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Primary flag'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	value = Column(
+		Unicode(255),
+		Comment('Channel address value'),
+		nullable=False,
+		info={
+			'header_string' : _('Address'),
+			'column_flex'   : 3
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Communication channel description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	def __str__(self):
+		return '%s: %s' % (
+			str(self.type),
+			str(self.user)
+		)
+
+	def uri(self, req):
+		if self.type and self.value:
+			return self.type.format_uri(self.value)
+
+	def grid_icon(self, req):
+		if self.type:
+			return self.type.grid_icon(req)
 
 class DAVLock(Base):
 	"""

@@ -1210,7 +1210,16 @@ def _dpane_group_caps(tabs, model, req):
 @register_hook('core.dpanetabs.core.User')
 def _dpane_user_caps(tabs, model, req):
 	loc = get_localizer(req)
-	tabs.append({
+	tabs.extend(({
+		'title'             : loc.translate(_('Communications')),
+		'iconCls'           : 'ico-mod-usercommunicationchannel',
+		'xtype'             : 'grid_core_UserCommunicationChannel',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('user',),
+		'extraParamProp'    : 'uid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
 		'title'             : loc.translate(_('Privileges')),
 		'iconCls'           : 'ico-mod-privilege',
 		'xtype'             : 'capgrid',
@@ -1218,7 +1227,7 @@ def _dpane_user_caps(tabs, model, req):
 		'stateful'          : False,
 		'apiGet'            : 'NetProfile.api.Privilege.user_get',
 		'apiSet'            : 'NetProfile.api.Privilege.user_set'
-	})
+	}))
 
 _cal_serial = 1
 def generate_calendar(name, color):
