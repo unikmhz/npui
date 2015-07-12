@@ -29,6 +29,8 @@ from __future__ import (
 
 __all__ = [
 	'NPModule',
+	'AddressType',
+	'PhoneType',
 	'UserState',
 	'User',
 	'Group',
@@ -375,6 +377,50 @@ class NPModule(Base):
 			'expanded' : True,
 			'iconCls'  : 'ico-module'
 		}
+
+class AddressType(DeclEnum):
+	"""
+	Address type ENUM.
+	"""
+	home    = 'home', _('Home Address'),    10
+	work    = 'work', _('Work Address'),    20
+	postal  = 'post', _('Postal Address'),  30
+	parcel  = 'parc', _('Parcel Address'),  40
+	billing = 'bill', _('Billing Address'), 50
+
+class PhoneType(DeclEnum):
+	"""
+	Phone type ENUM.
+	"""
+	home  = 'home',  _('Home Phone'),   10
+	cell  = 'cell',  _('Cell Phone'),   20
+	work  = 'work',  _('Work Phone'),   30
+	pager = 'pager', _('Pager Number'), 40
+	fax   = 'fax',   _('Fax Number'),   50
+	rec   = 'rec',   _('Receptionist'), 60
+
+	@classmethod
+	def icon(cls, data):
+		img = 'phone_small'
+		if data == PhoneType.cell:
+			img = 'mobile_small'
+		return img
+
+	@classmethod
+	def prefix(cls, data):
+		if data == PhoneType.home:
+			return _('home')
+		if data == PhoneType.cell:
+			return _('cell')
+		if data == PhoneType.work:
+			return _('work')
+		if data == PhoneType.pager:
+			return _('pg.')
+		if data == PhoneType.fax:
+			return _('fax')
+		if data == PhoneType.rec:
+			return _('rec.')
+		return _('tel.')
 
 class UserState(DeclEnum):
 	"""

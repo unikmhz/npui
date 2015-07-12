@@ -34,7 +34,6 @@ __all__ = [
 	'EntityFlag',
 	'EntityFlagType',
 	'Address',
-	'PhoneType',
 	'Phone',
 	'EntityState',
 	'EntityFile',
@@ -111,6 +110,10 @@ from netprofile.ext.columns import (
 	MarkupColumn
 )
 from netprofile.ext.filters import TextFilter
+from netprofile_core.models import (
+	AddressType,
+	PhoneType
+)
 from netprofile_geo.models import (
 	District,
 	House,
@@ -841,16 +844,6 @@ class EntityFlag(Base):
 		}
 	)
 
-class AddressType(DeclEnum):
-	"""
-	Address type ENUM.
-	"""
-	home    = 'home', _('Home Address'),    10
-	work    = 'work', _('Work Address'),    20
-	postal  = 'post', _('Postal Address'),  30
-	parcel  = 'parc', _('Parcel Address'),  40
-	billing = 'bill', _('Billing Address'), 50
-
 class Address(Base):
 	"""
 	Entity address.
@@ -1041,17 +1034,6 @@ class Address(Base):
 
 		return ' '.join(ret)
 
-class PhoneType(DeclEnum):
-	"""
-	Phone type ENUM.
-	"""
-	home  = 'home',  _('Home Phone'),   10
-	cell  = 'cell',  _('Cell Phone'),   20
-	work  = 'work',  _('Work Phone'),   30
-	pager = 'pager', _('Pager Number'), 40
-	fax   = 'fax',   _('Fax Number'),   50
-	rec   = 'rec',   _('Receptionist'), 60
-
 class Phone(Base):
 	"""
 	Generic telephone numbers.
@@ -1158,33 +1140,15 @@ class Phone(Base):
 		req = get_current_request()
 		loc = get_localizer(req)
 
-		pfx = None
-		if self.type == PhoneType.home:
-			pfx = _('home')
-		elif self.type == PhoneType.cell:
-			pfx = _('cell')
-		elif self.type == PhoneType.work:
-			pfx = _('work')
-		elif self.type == PhoneType.pager:
-			pfx = _('pg.')
-		elif self.type == PhoneType.fax:
-			pfx = _('fax')
-		elif self.type == PhoneType.rec:
-			pfx = _('rec.')
-		else:
-			pfx = _('tel.')
 		return '%s: %s' % (
-			loc.translate(pfx),
+			loc.translate(PhoneType.prefix(self.type)),
 			self.number
 		)
 
 	@property
 	def data(self):
-		img = 'phone_small'
-		if self.type == PhoneType.cell:
-			img = 'mobile_small'
 		return {
-			'img' : img,
+			'img' : PhoneType.icon(self.type),
 			'str' : str(self)
 		}
 
