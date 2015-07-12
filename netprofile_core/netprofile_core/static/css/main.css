@@ -456,6 +456,7 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-mod-calendar             { background-image: url(../img/calendar.png) !important; }
 .ico-mod-calendarimport       { background-image: url(../img/calendar_import.png) !important; }
 .ico-mod-calendars            { background-image: url(../img/calendars.png) !important; }
+.ico-mod-communicationtype    { background-image: url(../img/comm.png) !important; }
 .ico-mod-datacache            { background-image: url(../img/db.png) !important; }
 .ico-mod-globalsetting        { background-image: url(../img/item.png) !important; }
 .ico-mod-globalsettingsection { background-image: url(../img/item_group.png) !important; }

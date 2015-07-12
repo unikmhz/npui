@@ -64,6 +64,7 @@ __all__ = [
 	'Calendar',
 	'CalendarImport',
 	'Event',
+	'CommunicationType',
 
 	'HWAddrHexIEEEFunction',
 	'HWAddrHexLinuxFunction',
@@ -2491,6 +2492,128 @@ def _sess_nextcheck(req, ts):
 	except (TypeError, ValueError):
 		secs = 1800
 	return ts + dt.timedelta(seconds=secs)
+
+class CommunicationType(Base):
+	"""
+	Defines IM, social media and other communication channel links.
+	"""
+	__tablename__ = 'comms_types'
+	__table_args__ = (
+		Comment('Communication channel types'),
+		Index('comms_types_u_name', 'name', unique=True),
+		Index('comms_types_i_impp', 'impp'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				# FIXME
+				# no read cap
+				'cap_create'    : 'BASE_ADMIN',
+				'cap_edit'      : 'BASE_ADMIN',
+				'cap_delete'    : 'BASE_ADMIN',
+
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Communication Types'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					'commtid',
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="{grid_icon}" />'
+					),
+					'name', 'impp'
+				),
+				'grid_hidden'   : ('commtid',),
+				'form_view'     : ('name', 'icon', 'impp', 'urifmt', 'descr'),
+				'easy_search'   : ('name',),
+				'extra_data'    : ('grid_icon',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new communication type'))
+			}
+		}
+	)
+	id = Column(
+		'commtid',
+		UInt32(),
+		Sequence('comms_types_commtid_seq'),
+		Comment('Communication channel type ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Communication channel name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 1
+		}
+	)
+	icon = Column(
+		ASCIIString(32),
+		Comment('Icon name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Icon')
+		}
+	)
+	uri_protocol = Column(
+		'impp',
+		ASCIIString(32),
+		Comment('vCard IMPP URI prefix'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Protocol')
+		}
+	)
+	uri_format = Column(
+		'urifmt',
+		Unicode(255),
+		Comment('URI format string'),
+		nullable=False,
+		default='{proto}:{address}',
+		server_default='{proto}:{address}',
+		info={
+			'header_string' : _('URI Format')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Data field type description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	def __str__(self):
+		return '%s' % str(self.name)
+
+	def grid_icon(self, req):
+		icn = self.icon or 'generic'
+		return req.static_url('netprofile_core:static/img/comms/' + icn + '.png')
+
+	def format_uri(self, addr):
+		if PY3:
+			addr = urllib.parse.quote(addr, '')
+		else:
+			addr = urllib.quote(addr.encode(), '')
+		return self.uri_format.format(proto=self.uri_protocol, address=addr)
 
 class DAVLock(Base):
 	"""
