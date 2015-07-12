@@ -31,6 +31,7 @@ __all__ = [
 	'NPModule',
 	'AddressType',
 	'PhoneType',
+	'ContactInfoType',
 	'UserState',
 	'User',
 	'Group',
@@ -423,6 +424,13 @@ class PhoneType(DeclEnum):
 		if data == PhoneType.rec:
 			return _('rec.')
 		return _('tel.')
+
+class ContactInfoType(DeclEnum):
+	"""
+	Scope of contact information ENUM.
+	"""
+	home = 'home', _('home'), 10
+	work = 'work', _('work'), 20
 
 class UserState(DeclEnum):
 	"""
@@ -2660,16 +2668,16 @@ class UserCommunicationChannel(Base):
 						cell_class='np-nopad',
 						template='<img class="np-block-img" src="{grid_icon}" />'
 					),
-					'type', 'user', 'primary',
+					'type', 'user', 'primary', 'scope',
 					MarkupColumn(
 						name='value',
-						header_string=_('Value'),
+						header_string=_('Address'),
 						column_flex=3,
 						template='<a href="{uri}">{value}</a>'
 					)
 				),
 				'grid_hidden'   : ('ucommid',),
-				'form_view'     : ('type', 'user', 'primary', 'value', 'descr'),
+				'form_view'     : ('type', 'user', 'primary', 'scope', 'value', 'descr'),
 				'extra_data'    : ('grid_icon', 'uri'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new communication channel'))
@@ -2720,6 +2728,16 @@ class UserCommunicationChannel(Base):
 		server_default=npbool(False),
 		info={
 			'header_string' : _('Primary')
+		}
+	)
+	scope = Column(
+		ContactInfoType.db_type(),
+		Comment('Channel scope'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Type')
 		}
 	)
 	value = Column(

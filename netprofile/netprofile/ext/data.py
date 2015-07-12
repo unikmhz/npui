@@ -856,7 +856,7 @@ class ExtColumn(object):
 			if val is not None:
 				conf['width'] = val + 125
 				if ('xtype' in conf) and (conf['xtype'] in ('numberfield', 'combobox', 'nullablecombobox')):
-					conf['width'] += 25
+					conf['width'] += 30
 		val = self.editor_config
 		if val:
 			_recursive_update(conf, val)
