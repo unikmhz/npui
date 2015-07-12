@@ -38,8 +38,12 @@ Ext.define('NetProfile.form.field.SimpleModelSelect', {
 
 			if(!hf)
 				return;
-			if(recs && recs.length)
-				hf.setValue(recs[0].getId());
+			if(recs)
+			{
+				if(recs.length)
+					recs = recs[0];
+				hf.setValue(recs.getId());
+			}
 		}, this);
 	}
 });
