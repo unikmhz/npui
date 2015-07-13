@@ -51,6 +51,8 @@ __all__ = [
 	'AddrStreetNamesView'
 ]
 
+from collections import OrderedDict
+
 from sqlalchemy import (
 	CHAR,
 	Column,
@@ -114,6 +116,20 @@ from pyramid.i18n import (
 )
 
 _ = TranslationStringFactory('netprofile_geo')
+
+def countries_alpha2(column, req):
+	locale_cur = req.current_locale
+	locale_en = req.locales['en']
+	ret = dict()
+	for code in locale_en.territories:
+		if len(code) != 2:
+			continue
+		try:
+			ret[code] = locale_cur.territories[code]
+		except KeyError:
+			ret[code] = locale_en.territories[code]
+
+	return OrderedDict((k, v) for k, v in sorted(ret.items(), key=lambda x: x[1]))
 
 class City(Base):
 	"""
@@ -965,7 +981,8 @@ class UserLocation(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Country')
+			'header_string' : _('Country'),
+			'choices'       : countries_alpha2
 		}
 	)
 	city = Column(
@@ -1101,12 +1118,17 @@ class UserLocation(Base):
 	def __str__(self):
 		req = get_current_request()
 		loc = get_localizer(req)
-		locale = req.current_locale
+		locale_cur = req.current_locale
+		locale_en = req.locales['en']
 
 		ret = []
 		bit = self.country
-		if bit and (bit in locale.territories):
-			ret.append(locale.territories[bit] + ',')
+		if bit:
+			if bit in locale_cur.territories:
+				bit = locale_cur.territories[bit]
+			elif bit in locale_en.territories:
+				bit = locale_en.territories[bit]
+			ret.append(bit + ',')
 		bit = self.city_address
 		if bit:
 			ret.append(bit + ',')
