@@ -101,3 +101,17 @@ def _dpane_house_places(tabs, model, req):
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
+@register_hook('core.dpanetabs.core.User')
+def _dpane_user_locations(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Addresses')),
+		'iconCls'           : 'ico-mod-userlocation',
+		'xtype'             : 'grid_geo_UserLocation',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('user',),
+		'extraParamProp'    : 'uid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
