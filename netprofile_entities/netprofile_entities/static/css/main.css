@@ -34,5 +34,5 @@ div.change_details div.change_text
 .ico-mod-externalentity   { background-image: url(../img/external.png) !important; }
 
 .ico-mod-address          { background-image: url(../../geo/img/house.png) !important; }
-.ico-mod-phone            { background-image: url(../img/phone.png) !important; }
+.ico-mod-phone            { background-image: url(../../core/img/phone/phone.png) !important; }
 

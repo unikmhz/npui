@@ -111,7 +111,8 @@ class Module(ModuleBase):
 			CalendarImport,
 			Event,
 			CommunicationType,
-			UserCommunicationChannel
+			UserCommunicationChannel,
+			UserPhone
 		)
 
 	@classmethod

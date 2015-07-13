@@ -1211,6 +1211,15 @@ def _dpane_group_caps(tabs, model, req):
 def _dpane_user_caps(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.extend(({
+		'title'             : loc.translate(_('Phones')),
+		'iconCls'           : 'ico-mod-userphone',
+		'xtype'             : 'grid_core_UserPhone',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('user',),
+		'extraParamProp'    : 'uid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
 		'title'             : loc.translate(_('Communications')),
 		'iconCls'           : 'ico-mod-usercommunicationchannel',
 		'xtype'             : 'grid_core_UserCommunicationChannel',

@@ -67,6 +67,7 @@ __all__ = [
 	'Event',
 	'CommunicationType',
 	'UserCommunicationChannel',
+	'UserPhone',
 
 	'HWAddrHexIEEEFunction',
 	'HWAddrHexLinuxFunction',
@@ -679,7 +680,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Title'),
+			'header_string' : _('Position'),
 			'ldap_attr'     : 'title'
 		}
 	)
@@ -834,6 +835,12 @@ class User(Base):
 	)
 	comm_channels = relationship(
 		'UserCommunicationChannel',
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	phones = relationship(
+		'UserPhone',
 		backref=backref('user', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
@@ -2637,6 +2644,113 @@ class CommunicationType(Base):
 		else:
 			addr = urllib.quote(addr.encode(), '')
 		return self.uri_format.format(proto=self.uri_protocol, address=addr)
+
+class UserPhone(Base):
+	"""
+	Users' phone contacts.
+	"""
+	__tablename__ = 'users_phones'
+	__table_args__ = (
+		Comment('User phone numbers'),
+		Index('users_phones_i_uid', 'uid'),
+		Index('users_phones_i_num', 'num'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_read'      : 'USERS_LIST',
+				'cap_create'    : 'USERS_EDIT',
+				'cap_edit'      : 'USERS_EDIT',
+				'cap_delete'    : 'USERS_EDIT',
+
+				'menu_name'     : _('Phones'),
+				'default_sort'  : (
+					{ 'property': 'ptype' ,'direction': 'ASC' },
+					{ 'property': 'num' ,'direction': 'ASC' }
+				),
+				'grid_view'     : ('uphoneid', 'user', 'primary', 'ptype', 'num', 'descr'),
+				'grid_hidden'   : ('uphoneid',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new phone'))
+			}
+		}
+	)
+	id = Column(
+		'uphoneid',
+		UInt32(),
+		Sequence('users_phones_uphoneid_seq'),
+		Comment('User phone ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='users_phones_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'column_flex'   : 2,
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Primary flag'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	type = Column(
+		'ptype',
+		PhoneType.db_type(),
+		Comment('Phone type'),
+		nullable=False,
+		default=PhoneType.work,
+		server_default=PhoneType.work,
+		info={
+			'header_string' : _('Type'),
+			'column_flex'   : 1
+		}
+	)
+	number = Column(
+		'num',
+		ASCIIString(255),
+		Comment('Phone number'),
+		nullable=False,
+		info={
+			'header_string' : _('Number'),
+			'column_flex'   : 1
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Phone description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description'),
+			'column_flex'   : 2
+		}
+	)
+
+	def __str__(self):
+		req = get_current_request()
+		loc = get_localizer(req)
+
+		return '%s: %s' % (
+			loc.translate(PhoneType.prefix(self.type)),
+			self.number
+		)
 
 class UserCommunicationChannel(Base):
 	"""
