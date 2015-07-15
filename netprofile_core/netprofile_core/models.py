@@ -1176,6 +1176,8 @@ class User(Base):
 			ret['loginShell'] = settings['netprofile.ldap.orm.User.default_shell']
 		if len(dnlist) > 0:
 			ret['memberOf'] = dnlist
+		if len(self.email_addresses) > 0:
+			ret['mail'] = [str(ea) for ea in self.email_addresses]
 		return ret
 
 	def get_uri(self):
@@ -2865,6 +2867,22 @@ class UserEmail(Base):
 
 	def __str__(self):
 		return '%s' % (self.address,)
+
+def _mod_mail(mapper, conn, tgt):
+	try:
+		from netprofile_ldap.ldap import store
+	except ImportError:
+		return
+	user = tgt.user
+	user_id = tgt.user_id
+	if (not user) and user_id:
+		user = DBSession().query(User).get(user_id)
+	if user:
+		store(user)
+
+event.listen(UserEmail, 'after_delete', _mod_mail)
+event.listen(UserEmail, 'after_insert', _mod_mail)
+event.listen(UserEmail, 'after_update', _mod_mail)
 
 class UserCommunicationChannel(Base):
 	"""
