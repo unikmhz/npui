@@ -1220,6 +1220,15 @@ def _dpane_user_caps(tabs, model, req):
 		'extraParamProp'    : 'uid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	}, {
+		'title'             : loc.translate(_('E-mail')),
+		'iconCls'           : 'ico-mod-useremail',
+		'xtype'             : 'grid_core_UserEmail',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('user',),
+		'extraParamProp'    : 'uid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
 		'title'             : loc.translate(_('Communications')),
 		'iconCls'           : 'ico-mod-usercommunicationchannel',
 		'xtype'             : 'grid_core_UserCommunicationChannel',

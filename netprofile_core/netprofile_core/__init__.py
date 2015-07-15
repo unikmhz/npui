@@ -112,7 +112,8 @@ class Module(ModuleBase):
 			Event,
 			CommunicationType,
 			UserCommunicationChannel,
-			UserPhone
+			UserPhone,
+			UserEmail
 		)
 
 	@classmethod

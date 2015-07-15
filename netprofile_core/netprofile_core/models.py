@@ -68,6 +68,7 @@ __all__ = [
 	'CommunicationType',
 	'UserCommunicationChannel',
 	'UserPhone',
+	'UserEmail',
 
 	'HWAddrHexIEEEFunction',
 	'HWAddrHexLinuxFunction',
@@ -514,18 +515,18 @@ class User(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Users'),
 				'default_sort' : ({ 'property': 'login' ,'direction': 'ASC' },),
-				'grid_view'    : ('uid', 'login', 'name_family', 'name_given', 'name_middle', 'manager', 'group', 'enabled', 'state', 'security_policy', 'email'),
+				'grid_view'    : ('uid', 'login', 'name_family', 'name_given', 'name_middle', 'manager', 'group', 'enabled', 'state', 'security_policy'),
 				'grid_hidden'  : ('uid', 'name_middle', 'manager', 'security_policy'),
 				'form_view'    : (
 					'login', 'name_family', 'name_given', 'name_middle',
 					'title', 'group', 'secondary_groups', 'enabled',
 					'pass', 'security_policy', 'state',
-					'email', 'manager', 'photo'
+					'manager', 'photo'
 				),
 				'easy_search'  : ('login', 'name_family'),
 				'create_wizard' : 
 					Wizard(
-						Step('login', 'pass', 'group', 'email', title=_('New user')),
+						Step('login', 'pass', 'group', title=_('New user')),
 						Step('name_family', 'name_given', 'name_middle', 'ipaddr', 'enabled','state',title=_('New user details')),
 						title=_('Add new user')
 					),
@@ -697,19 +698,6 @@ class User(Base):
 			'column_flex'   : 2
 		}
 	)
-	email = Column(
-		Unicode(64),
-		Comment('User\'s e-mail'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('E-mail'),
-			'vtype'         : 'email',
-			'ldap_attr'     : 'mail',
-			'column_flex'   : 2
-		}
-	)
 	ip_address = Column(
 		'ipaddr',
 		IPv4Address(),
@@ -841,6 +829,12 @@ class User(Base):
 	)
 	phones = relationship(
 		'UserPhone',
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	email_addresses = relationship(
+		'UserEmail',
 		backref=backref('user', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
@@ -1217,8 +1211,8 @@ class User(Base):
 
 	def dav_alt_uri(self, req):
 		uris = []
-		if self.email:
-			uris.append('mailto:' + self.email)
+#		if self.email:
+#			uris.append('mailto:' + self.email)
 		return uris
 
 	def _get_vcard(self):
@@ -1242,8 +1236,8 @@ class User(Base):
 		card.add('N', cal.vStructuredUnicode(*fname))
 		card.add('FN', cal.vUnicode(' '.join(fname)))
 		card.add('NICKNAME', cal.vUnicode(self.login))
-		if self.email:
-			card.add('EMAIL', cal.vEMail(self.email))
+#		if self.email:
+#			card.add('EMAIL', cal.vEMail(self.email))
 
 		ical = card.to_ical()
 		resp = Response(ical, content_type='text/x-vcard', charset='utf-8')
@@ -1268,7 +1262,7 @@ class User(Base):
 			self.vcard = self._get_vcard()
 		return self.vcard
 
-	@validates('name_family', 'name_given', 'name_middle', 'login', 'email')
+	@validates('name_family', 'name_given', 'name_middle', 'login')
 	def _reset_vcard(self, k, v):
 		self.vcard = None
 		return v
@@ -2751,6 +2745,126 @@ class UserPhone(Base):
 			loc.translate(PhoneType.prefix(self.type)),
 			self.number
 		)
+
+class UserEmail(Base):
+	"""
+	Users' email addresses.
+	"""
+	__tablename__ = 'users_email'
+	__table_args__ = (
+		Comment('User e-mail addresses'),
+		Index('users_email_u_addr', 'addr', unique=True),
+		Index('users_email_i_uid', 'uid'),
+		Index('users_email_i_aliasid', 'aliasid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_read'      : 'USERS_LIST',
+				'cap_create'    : 'USERS_EDIT',
+				'cap_edit'      : 'USERS_EDIT',
+				'cap_delete'    : 'USERS_EDIT',
+
+				'menu_name'     : _('E-mail'),
+				'default_sort'  : (
+					{ 'property': 'scope' ,'direction': 'ASC' },
+					{ 'property': 'addr' ,'direction': 'ASC' },
+				),
+				'grid_view'     : ('uemailid', 'user', 'primary', 'scope', 'addr', 'original'),
+				'grid_hidden'   : ('uemailid',),
+				'form_view'     : ('user', 'primary', 'scope', 'addr', 'original', 'descr'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new e-mail address'))
+			}
+		}
+	)
+	id = Column(
+		'uemailid',
+		UInt32(),
+		Sequence('users_email_uemailid_seq'),
+		Comment('User e-mail ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='users_email_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'column_flex'   : 2,
+			'filter_type'   : 'none'
+		}
+	)
+	original_id = Column(
+		'aliasid',
+		UInt32(),
+		ForeignKey('users_email.uemailid', name='users_email_fk_aliasid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Aliased e-mail ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Original'),
+			'column_flex'   : 3,
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Primary flag'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	scope = Column(
+		ContactInfoType.db_type(),
+		Comment('Address scope'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Type')
+		}
+	)
+	address = Column(
+		'addr',
+		Unicode(255),
+		nullable=False,
+		info={
+			'header_string' : _('Address'),
+			'column_flex'   : 3
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Address description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	aliases = relationship(
+		'UserEmail',
+		backref=backref('original', remote_side=(id,)),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
+	def __str__(self):
+		return '%s' % (self.address,)
 
 class UserCommunicationChannel(Base):
 	"""
