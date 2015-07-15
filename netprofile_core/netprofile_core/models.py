@@ -519,7 +519,8 @@ class User(Base):
 				'grid_hidden'  : ('uid', 'name_middle', 'manager', 'security_policy'),
 				'form_view'    : (
 					'login', 'name_family', 'name_given', 'name_middle',
-					'title', 'group', 'secondary_groups', 'enabled',
+					'org', 'orgunit', 'title',
+					'group', 'secondary_groups', 'enabled',
 					'pass', 'security_policy', 'state',
 					'manager', 'photo'
 				),
@@ -527,7 +528,7 @@ class User(Base):
 				'create_wizard' : 
 					Wizard(
 						Step('login', 'pass', 'group', title=_('New user')),
-						Step('name_family', 'name_given', 'name_middle', 'ipaddr', 'enabled','state',title=_('New user details')),
+						Step('name_family', 'name_given', 'name_middle', 'enabled', 'state', title=_('New user details')),
 						title=_('Add new user')
 					),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
@@ -672,6 +673,30 @@ class User(Base):
 			'header_string' : _('Middle Name'),
 			'ldap_attr'     : 'initials', # FIXME?
 			'column_flex'   : 3
+		}
+	)
+	organization = Column(
+		'org',
+		Unicode(255),
+		Comment('Organization name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Organization'),
+			'ldap_attr'     : 'o'
+		}
+	)
+	organizational_unit = Column(
+		'orgunit',
+		Unicode(255),
+		Comment('Organizational unit name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Organizational Unit'),
+			'ldap_attr'     : 'ou'
 		}
 	)
 	title = Column(
