@@ -1847,6 +1847,7 @@ class ExtModel(object):
 			row['__str__'] = ''
 			records.append(row)
 		for obj in q:
+			obj.__req__ = request
 			row = {}
 			for cname, col in cols.items():
 				if isinstance(cname, PseudoColumn):
@@ -1900,6 +1901,7 @@ class ExtModel(object):
 		raise RuntimeError('read_one() not implemented')
 
 	def set_values(self, obj, values, request, is_create=False):
+		obj.__req__ = request
 		cols = self.get_columns()
 		rcols = self.get_read_columns()
 		trans = self._get_trans(rcols)
@@ -1954,6 +1956,7 @@ class ExtModel(object):
 			if p in pt:
 				del pt[p]
 			obj = self.model()
+			obj.__req__ = request
 			apply_onetomany = []
 			helper = getattr(self.model, '__augment_create__', None)
 			if callable(helper) and not helper(sess, obj, pt, request):
@@ -2058,6 +2061,7 @@ class ExtModel(object):
 			if self.pk not in pt:
 				raise Exception('Can\'t find primary key in record parameters')
 			obj = sess.query(self.model).get(pt[self.pk])
+			obj.__req__ = request
 			helper = getattr(self.model, '__augment_update__', None)
 			if callable(helper) and not helper(sess, obj, pt, request):
 				continue
@@ -2138,6 +2142,7 @@ class ExtModel(object):
 			if self.pk not in pt:
 				raise Exception('Can\'t find primary key in record parameters')
 			obj = sess.query(self.model).get(pt[self.pk])
+			obj.__req__ = request
 			helper = getattr(self.model, '__augment_delete__', None)
 			if callable(helper) and not helper(sess, obj, pt, request):
 				continue

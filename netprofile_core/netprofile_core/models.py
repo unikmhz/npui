@@ -90,6 +90,8 @@ import itertools
 import base64
 import icalendar
 
+from collections import defaultdict
+
 from sqlalchemy import (
 	BINARY,
 	Column,
@@ -189,6 +191,7 @@ from pyramid.response import (
 	FileIter,
 	Response
 )
+from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
@@ -393,6 +396,16 @@ class AddressType(DeclEnum):
 	parcel  = 'parc', _('Parcel Address'),  40
 	billing = 'bill', _('Billing Address'), 50
 
+	@classmethod
+	def ldap_address_attrs(cls, data):
+		if data == AddressType.home:
+			return ('homePostalAddress',)
+		if data == AddressType.work:
+			return ('street',)
+		if data == AddressType.postal:
+			return ('postalAddress',)
+		return ()
+
 class PhoneType(DeclEnum):
 	"""
 	Phone type ENUM.
@@ -426,6 +439,22 @@ class PhoneType(DeclEnum):
 		if data == PhoneType.rec:
 			return _('rec.')
 		return _('tel.')
+
+	@classmethod
+	def ldap_attrs(cls, data):
+		if data == PhoneType.home:
+			return ('homePhone',)
+		if data == PhoneType.cell:
+			return ('mobile',)
+		if data == PhoneType.work:
+			return ('telephoneNumber',)
+		if data == PhoneType.pager:
+			return ('pager',)
+		if data == PhoneType.fax:
+			return ('facsimileTelephoneNumber',)
+		if data == PhoneType.rec:
+			return ('companyPhone',)
+		return ('otherPhone',)
 
 class ContactInfoType(DeclEnum):
 	"""
@@ -498,7 +527,7 @@ class User(Base):
 		Index('users_i_state', 'state'),
 		Index('users_i_enabled', 'enabled'),
 		Index('users_i_managerid', 'managerid'),
-		Index('users_i_photo', 'photo'),
+		Index('users_i_phfileid', 'phfileid'),
 		Trigger('after', 'insert', 't_users_ai'),
 		Trigger('after', 'update', 't_users_au'),
 		Trigger('after', 'delete', 't_users_ad'),
@@ -522,7 +551,7 @@ class User(Base):
 					'org', 'orgunit', 'title',
 					'group', 'secondary_groups', 'enabled',
 					'pass', 'security_policy', 'state',
-					'manager', 'photo'
+					'manager', 'photo', 'descr'
 				),
 				'easy_search'  : ('login', 'name_family'),
 				'create_wizard' : 
@@ -671,7 +700,7 @@ class User(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Middle Name'),
-			'ldap_attr'     : 'initials', # FIXME?
+			'ldap_attr'     : 'initials',
 			'column_flex'   : 3
 		}
 	)
@@ -746,15 +775,29 @@ class User(Base):
 		}
 	)
 	photo_id = Column(
-		'photo',
+		'phfileid',
 		UInt32(),
-		ForeignKey('files_def.fileid', name='users_fk_photo', ondelete='SET NULL', onupdate='CASCADE', use_alter=True),
-		Comment('Photo File ID'),
+		ForeignKey('files_def.fileid', name='users_fk_phfileid', ondelete='SET NULL', onupdate='CASCADE', use_alter=True),
+		Comment('Photo file ID'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Photo')
+			'header_string' : _('Photo'),
+			'ldap_attr'     : 'jpegPhoto',
+			'ldap_value'    : 'ldap_photo'
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('User description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description'),
+			'ldap_attr'     : ('comment', 'description')
 		}
 	)
 
@@ -933,6 +976,16 @@ class User(Base):
 		ctx.update(pw.encode())
 		ctx.update(salt)
 		return '{SSHA}' + base64.b64encode(ctx.digest() + salt).decode()
+
+	def ldap_photo(self, settings):
+		if not self.photo:
+			return
+		ph = self.photo
+		if not ph.mime_type:
+			return
+		if ph.plain_mime_type != 'image/jpeg':
+			return
+		return ph.get_data(sess=DBSession())
 
 	def generate_a1hash(self, realm):
 		ctx = hashlib.md5()
@@ -1203,6 +1256,13 @@ class User(Base):
 			ret['memberOf'] = dnlist
 		if len(self.email_addresses) > 0:
 			ret['mail'] = [str(ea) for ea in self.email_addresses]
+		phones = defaultdict(list)
+		for ph in self.phones:
+			for attr in PhoneType.ldap_attrs(ph.type):
+				# FIXME: format phone as intl. (probably using phonenumbers lib)
+				phones[attr].append(ph.number)
+		if len(phones) > 0:
+			ret.update(phones)
 		return ret
 
 	def get_uri(self):
@@ -1238,8 +1298,8 @@ class User(Base):
 
 	def dav_alt_uri(self, req):
 		uris = []
-#		if self.email:
-#			uris.append('mailto:' + self.email)
+		for email in self.email_addresses:
+			uris.append('mailto:' + str(email))
 		return uris
 
 	def _get_vcard(self):
@@ -1263,8 +1323,8 @@ class User(Base):
 		card.add('N', cal.vStructuredUnicode(*fname))
 		card.add('FN', cal.vUnicode(' '.join(fname)))
 		card.add('NICKNAME', cal.vUnicode(self.login))
-#		if self.email:
-#			card.add('EMAIL', cal.vEMail(self.email))
+		for email in self.email_addresses:
+			card.add('EMAIL', cal.vEMail(str(email)))
 
 		ical = card.to_ical()
 		resp = Response(ical, content_type='text/x-vcard', charset='utf-8')
@@ -2772,6 +2832,22 @@ class UserPhone(Base):
 			loc.translate(PhoneType.prefix(self.type)),
 			self.number
 		)
+
+def _mod_phone(mapper, conn, tgt):
+	try:
+		from netprofile_ldap.ldap import store
+	except ImportError:
+		return
+	user = tgt.user
+	user_id = tgt.user_id
+	if (not user) and user_id:
+		user = DBSession().query(User).get(user_id)
+	if user:
+		store(user)
+
+event.listen(UserPhone, 'after_delete', _mod_phone)
+event.listen(UserPhone, 'after_insert', _mod_phone)
+event.listen(UserPhone, 'after_update', _mod_phone)
 
 class UserEmail(Base):
 	"""
@@ -4624,10 +4700,10 @@ class File(Base):
 		self.data = None
 		self.mime_type = infile.mime_type
 
-	def get_data(self):
+	def get_data(self, sess=None):
 		if self.data:
 			return self.data
-		with self.open('r') as fd:
+		with self.open('r', sess=sess) as fd:
 			return fd.read()
 
 	def __str__(self):

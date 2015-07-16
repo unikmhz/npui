@@ -61,6 +61,7 @@ from sqlalchemy import (
 	Sequence,
 	Unicode,
 	UnicodeText,
+	event,
 	func,
 	literal_column,
 	text
@@ -106,7 +107,10 @@ from netprofile.db.ddl import (
 )
 from netprofile.db.util import populate_related_list
 
-from netprofile_core.models import AddressType
+from netprofile_core.models import (
+	AddressType,
+	User
+)
 from netprofile_geo.filters import AddressFilter
 
 from pyramid.threadlocal import get_current_request
@@ -921,7 +925,7 @@ class UserLocation(Base):
 				'grid_hidden'   : ('ulocid',),
 				'form_view'     : (
 					'user', 'primary', 'atype', 'house',
-					'country', 'locality', 'city', 'addr',
+					'country', 'stprov', 'city', 'addr',
 					'entrance', 'floor', 'flat', 'room',
 					'entrycode', 'postindex', 'descr'
 				),
@@ -985,6 +989,17 @@ class UserLocation(Base):
 			'choices'       : countries_alpha2
 		}
 	)
+	state_or_province = Column(
+		'stprov',
+		Unicode(255),
+		Comment('State or province name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('State/province')
+		}
+	)
 	city = Column(
 		Unicode(255),
 		Comment('City name'),
@@ -993,16 +1008,6 @@ class UserLocation(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('City')
-		}
-	)
-	locality = Column(
-		Unicode(255),
-		Comment('Locality name'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Locality')
 		}
 	)
 	address = Column(
@@ -1116,7 +1121,7 @@ class UserLocation(Base):
 	)
 
 	def __str__(self):
-		req = get_current_request()
+		req = self.__req__ or get_current_request()
 		loc = get_localizer(req)
 		locale_cur = req.current_locale
 		locale_en = req.locales['en']
@@ -1167,6 +1172,22 @@ class UserLocation(Base):
 		if self.house:
 			return str(self.house)
 		return self.address
+
+def _mod_userloc(mapper, conn, tgt):
+	try:
+		from netprofile_ldap.ldap import store
+	except ImportError:
+		return
+	user = tgt.user
+	user_id = tgt.user_id
+	if (not user) and user_id:
+		user = DBSession().query(User).get(user_id)
+	if user:
+		store(user)
+
+event.listen(UserLocation, 'after_delete', _mod_userloc)
+event.listen(UserLocation, 'after_insert', _mod_userloc)
+event.listen(UserLocation, 'after_update', _mod_userloc)
 
 AddrFormatCompactFunction = SQLFunction(
 	'addr_format_compact',
