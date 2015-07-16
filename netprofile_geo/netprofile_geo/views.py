@@ -28,11 +28,15 @@ from __future__ import (
 	division
 )
 
+from collections import defaultdict
+
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
 from netprofile.common.hooks import register_hook
+
+from netprofile_core.models import AddressType
 
 _ = TranslationStringFactory('netprofile_geo')
 
@@ -100,4 +104,40 @@ def _dpane_house_places(tabs, model, req):
 		'extraParamProp'    : 'houseid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
+
+@register_hook('core.dpanetabs.core.User')
+def _dpane_user_locations(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Addresses')),
+		'iconCls'           : 'ico-mod-userlocation',
+		'xtype'             : 'grid_geo_UserLocation',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('user',),
+		'extraParamProp'    : 'uid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
+@register_hook('ldap.attrs.core.User')
+def _ldap_attrs_user(obj, dn, attrs):
+	newattrs = defaultdict(list)
+	req = getattr(obj, '__req__', None)
+	for loc in obj.locations:
+		loc.__req__ = req
+		for attr in AddressType.ldap_address_attrs(loc.type):
+			newattrs[attr].append(loc.street_address if (loc.type == AddressType.work) else str(loc))
+		if loc.type == AddressType.work:
+			if loc.country:
+				newattrs['c'].append(loc.country)
+			if loc.state_or_province:
+				newattrs['st'].append(loc.state_or_province)
+			if loc.city_address:
+				newattrs['l'].append(loc.city_address)
+			if loc.room:
+				newattrs['roomNumber'].append(loc.room)
+			if loc.postal_code:
+				newattrs['postalCode'].append(loc.postal_code)
+	if len(newattrs) > 0:
+		attrs.update(newattrs)
 

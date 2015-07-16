@@ -556,6 +556,10 @@ class ExtColumn(object):
 	def write_cap(self):
 		return self.column.info.get('write_cap')
 
+	@property
+	def choices(self):
+		return self.column.info.get('choices')
+
 	def get_secret_value(self, req):
 		cap = self.secret_value
 		if cap:
@@ -695,6 +699,11 @@ class ExtColumn(object):
 		ed_xtype = self.editor_xtype
 		if ed_xtype is None:
 			return None
+		choices = self.choices
+		if choices:
+			if callable(choices):
+				choices = choices(self, req)
+			ed_xtype = 'combobox'
 		if ed_xtype == 'combobox' and self.column.nullable:
 			ed_xtype = 'nullablecombobox'
 		if (self.column.primary_key) or \
@@ -727,6 +736,22 @@ class ExtColumn(object):
 		ro = self.get_read_only(req)
 		if ro:
 			conf['readOnly'] = True
+		if choices:
+			conf.update({
+				'queryMode'      : 'local',
+				'displayField'   : 'value',
+				'valueField'     : 'id',
+				'forceSelection' : True,
+				'store'          : {
+					'xtype'  : 'simplestore',
+					'fields' : ('id', 'value'),
+					'data'   : [{ 'id' : k, 'value' : v } for k, v in choices.items()]
+				}
+			})
+			if 'minLength' in conf:
+				del conf['minLength']
+			if 'maxLength' in conf:
+				del conf['maxLength']
 		val = self.default
 		if isinstance(val, Function):
 			val = None
@@ -853,10 +878,10 @@ class ExtColumn(object):
 		if in_form:
 			conf['fieldLabel'] = loc.translate(self.header_string)
 			val = self.pixels
-			if val is not None:
+			if (val is not None) and not choices:
 				conf['width'] = val + 125
 				if ('xtype' in conf) and (conf['xtype'] in ('numberfield', 'combobox', 'nullablecombobox')):
-					conf['width'] += 25
+					conf['width'] += 30
 		val = self.editor_config
 		if val:
 			_recursive_update(conf, val)
@@ -984,6 +1009,25 @@ class ExtColumn(object):
 					'labelField' : 'value',
 					'options'    : chf
 				})
+		choices = self.choices
+		if choices:
+			if callable(choices):
+				choices = choices(self, req)
+			chx = {}
+			chf = []
+			for k, v in choices.items():
+				chx[k] = v
+				chf.append({ 'id' : k, 'value' : v })
+			conf.update({
+				'xtype'    : 'enumcolumn',
+				'valueMap' : chx,
+				'filter'   : {
+					'type'       : 'nplist',
+					'idField'    : 'id',
+					'labelField' : 'value',
+					'options'    : chf
+				}
+			})
 		return conf
 
 	def append_data(self, obj):
@@ -1803,6 +1847,7 @@ class ExtModel(object):
 			row['__str__'] = ''
 			records.append(row)
 		for obj in q:
+			obj.__req__ = request
 			row = {}
 			for cname, col in cols.items():
 				if isinstance(cname, PseudoColumn):
@@ -1856,6 +1901,7 @@ class ExtModel(object):
 		raise RuntimeError('read_one() not implemented')
 
 	def set_values(self, obj, values, request, is_create=False):
+		obj.__req__ = request
 		cols = self.get_columns()
 		rcols = self.get_read_columns()
 		trans = self._get_trans(rcols)
@@ -1910,6 +1956,7 @@ class ExtModel(object):
 			if p in pt:
 				del pt[p]
 			obj = self.model()
+			obj.__req__ = request
 			apply_onetomany = []
 			helper = getattr(self.model, '__augment_create__', None)
 			if callable(helper) and not helper(sess, obj, pt, request):
@@ -2014,6 +2061,7 @@ class ExtModel(object):
 			if self.pk not in pt:
 				raise Exception('Can\'t find primary key in record parameters')
 			obj = sess.query(self.model).get(pt[self.pk])
+			obj.__req__ = request
 			helper = getattr(self.model, '__augment_update__', None)
 			if callable(helper) and not helper(sess, obj, pt, request):
 				continue
@@ -2094,6 +2142,7 @@ class ExtModel(object):
 			if self.pk not in pt:
 				raise Exception('Can\'t find primary key in record parameters')
 			obj = sess.query(self.model).get(pt[self.pk])
+			obj.__req__ = request
 			helper = getattr(self.model, '__augment_delete__', None)
 			if callable(helper) and not helper(sess, obj, pt, request):
 				continue

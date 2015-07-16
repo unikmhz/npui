@@ -51,7 +51,8 @@ class Module(ModuleBase):
 			models.House,
 			models.Place,
 			models.HouseGroup,
-			models.HouseGroupMapping
+			models.HouseGroupMapping,
+			models.UserLocation
 		)
 
 	@classmethod

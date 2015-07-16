@@ -29,6 +29,9 @@ from __future__ import (
 
 __all__ = [
 	'NPModule',
+	'AddressType',
+	'PhoneType',
+	'ContactInfoType',
 	'UserState',
 	'User',
 	'Group',
@@ -62,6 +65,10 @@ __all__ = [
 	'Calendar',
 	'CalendarImport',
 	'Event',
+	'CommunicationType',
+	'UserCommunicationChannel',
+	'UserPhone',
+	'UserEmail',
 
 	'HWAddrHexIEEEFunction',
 	'HWAddrHexLinuxFunction',
@@ -82,6 +89,8 @@ import urllib
 import itertools
 import base64
 import icalendar
+
+from collections import defaultdict
 
 from sqlalchemy import (
 	BINARY,
@@ -182,6 +191,7 @@ from pyramid.response import (
 	FileIter,
 	Response
 )
+from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
@@ -376,6 +386,83 @@ class NPModule(Base):
 			'iconCls'  : 'ico-module'
 		}
 
+class AddressType(DeclEnum):
+	"""
+	Address type ENUM.
+	"""
+	home    = 'home', _('Home Address'),    10
+	work    = 'work', _('Work Address'),    20
+	postal  = 'post', _('Postal Address'),  30
+	parcel  = 'parc', _('Parcel Address'),  40
+	billing = 'bill', _('Billing Address'), 50
+
+	@classmethod
+	def ldap_address_attrs(cls, data):
+		if data == AddressType.home:
+			return ('homePostalAddress',)
+		if data == AddressType.work:
+			return ('street',)
+		if data == AddressType.postal:
+			return ('postalAddress',)
+		return ()
+
+class PhoneType(DeclEnum):
+	"""
+	Phone type ENUM.
+	"""
+	home  = 'home',  _('Home Phone'),   10
+	cell  = 'cell',  _('Cell Phone'),   20
+	work  = 'work',  _('Work Phone'),   30
+	pager = 'pager', _('Pager Number'), 40
+	fax   = 'fax',   _('Fax Number'),   50
+	rec   = 'rec',   _('Receptionist'), 60
+
+	@classmethod
+	def icon(cls, data):
+		img = 'phone_small'
+		if data == PhoneType.cell:
+			img = 'mobile_small'
+		return img
+
+	@classmethod
+	def prefix(cls, data):
+		if data == PhoneType.home:
+			return _('home')
+		if data == PhoneType.cell:
+			return _('cell')
+		if data == PhoneType.work:
+			return _('work')
+		if data == PhoneType.pager:
+			return _('pg.')
+		if data == PhoneType.fax:
+			return _('fax')
+		if data == PhoneType.rec:
+			return _('rec.')
+		return _('tel.')
+
+	@classmethod
+	def ldap_attrs(cls, data):
+		if data == PhoneType.home:
+			return ('homePhone',)
+		if data == PhoneType.cell:
+			return ('mobile',)
+		if data == PhoneType.work:
+			return ('telephoneNumber',)
+		if data == PhoneType.pager:
+			return ('pager',)
+		if data == PhoneType.fax:
+			return ('facsimileTelephoneNumber',)
+		if data == PhoneType.rec:
+			return ('companyPhone',)
+		return ('otherPhone',)
+
+class ContactInfoType(DeclEnum):
+	"""
+	Scope of contact information ENUM.
+	"""
+	home = 'home', _('home'), 10
+	work = 'work', _('work'), 20
+
 class UserState(DeclEnum):
 	"""
 	Current user state ENUM.
@@ -440,7 +527,7 @@ class User(Base):
 		Index('users_i_state', 'state'),
 		Index('users_i_enabled', 'enabled'),
 		Index('users_i_managerid', 'managerid'),
-		Index('users_i_photo', 'photo'),
+		Index('users_i_phfileid', 'phfileid'),
 		Trigger('after', 'insert', 't_users_ai'),
 		Trigger('after', 'update', 't_users_au'),
 		Trigger('after', 'delete', 't_users_ad'),
@@ -457,19 +544,20 @@ class User(Base):
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Users'),
 				'default_sort' : ({ 'property': 'login' ,'direction': 'ASC' },),
-				'grid_view'    : ('uid', 'login', 'name_family', 'name_given', 'name_middle', 'manager', 'group', 'enabled', 'state', 'security_policy', 'email'),
+				'grid_view'    : ('uid', 'login', 'name_family', 'name_given', 'name_middle', 'manager', 'group', 'enabled', 'state', 'security_policy'),
 				'grid_hidden'  : ('uid', 'name_middle', 'manager', 'security_policy'),
 				'form_view'    : (
 					'login', 'name_family', 'name_given', 'name_middle',
-					'title', 'group', 'secondary_groups', 'enabled',
+					'org', 'orgunit', 'title',
+					'group', 'secondary_groups', 'enabled',
 					'pass', 'security_policy', 'state',
-					'email', 'manager', 'photo'
+					'manager', 'photo', 'descr'
 				),
 				'easy_search'  : ('login', 'name_family'),
 				'create_wizard' : 
 					Wizard(
-						Step('login', 'pass', 'group', 'email', title=_('New user')),
-						Step('name_family', 'name_given', 'name_middle', 'ipaddr', 'enabled','state',title=_('New user details')),
+						Step('login', 'pass', 'group', title=_('New user')),
+						Step('name_family', 'name_given', 'name_middle', 'enabled', 'state', title=_('New user details')),
 						title=_('Add new user')
 					),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
@@ -612,8 +700,32 @@ class User(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Middle Name'),
-			'ldap_attr'     : 'initials', # FIXME?
+			'ldap_attr'     : 'initials',
 			'column_flex'   : 3
+		}
+	)
+	organization = Column(
+		'org',
+		Unicode(255),
+		Comment('Organization name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Organization'),
+			'ldap_attr'     : 'o'
+		}
+	)
+	organizational_unit = Column(
+		'orgunit',
+		Unicode(255),
+		Comment('Organizational unit name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Organizational Unit'),
+			'ldap_attr'     : 'ou'
 		}
 	)
 	title = Column(
@@ -623,7 +735,7 @@ class User(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Title'),
+			'header_string' : _('Position'),
 			'ldap_attr'     : 'title'
 		}
 	)
@@ -637,19 +749,6 @@ class User(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Manager'),
-			'column_flex'   : 2
-		}
-	)
-	email = Column(
-		Unicode(64),
-		Comment('User\'s e-mail'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('E-mail'),
-			'vtype'         : 'email',
-			'ldap_attr'     : 'mail',
 			'column_flex'   : 2
 		}
 	)
@@ -676,15 +775,29 @@ class User(Base):
 		}
 	)
 	photo_id = Column(
-		'photo',
+		'phfileid',
 		UInt32(),
-		ForeignKey('files_def.fileid', name='users_fk_photo', ondelete='SET NULL', onupdate='CASCADE', use_alter=True),
-		Comment('Photo File ID'),
+		ForeignKey('files_def.fileid', name='users_fk_phfileid', ondelete='SET NULL', onupdate='CASCADE', use_alter=True),
+		Comment('Photo file ID'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Photo')
+			'header_string' : _('Photo'),
+			'ldap_attr'     : 'jpegPhoto',
+			'ldap_value'    : 'ldap_photo'
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('User description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description'),
+			'ldap_attr'     : ('comment', 'description')
 		}
 	)
 
@@ -776,6 +889,24 @@ class User(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	comm_channels = relationship(
+		'UserCommunicationChannel',
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	phones = relationship(
+		'UserPhone',
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	email_addresses = relationship(
+		'UserEmail',
+		backref=backref('user', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	secondary_groups = association_proxy(
 		'secondary_groupmap',
@@ -845,6 +976,16 @@ class User(Base):
 		ctx.update(pw.encode())
 		ctx.update(salt)
 		return '{SSHA}' + base64.b64encode(ctx.digest() + salt).decode()
+
+	def ldap_photo(self, settings):
+		if not self.photo:
+			return
+		ph = self.photo
+		if not ph.mime_type:
+			return
+		if ph.plain_mime_type != 'image/jpeg':
+			return
+		return ph.get_data(sess=DBSession())
 
 	def generate_a1hash(self, realm):
 		ctx = hashlib.md5()
@@ -1113,6 +1254,15 @@ class User(Base):
 			ret['loginShell'] = settings['netprofile.ldap.orm.User.default_shell']
 		if len(dnlist) > 0:
 			ret['memberOf'] = dnlist
+		if len(self.email_addresses) > 0:
+			ret['mail'] = [str(ea) for ea in self.email_addresses]
+		phones = defaultdict(list)
+		for ph in self.phones:
+			for attr in PhoneType.ldap_attrs(ph.type):
+				# FIXME: format phone as intl. (probably using phonenumbers lib)
+				phones[attr].append(ph.number)
+		if len(phones) > 0:
+			ret.update(phones)
 		return ret
 
 	def get_uri(self):
@@ -1148,8 +1298,8 @@ class User(Base):
 
 	def dav_alt_uri(self, req):
 		uris = []
-		if self.email:
-			uris.append('mailto:' + self.email)
+		for email in self.email_addresses:
+			uris.append('mailto:' + str(email))
 		return uris
 
 	def _get_vcard(self):
@@ -1173,8 +1323,8 @@ class User(Base):
 		card.add('N', cal.vStructuredUnicode(*fname))
 		card.add('FN', cal.vUnicode(' '.join(fname)))
 		card.add('NICKNAME', cal.vUnicode(self.login))
-		if self.email:
-			card.add('EMAIL', cal.vEMail(self.email))
+		for email in self.email_addresses:
+			card.add('EMAIL', cal.vEMail(str(email)))
 
 		ical = card.to_ical()
 		resp = Response(ical, content_type='text/x-vcard', charset='utf-8')
@@ -1199,7 +1349,7 @@ class User(Base):
 			self.vcard = self._get_vcard()
 		return self.vcard
 
-	@validates('name_family', 'name_given', 'name_middle', 'login', 'email')
+	@validates('name_family', 'name_given', 'name_middle', 'login')
 	def _reset_vcard(self, k, v):
 		self.vcard = None
 		return v
@@ -2445,6 +2595,532 @@ def _sess_nextcheck(req, ts):
 	except (TypeError, ValueError):
 		secs = 1800
 	return ts + dt.timedelta(seconds=secs)
+
+class CommunicationType(Base):
+	"""
+	Defines IM, social media and other communication channel links.
+	"""
+	__tablename__ = 'comms_types'
+	__table_args__ = (
+		Comment('Communication channel types'),
+		Index('comms_types_u_name', 'name', unique=True),
+		Index('comms_types_i_impp', 'impp'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				# FIXME
+				'cap_menu'      : 'BASE_ADMIN',
+				# no read cap
+				'cap_create'    : 'BASE_ADMIN',
+				'cap_edit'      : 'BASE_ADMIN',
+				'cap_delete'    : 'BASE_ADMIN',
+
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Communication Types'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					'commtid',
+					MarkupColumn(
+						name='icon',
+						header_string='&nbsp;',
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="{grid_icon}" />'
+					),
+					'name', 'impp'
+				),
+				'grid_hidden'   : ('commtid',),
+				'form_view'     : ('name', 'icon', 'impp', 'urifmt', 'descr'),
+				'easy_search'   : ('name',),
+				'extra_data'    : ('grid_icon',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new communication type'))
+			}
+		}
+	)
+	id = Column(
+		'commtid',
+		UInt32(),
+		Sequence('comms_types_commtid_seq'),
+		Comment('Communication channel type ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Communication channel name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 1
+		}
+	)
+	icon = Column(
+		ASCIIString(32),
+		Comment('Icon name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Icon')
+		}
+	)
+	uri_protocol = Column(
+		'impp',
+		ASCIIString(32),
+		Comment('vCard IMPP URI prefix'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Protocol')
+		}
+	)
+	uri_format = Column(
+		'urifmt',
+		Unicode(255),
+		Comment('URI format string'),
+		nullable=False,
+		default='{proto}:{address}',
+		server_default='{proto}:{address}',
+		info={
+			'header_string' : _('URI Format')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Communication channel type description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	user_channels = relationship(
+		'UserCommunicationChannel',
+		backref=backref('type', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
+	def __str__(self):
+		return '%s' % str(self.name)
+
+	def grid_icon(self, req):
+		icn = self.icon or 'generic'
+		return req.static_url('netprofile_core:static/img/comms/' + icn + '.png')
+
+	def format_uri(self, addr):
+		if PY3:
+			addr = urllib.parse.quote(addr, '')
+		else:
+			addr = urllib.quote(addr.encode(), '')
+		return self.uri_format.format(proto=self.uri_protocol, address=addr)
+
+class UserPhone(Base):
+	"""
+	Users' phone contacts.
+	"""
+	__tablename__ = 'users_phones'
+	__table_args__ = (
+		Comment('User phone numbers'),
+		Index('users_phones_i_uid', 'uid'),
+		Index('users_phones_i_num', 'num'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_read'      : 'USERS_LIST',
+				'cap_create'    : 'USERS_EDIT',
+				'cap_edit'      : 'USERS_EDIT',
+				'cap_delete'    : 'USERS_EDIT',
+
+				'menu_name'     : _('Phones'),
+				'default_sort'  : (
+					{ 'property': 'ptype' ,'direction': 'ASC' },
+					{ 'property': 'num' ,'direction': 'ASC' }
+				),
+				'grid_view'     : ('uphoneid', 'user', 'primary', 'ptype', 'num', 'descr'),
+				'grid_hidden'   : ('uphoneid',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new phone'))
+			}
+		}
+	)
+	id = Column(
+		'uphoneid',
+		UInt32(),
+		Sequence('users_phones_uphoneid_seq'),
+		Comment('User phone ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='users_phones_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'column_flex'   : 2,
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Primary flag'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	type = Column(
+		'ptype',
+		PhoneType.db_type(),
+		Comment('Phone type'),
+		nullable=False,
+		default=PhoneType.work,
+		server_default=PhoneType.work,
+		info={
+			'header_string' : _('Type'),
+			'column_flex'   : 1
+		}
+	)
+	number = Column(
+		'num',
+		ASCIIString(255),
+		Comment('Phone number'),
+		nullable=False,
+		info={
+			'header_string' : _('Number'),
+			'column_flex'   : 1
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Phone description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description'),
+			'column_flex'   : 2
+		}
+	)
+
+	def __str__(self):
+		req = get_current_request()
+		loc = get_localizer(req)
+
+		return '%s: %s' % (
+			loc.translate(PhoneType.prefix(self.type)),
+			self.number
+		)
+
+def _mod_phone(mapper, conn, tgt):
+	try:
+		from netprofile_ldap.ldap import store
+	except ImportError:
+		return
+	user = tgt.user
+	user_id = tgt.user_id
+	if (not user) and user_id:
+		user = DBSession().query(User).get(user_id)
+	if user:
+		store(user)
+
+event.listen(UserPhone, 'after_delete', _mod_phone)
+event.listen(UserPhone, 'after_insert', _mod_phone)
+event.listen(UserPhone, 'after_update', _mod_phone)
+
+class UserEmail(Base):
+	"""
+	Users' email addresses.
+	"""
+	__tablename__ = 'users_email'
+	__table_args__ = (
+		Comment('User e-mail addresses'),
+		Index('users_email_u_addr', 'addr', unique=True),
+		Index('users_email_i_uid', 'uid'),
+		Index('users_email_i_aliasid', 'aliasid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_read'      : 'USERS_LIST',
+				'cap_create'    : 'USERS_EDIT',
+				'cap_edit'      : 'USERS_EDIT',
+				'cap_delete'    : 'USERS_EDIT',
+
+				'menu_name'     : _('E-mail'),
+				'default_sort'  : (
+					{ 'property': 'scope' ,'direction': 'ASC' },
+					{ 'property': 'addr' ,'direction': 'ASC' },
+				),
+				'grid_view'     : ('uemailid', 'user', 'primary', 'scope', 'addr', 'original'),
+				'grid_hidden'   : ('uemailid',),
+				'form_view'     : ('user', 'primary', 'scope', 'addr', 'original', 'descr'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new e-mail address'))
+			}
+		}
+	)
+	id = Column(
+		'uemailid',
+		UInt32(),
+		Sequence('users_email_uemailid_seq'),
+		Comment('User e-mail ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='users_email_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'column_flex'   : 2,
+			'filter_type'   : 'none'
+		}
+	)
+	original_id = Column(
+		'aliasid',
+		UInt32(),
+		ForeignKey('users_email.uemailid', name='users_email_fk_aliasid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Aliased e-mail ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Original'),
+			'column_flex'   : 3,
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Primary flag'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	scope = Column(
+		ContactInfoType.db_type(),
+		Comment('Address scope'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Type')
+		}
+	)
+	address = Column(
+		'addr',
+		Unicode(255),
+		nullable=False,
+		info={
+			'header_string' : _('Address'),
+			'column_flex'   : 3
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Address description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	aliases = relationship(
+		'UserEmail',
+		backref=backref('original', remote_side=(id,)),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
+	def __str__(self):
+		return '%s' % (self.address,)
+
+def _mod_mail(mapper, conn, tgt):
+	try:
+		from netprofile_ldap.ldap import store
+	except ImportError:
+		return
+	user = tgt.user
+	user_id = tgt.user_id
+	if (not user) and user_id:
+		user = DBSession().query(User).get(user_id)
+	if user:
+		store(user)
+
+event.listen(UserEmail, 'after_delete', _mod_mail)
+event.listen(UserEmail, 'after_insert', _mod_mail)
+event.listen(UserEmail, 'after_update', _mod_mail)
+
+class UserCommunicationChannel(Base):
+	"""
+	Users' communication channel links.
+	"""
+	__tablename__ = 'users_comms'
+	__table_args__ = (
+		Comment('User communication channels'),
+		Index('users_comms_i_commtid', 'commtid'),
+		Index('users_comms_i_uid', 'uid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_read'      : 'USERS_LIST',
+				'cap_create'    : 'USERS_EDIT',
+				'cap_edit'      : 'USERS_EDIT',
+				'cap_delete'    : 'USERS_EDIT',
+
+				'menu_name'     : _('User Communications'),
+				'default_sort'  : ({ 'property': 'commtid' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					'ucommid',
+					MarkupColumn(
+						header_string='&nbsp;',
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="{grid_icon}" />'
+					),
+					'type', 'user', 'primary', 'scope',
+					MarkupColumn(
+						name='value',
+						header_string=_('Address'),
+						column_flex=3,
+						template='<a href="{uri}">{value}</a>'
+					)
+				),
+				'grid_hidden'   : ('ucommid',),
+				'form_view'     : ('type', 'user', 'primary', 'scope', 'value', 'descr'),
+				'extra_data'    : ('grid_icon', 'uri'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new communication channel'))
+			}
+		}
+	)
+	id = Column(
+		'ucommid',
+		UInt32(),
+		Sequence('users_comms_ucommid_seq'),
+		Comment('User communication channel ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	type_id = Column(
+		'commtid',
+		UInt32(),
+		ForeignKey('comms_types.commtid', name='users_comms_fk_commtid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Communication channel type ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Type'),
+			'column_flex'   : 2,
+			'filter_type'   : 'list',
+			'editor_xtype'  : 'simplemodelselect'
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='users_comms_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'column_flex'   : 2,
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Primary flag'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	scope = Column(
+		ContactInfoType.db_type(),
+		Comment('Channel scope'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Type')
+		}
+	)
+	value = Column(
+		Unicode(255),
+		Comment('Channel address value'),
+		nullable=False,
+		info={
+			'header_string' : _('Address'),
+			'column_flex'   : 3
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Communication channel description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	def __str__(self):
+		return '%s: %s' % (
+			str(self.type),
+			str(self.user)
+		)
+
+	def uri(self, req):
+		if self.type and self.value:
+			return self.type.format_uri(self.value)
+
+	def grid_icon(self, req):
+		if self.type:
+			return self.type.grid_icon(req)
 
 class DAVLock(Base):
 	"""
@@ -4024,10 +4700,10 @@ class File(Base):
 		self.data = None
 		self.mime_type = infile.mime_type
 
-	def get_data(self):
+	def get_data(self, sess=None):
 		if self.data:
 			return self.data
-		with self.open('r') as fd:
+		with self.open('r', sess=sess) as fd:
 			return fd.read()
 
 	def __str__(self):

@@ -36,6 +36,7 @@ __all__ = [
 	'Place',
 	'HouseGroup',
 	'HouseGroupMapping',
+	'UserLocation',
 
 	'AddrFormatCompactFunction',
 	'AddrFormatFunction',
@@ -50,13 +51,17 @@ __all__ = [
 	'AddrStreetNamesView'
 ]
 
+from collections import OrderedDict
+
 from sqlalchemy import (
+	CHAR,
 	Column,
 	ForeignKey,
 	Index,
 	Sequence,
 	Unicode,
 	UnicodeText,
+	event,
 	func,
 	literal_column,
 	text
@@ -77,10 +82,14 @@ from netprofile.db.connection import (
 	DBSession
 )
 from netprofile.db.fields import (
+	Int16,
+	NPBoolean,
 	UInt8,
 	UInt16,
-	UInt32
+	UInt32,
+	npbool
 )
+from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.filters import (
 	CheckboxGroupFilter
 )
@@ -98,6 +107,10 @@ from netprofile.db.ddl import (
 )
 from netprofile.db.util import populate_related_list
 
+from netprofile_core.models import (
+	AddressType,
+	User
+)
 from netprofile_geo.filters import AddressFilter
 
 from pyramid.threadlocal import get_current_request
@@ -107,6 +120,20 @@ from pyramid.i18n import (
 )
 
 _ = TranslationStringFactory('netprofile_geo')
+
+def countries_alpha2(column, req):
+	locale_cur = req.current_locale
+	locale_en = req.locales['en']
+	ret = dict()
+	for code in locale_en.territories:
+		if len(code) != 2:
+			continue
+		try:
+			ret[code] = locale_cur.territories[code]
+		except KeyError:
+			ret[code] = locale_en.territories[code]
+
+	return OrderedDict((k, v) for k, v in sorted(ret.items(), key=lambda x: x[1]))
 
 class City(Base):
 	"""
@@ -562,6 +589,12 @@ class House(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	user_locations = relationship(
+		'UserLocation',
+		backref='house',
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	house_groups = association_proxy(
 		'house_groupmap',
@@ -860,6 +893,301 @@ class HouseGroupMapping(Base):
 			'header_string' : _('House')
 		}
 	)
+
+class UserLocation(Base):
+	"""
+	Users' addresses.
+	"""
+	__tablename__ = 'users_locations'
+	__table_args__ = (
+		Comment('User locations'),
+		Index('users_locations_i_uid', 'uid'),
+		Index('users_locations_i_houseid', 'houseid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_read'      : 'USERS_LIST',
+				'cap_create'    : 'USERS_EDIT',
+				'cap_edit'      : 'USERS_EDIT',
+				'cap_delete'    : 'USERS_EDIT',
+
+				'menu_name'     : _('User Addresses'),
+				'default_sort'  : ({ 'property': 'atype' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					'ulocid', 'user', 'primary', 'atype',
+					MarkupColumn(
+						header_string=_('Address'),
+						column_flex=3,
+						template='{__str__}'
+					)
+				),
+				'grid_hidden'   : ('ulocid',),
+				'form_view'     : (
+					'user', 'primary', 'atype', 'house',
+					'country', 'stprov', 'city', 'addr',
+					'entrance', 'floor', 'flat', 'room',
+					'entrycode', 'postindex', 'descr'
+				),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new user address'))
+			}
+		}
+	)
+	id = Column(
+		'ulocid',
+		UInt32(),
+		Sequence('users_locations_ulocid_seq'),
+		Comment('User location ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='users_locations_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Primary flag'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	type = Column(
+		'atype',
+		AddressType.db_type(),
+		Comment('Address type'),
+		nullable=False,
+		default=AddressType.work,
+		server_default=AddressType.work,
+		info={
+			'header_string' : _('Type'),
+			'column_flex'   : 1
+		}
+	)
+	country = Column(
+		CHAR(2),
+		Comment('ISO 3166-1 alpha-2 country code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Country'),
+			'choices'       : countries_alpha2
+		}
+	)
+	state_or_province = Column(
+		'stprov',
+		Unicode(255),
+		Comment('State or province name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('State/province')
+		}
+	)
+	city = Column(
+		Unicode(255),
+		Comment('City name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('City')
+		}
+	)
+	address = Column(
+		'addr',
+		Unicode(255),
+		Comment('Freeform address'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Address')
+		}
+	)
+	house_id = Column(
+		'houseid',
+		UInt32(),
+		ForeignKey('addr_houses.houseid', name='users_locations_fk_houseid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('House ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('House'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
+		}
+	)
+	entrance = Column(
+		UInt8(),
+		Comment('Entrance number'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Entr.')
+		}
+	)
+	floor = Column(
+		Int16(),
+		Comment('Floor number'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Floor')
+		}
+	)
+	flat = Column(
+		UInt16(),
+		Comment('Flat/office number'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Flat')
+		}
+	)
+	room = Column(
+		Unicode(8),
+		Comment('Room identifier'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Room')
+		}
+	)
+	entry_code = Column(
+		'entrycode',
+		Unicode(8),
+		Comment('Entry code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Entry Code')
+		}
+	)
+	postal_code = Column(
+		'postindex',
+		Unicode(8),
+		Comment('Postal code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Postal Code')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Address description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description'),
+			'column_flex'   : 2
+		}
+	)
+
+	user = relationship(
+		'User',
+		innerjoin=True,
+		backref=backref(
+			'locations',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+
+	def __str__(self):
+		req = self.__req__ or get_current_request()
+		loc = get_localizer(req)
+		locale_cur = req.current_locale
+		locale_en = req.locales['en']
+
+		ret = []
+		bit = self.country
+		if bit:
+			if bit in locale_cur.territories:
+				bit = locale_cur.territories[bit]
+			elif bit in locale_en.territories:
+				bit = locale_en.territories[bit]
+			ret.append(bit + ',')
+		bit = self.city_address
+		if bit:
+			ret.append(bit + ',')
+		bit = self.street_address
+		if bit:
+			ret.append(bit)
+		if self.entrance:
+			ret.extend((
+				loc.translate(_('entr.')),
+				str(self.entrance)
+			))
+		if self.floor:
+			ret.extend((
+				loc.translate(_('fl.')),
+				str(self.floor)
+			))
+		if self.flat:
+			pfx = _('app.')
+			if self.type == AddressType.work:
+				pfx = _('office')
+			ret.extend((
+				loc.translate(pfx),
+				str(self.flat)
+			))
+
+		return ' '.join(ret)
+
+	@property
+	def city_address(self):
+		if self.house and self.house.street:
+			return str(self.house.street.city)
+		return self.city
+
+	@property
+	def street_address(self):
+		if self.house:
+			return str(self.house)
+		return self.address
+
+def _mod_userloc(mapper, conn, tgt):
+	try:
+		from netprofile_ldap.ldap import store
+	except ImportError:
+		return
+	user = tgt.user
+	user_id = tgt.user_id
+	if (not user) and user_id:
+		user = DBSession().query(User).get(user_id)
+	if user:
+		store(user)
+
+event.listen(UserLocation, 'after_delete', _mod_userloc)
+event.listen(UserLocation, 'after_insert', _mod_userloc)
+event.listen(UserLocation, 'after_update', _mod_userloc)
 
 AddrFormatCompactFunction = SQLFunction(
 	'addr_format_compact',

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_geo 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-21 21:30+0300\n"
-"PO-Revision-Date: 2015-04-21 21:30+0300\n"
+"POT-Creation-Date: 2015-07-16 09:43+0300\n"
+"PO-Revision-Date: 2015-07-16 09:50+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
@@ -20,149 +20,227 @@ msgstr ""
 "Generated-By: Babel 2.0-dev\n"
 "X-Generator: Poedit 1.5.5\n"
 
-#: netprofile_geo/__init__.py:138
+#: netprofile_geo/__init__.py:139
 msgid "Geography"
 msgstr "География"
 
-#: netprofile_geo/models.py:130
+#: netprofile_geo/models.py:157
 msgid "Cities"
 msgstr "Города"
 
-#: netprofile_geo/models.py:137
+#: netprofile_geo/models.py:164
 msgid "Add new city"
 msgstr "Добавить город"
 
-#: netprofile_geo/models.py:150 netprofile_geo/models.py:231
-#: netprofile_geo/models.py:318 netprofile_geo/models.py:473
-#: netprofile_geo/models.py:655 netprofile_geo/models.py:765
-#: netprofile_geo/models.py:840
+#: netprofile_geo/models.py:177 netprofile_geo/models.py:258
+#: netprofile_geo/models.py:345 netprofile_geo/models.py:500
+#: netprofile_geo/models.py:688 netprofile_geo/models.py:798
+#: netprofile_geo/models.py:873 netprofile_geo/models.py:945
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_geo/models.py:158 netprofile_geo/models.py:251
-#: netprofile_geo/models.py:352 netprofile_geo/models.py:687
-#: netprofile_geo/models.py:773
+#: netprofile_geo/models.py:185 netprofile_geo/models.py:278
+#: netprofile_geo/models.py:379 netprofile_geo/models.py:720
+#: netprofile_geo/models.py:806
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_geo/models.py:169 netprofile_geo/models.py:262
-#: netprofile_geo/models.py:363
+#: netprofile_geo/models.py:196 netprofile_geo/models.py:289
+#: netprofile_geo/models.py:390
 msgid "Prefix"
 msgstr "Префикс"
 
-#: netprofile_geo/models.py:211 netprofile_geo/views.py:43
+#: netprofile_geo/models.py:238 netprofile_geo/views.py:47
 msgid "Districts"
 msgstr "Районы"
 
-#: netprofile_geo/models.py:218
+#: netprofile_geo/models.py:245
 msgid "Add new district"
 msgstr "Добавить район"
 
-#: netprofile_geo/models.py:241 netprofile_geo/models.py:328
+#: netprofile_geo/models.py:268 netprofile_geo/models.py:355
+#: netprofile_geo/models.py:1010
 msgid "City"
 msgstr "Город"
 
-#: netprofile_geo/models.py:298 netprofile_geo/views.py:52
-#: netprofile_geo/views.py:66
+#: netprofile_geo/models.py:325 netprofile_geo/views.py:56
+#: netprofile_geo/views.py:70
 msgid "Streets"
 msgstr "Улицы"
 
-#: netprofile_geo/models.py:305
+#: netprofile_geo/models.py:332
 msgid "Add new street"
 msgstr "Добавить улицу"
 
-#: netprofile_geo/models.py:342
+#: netprofile_geo/models.py:369
 msgid "District"
 msgstr "Район"
 
-#: netprofile_geo/models.py:373
+#: netprofile_geo/models.py:400
 msgid "Suffix"
 msgstr "Суффикс"
 
-#: netprofile_geo/models.py:437 netprofile_geo/views.py:80
+#: netprofile_geo/models.py:464 netprofile_geo/views.py:84
 msgid "Houses"
 msgstr "Дома"
 
-#: netprofile_geo/models.py:446
+#: netprofile_geo/models.py:473
 msgid "House Group"
 msgstr "Группа домов"
 
-#: netprofile_geo/models.py:452
+#: netprofile_geo/models.py:479 netprofile_geo/models.py:920
+#: netprofile_geo/models.py:1021
 msgid "Address"
 msgstr "Адрес"
 
-#: netprofile_geo/models.py:457
+#: netprofile_geo/models.py:484
 msgid "Basic house data"
 msgstr "Базовая информация о доме"
 
-#: netprofile_geo/models.py:458
+#: netprofile_geo/models.py:485
 msgid "Additional house data"
 msgstr "Доп. информация о доме"
 
-#: netprofile_geo/models.py:459
+#: netprofile_geo/models.py:486
 msgid "Add new house"
 msgstr "Добавить дом"
 
-#: netprofile_geo/models.py:483
+#: netprofile_geo/models.py:510
 msgid "Street"
 msgstr "Улица"
 
-#: netprofile_geo/models.py:495 netprofile_geo/models.py:677
+#: netprofile_geo/models.py:522 netprofile_geo/models.py:710
 msgid "Number"
 msgstr "Номер"
 
-#: netprofile_geo/models.py:505
+#: netprofile_geo/models.py:532
 msgid "Building"
 msgstr "Корпус"
 
-#: netprofile_geo/models.py:516
+#: netprofile_geo/models.py:543
 msgid "Second Num."
 msgstr "Второй номер"
 
-#: netprofile_geo/models.py:527
+#: netprofile_geo/models.py:554
 msgid "Num. Suffix"
 msgstr "Суффикс номера"
 
-#: netprofile_geo/models.py:538 netprofile_geo/models.py:697
+#: netprofile_geo/models.py:565 netprofile_geo/models.py:730
 msgid "Entr. #"
 msgstr "Подъезд"
 
-#: netprofile_geo/models.py:549
+#: netprofile_geo/models.py:576 netprofile_geo/models.py:1097
 msgid "Postal Code"
 msgstr "Почтовый индекс"
 
-#: netprofile_geo/models.py:611
+#: netprofile_geo/models.py:644
 msgid "bld."
 msgstr "к."
 
-#: netprofile_geo/models.py:635 netprofile_geo/views.py:94
+#: netprofile_geo/models.py:668 netprofile_geo/views.py:98
 msgid "Places"
 msgstr "Размещения"
 
-#: netprofile_geo/models.py:642
+#: netprofile_geo/models.py:675
 msgid "Add new place"
 msgstr "Добавить размещение"
 
-#: netprofile_geo/models.py:665 netprofile_geo/models.py:860
+#: netprofile_geo/models.py:698 netprofile_geo/models.py:893
+#: netprofile_geo/models.py:1033
 msgid "House"
 msgstr "Дом"
 
-#: netprofile_geo/models.py:707
+#: netprofile_geo/models.py:740
 msgid "Floor #"
 msgstr "Этаж"
 
-#: netprofile_geo/models.py:718 netprofile_geo/models.py:785
+#: netprofile_geo/models.py:751 netprofile_geo/models.py:818
+#: netprofile_geo/models.py:1108
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_geo/models.py:745 netprofile_geo/models.py:817
+#: netprofile_geo/models.py:778 netprofile_geo/models.py:850
 msgid "House Groups"
 msgstr "Группы домов"
 
-#: netprofile_geo/models.py:752
+#: netprofile_geo/models.py:785
 msgid "Add new house group"
 msgstr "Добавить группу домов"
 
-#: netprofile_geo/models.py:850
+#: netprofile_geo/models.py:883
 msgid "Group"
 msgstr "Группа"
+
+#: netprofile_geo/models.py:915
+msgid "User Addresses"
+msgstr "Адреса"
+
+#: netprofile_geo/models.py:933
+#| msgid "Add new house group"
+msgid "Add new user address"
+msgstr "Добавить адрес сотрудника"
+
+#: netprofile_geo/models.py:955
+#| msgid "House"
+msgid "User"
+msgstr "Сотрудник"
+
+#: netprofile_geo/models.py:966
+msgid "Primary"
+msgstr "Основной"
+
+#: netprofile_geo/models.py:977
+msgid "Type"
+msgstr "Тип"
+
+#: netprofile_geo/models.py:988
+msgid "Country"
+msgstr "Страна"
+
+#: netprofile_geo/models.py:1000
+msgid "State/province"
+msgstr "Область"
+
+#: netprofile_geo/models.py:1045
+#| msgid "Entr. #"
+msgid "Entr."
+msgstr "Пд."
+
+#: netprofile_geo/models.py:1055
+#| msgid "Floor #"
+msgid "Floor"
+msgstr "Этаж"
+
+#: netprofile_geo/models.py:1065
+msgid "Flat"
+msgstr "Квартира/офис"
+
+#: netprofile_geo/models.py:1075
+msgid "Room"
+msgstr "Комната"
+
+#: netprofile_geo/models.py:1086
+msgid "Entry Code"
+msgstr "Код домофона"
+
+#: netprofile_geo/models.py:1145
+#| msgid "Entr. #"
+msgid "entr."
+msgstr "пд."
+
+#: netprofile_geo/models.py:1150
+msgid "fl."
+msgstr "эт."
+
+#: netprofile_geo/models.py:1154
+msgid "app."
+msgstr "кв."
+
+#: netprofile_geo/models.py:1156
+msgid "office"
+msgstr "офис"
+
+#: netprofile_geo/views.py:112
+#| msgid "Address"
+msgid "Addresses"
+msgstr "Адреса"

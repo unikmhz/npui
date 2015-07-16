@@ -16,7 +16,7 @@
 	<div>
 <tpl for="data.phones">
 	<span>
-		<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img')}/{img}.png" />
+		<img class="np-inline-img" src="${req.static_url('netprofile_core:static/img/phone')}/{img}.png" />
 		{str}
 	</span>
 </tpl>

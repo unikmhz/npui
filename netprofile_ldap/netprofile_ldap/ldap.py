@@ -30,6 +30,7 @@ from __future__ import (
 import ldap3
 import ssl
 from sqlalchemy import event
+from sqlalchemy.orm import object_mapper
 from pyramid.settings import (
 	asbool,
 	aslist
@@ -226,7 +227,8 @@ def _gen_ldap_object_delete(em, info, settings, hm):
 def _proc_model_ldap(mmgr, model):
 	if not LDAPConn:
 		return
-	info = model.model.__table__.info
+	cls = model.model
+	info = cls.__table__.info
 	if ('ldap_classes' not in info) or ('ldap_rdn' not in info):
 		return
 
@@ -234,10 +236,22 @@ def _proc_model_ldap(mmgr, model):
 	settings = registry.settings
 	hm = registry.getUtility(IHookManager)
 
-	event.listen(model.model, 'load', _gen_ldap_object_load(model, info, settings, hm))
-	event.listen(model.model, 'after_insert', _gen_ldap_object_store(model, info, settings, hm))
-	event.listen(model.model, 'after_update', _gen_ldap_object_store(model, info, settings, hm))
-	event.listen(model.model, 'after_delete', _gen_ldap_object_delete(model, info, settings, hm))
+	cls._ldap_load = _gen_ldap_object_load(model, info, settings, hm)
+	cls._ldap_store = _gen_ldap_object_store(model, info, settings, hm)
+	cls._ldap_delete = _gen_ldap_object_delete(model, info, settings, hm)
+
+	event.listen(model.model, 'load', cls._ldap_load)
+	event.listen(model.model, 'after_insert', cls._ldap_store)
+	event.listen(model.model, 'after_update', cls._ldap_store)
+	event.listen(model.model, 'after_delete', cls._ldap_delete)
+
+def store(obj):
+	if not LDAPConn:
+		return
+	cls = obj.__class__
+	callback = getattr(cls, '_ldap_store', None)
+	if callable(callback):
+		return callback(object_mapper(obj), None, obj)
 
 def includeme(config):
 	global _ldap_active, LDAPConn
