@@ -54,7 +54,7 @@ Ext.define('NetProfile.form.FileUpload', {
 	onButtonClose: function()
 	{
 		var me = this,
-			fb = me.ownerCt,
+			fb = me.up('filebrowser'),
 			tbar = fb.down('toolbar[dock=top]'),
 			btn = tbar.getComponent('btn_upload');
 
@@ -70,7 +70,7 @@ Ext.define('NetProfile.form.FileUpload', {
 	{
 		var me = this,
 			form = me.getForm(),
-			fb = me.ownerCt;
+			fb = me.up('filebrowser');
 
 		if(!form || !form.isValid())
 			return;

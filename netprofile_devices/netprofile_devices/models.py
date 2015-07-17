@@ -1643,7 +1643,8 @@ class DeviceTypeFile(Base):
 		nullable=False,
 		info={
 			'header_string' : _('File'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'editor_xtype'  : 'fileselect'
 		}
 	)
 
