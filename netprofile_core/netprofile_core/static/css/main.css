@@ -74,6 +74,11 @@ div#splash div.splashcont h1
 	height: 16px;
 }
 
+.x-form-folder-trigger
+{
+	background-image: url(../img/trigger-folder.png);
+}
+
 .np-cap-icon
 {
 	display: inline-block;

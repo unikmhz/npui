@@ -122,6 +122,10 @@ Ext.onReady(function()
 		override: 'NetProfile.form.field.ModelSelect',
 		chooseText: 'Выберите объект'
 	});
+	Ext.define('Ext.locale.ru.NetProfile.form.field.FileSelect', {
+		override: 'NetProfile.form.field.FileSelect',
+		chooseText: 'Выберите файл'
+	});
 
 	Ext.define('Ext.locale.ru.NetProfile.tab.PropBar', {
 		override: 'NetProfile.tab.PropBar',
@@ -234,6 +238,7 @@ Ext.onReady(function()
 		deleteManyMsgText: 'Вы уверены что хотите удалить выбранные файлы?',
 
 		btnUploadText: 'Залить',
+		btnFoldersText: 'Папки',
 
 		btnRenameText: 'Переименовать',
 		btnPropsText: 'Свойства',

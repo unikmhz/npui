@@ -9,14 +9,9 @@ Ext.define('NetProfile.form.FileUpload', {
 	cls: 'np-file-upload',
 	border: false,
 	layout: 'anchor',
-	resizable: {
-		handles: 'e',
-		pinned: true
-	},
 	defaults: {
 		anchor: '100%'
 	},
-	minWidth: 280,
 
 	titleText: 'Upload Files',
 	closeText: 'Close',

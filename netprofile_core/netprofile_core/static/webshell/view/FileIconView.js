@@ -13,6 +13,8 @@ Ext.define('NetProfile.view.FileIconView', {
 	],
 
 	useColumns: false,
+	singleSelection: false,
+	enableEditor: true,
 	browser: null,
 	getMIME: null,
 	getFileSize: null,
@@ -69,21 +71,28 @@ Ext.define('NetProfile.view.FileIconView', {
 					'<div>{fname}</div>',
 				'</tpl>'
 			]
-		}, {
-			ptype: 'dragselector'
-		}, {
-			ptype: 'labeleditor',
-			pluginId: 'editor',
-			dataIndex: 'fname',
-			recordFilter: Ext.bind(function(rec)
-			{
-				if(this.folder && !this.folder.get('allow_write'))
-					return false;
-				if(!rec.get('allow_write'))
-					return false;
-				return true;
-			}, me)
 		}];
+		if(me.singleSelection)
+			me.setSelectionModel({
+				type: 'dataviewmodel',
+				mode: 'SINGLE'
+			});
+		else
+			me.plugins.push({ ptype: 'dragselector' });
+		if(me.enableEditor)
+			me.plugins.push({
+				ptype: 'labeleditor',
+				pluginId: 'editor',
+				dataIndex: 'fname',
+				recordFilter: Ext.bind(function(rec)
+				{
+					if(this.folder && !this.folder.get('allow_write'))
+						return false;
+					if(!rec.get('allow_write'))
+						return false;
+					return true;
+				}, me)
+			});
 		me.emptyText = '<div class="x-view-empty">' + me.emptyText + '</div>';
 		me.callParent(arguments);
 		if(me.useColumns)

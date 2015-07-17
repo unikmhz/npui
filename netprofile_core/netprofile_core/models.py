@@ -785,7 +785,8 @@ class User(Base):
 		info={
 			'header_string' : _('Photo'),
 			'ldap_attr'     : 'jpegPhoto',
-			'ldap_value'    : 'ldap_photo'
+			'ldap_value'    : 'ldap_photo',
+			'editor_xtype'  : 'fileselect'
 		}
 	)
 	description = Column(
@@ -4073,7 +4074,8 @@ class File(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Folder'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	filename = Column(
@@ -4082,7 +4084,8 @@ class File(Base):
 		Comment('File name'),
 		nullable=False,
 		info={
-			'header_string' : _('Filename')
+			'header_string' : _('Filename'),
+			'column_flex'   : 2
 		}
 	)
 	name = Column(
@@ -4090,7 +4093,8 @@ class File(Base):
 		Comment('Human-readable file name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
 	user_id = Column(

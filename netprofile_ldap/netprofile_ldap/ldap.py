@@ -186,16 +186,19 @@ def _gen_ldap_object_store(em, info, settings, hm):
 					new_val = attrs[attr]
 					if new_val is None:
 						if old_val:
-							xattrs[attr] = (ldap3.MODIFY_DELETE, old_val)
+							xattrs[attr] = (ldap3.MODIFY_DELETE, ())
 						del_attrs.append(attr)
 					else:
 						xattrs[attr] = (ldap3.MODIFY_REPLACE, new_val)
+				for attr in ldap_data['attributes']:
+					if attr not in attrs:
+						xattrs[attr] = (ldap3.MODIFY_DELETE, ())
 				for attr in del_attrs:
 					del attrs[attr]
 				ret = lc.modify(dn, xattrs)
 				# FIXME: check for errors
 				ret, status = lc.get_response(ret)
-				tgt._ldap_data['attributes'].update(attrs)
+				tgt._ldap_data['attributes'] = attrs
 			else:
 				xattrs = {}
 				for attr in attrs:

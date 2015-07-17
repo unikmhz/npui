@@ -15,11 +15,17 @@ Ext.define('NetProfile.panel.FileBrowser', {
 		'NetProfile.form.FileUpload',
 		'NetProfile.store.core.File',
 		'NetProfile.view.FileIconView',
-		'NetProfile.form.field.RightsBitmaskField'
+		'NetProfile.form.field.RightsBitmaskField',
+		'NetProfile.tree.FileFolder'
 	],
 
 	border: 0,
 	layout: 'fit',
+	singleSelection: false,
+	showDelete: true,
+	showRename: true,
+	showUpload: true,
+	showFolders: false,
 
 	store: null,
 	view: null,
@@ -55,6 +61,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 	deleteManyMsgText: 'Are you sure you want to delete selected files?',
 
 	btnUploadText: 'Upload',
+	btnFoldersText: 'Folders',
 
 	btnRenameText: 'Rename',
 	btnPropsText: 'Properties',
@@ -79,7 +86,8 @@ Ext.define('NetProfile.panel.FileBrowser', {
 
 	initComponent: function()
 	{
-		var me = this;
+		var me = this,
+			xitems;
 
 		me.view = null;
 		me.views = {};
@@ -106,8 +114,52 @@ Ext.define('NetProfile.panel.FileBrowser', {
 					}
 				}
 			});
-		me.ctxMenu = Ext.create('Ext.menu.Menu', {
-			items: [{
+		xitems = [{
+			text: me.btnPropsText,
+			iconCls: 'ico-props',
+			handler: function(btn, ev)
+			{
+				var pb = Ext.getCmp('npws_propbar'),
+					rec = me.ctxMenu.record,
+					dp = NetProfile.view.grid.core.File.prototype.detailPane,
+					can_wr = true;
+
+				if(me.folder && !me.folder.get('allow_write'))
+					can_wr = false;
+				if(!pb || !rec || !dp)
+					return false;
+				if(Ext.isArray(rec))
+				{
+					var r;
+					for(r in rec)
+					{
+						rec[r].readOnly = !can_wr || !rec[r].get('allow_write');
+						pb.addRecordTab('core', 'File', dp, rec[r]);
+					}
+				}
+				else
+				{
+					rec.readOnly = !can_wr || !rec.get('allow_write');
+					pb.addRecordTab('core', 'File', dp, rec);
+				}
+				pb.show();
+			}
+		}, {
+			itemId: 'dl_item',
+			text: me.btnDownloadText,
+			iconCls: 'ico-save',
+			handler: function(btn, ev)
+			{
+				var rec;
+
+				rec = me.ctxMenu.record;
+				if(!rec)
+					return false;
+				return me.onFileOpen(rec);
+			}
+		}];
+		if(me.showRename)
+			xitems.push({
 				itemId: 'ren_item',
 				text: me.btnRenameText,
 				iconCls: 'ico-doc-ren',
@@ -143,50 +195,9 @@ Ext.define('NetProfile.panel.FileBrowser', {
 							break;
 					}
 				}
-			}, {
-				text: me.btnPropsText,
-				iconCls: 'ico-props',
-				handler: function(btn, ev)
-				{
-					var pb = Ext.getCmp('npws_propbar'),
-						rec = me.ctxMenu.record,
-						dp = NetProfile.view.grid.core.File.prototype.detailPane,
-						can_wr = true;
-
-					if(me.folder && !me.folder.get('allow_write'))
-						can_wr = false;
-					if(!pb || !rec || !dp)
-						return false;
-					if(Ext.isArray(rec))
-					{
-						var r;
-						for(r in rec)
-						{
-							rec[r].readOnly = !can_wr || !rec[r].get('allow_write');
-							pb.addRecordTab('core', 'File', dp, rec[r]);
-						}
-					}
-					else
-					{
-						rec.readOnly = !can_wr || !rec.get('allow_write');
-						pb.addRecordTab('core', 'File', dp, rec);
-					}
-					pb.show();
-				}
-			}, {
-				itemId: 'dl_item',
-				text: me.btnDownloadText,
-				iconCls: 'ico-save',
-				handler: function(btn, ev)
-				{
-					var rec;
-
-					rec = me.ctxMenu.record;
-					if(!rec)
-						return false;
-					return me.onFileOpen(rec);
-				}
-			}, '-', {
+			});
+		if(me.showDelete)
+			xitems.push('-', {
 				itemId: 'del_item',
 				text: me.btnDeleteText,
 				iconCls: 'ico-delete',
@@ -201,16 +212,73 @@ Ext.define('NetProfile.panel.FileBrowser', {
 						rec = [rec];
 					return me.deleteRecords(rec);
 				}
-			}]
-		});
+			});
+		if(xitems && xitems.length)
+			me.ctxMenu = Ext.create('Ext.menu.Menu', { items: xitems });
 		me.selectedRecords = [];
-		me.dockedItems = [{
-			xtype: 'fileuploadform',
-			dock: 'left',
-			hidden: true,
-			url: me.uploadUrl,
-			itemId: 'fileupload'
-		}];
+
+		if(me.showFolders || me.showUpload)
+		{
+			xitems = [];
+			if(me.showUpload)
+				xitems.push({
+					xtype: 'fileuploadform',
+					url: me.uploadUrl,
+					collapsed: true,
+					itemId: 'fileupload',
+					listeners: {
+						expand: function(panel)
+						{
+							var tbar = me.down('toolbar[dock=top]'),
+								btn = tbar.getComponent('btn_upload');
+
+							if(btn)
+								btn.toggle(true);
+						}
+					}
+				});
+			if(me.showFolders)
+				xitems.push({
+					xtype: 'filefoldertree',
+					title: me.btnFoldersText,
+					collapsed: true,
+					itemId: 'filefoldertree',
+					listeners: {
+						expand: function(panel)
+						{
+							var tbar = me.down('toolbar[dock=top]'),
+								btn = tbar.getComponent('btn_folders');
+
+							if(btn)
+								btn.toggle(true);
+						},
+						select: function(tree, rec, idx)
+						{
+							me.setFolder(rec);
+						}
+					}
+				});
+
+			me.dockedItems = [{
+				xtype: 'panel',
+				dock: 'left',
+				hidden: true,
+				border: 0,
+				padding: '0 4 0 0',
+				width: 280,
+				resizable: {
+					handles: 'e',
+					pinned: true
+				},
+				layout: {
+					type: 'accordion',
+					multi: false
+				},
+				itemId: 'leftbar',
+				items: xitems
+			}];
+		}
+
 		me.tbar = [{
 			text: me.viewText,
 			iconCls: 'ico-view',
@@ -282,26 +350,55 @@ Ext.define('NetProfile.panel.FileBrowser', {
 				checkHandler: 'onSortDirChange',
 				scope: me
 			}]
-		}, '-', {
-			text: me.btnDeleteText,
-			iconCls: 'ico-delete',
-			itemId: 'btn_delete',
-			disabled: true,
-			handler: function(btn, ev)
-			{
-				me.deleteSelected();
-			}
-		}, '-', {
-			text: me.btnUploadText,
-			iconCls: 'ico-upload',
-			itemId: 'btn_upload',
-			disabled: true,
-			enableToggle: true,
-			toggleHandler: function(btn, state)
-			{
-				me.getDockedComponent('fileupload').setVisible(state);
-			}
-		}, '->', {
+		}];
+		if(me.showDelete)
+			me.tbar.push('-', {
+				text: me.btnDeleteText,
+				iconCls: 'ico-delete',
+				itemId: 'btn_delete',
+				disabled: true,
+				handler: function(btn, ev)
+				{
+					me.deleteSelected();
+				}
+			});
+		if(me.showFolders || me.showUpload)
+			me.tbar.push('-');
+		if(me.showFolders)
+			me.tbar.push({
+				text: me.btnFoldersText,
+				iconCls: 'ico-mod-filefolder',
+				itemId: 'btn_folders',
+				disabled: false,
+				enableToggle: true,
+				toggleGroup: 'filebrowser_leftbar',
+				toggleHandler: function(btn, state)
+				{
+					var lbar = me.getDockedComponent('leftbar');
+
+					lbar.setVisible(state);
+					if(state)
+						lbar.getComponent('filefoldertree').expand();
+				}
+			});
+		if(me.showUpload)
+			me.tbar.push({
+				text: me.btnUploadText,
+				iconCls: 'ico-upload',
+				itemId: 'btn_upload',
+				disabled: true,
+				enableToggle: true,
+				toggleGroup: 'filebrowser_leftbar',
+				toggleHandler: function(btn, state)
+				{
+					var lbar = me.getDockedComponent('leftbar');
+
+					lbar.setVisible(state);
+					if(state)
+						lbar.getComponent('fileupload').expand();
+				}
+			});
+		me.tbar.push('->', {
 			xtype: 'textfield',
 			cls: 'np-ssearch-field',
 			itemId: 'search_fld',
@@ -313,7 +410,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 					me.fireEvent('searchchange', newval);
 				}
 			}
-		}];
+		});
 		me.callParent(arguments);
 
 		me.on({
@@ -473,6 +570,8 @@ Ext.define('NetProfile.panel.FileBrowser', {
 					getMIME: this.getMIME,
 					getFileSize: Ext.bind(this.getFileSize, this),
 					store: this.store,
+					singleSelection: this.singleSelection,
+					enableEditor: this.showRename,
 					emptyText: this.emptyText,
 					listeners: {
 						selectionchange: function(dv, nodes)
@@ -509,6 +608,8 @@ Ext.define('NetProfile.panel.FileBrowser', {
 					iconSize: 16,
 					scrollable: 'horizontal',
 					store: this.store,
+					singleSelection: this.singleSelection,
+					enableEditor: this.showRename,
 					emptyText: this.emptyText,
 					listeners: {
 						selectionchange: function(dv, nodes)
@@ -542,6 +643,12 @@ Ext.define('NetProfile.panel.FileBrowser', {
 				this.view.refresh();
 				break;
 			case 'grid':
+				var plugs = [];
+				if(this.showRename)
+					plugs.push({
+						ptype: 'cellediting',
+						pluginId: 'editor'
+					});
 				this.view = this.views[this.viewType] = this.add({
 					xtype: 'grid',
 					region: 'center',
@@ -550,12 +657,9 @@ Ext.define('NetProfile.panel.FileBrowser', {
 					emptyText: this.emptyText,
 					allowDeselect: true,
 					selModel: {
-						mode: 'MULTI'
+						mode: (this.singleSelection ? 'SINGLE' : 'MULTI')
 					},
-					plugins: [{
-						ptype: 'cellediting',
-						pluginId: 'editor'
-					}],
+					plugins: plugs,
 					viewConfig: {
 						plugins: [{
 							ptype: 'gridviewdragdrop',
