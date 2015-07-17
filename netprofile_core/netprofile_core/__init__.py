@@ -169,6 +169,10 @@ class Module(ModuleBase):
 				name='Access: Groups'
 			),
 			Privilege(
+				code='BASE_FILES',
+				name='Access: Files'
+			),
+			Privilege(
 				code='USERS_LIST',
 				name='Users: List'
 			),
@@ -554,7 +558,7 @@ class Module(ModuleBase):
 			Menu('users', title=loc.translate(_('Users')), order=20, direct='users', options={ # FIXME: add permission= ?
 				'disableSelection' : True
 			}),
-			Menu('folders', title=loc.translate(_('Folders')), order=30, direct='folders', permission='FILES_LIST', options={
+			Menu('folders', title=loc.translate(_('Folders')), order=30, direct='folders', permission='BASE_FILES', options={
 				'rootVisible' : True,
 				'hideHeaders' : True,
 				'columns'     : ({
