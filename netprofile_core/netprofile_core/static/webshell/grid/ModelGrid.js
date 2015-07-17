@@ -338,7 +338,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 				}
 				else
 					this.selectRecord(record);
-				return false;
+				return true;
 			},
 			scope: this
 		});

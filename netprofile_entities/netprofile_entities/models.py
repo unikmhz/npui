@@ -1168,7 +1168,7 @@ class EntityFile(Base):
 				'cap_menu'      : 'BASE_ENTITIES',
 				'cap_read'      : 'ENTITIES_LIST',
 				'cap_create'    : 'FILES_ATTACH_2ENTITIES',
-				'cap_edit'      : 'FILES_ATTACH_2ENTITIES',
+				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : 'FILES_ATTACH_2ENTITIES',
 
 				'menu_name'     : _('Files'),

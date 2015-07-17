@@ -9,12 +9,13 @@ Ext.define('NetProfile.controller.FileAttachments', {
 	{
 		this.control({
 			'modelgrid[componentCls~=file-attach]': {
-				itemdblclick: function(gr, rec, item, idx, ev)
+				beforeitemdblclick: function(gr, rec, item, idx, ev)
 				{
 					var dl = Ext.getCmp('npws_filedl');
 					if(!dl)
-						return;
+						return false;
 					dl.loadFileById(rec.get('fileid'));
+					return false;
 				},
 				afterrender: this.onAfterRender
 			}

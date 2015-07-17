@@ -1603,7 +1603,7 @@ class DeviceTypeFile(Base):
 				'cap_menu'      : 'BASE_DEVICES',
 				'cap_read'      : 'DEVICETYPES_LIST',
 				'cap_create'    : 'FILES_ATTACH_2DEVICETYPES',
-				'cap_edit'      : 'FILES_ATTACH_2DEVICETYPES',
+				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : 'FILES_ATTACH_2DEVICETYPES',
 
 				'menu_name'     : _('Files'),

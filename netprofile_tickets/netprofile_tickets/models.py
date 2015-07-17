@@ -662,7 +662,7 @@ class TicketFile(Base):
 				'cap_menu'      : 'BASE_TICKETS',
 				'cap_read'      : 'TICKETS_LIST',
 				'cap_create'    : 'FILES_ATTACH_2TICKETS',
-				'cap_edit'      : 'FILES_ATTACH_2TICKETS',
+				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : 'FILES_ATTACH_2TICKETS',
 
 				'menu_name'     : _('Files'),
