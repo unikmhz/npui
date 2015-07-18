@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV request objects
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -189,7 +189,7 @@ class DAVReportRequest(DAVRequest):
 
 	def get_name(self):
 		try:
-			return self.xml[0].tag
-		except IndexError:
+			return self.xml.tag
+		except AttributeError:
 			return None
 
