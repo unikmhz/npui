@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV-related interfaces
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -32,6 +32,8 @@ __all__ = [
 	'IDAVCollection',
 	'IDAVFile',
 	'IDAVPrincipal',
+	'IDAVAddressBook',
+	'IDAVDirectory',
 	'IDAVManager'
 ]
 
@@ -60,6 +62,16 @@ class IDAVPrincipal(IDAVNode):
 	DAV principal object interface.
 	"""
 	pass
+
+class IDAVAddressBook(IDAVNode):
+	"""
+	CardDAV address book object interface.
+	"""
+
+class IDAVDirectory(IDAVNode):
+	"""
+	CardDAV directory extension interface.
+	"""
 
 class IDAVManager(Interface):
 	"""

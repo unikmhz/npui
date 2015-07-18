@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV low-level library
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -59,6 +59,8 @@ def _parse_datetime(el):
 
 class DAVAllPropsSet(object):
 	def __contains__(self, el):
+		if el in dprops.ALLPROPS_EXEMPT:
+			return False
 		return True
 
 	def __len__(self):
@@ -76,12 +78,13 @@ class DAVManager(object):
 			'PATCH', 'LOCK', 'UNLOCK', 'ACL'
 		]
 		self.parsers = {
-			dprops.RESOURCE_TYPE    : _parse_resource_type,
-			dprops.CREATION_DATE    : _parse_datetime,
-			dprops.LAST_MODIFIED    : _parse_datetime,
-			dprops.GROUP_MEMBER_SET : _parse_hreflist,
-			dprops.ACE              : _parse_ace,
-			dprops.ACL              : _parse_acl
+			dprops.RESOURCE_TYPE          : _parse_resource_type,
+			dprops.CREATION_DATE          : _parse_datetime,
+			dprops.LAST_MODIFIED          : _parse_datetime,
+			dprops.GROUP_MEMBER_SET       : _parse_hreflist,
+			dprops.ACE                    : _parse_ace,
+			dprops.ACL                    : _parse_acl,
+			dprops.SUPPORTED_ADDRESS_DATA : _parse_supported_addressdata
 		}
 		self.default_priv_set = (
 			DAVPrivilegeValue(
@@ -114,6 +117,12 @@ class DAVManager(object):
 			dprops.PRINC_PROP_SEARCH     : DAVReport,
 			dprops.PRINC_SEARCH_PROP_SET : DAVReport
 		}
+		self.resource_map = (
+			(IDAVCollection,  dprops.COLLECTION),
+			(IDAVPrincipal,   dprops.PRINCIPAL),
+			(IDAVAddressBook, dprops.ADDRESS_BOOK),
+			(IDAVDirectory,   dprops.DIRECTORY)
+		)
 
 	def principal_collections(self, req):
 		dr = DAVRoot(req)
@@ -151,15 +160,21 @@ class DAVManager(object):
 			raise DAVReportNotSupportedError('Requested report type is not supported.')
 		return self.reports[name](name, rreq)
 
-	def set_headers(self, resp):
+	def set_headers(self, resp, node=None):
 		resp.status = 200
 		resp.content_type = None
-		resp.headers.add('DAV', ', '.join(self.features))
+		self.set_features(resp, node)
 		resp.headers.add('MS-Author-Via', 'DAV')
 		resp.accept_ranges = 'bytes'
 
-	def set_features(self, resp):
-		resp.headers.add('DAV', ', '.join(self.features))
+	def set_features(self, resp, node=None):
+		feats = self.features.copy()
+		try:
+			if verifyObject(IDAVAddressBook, node):
+				feats.append('addressbook')
+		except DoesNotImplement:
+			pass
+		resp.headers.add('DAV', ', '.join(feats))
 
 	def set_patch_formats(self, resp):
 		resp.headers.add('Accept-Patch', 'application/x-sabredav-partialupdate')
@@ -170,12 +185,14 @@ class DAVManager(object):
 			result.extend(more)
 		return result
 
-	def uri(self, req, tr=None):
+	def uri(self, req, tr=None, path_only=False):
 		if tr is None:
 			tr = '/'
+		if path_only:
+			return req.route_path('core.dav', traverse=tr)
 		return req.route_url('core.dav', traverse=tr)
 
-	def node_uri(self, req, node):
+	def node_uri(self, req, node, path_only=False):
 		uri = node.get_uri()
 		try:
 			if verifyObject(IDAVCollection, node):
@@ -186,6 +203,8 @@ class DAVManager(object):
 					uri.append('')
 			except DoesNotImplement:
 				pass
+		if path_only:
+			return req.route_path('core.dav', traverse=uri)
 		return req.route_url('core.dav', traverse=uri)
 
 	def node(self, req, uri):
@@ -358,6 +377,15 @@ class DAVManager(object):
 		# TODO: split this and clean up
 		# First, get properties from an object
 		props = node.dav_props(pset)
+		if (dprops.RESOURCE_TYPE in pset) and (dprops.RESOURCE_TYPE not in props):
+			rtypes = []
+			for rtpair in self.resource_map:
+				try:
+					if verifyObject(rtpair[0], node):
+						rtypes.append(rtpair[1])
+				except DoesNotImplement:
+					pass
+			props[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(*rtypes)
 		# Now, append lock-related stuff
 		if (dprops.SUPPORTED_LOCK in pset) and (dprops.SUPPORTED_LOCK not in props):
 			props[dprops.SUPPORTED_LOCK] = DAVSupportedLockValue()
@@ -423,6 +451,8 @@ class DAVManager(object):
 			group = node.dav_group
 			if group:
 				props[dprops.GROUP] = DAVHrefValue(group)
+		if dprops.DIRECTORY_GATEWAY in pset:
+			props[dprops.DIRECTORY_GATEWAY] = DAVHrefValue('users', prefix=True)
 		return props
 
 	def get_node_props(self, req, ctx, pset=None, get_404=True):

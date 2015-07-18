@@ -171,6 +171,7 @@ from netprofile.dav import (
 	DAVAllPropsSet,
 	DAVACEValue,
 	DAVACLValue,
+	DAVHrefValue,
 	DAVPrincipalValue,
 	DAVResourceTypeValue,
 
@@ -1275,16 +1276,18 @@ class User(Base):
 			self.vcard = self._get_vcard()
 
 		ret = {}
-		if dprops.RESOURCE_TYPE in pset:
-			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.PRINCIPAL)
 		if dprops.CONTENT_LENGTH in pset:
 			ret[dprops.CONTENT_LENGTH] = self.vcard.content_length
 		if dprops.CONTENT_TYPE in pset:
-			ret[dprops.CONTENT_TYPE] = 'text/x-vcard'
+			ret[dprops.CONTENT_TYPE] = 'text/vcard'
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.login
 		if dprops.ETAG in pset:
 			ret[dprops.ETAG] = '"%s"' % self.vcard.etag
+		if dprops.PRINCIPAL_ADDRESS in pset:
+			ret[dprops.PRINCIPAL_ADDRESS] = DAVHrefValue(self)
+		# TODO:
+		#  CARDDAV:addressbook-home-set (location of address book collections)
 		return ret
 
 	def dav_group_members(self, req):
@@ -1302,6 +1305,13 @@ class User(Base):
 		for email in self.email_addresses:
 			uris.append('mailto:' + str(email))
 		return uris
+
+	def dav_acl(self, req):
+		return DAVACLValue((DAVACEValue(
+			DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
+			grant=(dprops.ACL_READ,),
+			protected=True
+		),))
 
 	def _get_vcard(self):
 		card = cal.Card()
@@ -1328,7 +1338,7 @@ class User(Base):
 			card.add('EMAIL', cal.vEMail(str(email)))
 
 		ical = card.to_ical()
-		resp = Response(ical, content_type='text/x-vcard', charset='utf-8')
+		resp = Response(ical, content_type='text/vcard', charset='utf-8')
 		if PY3:
 			resp.content_disposition = \
 				'attachment; filename*=UTF-8\'\'%s.vcf' % (
@@ -1622,10 +1632,8 @@ class Group(Base):
 
 	def dav_props(self, pset):
 		ret = {}
-		if dprops.RESOURCE_TYPE in pset:
-			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.PRINCIPAL)
 		if dprops.CONTENT_TYPE in pset:
-			ret[dprops.CONTENT_TYPE] = 'text/x-vcard'
+			ret[dprops.CONTENT_TYPE] = 'text/vcard'
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.name
 		return ret
@@ -3747,8 +3755,6 @@ class FileFolder(Base):
 
 	def dav_props(self, pset):
 		ret = {}
-		if dprops.RESOURCE_TYPE in pset:
-			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.COLLECTION)
 		if dprops.CREATION_DATE in pset:
 			ret[dprops.CREATION_DATE] = self.creation_time
 		if dprops.DISPLAY_NAME in pset:
@@ -4461,8 +4467,6 @@ class File(Base):
 
 	def dav_props(self, pset):
 		ret = {}
-		if dprops.RESOURCE_TYPE in pset:
-			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue()
 		if dprops.CONTENT_LENGTH in pset:
 			ret[dprops.CONTENT_LENGTH] = self.size
 		if dprops.CONTENT_TYPE in pset:

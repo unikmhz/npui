@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV-related nodes for Pyramid traversal
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -114,8 +114,6 @@ class DAVRoot(object):
 
 	def dav_props(self, pset):
 		ret = {}
-		if dprops.RESOURCE_TYPE in pset:
-			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.COLLECTION)
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = 'dav'
 		if dprops.IS_COLLECTION in pset:
@@ -151,6 +149,7 @@ class DAVRoot(object):
 			pl.__parent__ = self
 			yield pl
 
+@implementer(IDAVCollection)
 class DAVPlugin(object):
 	def __init__(self, req):
 		self.req = req
@@ -162,8 +161,6 @@ class DAVPlugin(object):
 
 	def dav_props(self, pset):
 		ret = {}
-		if dprops.RESOURCE_TYPE in pset:
-			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.COLLECTION)
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.__name__
 		if dprops.IS_COLLECTION in pset:

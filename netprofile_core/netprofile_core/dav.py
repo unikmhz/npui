@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: High-level WebDAV support
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -334,7 +334,7 @@ class DAVPluginVFS(dav.DAVPlugin):
 			princ(princ.ALL)
 		))
 
-@implementer(dav.IDAVCollection)
+@implementer(dav.IDAVAddressBook, dav.IDAVDirectory)
 class DAVPluginUsers(dav.DAVPlugin):
 	def __iter__(self):
 		sess = DBSession()
@@ -361,7 +361,14 @@ class DAVPluginUsers(dav.DAVPlugin):
 			u.__plugin__ = self
 			yield u
 
-@implementer(dav.IDAVCollection)
+	def dav_props(self, pset):
+		ret = super(DAVPluginUsers, self).dav_props(pset)
+		if dprops.ADDRESS_BOOK_DESCRIPTION in pset:
+			ret[dprops.ADDRESS_BOOK_DESCRIPTION] = 'Global system users'
+		if dprops.SUPPORTED_ADDRESS_DATA in pset:
+			ret[dprops.SUPPORTED_ADDRESS_DATA] = dav.DAVSupportedAddressDataValue(('text/vcard', '3.0'))
+		return ret
+
 class DAVPluginGroups(dav.DAVPlugin):
 	def __iter__(self):
 		sess = DBSession()
@@ -392,6 +399,11 @@ class DAVPluginGroups(dav.DAVPlugin):
 @view_config(route_name='core.home', request_method='OPTIONS')
 def root_options(request):
 	return DAVCollectionHandler(request).notfound_options()
+
+@notfound_view_config(request_method='REPORT')
+@view_config(route_name='core.home', request_method='REPORT')
+def root_report(request):
+	return DAVCollectionHandler(request).report()
 
 class DAVHandler(object):
 	def __init__(self, req):
@@ -652,7 +664,7 @@ class DAVHandler(object):
 			el = dav.DAVResponseElement(self.req, ctx, node_props, names_only=is_pnames)
 			resp.add_element(el)
 		resp.make_body()
-		self.req.dav.set_features(resp)
+		req.dav.set_features(resp, req.context)
 		resp.vary = ('Brief', 'Prefer')
 		return resp
 
@@ -802,7 +814,7 @@ class DAVCollectionHandler(DAVHandler):
 	@view_config(request_method='OPTIONS', context=dav.IDAVCollection)
 	def options(self):
 		resp = Response()
-		self.req.dav.set_headers(resp)
+		self.req.dav.set_headers(resp, self.req.context)
 		self.req.dav.set_allow(resp)
 		return resp
 
@@ -974,7 +986,7 @@ class DAVFileHandler(DAVHandler):
 	@view_config(request_method='OPTIONS')
 	def options(self):
 		resp = Response()
-		self.req.dav.set_headers(resp)
+		self.req.dav.set_headers(resp, self.req.context)
 		self.req.dav.set_allow(resp)
 		self.req.dav.set_patch_formats(resp)
 		return resp
@@ -1067,7 +1079,7 @@ class DAVFileHandler(DAVHandler):
 			if callable(etag):
 				etag = etag(req)
 			resp = dav.DAVOverwriteResponse(request=req, etag=etag)
-			req.dav.set_features(resp)
+			req.dav.set_features(resp, obj)
 			return resp
 		raise dav.DAVUnsupportedMediaTypeError('Unknown content type specified in PATCH request.')
 
