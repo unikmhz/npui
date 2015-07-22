@@ -35,6 +35,7 @@ from pyramid.settings import (
 	asbool,
 	aslist
 )
+from pyramid.threadlocal import get_current_request
 from netprofile.common.hooks import (
 	IHookManager,
 	register_hook
@@ -144,6 +145,8 @@ def _gen_ldap_object_load(em, info, settings, hm):
 	object_classes = '(objectClass=' + ')(objectClass='.join(object_classes) + ')'
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
 	def _ldap_object_load(tgt, ctx):
+		if getattr(tgt, '__req__', None) is None:
+			tgt.__req__ = get_current_request()
 		ret = None
 		rdn = get_rdn(tgt)
 		flt = '(&(%s)%s)' % (rdn, object_classes)
