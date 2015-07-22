@@ -396,7 +396,9 @@ class ExtDirectRouter(object):
 		except Exception as e:
 			# Let a user defined view for specific exception prevent returning
 			# a server error.
-			exception_view = render_view_to_response(e, request)
+			exception_view = None
+			if not isinstance(e, AccessDeniedException):
+				exception_view = render_view_to_response(e, request)
 			if exception_view is not None:
 				ret['result'] = exception_view
 				return ret

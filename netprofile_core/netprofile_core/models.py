@@ -2583,6 +2583,9 @@ class SecurityPolicy(Base):
 	def check_password_age(self, req, user, npsess, ts):
 		last_pwh = user.last_password_change
 		if last_pwh:
+			if self.pw_age_max is None:
+				req.session['sess.pwage'] = 'ok'
+				return True
 			days = (ts - last_pwh.timestamp).days
 			if days > self.pw_age_max:
 				if self.pw_age_action == SecurityPolicyOnExpire.drop:
@@ -2598,7 +2601,12 @@ class SecurityPolicy(Base):
 			else:
 				req.session['sess.pwage'] = 'ok'
 		else:
-			req.session['sess.pwage'] = 'ok'
+			if self.pw_age_action == SecurityPolicyOnExpire.none:
+				req.session['sess.pwage'] = 'ok'
+			elif self.pw_age_max is None:
+				req.session['sess.pwage'] = 'ok'
+			else:
+				req.session['sess.pwage'] = 'force'
 		return True
 
 	def __str__(self):
