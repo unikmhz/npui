@@ -33,6 +33,9 @@ STANDARD_PROPS = set()
 
 NS_XML        = 'http://www.w3.org/XML/1998/namespace'
 NS_DAV        = 'DAV:'
+NS_ICAL       = 'http://apple.com/ns/ical/'
+NS_INFIT_AB   = 'http://inf-it.com/ns/ab/'
+NS_INFIT_DAV  = 'http://inf-it.com/ns/dav/'
 NS_NETPROFILE = 'http://netprofile.ru/ns/dav/'
 NS_APACHE     = 'http://apache.org/dav/props/'
 NS_CALDAV     = 'urn:ietf:params:xml:ns:caldav'
@@ -47,6 +50,7 @@ NS_MAP = {
 	'cd' : NS_CALDAV,
 	'cr' : NS_CARDDAV,
 	'ap' : NS_APACHE,
+#	'ic' : NS_ICAL,
 #	'dt' : NS_MSXMLDATA,
 	'np' : NS_NETPROFILE
 }
@@ -71,9 +75,11 @@ DEPTH_INFINITY = -1
 # Property tags
 ACL                      = _PROP(NS_DAV, 'acl')
 ACL_RESTRICTIONS         = _PROP(NS_DAV, 'acl-restrictions')
+ADDRESS_BOOK_COLOR       = _PROP(NS_INFIT_AB, 'addressbook-color')
 ADDRESS_BOOK_DESCRIPTION = _PROP(NS_CARDDAV, 'addressbook-description')
 ADDRESS_BOOK_HOME_SET    = _PROP(NS_CARDDAV, 'addressbook-home-set')
 ALTERNATE_URI_SET        = _PROP(NS_DAV, 'alternate-URI-set')
+CALENDAR_COLOR           = _PROP(NS_ICAL, 'calendar-color')
 CONTENT_LENGTH           = _PROP(NS_DAV, 'getcontentlength')
 CONTENT_TYPE             = _PROP(NS_DAV, 'getcontenttype')
 CREATION_DATE            = _PROP(NS_DAV, 'creationdate')
@@ -86,6 +92,7 @@ EXECUTABLE               = _PROP(NS_APACHE, 'executable')
 GROUP                    = _PROP(NS_DAV, 'group')
 GROUP_MEMBER_SET         = _PROP(NS_DAV, 'group-member-set')
 GROUP_MEMBERSHIP         = _PROP(NS_DAV, 'group-membership')
+HEADER_VALUE             = _PROP(NS_INFIT_DAV, 'headervalue')
 INHERITED_ACL_SET        = _PROP(NS_DAV, 'inherited-acl-set')
 IS_COLLECTION            = _PROP(NS_DAV, 'iscollection')
 IS_FOLDER                = _PROP(NS_DAV, 'isFolder')
@@ -116,11 +123,13 @@ PRINCIPAL                = _TAG(NS_DAV, 'principal')
 # Generic tags
 ABSTRACT                 = _TAG(NS_DAV, 'abstract')
 ACE                      = _TAG(NS_DAV, 'ace')
+ACL_PRINC_PROP_SET       = _TAG(NS_DAV, 'acl-principal-prop-set')
 ACTIVE_LOCK              = _TAG(NS_DAV, 'activelock')
 ADDRESS_BOOK_MULTIGET    = _TAG(NS_CARDDAV, 'addressbook-multiget')
 ADDRESS_BOOK_QUERY       = _TAG(NS_CARDDAV, 'addressbook-query')
 ADDRESS_DATA_TYPE        = _TAG(NS_CARDDAV, 'address-data-type')
 ALL_PROPS                = _TAG(NS_DAV, 'allprop')
+APPLY_TO_PRINC_COLL_SET  = _TAG(NS_DAV, 'apply-to-principal-collection-set')
 AUTHENTICATED            = _TAG(NS_DAV, 'authenticated')
 DENY                     = _TAG(NS_DAV, 'deny')
 DENY_BEFORE_GRANT        = _TAG(NS_DAV, 'deny-before-grant')
@@ -140,14 +149,19 @@ LOCK_ROOT                = _TAG(NS_DAV, 'lockroot')
 LOCK_SCOPE               = _TAG(NS_DAV, 'lockscope')
 LOCK_TOKEN               = _TAG(NS_DAV, 'locktoken')
 LOCK_TYPE                = _TAG(NS_DAV, 'locktype')
+MATCH                    = _TAG(NS_DAV, 'match')
 MKCOL                    = _TAG(NS_DAV, 'mkcol')
 MULTI_STATUS             = _TAG(NS_DAV, 'multistatus')
 NO_INVERT                = _TAG(NS_DAV, 'no-invert')
+PRINC_MATCH              = _TAG(NS_DAV, 'principal-match')
+PRINC_PROP               = _TAG(NS_DAV, 'principal-property')
 PRINC_PROP_SEARCH        = _TAG(NS_DAV, 'principal-property-search')
+PRINC_SEARCH_PROP        = _TAG(NS_DAV, 'principal-search-property')
 PRINC_SEARCH_PROP_SET    = _TAG(NS_DAV, 'principal-search-property-set')
 PRIVILEGE                = _TAG(NS_DAV, 'privilege')
 PROP                     = _TAG(NS_DAV, 'prop')
 PROPERTY                 = _TAG(NS_DAV, 'property')
+PROPERTY_SEARCH          = _TAG(NS_DAV, 'property-search')
 PROPERTY_UPDATE          = _TAG(NS_DAV, 'propertyupdate')
 PROPFIND                 = _TAG(NS_DAV, 'propfind')
 PROPNAME                 = _TAG(NS_DAV, 'propname')
@@ -179,6 +193,7 @@ SYNC_LEVEL               = _TAG(NS_DAV, 'sync-level')
 SYNC_TOKEN               = _TAG(NS_DAV, 'sync-token')
 
 # Error tags
+CANNOT_MODIFY_PROT_PROP  = _TAG(NS_DAV, 'cannot-modify-protected-property')
 LOCK_TOKEN_REQUEST_URI   = _TAG(NS_DAV, 'lock-token-matches-request-uri')
 LOCK_TOKEN_SUBMITTED     = _TAG(NS_DAV, 'lock-token-submitted')
 NEED_PRIVILEGES          = _TAG(NS_DAV, 'need-privileges')

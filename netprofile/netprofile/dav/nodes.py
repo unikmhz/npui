@@ -58,6 +58,7 @@ from . import props as dprops
 from .interfaces import IDAVCollection
 from .values import DAVResourceTypeValue
 from .acls import (
+	DAVACLRestrictions,
 	DAVACEValue,
 	DAVACLValue,
 	DAVPrincipalValue
@@ -90,7 +91,7 @@ class DAVRoot(object):
 		return DAVACLValue((
 			DAVACEValue(
 				DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
-				grant=(dprops.ACL_READ,),
+				grant=(dprops.ACL_READ, dprops.ACL_READ_ACL),
 				protected=True
 			),
 		))
@@ -190,8 +191,14 @@ class DAVPlugin(object):
 		return DAVACLValue((
 			DAVACEValue(
 				DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
-				grant=(dprops.ACL_READ,),
+				grant=(dprops.ACL_READ, dprops.ACL_READ_ACL),
 				protected=True
 			),
 		))
+
+	def acl_restrictions(self):
+		return DAVACLRestrictions(
+			DAVACLRestrictions.GRANT_ONLY |
+			DAVACLRestrictions.NO_INVERT
+		)
 

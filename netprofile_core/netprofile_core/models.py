@@ -1309,7 +1309,7 @@ class User(Base):
 	def dav_acl(self, req):
 		return DAVACLValue((DAVACEValue(
 			DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
-			grant=(dprops.ACL_READ,),
+			grant=(dprops.ACL_READ, dprops.ACL_READ_ACL),
 			protected=True
 		),))
 
@@ -1637,6 +1637,13 @@ class Group(Base):
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.name
 		return ret
+
+	def dav_acl(self, req):
+		return DAVACLValue((DAVACEValue(
+			DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
+			grant=(dprops.ACL_READ, dprops.ACL_READ_ACL),
+			protected=True
+		),))
 
 	def dav_group_members(self, req):
 		gmset = set()
@@ -3710,7 +3717,10 @@ class FileFolder(Base):
 			if bucket is None:
 				continue
 			if ace[2] == 'read':
-				bucket.append(dprops.ACL_READ)
+				bucket.extend((
+					dprops.ACL_READ,
+					dprops.ACL_READ_ACL
+				))
 			elif ace[2] == 'write':
 				bucket.extend((
 					dprops.ACL_WRITE,
@@ -4436,7 +4446,10 @@ class File(Base):
 			if bucket is None:
 				continue
 			if ace[2] == 'read':
-				bucket.append(dprops.ACL_READ)
+				bucket.extend((
+					dprops.ACL_READ,
+					dprops.ACL_READ_ACL
+				))
 			elif ace[2] == 'write':
 				bucket.extend((
 					dprops.ACL_WRITE,

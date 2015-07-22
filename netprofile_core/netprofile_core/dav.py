@@ -41,6 +41,10 @@ from pyramid.view import (
 )
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPNotFound
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
 from pyramid.security import (
 	Allow, Deny,
 	Everyone, Authenticated,
@@ -48,6 +52,7 @@ from pyramid.security import (
 	authenticated_userid,
 	has_permission
 )
+from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 from netprofile import dav
 from netprofile.dav import dprops
@@ -81,6 +86,8 @@ _re_if = re.compile(
 	r'(?:<(?P<uri>.*?)>\s)?\((?P<not>Not\s)?(?:<(?P<token>[^>]*)>)?(?:\s?)(?:\[(?P<etag>[^\]]*)\])?\)',
 	re.I | re.M
 )
+
+_ = TranslationStringFactory('netprofile_core')
 
 def dav_decorator(view):
 	def dav_request(context, request):
@@ -233,7 +240,10 @@ class DAVPluginVFS(dav.DAVPlugin):
 			if bucket is None:
 				continue
 			if ace[2] == 'read':
-				bucket.append(dprops.ACL_READ)
+				bucket.extend((
+					dprops.ACL_READ,
+					dprops.ACL_READ_ACL
+				))
 			elif ace[2] == 'write':
 				bucket.extend((
 					dprops.ACL_WRITE,
@@ -369,6 +379,26 @@ class DAVPluginUsers(dav.DAVPlugin):
 			ret[dprops.SUPPORTED_ADDRESS_DATA] = dav.DAVSupportedAddressDataValue(('text/vcard', '3.0'))
 		return ret
 
+	def dav_search_principals(self, req, test, query):
+		cond = []
+		for prop, value in query.items():
+			if prop == dprops.DISPLAY_NAME:
+				cond.append(User.login.contains(value))
+		if (test == 'anyof') and (len(cond) > 1):
+			cond = (or_(*cond),)
+		q = DBSession().query(User)
+		if len(cond) > 0:
+			return q.filter(*cond)
+		return q
+
+	def dav_search_fields(self, req):
+		return {
+			dprops.DISPLAY_NAME : _('User name')
+		}
+
+	def dav_match_self(self, req):
+		yield req.user
+
 class DAVPluginGroups(dav.DAVPlugin):
 	def __iter__(self):
 		sess = DBSession()
@@ -394,6 +424,29 @@ class DAVPluginGroups(dav.DAVPlugin):
 			g.__parent__ = self
 			g.__plugin__ = self
 			yield g
+
+	def dav_search_principals(self, req, test, query):
+		cond = []
+		for prop, value in query.items():
+			if prop == dprops.DISPLAY_NAME:
+				cond.append(Group.name.contains(value))
+		if (test == 'anyof') and (len(cond) > 1):
+			cond = (or_(*cond),)
+		q = DBSession().query(Group)
+		if len(cond) > 0:
+			return q.filter(*cond)
+		return q
+
+	def dav_search_fields(self, req):
+		return {
+			dprops.DISPLAY_NAME : _('Group name')
+		}
+
+	def dav_match_self(self, req):
+		user = req.user
+		for group in self.dav_children:
+			if user.is_member_of(group):
+				yield group
 
 @notfound_view_config(request_method='OPTIONS')
 @view_config(route_name='core.home', request_method='OPTIONS')
@@ -654,6 +707,7 @@ class DAVHandler(object):
 			pset = dav.DAVAllPropsSet()
 		else:
 			pset = pfreq.get_props()
+		# FIXME: RFC states default depth SHOULD be infinity
 		depth = req.dav.get_http_depth(req, 1)
 		if depth != 0:
 			depth = 1

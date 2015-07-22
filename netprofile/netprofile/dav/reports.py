@@ -29,8 +29,15 @@ from __future__ import (
 
 __all__ = [
 	'DAVReport',
-	'DAVExpandPropertyReport'
+	'DAVExpandPropertyReport',
+	'DAVPrincipalPropertySearchReport',
+	'DAVACLPrincipalPropertySetReport',
+	'DAVPrincipalSearchPropertySetReport',
+	'DAVPrincipalMatchReport'
 ]
+
+from zope.interface.verify import verifyObject
+from zope.interface.exceptions import DoesNotImplement
 
 from . import props as dprops
 from .errors import (
@@ -41,8 +48,12 @@ from .values import (
 	DAVHrefValue,
 	DAVResponseValue
 )
-from .responses import DAVMultiStatusResponse
+from .responses import (
+	DAVMultiStatusResponse,
+	DAVPrincipalSearchPropertySetResponse
+)
 from .elements import DAVResponseElement
+from .interfaces import IDAVCollection
 
 class DAVReport(object):
 	def __init__(self, rname, rreq):
@@ -56,20 +67,15 @@ class DAVExpandPropertyReport(DAVReport):
 	def __call__(self, req):
 		node = self.rreq.ctx
 		root = self.rreq.xml
+		depth = req.dav.get_http_depth(req, 0)
 
-		props = self.get_props(node, root, req)
-		# TODO: handle 'minimal' flags
-		resp = DAVMultiStatusResponse(request=req)
-
-		el = DAVResponseElement(req, node, props)
-		resp.add_element(el)
+		resp = self.get_props_depth(node, root, req, depth)
 		resp.make_body()
 		req.dav.set_features(resp, node)
 		resp.vary = ('Brief', 'Prefer')
 		return resp
 
-	def get_props(self, node, prop_root, req):
-		req.dav.user_acl(req, node, dprops.ACL_READ) # FIXME: parent
+	def parse_request(self, prop_root):
 		pdict = dict()
 		for prop in prop_root:
 			if prop.tag != dprops.PROPERTY:
@@ -80,6 +86,39 @@ class DAVExpandPropertyReport(DAVReport):
 			prop_ns = prop.get('namespace', dprops.NS_DAV)
 			prop_id = '{%s}%s' % (prop_ns, prop_name)
 			pdict[prop_id] = prop
+		return pdict
+
+	def get_props_depth(self, node, prop_root, req, depth):
+		req.dav.user_acl(req, node, dprops.ACL_READ) # FIXME: parent
+		pdict = self.parse_request(prop_root)
+
+		resp = DAVMultiStatusResponse(request=req)
+		props = req.dav.get_path_props(req, node, set(pdict), depth) # FIXME: get_404/minimal
+		for ctx, node_props in props.items():
+			if (200 in node_props) and (len(node_props[200]) > 0):
+				found_props = node_props[200]
+				for fprop in list(found_props):
+					if fprop not in pdict:
+						continue
+					qprop = pdict[fprop]
+					if len(qprop) == 0:
+						continue
+					fvalue = found_props[fprop]
+					if not isinstance(fvalue, DAVHrefValue):
+						continue
+					fnode = fvalue.get_node(req)
+					if fnode:
+						found_props[fprop] = DAVResponseValue(
+							fnode,
+							self.get_props(fnode, qprop, req)
+						)
+			el = DAVResponseElement(req, ctx, node_props)
+			resp.add_element(el)
+		return resp
+
+	def get_props(self, node, prop_root, req):
+		req.dav.user_acl(req, node, dprops.ACL_READ) # FIXME: parent
+		pdict = self.parse_request(prop_root)
 
 		props = req.dav.get_node_props(req, node, set(pdict))
 		if 200 not in props:
@@ -88,12 +127,12 @@ class DAVExpandPropertyReport(DAVReport):
 		if len(found_props) == 0:
 			return props
 		for fprop in list(found_props):
-			fvalue = found_props[fprop]
 			if fprop not in pdict:
 				continue
 			qprop = pdict[fprop]
 			if len(qprop) == 0:
 				continue
+			fvalue = found_props[fprop]
 			if not isinstance(fvalue, DAVHrefValue):
 				continue
 			fnode = fvalue.get_node(req)
@@ -103,4 +142,186 @@ class DAVExpandPropertyReport(DAVReport):
 					self.get_props(fnode, qprop, req)
 				)
 		return props
+
+class DAVPrincipalPropertySearchReport(DAVReport):
+	def __call__(self, req):
+		req.dav.assert_http_depth(req, 0)
+		root = self.rreq.xml
+		nodes = (self.rreq.ctx,)
+
+		if root.find(dprops.APPLY_TO_PRINC_COLL_SET) is not None:
+			nodes = req.dav.principal_collections(req)
+		test = root.get('test')
+		if test not in ('allof', 'anyof'):
+			test = 'allof'
+		query = dict()
+		pset = set()
+		for cond in root.iterchildren(dprops.PROPERTY_SEARCH):
+			prop = cond.find(dprops.PROP)
+			match = cond.find(dprops.MATCH)
+			if (prop is None) or (match is None):
+				raise DAVBadRequestError('DAV:property-search term must contain one property and one match tag.')
+			for pname in prop:
+				query[pname.tag] = match.text
+		if len(query) == 0:
+			raise DAVBadRequestError('DAV:principal-property-search report request must contain at least one DAV:property-search term.')
+
+		for prop in root.iterchildren(dprops.PROP):
+			for pname in prop:
+				pset.add(pname.tag)
+
+		resp = DAVMultiStatusResponse(request=req)
+
+		for node in nodes:
+			search = getattr(node, 'dav_search_principals', None)
+			if not callable(search):
+				continue
+			for result in search(req, test, query):
+				if not req.dav.has_user_acl(req, result, dprops.ACL_READ):
+					continue
+				props = req.dav.get_node_props(req, result, pset)
+				el = DAVResponseElement(req, result, props)
+				resp.add_element(el)
+
+		resp.make_body()
+		req.dav.set_features(resp, node)
+		resp.vary = ('Brief', 'Prefer')
+		return resp
+
+class DAVACLPrincipalPropertySetReport(DAVReport):
+	@classmethod
+	def supports(cls, node):
+		acl = getattr(node, 'dav_acl', None)
+		return callable(acl)
+
+	def __call__(self, req):
+		req.dav.assert_http_depth(req, 0)
+		root = self.rreq.xml
+		node = self.rreq.ctx
+		try:
+			acl = node.dav_acl(req)
+		except (AttributeError, TypeError):
+			raise DAVBadRequestError('Request URI does not support ACLs.')
+
+		req.dav.user_acl(req, node, dprops.ACL_READ_ACL)
+		pset = set()
+		for prop in root.iterchildren(dprops.PROP):
+			for pname in prop:
+				pset.add(pname.tag)
+
+		resp = DAVMultiStatusResponse(request=req)
+
+		for princ in acl.all_principals:
+			relnode = princ.related_node(req, node)
+			if relnode is None:
+				continue
+			if req.dav.has_user_acl(req, relnode, dprops.ACL_READ):
+				props = req.dav.get_node_props(req, relnode, pset)
+				el = DAVResponseElement(req, relnode, props)
+			else:
+				el = DAVResponseElement(req, relnode, props=None, status=403)
+			resp.add_element(el)
+
+		resp.make_body()
+		req.dav.set_features(resp, node)
+		resp.vary = ('Brief', 'Prefer')
+		return resp
+
+class DAVPrincipalSearchPropertySetReport(DAVReport):
+	@classmethod
+	def supports(cls, node):
+		sf = getattr(node, 'dav_search_fields', None)
+		return callable(sf)
+
+	def __call__(self, req):
+		req.dav.assert_http_depth(req, 0)
+		node = self.rreq.ctx
+		sf = getattr(node, 'dav_search_fields', None)
+		if not callable(sf):
+			raise DAVBadRequestError('Request URI does not support DAV:principal-search-property-set report.')
+		resp = DAVPrincipalSearchPropertySetResponse(req, sf(req))
+		resp.make_body()
+		return resp
+
+class DAVPrincipalMatchReport(DAVReport):
+	@classmethod
+	def supports(cls, node):
+		try:
+			verifyObject(IDAVCollection, node)
+		except DoesNotImplement:
+			return False
+		return True
+
+	def __call__(self, req):
+		req.dav.assert_http_depth(req, 0)
+		root = self.rreq.xml
+		node = self.rreq.ctx
+		user = req.user
+		req.dav.user_acl(req, node, dprops.ACL_READ) # FIXME: recursive
+
+		try:
+			verifyObject(IDAVCollection, node)
+		except DoesNotImplement:
+			raise DAVBadRequestError('DAV:principal-match report can only by run on collections.')
+		find_prop = root.find(dprops.PRINC_PROP)
+		if (find_prop is not None) and (len(find_prop) > 0):
+			find_prop = find_prop[0].tag
+		else:
+			find_prop = None
+		find_self = root.find(dprops.SELF)
+		pset = set()
+		for prop in root.iterchildren(dprops.PROP):
+			for pname in prop:
+				pset.add(pname.tag)
+
+		# TODO: try to optimize this report when PRINC_PROP (find_prop) is used
+		if find_prop and (find_self is not None):
+			raise DAVBadRequestError('DAV:principal-match report request cannot contain both DAV:principal-property and DAV:self properties.')
+
+		resp = DAVMultiStatusResponse(request=req)
+
+		if find_self is not None:
+			matcher = getattr(node, 'dav_match_self', None)
+			if callable(matcher):
+				for result in matcher(req):
+					if not req.dav.has_user_acl(req, result, dprops.ACL_READ):
+						continue
+					if len(pset):
+						props = req.dav.get_node_props(req, result, pset)
+					else:
+						props = None
+					el = DAVResponseElement(req, result, props, 200)
+					resp.add_element(el)
+		elif find_prop:
+			send_props = len(pset) > 0
+			remove_prop = False
+			if find_prop not in pset:
+				pset.add(find_prop)
+				remove_prop = True
+			props = req.dav.get_path_props(req, node, pset, dprops.DEPTH_INFINITY)
+			for ctx, node_props in props.items():
+				if not req.dav.has_user_acl(req, ctx, dprops.ACL_READ):
+					continue
+				if 200 not in node_props:
+					continue
+				found_props = node_props[200]
+				if find_prop not in found_props:
+					continue
+				fvalue = found_props[find_prop]
+				if not isinstance(fvalue, DAVHrefValue):
+					continue
+				if fvalue.get_node(req) is user:
+					if remove_prop:
+						del found_props[find_prop]
+					el = DAVResponseElement(
+						req, ctx,
+						node_props if send_props else None,
+						200 if not send_props else None
+					)
+					resp.add_element(el)
+
+		resp.make_body()
+		req.dav.set_features(resp, node)
+		resp.vary = ('Brief', 'Prefer')
+		return resp
 

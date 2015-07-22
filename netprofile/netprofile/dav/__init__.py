@@ -114,8 +114,10 @@ class DAVManager(object):
 		)
 		self.reports = {
 			dprops.EXPAND_PROPERTY       : DAVExpandPropertyReport,
-			dprops.PRINC_PROP_SEARCH     : DAVReport,
-			dprops.PRINC_SEARCH_PROP_SET : DAVReport
+			dprops.PRINC_PROP_SEARCH     : DAVPrincipalPropertySearchReport,
+			dprops.PRINC_SEARCH_PROP_SET : DAVPrincipalSearchPropertySetReport,
+			dprops.ACL_PRINC_PROP_SET    : DAVACLPrincipalPropertySetReport,
+			dprops.PRINC_MATCH           : DAVPrincipalMatchReport
 		}
 		self.resource_map = (
 			(IDAVCollection,  dprops.COLLECTION),
@@ -158,7 +160,11 @@ class DAVManager(object):
 	def report(self, name, rreq):
 		if name not in self.reports:
 			raise DAVReportNotSupportedError('Requested report type is not supported.')
-		return self.reports[name](name, rreq)
+		cls = self.reports[name]
+		supports = getattr(cls, 'supports', None)
+		if callable(supports) and rreq.ctx and (not supports(rreq.ctx)):
+			raise DAVReportNotSupportedError('Report type is not supported by current request URI.')
+		return cls(name, rreq)
 
 	def set_headers(self, resp, node=None):
 		resp.status = 200
@@ -301,6 +307,20 @@ class DAVManager(object):
 				ret.add(data.tag)
 		return ret
 
+	def assert_http_depth(self, req, value=0, dd=0):
+		d = req.headers.get('Depth')
+		if d is None:
+			if value != dd:
+				raise DAVBadRequestError('Need to specify HTTP Depth: header')
+			return
+		if d == 'infinity':
+			if value != dprops.DEPTH_INFINITY:
+				raise DAVBadRequestError('Invalid HTTP Depth: infinity header')
+			return
+		d = int(d)
+		if value != d:
+			raise DAVBadRequestError('Invalid HTTP Depth: header')
+
 	def get_http_depth(self, req, dd=dprops.DEPTH_INFINITY):
 		d = req.headers.get('Depth')
 		if d is None:
@@ -429,9 +449,11 @@ class DAVManager(object):
 				privset = self.default_priv_set
 			props[dprops.SUPPORTED_PRIVILEGE_SET] = DAVPrivilegeSetValue(privset)
 		if (dprops.ACL in pset) and (dprops.ACL not in props):
-			# TODO: check ACL: {DAV:}read-acl
 			if hasattr(node, 'dav_acl'):
-				props[dprops.ACL] = node.dav_acl(req)
+				if self.has_user_acl(req, node, dprops.ACL_READ_ACL):
+					props[dprops.ACL] = node.dav_acl(req)
+				elif set403 is not None:
+					set403.add(dprops.ACL)
 			else:
 				props[dprops.ACL] = None
 		if (dprops.ACL_RESTRICTIONS in pset) and (dprops.ACL_RESTRICTIONS not in props):
@@ -480,8 +502,11 @@ class DAVManager(object):
 				for pn in pset:
 					if pn in props:
 						ret[200][pn] = props[pn]
-					elif (not all_props) and get_404:
-						ret[404][pn] = None
+					elif not all_props:
+						if pn in forbidden:
+							ret[403][pn] = None
+						elif get_404:
+							ret[404][pn] = None
 			del props
 		return ret
 
