@@ -24,9 +24,9 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('tickets',)
 
-        @classmethod
+	@classmethod
 	def get_models(cls):
-                from netprofile_medical import models
+		from netprofile_medical import models
 		return (
 			models.ICDBlock,
 			models.ICDClass,
