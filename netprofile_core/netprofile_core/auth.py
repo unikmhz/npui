@@ -51,7 +51,10 @@ from pyramid.authentication import (
 from pyramid.authorization import ACLAuthorizationPolicy
 
 from sqlalchemy import and_
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import (
+    NoResultFound,
+    StaleDataError
+)
 
 from netprofile.common.auth import (
 	DigestAuthenticationPolicy,
@@ -86,7 +89,7 @@ def get_user(request):
 				User.enabled == True,
 				User.login == userid
 			).one()
-		except NoResultFound:
+		except (NoResultFound, StaleDataError):
 			return None
 
 def get_acls(request):
