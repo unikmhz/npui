@@ -9,7 +9,6 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
-from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -22,18 +21,20 @@ class Module(ModuleBase):
 		mmgr.cfg.scan()
 
 	@classmethod
-	def get_deps(self):
+	def get_deps(cls):
 		return ('tickets',)
 
-	def get_models(self):
+        @classmethod
+	def get_models(cls):
+                from netprofile_medical import models
 		return (
-			ICDBlock,
-			ICDClass,
-			ICDEntry,
-			ICDHistory,
-			ICDMapping,
-			MedicalTestType,
-			MedicalTest
+			models.ICDBlock,
+			models.ICDClass,
+			models.ICDEntry,
+			models.ICDHistory,
+			models.ICDMapping,
+			models.MedicalTestType,
+			models.MedicalTest
 		)
 
 	def get_css(self, request):
