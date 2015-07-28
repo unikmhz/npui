@@ -62,6 +62,7 @@ def _dpane_host_services(tabs, model, req):
 @register_hook('core.dpanetabs.entities.PhysicalEntity')
 @register_hook('core.dpanetabs.entities.LegalEntity')
 @register_hook('core.dpanetabs.entities.StructuralEntity')
+@register_hook('core.dpanetabs.entities.ExternalEntity')
 def _dpane_entity_hosts(tabs, model, req):
 	loc = get_localizer(req)
 	tabs.append({
@@ -72,6 +73,20 @@ def _dpane_entity_hosts(tabs, model, req):
 		'stateful'          : False,
 		'hideColumns'       : ('entity',),
 		'extraParamProp'    : 'entityid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
+@register_hook('core.dpanetabs.domains.Domain')
+def _dpane_domain_services(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Services')),
+		'iconCls'           : 'ico-mod-domainservice',
+		'xtype'             : 'grid_hosts_DomainService',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('domain',),
+		'extraParamProp'    : 'domainid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV response objects
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -34,6 +34,7 @@ __all__ = [
 	'DAVETagResponse',
 	'DAVCreateResponse',
 	'DAVXMLResponse',
+	'DAVMountResponse',
 	'DAVErrorResponse',
 	'DAVMultiStatusResponse',
 	'DAVLockResponse'
@@ -86,6 +87,7 @@ class DAVXMLResponse(DAVResponse):
 		self.nsmap = nsmap
 
 	def make_body(self):
+		#etree.cleanup_namespaces(self.xml_root)
 		self.body = etree.tostring(
 			self.xml_root,
 			encoding='utf-8',
@@ -96,6 +98,25 @@ class DAVXMLResponse(DAVResponse):
 
 	def append(self, el):
 		self.xml_root.append(el)
+
+class DAVMountResponse(DAVXMLResponse):
+	def __init__(self, *args, path=None, username=None, **kwargs):
+		super(DAVMountResponse, self).__init__(*args, **kwargs)
+		self.content_type = 'application/davmount+xml'
+		ns_map = dprops.NS_MAP.copy()
+		if self.nsmap:
+			ns_map.update(self.nsmap)
+		self.xml_root = etree.Element(dprops.MOUNT, nsmap={
+			'dm' : dprops.NS_DAVMOUNT
+		})
+		el = etree.SubElement(self.xml_root, dprops.MOUNT_URL)
+		el.text = self.req.dav.uri(self.req, '/')
+		if path is not None:
+			el = etree.SubElement(self.xml_root, dprops.MOUNT_OPEN)
+			el.text = path
+		if username is not None:
+			el = etree.SubElement(self.xml_root, dprops.MOUNT_USERNAME)
+			el.text = username
 
 class DAVErrorResponse(DAVXMLResponse):
 	def __init__(self, *args, error=None, **kwargs):

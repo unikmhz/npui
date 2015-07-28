@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV low-level library
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -57,12 +57,19 @@ from .acls import *
 def _parse_datetime(el):
 	return _dparse(el.text)
 
+class DAVAllPropsSet(object):
+	def __contains__(self, el):
+		return True
+
+	def __len__(self):
+		return 1
+
 @implementer(IDAVManager)
 class DAVManager(object):
 	def __init__(self, config):
 		self.cfg = config
 		self.lock_cls = None
-		self.features = ['1', '2', '3', 'extended-mkcol', 'access-control']
+		self.features = ['1', '2', '3', 'extended-mkcol', 'access-control', 'sabredav-partialupdate']
 		self.methods = [
 			'OPTIONS', 'GET', 'HEAD', 'DELETE', 'PROPFIND',
 			'PUT', 'PROPPATCH', 'COPY', 'MOVE', 'REPORT',
@@ -153,6 +160,9 @@ class DAVManager(object):
 
 	def set_features(self, resp):
 		resp.headers.add('DAV', ', '.join(self.features))
+
+	def set_patch_formats(self, resp):
+		resp.headers.add('Accept-Patch', 'application/x-sabredav-partialupdate')
 
 	def set_allow(self, resp, more=None):
 		result = list(self.methods)
@@ -280,7 +290,7 @@ class DAVManager(object):
 			return dprops.DEPTH_INFINITY
 		try:
 			return int(d)
-		except ValueError:
+		except (TypeError, ValueError):
 			pass
 		return dd
 
@@ -418,25 +428,30 @@ class DAVManager(object):
 	def get_node_props(self, req, ctx, pset=None, get_404=True):
 		# TODO: add exceptions for ACL access controls etc.
 		all_props = False
-		if (pset is None) or (len(pset) == 0):
+		if (pset is None) or (isinstance(pset, set) and (len(pset) == 0)):
 			all_props = True
 			pset = dprops.DEFAULT_PROPS
+		if isinstance(pset, DAVAllPropsSet):
+			all_props = True
+			get_404 = False
 		# TODO: handle add/remove from pset from hooks
 		ret = {
 			200 : {},
 			403 : {},
 			404 : {}
 		}
-		found = {}
-		not_found = {}
 		if len(pset) > 0:
 			forbidden = set()
 			props = self.props(req, ctx, pset, set403=forbidden)
-			for pn in pset:
-				if pn in props:
+			if isinstance(pset, DAVAllPropsSet):
+				for pn in props:
 					ret[200][pn] = props[pn]
-				elif (not all_props) and get_404:
-					ret[404][pn] = None
+			else:
+				for pn in pset:
+					if pn in props:
+						ret[200][pn] = props[pn]
+					elif (not all_props) and get_404:
+						ret[404][pn] = None
 			del props
 		return ret
 

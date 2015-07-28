@@ -1,0 +1,30 @@
+.tab-content > .tab-pane
+{
+	display: block;
+}
+
+ul.nav-tabs
+{
+	display: none;
+}
+
+.fade
+{
+	opacity: 1;
+}
+
+.collapse
+{
+	display: block;
+}
+
+.js-only
+{
+	display: none;
+}
+
+.no-js > li:hover > .dropdown-menu { display: block; }
+.no-js > .dropdown-toggle:hover + .dropdown-menu { display: block; }
+.no-js > .dropdown-menu { top: 32px; }
+.no-js > .dropdown-menu:hover { display: block; }
+

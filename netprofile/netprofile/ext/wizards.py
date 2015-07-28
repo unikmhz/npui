@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Classes used to produce UI wizards
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -187,7 +187,7 @@ class Step(object):
 	Single pane of a wizard. Wizards always contain at least one of these.
 	"""
 	def __init__(self, *args, **kwargs):
-		self.fields = args
+		self.fields = list(args)
 		self.title = kwargs.get('title')
 		self.id = kwargs.get('id')
 		self.validate = kwargs.get('validate', True)
@@ -253,7 +253,8 @@ class Wizard(object):
 	Generic wizard object. Generally viewed client-side on 'create' and other events.
 	"""
 	def __init__(self, *args, **kwargs):
-		self.steps = args
+		self.init_done = False
+		self.steps = list(args)
 		self.title = kwargs.get('title')
 		self.validator = kwargs.get('validator')
 
@@ -274,7 +275,7 @@ class Wizard(object):
 		)
 		return res
 
-	def action(self, step_id, act, values, req):
+	def action(self, model, step_id, act, values, req):
 		step = None
 		for xstep in self.steps:
 			if xstep.id == step_id:
@@ -290,7 +291,7 @@ class Wizard(object):
 				cb = step.on_submit
 			if cb:
 				if callable(cb):
-					return cb(self, step, act, values, req)
+					return cb(self, model, step, act, values, req)
 				return { 'do' : 'goto', 'goto' : cb }
 
 class SimpleWizard(Wizard):
@@ -300,6 +301,8 @@ class SimpleWizard(Wizard):
 	def get_cfg(self, model, req, **kwargs):
 		step = []
 		for cname, col in model.get_form_columns().items():
+			if col.get_read_only(req):
+				continue
 			colfld = col.get_editor_cfg(req, in_form=True)
 			if colfld:
 				coldef = col.default

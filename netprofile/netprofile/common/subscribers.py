@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Pyramid event subscribers
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -32,9 +32,12 @@ from pyramid.i18n import (
 	get_localizer
 )
 
+from pyramid.settings import asbool
+
 def add_renderer_globals(event):
 	request = event['request']
-	event['_'] = request.translate
+	if hasattr(request, 'translate'):
+		event['_'] = request.translate
 
 def on_new_request(event):
 	request = event.request
@@ -45,13 +48,28 @@ def on_new_request(event):
 		mr = 'netprofile_' + mr.name.split('.')[0]
 
 	def auto_translate(*args, **kwargs):
-		kwargs['domain'] = mr
+		if 'domain' not in kwargs:
+			kwargs['domain'] = mr
 		return get_localizer(request).translate(TranslationString(*args, **kwargs))
 
 	request.translate = auto_translate
 
-#	request.response.headerlist.append((
-#		'Content-Security-Policy',
-#		'default-src \'self\'; script-src \'self\' \'unsafe-eval\''
-#	))
+def on_response(event):
+	settings = event.request.registry.settings
+	res = event.response
+	# FIXME: add CSP
+	res.headerlist.append(('X-Content-Type-Options', 'nosniff'))
+	if 'X-Frame-Options' not in res.headers:
+		res.headerlist.append(('X-Frame-Options', 'DENY'))
+	if asbool(settings.get('netprofile.http.sts.enabled', False)):
+		try:
+			max_age = int(settings.get('netprofile.http.sts.max_age', 604800))
+		except (TypeError, ValueError):
+			max_age = 604800
+		sts_chunks = [ 'max-age=' + str(max_age) ]
+		if asbool(settings.get('netprofile.http.sts.include_subdomains', False)):
+			sts_chunks.append('includeSubDomains')
+		if asbool(settings.get('netprofile.http.sts.preload', False)):
+			sts_chunks.append('preload')
+		res.headerlist.append(('Strict-Transport-Security', '; '.join(sts_chunks)))
 

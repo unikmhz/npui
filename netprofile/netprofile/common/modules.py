@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Module detection and loading
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,8 +27,10 @@ from __future__ import (
 	division
 )
 
+import sys
 import pkg_resources
 import logging
+import transaction
 
 from zope.interface import (
 	implementer,
@@ -36,9 +38,13 @@ from zope.interface import (
 )
 
 from distutils import version
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm.exc import NoResultFound
 
-from netprofile.db.connection import DBSession
+from netprofile.db.connection import (
+	Base,
+	DBSession
+)
 from netprofile.ext.data import ExtBrowser
 from netprofile.common.hooks import IHookManager
 
@@ -77,10 +83,27 @@ class ModuleBase(object):
 	def add_routes(self, config):
 		pass
 
-	def get_models(self):
+	@classmethod
+	def get_models(cls):
 		return ()
 
-	def get_menus(self):
+	@classmethod
+	def get_sql_functions(cls):
+		return ()
+
+	@classmethod
+	def get_sql_views(cls):
+		return ()
+
+	@classmethod
+	def get_sql_events(cls):
+		return ()
+
+	@classmethod
+	def get_sql_data(cls, modobj, sess):
+		pass
+
+	def get_menus(self, request):
 		return ()
 
 	def get_js(self, request):
@@ -107,6 +130,9 @@ class ModuleBase(object):
 	def get_dav_plugins(self, request):
 		return {}
 
+	def get_task_imports(self):
+		return ()
+
 	def load(self):
 		pass
 
@@ -123,6 +149,9 @@ class IModuleManager(Interface):
 	"""
 	pass
 
+class ModuleError(RuntimeError):
+	pass
+
 @implementer(IModuleManager)
 class ModuleManager(object):
 	"""
@@ -130,21 +159,12 @@ class ModuleManager(object):
 	and (un)installing modules.
 	"""
 
-	@classmethod
-	def prepare(cls):
-		"""
-		Perform module discovery without loading all the discovered
-		modules. Might be handy for various utility tasks.
-		"""
-		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
-			ep.load()
-
 	def __init__(self, cfg, vhost=None):
 		self.cfg = cfg
 		self.modules = {}
+		self.installed = None
 		self.loaded = {}
 		self.models = {}
-		self.menus = {}
 		if vhost is None:
 			sett = cfg.get_settings()
 			self.vhost = sett.get('netprofile.vhost', None)
@@ -156,10 +176,37 @@ class ModuleManager(object):
 		Perform module discovery. Individual modules can't be loaded
 		without this call.
 		"""
+		mods = []
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
 			if ep.name in self.modules:
 				continue
 			self.modules[ep.name] = ep
+			mods.append(ep.name)
+
+		return mods
+
+	def rescan(self):
+		"""
+		Perform discovery of new modules at runtime. Does not reload modified
+		modules or detect deleted ones.
+		"""
+		new_mods = []
+		cur_env = pkg_resources.Environment(sys.path)
+		dists, errors = pkg_resources.working_set.find_plugins(cur_env)
+		for dist in dists:
+			pname = dist.project_name
+			if pname[:11] != 'netprofile-':
+				continue
+			moddef = pname[11:]
+			if moddef in self.modules:
+				continue
+			new_mods.append(moddef)
+			pkg_resources.working_set.add(dist)
+
+		if len(new_mods) > 0:
+			self.scan()
+
+		return new_mods
 
 	def _get_dist(self, moddef=None):
 		"""
@@ -178,8 +225,16 @@ class ModuleManager(object):
 		if moddef not in self.modules:
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
+		if not self.is_installed(moddef, DBSession()):
+			if moddef != 'core':
+				logger.error('Can\'t load uninstalled module \'%s\'. Please install it first.', moddef)
+			return False
 		mstack.append(moddef)
-		modcls = self.modules[moddef].load()
+		try:
+			modcls = self.modules[moddef].load()
+		except ImportError:
+			logger.error('Can\'t load module \'%s\'. Verify installation and try again.', moddef)
+			return False
 		if not issubclass(modcls, ModuleBase):
 			logger.error('Module \'%s\' is invalid. Verify installation and try again.', moddef)
 			return False
@@ -202,8 +257,6 @@ class ModuleManager(object):
 		hm = self.cfg.registry.getUtility(IHookManager)
 		for model in mod.get_models():
 			self._import_model(moddef, model, mb, hm)
-		for menu in mod.get_menus():
-			self.menus[menu.name] = menu
 		return True
 
 	def load(self, moddef):
@@ -236,7 +289,7 @@ class ModuleManager(object):
 		if mod.enabled == True:
 			return True
 		mod.enabled = True
-		sess.flush()
+		transaction.commit()
 		return self.load(moddef)
 
 	def disable(self, moddef):
@@ -260,7 +313,26 @@ class ModuleManager(object):
 		if mod.enabled == False:
 			return True
 		mod.enabled = False
-		sess.flush()
+		transaction.commit()
+		return True
+
+	def load_all(self):
+		"""
+		Load all modules disregarding whether they are enabled or not.
+		Must perform discovery first.
+		"""
+		try:
+			from netprofile_core.models import NPModule
+		except ImportError:
+			return False
+
+		sess = DBSession()
+		try:
+			for mod in sess.query(NPModule):
+				if mod.name != 'core':
+					self.load(mod.name)
+		except ProgrammingError:
+			return False
 		return True
 
 	def load_enabled(self):
@@ -268,24 +340,162 @@ class ModuleManager(object):
 		Load all modules from enabled list. Must perform
 		discovery first.
 		"""
-		from netprofile_core.models import NPModule
+		try:
+			from netprofile_core.models import NPModule
+		except ImportError:
+			return False
 
 		sess = DBSession()
-		for mod in sess.query(NPModule).filter(NPModule.enabled == True):
-			if mod.name != 'core':
-				self.load(mod.name)
+		try:
+			for mod in sess.query(NPModule).filter(NPModule.enabled == True):
+				if mod.name != 'core':
+					self.load(mod.name)
+		except ProgrammingError:
+			return False
+		return True
+
+	def is_installed(self, moddef, sess):
+		"""
+		Check if a module is installed.
+		"""
+		if ('core' not in self.loaded) and (moddef != 'core'):
+			return False
+		if moddef in self.loaded:
+			return True
+
+		if self.installed is None:
+			try:
+				from netprofile_core.models import NPModule
+			except ImportError:
+				return False
+			self.installed = set()
+
+			try:
+				for mod in sess.query(NPModule):
+					self.installed.add(mod.name)
+			except ProgrammingError:
+				return False
+
+		return moddef in self.installed
 
 	def install(self, moddef, sess):
 		"""
 		Run module's installation hooks and register the module in DB.
 		"""
-		pass
+		from netprofile_core.models import NPModule
+
+		if ('core' not in self.loaded) and (moddef != 'core'):
+			raise ModuleError('Unable to install anything prior to loading core module.')
+		if self.is_installed(moddef, sess):
+			return False
+
+		ep = None
+		if moddef in self.modules:
+			ep = self.modules[moddef]
+		else:
+			match = list(pkg_resources.iter_entry_points('netprofile.modules', moddef))
+			if len(match) == 0:
+				raise ModuleError('Can\'t find module: \'%s\'.' % (moddef,))
+			if len(match) > 1:
+				raise ModuleError('Can\'t resolve module to single distribution: \'%s\'.' % (moddef,))
+			ep = match[0]
+			if ep.name != moddef:
+				raise ModuleError('Loaded module source \'%s\', but was asked to load \'%s\'.' % (
+					ep.name,
+					moddef
+				))
+			self.modules[moddef] = ep
+
+		try:
+			modcls = ep.load()
+		except ImportError as e:
+			raise ModuleError('Can\'t locate ModuleBase class for module \'%s\'.' % (moddef,)) from e
+
+		get_deps = getattr(modcls, 'get_deps', None)
+		if callable(get_deps):
+			for dep in get_deps():
+				if not self.is_installed(dep, sess):
+					self.install(dep, sess)
+
+		modprep = getattr(modcls, 'prepare', None)
+		if callable(modprep):
+			modprep()
+		modversion = '0.0.0'
+		modv = getattr(modcls, 'version', None)
+		if callable(modv):
+			modversion = str(modv())
+
+		get_models = getattr(modcls, 'get_models', None)
+		if callable(get_models):
+			tables = [model.__table__ for model in get_models()]
+			Base.metadata.create_all(sess.bind, tables)
+
+		get_sql_functions = getattr(modcls, 'get_sql_functions', None)
+		if callable(get_sql_functions):
+			for func in get_sql_functions():
+				sess.execute(func.create(moddef))
+
+		get_sql_views = getattr(modcls, 'get_sql_views', None)
+		if callable(get_sql_views):
+			for view in get_sql_views():
+				sess.execute(view.create())
+
+		modobj = NPModule(id=None)
+		modobj.name = moddef
+		modobj.current_version = modversion
+		if moddef == 'core':
+			modobj.enabled = True
+		sess.add(modobj)
+		sess.flush()
+
+		get_sql_data = getattr(modcls, 'get_sql_data', None)
+		if callable(get_sql_data):
+			get_sql_data(modobj, sess)
+
+		mod_install = getattr(modcls, 'install', None)
+		if callable(mod_install):
+			mod_install(sess)
+
+		if self.installed is None:
+			self.installed = set()
+		self.installed.add(moddef)
+		transaction.commit()
+
+		get_sql_events = getattr(modcls, 'get_sql_events', None)
+		if callable(get_sql_events):
+			for evt in get_sql_events():
+				sess.execute(evt.create(moddef))
+			transaction.commit()
+
+		if moddef == 'core':
+			self.load('core')
+		return True
 
 	def uninstall(self, moddef, sess):
 		"""
 		Unregister the module from DB and run module's uninstallation hooks.
 		"""
-		pass
+		from netprofile_core.models import NPModule
+
+		if ('core' not in self.loaded) and (moddef != 'core'):
+			raise ModuleError('Unable to uninstall anything prior to loading core module.')
+		if not self.is_installed(moddef, sess):
+			return False
+
+		mod_uninstall = getattr(modcls, 'uninstall', None)
+		if callable(mod_uninstall):
+			mod_uninstall(sess)
+		# FIXME: write this
+		transaction.commit()
+
+		return True
+
+	def assert_loaded(self, *mods):
+		if (len(mods) == 1) and isinstance(mods[0], (list, tuple, set)):
+			mods = mods[0]
+		not_loaded = set(mods) - set(self.loaded)
+		if len(not_loaded) > 0:
+			raise ModuleError('These modules aren\'t loaded, but are required: %s.' % (', '.join(not_loaded),))
 
 	def _import_model(self, moddef, model, mb, hm):
 		mname = model.__name__
@@ -298,6 +508,32 @@ class ModuleManager(object):
 		Get module traversal helper.
 		"""
 		return ExtBrowser(self)
+
+	def get_export_formats(self):
+		"""
+		Get registered data export formats.
+		"""
+		ret = {}
+		for ep in pkg_resources.iter_entry_points('netprofile.export.formats'):
+			try:
+				cls = ep.load()
+				ret[ep.name] = cls()
+			except ImportError:
+				logger.error('Can\'t load export formatter \'%s\'.', moddef)
+		return ret
+
+	def get_export_format(self, name):
+		"""
+		Get registered data export format by name.
+		"""
+		eps = tuple(pkg_resources.iter_entry_points('netprofile.export.formats', name))
+		if len(eps) == 0:
+			raise ModuleError('Can\'t load export formatter \'%s\'.' % (name,))
+		try:
+			cls = eps[0].load()
+			return cls()
+		except ImportError:
+			raise ModuleError('Can\'t load export formatter \'%s\'.' % (name,))
 
 	def get_js(self, request):
 		"""
@@ -370,6 +606,24 @@ class ModuleManager(object):
 		for moddef, mod in self.loaded.items():
 			ret.update(mod.get_dav_plugins(request))
 		return ret
+
+	def get_task_imports(self):
+		"""
+		Get a list of all modules containing Celery tasks.
+		"""
+		ret = []
+		for moddef, mod in self.loaded.items():
+			ret.extend(mod.get_task_imports())
+		return ret
+
+	def menu_generator(self, request):
+		"""
+		Generate all registered UI menu objects.
+		"""
+		for moddef, mod in self.loaded.items():
+			for menu in mod.get_menus(request):
+				menu.__moddef__ = moddef
+				yield menu
 
 def includeme(config):
 	"""

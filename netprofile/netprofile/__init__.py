@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Setup and entry points
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,15 +28,20 @@ from __future__ import (
 )
 
 import sys
-import cdecimal
+
+try:
+	import cdecimal
+	sys.modules['decimal'] = cdecimal
+except ImportError:
+	pass
 
 PY3 = True
 if sys.version < '3':
 	PY3 = False
 	reload(sys)
 	sys.setdefaultencoding('utf-8')
-sys.modules['decimal'] = cdecimal
 
+from babel import Locale
 from pyramid.config import Configurator
 from pyramid.settings import asbool
 from sqlalchemy import engine_from_config
@@ -46,32 +51,21 @@ from netprofile.common.modules import IModuleManager
 from netprofile.common.factory import RootFactory
 from netprofile.db.connection import DBSession
 
-LANGUAGES = [
-	('en', 'English (US)'),
-	('ru', 'Russian [Русский]')
-]
-
-LANG_MAP = {
-	'en'      : 'en',
-	'eng'     : 'en',
-	'english' : 'en',
-	'en-US'   : 'en',
-	'en_US'   : 'en',
-	'ru'      : 'ru',
-	'rus'     : 'ru',
-	'russian' : 'ru',
-	'ru-RU'   : 'ru',
-	'ru_RU'   : 'ru'
-}
+inst_id = 'ru.netprofile'
 
 def locale_neg(request):
-	avail = request.registry.settings.get('pyramid.available_languages', '').split()
+	avail = request.locales
 	loc = request.params.get('__locale')
 	if loc is None:
 		loc = request.session.get('ui.locale')
 	if loc is None and request.accept_language:
-		loc = request.accept_language.best_match(LANG_MAP)
-		loc = LANG_MAP.get(loc)
+		loc = Locale.negotiate(
+			list(request.accept_language),
+			list(request.locales),
+			sep='-'
+		)
+		if loc:
+			loc = str(loc)
 	if loc is None:
 		loc = request.registry.settings.get('pyramid.default_locale_name', 'en')
 	if loc in avail:
@@ -81,6 +75,14 @@ def locale_neg(request):
 
 def get_debug(request):
 	return request.registry.settings.get('netprofile.debug', False)
+
+def get_locales(request):
+	avail = request.registry.settings.get('pyramid.available_languages', '').split()
+	return {loc: Locale.parse(loc) for loc in avail}
+
+def get_current_locale(request):
+	if request.locale_name in request.locales:
+		return request.locales[request.locale_name]
 
 def get_csrf(request):
 	if request.session:
@@ -104,11 +106,12 @@ class VHostPredicate(object):
 			return (self.current is None)
 		return self.needed == self.current
 
-def main(global_config, **settings):
-	"""
-	Pyramid WSGI application for main NetProfile vhost.
-	"""
+def setup_config(settings):
+	global inst_id
+
 	settings['netprofile.debug'] = asbool(settings.get('netprofile.debug'))
+	if 'netprofile.instance_id' in settings:
+		inst_id = settings.get('netprofile.instance_id')
 	engine = engine_from_config(settings, 'sqlalchemy.')
 	DBSession.configure(bind=engine)
 	cache.cache = cache.configure_cache(settings)
@@ -118,6 +121,15 @@ def main(global_config, **settings):
 		root_factory=RootFactory,
 		locale_negotiator=locale_neg
 	)
+	config.add_route_predicate('vhost', VHostPredicate)
+	config.add_view_predicate('vhost', VHostPredicate)
+	return config
+
+def main(global_config, **settings):
+	"""
+	Pyramid WSGI application for most of NetProfile vhosts.
+	"""
+	config = setup_config(settings)
 
 	config.add_subscriber(
 		'netprofile.common.subscribers.add_renderer_globals',
@@ -127,7 +139,12 @@ def main(global_config, **settings):
 		'netprofile.common.subscribers.on_new_request',
 		'pyramid.events.ContextFound'
 	)
-	config.add_route_predicate('vhost', VHostPredicate)
+	config.add_subscriber(
+		'netprofile.common.subscribers.on_response',
+		'pyramid.events.NewResponse'
+	)
+	config.add_request_method(get_locales, str('locales'), reify=True)
+	config.add_request_method(get_current_locale, str('current_locale'), reify=True)
 	config.add_request_method(get_debug, str('debug_enabled'), reify=True)
 	config.add_request_method(get_csrf, str('get_csrf'))
 

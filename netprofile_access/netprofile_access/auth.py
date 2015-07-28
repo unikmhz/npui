@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -34,13 +34,20 @@ from pyramid.security import (
 	Authenticated,
 	unauthenticated_userid
 )
-from pyramid.events import ContextFound
+from pyramid.events import (
+	NewResponse,
+	ContextFound
+)
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.settings import asbool
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.db.connection import DBSession
-from netprofile.db.clauses import SetVariable
+from netprofile.db.clauses import (
+	SetVariable,
+	SetVariables
+)
 
 def get_user(request):
 	sess = DBSession()
@@ -70,12 +77,42 @@ def _auth_to_db(event):
 	sess = DBSession()
 	user = request.user
 
-	sess.execute(SetVariable('accessuid', 0))
-	sess.execute(SetVariable('accessgid', 0))
-	if user:
-		sess.execute(SetVariable('accesslogin', '[ACCESS:%s]' % user.nick))
-	else:
-		sess.execute(SetVariable('accesslogin', '[ACCESS:GUEST]'))
+	db_vars = {
+		'accessuid'   : 0,
+		'accessgid'   : 0,
+		'accesslogin' : '[ACCESS:%s]' % (user.nick,) if user else '[ACCESS:GUEST]'
+	}
+	try:
+		sess.execute(SetVariables(**db_vars))
+	except NotImplementedError:
+		for vname in db_vars:
+			sess.execute(SetVariable(vname, db_vars[vname]))
+
+def _new_response(event):
+	request = event.request
+	settings = request.registry.settings
+	response = event.response
+	# TODO: add static URL if set
+	csp = 'default-src \'self\' www.google.com; style-src \'self\' www.google.com \'unsafe-inline\''
+	if request.debug_enabled:
+		csp += '; script-src \'self\' www.google.com \'unsafe-inline\''
+	response.headerlist.extend((
+		('Content-Security-Policy', csp),
+		('X-Content-Type-Options', 'nosniff')
+	))
+	if 'X-Frame-Options' not in response.headers:
+		response.headerlist.append(('X-Frame-Options', 'DENY'))
+	if asbool(settings.get('netprofile.http.sts.enabled', False)):
+		try:
+			max_age = int(settings.get('netprofile.http.sts.max_age', 604800))
+		except (TypeError, ValueError):
+			max_age = 604800
+		sts_chunks = [ 'max-age=' + str(max_age) ]
+		if asbool(settings.get('netprofile.http.sts.include_subdomains', False)):
+			sts_chunks.append('includeSubDomains')
+		if asbool(settings.get('netprofile.http.sts.preload', False)):
+			sts_chunks.append('preload')
+		response.headerlist.append(('Strict-Transport-Security', '; '.join(sts_chunks)))
 
 def includeme(config):
 	"""
@@ -92,5 +129,6 @@ def includeme(config):
 	config.set_authorization_policy(authz_policy)
 	config.set_authentication_policy(authn_policy)
 
+	config.add_subscriber(_new_response, NewResponse)
 	config.add_subscriber(_auth_to_db, ContextFound)
 

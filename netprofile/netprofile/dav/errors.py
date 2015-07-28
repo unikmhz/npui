@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV errors
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -40,11 +40,13 @@ __all__ = [
 	'DAVConflictError',
 	'DAVLockTokenMatchError',
 	'DAVACEConflictError',
+	'DAVLengthRequiredError',
 	'DAVPreconditionError',
 	'DAVNoAbstractPrivilegeError',
 	'DAVNotRecognizedPrincipalError',
 	'DAVNotSupportedPrivilegeError',
 	'DAVUnsupportedMediaTypeError',
+	'DAVUnsatisfiableRangeError',
 	'DAVLockedError',
 	'DAVConflictingLockError',
 	'DAVNotImplementedError'
@@ -136,6 +138,10 @@ class DAVACEConflictError(DAVConflictError):
 		etree.SubElement(parent, dprops.NO_ACE_CONFLICT)
 		super(DAVACEConflictError, self).render(req, parent)
 
+class DAVLengthRequiredError(DAVError):
+	def __init__(self, *args):
+		super(DAVLengthRequiredError, self).__init__(*args, status=411)
+
 class DAVPreconditionError(DAVError):
 	def __init__(self, *args, header=None):
 		super(DAVPreconditionError, self).__init__(*args, status=412)
@@ -159,6 +165,10 @@ class DAVNotSupportedPrivilegeError(DAVPreconditionError):
 class DAVUnsupportedMediaTypeError(DAVError):
 	def __init__(self, *args):
 		super(DAVUnsupportedMediaTypeError, self).__init__(*args, status=415)
+
+class DAVUnsatisfiableRangeError(DAVError):
+	def __init__(self, *args):
+		super(DAVUnsatisfiableRangeError, self).__init__(*args, status=416)
 
 class DAVLockedError(DAVError):
 	def __init__(self, *args, lock=None):

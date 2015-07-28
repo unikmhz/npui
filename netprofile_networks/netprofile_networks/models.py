@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Networks module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -36,6 +36,9 @@ __all__ = [
 	'RoutingTableEntry'
 ]
 
+import itertools
+import math
+
 from sqlalchemy import (
 	Column,
 	ForeignKey,
@@ -55,6 +58,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from netprofile.common import ipaddr
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -70,7 +74,10 @@ from netprofile.db.fields import (
 	IPv6Address,
 	IPv6Offset
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	Trigger
+)
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
 
@@ -101,6 +108,9 @@ class Network(Base):
 		Index('nets_def_i_netgid', 'netgid'),
 		Index('nets_def_i_rtid', 'rtid'),
 		Index('nets_def_i_mgmtdid', 'mgmtdid'),
+		Trigger('after', 'insert', 't_nets_def_ai'),
+		Trigger('after', 'update', 't_nets_def_au'),
+		Trigger('after', 'delete', 't_nets_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -112,11 +122,11 @@ class Network(Base):
 				'cap_delete'    : 'NETS_DELETE',
 				'menu_name'     : _('Networks'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 10,
 				'menu_main'     : True,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : (
-					'name', 'ipaddr', 'ip6addr',
+					'netid',
+					'name', 'domain', 'group', 'ipaddr', 'ip6addr',
 					MarkupColumn(
 						name='state',
 						header_string=_('State'),
@@ -125,9 +135,10 @@ class Network(Base):
 						column_resizable=False
 					)
 				),
+				'grid_hidden'   : ('netid', 'domain', 'group'),
 				'form_view'     : (
 					'name', 'domain', 'group',
-					# 'management_device',
+					'management_device',
 					'enabled', 'public',
 					'ipaddr', 'cidr',
 					'ip6addr', 'cidr6',
@@ -177,20 +188,21 @@ class Network(Base):
 	group_id = Column(
 		'netgid',
 		UInt32(),
-		ForeignKey('nets_groups.netgid', name='nets_def_fk_domainid', ondelete='SET NULL', onupdate='CASCADE'),
+		ForeignKey('nets_groups.netgid', name='nets_def_fk_netgid', ondelete='SET NULL', onupdate='CASCADE'),
 		Comment('Network group ID'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	management_device_id = Column(
 		'mgmtdid',
 		UInt32(),
-#TODO:		ForeignKey('devices_network.did', name='nets_def_fk_mgmtdid', ondelete='SET NULL', onupdate='CASCADE'),
+		ForeignKey('devices_network.did', name='nets_def_fk_mgmtdid', ondelete='SET NULL', onupdate='CASCADE'),
 		Comment('Management device ID'),
 		nullable=True,
 		default=None,
@@ -224,8 +236,9 @@ class Network(Base):
 		'ipaddr',
 		IPv4Address(),
 		Comment('Network IPv4 address'),
-		nullable=False,
-		default=0,
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('IPv4 Address')
 		}
@@ -352,7 +365,10 @@ class Network(Base):
 		'NetworkGroup',
 		backref='networks'
 	)
-	# TODO: management_device
+	management_device = relationship(
+		'NetworkDevice',
+		backref='networks'
+	)
 	routing_table = relationship(
 		'RoutingTable',
 		backref='networks'
@@ -363,6 +379,22 @@ class Network(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+
+	@property
+	def ipv4_network(self):
+		if self.ipv4_address:
+			return ipaddr.IPv4Network('%s/%s' % (
+				str(self.ipv4_address),
+				str(self.ipv4_cidr)
+			))
+
+	@property
+	def ipv6_network(self):
+		if self.ipv6_address:
+			return ipaddr.IPv6Network('%s/%s' % (
+				str(self.ipv6_address),
+				str(self.ipv6_cidr)
+			))
 
 	def __str__(self):
 		return str(self.name)
@@ -379,16 +411,16 @@ class NetworkGroup(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_NETGROUPS',
-				'cap_read'      : 'NETGROUPS_LIST',
+				'cap_menu'      : 'BASE_NETS',
+				'cap_read'      : 'NETS_LIST',
 				'cap_create'    : 'NETGROUPS_CREATE',
 				'cap_edit'      : 'NETGROUPS_EDIT',
 				'cap_delete'    : 'NETGROUPS_DELETE',
 				'menu_name'     : _('Groups'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 20,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'descr'),
+				'grid_view'     : ('netgid', 'name', 'descr'),
+				'grid_hidden'   : ('netgid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -450,9 +482,9 @@ class NetworkServiceType(Base):
 				'cap_delete'    : 'NETS_SERVICETYPES_DELETE',
 				'menu_name'     : _('Services'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 20,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'unique'),
+				'grid_view'     : ('hltypeid', 'name', 'unique'),
+				'grid_hidden'   : ('hltypeid',),
 				'form_view'     : ('name', 'unique'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -463,7 +495,7 @@ class NetworkServiceType(Base):
 	id = Column(
 		'hltypeid',
 		UInt32(),
-		Sequence('nets_hltypes_hltypeid_seq'),
+		Sequence('nets_hltypes_hltypeid_seq', start=101, increment=1),
 		Comment('Networks-hosts linkage type ID'),
 		primary_key=True,
 		nullable=False,
@@ -519,7 +551,8 @@ class NetworkService(Base):
 				'cap_edit'      : 'NETS_EDIT',
 				'cap_delete'    : 'NETS_EDIT',
 				'menu_name'     : _('Services'),
-				'grid_view'     : ('network', 'host', 'type'),
+				'grid_view'     : ('nhid', 'network', 'host', 'type'),
+				'grid_hidden'   : ('nhid',),
 				'form_view'     : ('network', 'host', 'type'),
 				'create_wizard' : SimpleWizard(title=_('Add new network service'))
 			}
@@ -602,9 +635,9 @@ class RoutingTable(Base):
 				'cap_delete'    : 'NETS_EDIT',
 				'menu_name'     : _('Routing Tables'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('rtid', 'name'),
+				'grid_hidden'   : ('rtid',),
 				'form_view'     : ('name',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -645,11 +678,11 @@ class RoutingTable(Base):
 
 class RoutingTableEntry(Base):
 	"""
-	Routing table entry object.
+	IPv4 routing table entry object.
 	"""
 	__tablename__ = 'rt_bits'
 	__table_args__ = (
-		Comment('Routing table entries'),
+		Comment('IPv4 routing table entries'),
 		Index('rt_bits_i_rtid', 'rtid'),
 		Index('rt_bits_i_rtr', 'rtr'),
 		{
@@ -662,9 +695,10 @@ class RoutingTableEntry(Base):
 				'cap_edit'      : 'NETS_EDIT',
 				'cap_delete'    : 'NETS_EDIT',
 				'menu_name'     : _('Routing Table Entries'),
-				'grid_view'     : ('table', 'net', 'cidr', 'next_hop'),
+				'grid_view'     : ('rtbid', 'table', 'net', 'cidr', 'next_hop'),
+				'grid_hidden'   : ('rtbid',),
 				'form_view'     : ('table', 'net', 'cidr', 'next_hop'),
-				'create_wizard' : SimpleWizard(title=_('Add new routing table entry'))
+				'create_wizard' : SimpleWizard(title=_('Add new IPv4 routing table entry'))
 			}
 		}
 	)
@@ -734,4 +768,27 @@ class RoutingTableEntry(Base):
 			passive_deletes=True
 		)
 	)
+
+	@property
+	def ipv4_network(self):
+		return ipaddr.IPv4Network('%s/%s' % (
+			str(self.network),
+			str(self.cidr)
+		))
+
+	def dhcp_strings(self, net):
+		if self.next_hop:
+			gws = self.next_hop.ipv4_addresses
+		else:
+			gws = itertools.chain.from_iterable(ns.host.ipv4_addresses for ns in net.services if ns.type_id == 4)
+		ret = []
+		netstr = ':'.join('{0:02x}'.format(o) for o in self.network.packed[:math.ceil(self.cidr / 8)])
+		for gw in gws:
+			ret.append('%02x%s%s:%s' % (
+				self.cidr,
+				':' if self.cidr > 0 else '',
+				netstr,
+				'%02x:%02x:%02x:%02x' % tuple(gw.address.packed)
+			))
+		return ret
 

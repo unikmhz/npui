@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Custom database fields
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -42,13 +42,18 @@ from sqlalchemy.dialects import (
 	postgresql
 )
 
-from sqlalchemy.sql import expression
+from sqlalchemy.sql import (
+	expression,
+	sqltypes
+)
 from sqlalchemy.ext.compiler import compiles
 
 from netprofile.db import processors
 from netprofile.common import ipaddr
 
 import sys
+import binascii
+
 
 if sys.version < '3':
 	from netprofile.db.enum2 import (
@@ -64,7 +69,6 @@ else:
 	)
 
 import re
-import colander
 
 _D_MYSQL = frozenset([
 	mysql.mysqlconnector.dialect,
@@ -107,6 +111,21 @@ def _is_ora(d):
 def _is_mssql(d):
 	return d.__class__ in _D_MSSQL
 
+class LargeBLOB(types.TypeDecorator):
+	"""
+	Large binary object.
+	"""
+	impl = types.LargeBinary
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.LONGBLOB()
+		return self.impl
+
+	@property
+	def python_type(self):
+		return bytes
+
 class IPv4Address(types.TypeDecorator):
 	"""
 	Hybrid IPv4 address.
@@ -140,11 +159,9 @@ class IPv6Address(types.TypeDecorator):
 	"""
 	Hybrid IPv6 address.
 	"""
-	impl = types.Numeric(39, 0)
+	impl = types.BINARY(16)
 
 	def load_dialect_impl(self, dialect):
-		if _is_mysql(dialect):
-			return mysql.DECIMAL(precision=39, scale=0, unsigned=True)
 		if _is_pgsql(dialect):
 			return postgresql.INET()
 		return self.impl
@@ -158,7 +175,7 @@ class IPv6Address(types.TypeDecorator):
 			return None
 		if _is_pgsql(dialect):
 			return str(value)
-		return int(value)
+		return value.packed
 
 	def process_result_value(self, value, dialect):
 		if value is None:
@@ -182,25 +199,72 @@ class IPv6Offset(types.TypeDecorator):
 	def python_type(self):
 		return int
 
+class Money(types.TypeDecorator):
+	"""
+	Money amount.
+	"""
+	impl = types.Numeric(20, 8)
+
+class Traffic(types.TypeDecorator):
+	"""
+	Amount of traffic in bytes.
+	"""
+	impl = types.Numeric(16, 0)
+	MIN_VALUE = 0
+	MAX_VALUE = 9999999999999999
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.DECIMAL(precision=16, scale=0, unsigned=True)
+		return self.impl
+
+	@property
+	def python_type(self):
+		return int
+
+class PercentFraction(types.TypeDecorator):
+	"""
+	Highly accurate percent fraction.
+	"""
+	impl = types.Numeric(11, 10)
+
+	def load_dialect_impl(self, dialect):
+		if _is_mysql(dialect):
+			return mysql.DECIMAL(precision=11, scale=10, unsigned=True)
+		return self.impl
+
+	@property
+	def python_type(self):
+		return int
+
 class MACAddress(types.TypeDecorator):
 	"""
 	MAC address
 	"""
-	impl = types.String(17)
+	impl = types.BINARY(6)
+
+	def load_dialect_impl(self, dialect):
+		if _is_pgsql(dialect):
+			return postgresql.MACADDR()
+		return self.impl
 	
 	@property
 	def python_type(self):
-		return types.String
+		return str
 
 	def process_bind_param(self, value, dialect):
 		if value is None:
 			return None
-		return binascii.unhexlify(value.replace(b':', b''))
+		if _is_pgsql(dialect):
+			return str(value)
+		return binascii.unhexlify(bytes(value.replace(':', ''), 'utf-8'))
 
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		return ':'.join( [ "%02X" % x for x in value ] )
+		if _is_pgsql(dialect):
+			return value
+		return ':'.join('%02x' % x for x in value)
 
 
 
@@ -259,6 +323,15 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
 				other = type_coerce(other, NPBoolean)
 			return types.Boolean.Comparator.__ne__(self, other)
 
+	def process_literal_param(self, value, dialect):
+		if isinstance(value, bool):
+			if _is_mysql(dialect):
+				if value:
+					return 'Y'
+				return 'N'
+			# FIXME: add SQLite check
+		return value
+
 class npbool(expression.FunctionElement):
 	"""
 	Constant NPBoolean element.
@@ -300,12 +373,9 @@ class ASCIIString(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
-
-	def colander_type(self):
-		return colander.String(encoding='ascii')
 
 class ASCIIFixedString(types.TypeDecorator):
 	"""
@@ -321,12 +391,9 @@ class ASCIIFixedString(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
-
-	def colander_type(self):
-		return colander.String(encoding='ascii')
 
 class ExactUnicode(types.TypeDecorator):
 	"""
@@ -342,7 +409,7 @@ class ExactUnicode(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode()
 		return value
 
@@ -464,12 +531,9 @@ class ASCIITinyText(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
-
-	def colander_type(self):
-		return colander.String(encoding='ascii')
 
 class ASCIIText(types.TypeDecorator):
 	"""
@@ -485,16 +549,13 @@ class ASCIIText(types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return value
 
-	def colander_type(self):
-		return colander.String(encoding='ascii')
-
 @compiles(EnumSymbol)
 def compile_enumsym(element, compiler, **kw):
-	return compiler.sql_compiler.render_literal_value(element.value, None)
+	return compiler.sql_compiler.render_literal_value(element.value, sqltypes.STRINGTYPE)
 
 class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	"""
@@ -535,7 +596,7 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
-		if isinstance(value, bytes):
+		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
 		return self.enum.from_string(value.strip())
 

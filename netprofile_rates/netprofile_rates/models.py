@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Rates module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -35,18 +35,26 @@ __all__ = [
 	'Filter',
 	'FilterSet',
 	'GlobalRateModifier',
-	'PerUserRateModifier',
 	'Rate',
 	'RateClass',
-	'RateModifierType'
+	'RateModifierType',
+
+	'AcctRateDestProcedure',
+	'AcctRateFilterProcedure',
+	'AcctRatePercentRemainingFunction',
+	'AcctRatePercentSpentFunction',
+	'AcctRateQPCountFunction',
+	'AcctRateQPLengthFunction',
+	'AcctRateQPNewFunction',
+	'AcctRateQPSpentFunction'
 ]
 
 from sqlalchemy import (
 	Column,
+	DateTime,
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -68,14 +76,26 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Int32,
+	Money,
 	NPBoolean,
+	PercentFraction,
+	Traffic,
 	UInt8,
 	UInt16,
 	UInt32,
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	InArgument,
+	InOutArgument,
+	OutArgument,
+	SQLFunction,
+	SQLFunctionArgument,
+	Trigger
+)
 
 from netprofile.ext.wizards import SimpleWizard
 
@@ -107,6 +127,10 @@ class QuotaPeriodUnit(DeclEnum):
 	calendar_hour  = 'c_hour',  _('Hour (cal.)'),  50
 	calendar_day   = 'c_day',   _('Day (cal.)'),   60
 	calendar_month = 'c_month', _('Month (cal.)'), 70
+	fixed_hour     = 'f_hour',  _('Hour (fix.)'),  80
+	fixed_day      = 'f_day',   _('Day (fix.)'),   90
+	fixed_week     = 'f_week',  _('Week (fix.)'),  100
+	fixed_month    = 'f_month', _('Month (fix.)'), 110
 
 class DestinationType(DeclEnum):
 	"""
@@ -150,9 +174,9 @@ class BillingPeriod(Base):
 				'cap_delete'    : 'RATES_EDIT',
 				'menu_name'     : _('Billing Periods'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 50,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('bperiodid', 'name'),
+				'grid_hidden'   : ('bperiodid',),
 				'form_view'     : (
 					'name',
 					'start_month', 'start_mday', 'start_wday',
@@ -313,9 +337,9 @@ class DestinationSet(Base):
 				'cap_delete'    : 'RATES_DS_DELETE',
 				'menu_name'    : _('Destination Sets'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('dsid', 'name'),
+				'grid_hidden'   : ('dsid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new accounting destination set'))
@@ -374,7 +398,8 @@ class Destination(Base):
 				'cap_delete'    : 'RATES_DS_EDIT',
 				'menu_name'    : _('Destinations'),
 				'default_sort'  : ({ 'property': 'l_ord', 'direction': 'ASC' },),
-				'grid_view'     : ('set', 'name', 'type', 'mt', 'match', 'l_ord', 'active'),
+				'grid_view'     : ('destid', 'set', 'name', 'type', 'mt', 'match', 'l_ord', 'active'),
+				'grid_hidden'   : ('destid',),
 				'form_view'     : (
 					'set', 'name', 'type',
 					'active', 'l_ord',
@@ -406,7 +431,8 @@ class Destination(Base):
 		default=DestinationType.normal,
 		server_default=DestinationType.normal,
 		info={
-			'header_string' : _('Type')
+			'header_string' : _('Type'),
+			'column_flex'   : 1
 		}
 	)
 	match_type = Column(
@@ -417,7 +443,8 @@ class Destination(Base):
 		default=DestinationMatchType.prefix,
 		server_default=DestinationMatchType.prefix,
 		info={
-			'header_string' : _('Match Type')
+			'header_string' : _('Match Type'),
+			'column_flex'   : 1
 		}
 	)
 	set_id = Column(
@@ -428,7 +455,8 @@ class Destination(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Set'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 2
 		}
 	)
 	name = Column(
@@ -436,7 +464,8 @@ class Destination(Base):
 		Comment('Destination name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	active = Column(
@@ -473,7 +502,7 @@ class Destination(Base):
 	)
 	overquota_sum_seconds = Column(
 		'oqsum_sec',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota per second override'),
 		nullable=True,
 		default=None,
@@ -484,7 +513,7 @@ class Destination(Base):
 	)
 	overquota_multiplier_seconds = Column(
 		'oqmul_sec',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota per second multiplier'),
 		nullable=True,
 		default=None,
@@ -526,9 +555,9 @@ class FilterSet(Base):
 				'cap_delete'    : 'RATES_FS_DELETE',
 				'menu_name'     : _('Filter Sets'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('fsid', 'name'),
+				'grid_hidden'   : ('fsid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new accounting filter set'))
@@ -583,8 +612,9 @@ class Filter(Base):
 				'cap_create'    : 'RATES_FS_EDIT',
 				'cap_edit'      : 'RATES_FS_EDIT',
 				'cap_delete'    : 'RATES_FS_EDIT',
-				'menu_name'    : _('Filters'),
-				'grid_view'     : ('set', 'porttype', 'servicetype', 'frproto', 'tuntype', 'tunmedium'),
+				'menu_name'     : _('Filters'),
+				'grid_view'     : ('fid', 'set', 'porttype', 'servicetype', 'frproto', 'tuntype', 'tunmedium'),
+				'grid_hidden'   : ('fid',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new filter'))
 			}
@@ -609,7 +639,8 @@ class Filter(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Set'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 3
 		}
 	)
 	nas_port_type = Column(
@@ -620,7 +651,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'NAS-Port-Type'
+			'header_string' : 'NAS-Port-Type',
+			'column_flex'   : 1
 		}
 	)
 	service_type = Column(
@@ -631,7 +663,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Service-Type'
+			'header_string' : 'Service-Type',
+			'column_flex'   : 1
 		}
 	)
 	framed_protocol = Column(
@@ -642,7 +675,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Framed-Protocol'
+			'header_string' : 'Framed-Protocol',
+			'column_flex'   : 1
 		}
 	)
 	tunnel_type = Column(
@@ -653,7 +687,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Tunnel-Type'
+			'header_string' : 'Tunnel-Type',
+			'column_flex'   : 1
 		}
 	)
 	tunnel_medium_type = Column(
@@ -664,7 +699,8 @@ class Filter(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : 'Tunnel-Medium-Type'
+			'header_string' : 'Tunnel-Medium-Type',
+			'column_flex'   : 1
 		}
 	)
 
@@ -686,6 +722,9 @@ class Rate(Base):
 		Index('rates_def_i_poolid', 'poolid'),
 		Index('rates_def_i_dsid', 'dsid'),
 		Index('rates_def_i_fsid', 'fsid'),
+		Trigger('after', 'insert', 't_rates_def_ai'),
+		Trigger('after', 'update', 't_rates_def_au'),
+		Trigger('after', 'delete', 't_rates_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -698,9 +737,9 @@ class Rate(Base):
 				'menu_name'     : _('Payment Rates'),
 				'show_in_menu'  : 'modules',
 				'menu_main'     : True,
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'class', 'type', 'qp_amount', 'qp_unit', 'qsum'),
+				'grid_view'     : ('rateid', 'name', 'class', 'type', 'qp_amount', 'qp_unit', 'qsum'),
+				'grid_hidden'   : ('rateid',),
 				'form_view'     : (
 					'name', 'class', 'type',
 					'polled', 'abf', 'usersel',
@@ -882,7 +921,7 @@ class Rate(Base):
 	)
 	quota_sum = Column(
 		'qsum',
-		Numeric(20, 8),
+		Money(),
 		Comment('Quota sum'),
 		nullable=False,
 		default=0.0,
@@ -893,7 +932,7 @@ class Rate(Base):
 	)
 	auxiliary_sum = Column(
 		'auxsum',
-		Numeric(20, 8),
+		Money(),
 		Comment('Auxiliary sum'),
 		nullable=True,
 		default=None,
@@ -904,7 +943,7 @@ class Rate(Base):
 	)
 	quota_ingress_traffic = Column(
 		'qt_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Ingress traffic included in quota (in bytes)'),
 		nullable=False,
 		default=0,
@@ -915,7 +954,7 @@ class Rate(Base):
 	)
 	quota_egress_traffic = Column(
 		'qt_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Egress traffic included in quota (in bytes)'),
 		nullable=False,
 		default=0,
@@ -937,7 +976,7 @@ class Rate(Base):
 	)
 	overquota_sum_ingress = Column(
 		'oqsum_ingress',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota payment for ingress traffic (per byte)'),
 		nullable=False,
 		default=0.0,
@@ -948,7 +987,7 @@ class Rate(Base):
 	)
 	overquota_sum_egress = Column(
 		'oqsum_egress',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota payment for egress traffic (per byte)'),
 		nullable=False,
 		default=0.0,
@@ -959,7 +998,7 @@ class Rate(Base):
 	)
 	overquota_sum_seconds = Column(
 		'oqsum_sec',
-		Numeric(20, 8),
+		Money(),
 		Comment('Over quota payment for time (per second)'),
 		nullable=False,
 		default=0.0,
@@ -1087,12 +1126,6 @@ class Rate(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
-	per_user_modifiers = relationship(
-		'PerUserRateModifier',
-		backref='rate',
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
 
 	global_modifiers = association_proxy(
 		'global_modmap',
@@ -1120,13 +1153,13 @@ class RateClass(Base):
 				'cap_create'    : 'RATES_CLASSES_CREATE',
 				'cap_edit'      : 'RATES_CLASSES_EDIT',
 				'cap_delete'    : 'RATES_CLASSES_DELETE',
-				'menu_name'    : _('Classes'),
+				'menu_name'     : _('Classes'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 20,
-				'default_sort' : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view' : ('name',),
-				'form_view' : ('name', 'descr'),
-				'easy_search' : ('name',),
+				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
+				'grid_view'     : ('rcid', 'name'),
+				'grid_hidden'   : ('rcid',),
+				'form_view'     : ('name', 'descr'),
+				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new rate class'))
 			}
@@ -1204,7 +1237,8 @@ class EntityTypeRateClass(Base):
 				'cap_delete'    : 'RATES_CLASSES_EDIT',
 				'menu_name'     : _('Entity Type Mappings'),
 				'default_sort'  : ({ 'property': 'etype', 'direction': 'ASC' },),
-				'grid_view'     : ('class', 'etype'),
+				'grid_view'     : ('rcmapid', 'class', 'etype'),
+				'grid_hidden'   : ('rcmapid',),
 				'form_view'     : ('class', 'etype'),
 				'easy_search'   : ('etype',),
 				'create_wizard' : SimpleWizard(title=_('Add new mapping'))
@@ -1229,7 +1263,8 @@ class EntityTypeRateClass(Base):
 		Comment('Rate class ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Class')
+			'header_string' : _('Class'),
+			'column_flex'   : 1
 		}
 	)
 	entity_type = Column(
@@ -1238,7 +1273,8 @@ class EntityTypeRateClass(Base):
 		Comment('Entity type'),
 		nullable=False,
 		info={
-			'header_string' : _('Entity Type')
+			'header_string' : _('Entity Type'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -1262,9 +1298,9 @@ class RateModifierType(Base):
 				'cap_delete'    : 'RATES_DELETE',
 				'menu_name'     : _('Rate Modifiers'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 60,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('name', 'enabled'),
+				'grid_view'     : ('rmtid', 'name', 'enabled'),
+				'grid_hidden'   : ('rmtid',),
 				'form_view'     : (
 					'name', 'enabled', 'descr',
 					'billing_period',
@@ -1323,7 +1359,7 @@ class RateModifierType(Base):
 	)
 	oq_sum_multiplier_ingress = Column(
 		'oqsum_ingress_mul',
-		Numeric(20, 8),
+		Money(),
 		Comment('Ingress overquota sum multiplier'),
 		nullable=True,
 		default=None,
@@ -1334,7 +1370,7 @@ class RateModifierType(Base):
 	)
 	oq_sum_multiplier_egress = Column(
 		'oqsum_egress_mul',
-		Numeric(20, 8),
+		Money(),
 		Comment('Egress overquota sum multiplier'),
 		nullable=True,
 		default=None,
@@ -1345,7 +1381,7 @@ class RateModifierType(Base):
 	)
 	oq_sum_multiplier_seconds = Column(
 		'oqsum_sec_mul',
-		Numeric(20, 8),
+		Money(),
 		Comment('Per-second overquota sum multiplier'),
 		nullable=True,
 		default=None,
@@ -1420,12 +1456,6 @@ class RateModifierType(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
-	per_user_modifiers = relationship(
-		'PerUserRateModifier',
-		backref=backref('type', innerjoin=True),
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
 
 	def __str__(self):
 		return '%s' % str(self.name)
@@ -1440,6 +1470,7 @@ class GlobalRateModifier(Base):
 		Index('rates_mods_global_u_mapping', 'rmtid', 'rateid', unique=True),
 		Index('rates_mods_global_i_rateid', 'rateid'),
 		Index('rates_mods_global_i_l_ord', 'l_ord'),
+		Trigger('before', 'insert', 't_rates_mods_global_bi'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1451,7 +1482,8 @@ class GlobalRateModifier(Base):
 				'cap_delete'    : 'RATES_EDIT',
 				'menu_name'     : _('Rate Modifiers'),
 				'default_sort'  : ({ 'property': 'l_ord', 'direction': 'ASC' },),
-				'grid_view'     : ('rate', 'type', 'enabled', 'l_ord'),
+				'grid_view'     : ('rmid', 'rate', 'type', 'enabled', 'l_ord'),
+				'grid_hidden'   : ('rmid',),
 				'create_wizard' : SimpleWizard(title=_('Add new rate modifier'))
 			}
 		}
@@ -1475,7 +1507,8 @@ class GlobalRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	rate_id = Column(
@@ -1486,7 +1519,8 @@ class GlobalRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Rate'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	creation_time = Column(
@@ -1523,120 +1557,119 @@ class GlobalRateModifier(Base):
 		}
 	)
 
-class PerUserRateModifier(Base):
-	"""
-	Per-user rate modifier definition
-	"""
-	__tablename__ = 'rates_mods_peruser'
-	__table_args__ = (
-		Comment('Per-user rate modifiers'),
-		Index('rates_mods_peruser_u_mapping', 'rmtid', 'entityid', 'rateid', unique=True),
-		Index('rates_mods_peruser_i_entityid', 'entityid'),
-		Index('rates_mods_peruser_i_rateid', 'rateid'),
-		Index('rates_mods_peruser_i_l_ord', 'l_ord'),
-		{
-			'mysql_engine'  : 'InnoDB',
-			'mysql_charset' : 'utf8',
-			'info'          : {
-				'cap_menu'      : 'BASE_RATES', # FIXME
-				'cap_read'      : 'RATES_LIST', # FIXME
-				'cap_create'    : 'RATES_EDIT', # FIXME
-				'cap_edit'      : 'RATES_EDIT', # FIXME
-				'cap_delete'    : 'RATES_EDIT', # FIXME
-				'menu_name'     : _('Rate Modifiers'),
-				'default_sort'  : ({ 'property': 'l_ord', 'direction': 'ASC' },),
-				'grid_view'     : ('entity', 'rate', 'type', 'enabled', 'l_ord'),
-				'create_wizard' : SimpleWizard(title=_('Add new rate modifier'))
-			}
-		}
-	)
-	id = Column(
-		'rmid',
-		UInt32(),
-		Sequence('rates_mods_peruser_rmid_seq'),
-		Comment('Rate modifier ID'),
-		primary_key=True,
-		nullable=False,
-		info={
-			'header_string' : _('ID')
-		}
-	)
-	type_id = Column(
-		'rmtid',
-		UInt32(),
-		Comment('Rate modifier type ID'),
-		ForeignKey('rates_mods_types.rmtid', name='rates_mods_peruser_fk_rmtid', ondelete='CASCADE', onupdate='CASCADE'),
-		nullable=False,
-		info={
-			'header_string' : _('Type'),
-			'filter_type'   : 'list'
-		}
-	)
-	entity_id = Column(
-		'entityid',
-		UInt32(),
-		Comment('Access entity ID'),
-		ForeignKey('entities_access.entityid', name='rates_mods_peruser_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
-		nullable=False,
-		info={
-			'header_string' : _('Account'),
-			'filter_type'   : 'none'
-		}
-	)
-	rate_id = Column(
-		'rateid',
-		UInt32(),
-		Comment('Rate ID'),
-		ForeignKey('rates_def.rateid', name='rates_mods_peruser_fk_rateid', ondelete='CASCADE', onupdate='CASCADE'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Rate'),
-			'filter_type'   : 'list'
-		}
-	)
-	creation_time = Column(
-		'ctime',
-		TIMESTAMP(),
-		Comment('Creation timestamp'),
-		nullable=True,
-		default=None,
-		server_default=FetchedValue(),
-		info={
-			'header_string' : _('Created'),
-			'read_only'     : True
-		}
-	)
-	enabled = Column(
-		NPBoolean(),
-		Comment('Is modifier enabled?'),
-		nullable=False,
-		default=False,
-		server_default=npbool(False),
-		info={
-			'header_string' : _('Enabled')
-		}
-	)
-	lookup_order = Column(
-		'l_ord',
-		UInt16(),
-		Comment('Lookup order'),
-		nullable=False,
-		default=1000,
-		server_default=text('1000'),
-		info={
-			'header_string' : _('Lookup Order')
-		}
-	)
+AcctRateDestProcedure = SQLFunction(
+	'acct_rate_dest',
+	args=(
+		InArgument('ts', DateTime()),
+		InArgument('rateid', UInt32()),
+		InArgument('dsid', UInt32()),
+		InArgument('called', ASCIIString(255)),
+		InOutArgument('destid', UInt32()),
+		InOutArgument('dtype', DestinationType.db_type()),
+		InOutArgument('oqsum_sec', Money())
+	),
+	comment='Search destination sets for a match',
+	writes_sql=False,
+	label='ardfunc',
+	is_procedure=True
+)
 
-	entity = relationship(
-		'AccessEntity',
-		innerjoin=True,
-		backref=backref(
-			'rate_modifiers',
-			cascade='all, delete-orphan',
-			passive_deletes=True
-		)
-	)
+AcctRateFilterProcedure = SQLFunction(
+	'acct_rate_filter',
+	args=(
+		InArgument('fsid', UInt32()),
+		InArgument('r_porttype', Int32()),
+		InArgument('r_servicetype', Int32()),
+		InArgument('r_frproto', Int32()),
+		InArgument('r_tuntype', Int32()),
+		InArgument('r_tunmedium', Int32()),
+		OutArgument('filterid', UInt32())
+	),
+	comment='Search filter sets for a match',
+	writes_sql=False,
+	label='arffunc',
+	is_procedure=True
+)
+
+AcctRatePercentRemainingFunction = SQLFunction(
+	'acct_rate_percent_remaining',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('time', DateTime()),
+		SQLFunctionArgument('endtime', DateTime())
+	),
+	returns=PercentFraction(),
+	comment='Calculate remaining part of current quota period',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRatePercentSpentFunction = SQLFunction(
+	'acct_rate_percent_spent',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('time', DateTime()),
+		SQLFunctionArgument('endtime', DateTime())
+	),
+	returns=PercentFraction(),
+	comment='Calculate spent part of current quota period',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRateQPCountFunction = SQLFunction(
+	'acct_rate_qpcount',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('dfrom', DateTime()),
+		SQLFunctionArgument('dto', DateTime())
+	),
+	returns=UInt32(),
+	comment='Calculate number of periods between two dates',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRateQPLengthFunction = SQLFunction(
+	'acct_rate_qplength',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('endtime', DateTime())
+	),
+	returns=UInt32(),
+	comment='Calculate length of current quota period in seconds',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRateQPNewFunction = SQLFunction(
+	'acct_rate_qpnew',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('time', DateTime())
+	),
+	returns=UInt32(),
+	comment='Calculate new quota period to seconds',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AcctRateQPSpentFunction = SQLFunction(
+	'acct_rate_qpspent',
+	args=(
+		SQLFunctionArgument('qpa', UInt16()),
+		SQLFunctionArgument('qpu', QuotaPeriodUnit.db_type()),
+		SQLFunctionArgument('time', DateTime()),
+		SQLFunctionArgument('endtime', DateTime())
+	),
+	returns=UInt32(),
+	comment='Calculate spent part of current quota period in seconds',
+	reads_sql=False,
+	writes_sql=False
+)
 

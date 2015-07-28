@@ -1,0 +1,34 @@
+# Vendor code marking for GitHub
+netprofile_core/netprofile_core/static/extern/** linguist-vendored
+netprofile_access/netprofile_access/static/css/bootstrap* linguist-vendored
+netprofile_access/netprofile_access/static/css/font* linguist-vendored
+netprofile_access/netprofile_access/static/fonts/** linguist-vendored
+netprofile_access/netprofile_access/static/js/all.js linguist-vendored
+netprofile_access/netprofile_access/static/js/*.min.js linguist-vendored
+netprofile_access/netprofile_access/static/js/bootstrap* linguist-vendored
+netprofile_access/netprofile_access/static/js/chosen* linguist-vendored
+netprofile_access/netprofile_access/static/js/html5shiv* linguist-vendored
+netprofile_access/netprofile_access/static/js/jqBootstrapValidation* linguist-vendored
+netprofile_access/netprofile_access/static/js/jquery* linguist-vendored
+netprofile_access/netprofile_access/static/js/moment* linguist-vendored
+netprofile_access/netprofile_access/static/js/respond* linguist-vendored
+
+# Minified sources
+netprofile_core/netprofile_core/static/extern/extensible/lib/extensible-all.js binary
+netprofile_core/netprofile_core/static/extern/extjs/build/ext-all.js binary
+netprofile_core/netprofile_core/static/extern/extjs/build/packages/ext-aria/build/ext-aria.js binary
+netprofile_core/netprofile_core/static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic.js binary
+netprofile_core/netprofile_core/static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all.css binary
+netprofile_core/netprofile_core/static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all-rtl_01.css binary
+netprofile_core/netprofile_core/static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all-rtl_02.css binary
+netprofile_core/netprofile_core/static/extern/extjs/build/packages/sencha-charts/build/sencha-charts.js binary
+*.min.js binary
+*.min.css binary
+
+# Language hints for GitHub
+*.mak linguist-language=Mako
+
+# Documentation hints for GitHub
+README.rst linguist-documentation
+INSTALL.rst linguist-documentation
+

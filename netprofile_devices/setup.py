@@ -1,14 +1,18 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(here, 'README.txt')).read()
-CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
+README_LOCAL = open(os.path.join(here, 'README.rst')).read()
+README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
 	'setuptools',
-	'netprofile >= 0.3',
+	'netprofile_entities >= 0.3',
+	'netprofile_hosts >= 0.3'
 ]
 
 setup(
@@ -16,13 +20,14 @@ setup(
 	version='0.3',
 	description='NetProfile Administrative UI - Devices Module',
 	license='GNU Affero General Public License v3 or later (AGPLv3+)',
-	long_description=README + '\n\n' +  CHANGES,
+	long_description=README_LOCAL + '\n\n' +  README_GLOBAL,
 	classifiers=[
 		'Programming Language :: Python',
 		'Programming Language :: Python :: 2',
 		'Programming Language :: Python :: 2.7',
 		'Programming Language :: Python :: 3',
 		'Programming Language :: Python :: 3.2',
+		'Programming Language :: Python :: 3.4',
 		'Programming Language :: Python :: Implementation :: CPython',
 		'Framework :: Pyramid',
 		'Topic :: Internet :: WWW/HTTP',
@@ -37,9 +42,9 @@ setup(
 		'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
 		'Operating System :: OS Independent'
 	],
-	author='Andriyanov Nikita',
-	author_email='nikitos@compot.ru',
-	url='https://netprofile.ru',
+	author='Alex Unigovsky',
+	author_email='unik@compot.ru',
+	url='https://github.com/unikmhz/npui',
 	keywords='web wsgi pyramid np netprofile crm billing accounting network isp',
 	packages=find_packages(),
 	include_package_data=True,

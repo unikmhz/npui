@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Authentication routines
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -34,10 +34,39 @@ import time
 
 from zope.interface import implementer
 from pyramid.interfaces import IAuthenticationPolicy
+from pyramid.httpexceptions import HTTPFound
 from pyramid.security import (
 	Authenticated,
-	Everyone
+	Everyone,
+	forget,
+	remember
 )
+
+def auth_add(request, login, route_name):
+	sess = request.session
+	# TODO: add hook here
+	if sess:
+		if 'auth.acls' in sess:
+			del sess['auth.acls']
+		if 'auth.settings' in sess:
+			del sess['auth.settings']
+	headers = remember(request, login)
+	loc = request.route_url(route_name)
+	return HTTPFound(location=loc, headers=headers)
+
+def auth_remove(request, route_name):
+	sess = request.session
+	# TODO: add hook here
+	if sess:
+		if 'auth.acls' in sess:
+			del sess['auth.acls']
+		if 'auth.settings' in sess:
+			del sess['auth.settings']
+		sess.invalidate()
+		sess.new_csrf_token()
+	headers = forget(request)
+	loc = request.route_url(route_name)
+	return HTTPFound(location=loc, headers=headers)
 
 class PluginPolicySelected(object):
 	def __init__(self, request, policy):
@@ -64,7 +93,11 @@ class PluginAuthenticationPolicy(object):
 			r_len = len(route)
 			if r_len <= cur_len:
 				continue
-			if route == request.path[:r_len]:
+			path = request.path
+			if route == path[:r_len]:
+				if len(path) > r_len:
+					if path[r_len:r_len + 1] != '/':
+						continue
 				cur = plug
 				cur_len = r_len
 		if cur:

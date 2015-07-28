@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,10 +28,15 @@ from __future__ import (
 )
 
 __all__ = [
+	'FuturePayment',
 	'Stash',
 	'StashIO',
 	'StashIOType',
-	'StashOperation'
+	'StashOperation',
+
+	'FuturesPollProcedure',
+
+	'FuturesPollEvent'
 ]
 
 from sqlalchemy import (
@@ -39,7 +44,6 @@ from sqlalchemy import (
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -62,14 +66,26 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	Money,
 	NPBoolean,
+	Traffic,
 	UInt32,
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault,
+	SQLEvent,
+	SQLFunction,
+	Trigger
+)
 
-from netprofile.ext.wizards import SimpleWizard
+from netprofile.ext.wizards import (
+	SimpleWizard,
+	Step,
+	Wizard
+)
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
@@ -110,6 +126,21 @@ class StashOperationType(DeclEnum):
 	oper          = 'oper',          _('Operator'),                                            120
 	rollback      = 'rollback',      _('Rollback'),                                            130
 
+class FuturePaymentState(DeclEnum):
+	"""
+	Future payment state enumeration.
+	"""
+	active    = 'A', _('Active'),    10
+	paid      = 'P', _('Paid'),      20
+	cancelled = 'C', _('Cancelled'), 30
+
+class FuturePaymentOrigin(DeclEnum):
+	"""
+	Future payment origin enumeration.
+	"""
+	operator = 'oper', _('Operator'), 10
+	user     = 'user', _('User'),     20
+
 class Stash(Base):
 	"""
 	Stash object.
@@ -118,11 +149,13 @@ class Stash(Base):
 	__table_args__ = (
 		Comment('Stashes of money'),
 		Index('stashes_def_i_entityid', 'entityid'),
+		Trigger('before', 'insert', 't_stashes_def_bi'),
+		Trigger('before', 'update', 't_stashes_def_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				#'cap_menu'      : '',
+				'cap_menu'      : 'BASE_STASHES',
 				'cap_read'      : 'STASHES_LIST',
 				'cap_create'    : 'STASHES_CREATE',
 				'cap_edit'      : 'STASHES_EDIT',
@@ -130,9 +163,9 @@ class Stash(Base):
 				'menu_name'     : _('Stashes'),
 				'menu_main'     : True,
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('entity', 'name', 'amount', 'credit'),
+				'grid_view'     : ('stashid', 'entity', 'name', 'amount', 'credit'),
+				'grid_hidden'   : ('stashid',),
 				'form_view'     : ('entity', 'name', 'amount', 'credit', 'alltime_min', 'alltime_max'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -173,7 +206,7 @@ class Stash(Base):
 		}
 	)
 	amount = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('Stash balance'),
 		nullable=False,
 		default=0,
@@ -184,7 +217,7 @@ class Stash(Base):
 		}
 	)
 	credit = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('Stash credit'),
 		nullable=False,
 		default=0,
@@ -195,7 +228,7 @@ class Stash(Base):
 		}
 	)
 	alltime_max = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('All-time maximum balance'),
 		nullable=False,
 		default=0,
@@ -206,7 +239,7 @@ class Stash(Base):
 		}
 	)
 	alltime_min = Column(
-		Numeric(20, 8),
+		Money(),
 		Comment('All-time minimum balance'),
 		nullable=False,
 		default=0,
@@ -248,17 +281,16 @@ class StashIOType(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_ADMIN', # FIXME
+				'cap_menu'      : 'BASE_STASHES',
 				'cap_read'      : 'STASHES_IO',
 				'cap_create'    : 'STASHES_IOTYPES_CREATE',
 				'cap_edit'      : 'STASHES_IOTYPES_EDIT',
 				'cap_delete'    : 'STASHES_IOTYPES_DELETE',
 				'menu_name'     : _('Operation Types'),
 				'show_in_menu'  : 'admin',
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'class', 'type'),
-				'form_view'     : ('name', 'class', 'type', 'user_visible', 'oper_visible', 'oper_capability'),
+				'form_view'     : ('name', 'class', 'type', 'user_visible', 'oper_visible', 'oper_capability', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new operation type'))
@@ -268,7 +300,7 @@ class StashIOType(Base):
 	id = Column(
 		'siotypeid',
 		UInt32(),
-		Sequence('stashes_io_types_siotypeid_seq'),
+		Sequence('stashes_io_types_siotypeid_seq', start=101, increment=1),
 		Comment('Stash I/O ID'),
 		primary_key=True,
 		nullable=False,
@@ -338,14 +370,50 @@ class StashIOType(Base):
 			'header_string' : _('Required Operator Capability')
 		}
 	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Stash I/O description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
 
 	oper_capability = relationship(
 		'Privilege',
-		backref='stash_io_types'
+		backref='stash_io_types',
+		lazy='joined'
 	)
 
 	def __str__(self):
 		return str(self.name)
+
+def _wizcb_stashio_submit(wiz, em, step, act, val, req):
+	sess = DBSession()
+	obj = StashIO()
+	em.set_values(obj, val, req, True)
+	sess.add(obj)
+	if obj.difference:
+		stash = sess.query(Stash).get(obj.stash_id)
+		if stash:
+			stash.amount += obj.difference
+	return {
+		'do'     : 'close',
+		'reload' : True
+	}
+
+def _wizcb_future_submit(wiz, em, step, act, val, req):
+	sess = DBSession()
+	obj = FuturePayment()
+	em.set_values(obj, val, req, True)
+	sess.add(obj)
+	return {
+		'do'     : 'close',
+		'reload' : True
+	}
 
 class StashIO(Base):
 	"""
@@ -359,24 +427,33 @@ class StashIO(Base):
 		Index('stashes_io_i_uid', 'uid'),
 		Index('stashes_io_i_entityid', 'entityid'),
 		Index('stashes_io_i_ts', 'ts'),
+		Trigger('before', 'insert', 't_stashes_io_def_bi'),
+		Trigger('after', 'insert', 't_stashes_io_def_ai'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_ADMIN', # FIXME
+				'cap_menu'      : 'BASE_STASHES',
 				'cap_read'      : 'STASHES_IO',
 				'cap_create'    : 'STASHES_IO',
 				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : '__NOPRIV__',
-				'menu_name'    : _('Operations'),
+				'menu_name'     : _('Operations'),
 				'show_in_menu'  : 'modules',
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'ts', 'direction': 'DESC' },),
-				'grid_view' : ('type', 'stash', 'entity', 'user', 'ts', 'diff'),
-				'form_view' : ('type', 'stash', 'entity', 'user', 'ts', 'diff', 'descr'),
+				'grid_view'     : ('sioid', 'type', 'stash', 'entity', 'user', 'ts', 'diff'),
+				'grid_hidden'   : ('sioid',),
+				'form_view'     : ('type', 'stash', 'entity', 'user', 'ts', 'diff', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-				# TODO: Add IO wizard to create_wizard
-				#'create_wizard' : SimpleWizard(title=_('Add new operation'))
+
+				'create_wizard' : Wizard(
+					Step(
+						'stash', 'type', 'diff', 'descr',
+						id='generic',
+						on_submit=_wizcb_stashio_submit
+					),
+					title=_('Add new operation')
+				)
 			}
 		}
 	)
@@ -400,6 +477,14 @@ class StashIO(Base):
 		info={
 			'header_string' : _('Type'),
 			'filter_type'   : 'list',
+			'editor_xtype'  : 'simplemodelselect',
+			'editor_config' : {
+				'extraParams' : { '__ffilter' : [{
+					'property' : 'oper_visible',
+					'operator' : 'eq',
+					'value'    : True
+				}]}
+			},
 			'column_flex'   : 2
 		}
 	)
@@ -446,9 +531,8 @@ class StashIO(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Time stamp of operation'),
+		CurrentTimestampDefault(),
 		nullable=False,
-		default=func.current_timestamp(),
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Date'),
 			'column_flex'   : 1
@@ -456,7 +540,7 @@ class StashIO(Base):
 	)
 	difference = Column(
 		'diff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Operation result'),
 		nullable=False,
 		info={
@@ -478,6 +562,7 @@ class StashIO(Base):
 	type = relationship(
 		'StashIOType',
 		innerjoin=True,
+		lazy='joined',
 		backref=backref(
 			'ios',
 			cascade='all, delete-orphan',
@@ -499,7 +584,10 @@ class StashIO(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='stash_ios'
+		backref=backref(
+			'stash_ios',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):
@@ -524,7 +612,7 @@ class StashOperation(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'      : 'BASE_ADMIN', # FIXME
+				'cap_menu'      : 'BASE_STASHES',
 				'cap_read'      : 'STASHES_IO',
 				'cap_create'    : '__NOPRIV__',
 				'cap_edit'      : '__NOPRIV__',
@@ -572,9 +660,8 @@ class StashOperation(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Time stamp of operation'),
+		CurrentTimestampDefault(),
 		nullable=False,
-		default=func.current_timestamp(),
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Date')
 		}
@@ -607,7 +694,7 @@ class StashOperation(Base):
 	)
 	difference = Column(
 		'diff',
-		Numeric(20, 8),
+		Money(),
 		Comment('Changes made to stash'),
 		nullable=False,
 		default=0,
@@ -618,7 +705,7 @@ class StashOperation(Base):
 	)
 	accounted_ingress = Column(
 		'acct_ingress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Accounted ingress traffic'),
 		nullable=True,
 		default=None,
@@ -629,7 +716,7 @@ class StashOperation(Base):
 	)
 	accounted_egress = Column(
 		'acct_egress',
-		Numeric(16, 0),
+		Traffic(),
 		Comment('Accounted egress traffic'),
 		nullable=True,
 		default=None,
@@ -664,7 +751,10 @@ class StashOperation(Base):
 	)
 	entity = relationship(
 		'Entity',
-		backref='stash_operations'
+		backref=backref(
+			'stash_operations',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):
@@ -672,4 +762,245 @@ class StashOperation(Base):
 			str(self.stash),
 			str(self.timestamp)
 		)
+
+class FuturePayment(Base):
+	"""
+	Future payment object.
+	"""
+	__tablename__ = 'futures_def'
+	__table_args__ = (
+		Comment('Future payments'),
+		Index('futures_def_i_futures', 'state', 'ptime'),
+		Index('futures_def_i_entityid', 'entityid'),
+		Index('futures_def_i_stashid', 'stashid'),
+		Index('futures_def_i_cby', 'cby'),
+		Index('futures_def_i_mby', 'mby'),
+		Index('futures_def_i_pby', 'pby'),
+		Trigger('before', 'insert', 't_futures_def_bi'),
+		Trigger('before', 'update', 't_futures_def_bu'),
+		Trigger('after', 'insert', 't_futures_def_ai'),
+		Trigger('after', 'update', 't_futures_def_au'),
+		Trigger('after', 'delete', 't_futures_def_ad'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_FUTURES',
+				'cap_read'      : 'FUTURES_LIST',
+				'cap_create'    : 'FUTURES_CREATE',
+				'cap_edit'      : 'FUTURES_EDIT',
+				'cap_delete'    : '__NOPRIV__',
+				# TODO: APPROVE/CANCEL
+				'menu_name'     : _('Promised Payments'),
+				'default_sort'  : ({ 'property': 'ctime', 'direction': 'DESC' },),
+				'grid_view'     : ('futureid', 'entity', 'stash', 'diff', 'state', 'ctime'),
+				'grid_hidden'   : ('futureid',),
+				'form_view'     : (
+					'entity', 'stash', 'diff',
+					'state', 'origin',
+					'ctime', 'cby',
+					'mtime', 'mby',
+					'ptime', 'pby'
+				),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : Wizard(
+					Step(
+						'entity', 'stash', 'diff', 'descr',
+						id='generic',
+						on_submit=_wizcb_future_submit
+					),
+					title=_('Add new promised payment')
+				)
+			}
+		}
+	)
+	id = Column(
+		'futureid',
+		UInt32(),
+		Sequence('futures_def_futureid_seq'),
+		Comment('Future payment ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string': _('ID')
+		}
+	)
+	entity_id = Column(
+		'entityid',
+		UInt32(),
+		Comment('Entity ID'),
+		ForeignKey('entities_def.entityid', name='futures_def_fk_entityid', onupdate='CASCADE', ondelete='SET NULL'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Entity'),
+			'filter_type'   : 'none',
+			'column_flex'   : 2
+		}
+	)
+	stash_id = Column(
+		'stashid',
+		UInt32(),
+		Comment('Stash ID'),
+		ForeignKey('stashes_def.stashid', name='futures_def_fk_stashid', ondelete='CASCADE', onupdate='CASCADE'),
+		nullable=False,
+		info={
+			'header_string' : _('Stash'),
+			'filter_type'   : 'none',
+			'column_flex'   : 2
+		}
+	)
+	difference = Column(
+		'diff',
+		Money(),
+		Comment('Payment result'),
+		nullable=False,
+		default=0.0,
+		server_default=text('0.0'),
+		info={
+			'header_string' : _('Change')
+		}
+	)
+	state = Column(
+		FuturePaymentState.db_type(),
+		Comment('Active / Paid / Cancelled'),
+		nullable=False,
+		default=FuturePaymentState.active,
+		server_default=FuturePaymentState.active,
+		info={
+			'header_string' : _('State')
+		}
+	)
+	origin = Column(
+		FuturePaymentOrigin.db_type(),
+		Comment('Origin of payment'),
+		nullable=False,
+		default=FuturePaymentOrigin.operator,
+		server_default=FuturePaymentOrigin.operator,
+		info={
+			'header_string' : _('Origin')
+		}
+	)
+	creation_time = Column(
+		'ctime',
+		TIMESTAMP(),
+		Comment('Creation timestamp'),
+		nullable=True,
+		default=None,
+		server_default=FetchedValue(),
+		info={
+			'header_string' : _('Created'),
+			'read_only'     : True
+		}
+	)
+	modification_time = Column(
+		'mtime',
+		TIMESTAMP(),
+		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
+		nullable=False,
+#		default=zzz,
+		info={
+			'header_string' : _('Modified'),
+			'read_only'     : True
+		}
+	)
+	payment_time = Column(
+		'ptime',
+		TIMESTAMP(),
+		Comment('Payment timestamp'),
+		nullable=True,
+		default=None,
+		server_default=FetchedValue(),
+		info={
+			'header_string' : _('Paid'),
+			'read_only'     : True
+		}
+	)
+	created_by_id = Column(
+		'cby',
+		UInt32(),
+		ForeignKey('users.uid', name='futures_def_fk_cby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Created by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Created'),
+			'read_only'     : True
+		}
+	)
+	modified_by_id = Column(
+		'mby',
+		UInt32(),
+		ForeignKey('users.uid', name='futures_def_fk_mby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Modified by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Modified'),
+			'read_only'     : True
+		}
+	)
+	paid_by_id = Column(
+		'pby',
+		UInt32(),
+		ForeignKey('users.uid', name='futures_def_fk_pby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Payment confirmed by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Confirmed'),
+			'read_only'     : True
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+	stash = relationship(
+		'Stash',
+		innerjoin=True,
+		backref=backref(
+			'futures',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+	entity = relationship(
+		'Entity',
+		backref=backref(
+			'stash_futures',
+			passive_deletes=True
+		)
+	)
+
+	def __str__(self):
+		return '%s: %s' % (
+			str(self.stash),
+			str(self.difference)
+		)
+
+FuturesPollProcedure = SQLFunction(
+	'futures_poll',
+	comment='Poll for expired futures',
+	is_procedure=True
+)
+
+FuturesPollEvent = SQLEvent(
+	'ev_futures_poll',
+	sched_unit='hour',
+	sched_interval=1,
+	comment='Poll for expired promised payments'
+)
 

@@ -1,3 +1,5 @@
+@charset "UTF-8";
+
 *
 {
 	margin: 0;
@@ -6,221 +8,280 @@
 html, body
 {
 	height: 100%;
-}
-
-body, td
-{
-	font-family: "Droid Sans", Helvetica, sans-serif;
-	font-size: 10pt;
-	vertical-align: top;
 	margin: 0;
 	padding: 0;
 }
 
-body
+div#wrap
 {
-	color: #000;
-	background: #fff;
-}
-
-div#wrapper
-{
-	position: relative;
 	min-height: 100%;
-	margin-bottom: -1.6em;
+	height: auto;
+	position: relative;
+	margin: 0 auto -4em;
 }
 
-div#wrapper:after
+div#wrap:after
 {
 	content: '';
 	display: block;
-	height: 1.6em;
-}
-
-div#header, div#footer
-{
-	color: #fff;
-	background: #0383be;
-	padding: 0.3em 0.4em;
-}
-
-div#header
-{
-	text-transform: uppercase;
-	line-height: 2em;
-	height: 2em;
-	font-weight: bold;
+	height: 4em;
 }
 
 div#footer
 {
-	height: 1em;
+	color: #5e5e5e;
+	background-color: #f8f8f8;
+	background-image: linear-gradient(to top, #ffffff 0%, #f8f8f8 100%);
+	padding: 1em 0.8em;
+	margin-top: 0.6em;
+	min-height: 2.8em;
+	line-height: 1.4em;
 	text-align: right;
-}
-
-div#body
-{
-}
-
-ul#menu
-{
-	display: block;
-	background: #cce7f3;
-	position: absolute;
-	top: 2.6em;
-	left: 0;
-	bottom: 1.6em;
-	width: 16em;
-	margin: 0;
-	padding: 0;
-}
-
-ul#menu li
-{
-	display: block;
-	margin: 0;
-	padding: 0;
-	border-bottom: 1px solid #9acde6;
-}
-
-ul#menu li.active
-{
-	padding: 0.3em 0.4em;
-	font-weight: bold;
-}
-
-ul#menu li.bottom
-{
-	border-bottom: 0;
-	border-top: 1px solid #9acde6;
-	position: absolute;
 	bottom: 0;
-	left: 0;
-	right: 0;
+	z-index: 100;
+	position: relative;
+	-webkit-box-shadow: 0 -5px 5px rgba(0, 0, 0, 0.075);
+	box-shadow: 0 -5px 5px rgba(0, 0, 0, 0.075);
 }
 
-ul#menu li a
+div#wrap > .container
+{
+	padding-top: 5em;
+	padding-bottom: 1em;
+}
+
+body > iframe
+{
+	display: none !important;
+}
+
+@media (max-width: 480px)
+{
+	.userbar
+	{
+	}
+
+	.userbar > .btn-group
+	{
+		display: table;
+		width: 100%;
+		table-layout: fixed;
+		border-collapse: separate;
+		margin-bottom: 0.4em;
+	}
+
+	.userbar > .btn-group .btn
+	{
+		float: none;
+		display: table-cell;
+		width: 1%;
+	}
+}
+
+@media print
+{
+	html, body
+	{
+		height: auto;
+	}
+
+	div#wrap > .container
+	{
+		padding-top: 0;
+	}
+}
+
+div.controls
+{
+	position: relative;
+}
+
+span.req
+{
+	color: #e13;
+	font-size: 120%;
+}
+
+div.controls span.req
+{
+	position: absolute;
+	display: inline-block;
+	top: 0;
+	right: 0.2em;
+}
+
+#main-navbar .langform
+{
+	margin-right: 0.1em;
+}
+
+.legend span.req
 {
 	display: block;
-	padding: 0.3em 0.4em;
-	color: #00639e;
-	font-weight: bold;
-	text-decoration: none;
+	float: left;
+	vertical-align: middle;
+	padding: 0.2em;
 }
 
-div#body div#contents
+@media (min-width: 768px)
 {
-	padding-top: 0.3em;
-	margin-left: 16.4em;
+	.navbar-nav > li > a.flag-toggle
+	{
+	    padding-top: 9px;
+	    padding-bottom: 9px;
+	}
 }
 
-div#login_outer
+#recaptcha_widget_div
+{
+	position: relative;
+	left: -3px;
+}
+
+#recaptcha_table
+{
+	line-height: 1.2 !important;
+}
+
+.single-line
+{
+	white-space: nowrap;
+}
+
+.navbar .chosen-container, .navbar .chosen-drop, .navbar .chosen-drop .chosen-search, .navbar .chosen-drop .chosen-search input
+{
+	width: 100% !important;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.navbar .chosen-container
+{
+	min-width: 10em !important;
+}
+
+.form-inline .chosen-container, .form-inline input, .form-inline select, .form-inline button
+{
+	margin-bottom: 0.3em;
+}
+
+.navbar-brand
+{
+  padding: 5px 15px;
+}
+
+.navbar-brand > .large, .navbar-brand > .small
+{
+	display: block;
+}
+
+.tab-content  > .list-group-item { display: none; }
+
+.money { font-size: 2em; }
+.money .fa { font-size: 85%; }
+
+/*
+ * jQuery File Upload Plugin CSS 1.3.0
+ * https://github.com/blueimp/jQuery-File-Upload
+ *
+ * Copyright 2013, Sebastian Tschan
+ * https://blueimp.net
+ *
+ * Licensed under the MIT license:
+ * http://www.opensource.org/licenses/MIT
+ */
+
+.fileinput-button
+{
+	position: relative;
+	overflow: hidden;
+}
+
+.fileinput-button input
 {
 	position: absolute;
 	top: 0;
-	left: 0;
 	right: 0;
-	bottom: 0;
-}
-
-div#login
-{
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	display: block;
-	width: 20em;
-	height: 16em;
-	margin: -10.1em 0 0 -8.1em;
-	border: 1px solid #0383be;
-	background: #9acde6;
-	border-radius: 5px;
-}
-
-div#login div.errmsg
-{
-	position: absolute;
-	z-index: 100;
-	top: -3em;
-	left: 0;
-	right: 0;
-	color: #d73600;
-	background-color: #f6f5ac;
-	font-weight: bold;
-	margin: 0.3em;
-	padding: 0.4em;
-	border: 2px solid #d73600;
-	border-radius: 3px;
-}
-
-div#login div.elem
-{
-	position: relative;
-	margin: 0.3em;
-	padding-left: 0.3em;
-	padding-right: 0.3em;
-	border: 1px solid #0383be;
-	background: #cce7f3;
-	border-radius: 3px;
-}
-
-div#login div.elem label
-{
-	display: block;
-	background: #fff;
-	margin: 0.3em 0 0 0;
-	padding: 0.1em 0.2em;
-	border-top: 1px solid #9acde6;
-	border-left: 1px solid #9acde6;
-	border-right: 1px solid #9acde6;
-	border-top-left-radius: 2px;
-	border-top-right-radius: 2px;
-	font-size: 9pt;
-}
-
-div#login div.elem div.wrap
-{
-	display: block;
-	background: #fff;
-	margin: 0 0 0.3em 0;
-	padding: 0.1em 0.2em;
-	border-top-width: 0;
-	border-bottom: 1px solid #9acde6;
-	border-left: 1px solid #9acde6;
-	border-right: 1px solid #9acde6;
-	border-bottom-left-radius: 2px;
-	border-bottom-right-radius: 2px;
-}
-
-div#login div.elem input, div#login div.elem select
-{
-	display: block;
-	background: transparent;
 	margin: 0;
-	padding: 0;
-	width: 100%;
-	border: 0;
+	opacity: 0;
+	-ms-filter: 'alpha(opacity=0)';
+	font-size: 200px;
+	direction: ltr;
+	cursor: pointer;
 }
 
-div#login div#buttons
+/* Fixes for IE < 8 */
+@media screen\9
 {
-	position: absolute;
-	bottom: 0.3em;
-	left: 0.3em;
-	right: 0.3em;
-	border: 1px solid #0383be;
-	background: #cce7f3;
-	border-radius: 3px;
-	text-align: right;
+	.fileinput-button input
+	{
+		filter: alpha(opacity=0);
+		font-size: 100%;
+		height: 100%;
+	}
 }
 
-div#login div#buttons button
+.fileupload-buttonbar .btn,
+.fileupload-buttonbar .toggle
 {
-	display: inline-block;
-	color: #0383be;
-	background: #fff;
-	border: 1px solid #9acde6;
-	border-radius: 2px;
-	margin: 0.3em;
+	margin-bottom: 5px;
+}
+
+.progress-animated .progress-bar,
+.progress-animated .bar
+{
+	background: url("../img/progressbar.gif") !important;
+	filter: none;
+}
+
+.fileupload-process
+{
+	float: right;
+	display: none;
+}
+
+.fileupload-processing .fileupload-process,
+.files .processing .preview
+{
+	display: block;
+	width: 32px;
+	height: 32px;
+	background: url("../img/loading.gif") center no-repeat;
+	background-size: contain;
+}
+
+.files audio,
+.files video
+{
+	max-width: 300px;
+}
+
+@media (max-width: 767px)
+{
+	.fileupload-buttonbar .toggle,
+	.files .toggle,
+	.files .btn span
+	{
+		display: none;
+	}
+
+	.files .name
+	{
+		width: 80px;
+		word-wrap: break-word;
+	}
+
+	.files audio,
+	.files video
+	{
+		max-width: 80px;
+	}
+
+	.files img,
+	.files canvas
+	{
+		max-width: 100%;
+	}
 }
 

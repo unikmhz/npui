@@ -49,20 +49,6 @@ def _dpane_rate_mods(tabs, model, req):
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
-@register_hook('core.dpanetabs.entities.AccessEntity')
-def _dpane_aent_mods(tabs, model, req):
-	loc = get_localizer(req)
-	tabs.append({
-		'title'             : loc.translate(_('Rate Modifiers')),
-		'iconCls'           : 'ico-mod-ratemodifiertype',
-		'xtype'             : 'grid_rates_PerUserRateModifier',
-		'stateId'           : None,
-		'stateful'          : False,
-		'hideColumns'       : ('entity',),
-		'extraParamProp'    : 'entityid',
-		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	})
-
 @register_hook('core.dpanetabs.rates.RateClass')
 def _dpane_rc_entities(tabs, model, req):
 	loc = get_localizer(req)

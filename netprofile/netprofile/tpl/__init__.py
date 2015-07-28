@@ -34,6 +34,8 @@ class TemplateObject(object):
 		self.path = path
 		self.args = kwargs
 
-	def render(self, req):
-		return render(self.path, self.args, request=req)
+	def render(self, req, **kwargs):
+		args = self.args.copy()
+		args.update(kwargs)
+		return render(self.path, args, request=req)
 

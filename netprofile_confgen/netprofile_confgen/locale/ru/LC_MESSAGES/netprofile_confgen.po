@@ -1,0 +1,105 @@
+# Russian translations for netprofile_confgen.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the netprofile_confgen
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_confgen 0.3\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2015-04-21 21:23+0300\n"
+"PO-Revision-Date: 2015-04-21 21:24+0300\n"
+"Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.0-dev\n"
+"X-Generator: Poedit 1.5.5\n"
+
+#: netprofile_confgen/__init__.py:214
+msgid "Config Generation"
+msgstr "Создание настроек"
+
+#: netprofile_confgen/models.py:92
+msgid "Server Types"
+msgstr "Типы серверов"
+
+#: netprofile_confgen/models.py:100
+msgid "Add new server type"
+msgstr "Добавить новый тип серверов"
+
+#: netprofile_confgen/models.py:112 netprofile_confgen/models.py:213
+#: netprofile_confgen/models.py:324
+msgid "ID"
+msgstr "ID"
+
+#: netprofile_confgen/models.py:120 netprofile_confgen/models.py:344
+msgid "Name"
+msgstr "Название"
+
+#: netprofile_confgen/models.py:130
+msgid "Class"
+msgstr "Класс"
+
+#: netprofile_confgen/models.py:141
+msgid "Defaults"
+msgstr "Умолчания"
+
+#: netprofile_confgen/models.py:152
+msgid "Description"
+msgstr "Описание"
+
+#: netprofile_confgen/models.py:190 netprofile_confgen/views.py:42
+#: netprofile_confgen/views.py:70
+msgid "Servers"
+msgstr "Серверы"
+
+#: netprofile_confgen/models.py:195
+msgid "Add new server"
+msgstr "Добавить новый сервер"
+
+#: netprofile_confgen/models.py:199
+msgid "Generate server configuration"
+msgstr "Сгенерировать конфигурацию серверов"
+
+#: netprofile_confgen/models.py:223
+msgid "Host"
+msgstr "Хост"
+
+#: netprofile_confgen/models.py:235
+msgid "Type"
+msgstr "Тип"
+
+#: netprofile_confgen/models.py:308
+msgid "Server Parameters"
+msgstr "Параметры сервера"
+
+#: netprofile_confgen/models.py:312
+msgid "Add new parameter"
+msgstr "Добавить новый параметр"
+
+#: netprofile_confgen/models.py:334
+msgid "Server"
+msgstr "Сервер"
+
+#: netprofile_confgen/models.py:355
+msgid "Value"
+msgstr "Значение"
+
+#: netprofile_confgen/tasks.py:72
+#, python-format
+msgid "Successfully generated %s configuration for host %s."
+msgstr "Успешно сгененрирована конфигурация %s для хоста %s."
+
+#: netprofile_confgen/tasks.py:78
+#, python-format
+msgid "Successfully deployed configuration for hosts: %s."
+msgstr "Успешно развёрнута конфигурация для хостов: %s."
+
+#: netprofile_confgen/views.py:56
+msgid "Parameters"
+msgstr "Параметры"

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module - Models
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -52,11 +52,9 @@ from dateutil.parser import parse as dparse
 
 from sqlalchemy import (
 	Column,
-	Date,
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -68,8 +66,6 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import (
 	backref,
-	contains_eager,
-	joinedload,
 	lazyload,
 	relationship
 )
@@ -82,7 +78,6 @@ from netprofile.db.connection import (
 )
 from netprofile.db.fields import (
 	ASCIIString,
-	DeclEnum,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -90,7 +85,11 @@ from netprofile.db.fields import (
 	UInt64,
 	npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	CurrentTimestampDefault,
+	Trigger
+)
 from netprofile.db.clauses import IntervalSeconds
 from netprofile.db.util import (
 	populate_related,
@@ -162,9 +161,9 @@ class TicketOrigin(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Origins'),
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('toid', 'name'),
+				'grid_hidden'   : ('toid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -176,7 +175,7 @@ class TicketOrigin(Base):
 	id = Column(
 		'toid',
 		UInt32(),
-		Sequence('tickets_origins_toid_seq'),
+		Sequence('tickets_origins_toid_seq', start=101, increment=1),
 		Comment('Ticket origin ID'),
 		primary_key=True,
 		nullable=False,
@@ -189,7 +188,8 @@ class TicketOrigin(Base):
 		Comment('Ticket origin name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	description = Column(
@@ -231,18 +231,19 @@ class TicketState(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket States'),
-				'menu_order'    : 20,
 				'default_sort'  : (
 					{ 'property': 'title' ,'direction': 'ASC' },
 					{ 'property': 'subtitle' ,'direction': 'ASC' }
 				),
 				'grid_view'     : (
+					'tstid',
 					'title', 'subtitle',
 					'flow', 'is_start', 'is_end'
 				),
+				'grid_hidden'   : ('tstid',),
 				'form_view'     : (
 					'title', 'subtitle',
-					'flow', 'is_start', 'is_end',
+					'flow', 'is_start', 'is_end', 'allow_client',
 					'dur', 'style', 'image', 'descr'
 				),
 				'easy_search'   : ('title', 'subtitle'),
@@ -268,7 +269,8 @@ class TicketState(Base):
 		Comment('Ticket state title'),
 		nullable=False,
 		info={
-			'header_string' : _('Title')
+			'header_string' : _('Title'),
+			'column_flex'   : 1
 		}
 	)
 	subtitle = Column(
@@ -278,7 +280,8 @@ class TicketState(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Subtitle')
+			'header_string' : _('Subtitle'),
+			'column_flex'   : 1
 		}
 	)
 	flow = Column(
@@ -311,12 +314,22 @@ class TicketState(Base):
 			'header_string' : _('End')
 		}
 	)
+	allow_client = Column(
+		NPBoolean(),
+		Comment('Can be created by clients'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Show to Clients')
+		}
+	)
 	duration = Column(
 		'dur',
 		UInt32(),
 		Comment('Default ticket duration (in sec)'),
 		nullable=True,
-		default=None,
+		default=0,
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Duration')
@@ -396,9 +409,9 @@ class TicketStateTransition(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Transitions'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name', 'from_state', 'to_state'),
+				'grid_view'     : ('ttrid', 'name', 'from_state', 'to_state'),
+				'grid_hidden'   : ('ttrid',),
 				'form_view'     : ('name', 'from_state', 'to_state', 'reassign_to', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -423,7 +436,8 @@ class TicketStateTransition(Base):
 		Comment('Ticket transition name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	from_state_id = Column(
@@ -433,7 +447,8 @@ class TicketStateTransition(Base):
 		Comment('From state'),
 		nullable=False,
 		info={
-			'header_string' : _('From')
+			'header_string' : _('From'),
+			'column_flex'   : 1
 		}
 	)
 	to_state_id = Column(
@@ -443,7 +458,8 @@ class TicketStateTransition(Base):
 		Comment('To state'),
 		nullable=False,
 		info={
-			'header_string' : _('To')
+			'header_string' : _('To'),
+			'column_flex'   : 1
 		}
 	)
 	reassign_to_id = Column(
@@ -508,9 +524,9 @@ class TicketFlagType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Ticket Flags'),
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('tftid', 'name'),
+				'grid_hidden'   : ('tftid',),
 				'form_view'     : ('name', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
@@ -535,7 +551,8 @@ class TicketFlagType(Base):
 		Comment('Ticket flag type name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	description = Column(
@@ -581,6 +598,8 @@ class TicketFlag(Base):
 		Comment('Ticket flag mappings'),
 		Index('tickets_flags_def_u_tf', 'ticketid', 'tftid', unique=True),
 		Index('tickets_flags_def_i_tftid', 'tftid'),
+		Trigger('after', 'insert', 't_tickets_flags_def_ai'),
+		Trigger('after', 'delete', 't_tickets_flags_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -643,11 +662,12 @@ class TicketFile(Base):
 				'cap_menu'      : 'BASE_TICKETS',
 				'cap_read'      : 'TICKETS_LIST',
 				'cap_create'    : 'FILES_ATTACH_2TICKETS',
-				'cap_edit'      : 'FILES_ATTACH_2TICKETS',
+				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : 'FILES_ATTACH_2TICKETS',
 
 				'menu_name'     : _('Files'),
-				'grid_view'     : ('ticket', 'file'),
+				'grid_view'     : ('tfid', 'ticket', 'file'),
+				'grid_hidden'   : ('tfid',),
 
 				'create_wizard' : SimpleWizard(title=_('Attach file'))
 			}
@@ -671,7 +691,8 @@ class TicketFile(Base):
 		Comment('Ticket ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Ticket')
+			'header_string' : _('Ticket'),
+			'column_flex'   : 1
 		}
 	)
 	file_id = Column(
@@ -681,12 +702,15 @@ class TicketFile(Base):
 		Comment('File ID'),
 		nullable=False,
 		info={
-			'header_string' : _('File')
+			'header_string' : _('File'),
+			'column_flex'   : 1,
+			'editor_xtype'  : 'fileselect'
 		}
 	)
 
 	file = relationship(
 		'File',
+		innerjoin=True,
 		backref=backref(
 			'linked_tickets',
 			cascade='all, delete-orphan',
@@ -753,9 +777,8 @@ def _wizfld_ticket_tpl(fld, model, req, **kwargs):
 		'fieldLabel'     : loc.translate(_('Template'))
 	}
 
-def _wizcb_ticket_submit(wiz, step, act, val, req):
+def _wizcb_ticket_submit(wiz, em, step, act, val, req):
 	sess = DBSession()
-	em = ExtModel(Ticket)
 	obj = Ticket(origin_id=1)
 	em.set_values(obj, val, req, True)
 	sess.add(obj)
@@ -770,9 +793,8 @@ def _wizcb_ticket_submit(wiz, step, act, val, req):
 		'reload' : True
 	}
 
-def _wizcb_ticket_tpl_submit(wiz, step, act, val, req):
+def _wizcb_ticket_tpl_submit(wiz, em, step, act, val, req):
 	sess = DBSession()
-	em = ExtModel(Ticket)
 	if ('ttplid' not in val) or ('entityid' not in val):
 		raise ValueError
 	tpl = sess.query(TicketTemplate).get(int(val['ttplid']))
@@ -809,6 +831,11 @@ class Ticket(Base):
 		Index('tickets_def_i_assigned_gid', 'assigned_gid'),
 		Index('tickets_def_i_toid', 'toid'),
 		Index('tickets_def_i_archived', 'archived'),
+		Trigger('before', 'insert', 't_tickets_def_bi'),
+		Trigger('before', 'update', 't_tickets_def_bu'),
+		Trigger('after', 'insert', 't_tickets_def_ai'),
+		Trigger('after', 'update', 't_tickets_def_au'),
+		Trigger('after', 'delete', 't_tickets_def_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -822,16 +849,16 @@ class Ticket(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Tickets'),
 				'menu_main'     : True,
-				'menu_order'    : 10,
 				'default_sort'  : ({ 'property': 'ctime' ,'direction': 'DESC' },),
 				'grid_view'     : (
 					'ticketid', 'entity', 'state',
 					'assigned_time', 'assigned_group', 'name'
 				),
+				'grid_hidden'   : ('ticketid',),
 				'form_view'     : (
 					'entity', 'name', 'state', 'flags', 'origin',
 					'assigned_user', 'assigned_group', 'assigned_time', 'dur',
-					'archived', 'descr', 'ctime', 'created_by',
+					'archived', 'show_client', 'descr', 'ctime', 'created_by',
 					'mtime', 'modified_by', 'ttime', 'transition_by'
 				),
 				'easy_search'   : ('name',),
@@ -841,6 +868,7 @@ class Ticket(Base):
 					Step(
 						'entity', 'name',
 						ExtJSWizardField(_wizfld_ticket_state),
+						'show_client',
 						'flags', 'descr',
 						id='generic'
 					),
@@ -907,7 +935,8 @@ class Ticket(Base):
 		info={
 			'header_string' : _('Entity'),
 			'filter_type'   : 'none',
-			'write_cap'     : 'TICKETS_CHANGE_ENTITY'
+			'write_cap'     : 'TICKETS_CHANGE_ENTITY',
+			'column_flex'   : 1
 		}
 	)
 	state_id = Column(
@@ -918,7 +947,8 @@ class Ticket(Base):
 		nullable=False,
 		info={
 			'header_string' : _('State'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	origin_id = Column(
@@ -943,7 +973,8 @@ class Ticket(Base):
 		info={
 			'header_string' : _('User'),
 			'filter_type'   : 'list',
-			'write_cap'     : 'TICKETS_CHANGE_UID'
+			'write_cap'     : 'TICKETS_CHANGE_UID',
+			'column_flex'   : 1
 		}
 	)
 	assigned_group_id = Column(
@@ -957,7 +988,8 @@ class Ticket(Base):
 		info={
 			'header_string' : _('Group'),
 			'filter_type'   : 'list',
-			'write_cap'     : 'TICKETS_CHANGE_GID'
+			'write_cap'     : 'TICKETS_CHANGE_GID',
+			'column_flex'   : 1
 		}
 	)
 	assigned_time = Column(
@@ -994,12 +1026,23 @@ class Ticket(Base):
 			'write_cap'     : 'TICKETS_ARCHIVAL'
 		}
 	)
+	show_client = Column(
+		NPBoolean(),
+		Comment('Show ticket to client'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Show to Client')
+		}
+	)
 	name = Column(
 		Unicode(255),
 		Comment('Ticket name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
 	description = Column(
@@ -1010,7 +1053,8 @@ class Ticket(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Description')
+			'header_string' : _('Description'),
+			'column_flex'   : 3
 		}
 	)
 	creation_time = Column(
@@ -1029,10 +1073,9 @@ class Ticket(Base):
 		'mtime',
 		TIMESTAMP(),
 		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
 		nullable=False,
 #		default=zzz,
-		server_default=func.current_timestamp(),
-		server_onupdate=func.current_timestamp(),
 		info={
 			'header_string' : _('Modified'),
 			'read_only'     : True
@@ -1094,7 +1137,11 @@ class Ticket(Base):
 		'Entity',
 		innerjoin=True,
 		lazy='joined',
-		backref='tickets'
+		backref=backref(
+			'tickets',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
 	)
 	state = relationship(
 		'TicketState',
@@ -1174,24 +1221,27 @@ class Ticket(Base):
 		return '%s' % self.name
 
 	@classmethod
-	def __augment_query__(cls, sess, query, params):
-		flt = {}
+	def __augment_query__(cls, sess, query, params, req):
+		flist = []
 		if '__filter' in params:
-			flt.update(params['__filter'])
+			flist.extend(params['__filter'])
 		if '__ffilter' in params:
-			flt.update(params['__ffilter'])
-		if ('parentid' in flt) and ('eq' in flt['parentid']):
-			val = int(flt['parentid']['eq'])
-			if val > 0:
-				query = query.join(TicketDependency, Ticket.id == TicketDependency.child_id).filter(TicketDependency.parent_id == val)
-		if ('childid' in flt) and ('eq' in flt['childid']):
-			val = int(flt['childid']['eq'])
-			if val > 0:
-				query = query.join(TicketDependency, Ticket.id == TicketDependency.parent_id).filter(TicketDependency.child_id == val)
+			flist.extend(params['__ffilter'])
+		for flt in flist:
+			prop = flt.get('property', None)
+			oper = flt.get('operator', None)
+			value = flt.get('value', None)
+			if prop == 'parentid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.join(TicketDependency, Ticket.id == TicketDependency.child_id).filter(TicketDependency.parent_id == int(value))
+			if prop == 'childid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.join(TicketDependency, Ticket.id == TicketDependency.parent_id).filter(TicketDependency.child_id == int(value))
+		# FIXME: check TICKETS_LIST_ARCHIVED, TICKETS_OWN_LIST, TICKETS_OWNGROUP_LIST and ACLs
 		return query
 
 	@classmethod
-	def __augment_result__(cls, sess, res, params):
+	def __augment_result__(cls, sess, res, params, req):
 		populate_related_list(
 			res, 'id', 'flagmap', TicketFlag,
 			sess.query(TicketFlag),
@@ -1252,9 +1302,9 @@ class TicketTemplate(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Templates'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('ttplid', 'name'),
+				'grid_hidden'   : ('ttplid',),
 				'form_view'     : (
 					'name',
 					'tpl_name', 'tpl_descr',
@@ -1287,7 +1337,8 @@ class TicketTemplate(Base):
 		Comment('Ticket template name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	name_template = Column(
@@ -1495,9 +1546,9 @@ class TicketChangeField(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Change Fields'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('tcfid', 'name'),
+				'grid_hidden'   : ('tcfid',),
 				'easy_search'   : ('name',),
 
 				'create_wizard' : SimpleWizard(title=_('Add new change field'))
@@ -1520,7 +1571,8 @@ class TicketChangeField(Base):
 		Comment('Ticket change field name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -1612,9 +1664,9 @@ class TicketChange(Base):
 		'ts',
 		TIMESTAMP(),
 		Comment('Ticket change timestamp'),
+		CurrentTimestampDefault(),
 		nullable=False,
 #		default=
-		server_default=func.current_timestamp(),
 		info={
 			'header_string' : _('Time')
 		}
@@ -1627,6 +1679,16 @@ class TicketChange(Base):
 		server_default=npbool(False),
 		info={
 			'header_string' : _('Show to Client')
+		}
+	)
+	from_client = Column(
+		NPBoolean(),
+		Comment('This change is from client'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('From Client')
 		}
 	)
 	comments = Column(
@@ -1825,9 +1887,9 @@ class TicketScheduler(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Schedulers'),
-				'menu_order'    : 30,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name',),
+				'grid_view'     : ('tschedid', 'name'),
+				'grid_hidden'   : ('tschedid',),
 				'form_view'     : (
 					'name',
 					'sim_user', 'sim_group', 'ov_dur',
@@ -1857,7 +1919,8 @@ class TicketScheduler(Base):
 		Comment('Ticket scheduler name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	sim_user = Column(
@@ -2091,7 +2154,8 @@ class TicketSchedulerUserAssignment(Base):
 				'cap_delete'    : 'BASE_ADMIN',
 
 				'menu_name'     : _('Scheduler Assignments for Users'),
-				'grid_view'     : ('user', 'scheduler'),
+				'grid_view'     : ('tschedassid', 'user', 'scheduler'),
+				'grid_hidden'   : ('tschedassid',),
 
 				'create_wizard' : SimpleWizard(title=_('Add new scheduling assignment'))
 			}
@@ -2115,7 +2179,8 @@ class TicketSchedulerUserAssignment(Base):
 		Comment('User ID'),
 		nullable=False,
 		info={
-			'header_string' : _('User')
+			'header_string' : _('User'),
+			'column_flex'   : 1
 		}
 	)
 	scheduler_id = Column(
@@ -2125,7 +2190,8 @@ class TicketSchedulerUserAssignment(Base):
 		Comment('Ticket scheduler ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Scheduler')
+			'header_string' : _('Scheduler'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -2162,7 +2228,8 @@ class TicketSchedulerGroupAssignment(Base):
 				'cap_delete'    : 'BASE_ADMIN',
 
 				'menu_name'     : _('Scheduler Assignments for Groups'),
-				'grid_view'     : ('group', 'scheduler'),
+				'grid_view'     : ('tschedassid', 'group', 'scheduler'),
+				'grid_hidden'   : ('tschedassid',),
 
 				'create_wizard' : SimpleWizard(title=_('Add new scheduling assignment'))
 			}
@@ -2186,7 +2253,8 @@ class TicketSchedulerGroupAssignment(Base):
 		Comment('Group ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Group')
+			'header_string' : _('Group'),
+			'column_flex'   : 1
 		}
 	)
 	scheduler_id = Column(
@@ -2196,7 +2264,8 @@ class TicketSchedulerGroupAssignment(Base):
 		Comment('Ticket scheduler ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Scheduler')
+			'header_string' : _('Scheduler'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -2289,6 +2358,8 @@ class TicketDependency(Base):
 	__table_args__ = (
 		Comment('Ticket resolution dependencies'),
 		Index('tickets_dependencies_i_ticketid_child', 'ticketid_child'),
+		Trigger('before', 'insert', 't_tickets_dependencies_bi'),
+		Trigger('before', 'update', 't_tickets_dependencies_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',

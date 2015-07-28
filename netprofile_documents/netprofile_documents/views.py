@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Documents module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -46,46 +46,62 @@ from .models import (
 
 _ = TranslationStringFactory('netprofile_documents')
 
+@register_hook('core.dpanetabs.documents.DocumentBundle')
+def _dpane_docbundle_documents(tabs, model, req):
+	loc = get_localizer(req)
+	tabs.append({
+		'title'             : loc.translate(_('Contents')),
+		'iconCls'           : 'ico-mod-document',
+		'xtype'             : 'grid_documents_DocumentBundleMapping',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('bundle',),
+		'extraParamProp'    : 'dbid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
 @register_hook('core.dpane.entities.Entity')
 @register_hook('core.dpane.entities.PhysicalEntity')
 @register_hook('core.dpane.entities.LegalEntity')
 @register_hook('core.dpane.entities.StructuralEntity')
 @register_hook('core.dpane.entities.ExternalEntity')
+@register_hook('core.dpane.entities.AccessEntity')
 def _dpane_make_doc(cont, model, req):
 	if not has_permission('DOCUMENTS_GENERATE', req.context, req):
 		return
 	loc = get_localizer(req)
-	panel = {
-		'xtype'  : 'panel',
-		'title'  : loc.translate(_('Generate Documents')),
-		'layout' : {
-			'type' : 'hbox'
-		},
-		'defaults' : {
-			'margin' : 4
-		},
-		'border' : 0,
-		'items'  : [{
-			'xtype'          : 'combobox',
-			'itemId'         : 'docid',
-			'format'         : 'string',
-			'displayField'   : 'name',
-			'valueField'     : 'docid',
-			'queryMode'      : 'local',
-			'editable'       : False,
-			'forceSelection' : False,
-			'store'          : { 'type' : 'documents_Document' },
-			'flex'           : 1,
-			'border'         : 0,
-			'emptyText'      : loc.translate(_('Choose document template…'))
-		}, {
-			'xtype'      : 'docbutton',
-			'text'       : loc.translate(_('Generate')),
-			'iconCls'    : 'ico-print',
-			'objectType' : 'entity'
-		}]
+	button = {
+		'text'    : loc.translate(_('Documents')),
+		'iconCls' : 'ico-print',
+		'itemId'  : 'btn_documents',
+		'menu'    : {
+			'xtype'         : 'menu',
+			'plain'         : True,
+			'showSeparator' : False,
+			'minWidth'      : 220,
+			'items'         : [{
+				'xtype'          : 'combobox',
+				'itemId'         : 'docid',
+				'displayField'   : 'name',
+				'valueField'     : 'docid',
+				'editable'       : False,
+				'forceSelection' : False,
+				'store'          : { 'type' : 'documents_Document' },
+				'margin'         : 2,
+				'emptyText'      : loc.translate(_('Choose document template…'))
+			}, {
+				'xtype'      : 'docbutton',
+				'text'       : loc.translate(_('Generate')),
+				'iconCls'    : 'ico-print',
+				'margin'     : 2,
+				'objectType' : 'entity'
+			}]
+		}
 	}
-	cont['items'][0]['items'].append(panel)
+	npform = cont['items'][0]
+	if 'extraButtons' not in npform:
+		npform['extraButtons'] = []
+	npform['extraButtons'].append(button)
 
 @extdirect_method('Document', 'prepare_template', request_as_last_param=True, permission='DOCUMENTS_GENERATE')
 def _dyn_prep_tpl(params, req):

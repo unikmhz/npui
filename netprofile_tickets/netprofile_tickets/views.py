@@ -33,10 +33,12 @@ if PY3:
 else:
 	from cgi import escape as html_escape
 
+import collections
 import datetime as dt
 from dateutil.parser import parse as dparse
 
 from sqlalchemy.orm import joinedload
+from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.ext.wizards import (
 	CompositeWizardField,
@@ -45,8 +47,12 @@ from netprofile.ext.wizards import (
 	Step,
 	Wizard
 )
+from netprofile.common.factory import RootFactory
 from netprofile.db.fields import npbool
-from netprofile.db.clauses import SetVariable
+from netprofile.db.clauses import (
+	IntervalSeconds,
+	SetVariable
+)
 from netprofile.db.connection import DBSession
 from netprofile.ext.data import ExtModel
 from netprofile.ext.direct import extdirect_method
@@ -55,24 +61,33 @@ from netprofile_core.models import (
 	Group,
 	User
 )
+from netprofile_core.views import generate_calendar
 
 from .models import (
 	Ticket,
 	TicketChange,
+	TicketFile,
 	TicketScheduler,
 	TicketState,
 	TicketStateTransition,
 	TicketTemplate
 )
 
+from pyramid.view import view_config
+from pyramid.settings import asbool
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
 from netprofile.common.hooks import register_hook
 from pyramid.security import has_permission
+from pyramid.httpexceptions import (
+	HTTPForbidden,
+	HTTPSeeOther
+)
 
 _ = TranslationStringFactory('netprofile_tickets')
+_a = TranslationStringFactory('netprofile_access')
 
 def dpane_tickets(model, request):
 	loc = get_localizer(request)
@@ -124,17 +139,20 @@ def dpane_tickets(model, request):
 		'layout' : {
 			'type'    : 'hbox',
 			'align'   : 'stretch',
-			'padding' : 4
+			'padding' : 0
 		},
 		'items' : [{
-			'xtype' : 'npform',
-			'flex'  : 2
+			'xtype'   : 'npform',
+			'flex'    : 2,
+			'padding' : '4 0 4 4'
 		}, {
-			'xtype' : 'splitter'
+			'xtype'   : 'splitter'
 		}, {
-			'xtype'  : 'tabpanel',
-			'flex'   : 3,
-			'items'  : tabs
+			'xtype'   : 'tabpanel',
+			'cls'     : 'np-subtab',
+			'border'  : False,
+			'flex'    : 3,
+			'items'   : tabs
 		}]
 	}
 	request.run_hook(
@@ -311,9 +329,10 @@ def dyn_ticket_uwiz(params, request):
 				'readOnly' : not bool(has_permission('TICKETS_ARCHIVAL', request.context, request))
 			}
 		),
-		ExternalWizardField(ch_model, 'show_client', value=False),
-		ExternalWizardField(ch_model, 'comments')
+		ExternalWizardField(ch_model, 'show_client', value=False)
 	))
+	if has_permission('TICKETS_COMMENT', request.context, request):
+		fields.append(ExternalWizardField(ch_model, 'comments'))
 	wiz = Wizard(Step(*fields), title=_('Update ticket'))
 	ret = {
 		'success' : True,
@@ -365,9 +384,11 @@ def dyn_ticket_uwiz_update(params, request):
 	else:
 		show_cl = False
 	sess.execute(SetVariable('show_client', npbool(show_cl)))
-	if 'comments' in params:
+	if ('comments' in params) and has_permission('TICKETS_COMMENT', request.context, request):
 		sess.execute(SetVariable('comments', params['comments']))
 		del params['comments']
+	else:
+		sess.execute(SetVariable('comments', None))
 	model.set_values(ticket, params, request)
 	sess.flush()
 	sess.execute(SetVariable('tcid', None))
@@ -444,4 +465,368 @@ def dyn_ticket_sched_find(params, request):
 		'success' : True,
 		'dates'   : dates
 	}
+
+_cal = generate_calendar(_('Tickets'), 22)
+_cal['cancreate'] = False
+
+@register_hook('core.calendar.calendars.read')
+def _cal_calendars(cals, params, req):
+	if not has_permission('TICKETS_LIST', req.context, req):
+		return
+	cals.append(_cal)
+
+@register_hook('core.calendar.events.read')
+def _cal_events(evts, params, req):
+	if not has_permission('TICKETS_LIST', req.context, req):
+		return
+	# TODO: fancy permissions/ACLs
+	ts_from = params.get('startDate')
+	ts_to = params.get('endDate')
+	if (not ts_from) or (not ts_to):
+		return
+	cals = params.get('cals')
+	if cals:
+		if isinstance(cals, collections.Iterable):
+			if _cal['id'] not in cals:
+				return
+		else:
+			return
+	ts_from = dparse(ts_from).replace(hour=0, minute=0, second=0, microsecond=0)
+	ts_to = dparse(ts_to).replace(hour=23, minute=59, second=59, microsecond=999999)
+	sess = DBSession()
+	q = sess.query(Ticket)\
+		.filter(
+			Ticket.assigned_time <= ts_to,
+			IntervalSeconds(Ticket.assigned_time, Ticket.duration) >= ts_from
+		)
+	for tkt in q:
+		ev = {
+			'id'       : 'ticket-%d' % tkt.id,
+			'cid'      : _cal['id'],
+			'title'    : tkt.name,
+			'start'    : tkt.assigned_time,
+			'end'      : tkt.end_time,
+			'notes'    : tkt.description,
+			'apim'     : 'tickets',
+			'apic'     : 'Ticket',
+			'apiid'    : tkt.id,
+			'caned'    : False
+		}
+		evts.append(ev)
+
+@register_hook('core.calendar.events.update')
+def _cal_events_update(params, req):
+	if 'EventId' not in params:
+		return
+	evtype, evid = params['EventId'].split('-')
+	if evtype != 'ticket':
+		return
+	evid = int(evid)
+	if not has_permission('TICKETS_UPDATE', req.context, req):
+		return
+	# TODO: fancy permissions/ACLs
+	sess = DBSession()
+	tkt = sess.query(Ticket).get(evid)
+	if tkt is None:
+		return
+	sess.execute(SetVariable('ticketid', tkt.id))
+	if 'StartDate' in params:
+		new_ts = dparse(params['StartDate']).replace(tzinfo=None, microsecond=0)
+		if new_ts:
+			tkt.assigned_time = new_ts
+	if ('EndDate' in params) and tkt.assigned_time:
+		new_ts = dparse(params['EndDate']).replace(tzinfo=None, microsecond=0)
+		if new_ts:
+			delta = new_ts - tkt.assigned_time
+			tkt.duration = delta.seconds
+
+class ClientRootFactory(RootFactory):
+	def __getitem__(self, name):
+		if not self.req.user:
+			raise KeyError('Not logged in')
+		try:
+			name = int(name, base=10)
+			ent = self.req.user.parent
+			sess = DBSession()
+			try:
+				tkt = sess.query(Ticket).filter(
+					Ticket.entity == ent,
+					Ticket.id == name,
+					Ticket.show_client == True
+				).one()
+				tkt.__parent__ = self
+				tkt.__name__ = str(name)
+				return tkt
+			except NoResultFound:
+				raise KeyError('Invalid ticket ID')
+		except (TypeError, ValueError):
+			pass
+		raise KeyError('Invalid URL')
+
+@register_hook('access.cl.menu')
+def _tickets_menu(menu, req):
+	cfg = req.registry.settings
+	if asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		menu.append({
+			'route' : 'tickets.cl.issues',
+			'text'  : _('Issues')
+		})
+
+@register_hook('access.cl.upload')
+def _tickets_upload_file(obj, mode, req, sess, tpldef):
+	if mode != 'ticket':
+		return False
+	try:
+		ticket_id = int(req.POST.get('ticketid', ''))
+	except (TypeError, ValueError):
+		return False
+	tkt = sess.query(Ticket).get(ticket_id)
+	if not tkt:
+		return False
+	ent = req.user.parent
+	if tkt.archived or (tkt.entity != ent):
+		return False
+	link = TicketFile()
+	link.file = obj
+	link.ticket = tkt
+	sess.add(link)
+	sess.flush()
+	url = req.route_url('access.cl.download', mode='ticket', id=link.id)
+	tpldef.append({
+		'name'       : obj.filename,
+		'size'       : obj.size,
+		'url'        : url,
+		'deleteUrl'  : url,
+		'deleteType' : 'DELETE'
+	})
+	return True
+
+@register_hook('access.cl.file_list')
+def _tickets_list_files(mode, req, sess, tpldef):
+	if mode != 'ticket':
+		return False
+	try:
+		ticket_id = int(req.GET.get('ticketid', ''))
+	except (TypeError, ValueError):
+		return False
+	tkt = sess.query(Ticket).get(ticket_id)
+	if not tkt:
+		return False
+	ent = req.user.parent
+	if tkt.entity != ent:
+		return False
+	for link in tkt.filemap:
+		url = req.route_url('access.cl.download', mode='ticket', id=link.id)
+		tpldef.append({
+			'name'       : link.file.filename,
+			'size'       : link.file.size,
+			'url'        : url,
+			'deleteUrl'  : url,
+			'deleteType' : 'DELETE'
+		})
+
+@register_hook('access.cl.download')
+def _tickets_download_file(mode, objid, req, sess):
+	if mode != 'ticket':
+		return False
+	link = sess.query(TicketFile).get(objid)
+	if not link:
+		return False
+	if link.ticket.archived and (req.method == 'DELETE'):
+		return False
+	ent = req.user.parent
+	if link.ticket.entity != ent:
+		return False
+	return link.file
+
+@view_config(
+	route_name='tickets.cl.issues',
+	name='',
+	context=ClientRootFactory,
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_list.mak'
+)
+def client_issue_list(ctx, req):
+	cfg = req.registry.settings
+	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		raise HTTPForbidden(detail=_('Issues view is disabled'))
+	sess = DBSession()
+	ent = req.user.parent
+	q = sess.query(Ticket)\
+		.filter(Ticket.entity == ent, Ticket.show_client == True)\
+		.order_by(Ticket.creation_time.desc())
+	tpldef = {
+		'sess'    : DBSession(),
+		'tickets' : q.all()
+	}
+	req.run_hook('access.cl.tpldef', tpldef, req)
+	req.run_hook('access.cl.tpldef.issue.list', tpldef, req)
+	return tpldef
+
+@view_config(
+	route_name='tickets.cl.issues',
+	name='new',
+	context=ClientRootFactory,
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_create.mak'
+)
+def client_issue_new(ctx, req):
+	loc = get_localizer(req)
+	cfg = req.registry.settings
+	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		raise HTTPForbidden(detail=_('Issues view is disabled'))
+	origin_id = int(cfg.get('netprofile.client.ticket.origin_id', 0))
+	user_id = int(cfg.get('netprofile.client.ticket.assign_uid', 0))
+	group_id = int(cfg.get('netprofile.client.ticket.assign_gid', 0))
+	errors = {}
+	sess = DBSession()
+	ent = req.user.parent
+	states = sess.query(TicketState)\
+		.filter(TicketState.is_start == True, TicketState.allow_client == True)
+	if 'submit' in req.POST:
+		csrf = req.POST.get('csrf', '')
+		name = req.POST.get('name', '')
+		descr = req.POST.get('descr', '')
+		state = int(req.POST.get('state', 0))
+		if csrf != req.get_csrf():
+			errors['csrf'] = _a('Error submitting form')
+		else:
+			l = len(name)
+			if (l == 0) or (l > 254):
+				errors['name'] = _a('Invalid field length')
+			for s in states:
+				if s.id == state:
+					state = s
+					break
+			else:
+				errors['state'] = _('Invalid issue type')
+		if len(errors) == 0:
+			tkt = Ticket()
+			tkt.name = name
+			tkt.state = state
+			tkt.entity = ent
+			tkt.show_client = True
+			if descr:
+				tkt.description = descr
+			if origin_id:
+				tkt.origin_id = origin_id
+			if user_id:
+				tkt.assigned_user_id = user_id
+			if group_id:
+				tkt.assigned_group_id = group_id
+			sess.add(tkt)
+			sess.flush()
+
+			req.session.flash({
+				'text' : loc.translate(_('New issue successfully created'))
+			})
+			return HTTPSeeOther(location=req.route_url('tickets.cl.issues', traverse=(tkt.id, 'view')))
+	tpldef = {
+		'states' : states,
+		'crumbs' : [{
+			'text' : loc.translate(_('My Issues')),
+			'url'  : req.route_url('tickets.cl.issues', traverse=())
+		}, {
+			'text' : loc.translate(_('New Issue'))
+		}],
+		'errors' : {err: loc.translate(errors[err]) for err in errors}
+	}
+	req.run_hook('access.cl.tpldef', tpldef, req)
+	req.run_hook('access.cl.tpldef.issue.new', tpldef, req)
+	return tpldef
+
+@view_config(
+	route_name='tickets.cl.issues',
+	name='append',
+	context=Ticket,
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_append.mak'
+)
+def client_issue_append(ctx, req):
+	loc = get_localizer(req)
+	cfg = req.registry.settings
+	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		raise HTTPForbidden(detail=_('Issues view is disabled'))
+	errors = {}
+	if ctx.archived:
+		req.session.flash({
+			'class' : 'danger',
+			'text'  : loc.translate(_('This ticket is archived. You can\'t append to it.'))
+		})
+		return HTTPSeeOther(location=req.route_url('tickets.cl.issues', traverse=(ctx.id, 'view')))
+	if 'submit' in req.POST:
+		csrf = req.POST.get('csrf', '')
+		comments = req.POST.get('comments', '')
+		if csrf != req.get_csrf():
+			errors['csrf'] = _a('Error submitting form')
+		elif not comments:
+			errors['comments'] = _a('Invalid field length')
+		if len(errors) == 0:
+			sess = DBSession()
+			ch = TicketChange()
+			ch.ticket = ctx
+			ch.from_client = True
+			ch.show_client = True
+			ch.comments = comments
+			sess.add(ch)
+
+			req.session.flash({
+				'text' : loc.translate(_('Your comment was successfully appended to the issue'))
+			})
+			return HTTPSeeOther(location=req.route_url('tickets.cl.issues', traverse=(ctx.id, 'view')))
+	tpldef = {
+		'crumbs' : [{
+			'text' : loc.translate(_('My Issues')),
+			'url'  : req.route_url('tickets.cl.issues', traverse=())
+		}, {
+			'text' : loc.translate(_('View Issue #%d')) % ctx.id,
+			'url'  : req.route_url('tickets.cl.issues', traverse=(ctx.id, 'view'))
+		}, {
+			'text' : loc.translate(_('Append Comment to Issue #%d')) % ctx.id
+		}],
+		'ticket' : ctx,
+		'errors' : {err: loc.translate(errors[err]) for err in errors}
+	}
+	req.run_hook('access.cl.tpldef', tpldef, req)
+	req.run_hook('access.cl.tpldef.issue.append', tpldef, req)
+	return tpldef
+
+@view_config(
+	route_name='tickets.cl.issues',
+	name='',
+	context=Ticket,
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_view.mak'
+)
+@view_config(
+	route_name='tickets.cl.issues',
+	name='view',
+	context=Ticket,
+	permission='USAGE',
+	renderer='netprofile_tickets:templates/client_view.mak'
+)
+def client_issue_view(ctx, req):
+	loc = get_localizer(req)
+	cfg = req.registry.settings
+	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
+		raise HTTPForbidden(detail=_('Issues view is disabled'))
+	tpldef = {
+		'crumbs' : [{
+			'text' : loc.translate(_('My Issues')),
+			'url'  : req.route_url('tickets.cl.issues', traverse=())
+		}, {
+			'text' : loc.translate(_('View Issue #%d')) % ctx.id
+		}],
+		'trans'  : (
+			_('Begin'),
+			_('Cancel'),
+			_('Delete'),
+			_('Error'),
+			_('Processing…')
+		),
+		'ticket' : ctx
+	}
+	req.run_hook('access.cl.tpldef', tpldef, req)
+	req.run_hook('access.cl.tpldef.issue.view', tpldef, req)
+	return tpldef
 

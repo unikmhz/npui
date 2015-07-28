@@ -52,10 +52,11 @@ class DAVNodeElement(DAVElement):
 		self.ctx = ctx
 
 class DAVResponseElement(DAVNodeElement):
-	def __init__(self, req, ctx, props=None, status=None):
+	def __init__(self, req, ctx, props=None, status=None, names_only=False):
 		super(DAVResponseElement, self).__init__(req, ctx)
 		self.props = props
 		self.status = status
+		self.names_only = names_only
 
 	def to_xml(self):
 		req = self.req
@@ -74,7 +75,7 @@ class DAVResponseElement(DAVNodeElement):
 				prop = etree.SubElement(propstat, dprops.PROP)
 				for k, v in props.items():
 					curprop = etree.SubElement(prop, k)
-					if v is None:
+					if (v is None) or self.names_only:
 						pass
 					elif isinstance(v, dt.datetime):
 						curprop.text = v.strftime('%a, %d %b %Y %H:%M:%S')

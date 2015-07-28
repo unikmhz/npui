@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -35,16 +35,35 @@ __all__ = [
 	'House',
 	'Place',
 	'HouseGroup',
-	'HouseGroupMapping'
+	'HouseGroupMapping',
+	'UserLocation',
+
+	'AddrFormatCompactFunction',
+	'AddrFormatFunction',
+	'AddrGetFullFunction',
+	'AddrListDistrictProcedure',
+	'AddrListEntrProcedure',
+	'AddrListStreetProcedure',
+
+	'AddrCompactView',
+	'AddrExtraView',
+	'AddrFullView',
+	'AddrStreetNamesView'
 ]
 
+from collections import OrderedDict
+
 from sqlalchemy import (
+	CHAR,
 	Column,
 	ForeignKey,
 	Index,
 	Sequence,
 	Unicode,
 	UnicodeText,
+	event,
+	func,
+	literal_column,
 	text
 )
 
@@ -58,20 +77,19 @@ from sqlalchemy.ext.associationproxy import (
 	association_proxy
 )
 
-#from colanderalchemy import (
-#	Column,
-#	relationship
-#)
-
 from netprofile.db.connection import (
 	Base,
 	DBSession
 )
 from netprofile.db.fields import (
+	Int16,
+	NPBoolean,
 	UInt8,
 	UInt16,
-	UInt32
+	UInt32,
+	npbool
 )
+from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.filters import (
 	CheckboxGroupFilter
 )
@@ -80,9 +98,19 @@ from netprofile.ext.wizards import (
 	Step,
 	Wizard
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+	Comment,
+	InArgument,
+	SQLFunction,
+	SQLFunctionArgument,
+	View
+)
 from netprofile.db.util import populate_related_list
 
+from netprofile_core.models import (
+	AddressType,
+	User
+)
 from netprofile_geo.filters import AddressFilter
 
 from pyramid.threadlocal import get_current_request
@@ -92,6 +120,20 @@ from pyramid.i18n import (
 )
 
 _ = TranslationStringFactory('netprofile_geo')
+
+def countries_alpha2(column, req):
+	locale_cur = req.current_locale
+	locale_en = req.locales['en']
+	ret = dict()
+	for code in locale_en.territories:
+		if len(code) != 2:
+			continue
+		try:
+			ret[code] = locale_cur.territories[code]
+		except KeyError:
+			ret[code] = locale_en.territories[code]
+
+	return OrderedDict((k, v) for k, v in sorted(ret.items(), key=lambda x: x[1]))
 
 class City(Base):
 	"""
@@ -113,9 +155,9 @@ class City(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Cities'),
-				'menu_order'    : 40,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('name', 'prefix'),
+				'grid_view'     : ('cityid', 'name', 'prefix'),
+				'grid_hidden'   : ('cityid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -140,7 +182,8 @@ class City(Base):
 		Comment('City name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	prefix = Column(
@@ -150,7 +193,8 @@ class City(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Prefix')
+			'header_string' : _('Prefix'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -163,7 +207,7 @@ class City(Base):
 
 	streets = relationship(
 		'Street',
-		backref=backref('city', innerjoin=True),
+#		backref=backref('city', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
@@ -192,9 +236,9 @@ class District(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Districts'),
-				'menu_order'    : 50,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('city', 'name', 'prefix'),
+				'grid_view'     : ('districtid', 'city', 'name', 'prefix'),
+				'grid_hidden'   : ('districtid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -222,7 +266,8 @@ class District(Base):
 		nullable=False,
 		info={
 			'header_string' : _('City'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
@@ -230,7 +275,8 @@ class District(Base):
 		Comment('District name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 3
 		}
 	)
 	prefix = Column(
@@ -240,7 +286,8 @@ class District(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Prefix')
+			'header_string' : _('Prefix'),
+			'column_flex'   : 1
 		}
 	)
 
@@ -276,9 +323,9 @@ class Street(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Streets'),
-				'menu_order'    : 60,
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('city', 'district', 'name', 'prefix', 'suffix'),
+				'grid_view'     : ('streetid', 'city', 'district', 'name', 'prefix', 'suffix'),
+				'grid_hidden'   : ('streetid',),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -306,7 +353,8 @@ class Street(Base):
 		nullable=False,
 		info={
 			'header_string' : _('City'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	district_id = Column(
@@ -319,7 +367,8 @@ class Street(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('District'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	name = Column(
@@ -327,7 +376,8 @@ class Street(Base):
 		Comment('Street name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
 	prefix = Column(
@@ -351,6 +401,10 @@ class Street(Base):
 		}
 	)
 
+	city = relationship(
+		'City',
+		innerjoin=True
+	)
 	houses = relationship(
 		'House',
 		backref=backref('street', innerjoin=True),
@@ -400,21 +454,21 @@ class House(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_GEO',
-				'cap_read'     : 'GEO_LIST',
-				'cap_create'   : 'GEO_CREATE',
-				'cap_edit'     : 'GEO_EDIT',
-				'cap_delete'   : 'GEO_DELETE',
+				'cap_menu'      : 'BASE_GEO',
+				'cap_read'      : 'GEO_LIST',
+				'cap_create'    : 'GEO_CREATE',
+				'cap_edit'      : 'GEO_EDIT',
+				'cap_delete'    : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : _('Houses'),
-				'menu_order'   : 70,
-				'default_sort' : (), # FIXME: NEEDS CUSTOM SORTING
-				'grid_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
-				'form_view'    : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'house_groups', 'entrnum', 'postindex'),
-				'easy_search'  : ('number',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
-				'extra_search' : (
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Houses'),
+				'default_sort'  : (), # FIXME: NEEDS CUSTOM SORTING
+				'grid_view'     : ('houseid', 'street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
+				'grid_hidden'   : ('houseid',),
+				'form_view'     : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'house_groups', 'entrnum', 'postindex'),
+				'easy_search'   : ('number',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'extra_search'  : (
 					CheckboxGroupFilter('hg', _filter_hgroup,
 						title=_('House Group'),
 						data='NetProfile.store.geo.HouseGroup',
@@ -454,7 +508,8 @@ class House(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Street'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'list',
+			'column_flex'   : 1
 		}
 	)
 	number = Column(
@@ -534,6 +589,12 @@ class House(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+	user_locations = relationship(
+		'UserLocation',
+		backref='house',
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
 
 	house_groups = association_proxy(
 		'house_groupmap',
@@ -542,25 +603,27 @@ class House(Base):
 	)
 
 	@classmethod
-	def __augment_query__(cls, sess, query, params):
+	def __augment_query__(cls, sess, query, params, req):
 		query = query.join(House.street).options(contains_eager(House.street))
-		flt = {}
+		flist = []
 		if '__filter' in params:
-			flt.update(params['__filter'])
+			flist.extend(params['__filter'])
 		if '__ffilter' in params:
-			flt.update(params['__ffilter'])
-		if ('districtid' in flt) and ('eq' in flt['districtid']) and flt['districtid']['eq']:
-			val = int(flt['districtid']['eq'])
-			if val > 0:
-				query = query.filter(Street.district_id == val)
-		elif ('cityid' in flt) and ('eq' in flt['cityid']) and flt['cityid']['eq']:
-			val = int(flt['cityid']['eq'])
-			if val > 0:
-				query = query.filter(Street.city_id == val)
+			flist.extend(params['__ffilter'])
+		for flt in flist:
+			prop = flt.get('property', None)
+			oper = flt.get('operator', None)
+			value = flt.get('value', None)
+			if prop == 'districtid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.filter(Street.district_id == int(value))
+			if prop == 'cityid':
+				if oper in ('eq', '=', '==', '==='):
+					query = query.filter(Street.city_id == int(value))
 		return query
 
 	@classmethod
-	def __augment_result__(cls, sess, res, params):
+	def __augment_result__(cls, sess, res, params, req):
 		populate_related_list(
 			res, 'id', 'house_groupmap', HouseGroupMapping,
 			sess.query(HouseGroupMapping),
@@ -595,19 +658,19 @@ class Place(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_GEO',
-				'cap_read'     : 'GEO_LIST',
-				'cap_create'   : 'GEO_CREATE',
-				'cap_edit'     : 'GEO_EDIT',
-				'cap_delete'   : 'GEO_DELETE',
+				'cap_menu'      : 'BASE_GEO',
+				'cap_read'      : 'GEO_LIST',
+				'cap_create'    : 'GEO_CREATE',
+				'cap_edit'      : 'GEO_EDIT',
+				'cap_delete'    : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : _('Places'),
-				'menu_order'   : 80,
-				'default_sort' : (), # FIXME: SEE HOUSES
-				'grid_view'    : ('house', 'number', 'name', 'entrance', 'floor', 'descr'),
-				'easy_search'  : ('number',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Places'),
+				'default_sort'  : (), # FIXME: SEE HOUSES
+				'grid_view'     : ('placeid', 'house', 'number', 'name', 'entrance', 'floor', 'descr'),
+				'grid_hidden'   : ('placeid',),
+				'easy_search'   : ('number',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : SimpleWizard(title=_('Add new place'))
 			}
@@ -633,7 +696,8 @@ class Place(Base):
 		nullable=False,
 		info={
 			'header_string' : _('House'),
-			'filter_type'   : 'none'
+			'filter_type'   : 'none',
+			'column_flex'   : 1
 		}
 	)
 	number = Column(
@@ -704,19 +768,19 @@ class HouseGroup(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				'cap_menu'     : 'BASE_GEO',
-				'cap_read'     : 'GEO_LIST',
-				'cap_create'   : 'GEO_CREATE',
-				'cap_edit'     : 'GEO_EDIT',
-				'cap_delete'   : 'GEO_DELETE',
+				'cap_menu'      : 'BASE_GEO',
+				'cap_read'      : 'GEO_LIST',
+				'cap_create'    : 'GEO_CREATE',
+				'cap_edit'      : 'GEO_EDIT',
+				'cap_delete'    : 'GEO_DELETE',
 
-				'show_in_menu' : 'admin',
-				'menu_name'    : _('House Groups'),
-				'menu_order'   : 90,
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('name', 'descr'),
-				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('House Groups'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('ahgid', 'name', 'descr'),
+				'grid_hidden'   : ('ahgid',),
+				'easy_search'   : ('name',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : SimpleWizard(title=_('Add new house group'))
 			}
@@ -739,7 +803,8 @@ class HouseGroup(Base):
 		Comment('House group name'),
 		nullable=False,
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 1
 		}
 	)
 	description = Column(
@@ -750,7 +815,8 @@ class HouseGroup(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Description')
+			'header_string' : _('Description'),
+			'column_flex'   : 1
 		}
 	)
 	mappings = relationship(
@@ -827,4 +893,418 @@ class HouseGroupMapping(Base):
 			'header_string' : _('House')
 		}
 	)
+
+class UserLocation(Base):
+	"""
+	Users' addresses.
+	"""
+	__tablename__ = 'users_locations'
+	__table_args__ = (
+		Comment('User locations'),
+		Index('users_locations_i_uid', 'uid'),
+		Index('users_locations_i_houseid', 'houseid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_read'      : 'USERS_LIST',
+				'cap_create'    : 'USERS_EDIT',
+				'cap_edit'      : 'USERS_EDIT',
+				'cap_delete'    : 'USERS_EDIT',
+
+				'menu_name'     : _('User Addresses'),
+				'default_sort'  : ({ 'property': 'atype' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					'ulocid', 'user', 'primary', 'atype',
+					MarkupColumn(
+						header_string=_('Address'),
+						column_flex=3,
+						template='{__str__}'
+					)
+				),
+				'grid_hidden'   : ('ulocid',),
+				'form_view'     : (
+					'user', 'primary', 'atype', 'house',
+					'country', 'stprov', 'city', 'addr',
+					'entrance', 'floor', 'flat', 'room',
+					'entrycode', 'postindex', 'descr'
+				),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new user address'))
+			}
+		}
+	)
+	id = Column(
+		'ulocid',
+		UInt32(),
+		Sequence('users_locations_ulocid_seq'),
+		Comment('User location ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		ForeignKey('users.uid', name='users_locations_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('User ID'),
+		nullable=False,
+		info={
+			'header_string' : _('User'),
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Primary flag'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	type = Column(
+		'atype',
+		AddressType.db_type(),
+		Comment('Address type'),
+		nullable=False,
+		default=AddressType.work,
+		server_default=AddressType.work,
+		info={
+			'header_string' : _('Type'),
+			'column_flex'   : 1
+		}
+	)
+	country = Column(
+		CHAR(2),
+		Comment('ISO 3166-1 alpha-2 country code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Country'),
+			'choices'       : countries_alpha2
+		}
+	)
+	state_or_province = Column(
+		'stprov',
+		Unicode(255),
+		Comment('State or province name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('State/province')
+		}
+	)
+	city = Column(
+		Unicode(255),
+		Comment('City name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('City')
+		}
+	)
+	address = Column(
+		'addr',
+		Unicode(255),
+		Comment('Freeform address'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Address')
+		}
+	)
+	house_id = Column(
+		'houseid',
+		UInt32(),
+		ForeignKey('addr_houses.houseid', name='users_locations_fk_houseid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('House ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('House'),
+			'filter_type'   : 'none',
+			'column_flex'   : 1
+		}
+	)
+	entrance = Column(
+		UInt8(),
+		Comment('Entrance number'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Entr.')
+		}
+	)
+	floor = Column(
+		Int16(),
+		Comment('Floor number'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Floor')
+		}
+	)
+	flat = Column(
+		UInt16(),
+		Comment('Flat/office number'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Flat')
+		}
+	)
+	room = Column(
+		Unicode(8),
+		Comment('Room identifier'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Room')
+		}
+	)
+	entry_code = Column(
+		'entrycode',
+		Unicode(8),
+		Comment('Entry code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Entry Code')
+		}
+	)
+	postal_code = Column(
+		'postindex',
+		Unicode(8),
+		Comment('Postal code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Postal Code')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Address description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description'),
+			'column_flex'   : 2
+		}
+	)
+
+	user = relationship(
+		'User',
+		innerjoin=True,
+		backref=backref(
+			'locations',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+
+	def __str__(self):
+		req = self.__req__ or get_current_request()
+		loc = get_localizer(req)
+		locale_cur = req.current_locale
+		locale_en = req.locales['en']
+
+		ret = []
+		bit = self.country
+		if bit:
+			if bit in locale_cur.territories:
+				bit = locale_cur.territories[bit]
+			elif bit in locale_en.territories:
+				bit = locale_en.territories[bit]
+			ret.append(bit + ',')
+		bit = self.city_address
+		if bit:
+			ret.append(bit + ',')
+		bit = self.street_address
+		if bit:
+			ret.append(bit)
+		if self.entrance:
+			ret.extend((
+				loc.translate(_('entr.')),
+				str(self.entrance)
+			))
+		if self.floor:
+			ret.extend((
+				loc.translate(_('fl.')),
+				str(self.floor)
+			))
+		if self.flat:
+			pfx = _('app.')
+			if self.type == AddressType.work:
+				pfx = _('office')
+			ret.extend((
+				loc.translate(pfx),
+				str(self.flat)
+			))
+
+		return ' '.join(ret)
+
+	@property
+	def city_address(self):
+		if self.house and self.house.street:
+			return str(self.house.street.city)
+		return self.city
+
+	@property
+	def street_address(self):
+		if self.house:
+			return str(self.house)
+		return self.address
+
+def _mod_userloc(mapper, conn, tgt):
+	try:
+		from netprofile_ldap.ldap import store
+	except ImportError:
+		return
+	user = tgt.user
+	user_id = tgt.user_id
+	if (not user) and user_id:
+		user = DBSession().query(User).get(user_id)
+	if user:
+		store(user)
+
+event.listen(UserLocation, 'after_delete', _mod_userloc)
+event.listen(UserLocation, 'after_insert', _mod_userloc)
+event.listen(UserLocation, 'after_update', _mod_userloc)
+
+AddrFormatCompactFunction = SQLFunction(
+	'addr_format_compact',
+	args=(
+		SQLFunctionArgument('streetname', Unicode(255)),
+		SQLFunctionArgument('num', UInt16()),
+		SQLFunctionArgument('num_slash', UInt16()),
+		SQLFunctionArgument('num_suffix', Unicode(32)),
+		SQLFunctionArgument('bld', UInt16()),
+		SQLFunctionArgument('fl', UInt16())
+	),
+	returns=Unicode(255),
+	comment='Format compact address',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AddrFormatFunction = SQLFunction(
+	'addr_format',
+	args=(
+		SQLFunctionArgument('streetname', Unicode(255)),
+		SQLFunctionArgument('prefix', Unicode(8)),
+		SQLFunctionArgument('suffix', Unicode(8)),
+		SQLFunctionArgument('num', UInt16()),
+		SQLFunctionArgument('num_slash', UInt16()),
+		SQLFunctionArgument('num_suffix', Unicode(32)),
+		SQLFunctionArgument('bld', UInt16()),
+		SQLFunctionArgument('fl', UInt16())
+	),
+	returns=Unicode(255),
+	comment='Format full address',
+	reads_sql=False,
+	writes_sql=False
+)
+
+AddrGetFullFunction = SQLFunction(
+	'addr_get_full',
+	args=(
+		SQLFunctionArgument('hid', UInt32()),
+	),
+	returns=Unicode(255),
+	comment='Get full address of a house by its ID',
+	writes_sql=False
+)
+
+AddrListDistrictProcedure = SQLFunction(
+	'addr_list_district',
+	args=(
+		InArgument('did', UInt32()),
+	),
+	comment='List all houses in a given district',
+	writes_sql=False,
+	is_procedure=True
+)
+
+AddrListEntrProcedure = SQLFunction(
+	'addr_list_entr',
+	args=(
+		InArgument('minentr', UInt8()),
+	),
+	comment='List all houses which have at least given number of entries',
+	writes_sql=False,
+	is_procedure=True
+)
+
+AddrListStreetProcedure = SQLFunction(
+	'addr_list_street',
+	args=(
+		InArgument('sid', UInt32()),
+	),
+	comment='List all houses on a given street',
+	writes_sql=False,
+	is_procedure=True
+)
+
+AddrCompactView = View('addr_compact', DBSession.query(
+	House.id.label('houseid'),
+	House.street_id.label('streetid'),
+	Street.district_id.label('districtid'),
+	City.id.label('cityid'),
+	City.name.label('city'),
+	func.addr_format_compact(Street.name, House.number, House.second_number, House.number_suffix, House.building, None).label('address'),
+	House.entrances.label('entrnum'),
+	House.postal_code.label('postindex')
+).select_from(House).join(Street).join(Street.city).order_by(City.name, Street.name, House.number, House.second_number, House.number_suffix, House.building))
+
+AddrExtraView = View('addr_extra', DBSession.query(
+	House.id.label('houseid'),
+	House.street_id.label('streetid'),
+	Street.district_id.label('districtid'),
+	City.id.label('cityid'),
+	func.concat_ws(' ',
+		func.concat(City.name, ','),
+		func.concat(District.name, ','),
+		func.addr_format(Street.name, Street.prefix, Street.suffix, House.number, House.second_number, House.number_suffix, House.building, None)
+	).label('address'),
+	House.entrances.label('entrnum'),
+	House.postal_code.label('postindex')
+).select_from(House).join(Street).outerjoin(District).join(Street.city).order_by(City.name, District.name, Street.name, House.number, House.second_number, House.number_suffix, House.building))
+
+AddrFullView = View('addr_full', DBSession.query(
+	House.id.label('houseid'),
+	House.street_id.label('streetid'),
+	Street.district_id.label('districtid'),
+	City.id.label('cityid'),
+	City.name.label('city'),
+	func.addr_format(Street.name, Street.prefix, Street.suffix, House.number, House.second_number, House.number_suffix, House.building, None).label('address'),
+	House.entrances.label('entrnum'),
+	House.postal_code.label('postindex')
+).select_from(House).join(Street).join(Street.city).order_by(City.name, Street.name, House.number, House.second_number, House.number_suffix, House.building))
+
+AddrStreetNamesView = View('addr_streetnames', DBSession.query(
+	Street.id.label('streetid'),
+	District.id.label('districtid'),
+	City.id.label('cityid'),
+	City.name.label('city'),
+	District.name.label('district'),
+	func.addr_format(Street.name, Street.prefix, Street.suffix, None, None, None, None, None).label('fullname')
+).select_from(Street).outerjoin(District).join(Street.city).order_by(City.name, District.name, Street.name))
 

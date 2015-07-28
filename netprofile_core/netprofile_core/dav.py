@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: High-level WebDAV support
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2014 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -32,6 +32,7 @@ import re
 import itertools
 import logging
 from zope.interface import implementer
+from webob.descriptors import parse_range
 
 from pyramid.view import (
 	notfound_view_config,
@@ -399,6 +400,8 @@ class DAVHandler(object):
 	def conditional_request(self, ctx):
 		req = self.req
 		etag = getattr(ctx, 'etag', None)
+		if callable(etag):
+			etag = etag(req)
 		if etag:
 			if etag not in req.if_match:
 				raise dav.DAVPreconditionError(
@@ -632,7 +635,13 @@ class DAVHandler(object):
 		req = self.req
 		req.dav.user_acl(req, req.context, dprops.ACL_READ) # FIXME: parent
 		pfreq = dav.DAVPropFindRequest(req)
-		pset = pfreq.get_props()
+		is_pnames = pfreq.is_propname_request()
+		is_allprop = pfreq.is_allprop_request()
+		pset = None
+		if is_pnames or is_allprop:
+			pset = dav.DAVAllPropsSet()
+		else:
+			pset = pfreq.get_props()
 		depth = req.dav.get_http_depth(req, 1)
 		if depth != 0:
 			depth = 1
@@ -640,7 +649,7 @@ class DAVHandler(object):
 		# TODO: handle 'minimal' flags
 		resp = dav.DAVMultiStatusResponse(request=req)
 		for ctx, node_props in props.items():
-			el = dav.DAVResponseElement(self.req, ctx, node_props)
+			el = dav.DAVResponseElement(self.req, ctx, node_props, names_only=is_pnames)
 			resp.add_element(el)
 		resp.make_body()
 		self.req.dav.set_features(resp)
@@ -784,13 +793,13 @@ class DAVHandler(object):
 		r = req.dav.report(rname, rreq)
 		return r(req)
 
-@view_defaults(route_name='core.dav', context=dav.IDAVCollection, decorator=dav_decorator)
+@view_defaults(route_name='core.dav', decorator=dav_decorator)
 class DAVCollectionHandler(DAVHandler):
 	@notfound_view_config(containment=dav.IDAVCollection, decorator=dav_decorator)
 	def notfound_generic(self):
 		raise dav.DAVNotFoundError('Node not found.')
 
-	@view_config(request_method='OPTIONS')
+	@view_config(request_method='OPTIONS', context=dav.IDAVCollection)
 	def options(self):
 		resp = Response()
 		self.req.dav.set_headers(resp)
@@ -810,7 +819,7 @@ class DAVCollectionHandler(DAVHandler):
 		# TODO: ACL
 		return HTTPNotFound()
 
-	@view_config(request_method='MKCOL')
+	@view_config(request_method='MKCOL', context=dav.IDAVCollection)
 	def mkcol(self):
 		# Try to create collection on top of existing collection
 		req = self.req
@@ -825,19 +834,19 @@ class DAVCollectionHandler(DAVHandler):
 		resp = mcreq.process()
 		return resp
 
-	@view_config(request_method='PROPFIND')
+	@view_config(request_method='PROPFIND', context=dav.IDAVCollection)
 	def propfind(self):
 		return super(DAVCollectionHandler, self).propfind()
 
-	@view_config(request_method='PROPPATCH')
+	@view_config(request_method='PROPPATCH', context=dav.IDAVCollection)
 	def proppatch(self):
 		return super(DAVCollectionHandler, self).proppatch()
 
-	@view_config(request_method='DELETE')
+	@view_config(request_method='DELETE', context=dav.IDAVCollection)
 	def delete(self):
 		return super(DAVCollectionHandler, self).delete()
 
-	@view_config(request_method='PUT')
+	@view_config(request_method='PUT', context=dav.IDAVCollection)
 	def put(self):
 		req = self.req
 		req.dav.user_acl(req, req.context, dprops.ACL_BIND)
@@ -864,22 +873,24 @@ class DAVCollectionHandler(DAVHandler):
 			raise dav.DAVNotImplementedError('Unable to create child node.')
 		obj = creator(req, req.view_name, None, None, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
 		etag = getattr(obj, 'etag', None)
+		if callable(etag):
+			etag = etag(req)
 		resp = dav.DAVCreateResponse(request=req, etag=etag)
 		return resp
 
-	@view_config(request_method='REPORT')
+	@view_config(request_method='REPORT', context=dav.IDAVCollection)
 	def report(self):
 		return super(DAVCollectionHandler, self).report()
 
-	@view_config(request_method='MOVE')
+	@view_config(request_method='MOVE', context=dav.IDAVCollection)
 	def move(self):
 		return super(DAVCollectionHandler, self).move()
 
-	@view_config(request_method='COPY')
+	@view_config(request_method='COPY', context=dav.IDAVCollection)
 	def copy(self):
 		return super(DAVCollectionHandler, self).copy()
 
-	@view_config(request_method='LOCK')
+	@view_config(request_method='LOCK', context=dav.IDAVCollection)
 	def lock(self):
 		return super(DAVCollectionHandler, self).lock()
 
@@ -950,16 +961,24 @@ class DAVCollectionHandler(DAVHandler):
 		resp.make_body()
 		return resp
 
-	@view_config(request_method='UNLOCK')
+	@view_config(request_method='UNLOCK', context=dav.IDAVCollection)
 	def unlock(self):
 		return super(DAVCollectionHandler, self).unlock()
 
-	@view_config(request_method='ACL')
+	@view_config(request_method='ACL', context=dav.IDAVCollection)
 	def acl(self):
 		return super(DAVCollectionHandler, self).acl()
 
 @view_defaults(route_name='core.dav', context=dav.IDAVFile, decorator=dav_decorator)
 class DAVFileHandler(DAVHandler):
+	@view_config(request_method='OPTIONS')
+	def options(self):
+		resp = Response()
+		self.req.dav.set_headers(resp)
+		self.req.dav.set_allow(resp)
+		self.req.dav.set_patch_formats(resp)
+		return resp
+
 	@view_config(request_method='GET')
 	def get(self):
 		req = self.req
@@ -992,8 +1011,65 @@ class DAVFileHandler(DAVHandler):
 			raise dav.DAVNotImplementedError('Unable to overwrite node.')
 		putter(req, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
 		etag = getattr(obj, 'etag', None)
-		resp = dav.DAVCreateResponse(request=req, etag=etag)
+		if callable(etag):
+			etag = etag(req)
+		resp = dav.DAVOverwriteResponse(request=req, etag=etag)
 		return resp
+
+	@view_config(request_method='PATCH')
+	def patch(self):
+		# Overwrite a region of an existing file
+		req = self.req
+		obj = req.context
+		req.dav.user_acl(req, obj, dprops.ACL_WRITE_CONTENT)
+		self.conditional_request(obj)
+		ctype = req.content_type
+		if ctype == 'application/x-sabredav-partialupdate':
+			if 'Content-Length' not in req.headers:
+				raise dav.DAVLengthRequiredError('SabreDAV PATCH method requires Content-Length: HTTP header.')
+			if 'X-Update-Range' not in req.headers:
+				raise dav.DAVBadRequestError('Patch range must be specified via X-Update-Range: HTTP header.')
+			range_hdr = req.headers.get('X-Update-Range')
+			if ',' in range_hdr:
+				raise dav.DAVBadRequestError('Malformed patch range or multiple ranges supplied via X-Update-Range: HTTP header.')
+			r_start = r_end = None
+			obj_sz = getattr(obj, 'size', None)
+			if callable(obj_sz):
+				obj_sz = obj_sz(req)
+			if range_hdr == 'append':
+				if obj_sz is None:
+					raise dav.DAVNotImplementedError('Node does not support appending data.')
+				r_start = obj_sz
+				r_end = r_start + req.content_length
+			else:
+				patch_range = parse_range(range_hdr)
+				if patch_range is None:
+					raise dav.DAVBadRequestError('Malformed patch range supplied via X-Update-Range: HTTP header.')
+				r_start = patch_range.start
+				r_end = patch_range.end
+				if (r_start is not None) and (r_end is not None):
+					if (r_end - r_start) != req.content_length:
+						raise dav.DAVUnsatisfiableRangeError('Content length and range supplied via X-Update-Range: HTTP header are not consistent.')
+				if r_start < 0:
+					if obj_sz is None:
+						raise dav.DAVNotImplementedError('Node does not support relative file offsets.')
+					r_start = obj_sz + r_start
+					if r_start < 0:
+						raise dav.DAVUnsatisfiableRangeError('Relative offset (supplied via X-Update-Range: HTTP header) is before file start.')
+					r_end = r_start + req.content_length
+				if r_end is None:
+					r_end = r_start + req.content_length
+			putter = getattr(obj, 'dav_put', None)
+			if putter is None:
+				raise dav.DAVNotImplementedError('Unable to patch node.')
+			putter(req, req.body_file_seekable, r_start, r_end - r_start) # TODO: handle IOErrors, handle non-seekable request body
+			etag = getattr(obj, 'etag', None)
+			if callable(etag):
+				etag = etag(req)
+			resp = dav.DAVOverwriteResponse(request=req, etag=etag)
+			req.dav.set_features(resp)
+			return resp
+		raise dav.DAVUnsupportedMediaTypeError('Unknown content type specified in PATCH request.')
 
 	@view_config(request_method='MKCOL')
 	def mkcol(self):
