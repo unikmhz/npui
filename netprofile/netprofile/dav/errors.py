@@ -120,6 +120,11 @@ class DAVNeedPrivilegesError(DAVForbiddenError):
 			etree.SubElement(el, p)
 		super(DAVNeedPrivilegesError, self).render(req, parent)
 
+class DAVTooManyMatchesError(DAVForbiddenError):
+	def render(self, req, parent):
+		etree.SubElement(parent, dprops.MATCHES_WITHIN_LIMITS)
+		super(DAVTooManyMatchesError, self).render(req, parent)
+
 class DAVMethodNotAllowedError(DAVError):
 	def __init__(self, *args):
 		super(DAVMethodNotAllowedError, self).__init__(*args, status=405)

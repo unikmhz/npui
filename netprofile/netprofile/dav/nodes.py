@@ -150,6 +150,14 @@ class DAVRoot(object):
 			pl.__parent__ = self
 			yield pl
 
+	@property
+	def dav_collections(self):
+		return self.dav_children
+
+	@property
+	def dav_collection_id(self):
+		return 'ROOT'
+
 @implementer(IDAVCollection)
 class DAVPlugin(object):
 	def __init__(self, req):
@@ -201,4 +209,8 @@ class DAVPlugin(object):
 			DAVACLRestrictions.GRANT_ONLY |
 			DAVACLRestrictions.NO_INVERT
 		)
+
+	@property
+	def dav_collection_id(self):
+		return self.__dav_collid__
 

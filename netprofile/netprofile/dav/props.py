@@ -203,6 +203,7 @@ NO_CONFLICTING_LOCK      = _TAG(NS_DAV, 'no-conflicting-lock')
 NOT_SUPPORTED_PRIVILEGE  = _TAG(NS_DAV, 'not-supported-privilege')
 RECOGNIZED_PRINCIPAL     = _TAG(NS_DAV, 'recognized-principal')
 VALID_RESOURCETYPE       = _TAG(NS_DAV, 'valid-resourcetype')
+MATCHES_WITHIN_LIMITS    = _TAG(NS_DAV, 'number-of-matches-within-limits')
 
 # Mount tags
 MOUNT                    = _TAG(NS_DAVMOUNT, 'mount')
@@ -244,7 +245,8 @@ ALLPROPS_EXEMPT = frozenset((
 	MAX_RESOURCE_SIZE,
 	PRINCIPAL_ADDRESS,
 	SUPPORTED_ADDRESS_DATA,
-	SUPPORTED_COLLATION_SET
+	SUPPORTED_COLLATION_SET,
+	SYNC_TOKEN
 ))
 
 RO_PROPS = frozenset(STANDARD_PROPS)
