@@ -83,6 +83,7 @@ class Module(ModuleBase):
 	def get_models(cls):
 		return (
 			NPModule,
+			NPVariable,
 			User,
 			Group,
 			Privilege,
@@ -549,6 +550,31 @@ class Module(ModuleBase):
 		)
 
 		for obj in commtypes:
+			sess.add(obj)
+
+		gvars = (
+			NPVariable(
+				name='DAV:SYNC:CURRENT',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:ROOT',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:VFS',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:USERS',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:GROUPS',
+				integer_value=1
+			)
+		)
+		for obj in gvars:
 			sess.add(obj)
 
 	def get_menus(self, request):

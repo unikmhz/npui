@@ -111,6 +111,8 @@ def dav_decorator(view):
 
 @implementer(dav.IDAVCollection)
 class DAVPluginVFS(dav.DAVPlugin):
+	__dav_collid__ = 'PLUG:VFS'
+
 	def __iter__(self):
 		user = self.req.user
 		root = None
@@ -335,6 +337,29 @@ class DAVPluginVFS(dav.DAVPlugin):
 			t.__plugin__ = self
 			yield t
 
+	@property
+	def dav_collections(self):
+		user = self.req.user
+		root = None
+		if user:
+			root = user.group.effective_root_folder
+		sess = DBSession()
+		for t in sess.query(FileFolder).filter(FileFolder.parent == root):
+			t.__req__ = self.req
+			t.__parent__ = self
+			t.__plugin__ = self
+			yield t
+
+	@property
+	def dav_collection_id(self):
+		user = self.req.user
+		root = None
+		if user:
+			root = user.group.effective_root_folder
+		if root:
+			return root.dav_collection_id
+		return self.__dav_collid__
+
 	def acl_restrictions(self):
 		cls = dav.DAVACLRestrictions
 		princ = dav.DAVPrincipalValue
@@ -346,6 +371,8 @@ class DAVPluginVFS(dav.DAVPlugin):
 
 @implementer(dav.IDAVAddressBook, dav.IDAVDirectory)
 class DAVPluginUsers(dav.DAVPlugin):
+	__dav_collid__ = 'PLUG:USERS'
+
 	def __iter__(self):
 		sess = DBSession()
 		for t in sess.query(User.login):
@@ -370,6 +397,10 @@ class DAVPluginUsers(dav.DAVPlugin):
 			u.__parent__ = self
 			u.__plugin__ = self
 			yield u
+
+	@property
+	def dav_collections(self):
+		return self.dav_children
 
 	def dav_props(self, pset):
 		ret = super(DAVPluginUsers, self).dav_props(pset)
@@ -400,6 +431,8 @@ class DAVPluginUsers(dav.DAVPlugin):
 		yield req.user
 
 class DAVPluginGroups(dav.DAVPlugin):
+	__dav_collid__ = 'PLUG:GROUPS'
+
 	def __iter__(self):
 		sess = DBSession()
 		for t in sess.query(Group.name):
@@ -424,6 +457,10 @@ class DAVPluginGroups(dav.DAVPlugin):
 			g.__parent__ = self
 			g.__plugin__ = self
 			yield g
+
+	@property
+	def dav_collections(self):
+		return self.dav_children
 
 	def dav_search_principals(self, req, test, query):
 		cond = []

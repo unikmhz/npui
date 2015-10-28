@@ -29,6 +29,7 @@ from __future__ import (
 
 __all__ = [
 	'NPModule',
+	'NPVariable',
 	'AddressType',
 	'PhoneType',
 	'ContactInfoType',
@@ -146,6 +147,7 @@ from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
 	ExactUnicode,
+	Int64,
 	Int8,
 	IPv4Address,
 	IPv6Address,
@@ -386,6 +388,91 @@ class NPModule(Base):
 			'expanded' : True,
 			'iconCls'  : 'ico-module'
 		}
+
+class NPVariable(Base):
+	"""
+	NetProfile global variable.
+	"""
+	__tablename__ = 'np_vars'
+	__table_args__ = (
+		Comment('NetProfile global variables'),
+		Index('np_vars_u_name', 'name', unique=True),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'     : 'BASE_ADMIN',
+				'cap_read'     : 'BASE_ADMIN',
+				'cap_create'   : 'BASE_ADMIN',
+				'cap_edit'     : 'BASE_ADMIN',
+				'cap_delete'   : 'BASE_ADMIN',
+
+				'show_in_menu' : 'admin',
+				'menu_name'    : _('System Variables'),
+				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'    : ('varid', 'name', 'value_str', 'value_int'),
+				'grid_hidden'  : ('varid',),
+				'easy_search'  : ('name',)
+			}
+		}
+	)
+	id = Column(
+		'varid',
+		UInt32(),
+		Sequence('np_vars_varid_seq'),
+		Comment('Global variable ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		ASCIIString(255),
+		Comment('Global variable name'),
+		nullable=False,
+		default=None,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 1
+		}
+	)
+	string_value = Column(
+		'value_str',
+		ExactUnicode(255),
+		Comment('Global variable value - as string'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('String'),
+			'column_flex'   : 1
+		}
+	)
+	integer_value = Column(
+		'value_int',
+		Int64(),
+		Comment('Global variable value - as integer'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Integer'),
+			'column_flex'   : 1
+		}
+	)
+
+	def __str__(self):
+		return '%s' % str(self.name)
+
+	@classmethod
+	def __augment_query__(cls, sess, query, params, req):
+		query = query.with_for_update(read=True)
+		return query
+
+	@classmethod
+	def get(cls, name):
+		return DBSession().query(cls).filter(cls.name == name).with_for_update().one()
 
 class AddressType(DeclEnum):
 	"""
@@ -3892,6 +3979,20 @@ class FileFolder(Base):
 			t.__parent__ = self
 			yield t
 
+	@property
+	def dav_collections(self):
+		for t in self.subfolders:
+			t.__req__ = getattr(self, '__req__', None)
+			t.__plugin__ = getattr(self, '__plugin__', None)
+			t.__parent__ = self
+			yield t
+
+	@property
+	def dav_collection_id(self):
+		if not self.id:
+			raise RuntimeError('Requested collection ID from non-persistent folder')
+		return 'FF:%u' % (self.id,)
+
 	def allow_read(self, req):
 		return self.can_read(req.user)
 
@@ -5326,7 +5427,7 @@ class LogData(Base):
 	__table_args__ = (
 		Comment('Actual system log'),
 		{
-			'mysql_engine'  : 'InnoDB', # or leave MyISAM?
+			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
