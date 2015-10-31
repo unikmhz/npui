@@ -63,6 +63,7 @@ __all__ = [
 	'UserSetting',
 	'DataCache',
 	'DAVLock',
+	'DAVHistory',
 	'Calendar',
 	'CalendarImport',
 	'Event',
@@ -107,6 +108,7 @@ from sqlalchemy import (
 	UnicodeText,
 	event,
 	func,
+	inspect,
 	text,
 	or_,
 	and_
@@ -147,8 +149,8 @@ from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
 	ExactUnicode,
-	Int64,
 	Int8,
+	Int64,
 	IPv4Address,
 	IPv6Address,
 	LargeBLOB,
@@ -156,6 +158,7 @@ from netprofile.db.fields import (
 	UInt8,
 	UInt16,
 	UInt32,
+	UInt64,
 	npbool
 )
 from netprofile.ext.wizards import (
@@ -471,8 +474,12 @@ class NPVariable(Base):
 		return query
 
 	@classmethod
-	def get(cls, name):
+	def get_rw(cls, name):
 		return DBSession().query(cls).filter(cls.name == name).with_for_update().one()
+
+	@classmethod
+	def get_ro(cls, name):
+		return DBSession().query(cls).filter(cls.name == name).with_for_update(read=True).one()
 
 class AddressType(DeclEnum):
 	"""
@@ -3400,6 +3407,100 @@ class DAVLock(Base):
 			self.timeout = self.creation_time + dt.timedelta(seconds=1800)
 		return old_td
 
+class DAVHistoryOp(DeclEnum):
+	"""
+	DAV resource operation type.
+	"""
+	add    = 'A', _('Add'),    10
+	modify = 'M', _('Modify'), 20
+	delete = 'D', _('Delete'), 30
+
+class DAVHistory(Base):
+	"""
+	DAV collection history log.
+
+	Used in WebDAV sync protocol extension.
+	"""
+
+	__tablename__ = 'dav_history'
+	__table_args__ = (
+		Comment('DAV resource modification history'),
+		Index('dav_history_i_collchange', 'collid', 'changeid'),
+		Index('dav_history_i_changeid', 'changeid'),
+		Index('dav_history_i_ts', 'ts'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8'
+		}
+	)
+	id = Column(
+		'dhistid',
+		UInt64(),
+		Sequence('dav_history_dhistid_seq'),
+		Comment('DAV history item ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	collection_id = Column(
+		'collid',
+		ASCIIString(32),
+		Comment('DAV collection ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Collection ID')
+		}
+	)
+	change_id = Column(
+		'changeid',
+		Int64(),
+		Comment('DAV sequential history change ID'),
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	is_collection = Column(
+		'iscoll',
+		NPBoolean(),
+		Comment('Is resource a collection?'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Collection Resource')
+		}
+	)
+	operation = Column(
+		'op',
+		DAVHistoryOp.db_type(),
+		Comment('Operation type'),
+		nullable=False,
+		info={
+			'header_string' : _('Operation')
+		}
+	)
+	timestamp = Column(
+		'ts',
+		TIMESTAMP(),
+		Comment('Operation timestamp'),
+		CurrentTimestampDefault(),
+		nullable=False,
+		info={
+			'header_string' : _('Time')
+		}
+	)
+	uri = Column(
+		Unicode(1000),
+		Comment('Resource URI'),
+		nullable=False,
+		info={
+			'header_string' : _('URI')
+		}
+	)
+
 class FileMeta(Mutable, dict):
 	@classmethod
 	def coerce(cls, key, value):
@@ -3462,6 +3563,7 @@ class FileFolder(Base):
 		Index('files_folders_u_folder', 'parentid', 'name', unique=True),
 		Index('files_folders_i_uid', 'uid'),
 		Index('files_folders_i_gid', 'gid'),
+		Index('files_folders_i_synctoken', 'synctoken'),
 		Trigger('before', 'insert', 't_files_folders_bi'),
 		Trigger('before', 'update', 't_files_folders_bu'),
 		Trigger('after', 'insert', 't_files_folders_ai'),
@@ -3534,6 +3636,17 @@ class FileFolder(Base):
 		info={
 			'header_string' : _('Group'),
 			'editor_config' : { 'allowBlank' : False }
+		}
+	)
+	sync_token = Column(
+		'synctoken',
+		Int64(),
+		Comment('Sync token for DAV'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Sync Token')
 		}
 	)
 	rights = Column(
@@ -3872,6 +3985,11 @@ class FileFolder(Base):
 			ret[dprops.IS_FOLDER] = 't'
 		if dprops.IS_HIDDEN in pset:
 			ret[dprops.IS_HIDDEN] = '0'
+		if dprops.ETAG in pset:
+			etag = None
+			if self.sync_token:
+				etag = '"ST:%d"' % (self.sync_token,)
+			ret[dprops.ETAG] = etag
 		if isinstance(pset, DAVAllPropsSet):
 			ret.update(self.get_props())
 		else:
@@ -4040,8 +4158,99 @@ class FileFolder(Base):
 			par = par.parent
 		return False
 
+	@property
+	def needs_dav_history(self):
+		attrs = inspect(self).attrs
+		attrnames = (
+			'parent',
+			'name',
+			'user',
+			'group',
+			'rights',
+			'description'
+		)
+		for aname in attrnames:
+			if getattr(attrs, aname).history.has_changes():
+				return True
+		return False
+
+	def get_dav_history(self, sess, token_value):
+		coll_id = ('FF:%u' % (self.parent.id,)) if self.parent else 'PLUG:VFS'
+		if self in sess.deleted:
+			return (DAVHistory(
+				collection_id=coll_id,
+				change_id=token_value,
+				is_collection=True,
+				operation=DAVHistoryOp.delete,
+				uri=self.name
+			),)
+		if self in sess.new:
+			return (DAVHistory(
+				collection_id=coll_id,
+				change_id=token_value,
+				is_collection=True,
+				operation=DAVHistoryOp.add,
+				uri=self.name
+			),)
+		attrs = inspect(self).attrs
+		name_hist = attrs.name.history
+		parent_hist = attrs.parent.history
+		if parent_hist.has_changes() or name_hist.has_changes():
+			old_parent = parent_hist.non_added()
+			if len(old_parent) and old_parent[0]:
+				old_parent = 'FF:%u' % (old_parent[0].id,)
+			else:
+				old_parent = 'PLUG:VFS'
+
+			new_parent = parent_hist.non_deleted()
+			if len(new_parent) and new_parent[0]:
+				new_parent = 'FF:%u' % (new_parent[0].id,)
+			else:
+				new_parent = 'PLUG:VFS'
+
+			old_name = name_hist.non_added()[0]
+			new_name = name_hist.non_deleted()[0]
+
+			return (DAVHistory(
+				collection_id=old_parent,
+				change_id=token_value,
+				is_collection=True,
+				operation=DAVHistoryOp.delete,
+				uri=old_name
+			), DAVHistory(
+				collection_id=new_parent,
+				change_id=token_value,
+				is_collection=True,
+				operation=DAVHistoryOp.add,
+				uri=new_name
+			))
+		return (DAVHistory(
+			collection_id=coll_id,
+			change_id=token_value,
+			is_collection=True,
+			operation=DAVHistoryOp.modify,
+			uri=self.name
+		),)
+
 	def __str__(self):
 		return '%s' % str(self.name)
+
+@event.listens_for(FileFolder.parent_id, 'set', active_history=True)
+def _on_ff_set_parent_id(tgt, value, oldvalue, initiator):
+	if value is None:
+		tgt.parent = None
+	else:
+		tgt.parent = DBSession().query(FileFolder).get(value)
+	return value
+
+@event.listens_for(FileFolder.sync_token, 'set', active_history=True)
+def _on_set_synctoken(tgt, value, oldvalue, initiator):
+	hist = inspect(tgt).attrs.parent.history
+	for parent in hist.sum():
+		if parent is None:
+			continue
+		parent.sync_token = value
+	return value
 
 _BLOCK_SIZE = 4096 * 64 # 256K
 _CHUNK_SIZE = 1024 * 1024 * 2 # 2M
@@ -4600,7 +4809,7 @@ class File(Base):
 		if dprops.ETAG in pset:
 			etag = None
 			if self.etag:
-				etag = '"%s"' % self.etag
+				etag = '"%s"' % (self.etag,)
 			ret[dprops.ETAG] = etag
 		if hasattr(self, '__req__'):
 			req = self.__req__
@@ -4836,8 +5045,89 @@ class File(Base):
 		with self.open('r', sess=sess) as fd:
 			return fd.read()
 
+	@property
+	def needs_dav_history(self):
+		attrs = inspect(self).attrs
+		attrnames = (
+			'folder',
+			'filename',
+			'name',
+			'user',
+			'group',
+			'rights',
+			'size',
+			'etag',
+			'description',
+			'data'
+		)
+		for aname in attrnames:
+			if getattr(attrs, aname).history.has_changes():
+				return True
+		return False
+
+	def get_dav_history(self, sess, token_value):
+		coll_id = ('FF:%u' % (self.folder.id,)) if self.folder else 'PLUG:VFS'
+		if self in sess.deleted:
+			return (DAVHistory(
+				collection_id=coll_id,
+				change_id=token_value,
+				operation=DAVHistoryOp.delete,
+				uri=self.filename
+			),)
+		if self in sess.new:
+			return (DAVHistory(
+				collection_id=coll_id,
+				change_id=token_value,
+				operation=DAVHistoryOp.add,
+				uri=self.filename
+			),)
+		attrs = inspect(self).attrs
+		name_hist = attrs.filename.history
+		parent_hist = attrs.folder.history
+		if parent_hist.has_changes() or name_hist.has_changes():
+			old_parent = parent_hist.non_added()
+			if len(old_parent) and old_parent[0]:
+				old_parent = 'FF:%u' % (old_parent[0].id,)
+			else:
+				old_parent = 'PLUG:VFS'
+
+			new_parent = parent_hist.non_deleted()
+			if len(new_parent) and new_parent[0]:
+				new_parent = 'FF:%u' % (new_parent[0].id,)
+			else:
+				new_parent = 'PLUG:VFS'
+
+			old_name = name_hist.non_added()[0]
+			new_name = name_hist.non_deleted()[0]
+
+			return (DAVHistory(
+				collection_id=old_parent,
+				change_id=token_value,
+				operation=DAVHistoryOp.delete,
+				uri=old_name
+			), DAVHistory(
+				collection_id=new_parent,
+				change_id=token_value,
+				operation=DAVHistoryOp.add,
+				uri=new_name
+			))
+		return (DAVHistory(
+			collection_id=coll_id,
+			change_id=token_value,
+			operation=DAVHistoryOp.modify,
+			uri=self.filename
+		),)
+
 	def __str__(self):
 		return '%s' % str(self.filename)
+
+@event.listens_for(File.folder_id, 'set', active_history=True)
+def _on_file_set_folder_id(tgt, value, oldvalue, initiator):
+	if value is None:
+		tgt.folder = None
+	else:
+		tgt.folder = DBSession().query(FileFolder).get(value)
+	return value
 
 class FileChunk(Base):
 	"""
@@ -7253,4 +7543,32 @@ HWAddrUnhexFunction = SQLFunction(
 	reads_sql=False,
 	writes_sql=False
 )
+
+@event.listens_for(DBSession, 'before_flush')
+def _core_before_flush(sess, flush_ctx, instances):
+	add_history = set()
+	update_synctoken = set()
+	for obj in sess:
+		if not isinstance(obj, (File, FileFolder)):
+			continue
+		if (obj in sess.new) or (obj in sess.deleted) or (obj in sess.dirty):
+			if (obj in sess.dirty) and (not obj.needs_dav_history):
+				continue
+			add_history.add(obj)
+			if isinstance(obj, File):
+				if obj.folder:
+					update_synctoken.add(obj.folder)
+			else:
+				update_synctoken.add(obj)
+
+	if (len(update_synctoken) > 0) or (len(add_history) > 0):
+		token = NPVariable.get_rw('DAV:SYNC:ROOT')
+		token_vfs = NPVariable.get_rw('DAV:SYNC:PLUG:VFS')
+		token.integer_value += 1
+		token_vfs.integer_value = token.integer_value
+		for obj in add_history:
+			for dh in obj.get_dav_history(sess, token.integer_value):
+				sess.add(dh)
+		for folder in update_synctoken:
+			folder.sync_token = token.integer_value
 

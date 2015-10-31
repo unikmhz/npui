@@ -108,6 +108,8 @@ class Module(ModuleBase):
 			UserSettingSection,
 			UserSettingType,
 			DataCache,
+			DAVLock,
+			DAVHistory,
 			Calendar,
 			CalendarImport,
 			Event,
@@ -553,10 +555,6 @@ class Module(ModuleBase):
 			sess.add(obj)
 
 		gvars = (
-			NPVariable(
-				name='DAV:SYNC:CURRENT',
-				integer_value=1
-			),
 			NPVariable(
 				name='DAV:SYNC:ROOT',
 				integer_value=1

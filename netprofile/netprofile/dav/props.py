@@ -204,6 +204,7 @@ NOT_SUPPORTED_PRIVILEGE  = _TAG(NS_DAV, 'not-supported-privilege')
 RECOGNIZED_PRINCIPAL     = _TAG(NS_DAV, 'recognized-principal')
 VALID_RESOURCETYPE       = _TAG(NS_DAV, 'valid-resourcetype')
 MATCHES_WITHIN_LIMITS    = _TAG(NS_DAV, 'number-of-matches-within-limits')
+SYNC_TRAVERSAL_SUPPORTED = _TAG(NS_DAV, 'sync-traversal-supported')
 
 # Mount tags
 MOUNT                    = _TAG(NS_DAVMOUNT, 'mount')
