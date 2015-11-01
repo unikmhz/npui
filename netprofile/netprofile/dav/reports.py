@@ -33,7 +33,8 @@ __all__ = [
 	'DAVPrincipalPropertySearchReport',
 	'DAVACLPrincipalPropertySetReport',
 	'DAVPrincipalSearchPropertySetReport',
-	'DAVPrincipalMatchReport'
+	'DAVPrincipalMatchReport',
+	'DAVSyncCollectionReport'
 ]
 
 from zope.interface.verify import verifyObject
@@ -42,7 +43,8 @@ from zope.interface.exceptions import DoesNotImplement
 from . import props as dprops
 from .errors import (
 	DAVBadRequestError,
-	DAVNotImplementedError
+	DAVNotImplementedError,
+	DAVInvalidSyncTokenError
 )
 from .values import (
 	DAVHrefValue,
@@ -50,7 +52,8 @@ from .values import (
 )
 from .responses import (
 	DAVMultiStatusResponse,
-	DAVPrincipalSearchPropertySetResponse
+	DAVPrincipalSearchPropertySetResponse,
+	DAVSyncCollectionResponse
 )
 from .elements import DAVResponseElement
 from .interfaces import IDAVCollection
@@ -262,7 +265,7 @@ class DAVPrincipalMatchReport(DAVReport):
 		try:
 			verifyObject(IDAVCollection, node)
 		except DoesNotImplement:
-			raise DAVBadRequestError('DAV:principal-match report can only by run on collections.')
+			raise DAVBadRequestError('DAV:principal-match report can only be run on collections.')
 		find_prop = root.find(dprops.PRINC_PROP)
 		if (find_prop is not None) and (len(find_prop) > 0):
 			find_prop = find_prop[0].tag
@@ -319,6 +322,110 @@ class DAVPrincipalMatchReport(DAVReport):
 						200 if not send_props else None
 					)
 					resp.add_element(el)
+
+		resp.make_body()
+		req.dav.set_features(resp, node)
+		resp.vary = ('Brief', 'Prefer')
+		return resp
+
+class DAVSyncCollectionReport(DAVReport):
+	@classmethod
+	def supports(cls, node):
+		try:
+			verifyObject(IDAVCollection, node)
+		except DoesNotImplement:
+			return False
+		if not hasattr(node, 'dav_sync_token'):
+			return False
+		davcid = getattr(node, 'dav_collection_id', None)
+		return (davcid is not None)
+
+	def get_changes(self, req, ctx, pset, sync_token, sync_level, resp):
+		changes = {}
+		if sync_level != dprops.DEPTH_INFINITY:
+			sync_level -= 1
+		if not hasattr(ctx, 'dav_sync_token'):
+			return
+		for hist in req.dav.get_history(ctx, sync_token, ctx.dav_sync_token):
+			changes[hist.uri] = hist
+		for uri, hist in changes.items():
+			if hist.is_delete:
+				node = (ctx, uri, '') if hist.is_collection else (ctx, uri)
+				el = DAVResponseElement(req, node, status=404)
+				resp.add_element(el)
+			else:
+				node = ctx[uri]
+				if not req.dav.has_user_acl(req, node, dprops.ACL_READ):
+					continue
+				props = req.dav.get_node_props(req, node, pset)
+				el = DAVResponseElement(req, node, props)
+				resp.add_element(el)
+				if sync_level and hist.is_collection:
+					self.get_changes(req, node, pset, sync_token, sync_level, resp)
+		if sync_level:
+			for ch in ctx.dav_collections:
+				ch_tok = getattr(ch, 'dav_sync_token', None)
+				if ch_tok is None:
+					continue
+				if sync_token >= ch_tok:
+					continue
+				name = ch.__name__
+				if name in changes:
+					continue
+				self.get_changes(req, ch, pset, sync_token, sync_level, resp)
+
+	def __call__(self, req):
+		req.dav.assert_http_depth(req, 0)
+		root = self.rreq.xml
+		node = self.rreq.ctx
+		user = req.user
+		req.dav.user_acl(req, node, dprops.ACL_READ) # FIXME: recursive
+
+		try:
+			verifyObject(IDAVCollection, node)
+		except DoesNotImplement:
+			raise DAVBadRequestError('DAV:sync-collection report can only be run on collections.')
+		sync_token = root.find(dprops.SYNC_TOKEN)
+		if sync_token is not None:
+			sync_token = sync_token.text
+		if sync_token is not None:
+			if not sync_token.startswith(dprops.NS_SYNC):
+				raise DAVInvalidSyncTokenError('Invalid DAV:sync-token value specified.')
+			try:
+				sync_token = int(sync_token[len(dprops.NS_SYNC):])
+			except (TypeError, ValueError):
+				raise DAVInvalidSyncTokenError('Invalid DAV:sync-token value specified.')
+		sync_level = root.find(dprops.SYNC_LEVEL)
+		if sync_level is not None:
+			sync_level = sync_level.text
+			if sync_level == 'infinite':
+				sync_level = dprops.DEPTH_INFINITY
+			else:
+				try:
+					sync_level = int(sync_level)
+				except (TypeError, ValueError):
+					raise DAVBadRequestError('Invalid DAV:sync-level value specified.')
+		else:
+			sync_level = 1
+#		sync_limit = root.find(dprops.LIMIT)
+		dav_cid = node.dav_collection_id
+		cur_sync_token = node.dav_sync_token
+		pset = set()
+		for prop in root.iterchildren(dprops.PROP):
+			for pname in prop:
+				pset.add(pname.tag)
+
+		resp = DAVSyncCollectionResponse(request=req, sync_token=cur_sync_token)
+
+		if sync_token is None:
+			props = req.dav.get_path_props(req, node, pset, sync_level) # FIXME: get_404/minimal
+			for ctx, node_props in props.items():
+				if not req.dav.has_user_acl(req, ctx, dprops.ACL_READ):
+					continue
+				el = DAVResponseElement(req, ctx, node_props)
+				resp.add_element(el)
+		else:
+			self.get_changes(req, node, pset, sync_token, sync_level, resp)
 
 		resp.make_body()
 		req.dav.set_features(resp, node)

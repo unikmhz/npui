@@ -50,6 +50,11 @@ from pyramid.i18n import (
 
 _ = TranslationStringFactory('netprofile_core')
 
+def _synctoken_cb(node):
+	var = NPVariable.get_ro('DAV:SYNC:' + node.__dav_collid__)
+	if var:
+		return var.integer_value
+
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
@@ -68,6 +73,8 @@ class Module(ModuleBase):
 			dav = cfg.registry.getUtility(IDAVManager)
 			if dav:
 				dav.set_locks_backend(DAVLock)
+				dav.set_history_backend(DAVHistory)
+				dav.set_sync_token_callback(_synctoken_cb)
 		except ComponentLookupError:
 			pass
 

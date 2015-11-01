@@ -37,6 +37,7 @@ NS_ICAL       = 'http://apple.com/ns/ical/'
 NS_INFIT_AB   = 'http://inf-it.com/ns/ab/'
 NS_INFIT_DAV  = 'http://inf-it.com/ns/dav/'
 NS_NETPROFILE = 'http://netprofile.ru/ns/dav/'
+NS_SYNC       = 'http://netprofile.ru/ns/davsync/'
 NS_APACHE     = 'http://apache.org/dav/props/'
 NS_CALDAV     = 'urn:ietf:params:xml:ns:caldav'
 NS_CARDDAV    = 'urn:ietf:params:xml:ns:carddav'
@@ -205,6 +206,7 @@ RECOGNIZED_PRINCIPAL     = _TAG(NS_DAV, 'recognized-principal')
 VALID_RESOURCETYPE       = _TAG(NS_DAV, 'valid-resourcetype')
 MATCHES_WITHIN_LIMITS    = _TAG(NS_DAV, 'number-of-matches-within-limits')
 SYNC_TRAVERSAL_SUPPORTED = _TAG(NS_DAV, 'sync-traversal-supported')
+VALID_SYNC_TOKEN         = _TAG(NS_DAV, 'valid-sync-token')
 
 # Mount tags
 MOUNT                    = _TAG(NS_DAVMOUNT, 'mount')

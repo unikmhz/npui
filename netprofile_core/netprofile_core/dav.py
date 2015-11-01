@@ -110,7 +110,6 @@ def dav_decorator(view):
 			return resp
 	return dav_request
 
-@implementer(dav.IDAVCollection)
 class DAVPluginVFS(dav.DAVPlugin):
 	__dav_collid__ = 'PLUG:VFS'
 

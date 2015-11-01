@@ -36,6 +36,8 @@ __all__ = [
 	'DAVInvalidResourceTypeError',
 	'DAVReportNotSupportedError',
 	'DAVNeedPrivilegesError',
+	'DAVTooManyMatchesError',
+	'DAVInvalidSyncTokenError',
 	'DAVMethodNotAllowedError',
 	'DAVConflictError',
 	'DAVLockTokenMatchError',
@@ -124,6 +126,11 @@ class DAVTooManyMatchesError(DAVForbiddenError):
 	def render(self, req, parent):
 		etree.SubElement(parent, dprops.MATCHES_WITHIN_LIMITS)
 		super(DAVTooManyMatchesError, self).render(req, parent)
+
+class DAVInvalidSyncTokenError(DAVForbiddenError):
+	def render(self, req, parent):
+		etree.SubElement(parent, dprops.VALID_SYNC_TOKEN)
+		super(DAVInvalidSyncTokenError, self).render(req, parent)
 
 class DAVMethodNotAllowedError(DAVError):
 	def __init__(self, *args):

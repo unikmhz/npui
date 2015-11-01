@@ -3501,6 +3501,25 @@ class DAVHistory(Base):
 		}
 	)
 
+	@classmethod
+	def find(cls, coll_id, since_token, until_token=None):
+		sess = DBSession()
+		q = sess.query(DAVHistory).filter(
+			DAVHistory.collection_id == coll_id,
+			DAVHistory.change_id > since_token
+		).order_by(DAVHistory.change_id)
+		if until_token is not None:
+			q = q.filter(DAVHistory.change_id <= until_token)
+		return q
+
+	@property
+	def is_add(self):
+		return (self.operation == DAVHistoryOp.add)
+
+	@property
+	def is_delete(self):
+		return (self.operation == DAVHistoryOp.delete)
+
 class FileMeta(Mutable, dict):
 	@classmethod
 	def coerce(cls, key, value):
@@ -4111,6 +4130,10 @@ class FileFolder(Base):
 			raise RuntimeError('Requested collection ID from non-persistent folder')
 		return 'FF:%u' % (self.id,)
 
+	@property
+	def dav_sync_token(self):
+		return self.sync_token
+
 	def allow_read(self, req):
 		return self.can_read(req.user)
 
@@ -4165,7 +4188,9 @@ class FileFolder(Base):
 			'parent',
 			'name',
 			'user',
+			'user_id',
 			'group',
+			'group_id',
 			'rights',
 			'description'
 		)
@@ -4871,7 +4896,7 @@ class File(Base):
 	def dav_clone(self, req):
 		# TODO: clone meta
 		obj = File(
-			folder_id=self.folder_id,
+			folder_id=None,
 			filename=self.filename,
 			name=self.name,
 			user_id=self.user_id,
@@ -5053,7 +5078,9 @@ class File(Base):
 			'filename',
 			'name',
 			'user',
+			'user_id',
 			'group',
+			'group_id',
 			'rights',
 			'size',
 			'etag',

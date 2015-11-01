@@ -71,6 +71,8 @@ class DAVManager(object):
 	def __init__(self, config):
 		self.cfg = config
 		self.lock_cls = None
+		self.history_cls = None
+		self.get_synctoken = None
 		self.features = ['1', '2', '3', 'extended-mkcol', 'access-control', 'sabredav-partialupdate']
 		self.methods = [
 			'OPTIONS', 'GET', 'HEAD', 'DELETE', 'PROPFIND',
@@ -117,7 +119,8 @@ class DAVManager(object):
 			dprops.PRINC_PROP_SEARCH     : DAVPrincipalPropertySearchReport,
 			dprops.PRINC_SEARCH_PROP_SET : DAVPrincipalSearchPropertySetReport,
 			dprops.ACL_PRINC_PROP_SET    : DAVACLPrincipalPropertySetReport,
-			dprops.PRINC_MATCH           : DAVPrincipalMatchReport
+			dprops.PRINC_MATCH           : DAVPrincipalMatchReport,
+			dprops.SYNC_COLLECTION       : DAVSyncCollectionReport
 		}
 		self.resource_map = (
 			(IDAVCollection,  dprops.COLLECTION),
@@ -131,6 +134,17 @@ class DAVManager(object):
 		hlist = [ dr['users'], dr['groups'] ]
 		# TODO: add hooks for other modules here
 		return hlist
+
+	def set_sync_token_callback(self, cb):
+		self.get_synctoken = cb
+
+	def set_history_backend(self, cls):
+		self.history_cls = cls
+
+	def get_history(self, ctx, since_token, until_token=None):
+		if self.history_cls is None:
+			return []
+		return self.history_cls.find(ctx.dav_collection_id, since_token, until_token)
 
 	def set_locks_backend(self, cls):
 		self.lock_cls = cls
@@ -199,16 +213,25 @@ class DAVManager(object):
 		return req.route_url('core.dav', traverse=tr)
 
 	def node_uri(self, req, node, path_only=False):
+		extra = None
+		if isinstance(node, (list, tuple)):
+			if len(node) <= 0:
+				raise ValueError('Empty node specification.')
+			extra = node[1:]
+			node = node[0]
 		uri = node.get_uri()
-		try:
-			if verifyObject(IDAVCollection, node):
-				uri.append('')
-		except DoesNotImplement:
+		if extra is None:
 			try:
-				if verifyObject(IDAVPrincipal, node):
+				if verifyObject(IDAVCollection, node):
 					uri.append('')
 			except DoesNotImplement:
-				pass
+				try:
+					if verifyObject(IDAVPrincipal, node):
+						uri.append('')
+				except DoesNotImplement:
+					pass
+		else:
+			uri.extend(extra)
 		if path_only:
 			return req.route_path('core.dav', traverse=uri)
 		return req.route_url('core.dav', traverse=uri)
@@ -385,12 +408,19 @@ class DAVManager(object):
 				obj.dav_append(req, newch, ch.__name__)
 		return obj
 
-	def get_path_props(self, req, ctx, pset, depth, get_404=True):
-		ret = {}
+	def get_path_props(self, req, ctx, pset, depth, get_404=True, append_to=None):
+		if append_to is not None:
+			ret = append_to
+		else:
+			ret = {}
 		ret[ctx] = self.get_node_props(req, ctx, pset, get_404=get_404) # catch exceptions
 		if depth:
+			if depth == dprops.DEPTH_INFINITY:
+				new_depth = depth
+			else:
+				new_depth = depth - 1
 			for ch in self.children(ctx):
-				ret[ch] = self.get_node_props(req, ch, pset, get_404=get_404) # catch exceptions
+				self.get_path_props(req, ch, pset, new_depth, get_404=get_404, append_to=ret) # catch exceptions
 		return ret
 
 	def props(self, req, node, pset, set403=None):

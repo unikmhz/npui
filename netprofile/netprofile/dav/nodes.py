@@ -74,6 +74,7 @@ class DAVRoot(object):
 	"""
 	__parent__ = None
 	__name__ = 'dav'
+	__dav_collid__ = 'ROOT'
 
 	@property
 	def name(self):
@@ -158,6 +159,15 @@ class DAVRoot(object):
 	def dav_collection_id(self):
 		return 'ROOT'
 
+	@property
+	def dav_sync_token(self):
+		get_st = self.req.dav.get_synctoken
+		if callable(get_st):
+			return get_st(self)
+
+	def dav_changes(self, since_token):
+		pass
+
 @implementer(IDAVCollection)
 class DAVPlugin(object):
 	def __init__(self, req):
@@ -213,4 +223,10 @@ class DAVPlugin(object):
 	@property
 	def dav_collection_id(self):
 		return self.__dav_collid__
+
+	@property
+	def dav_sync_token(self):
+		get_st = self.req.dav.get_synctoken
+		if callable(get_st):
+			return get_st(self)
 

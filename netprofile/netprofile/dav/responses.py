@@ -37,6 +37,7 @@ __all__ = [
 	'DAVMountResponse',
 	'DAVErrorResponse',
 	'DAVMultiStatusResponse',
+	'DAVSyncCollectionResponse',
 	'DAVLockResponse',
 	'DAVPrincipalSearchPropertySetResponse'
 ]
@@ -153,6 +154,16 @@ class DAVMultiStatusResponse(DAVXMLResponse):
 
 	def add_element(self, resp_el):
 		self.xml_root.append(resp_el.to_xml())
+
+class DAVSyncCollectionResponse(DAVMultiStatusResponse):
+	def __init__(self, *args, sync_token=None, **kwargs):
+		super(DAVSyncCollectionResponse, self).__init__(*args, **kwargs)
+		if sync_token is not None:
+			tok = etree.SubElement(self.xml_root, dprops.SYNC_TOKEN)
+			tok.text  = '%s%s' % (
+				dprops.NS_SYNC,
+				str(sync_token)
+			)
 
 class DAVLockResponse(DAVXMLResponse):
 	def __init__(self, *args, lock=None, new_file=False, **kwargs):
