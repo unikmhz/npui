@@ -4009,6 +4009,14 @@ class FileFolder(Base):
 			if self.sync_token:
 				etag = '"ST:%d"' % (self.sync_token,)
 			ret[dprops.ETAG] = etag
+		if dprops.CTAG in pset:
+			ctag = None
+			if self.sync_token:
+				ctag = '%s%s' % (
+					dprops.NS_SYNC,
+					str(self.sync_token)
+				)
+			ret[dprops.CTAG] = ctag
 		if isinstance(pset, DAVAllPropsSet):
 			ret.update(self.get_props())
 		else:

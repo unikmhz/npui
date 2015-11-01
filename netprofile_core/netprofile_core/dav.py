@@ -371,12 +371,23 @@ class DAVPluginVFS(dav.DAVPlugin):
 
 	def dav_props(self, pset):
 		ret = super(DAVPluginVFS, self).dav_props(pset)
+		token = None
 		if dprops.ETAG in pset:
 			etag = None
 			token = NPVariable.get_ro('DAV:SYNC:PLUG:VFS')
 			if token and token.integer_value:
 				etag = '"ST:%d"' % (token.integer_value,)
 			ret[dprops.ETAG] = etag
+		if dprops.CTAG in pset:
+			ctag = None
+			if token is None:
+				token = NPVariable.get_ro('DAV:SYNC:PLUG:VFS')
+			if token and token.integer_value:
+				ctag = '%s%s' % (
+					dprops.NS_SYNC,
+					str(token.integer_value)
+				)
+			ret[dprops.CTAG] = ctag
 		return ret
 
 @implementer(dav.IDAVAddressBook, dav.IDAVDirectory)
@@ -414,12 +425,23 @@ class DAVPluginUsers(dav.DAVPlugin):
 
 	def dav_props(self, pset):
 		ret = super(DAVPluginUsers, self).dav_props(pset)
+		token = None
 		if dprops.ETAG in pset:
 			etag = None
 			token = NPVariable.get_ro('DAV:SYNC:PLUG:USERS')
 			if token and token.integer_value:
 				etag = '"ST:%d"' % (token.integer_value,)
 			ret[dprops.ETAG] = etag
+		if dprops.CTAG in pset:
+			ctag = None
+			if token is None:
+				token = NPVariable.get_ro('DAV:SYNC:PLUG:USERS')
+			if token and token.integer_value:
+				ctag = '%s%s' % (
+					dprops.NS_SYNC,
+					str(token.integer_value)
+				)
+			ret[dprops.CTAG] = ctag
 		if dprops.ADDRESS_BOOK_DESCRIPTION in pset:
 			ret[dprops.ADDRESS_BOOK_DESCRIPTION] = 'Global system users'
 		if dprops.SUPPORTED_ADDRESS_DATA in pset:
@@ -480,12 +502,23 @@ class DAVPluginGroups(dav.DAVPlugin):
 
 	def dav_props(self, pset):
 		ret = super(DAVPluginGroups, self).dav_props(pset)
+		token = None
 		if dprops.ETAG in pset:
 			etag = None
 			token = NPVariable.get_ro('DAV:SYNC:PLUG:GROUPS')
 			if token and token.integer_value:
 				etag = '"ST:%d"' % (token.integer_value,)
 			ret[dprops.ETAG] = etag
+		if dprops.CTAG in pset:
+			ctag = None
+			if token is None:
+				token = NPVariable.get_ro('DAV:SYNC:PLUG:GROUPS')
+			if token and token.integer_value:
+				ctag = '%s%s' % (
+					dprops.NS_SYNC,
+					str(token.integer_value)
+				)
+			ret[dprops.CTAG] = ctag
 		return ret
 
 	def dav_search_principals(self, req, test, query):
