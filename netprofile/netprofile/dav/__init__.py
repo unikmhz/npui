@@ -462,7 +462,10 @@ class DAVManager(object):
 		if (dprops.PRINCIPAL_COLL_SET in pset) and (dprops.PRINCIPAL_COLL_SET not in props):
 			props[dprops.PRINCIPAL_COLL_SET] = DAVHrefListValue(req.dav.principal_collections(req))
 		if (dprops.CUR_USER_PRINCIPAL in pset) and (dprops.CUR_USER_PRINCIPAL not in props):
-			props[dprops.CUR_USER_PRINCIPAL] = DAVHrefValue(req.user)
+			if req.user:
+				props[dprops.CUR_USER_PRINCIPAL] = DAVHrefValue(req.user)
+			else:
+				props[dprops.CUR_USER_PRINCIPAL] = DAVTagValue(dprops.UNAUTHENTICATED)
 		# TODO: check {DAV:}read-current-user-privilege-set
 		if (dprops.CUR_USER_PRIVILEGE_SET in pset) and (dprops.CUR_USER_PRIVILEGE_SET not in props):
 			if hasattr(node, 'dav_acl'):

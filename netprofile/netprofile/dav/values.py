@@ -35,11 +35,13 @@ __all__ = [
 	'DAVLockDiscoveryValue',
 	'DAVSupportedReportSetValue',
 	'DAVSupportedPrivilegeSetValue',
+	'DAVTagValue',
 	'DAVHrefValue',
 	'DAVHrefListValue',
 	'DAVSupportedAddressDataValue',
 
 	'_parse_resource_type',
+	'_parse_tag',
 	'_parse_href',
 	'_parse_hreflist',
 	'_parse_supported_addressdata'
@@ -148,6 +150,20 @@ class DAVSupportedPrivilegeSetValue(DAVValue):
 	def render(self, req, parent):
 		for p in self.priv:
 			p.render(req, parent)
+
+class DAVTagValue(DAVValue):
+	def __init__(self, tag):
+		self.tag = tag
+
+	def render(self, req,parent):
+		etree.SubElement(parent, self.tag)
+
+def _parse_tag(el):
+	try:
+		el = el[0]
+	except IndexError:
+		return None
+	return DAVTagValue(el.tag)
 
 class DAVHrefValue(DAVValue):
 	def __init__(self, value, prefix=False, path_only=False):
