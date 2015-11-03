@@ -119,6 +119,7 @@ from netprofile.common import ipaddr
 from netprofile.tpl import TemplateObject
 from pyramid.security import has_permission
 from pyramid.i18n import (
+	TranslationString,
 	TranslationStringFactory,
 	get_localizer
 )
@@ -470,13 +471,15 @@ class ExtColumn(object):
 			return True
 		return getattr(self.column.type, 'unsigned', False)
 
-	@property
-	def default(self):
+	def default(self, req):
 		dv = getattr(self.column, 'default', None)
 		if (dv is not None) and (not isinstance(dv, Sequence)):
 			if dv.is_callable:
 				return dv.arg(None)
-			return dv.arg
+			val = dv.arg
+			if isinstance(val, TranslationString):
+				return req.localizer.translate(val)
+			return val
 		return None
 
 	@property
@@ -752,7 +755,7 @@ class ExtColumn(object):
 				del conf['minLength']
 			if 'maxLength' in conf:
 				del conf['maxLength']
-		val = self.default
+		val = self.default(req)
 		if isinstance(val, Function):
 			val = None
 		if initval is not None:
@@ -770,7 +773,7 @@ class ExtColumn(object):
 				'inputValue'     : 'true',
 				'uncheckedValue' : 'false'
 			})
-			val = self.default
+			val = self.default(req)
 			if isinstance(initval, bool) and initval:
 				conf['checked'] = initval
 			elif isinstance(val, bool) and val:
@@ -887,7 +890,7 @@ class ExtColumn(object):
 			_recursive_update(conf, val)
 		return conf
 
-	def get_reader_cfg(self):
+	def get_reader_cfg(self, req):
 		typecls = self.column.type.__class__
 		conf = {
 			'name'       : self.name,
@@ -897,7 +900,7 @@ class ExtColumn(object):
 		}
 		if conf['type'] == 'date':
 			conf['dateFormat'] = _DATE_FMT_MAP[typecls]
-		val = self.default
+		val = self.default(req)
 		if val is not None:
 			if type(val) in {int, str, list, dict, bool}:
 				conf['defaultValue'] = val
@@ -1068,8 +1071,7 @@ class ExtPseudoColumn(ExtColumn):
 	def unsigned(self):
 		return False
 
-	@property
-	def default(self):
+	def default(self, req):
 		return None
 
 	@property
@@ -1103,7 +1105,7 @@ class ExtPseudoColumn(ExtColumn):
 		# FIXME: add smth here
 		return None
 
-	def get_reader_cfg(self):
+	def get_reader_cfg(self, req):
 		return None
 
 	def get_column_cfg(self, req):
@@ -1255,7 +1257,7 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 			conf.update(val)
 		return conf
 
-	def get_reader_cfg(self):
+	def get_reader_cfg(self, req):
 		return {
 			'name'       : self.prop.key,
 			'allowBlank' : self.nullable,
@@ -1330,7 +1332,7 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 			conf.update(val)
 		return conf
 
-	def get_reader_cfg(self):
+	def get_reader_cfg(self, req):
 		return {
 			'name'       : self.name,
 			'allowBlank' : True,
@@ -1587,11 +1589,11 @@ class ExtModel(object):
 				ret.append(cdef)
 		return ret
 
-	def get_reader_cfg(self):
+	def get_reader_cfg(self, req):
 		ret = []
 		str_added = False
 		for cname, col in self.get_read_columns().items():
-			cfg = col.get_reader_cfg()
+			cfg = col.get_reader_cfg(req)
 			if cfg is None:
 				continue
 			if cfg['name'] == '__str__':

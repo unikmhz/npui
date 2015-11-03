@@ -50,7 +50,7 @@ def _add_field(step, model, req, field, **kwargs):
 	col = model.get_column(field)
 	colfld = col.get_editor_cfg(req, in_form=True)
 	if colfld:
-		coldef = col.default
+		coldef = col.default(req)
 		if (kwargs.get('use_defaults', False)) and (coldef is not None):
 			colfld['value'] = coldef
 			if isinstance(col, ExtRelationshipColumn) and ('hiddenField' in colfld):
@@ -61,7 +61,7 @@ def _add_field(step, model, req, field, **kwargs):
 		if isinstance(col, ExtRelationshipColumn) and ('hiddenField' in colfld):
 			hcol = model.get_column(colfld['hiddenField'])
 			colfld = hcol.get_editor_cfg(req, in_form=True)
-			coldef = hcol.default
+			coldef = hcol.default(req)
 			if (kwargs.get('use_defaults', False)) and (coldef is not None):
 				colfld['value'] = coldef
 			step.append(colfld)
@@ -162,7 +162,7 @@ class ExternalWizardField(CustomWizardField):
 		colfld = col.get_editor_cfg(req, in_form=True, initval=self.value)
 		if colfld:
 			colfld['name'] = self.name
-			coldef = col.default
+			coldef = col.default(req)
 			if (kwargs.get('use_defaults', False)) and (coldef is not None) and (not self.value):
 				colfld['value'] = coldef
 			if self.extra_config:
@@ -173,7 +173,7 @@ class ExternalWizardField(CustomWizardField):
 				ecol = self.model.get_column(extra)
 				ecolfld = ecol.get_editor_cfg(req, in_form=True, initval=self.value)
 				if ecolfld:
-					ecoldef = ecol.default
+					ecoldef = ecol.default(req)
 					if (kwargs.get('use_defaults', False)) and (ecoldef is not None) and (not self.value):
 						ecolfld['value'] = ecoldef
 					ret.append(ecolfld)
@@ -212,7 +212,7 @@ class Step(object):
 			col = model.get_column(field)
 			colfld = col.get_editor_cfg(req, in_form=True)
 			if colfld:
-				coldef = col.default
+				coldef = col.default(req)
 				if (kwargs.get('use_defaults', False)) and (coldef is not None):
 					colfld['value'] = coldef
 					if isinstance(col, ExtRelationshipColumn) and ('hiddenField' in colfld):
@@ -223,7 +223,7 @@ class Step(object):
 				if isinstance(col, ExtRelationshipColumn) and ('hiddenField' in colfld):
 					hcol = model.get_column(colfld['hiddenField'])
 					colfld = hcol.get_editor_cfg(req, in_form=True)
-					coldef = hcol.default
+					coldef = hcol.default(req)
 					if (kwargs.get('use_defaults', False)) and (coldef is not None):
 						colfld['value'] = coldef
 					step.append(colfld)
@@ -305,7 +305,7 @@ class SimpleWizard(Wizard):
 				continue
 			colfld = col.get_editor_cfg(req, in_form=True)
 			if colfld:
-				coldef = col.default
+				coldef = col.default(req)
 				if coldef is not None:
 					colfld['value'] = coldef
 					if isinstance(col, ExtRelationshipColumn) and ('hiddenField' in colfld):
