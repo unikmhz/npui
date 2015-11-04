@@ -29,7 +29,6 @@ from __future__ import (
 
 __all__ = [
 	'DAVValue',
-	'DAVTagValue',
 	'DAVResourceTypeValue',
 	'DAVSupportedLockValue',
 	'DAVLockDiscoveryValue',
@@ -55,16 +54,6 @@ from . import props as dprops
 class DAVValue(object):
 	def render(self, req, parent):
 		raise NotImplementedError('No render method defined for DAV value')
-
-class DAVTagValue(DAVValue):
-	def __init__(self, tag, value=None):
-		self.tag = tag
-		self.value = value
-
-	def render(self, req, parent):
-		node = etree.SubElement(parent, self.tag)
-		if self.value is not None:
-			node.text = self.value
 
 class DAVResourceTypeValue(DAVValue):
 	def __init__(self, *types):
@@ -152,18 +141,24 @@ class DAVSupportedPrivilegeSetValue(DAVValue):
 			p.render(req, parent)
 
 class DAVTagValue(DAVValue):
-	def __init__(self, tag):
+	def __init__(self, tag, value=None):
 		self.tag = tag
+		self.value = value
 
-	def render(self, req,parent):
-		etree.SubElement(parent, self.tag)
+	def render(self, req, parent):
+		node = etree.SubElement(parent, self.tag)
+		if self.value is not None:
+			node.text = self.value
 
 def _parse_tag(el):
 	try:
 		el = el[0]
 	except IndexError:
 		return None
-	return DAVTagValue(el.tag)
+	val = None
+	if el.text:
+		val = el.text
+	return DAVTagValue(el.tag, val)
 
 class DAVHrefValue(DAVValue):
 	def __init__(self, value, prefix=False, path_only=False):
