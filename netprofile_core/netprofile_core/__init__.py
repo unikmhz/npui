@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 from zope.interface.interfaces import ComponentLookupError
+from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.common.modules import ModuleBase
 from netprofile.common.menus import Menu
@@ -38,9 +39,10 @@ from netprofile.dav import (
 )
 from .models import *
 from .dav import (
-	DAVPluginVFS,
+	DAVPluginAddressBooks,
+	DAVPluginGroups,
 	DAVPluginUsers,
-	DAVPluginGroups
+	DAVPluginVFS
 )
 
 from pyramid.i18n import (
@@ -51,7 +53,10 @@ from pyramid.i18n import (
 _ = TranslationStringFactory('netprofile_core')
 
 def _synctoken_cb(node):
-	var = NPVariable.get_ro('DAV:SYNC:' + node.__dav_collid__)
+	try:
+		var = NPVariable.get_ro('DAV:SYNC:' + node.__dav_collid__)
+	except NoResultFound:
+		return 1
 	if var:
 		return var.integer_value
 
@@ -120,6 +125,8 @@ class Module(ModuleBase):
 			Calendar,
 			CalendarImport,
 			Event,
+			AddressBook,
+			AddressBookCard,
 			CommunicationType,
 			UserCommunicationChannel,
 			UserPhone,
@@ -577,6 +584,14 @@ class Module(ModuleBase):
 			NPVariable(
 				name='DAV:SYNC:PLUG:GROUPS',
 				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:ABOOKS',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:UABOOKS',
+				integer_value=1
 			)
 		)
 		for obj in gvars:
@@ -673,9 +688,10 @@ class Module(ModuleBase):
 
 	def get_dav_plugins(self, request):
 		return {
-			'fs'     : DAVPluginVFS,
-			'users'  : DAVPluginUsers,
-			'groups' : DAVPluginGroups
+			'addressbooks' : DAVPluginAddressBooks,
+			'fs'           : DAVPluginVFS,
+			'groups'       : DAVPluginGroups,
+			'users'        : DAVPluginUsers
 		}
 
 	@property

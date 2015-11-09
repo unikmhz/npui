@@ -1551,4 +1551,11 @@ def _menu_custom(name, menu, req, extb):
 			'iconCls' : 'ico-mod-calendarimport'
 		})
 	})
+	menu.append({
+		'leaf'     : False,
+		'expanded' : True,
+		'xview'    : 'grid_core_AddressBook',
+		'text'     : loc.translate(_('Address Books')),
+		'id'       : 'abooks'
+	})
 

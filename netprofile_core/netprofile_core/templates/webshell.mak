@@ -882,7 +882,7 @@ Ext.require([
 	});
 	Ext.define('NetProfile.model.${module}.${model}', {
 		extend: 'NetProfile.data.BaseModel',
-		fields: ${mod.get_reader_cfg() | n,jsone},
+		fields: ${mod.get_reader_cfg(req) | n,jsone},
 		idProperty: '${mod.pk}',
 		proxy: {
 			type: '${module}_${model}'

@@ -53,11 +53,13 @@ from pyramid.security import (
 	has_permission
 )
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from netprofile import dav
 from netprofile.dav import dprops
 from netprofile.db.connection import DBSession
 from .models import (
+	AddressBook,
 	NPVariable,
 	DAVLock,
 	File,
@@ -544,6 +546,141 @@ class DAVPluginGroups(dav.DAVPlugin):
 			if user.is_member_of(group):
 				yield group
 
+class DAVPluginAbstractAddressBooks(dav.DAVPlugin):
+	def dav_props(self, pset):
+		ret = super(DAVPluginAbstractAddressBooks, self).dav_props(pset)
+		token = None
+		if dprops.ETAG in pset:
+			etag = None
+			try:
+				token = NPVariable.get_ro('DAV:SYNC:' + self.__dav_collid__)
+				if token and token.integer_value:
+					etag = '"ST:%d"' % (token.integer_value,)
+				ret[dprops.ETAG] = etag
+			except NoResultFound:
+				pass
+		if dprops.CTAG in pset:
+			ctag = None
+			try:
+				if token is None:
+					token = NPVariable.get_ro('DAV:SYNC:' + self.__dav_collid__)
+				if token and token.integer_value:
+					ctag = '%s%s' % (
+						dprops.NS_SYNC,
+						str(token.integer_value)
+					)
+				ret[dprops.CTAG] = ctag
+			except NoResultFound:
+				pass
+		return ret
+
+	@property
+	def dav_collections(self):
+		return self.dav_children
+
+class DAVPluginUserAddressBooks(DAVPluginAbstractAddressBooks):
+	def __init__(self, req, user):
+		super(DAVPluginUserAddressBooks, self).__init__(req)
+		self.user = user
+
+	@property
+	def __name__(self):
+		return self.user.login
+
+	@property
+	def __dav_collid__(self):
+		return 'ABC:%u' % (self.user.id,)
+
+	def __iter__(self):
+		loc = get_localizer(self.req)
+		sess = DBSession()
+		for ab in sess.query(AddressBook).filter(AddressBook.user == self.user):
+			yield ab.name
+
+	def __getitem__(self, name):
+		sess = DBSession()
+		try:
+			ab = sess.query(AddressBook)\
+					.filter(AddressBook.user == self.user, AddressBook.name == name)\
+					.one()
+		except NoResultFound:
+			raise KeyError('No such file or directory')
+		ab.__req__ = self.req
+		ab.__parent__ = self
+		ab.__plugin__ = self
+		return ab
+
+	@property
+	def dav_children(self):
+		sess = DBSession()
+		for ab in sess.query(AddressBook)\
+				.filter(AddressBook.user == self.user):
+			ab.__req__ = self.req
+			ab.__parent__ = self
+			ab.__plugin__ = self
+			yield ab
+
+	@property
+	def dav_sync_token(self):
+		varname = 'DAV:SYNC:ABC:%u' % (self.user.id,)
+		try:
+			var = NPVariable.get_ro(varname)
+		except NoResultFound:
+			sess = DBSession()
+			cvar = NPVariable.get_ro('DAV:SYNC:PLUG:UABOOKS')
+			var = NPVariable(name=varname, integer_value=cvar.integer_value)
+			sess.add(var)
+		return var.integer_value
+
+class DAVPluginUserAddressBookCollections(DAVPluginAbstractAddressBooks):
+	__dav_collid__ = 'PLUG:UABOOKS'
+
+	def __iter__(self):
+		sess = DBSession()
+		for t in sess.query(User.login):
+			yield t[0]
+
+	def __getitem__(self, name):
+		sess = DBSession()
+		try:
+			u = sess.query(User).filter(User.login == name).one()
+		except NoResultFound:
+			raise KeyError('No such file or directory')
+		ab = DAVPluginUserAddressBooks(self.req, u)
+		ab.__req__ = self.req
+		ab.__parent__ = self
+		return ab
+
+	@property
+	def dav_children(self):
+		sess = DBSession()
+		for u in sess.query(User):
+			ab = DAVPluginUserAddressBooks(self.req, u)
+			ab.__req__ = self.req
+			ab.__parent__ = self
+			yield ab
+
+	@property
+	def dav_collections(self):
+		return self.dav_children
+
+class DAVPluginAddressBooks(DAVPluginAbstractAddressBooks):
+	__dav_collid__ = 'PLUG:ABOOKS'
+	__abooks__ = {
+		'users' : DAVPluginUserAddressBookCollections
+	}
+
+	def __iter__(self):
+		return iter(self.__abooks__)
+
+	def __getitem__(self, name):
+		if name not in self.__abooks__:
+			raise KeyError('No such address book class')
+		plug = self.__abooks__[name](self.req)
+		plug.__name__ = name
+		plug.__parent__ = self
+		return plug
+
 @notfound_view_config(request_method='OPTIONS')
 @view_config(route_name='core.home', request_method='OPTIONS')
 def root_options(request):
@@ -766,6 +903,7 @@ class DAVHandler(object):
 		ctx = req.context
 		req.dav.user_acl(req, ctx, dprops.ACL_WRITE_ACL)
 		# TODO: write this
+		raise dav.DAVNotImplementedError('ACL method is yet to be written.')
 
 	def proppatch(self):
 		req = self.req
