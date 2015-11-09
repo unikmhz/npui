@@ -375,7 +375,8 @@ class DAVSyncCollectionReport(DAVReport):
 				self.get_changes(req, ch, pset, sync_token, sync_level, resp)
 
 	def __call__(self, req):
-		req.dav.assert_http_depth(req, 0)
+		# XXX: CardDavMate sends Depth:1 here
+		#req.dav.assert_http_depth(req, 0)
 		root = self.rreq.xml
 		node = self.rreq.ctx
 		user = req.user
