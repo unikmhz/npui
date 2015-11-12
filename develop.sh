@@ -26,7 +26,6 @@ NPMOD_DEFAULT="netprofile \
 pip install \
 	--upgrade \
 	python-dateutil \
-	icalendar \
 	phpserialize \
 	dogpile.cache \
 	repoze.tm2 \

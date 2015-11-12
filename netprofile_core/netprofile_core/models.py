@@ -92,9 +92,9 @@ import datetime as dt
 import urllib
 import itertools
 import base64
-import icalendar
 
 from collections import defaultdict
+from dateutil.tz import tzutc
 
 from sqlalchemy import (
 	BINARY,
@@ -132,13 +132,12 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile import (
+	BASE_VERSION,
 	PY3,
-	inst_id
+	inst_id,
+	vobject
 )
-from netprofile.common import (
-	ipaddr,
-	cal
-)
+from netprofile.common import ipaddr
 from netprofile.common.phps import HybridPickler
 from netprofile.common.threadlocal import magic
 from netprofile.common.cache import cache
@@ -1432,8 +1431,11 @@ class User(Base):
 		),))
 
 	def _get_vcard(self):
-		card = cal.Card()
-		card.add('VERSION', '3.0')
+		card = vobject.vCard()
+		card.add('version').value = '3.0'
+		card.add('prodid').value = '-//NetProfile//NetProfile DAV %s//EN' % (BASE_VERSION,)
+		# FIXME: track proper mtime
+		card.add('rev').value = dt.datetime.now(tz=tzutc()).replace(microsecond=0).isoformat()
 
 		fname = []
 		if self.name_family:
@@ -1445,18 +1447,18 @@ class User(Base):
 		if len(fname) == 0:
 			fname = (self.login,)
 		if self.id:
-			card.add('UID', icalendar.vUri('urn:npobj:user:%s:%u' % (
+			card.add('uid').value = 'urn:npobj:user:%s:%u' % (
 				inst_id,
 				self.id
-			)))
-		card.add('N', cal.vStructuredUnicode(*fname))
-		card.add('FN', cal.vUnicode(' '.join(fname)))
-		card.add('NICKNAME', cal.vUnicode(self.login))
+			)
+		card.add('n').value = vobject.vcard.Name(*fname)
+		card.add('fn').value = (self.name_full or self.login)
+		card.add('nickname').value = self.login
 		for email in self.email_addresses:
-			card.add('EMAIL', cal.vEMail(str(email)))
+			email.add_to_vcard(card)
 
-		ical = card.to_ical()
-		resp = Response(ical, content_type='text/vcard', charset='utf-8')
+		body = card.serialize().encode()
+		resp = Response(body, content_type='text/vcard', charset='utf-8')
 		if PY3:
 			resp.content_disposition = \
 				'attachment; filename*=UTF-8\'\'%s.vcf' % (
@@ -1468,7 +1470,7 @@ class User(Base):
 					urllib.quote(self.login.encode(), '')
 				)
 		ctx = hashlib.md5()
-		ctx.update(ical)
+		ctx.update(body)
 		resp.etag = ctx.hexdigest()
 		return resp
 
@@ -3114,6 +3116,11 @@ class UserEmail(Base):
 
 	def __str__(self):
 		return '%s' % (self.address,)
+
+	def add_to_vcard(self, card):
+		obj = card.add('email')
+		obj.type_param = 'INTERNET'
+		obj.value = self.address
 
 def _mod_mail(mapper, conn, tgt):
 	try:

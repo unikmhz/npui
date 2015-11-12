@@ -41,6 +41,8 @@ if sys.version < '3':
 	reload(sys)
 	sys.setdefaultencoding('utf-8')
 
+BASE_VERSION = '0.3'
+
 from babel import Locale
 from pyramid.config import Configurator
 from pyramid.settings import asbool

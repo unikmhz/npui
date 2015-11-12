@@ -112,6 +112,9 @@ Bundled third-party libraries
 * `Extensible Calendar Pro`_ calendar component for ExtJS (ported to
   ExtJS 5), licensed under `GPL version 3`_.
 * `Google ipaddr-py`_ module, licensed under `Apache 2.0`_ license.
+* vobject_ module, licensed under `Apache 2.0`_ license. We use forked
+  and updated version by Ivan Diao and Tim Baxter, found
+  `here <https://github.com/tBaxter/vobject>`_.
 * Modified pyramid_extdirect_ module, licensed under following license::
 
    Copyright (c) 2010-2011 Igor Stroh, All Rights Reserved
@@ -516,6 +519,7 @@ Bundled third-party resources
 .. _Extensible Calendar Pro: http://ext.ensible.com/
 .. _SockJS JavaScript client: https://github.com/sockjs/sockjs-client
 .. _Google ipaddr-py: http://code.google.com/p/ipaddr-py/
+.. _vobject: http://vobject.skyhouseconsulting.com
 .. _pyramid_extdirect: https://github.com/jenner/pyramid_extdirect
 .. _TinyMCE: http://www.tinymce.com/
 .. _Ext.ux.form.TinyMCETextArea: http://www.point-constructor.com/en/tinyta/
