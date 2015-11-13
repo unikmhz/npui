@@ -369,6 +369,8 @@ class DAVSyncCollectionReport(DAVReport):
 				if sync_level and hist.is_collection:
 					self.get_changes(req, node, pset, sync_token, sync_level, resp)
 		if sync_level:
+			if not hasattr(ctx, 'dav_collections'):
+				return
 			for ch in ctx.dav_collections:
 				ch_tok = getattr(ch, 'dav_sync_token', None)
 				if ch_tok is None:
