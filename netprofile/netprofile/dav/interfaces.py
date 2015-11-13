@@ -33,6 +33,7 @@ __all__ = [
 	'IDAVFile',
 	'IDAVPrincipal',
 	'IDAVAddressBook',
+	'IDAVCard',
 	'IDAVDirectory',
 	'IDAVManager'
 ]
@@ -65,7 +66,12 @@ class IDAVPrincipal(IDAVNode):
 
 class IDAVAddressBook(IDAVNode):
 	"""
-	CardDAV address book object interface.
+	CardDAV address book collection interface.
+	"""
+
+class IDAVCard(IDAVNode):
+	"""
+	CardDAV address object interface.
 	"""
 
 class IDAVDirectory(IDAVNode):

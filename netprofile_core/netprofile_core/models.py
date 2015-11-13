@@ -171,6 +171,7 @@ from netprofile.ext.wizards import (
 from netprofile.ext.columns import MarkupColumn
 from netprofile.dav import (
 	IDAVAddressBook,
+	IDAVCard,
 	IDAVFile,
 	IDAVCollection,
 	IDAVPrincipal,
@@ -178,10 +179,12 @@ from netprofile.dav import (
 	DAVAllPropsSet,
 	DAVACEValue,
 	DAVACLValue,
+	DAVBinaryValue,
 	DAVHrefListValue,
 	DAVHrefValue,
 	DAVPrincipalValue,
 	DAVResourceTypeValue,
+	DAVSupportedAddressDataValue,
 
 	dprops
 )
@@ -514,6 +517,20 @@ class AddressType(DeclEnum):
 			return ('postalAddress',)
 		return ()
 
+	@classmethod
+	def vcard_types(cls, data):
+		if data == AddressType.home:
+			return ('HOME',)
+		if data == AddressType.work:
+			return ('WORK',)
+		if data == AddressType.postal:
+			return ('POSTAL',)
+		if data == AddressType.parcel:
+			return ('PARCEL',)
+		if data == AddressType.billing:
+			return ('DOM',)
+		return ('OTHER',)
+
 class PhoneType(DeclEnum):
 	"""
 	Phone type ENUM.
@@ -563,6 +580,20 @@ class PhoneType(DeclEnum):
 		if data == PhoneType.rec:
 			return ('companyPhone',)
 		return ('otherPhone',)
+
+	@classmethod
+	def vcard_types(cls, data):
+		if data == PhoneType.home:
+			return ('VOICE', 'HOME')
+		if data == PhoneType.cell:
+			return ('VOICE', 'CELL')
+		if data == PhoneType.work:
+			return ('VOICE', 'WORK')
+		if data == PhoneType.pager:
+			return ('PAGER',)
+		if data == PhoneType.fax:
+			return ('FAX', 'WORK')
+		return ('VOICE', 'OTHER')
 
 class ContactInfoType(DeclEnum):
 	"""
@@ -621,7 +652,7 @@ def secpol_errors(checkpw, loc):
 		errors.append(loc.translate(_('You\'ve just changed your password.')))
 	return errors
 
-@implementer(IDAVFile, IDAVPrincipal)
+@implementer(IDAVFile, IDAVPrincipal, IDAVCard)
 class User(Base):
 	"""
 	NetProfile operator user.
@@ -1052,6 +1083,7 @@ class User(Base):
 	def __init__(self, **kwargs):
 		super(User, self).__init__(**kwargs)
 		self.vcard = None
+		self.mod_vcard = False
 		self.mod_pw = False
 
 	def __str__(self):
@@ -1399,6 +1431,8 @@ class User(Base):
 			ret[dprops.ETAG] = '"%s"' % self.vcard.etag
 		if dprops.PRINCIPAL_ADDRESS in pset:
 			ret[dprops.PRINCIPAL_ADDRESS] = DAVHrefValue(self)
+		if dprops.ADDRESS_DATA in pset:
+			ret[dprops.ADDRESS_DATA] = DAVBinaryValue(self.vcard.body)
 		req = getattr(self, '__req__', None)
 		if req:
 			if dprops.ADDRESS_BOOK_HOME_SET in pset:
@@ -1430,6 +1464,59 @@ class User(Base):
 			protected=True
 		),))
 
+	@property
+	def needs_dav_history(self):
+		attrs = inspect(self).attrs
+		attrnames = (
+			'login',
+		)
+		for aname in attrnames:
+			if getattr(attrs, aname).history.has_changes():
+				return True
+		return getattr(self, 'mod_vcard', False)
+
+	def get_dav_history(self, sess, token_value):
+		if self.login is None:
+			return ()
+		coll_id = 'PLUG:USERS'
+		if self in sess.deleted:
+			return (DAVHistory(
+				collection_id=coll_id,
+				change_id=token_value,
+				operation=DAVHistoryOp.delete,
+				uri=self.login
+			),)
+		if self in sess.new:
+			return (DAVHistory(
+				collection_id=coll_id,
+				change_id=token_value,
+				operation=DAVHistoryOp.add,
+				uri=self.login
+			),)
+		attrs = inspect(self).attrs
+		name_hist = attrs.login.history
+		if name_hist.has_changes():
+			old_name = name_hist.non_added()[0]
+			new_name = name_hist.non_deleted()[0]
+
+			return (DAVHistory(
+				collection_id=coll_id,
+				change_id=token_value,
+				operation=DAVHistoryOp.delete,
+				uri=old_name
+			), DAVHistory(
+				collection_id=coll_id,
+				change_id=token_value,
+				operation=DAVHistoryOp.add,
+				uri=new_name
+			))
+		return (DAVHistory(
+			collection_id=coll_id,
+			change_id=token_value,
+			operation=DAVHistoryOp.modify,
+			uri=self.login
+		),)
+
 	def _get_vcard(self):
 		card = vobject.vCard()
 		card.add('version').value = '3.0'
@@ -1452,10 +1539,35 @@ class User(Base):
 				self.id
 			)
 		card.add('n').value = vobject.vcard.Name(*fname)
-		card.add('fn').value = (self.name_full or self.login)
+		card.add('fn').value = ' '.join(fname) if len(fname) else self.login
 		card.add('nickname').value = self.login
+		orgname = []
+		if self.organization:
+			orgname.append(self.organization)
+		if self.organizational_unit:
+			if len(orgname) == 0:
+				orgname.append('')
+			orgname.append(self.organizational_unit)
+		if len(orgname) > 0:
+			card.add('org').value = orgname
+		if self.title:
+			card.add('title').value = self.title
+		if self.description:
+			card.add('note').value = self.description
 		for email in self.email_addresses:
 			email.add_to_vcard(card)
+		for ph in self.phones:
+			ph.add_to_vcard(card)
+		if self.photo and (self.photo.plain_mime_type in ('image/jpeg',)):
+			photo = card.add('photo')
+			photo.encoded = True
+			photo.value = base64.b64encode(self.photo.get_data(sess=DBSession())).decode()
+			photo.encoding_param = 'B'
+			if self.photo.plain_mime_type == 'image/jpeg':
+				photo.type_param = 'JPEG'
+		req = getattr(self, '__req__', None)
+		if req:
+			req.run_hook('core.vcard.User', card, self, req)
 
 		body = card.serialize().encode()
 		resp = Response(body, content_type='text/vcard', charset='utf-8')
@@ -1480,9 +1592,10 @@ class User(Base):
 			self.vcard = self._get_vcard()
 		return self.vcard
 
-	@validates('name_family', 'name_given', 'name_middle', 'login')
+	@validates('name_family', 'name_given', 'name_middle', 'login', 'organization', 'organizational_unit', 'title', 'description')
 	def _reset_vcard(self, k, v):
 		self.vcard = None
+		self.mod_vcard = True
 		return v
 
 	@classmethod
@@ -1492,6 +1605,24 @@ class User(Base):
 		for u in sess.query(User):
 			res[u.id] = str(u)
 		return res
+
+	@property
+	def sync_token(self):
+		try:
+			userst = NPVariable.get_ro('DAV:SYNC:PLUG:USERS')
+		except NoResultFound:
+			return 1
+		return userst.integer_value
+
+	@sync_token.setter
+	def sync_token(self, value):
+		try:
+			userst = NPVariable.get_rw('DAV:SYNC:PLUG:USERS')
+			userst.integer_value = value
+		except NoResultFound:
+			sess = DBSession()
+			userst = NPVariable(name='DAV:SYNC:PLUG:USERS', integer_value=value)
+			sess.add(userst)
 
 def _del_user(mapper, conn, tgt):
 	sess = DBSession()
@@ -2981,6 +3112,15 @@ class UserPhone(Base):
 			self.number
 		)
 
+	def add_to_vcard(self, card):
+		obj = card.add('tel')
+		objtype = list(PhoneType.vcard_types(self.type))
+		if self.primary:
+			objtype.append('pref')
+		obj.type_paramlist = objtype
+		# TODO: convert to intl. format
+		obj.value = self.number
+
 def _mod_phone(mapper, conn, tgt):
 	try:
 		from netprofile_ldap.ldap import store
@@ -2991,6 +3131,8 @@ def _mod_phone(mapper, conn, tgt):
 	if (not user) and user_id:
 		user = DBSession().query(User).get(user_id)
 	if user:
+		user.vcard = None
+		user.mod_vcard = True
 		store(user)
 
 event.listen(UserPhone, 'after_delete', _mod_phone)
@@ -3119,7 +3261,12 @@ class UserEmail(Base):
 
 	def add_to_vcard(self, card):
 		obj = card.add('email')
-		obj.type_param = 'INTERNET'
+		objtype = ['INTERNET']
+		if self.scope is not None:
+			objtype.append(self.scope.name.upper())
+		if self.primary:
+			objtype.append('pref')
+		obj.type_paramlist = objtype
 		obj.value = self.address
 
 def _mod_mail(mapper, conn, tgt):
@@ -3132,6 +3279,8 @@ def _mod_mail(mapper, conn, tgt):
 	if (not user) and user_id:
 		user = DBSession().query(User).get(user_id)
 	if user:
+		user.vcard = None
+		user.mod_vcard = True
 		store(user)
 
 event.listen(UserEmail, 'after_delete', _mod_mail)
@@ -7864,6 +8013,10 @@ class AddressBook(Base):
 					str(self.sync_token)
 				)
 			ret[dprops.CTAG] = ctag
+		if dprops.ADDRESS_BOOK_DESCRIPTION in pset:
+			ret[dprops.ADDRESS_BOOK_DESCRIPTION] = self.description
+		if dprops.SUPPORTED_ADDRESS_DATA in pset:
+			ret[dprops.SUPPORTED_ADDRESS_DATA] = DAVSupportedAddressDataValue(('text/vcard', '3.0'))
 		if isinstance(pset, DAVAllPropsSet):
 			ret.update(self.get_props())
 		else:
@@ -7877,6 +8030,9 @@ class AddressBook(Base):
 
 	def dav_props_set(self, pdict):
 		pset = set(pdict)
+		if dprops.ADDRESS_BOOK_DESCRIPTION in pset:
+			self.description = pdict[dprops.ADDRESS_BOOK_DESCRIPTION]
+			pset.remove(dprops.ADDRESS_BOOK_DESCRIPTION)
 		custom = pset.difference(dprops.RO_PROPS)
 		for cprop in custom:
 			if pdict[cprop] is None:
@@ -8136,6 +8292,7 @@ def _on_set_ab_synctoken(tgt, value, oldvalue, initiator):
 				var.integer_value = value
 	return value
 
+@implementer(IDAVCard, IDAVFile)
 class AddressBookCard(Base):
 	"""
 	vCard from a user's address book.
@@ -8441,6 +8598,8 @@ class AddressBookCard(Base):
 			ret[dprops.EXECUTABLE] = 'F'
 		if dprops.LAST_MODIFIED in pset:
 			ret[dprops.LAST_MODIFIED] = self.modification_time
+		if dprops.ADDRESS_DATA in pset:
+			ret[dprops.ADDRESS_DATA] = DAVBinaryValue(self.data)
 		if isinstance(pset, DAVAllPropsSet):
 			ret.update(self.get_props())
 		else:
@@ -8626,11 +8785,9 @@ def _core_before_flush(sess, flush_ctx, instances):
 	add_history = set()
 	update_synctoken = set()
 	for obj in sess:
-		if not isinstance(obj, (File, FileFolder, AddressBook, AddressBookCard)):
+		if not isinstance(obj, (File, FileFolder, AddressBook, AddressBookCard, User)):
 			continue
-		if (obj in sess.new) or (obj in sess.deleted) or (obj in sess.dirty):
-			if (obj in sess.dirty) and (not obj.needs_dav_history):
-				continue
+		if (obj in sess.new) or (obj in sess.deleted) or (obj.needs_dav_history):
 			add_history.add(obj)
 			if isinstance(obj, File):
 				if obj.folder:

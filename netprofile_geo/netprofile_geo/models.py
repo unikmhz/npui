@@ -113,6 +113,8 @@ from netprofile_core.models import (
 )
 from netprofile_geo.filters import AddressFilter
 
+from netprofile import vobject
+
 from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
 	TranslationStringFactory,
@@ -1161,6 +1163,28 @@ class UserLocation(Base):
 
 		return ' '.join(ret)
 
+	def add_to_vcard(self, card):
+		data = dict()
+		if self.country:
+			data['country'] = self.country
+		if self.state_or_province:
+			data['region'] = self.state_or_province
+		if self.postal_code:
+			data['box'] = self.postal_code
+		bit = self.city_address
+		if bit:
+			data['city'] = bit
+		bit = self.street_address
+		if bit:
+			data['street'] = bit
+		if len(data) > 0:
+			obj = card.add('adr')
+			obj.value = vobject.vcard.Address(**data)
+			objtype = list(AddressType.vcard_types(self.type))
+			if self.primary:
+				objtype.append('pref')
+			obj.type_paramlist = objtype
+
 	@property
 	def city_address(self):
 		if self.house and self.house.street:
@@ -1183,6 +1207,7 @@ def _mod_userloc(mapper, conn, tgt):
 	if (not user) and user_id:
 		user = DBSession().query(User).get(user_id)
 	if user:
+		user.vcard = None
 		store(user)
 
 event.listen(UserLocation, 'after_delete', _mod_userloc)

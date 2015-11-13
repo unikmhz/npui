@@ -952,8 +952,9 @@ class DAVHandler(object):
 			el = dav.DAVResponseElement(self.req, ctx, node_props, names_only=is_pnames)
 			resp.add_element(el)
 		resp.make_body()
-		req.dav.set_features(resp, req.context)
+		req.dav.set_features(resp, node=req.context)
 		resp.vary = ('Brief', 'Prefer')
+		resp.headers.add('MS-Author-Via', 'DAV')
 		return resp
 
 	def move(self):
@@ -1102,8 +1103,8 @@ class DAVCollectionHandler(DAVHandler):
 	@view_config(request_method='OPTIONS', context=dav.IDAVCollection)
 	def options(self):
 		resp = Response()
-		self.req.dav.set_headers(resp, self.req.context)
-		self.req.dav.set_allow(resp)
+		self.req.dav.set_headers(resp, node=self.req.context)
+		self.req.dav.set_allow(resp, node=self.req.context)
 		return resp
 
 	@notfound_view_config(request_method='OPTIONS', containment=dav.IDAVCollection, decorator=dav_decorator)
@@ -1274,8 +1275,8 @@ class DAVFileHandler(DAVHandler):
 	@view_config(request_method='OPTIONS')
 	def options(self):
 		resp = Response()
-		self.req.dav.set_headers(resp, self.req.context)
-		self.req.dav.set_allow(resp)
+		self.req.dav.set_headers(resp, node=self.req.context)
+		self.req.dav.set_allow(resp, node=self.req.context)
 		self.req.dav.set_patch_formats(resp)
 		return resp
 
@@ -1367,7 +1368,8 @@ class DAVFileHandler(DAVHandler):
 			if callable(etag):
 				etag = etag(req)
 			resp = dav.DAVOverwriteResponse(request=req, etag=etag)
-			req.dav.set_features(resp, obj)
+			req.dav.set_features(resp, node=obj)
+			resp.headers.add('MS-Author-Via', 'DAV')
 			return resp
 		raise dav.DAVUnsupportedMediaTypeError('Unknown content type specified in PATCH request.')
 

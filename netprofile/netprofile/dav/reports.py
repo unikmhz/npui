@@ -34,7 +34,9 @@ __all__ = [
 	'DAVACLPrincipalPropertySetReport',
 	'DAVPrincipalSearchPropertySetReport',
 	'DAVPrincipalMatchReport',
-	'DAVSyncCollectionReport'
+	'DAVSyncCollectionReport',
+	'DAVAddressBookQueryReport',
+	'DAVAddressBookMultiGetReport'
 ]
 
 from zope.interface.verify import verifyObject
@@ -56,7 +58,11 @@ from .responses import (
 	DAVSyncCollectionResponse
 )
 from .elements import DAVResponseElement
-from .interfaces import IDAVCollection
+from .interfaces import (
+	IDAVAddressBook,
+	IDAVCard,
+	IDAVCollection
+)
 
 class DAVReport(object):
 	def __init__(self, rname, rreq):
@@ -432,4 +438,27 @@ class DAVSyncCollectionReport(DAVReport):
 		req.dav.set_features(resp, node)
 		resp.vary = ('Brief', 'Prefer')
 		return resp
+
+class CardDAVReport(DAVReport):
+	@classmethod
+	def supports(cls, node):
+		try:
+			verifyObject(IDAVAddressBook, node)
+		except DoesNotImplement:
+			try:
+				verifyObject(IDAVCard, node)
+			except DoesNotImplement:
+				return False
+		return True
+
+class DAVAddressBookQueryReport(CardDAVReport):
+	def __call__(self, req):
+		root = self.rreq.xml
+		node = self.rreq.ctx
+		user = req.user
+		req.dav.user_acl(req, node, dprops.ACL_READ) # FIXME: recursive
+
+class DAVAddressBookMultiGetReport(CardDAVReport):
+	def __call__(self, req):
+		pass
 

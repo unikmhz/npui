@@ -141,3 +141,8 @@ def _ldap_attrs_user(obj, dn, attrs):
 	if len(newattrs) > 0:
 		attrs.update(newattrs)
 
+@register_hook('core.vcard.User')
+def _vcard_user(card, user, req):
+	for loc in user.locations:
+		loc.add_to_vcard(card)
+

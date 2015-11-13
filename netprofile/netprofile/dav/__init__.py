@@ -73,7 +73,7 @@ class DAVManager(object):
 		self.lock_cls = None
 		self.history_cls = None
 		self.get_synctoken = None
-		self.features = ['1', '2', '3', 'extended-mkcol', 'access-control', 'sabredav-partialupdate']
+		self.features = ['1', '2', '3', 'extended-mkcol', 'access-control', 'addressbook', 'sabredav-partialupdate']
 		self.methods = [
 			'OPTIONS', 'GET', 'HEAD', 'DELETE', 'PROPFIND',
 			'PUT', 'PROPPATCH', 'COPY', 'MOVE', 'REPORT',
@@ -120,7 +120,9 @@ class DAVManager(object):
 			dprops.PRINC_SEARCH_PROP_SET : DAVPrincipalSearchPropertySetReport,
 			dprops.ACL_PRINC_PROP_SET    : DAVACLPrincipalPropertySetReport,
 			dprops.PRINC_MATCH           : DAVPrincipalMatchReport,
-			dprops.SYNC_COLLECTION       : DAVSyncCollectionReport
+			dprops.SYNC_COLLECTION       : DAVSyncCollectionReport,
+			dprops.ADDRESS_BOOK_QUERY    : DAVAddressBookQueryReport,
+			dprops.ADDRESS_BOOK_MULTIGET : DAVAddressBookMultiGetReport
 		}
 		self.resource_map = (
 			(IDAVCollection,  dprops.COLLECTION),
@@ -158,10 +160,10 @@ class DAVManager(object):
 		self.reports[name] = cls
 
 	def add_method(self, meth):
-		self.methods.add(meth)
+		self.methods.append(meth)
 
 	def add_feature(self, feat):
-		self.features.add(feat)
+		self.features.append(feat)
 
 	def supported_report_set(self, node):
 		rset = set()
@@ -189,20 +191,23 @@ class DAVManager(object):
 
 	def set_features(self, resp, node=None):
 		feats = self.features.copy()
-		try:
-			if verifyObject(IDAVAddressBook, node):
-				feats.append('addressbook')
-		except DoesNotImplement:
-			pass
+		if node:
+			mod = getattr(node, 'dav_features', None)
+			if callable(mod):
+				mod(feats)
 		resp.headers.add('DAV', ', '.join(feats))
 
 	def set_patch_formats(self, resp):
 		resp.headers.add('Accept-Patch', 'application/x-sabredav-partialupdate')
 
-	def set_allow(self, resp, more=None):
-		result = list(self.methods)
+	def set_allow(self, resp, more=None, node=None):
+		result = self.methods.copy()
 		if more:
 			result.extend(more)
+		if node:
+			mod = getattr(node, 'http_methods', None)
+			if callable(mod):
+				mod(result)
 		return result
 
 	def uri(self, req, tr=None, path_only=False):
@@ -507,7 +512,11 @@ class DAVManager(object):
 			if group:
 				props[dprops.GROUP] = DAVHrefValue(group)
 		if dprops.DIRECTORY_GATEWAY in pset:
-			props[dprops.DIRECTORY_GATEWAY] = DAVHrefValue('users', prefix=True)
+			props[dprops.DIRECTORY_GATEWAY] = DAVHrefValue('users/', prefix=True)
+		if (dprops.SUPPORTED_COLLSET_CAL in pset) and (dprops.SUPPORTED_COLLSET_CAL not in props):
+			props[dprops.SUPPORTED_COLLSET_CAL] = CalDAVSupportedCollationSetValue('i;ascii-casemap', 'i;unicode-casemap', 'i;octet')
+		if (dprops.SUPPORTED_COLLSET_CARD in pset) and (dprops.SUPPORTED_COLLSET_CARD not in props):
+			props[dprops.SUPPORTED_COLLSET_CARD] = CardDAVSupportedCollationSetValue('i;ascii-casemap', 'i;unicode-casemap', 'i;octet')
 		return props
 
 	def get_node_props(self, req, ctx, pset=None, get_404=True):

@@ -79,6 +79,7 @@ ACL_RESTRICTIONS         = _PROP(NS_DAV, 'acl-restrictions')
 ADDRESS_BOOK_COLOR       = _PROP(NS_INFIT_AB, 'addressbook-color')
 ADDRESS_BOOK_DESCRIPTION = _PROP(NS_CARDDAV, 'addressbook-description')
 ADDRESS_BOOK_HOME_SET    = _PROP(NS_CARDDAV, 'addressbook-home-set')
+ADDRESS_DATA             = _PROP(NS_CARDDAV, 'address-data')
 ALTERNATE_URI_SET        = _PROP(NS_DAV, 'alternate-URI-set')
 CALENDAR_COLOR           = _PROP(NS_ICAL, 'calendar-color')
 CONTENT_LENGTH           = _PROP(NS_DAV, 'getcontentlength')
@@ -110,7 +111,8 @@ QUOTA_AVAIL_BYTES        = _PROP(NS_DAV, 'quota-available-bytes')
 QUOTA_USED_BYTES         = _PROP(NS_DAV, 'quota-used-bytes')
 RESOURCE_TYPE            = _PROP(NS_DAV, 'resourcetype')
 SUPPORTED_ADDRESS_DATA   = _PROP(NS_CARDDAV, 'supported-address-data')
-SUPPORTED_COLLATION_SET  = _PROP(NS_CARDDAV, 'supported-collation-set')
+SUPPORTED_COLLSET_CAL    = _PROP(NS_CALDAV, 'supported-collation-set')
+SUPPORTED_COLLSET_CARD   = _PROP(NS_CARDDAV, 'supported-collation-set')
 SUPPORTED_LIVE_PROP_SET  = _PROP(NS_DAV, 'supported-live-property-set')
 SUPPORTED_LOCK           = _PROP(NS_DAV, 'supportedlock')
 SUPPORTED_PRIVILEGE_SET  = _PROP(NS_DAV, 'supported-privilege-set')
@@ -179,6 +181,8 @@ SELF                     = _TAG(NS_DAV, 'self')
 SET                      = _TAG(NS_DAV, 'set')
 SHARED                   = _TAG(NS_DAV, 'shared')
 STATUS                   = _TAG(NS_DAV, 'status')
+SUPPORTED_COLL_CAL       = _TAG(NS_CALDAV, 'supported-collation')
+SUPPORTED_COLL_CARD      = _TAG(NS_CARDDAV, 'supported-collation')
 SUPPORTED_PRIVILEGE      = _TAG(NS_DAV, 'supported-privilege')
 SUPPORTED_REPORT         = _TAG(NS_DAV, 'supported-report')
 TIMEOUT                  = _TAG(NS_DAV, 'timeout')
@@ -195,6 +199,7 @@ SYNC_LEVEL               = _TAG(NS_DAV, 'sync-level')
 SYNC_TOKEN               = _TAG(NS_DAV, 'sync-token')
 
 # Error tags
+ADDRESS_BOOK_COLL_LOC_OK = _TAG(NS_CARDDAV, 'addressbook-collection-location-ok')
 CANNOT_MODIFY_PROT_PROP  = _TAG(NS_DAV, 'cannot-modify-protected-property')
 LOCK_TOKEN_REQUEST_URI   = _TAG(NS_DAV, 'lock-token-matches-request-uri')
 LOCK_TOKEN_SUBMITTED     = _TAG(NS_DAV, 'lock-token-submitted')
@@ -203,9 +208,12 @@ MATCHES_WITHIN_LIMITS    = _TAG(NS_DAV, 'number-of-matches-within-limits')
 NO_ABSTRACT              = _TAG(NS_DAV, 'no-abstract')
 NO_ACE_CONFLICT          = _TAG(NS_DAV, 'no-ace-conflict')
 NO_CONFLICTING_LOCK      = _TAG(NS_DAV, 'no-conflicting-lock')
+NO_UID_CONFLICT          = _TAG(NS_CARDDAV, 'no-uid-conflict')
 NOT_SUPPORTED_PRIVILEGE  = _TAG(NS_DAV, 'not-supported-privilege')
 RECOGNIZED_PRINCIPAL     = _TAG(NS_DAV, 'recognized-principal')
+SUPPORTED_ADDRESS_DATA_CONV = _TAG(NS_CARDDAV, 'supported-address-data-conversion')
 SYNC_TRAVERSAL_SUPPORTED = _TAG(NS_DAV, 'sync-traversal-supported')
+VALID_ADDRESS_DATA       = _TAG(NS_CARDDAV, 'valid-address-data')
 VALID_RESOURCETYPE       = _TAG(NS_DAV, 'valid-resourcetype')
 VALID_SYNC_TOKEN         = _TAG(NS_DAV, 'valid-sync-token')
 
@@ -245,11 +253,13 @@ DEFAULT_PROPS = frozenset((
 ALLPROPS_EXEMPT = frozenset((
 	ADDRESS_BOOK_DESCRIPTION,
 	ADDRESS_BOOK_HOME_SET,
+	ADDRESS_DATA,
 	DIRECTORY_GATEWAY,
 	MAX_RESOURCE_SIZE,
 	PRINCIPAL_ADDRESS,
 	SUPPORTED_ADDRESS_DATA,
-	SUPPORTED_COLLATION_SET,
+	SUPPORTED_COLLSET_CAL,
+	SUPPORTED_COLLSET_CARD,
 	SYNC_TOKEN
 ))
 

@@ -35,15 +35,20 @@ __all__ = [
 	'DAVSupportedReportSetValue',
 	'DAVSupportedPrivilegeSetValue',
 	'DAVTagValue',
+	'DAVBinaryValue',
 	'DAVHrefValue',
 	'DAVHrefListValue',
 	'DAVSupportedAddressDataValue',
+	'CalDAVSupportedCollationSetValue',
+	'CardDAVSupportedCollationSetValue',
 
 	'_parse_resource_type',
 	'_parse_tag',
 	'_parse_href',
 	'_parse_hreflist',
-	'_parse_supported_addressdata'
+	'_parse_supported_addressdata',
+	'_parse_caldav_supported_collation_set',
+	'_parse_carddav_supported_collation_set'
 ]
 
 import datetime as dt
@@ -160,6 +165,16 @@ def _parse_tag(el):
 		val = el.text
 	return DAVTagValue(el.tag, val)
 
+class DAVBinaryValue(DAVValue):
+	def __init__(self, buf):
+		self.buf = buf
+
+	def render(self, req, parent):
+		buf = self.buf
+		if isinstance(buf, (bytes, bytearray)):
+			buf = buf.decode()
+		parent.text = etree.CDATA(buf)
+
 class DAVHrefValue(DAVValue):
 	def __init__(self, value, prefix=False, path_only=False):
 		self.value = value
@@ -254,6 +269,38 @@ def _parse_supported_addressdata(el):
 			elif ver:
 				ret.append((None, ver))
 	return DAVSupportedAddressDataValue(*ret)
+
+class CalDAVSupportedCollationSetValue(DAVValue):
+	def __init__(self, *colls):
+		self.colls = colls
+
+	def render(self, req, parent):
+		for coll in self.colls:
+			el = etree.SubElement(parent, dprops.SUPPORTED_COLL_CAL)
+			el.text = coll
+
+def _parse_caldav_supported_collation_set(el):
+	ret = []
+	for coll in el:
+		if coll.tag == dprops.SUPPORTED_COLL_CAL:
+			ret.append(coll.text)
+	return CalDAVSupportedCollationSetValue(*ret)
+
+class CardDAVSupportedCollationSetValue(DAVValue):
+	def __init__(self, *colls):
+		self.colls = colls
+
+	def render(self, req, parent):
+		for coll in self.colls:
+			el = etree.SubElement(parent, dprops.SUPPORTED_COLL_CARD)
+			el.text = coll
+
+def _parse_carddav_supported_collation_set(el):
+	ret = []
+	for coll in el:
+		if coll.tag == dprops.SUPPORTED_COLL_CARD:
+			ret.append(coll.text)
+	return CardDAVSupportedCollationSetValue(*ret)
 
 class DAVResponseValue(DAVValue):
 	def __init__(self, node=None, props=None, status=None, names_only=False):
