@@ -51,6 +51,7 @@ from .errors import (
 	DAVInvalidSyncTokenError
 )
 from .values import (
+	DAVBinaryValue,
 	DAVHrefValue,
 	DAVResponseValue
 )
@@ -492,8 +493,15 @@ class DAVAddressBookQueryReport(CardDAVReport):
 				card = vobject.readOne(card_data)
 				if not self.filter(req, ctx, card, vcard_filter):
 					continue
-				if len(vpset) > 0:
-					# TODO: custom vcard fields
+				if (len(vpset) > 0) and (200 in node_props) and (dprops.ADDRESS_DATA in node_props[200]):
+					newcard = vobject.vCard()
+					for vpname in vpset:
+						vpname_lower = vpname.lower()
+						if vpname_lower not in card.contents:
+							continue
+						for vpval in getattr(card, vpname_lower + '_list'):
+							newcard.add(vpval.duplicate(vpval))
+					node_props[200][dprops.ADDRESS_DATA] = DAVBinaryValue(newcard.serialize(validate=False))
 					pass
 			except (DoesNotImplement, vobject.base.ParseError):
 				continue
