@@ -35,6 +35,7 @@ __all__ = [
 	'IDAVAddressBook',
 	'IDAVCard',
 	'IDAVDirectory',
+	'IDAVCalendar',
 	'IDAVManager'
 ]
 
@@ -68,16 +69,25 @@ class IDAVAddressBook(IDAVNode):
 	"""
 	CardDAV address book collection interface.
 	"""
+	pass
 
 class IDAVCard(IDAVNode):
 	"""
 	CardDAV address object interface.
 	"""
+	pass
 
 class IDAVDirectory(IDAVNode):
 	"""
 	CardDAV directory extension interface.
 	"""
+	pass
+
+class IDAVCalendar(IDAVNode):
+	"""
+	CalDAV calendar collection interface.
+	"""
+	pass
 
 class IDAVManager(Interface):
 	"""

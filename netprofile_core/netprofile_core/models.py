@@ -35,6 +35,7 @@ __all__ = [
 	'ContactInfoType',
 	'UserState',
 	'User',
+	'UserCard',
 	'Group',
 	'Privilege',
 	'Capability',
@@ -483,6 +484,7 @@ class NPVariable(Base):
 
 	@classmethod
 	def get_rw(cls, name):
+		# FIXME: thread safety
 		sess = DBSession()
 		var = cls._var_map.get(name)
 		if (var is None) or (var not in sess):
@@ -491,6 +493,7 @@ class NPVariable(Base):
 
 	@classmethod
 	def get_ro(cls, name):
+		# FIXME: thread safety
 		sess = DBSession()
 		var = cls._var_map.get(name)
 		if (var is None) or (var not in sess):
@@ -652,7 +655,7 @@ def secpol_errors(checkpw, loc):
 		errors.append(loc.translate(_('You\'ve just changed your password.')))
 	return errors
 
-@implementer(IDAVFile, IDAVPrincipal, IDAVCard)
+@implementer(IDAVFile, IDAVPrincipal)
 class User(Base):
 	"""
 	NetProfile operator user.
@@ -1416,29 +1419,18 @@ class User(Base):
 		return [ '', 'users', self.login ]
 
 	def dav_props(self, pset):
-		vcard = getattr(self, 'vcard', None)
-		if vcard is None:
-			self.vcard = self._get_vcard()
-
 		ret = {}
-		if dprops.CONTENT_LENGTH in pset:
-			ret[dprops.CONTENT_LENGTH] = self.vcard.content_length
-		if dprops.CONTENT_TYPE in pset:
-			ret[dprops.CONTENT_TYPE] = 'text/vcard'
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.login
-		if dprops.ETAG in pset:
-			ret[dprops.ETAG] = '"%s"' % self.vcard.etag
 		if dprops.PRINCIPAL_ADDRESS in pset:
-			ret[dprops.PRINCIPAL_ADDRESS] = DAVHrefValue(self)
-		if dprops.ADDRESS_DATA in pset:
-			ret[dprops.ADDRESS_DATA] = DAVBinaryValue(self.vcard.body)
-		req = getattr(self, '__req__', None)
-		if req:
-			if dprops.ADDRESS_BOOK_HOME_SET in pset:
-				ret[dprops.ADDRESS_BOOK_HOME_SET] = DAVHrefListValue((
-					'addressbooks/users/%s/' % (self.login,),
-				), prefix=True)
+			ret[dprops.PRINCIPAL_ADDRESS] = DAVHrefValue(
+				'addressbooks/system/%s.vcf' % (self.login,),
+				prefix=True
+			)
+		if dprops.ADDRESS_BOOK_HOME_SET in pset:
+			ret[dprops.ADDRESS_BOOK_HOME_SET] = DAVHrefListValue((
+				'addressbooks/users/%s/' % (self.login,),
+			), prefix=True)
 		return ret
 
 	def dav_group_members(self, req):
@@ -1586,12 +1578,6 @@ class User(Base):
 		resp.etag = ctx.hexdigest()
 		return resp
 
-	def dav_get(self, req):
-		vcard = getattr(self, 'vcard', None)
-		if vcard is None:
-			self.vcard = self._get_vcard()
-		return self.vcard
-
 	@validates('name_family', 'name_given', 'name_middle', 'login', 'organization', 'organizational_unit', 'title', 'description')
 	def _reset_vcard(self, k, v):
 		self.vcard = None
@@ -1634,6 +1620,58 @@ def _del_user(mapper, conn, tgt):
 		.delete(synchronize_session=False)
 
 event.listen(User, 'after_delete', _del_user)
+
+@implementer(IDAVFile, IDAVCard)
+class UserCard(object):
+	"""
+	User's vCard object.
+	"""
+	def __init__(self, user, req):
+		self.user = user
+		self.req = req
+
+	@property
+	def __name__(self):
+		return '%s.vcf' % (self.user.login,)
+
+	def __str__(self):
+		return self.__name__
+
+	def get_uri(self):
+		return [ '', 'addressbooks', 'system', self.user.login ]
+
+	def dav_props(self, pset):
+		user = self.user
+		vcard = getattr(user, 'vcard', None)
+		if vcard is None:
+			user.vcard = user._get_vcard()
+
+		ret = {}
+		if dprops.CONTENT_LENGTH in pset:
+			ret[dprops.CONTENT_LENGTH] = user.vcard.content_length
+		if dprops.CONTENT_TYPE in pset:
+			ret[dprops.CONTENT_TYPE] = 'text/vcard'
+		if dprops.DISPLAY_NAME in pset:
+			ret[dprops.DISPLAY_NAME] = self.__name__
+		if dprops.ETAG in pset:
+			ret[dprops.ETAG] = '"%s"' % user.vcard.etag
+		if dprops.ADDRESS_DATA in pset:
+			ret[dprops.ADDRESS_DATA] = DAVBinaryValue(user.vcard.body)
+		return ret
+
+	def dav_acl(self, req):
+		return DAVACLValue((DAVACEValue(
+			DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
+			grant=(dprops.ACL_READ, dprops.ACL_READ_ACL),
+			protected=True
+		),))
+
+	def dav_get(self, req):
+		user = self.user
+		vcard = getattr(user, 'vcard', None)
+		if vcard is None:
+			user.vcard = user._get_vcard()
+		return user.vcard
 
 @implementer(IDAVFile, IDAVPrincipal)
 class Group(Base):
@@ -1887,8 +1925,6 @@ class Group(Base):
 
 	def dav_props(self, pset):
 		ret = {}
-		if dprops.CONTENT_TYPE in pset:
-			ret[dprops.CONTENT_TYPE] = 'text/vcard'
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.name
 		return ret
@@ -4275,7 +4311,7 @@ class FileFolder(Base):
 				obj.creation_time = props[dprops.CREATION_DATE]
 			if dprops.LAST_MODIFIED in props:
 				obj.modification_time = props[dprops.LAST_MODIFIED]
-		return obj
+		return (obj, False)
 
 	def dav_append(self, req, ctx, name):
 		if isinstance(ctx, File):
@@ -4475,8 +4511,6 @@ def _on_set_ff_synctoken(tgt, value, oldvalue, initiator):
 		var_vfs = NPVariable.get_rw('DAV:SYNC:PLUG:VFS')
 		if value > var_vfs.integer_value:
 			var_vfs.integer_value = value
-		if value > var_root.integer_value:
-			var_root.integer_value = value
 	return value
 
 _BLOCK_SIZE = 4096 * 64 # 256K
@@ -5150,6 +5184,7 @@ class File(Base):
 			self.set_region_from_file(data, start, length, req.user)
 		else:
 			self.set_from_file(data, req.user)
+		return False
 
 	def dav_clone(self, req):
 		# TODO: clone meta
@@ -8156,15 +8191,16 @@ class AddressBook(Base):
 			name=name,
 			address_book=self
 		)
+		mod = False
 		if data is not None:
-			obj.dav_put(req, data)
+			mod = obj.dav_put(req, data)
 		sess.add(obj)
 		if props:
 			if dprops.CREATION_DATE in props:
 				obj.creation_time = props[dprops.CREATION_DATE]
 			if dprops.LAST_MODIFIED in props:
 				obj.modification_time = props[dprops.LAST_MODIFIED]
-		return obj
+		return (obj, mod)
 
 	def dav_append(self, req, ctx, name):
 		if isinstance(ctx, AddressBookCard):
@@ -8645,6 +8681,7 @@ class AddressBookCard(Base):
 		return self.get_response(req)
 
 	def dav_put(self, req, data, start=None, length=None):
+		mod = False
 		if isinstance(start, int) and isinstance(length, int):
 			newdata = bytearray(self.data)
 			mv = memoryview(newdata)
@@ -8652,12 +8689,14 @@ class AddressBookCard(Base):
 				mv[start:start + length] = data.read(length)
 			except AttributeError:
 				mv[start:start + length] = data
-			self.data = newdata
 		else:
 			try:
-				self.data = data.read()
+				newdata = bytearray(data.read())
 			except AttributeError:
-				self.data = data
+				newdata = bytearray(data)
+		mod = req.dav.verify_vcard(newdata)
+		self.data = newdata
+		return mod
 
 	def dav_clone(self, req):
 		# TODO: clone meta

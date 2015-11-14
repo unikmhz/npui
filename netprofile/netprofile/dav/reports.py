@@ -42,6 +42,8 @@ __all__ = [
 from zope.interface.verify import verifyObject
 from zope.interface.exceptions import DoesNotImplement
 
+from netprofile import vobject
+
 from . import props as dprops
 from .errors import (
 	DAVBadRequestError,
@@ -453,12 +455,160 @@ class CardDAVReport(DAVReport):
 				return False
 		return True
 
+_vcard_propfilter_alias = {
+	'mail' : 'email'
+}
+
 class DAVAddressBookQueryReport(CardDAVReport):
 	def __call__(self, req):
 		root = self.rreq.xml
 		node = self.rreq.ctx
-		user = req.user
-		req.dav.user_acl(req, node, dprops.ACL_READ) # FIXME: recursive
+		depth = req.dav.get_http_depth(req, 0)
+		req.dav.user_acl(req, node, dprops.ACL_READ)
+
+		vcard_filter = root.find('./' + dprops.VCARD_FILTER)
+		pset = set()
+		vpset = set()
+		for prop in root.iterchildren(dprops.PROP):
+			for pname in prop:
+				pset.add(pname.tag)
+				if pname.tag == dprops.ADDRESS_DATA:
+					for vprop in pname.iterchildren(dprops.VCARD_PROP):
+						vpname = vprop.get('name')
+						if vpname is not None:
+							vpset.add(vpname)
+
+		resp = DAVMultiStatusResponse(request=req)
+		props = req.dav.get_path_props(req, node, pset, depth) # FIXME: get_404/minimal
+		for ctx, node_props in props.items():
+			if not req.dav.has_user_acl(req, ctx, dprops.ACL_READ):
+				continue
+			try:
+				verifyObject(IDAVCard, ctx)
+				try:
+					card_data = ctx.dav_get(req).body.decode()
+				except AttributeError:
+					continue
+				card = vobject.readOne(card_data)
+				if not self.filter(req, ctx, card, vcard_filter):
+					continue
+				if len(vpset) > 0:
+					# TODO: custom vcard fields
+					pass
+			except (DoesNotImplement, vobject.base.ParseError):
+				continue
+			el = DAVResponseElement(req, ctx, node_props)
+			resp.add_element(el)
+
+		resp.make_body()
+		req.dav.set_features(resp, node)
+		resp.vary = ('Brief', 'Prefer')
+		return resp
+
+	def filter(self, req, obj, card, filters):
+		if filters is None:
+			return True
+		if len(filters) == 0:
+			return True
+		test = filters.get('test')
+		if test not in ('allof', 'anyof'):
+			test = 'anyof'
+		for propfilter in filters.iterchildren(dprops.VCARD_PROP_FILTER):
+			name = propfilter.get('name')
+			if name is None:
+				continue
+			group = None
+			if '.' in name:
+				group, name = name.split('.')
+			lcname = name.lower()
+			if lcname in _vcard_propfilter_alias:
+				lcname = _vcard_propfilter_alias[lcname]
+			ftest = propfilter.get('test')
+			if ftest not in ('allof', 'anyof'):
+				ftest = 'anyof'
+			fmatched = False if (ftest == 'anyof') else True
+			flen = len(propfilter)
+
+			exists = (lcname in card.contents)
+			propvalues = []
+			if exists:
+				if group:
+					exists = False
+					for pval in getattr(card, lcname + '_list'):
+						if pval.group == group:
+							exists = True
+							propvalues.append(pval)
+				else:
+					propvalues = getattr(card, lcname + '_list')
+			notdef = (propfilter.find('./' + dprops.VCARD_IS_NOT_DEFINED) is not None)
+			if notdef:
+				flen -= 1
+
+			if (flen == 0) or notdef:
+				if notdef:
+					fmatched = not exists
+				else:
+					fmatched = exists
+			elif not exists:
+				fmatched = False
+			else:
+				for paramfilter in propfilter.iterchildren(dprops.VCARD_PARAM_FILTER):
+					res = self.filter_param(req, obj, propvalues, paramfilter)
+					if (ftest == 'anyof') and res:
+						fmatched = True
+						break
+					if (ftest == 'allof') and not res:
+						fmatched = False
+						break
+				else:
+					for textmatch in propfilter.iterchildren(dprops.VCARD_TEXT_MATCH):
+						res = self.filter_text(req, obj, propvalues, textmatch)
+						if (ftest == 'anyof') and res:
+							fmatched = True
+							break
+						if (ftest == 'allof') and not res:
+							fmatched = False
+							break
+
+			if (test == 'anyof') and fmatched:
+				return True
+			if (test == 'allof') and not fmatched:
+				return False
+
+		return False if (test == 'anyof') else True
+
+	def filter_param(self, req, obj, propvalues, paramfilter):
+		name = paramfilter.get('name')
+		if name is None:
+			return False
+		ucname = name.upper()
+		notdef = (paramfilter.find('./' + dprops.VCARD_IS_NOT_DEFINED) is not None)
+		found = False
+		has_terms = False
+		for val in propvalues:
+			if ucname not in val.params:
+				continue
+			found = True
+			for textmatch in paramfilter.iterchildren(dprops.VCARD_TEXT_MATCH):
+				has_terms = True
+				if self.filter_text(req, obj, val.params[ucname], textmatch):
+					return True
+		if has_terms:
+			return False
+		return found ^ notdef
+
+	def filter_text(self, req, obj, propvalues, textmatch):
+		substr = textmatch.text
+		collation = textmatch.get('collation', 'i;unicode-casemap')
+		matchtype = textmatch.get('match-type', 'contains')
+		negate = True if (textmatch.get('negate-condition') == 'yes') else False
+		for val in propvalues:
+			val = getattr(val, 'value', val)
+			if req.dav.match_text(val, substr, collation, matchtype):
+				break
+		else:
+			return negate
+		return not negate
 
 class DAVAddressBookMultiGetReport(CardDAVReport):
 	def __call__(self, req):

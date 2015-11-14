@@ -66,6 +66,7 @@ from .models import (
 	FileFolder,
 	Group,
 	User,
+	UserCard,
 
 	F_DEFAULT_FILES,
 	F_DEFAULT_DIRS,
@@ -313,7 +314,7 @@ class DAVPluginVFS(dav.DAVPlugin):
 				obj.creation_time = props[dprops.CREATION_DATE]
 			if dprops.LAST_MODIFIED in props:
 				obj.modification_time = props[dprops.LAST_MODIFIED]
-		return obj
+		return (obj, False)
 
 	def dav_append(self, req, ctx, name):
 		if isinstance(ctx, File):
@@ -392,10 +393,7 @@ class DAVPluginVFS(dav.DAVPlugin):
 			ret[dprops.CTAG] = ctag
 		return ret
 
-@implementer(dav.IDAVAddressBook, dav.IDAVDirectory)
 class DAVPluginUsers(dav.DAVPlugin):
-	__dav_collid__ = 'PLUG:USERS'
-
 	def __iter__(self):
 		sess = DBSession()
 		for t in sess.query(User.login):
@@ -425,31 +423,6 @@ class DAVPluginUsers(dav.DAVPlugin):
 	def dav_collections(self):
 		return self.dav_children
 
-	def dav_props(self, pset):
-		ret = super(DAVPluginUsers, self).dav_props(pset)
-		token = None
-		if dprops.ETAG in pset:
-			etag = None
-			token = NPVariable.get_ro('DAV:SYNC:PLUG:USERS')
-			if token and token.integer_value:
-				etag = '"ST:%d"' % (token.integer_value,)
-			ret[dprops.ETAG] = etag
-		if dprops.CTAG in pset:
-			ctag = None
-			if token is None:
-				token = NPVariable.get_ro('DAV:SYNC:PLUG:USERS')
-			if token and token.integer_value:
-				ctag = '%s%s' % (
-					dprops.NS_SYNC,
-					str(token.integer_value)
-				)
-			ret[dprops.CTAG] = ctag
-		if dprops.ADDRESS_BOOK_DESCRIPTION in pset:
-			ret[dprops.ADDRESS_BOOK_DESCRIPTION] = 'Global system users'
-		if dprops.SUPPORTED_ADDRESS_DATA in pset:
-			ret[dprops.SUPPORTED_ADDRESS_DATA] = dav.DAVSupportedAddressDataValue(('text/vcard', '3.0'))
-		return ret
-
 	def dav_search_principals(self, req, test, query):
 		cond = []
 		for prop, value in query.items():
@@ -471,8 +444,6 @@ class DAVPluginUsers(dav.DAVPlugin):
 		yield req.user
 
 class DAVPluginGroups(dav.DAVPlugin):
-	__dav_collid__ = 'PLUG:GROUPS'
-
 	def __iter__(self):
 		sess = DBSession()
 		for t in sess.query(Group.name):
@@ -501,27 +472,6 @@ class DAVPluginGroups(dav.DAVPlugin):
 	@property
 	def dav_collections(self):
 		return self.dav_children
-
-	def dav_props(self, pset):
-		ret = super(DAVPluginGroups, self).dav_props(pset)
-		token = None
-		if dprops.ETAG in pset:
-			etag = None
-			token = NPVariable.get_ro('DAV:SYNC:PLUG:GROUPS')
-			if token and token.integer_value:
-				etag = '"ST:%d"' % (token.integer_value,)
-			ret[dprops.ETAG] = etag
-		if dprops.CTAG in pset:
-			ctag = None
-			if token is None:
-				token = NPVariable.get_ro('DAV:SYNC:PLUG:GROUPS')
-			if token and token.integer_value:
-				ctag = '%s%s' % (
-					dprops.NS_SYNC,
-					str(token.integer_value)
-				)
-			ret[dprops.CTAG] = ctag
-		return ret
 
 	def dav_search_principals(self, req, test, query):
 		cond = []
@@ -664,10 +614,67 @@ class DAVPluginUserAddressBookCollections(DAVPluginAbstractAddressBooks):
 	def dav_collections(self):
 		return self.dav_children
 
+@implementer(dav.IDAVAddressBook, dav.IDAVDirectory)
+class DAVPluginSystemAddressBook(DAVPluginAbstractAddressBooks):
+	__dav_collid__ = 'PLUG:USERS'
+
+	def __iter__(self):
+		sess = DBSession()
+		for t in sess.query(User.login):
+			yield '%s.vcf' % (t[0],)
+
+	def __getitem__(self, name):
+		sess = DBSession()
+		try:
+			u = sess.query(User).filter(User.login == name).one()
+		except NoResultFound:
+			raise KeyError('No such file or directory')
+		u.__req__ = self.req
+		uc = UserCard(u, self.req)
+		uc.__parent__ = self
+		uc.__plugin__ = self
+		return uc
+
+	@property
+	def dav_children(self):
+		sess = DBSession()
+		for u in sess.query(User):
+			u.__req__ = self.req
+			uc = UserCard(u, self.req)
+			uc.__parent__ = self
+			uc.__plugin__ = self
+			yield uc
+
+	def dav_props(self, pset):
+		ret = super(DAVPluginSystemAddressBook, self).dav_props(pset)
+		token = None
+		if dprops.ETAG in pset:
+			etag = None
+			token = NPVariable.get_ro('DAV:SYNC:PLUG:USERS')
+			if token and token.integer_value:
+				etag = '"ST:%d"' % (token.integer_value,)
+			ret[dprops.ETAG] = etag
+		if dprops.CTAG in pset:
+			ctag = None
+			if token is None:
+				token = NPVariable.get_ro('DAV:SYNC:PLUG:USERS')
+			if token and token.integer_value:
+				ctag = '%s%s' % (
+					dprops.NS_SYNC,
+					str(token.integer_value)
+				)
+			ret[dprops.CTAG] = ctag
+		if dprops.ADDRESS_BOOK_DESCRIPTION in pset:
+			ret[dprops.ADDRESS_BOOK_DESCRIPTION] = 'Global system users'
+		if dprops.SUPPORTED_ADDRESS_DATA in pset:
+			ret[dprops.SUPPORTED_ADDRESS_DATA] = dav.DAVSupportedAddressDataValue(('text/vcard', '3.0'))
+		return ret
+
 class DAVPluginAddressBooks(DAVPluginAbstractAddressBooks):
 	__dav_collid__ = 'PLUG:ABOOKS'
 	__abooks__ = {
-		'users' : DAVPluginUserAddressBookCollections
+		'users'  : DAVPluginUserAddressBookCollections,
+		'system' : DAVPluginSystemAddressBook
 	}
 
 	def __iter__(self):
@@ -680,6 +687,18 @@ class DAVPluginAddressBooks(DAVPluginAbstractAddressBooks):
 		plug.__name__ = name
 		plug.__parent__ = self
 		return plug
+
+	@property
+	def dav_children(self):
+		for name, cls in self.__abooks__.items():
+			plug = cls(self.req)
+			plug.__name__ = name
+			plug.__parent__ = self
+			yield plug
+
+	@property
+	def dav_collections(self):
+		return self.dav_children
 
 @notfound_view_config(request_method='OPTIONS')
 @view_config(route_name='core.home', request_method='OPTIONS')
@@ -1172,10 +1191,13 @@ class DAVCollectionHandler(DAVHandler):
 		creator = getattr(req.context, 'dav_create', None)
 		if creator is None:
 			raise dav.DAVNotImplementedError('Unable to create child node.')
-		obj = creator(req, req.view_name, None, None, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
-		etag = getattr(obj, 'etag', None)
-		if callable(etag):
-			etag = etag(req)
+		obj, modified = creator(req, req.view_name, None, None, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
+		if modified:
+			etag = None
+		else:
+			etag = getattr(obj, 'etag', None)
+			if callable(etag):
+				etag = etag(req)
 		resp = dav.DAVCreateResponse(request=req, etag=etag)
 		return resp
 
@@ -1249,7 +1271,7 @@ class DAVCollectionHandler(DAVHandler):
 		if creator is None:
 			raise dav.DAVNotImplementedError('Unable to create child node.')
 		with io.BytesIO(b'') as bio:
-			obj = creator(req, req.view_name, None, None, bio) # TODO: handle IOErrors, handle non-seekable request body
+			obj, modified = creator(req, req.view_name, None, None, bio) # TODO: handle IOErrors, handle non-seekable request body
 		if isinstance(obj, File):
 			lock.file = obj
 		lock.refresh(req.dav.get_http_timeout(req))
@@ -1310,10 +1332,13 @@ class DAVFileHandler(DAVHandler):
 		putter = getattr(obj, 'dav_put', None)
 		if putter is None:
 			raise dav.DAVNotImplementedError('Unable to overwrite node.')
-		putter(req, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
-		etag = getattr(obj, 'etag', None)
-		if callable(etag):
-			etag = etag(req)
+		modified = putter(req, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
+		if modified:
+			etag = None
+		else:
+			etag = getattr(obj, 'etag', None)
+			if callable(etag):
+				etag = etag(req)
 		resp = dav.DAVOverwriteResponse(request=req, etag=etag)
 		return resp
 
@@ -1363,10 +1388,13 @@ class DAVFileHandler(DAVHandler):
 			putter = getattr(obj, 'dav_put', None)
 			if putter is None:
 				raise dav.DAVNotImplementedError('Unable to patch node.')
-			putter(req, req.body_file_seekable, r_start, r_end - r_start) # TODO: handle IOErrors, handle non-seekable request body
-			etag = getattr(obj, 'etag', None)
-			if callable(etag):
-				etag = etag(req)
+			modified = putter(req, req.body_file_seekable, r_start, r_end - r_start) # TODO: handle IOErrors, handle non-seekable request body
+			if modified:
+				etag = None
+			else:
+				etag = getattr(obj, 'etag', None)
+				if callable(etag):
+					etag = etag(req)
 			resp = dav.DAVOverwriteResponse(request=req, etag=etag)
 			req.dav.set_features(resp, node=obj)
 			resp.headers.add('MS-Author-Via', 'DAV')

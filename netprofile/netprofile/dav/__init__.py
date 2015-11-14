@@ -35,6 +35,9 @@ else:
 	from urlparse import urlparse
 	from urllib import quote
 
+import string
+import unicodedata
+
 from dateutil.parser import parse as _dparse
 from zope.interface import implementer
 from zope.interface.verify import verifyObject
@@ -42,6 +45,7 @@ from zope.interface.exceptions import DoesNotImplement
 from webob.util import status_reasons
 
 from netprofile.db.connection import DBSession
+from netprofile import vobject
 
 from . import props as dprops
 from .interfaces import *
@@ -53,6 +57,11 @@ from .elements import *
 from .responses import *
 from .reports import *
 from .acls import *
+
+if PY3:
+	_tr_ascii_tolower = str.maketrans(string.ascii_uppercase, string.ascii_lowercase)
+else:
+	_tr_ascii_tolower = dict((ord(uc), ord(lc)) for uc, lc in zip(string.ascii_uppercase, string.ascii_lowercase))
 
 def _parse_datetime(el):
 	return _dparse(el.text)
@@ -79,6 +88,7 @@ class DAVManager(object):
 			'PUT', 'PROPPATCH', 'COPY', 'MOVE', 'REPORT',
 			'PATCH', 'LOCK', 'UNLOCK', 'ACL'
 		]
+		self.collations = ['i;ascii-casemap', 'i;unicode-casemap', 'i;octet', 'i;unicasemap']
 		self.parsers = {
 			dprops.RESOURCE_TYPE          : _parse_resource_type,
 			dprops.CREATION_DATE          : _parse_datetime,
@@ -127,9 +137,17 @@ class DAVManager(object):
 		self.resource_map = (
 			(IDAVCollection,  dprops.COLLECTION),
 			(IDAVPrincipal,   dprops.PRINCIPAL),
+			(IDAVCalendar,    dprops.CALENDAR),
 			(IDAVAddressBook, dprops.ADDRESS_BOOK),
 			(IDAVDirectory,   dprops.DIRECTORY)
 		)
+		self.vcard_accepts = [
+			'text/vcard',
+			('text/x-vcard', 0.9),
+			('text/vcard; version=3.0', 0.9),
+			('text/vcard; version=4.0', 0.8),
+			('application/vcard+json', 0.7)
+		]
 
 	def principal_collections(self, req):
 		dr = DAVRoot(req)
@@ -512,11 +530,11 @@ class DAVManager(object):
 			if group:
 				props[dprops.GROUP] = DAVHrefValue(group)
 		if dprops.DIRECTORY_GATEWAY in pset:
-			props[dprops.DIRECTORY_GATEWAY] = DAVHrefValue('users/', prefix=True)
+			props[dprops.DIRECTORY_GATEWAY] = DAVHrefValue('addressbooks/system/', prefix=True)
 		if (dprops.SUPPORTED_COLLSET_CAL in pset) and (dprops.SUPPORTED_COLLSET_CAL not in props):
-			props[dprops.SUPPORTED_COLLSET_CAL] = CalDAVSupportedCollationSetValue('i;ascii-casemap', 'i;unicode-casemap', 'i;octet')
+			props[dprops.SUPPORTED_COLLSET_CAL] = CalDAVSupportedCollationSetValue(*self.collations)
 		if (dprops.SUPPORTED_COLLSET_CARD in pset) and (dprops.SUPPORTED_COLLSET_CARD not in props):
-			props[dprops.SUPPORTED_COLLSET_CARD] = CardDAVSupportedCollationSetValue('i;ascii-casemap', 'i;unicode-casemap', 'i;octet')
+			props[dprops.SUPPORTED_COLLSET_CARD] = CardDAVSupportedCollationSetValue(*self.collations)
 		return props
 
 	def get_node_props(self, req, ctx, pset=None, get_404=True):
@@ -592,7 +610,7 @@ class DAVManager(object):
 		creator = getattr(parent, 'dav_create', None)
 		if (creator is None) or (not callable(creator)):
 			raise DAVNotImplementedError('Unable to create child node.')
-		obj = creator(req, name, rtype.types, props)
+		obj, modified = creator(req, name, rtype.types, props)
 		if len(props) == 0:
 			pset = set(dprops.DEFAULT_PROPS)
 		else:
@@ -600,6 +618,53 @@ class DAVManager(object):
 		sess.flush()
 		obj.__parent__ = parent
 		return (obj, self.get_node_props(req, obj, pset))
+
+	def negotiate_vcard_format(self, req):
+		return req.accept.best_match(self.vcard_accepts)
+
+	def verify_vcard(self, data):
+		vcard = None
+		try:
+			for obj in vobject.readComponents(data):
+				if vcard is None:
+					vcard = obj
+				else:
+					raise DAVUnsupportedMediaTypeError('Only one component is allowed inside vCard.')
+			vcard = vobject.readOne(data)
+		except vobject.base.ParseError as e:
+			if len(e.args):
+				err = 'Unable to parse vCard: %s.' % (e.args[0],)
+			else:
+				err = 'Unable to parse vCard.'
+			raise DAVUnsupportedMediaTypeError(err)
+		if vcard.name != 'VCARD':
+			raise DAVUnsupportedMediaTypeError('Only VCARD objects are allowed in this collection.')
+		mod = False
+		# TODO: convert to UTF-8
+		# TODO: generate UID if missing
+		# TODO: convert to canonical format (vCard 3.0 as of now)
+		return mod
+
+	def match_text(self, superstr, substr, collation='i;unicode-casemap', matchtype='contains'):
+		# TODO: investigate use of i;ascii-numeric collation
+		if collation not in self.collations:
+			raise DAVBadRequestError('Unsupported collation: %s.' % (collation,))
+		if collation == 'i;ascii-casemap':
+			superstr = superstr.translate(_tr_ascii_tolower)
+			substr = substr.translate(_tr_ascii_tolower)
+		elif collation in ('i;unicode-casemap', 'i;unicasemap'):
+			superstr = unicodedata.normalize('NFKD', superstr.lower())
+			substr = unicodedata.normalize('NFKD', substr.lower())
+
+		if matchtype in ('contains', 'substring'):
+			return substr in superstr
+		if matchtype == 'equals':
+			return substr == superstr
+		if matchtype == 'starts-with':
+			return superstr.startswith(substr)
+		if matchtype == 'ends-with':
+			return superstr.endswith(substr)
+		raise DAVBadRequestError('Unsupported text match type: %s.' % (matchtype,))
 
 def _get_davm(request):
 	return request.registry.getUtility(IDAVManager)
