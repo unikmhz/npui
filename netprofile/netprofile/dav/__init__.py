@@ -624,13 +624,15 @@ class DAVManager(object):
 
 	def verify_vcard(self, data):
 		vcard = None
+		datastr = data
+		if isinstance(data, (bytes, bytearray)):
+			datastr = data.decode()
 		try:
-			for obj in vobject.readComponents(data):
+			for obj in vobject.readComponents(datastr):
 				if vcard is None:
 					vcard = obj
 				else:
 					raise DAVUnsupportedMediaTypeError('Only one component is allowed inside vCard.')
-			vcard = vobject.readOne(data)
 		except vobject.base.ParseError as e:
 			if len(e.args):
 				err = 'Unable to parse vCard: %s.' % (e.args[0],)

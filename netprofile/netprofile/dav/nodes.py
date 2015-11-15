@@ -129,10 +129,12 @@ class DAVRoot(object):
 	def dav_create(self, req, name, rtype=None, props=None, data=None):
 		raise DAVForbiddenError('Unable to create child node.')
 
-	def resolve_uri(self, uri, exact=False):
+	def resolve_uri(self, uri, exact=False, accept_path=True):
 		url = urlparse(uri)
 		url_loc = url.netloc
-		if not url.port:
+		if accept_path and (uri[0] == '/') and (url_loc == ''):
+			url_loc = self.req.host
+		elif not url.port:
 			url_loc += ':80'
 		if url_loc != self.req.host:
 			raise ValueError('Alien URL supplied.')

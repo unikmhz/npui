@@ -502,7 +502,6 @@ class DAVAddressBookQueryReport(CardDAVReport):
 						for vpval in getattr(card, vpname_lower + '_list'):
 							newcard.add(vpval.duplicate(vpval))
 					node_props[200][dprops.ADDRESS_DATA] = DAVBinaryValue(newcard.serialize(validate=False))
-					pass
 			except (DoesNotImplement, vobject.base.ParseError):
 				continue
 			el = DAVResponseElement(req, ctx, node_props)
@@ -620,5 +619,66 @@ class DAVAddressBookQueryReport(CardDAVReport):
 
 class DAVAddressBookMultiGetReport(CardDAVReport):
 	def __call__(self, req):
-		pass
+		root = self.rreq.xml
+		node = self.rreq.ctx
+		req.dav.assert_http_depth(req, 0)
+		req.dav.user_acl(req, node, dprops.ACL_READ)
+
+		pset = set()
+		vpset = set()
+		for prop in root.iterchildren(dprops.PROP):
+			for pname in prop:
+				pset.add(pname.tag)
+				if pname.tag == dprops.ADDRESS_DATA:
+					for vprop in pname.iterchildren(dprops.VCARD_PROP):
+						vpname = vprop.get('name')
+						if vpname is not None:
+							vpset.add(vpname)
+
+		nodes = []
+		notfound_urls = []
+		for href in root.iterchildren(dprops.HREF):
+			if href.text is None:
+				continue
+			try:
+				ctx = req.dav.node(req, href.text)
+			except ValueError:
+				notfound_urls.append(href.text)
+				continue
+			nodes.append(ctx)
+
+		if (len(nodes) == 0) and (len(notfound_urls) == 0):
+			nodes = (node,)
+
+		resp = DAVMultiStatusResponse(request=req)
+		for ctx in nodes:
+			if req.dav.has_user_acl(req, ctx, dprops.ACL_READ):
+				props = req.dav.get_node_props(req, ctx, pset)
+				if (len(vpset) > 0) and (200 in props) and (dprops.ADDRESS_DATA in props[200]):
+					try:
+						verifyObject(IDAVCard, ctx)
+						card_data = ctx.dav_get(req).body.decode()
+						card = vobject.readOne(card_data)
+						newcard = vobject.vCard()
+						for vpname in vpset:
+							vpname_lower = vpname.lower()
+							if vpname_lower not in card.contents:
+								continue
+							for vpval in getattr(card, vpname_lower + '_list'):
+								newcard.add(vpval.duplicate(vpval))
+						props[200][dprops.ADDRESS_DATA] = DAVBinaryValue(newcard.serialize(validate=False))
+					except (AttributeError, DoesNotImplement, vobject.base.ParseError):
+						del props[200][dprops.ADDRESS_DATA]
+				el = DAVResponseElement(req, ctx, props)
+			else:
+				el = DAVResponseElement(req, ctx, props=None, status=403)
+			resp.add_element(el)
+		for uri in notfound_urls:
+			el = DAVResponseElement(req, uri, props=None, status=404)
+			resp.add_element(el)
+
+		resp.make_body()
+		req.dav.set_features(resp, node)
+		resp.vary = ('Brief', 'Prefer')
+		return resp
 

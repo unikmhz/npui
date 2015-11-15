@@ -33,6 +33,8 @@ STANDARD_PROPS = set()
 
 NS_XML        = 'http://www.w3.org/XML/1998/namespace'
 NS_DAV        = 'DAV:'
+
+NS_APPLE_DAV  = 'http://www.apple.com/webdav_fs/props/'
 NS_ICAL       = 'http://apple.com/ns/ical/'
 NS_INFIT_AB   = 'http://inf-it.com/ns/ab/'
 NS_INFIT_DAV  = 'http://inf-it.com/ns/dav/'
@@ -41,6 +43,7 @@ NS_SYNC       = 'http://netprofile.ru/ns/davsync/'
 NS_APACHE     = 'http://apache.org/dav/props/'
 NS_CALDAV     = 'urn:ietf:params:xml:ns:caldav'
 NS_CARDDAV    = 'urn:ietf:params:xml:ns:carddav'
+NS_MSSCHEMAS  = 'urn:schemas-microsoft-com:'
 NS_MSXMLDATA  = 'urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/'
 NS_CS         = 'http://calendarserver.org/ns/'
 NS_DAVMOUNT   = 'http://purl.org/NET/webdav/mount'
