@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 __all__ = [
+	'Currency',
 	'FuturePayment',
 	'Stash',
 	'StashIO',
@@ -40,6 +41,7 @@ __all__ = [
 ]
 
 from sqlalchemy import (
+	CHAR,
 	Column,
 	FetchedValue,
 	ForeignKey,
@@ -141,6 +143,222 @@ class FuturePaymentOrigin(DeclEnum):
 	operator = 'oper', _('Operator'), 10
 	user     = 'user', _('User'),     20
 
+class Currency(Base):
+	"""
+	Stash currency object.
+	"""
+	__tablename__ = 'currencies_def'
+	__table_args__ = (
+		Comment('Currencies'),
+		Index('currencies_def_u_name', 'name', unique=True),
+		Index('currencies_def_u_code', 'code', unique=True),
+		Index('currencies_def_u_symbol', 'symbol', unique=True),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_STASHES',
+				'cap_read'      : 'STASHES_LIST',
+				'cap_create'    : 'STASHES_CURRENCIES_CREATE',
+				'cap_edit'      : 'STASHES_CURRENCIES_EDIT',
+				'cap_delete'    : 'STASHES_CURRENCIES_DELETE',
+				'cap_menu'      : 'BASE_ADMIN',
+				'cap_read'      : 'BASE_ADMIN',
+				'cap_create'    : 'BASE_ADMIN',
+				'cap_edit'      : 'BASE_ADMIN',
+				'cap_delete'    : 'BASE_ADMIN',
+				'menu_name'     : _('Currencies'),
+				'show_in_menu'  : 'admin',
+				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
+				'grid_view'     : ('currid', 'name', 'code'),
+				'grid_hidden'   : ('currid',),
+				'form_view'     : (
+					'name', 'code', 'symbol',
+					'xchange_rate',
+					'xchange_from', 'xchange_to',
+					'convert_from', 'convert_to',
+					'allow_credit', 'allow_accounts', 'allow_services', 'allow_futures',
+					'oper_visible', 'user_visible',
+					'descr'
+				),
+				'easy_search'   : ('name', 'code', 'symbol'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new currency'))
+			}
+		}
+	)
+	id = Column(
+		'currid',
+		UInt32(),
+		Sequence('currencies_def_currid_seq'),
+		Comment('Currency ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Currency name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	code = Column(
+		CHAR(3),
+		Comment('ISO 4217 currency code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Code')
+		}
+	)
+	symbol = Column(
+		Unicode(16),
+		Comment('Currency symbol'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Symbol')
+		}
+	)
+	exchange_rate = Column(
+		'xchange_rate',
+		Money(),
+		Comment('Fallback exchange rate with default currency'),
+		nullable=False,
+		default=1,
+		server_default=text('1'),
+		info={
+			'header_string' : _('Exchange Rate')
+		}
+	)
+	can_exchange_from = Column(
+		'xchange_from',
+		NPBoolean(),
+		Comment('Can exchange from this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Exchange From')
+		}
+	)
+	can_exchange_to = Column(
+		'xchange_to',
+		NPBoolean(),
+		Comment('Can exchange to this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Exchange To')
+		}
+	)
+	can_convert_from = Column(
+		'convert_from',
+		NPBoolean(),
+		Comment('Allow converting stashes from this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Convert From')
+		}
+	)
+	can_convert_to = Column(
+		'convert_to',
+		NPBoolean(),
+		Comment('Allow converting stashes to this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Convert To')
+		}
+	)
+	allow_credit = Column(
+		NPBoolean(),
+		Comment('Allow crediting with this currency'),
+		nullable=False,
+		default=True,
+		server_default=npbool(True),
+		info={
+			'header_string' : _('Crediting')
+		}
+	)
+	allow_accounts = Column(
+		NPBoolean(),
+		Comment('Allow linking accounts to stashes with this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Allow Accounts')
+		}
+	)
+	allow_services = Column(
+		NPBoolean(),
+		Comment('Allow linking paid services to stashes with this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Allow Paid Services')
+		}
+	)
+	allow_futures = Column(
+		NPBoolean(),
+		Comment('Allow promised payments to stashes with this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Allow Promised Payments')
+		}
+	)
+	visible_to_operator = Column(
+		'oper_visible',
+		NPBoolean(),
+		Comment('Visibility in operator interface'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Visible to Operator')
+		}
+	)
+	visible_to_user = Column(
+		'user_visible',
+		NPBoolean(),
+		Comment('Visibility in user interface'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Visible to User')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Currency description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	def __str__(self):
+		return str(self.name)
+
 class Stash(Base):
 	"""
 	Stash object.
@@ -149,6 +367,7 @@ class Stash(Base):
 	__table_args__ = (
 		Comment('Stashes of money'),
 		Index('stashes_def_i_entityid', 'entityid'),
+		Index('stashes_def_i_currid', 'currid'),
 		Trigger('before', 'insert', 't_stashes_def_bi'),
 		Trigger('before', 'update', 't_stashes_def_bu'),
 		{
@@ -194,6 +413,19 @@ class Stash(Base):
 			'header_string' : _('Entity'),
 			'filter_type'   : 'none',
 			'column_flex'   : 2
+		}
+	)
+	currency_id = Column(
+		'currid',
+		UInt32(),
+		Comment('Currency ID'),
+		ForeignKey('currencies_def.currid', name='stashes_def_fk_currid', onupdate='CASCADE'), # ondelete=RESTRICT
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Currency'),
+			'filter_type'   : 'list'
 		}
 	)
 	name = Column(
@@ -257,6 +489,13 @@ class Stash(Base):
 			'stashes',
 			cascade='all, delete-orphan',
 			passive_deletes=True
+		)
+	)
+	currency = relationship(
+		'Currency',
+		backref=backref(
+			'stashes',
+			passive_deletes='all'
 		)
 	)
 
@@ -338,7 +577,8 @@ class StashIOType(Base):
 			'header_string' : _('Type')
 		}
 	)
-	oper_visible = Column(
+	visible_to_operator = Column(
+		'oper_visible',
 		NPBoolean(),
 		Comment('Visibility in operator interface'),
 		nullable=False,
@@ -348,7 +588,8 @@ class StashIOType(Base):
 			'header_string' : _('Visible to Operator')
 		}
 	)
-	user_visible = Column(
+	visible_to_user = Column(
+		'user_visible',
 		NPBoolean(),
 		Comment('Visibility in user interface'),
 		nullable=False,

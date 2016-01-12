@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -55,6 +55,7 @@ class Module(ModuleBase):
 	def get_models(cls):
 		from netprofile_stashes import models
 		return (
+			models.Currency,
 			models.FuturePayment,
 			models.Stash,
 			models.StashIO,
@@ -179,8 +180,8 @@ class Module(ModuleBase):
 				name='Subscription fee',
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
+				visible_to_operator=False,
+				visible_to_user=True,
 				description='Periodic withdrawal of funds for an active service.'
 			),
 			StashIOType(
@@ -188,8 +189,8 @@ class Module(ModuleBase):
 				name='Postpaid service fee',
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
+				visible_to_operator=False,
+				visible_to_user=True,
 				description='Withdrawal of funds for used service.'
 			),
 			StashIOType(
@@ -197,8 +198,8 @@ class Module(ModuleBase):
 				name='Reimbursement for unused subscription fee.',
 				io_class=OperationClass.system,
 				type=IOOperationType.incoming,
-				oper_visible=False,
-				user_visible=True,
+				visible_to_operator=False,
+				visible_to_user=True,
 				description='Addition of funds that is a result of tariff recalculation or operator action.'
 			),
 			StashIOType(
@@ -206,8 +207,8 @@ class Module(ModuleBase):
 				name='Confirmation of promised payment',
 				io_class=OperationClass.system,
 				type=IOOperationType.bidirectional,
-				oper_visible=False,
-				user_visible=True,
+				visible_to_operator=False,
+				visible_to_user=True,
 				description='This operation is a result of a payment promise being fulfilled.'
 			),
 			StashIOType(
@@ -215,8 +216,8 @@ class Module(ModuleBase):
 				name='Transfer from another stash',
 				io_class=OperationClass.system,
 				type=IOOperationType.incoming,
-				oper_visible=False,
-				user_visible=True,
+				visible_to_operator=False,
+				visible_to_user=True,
 				description='Addition of funds that were transferred from another stash.'
 			),
 			StashIOType(
@@ -224,8 +225,8 @@ class Module(ModuleBase):
 				name='Transfer to another stash',
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
+				visible_to_operator=False,
+				visible_to_user=True,
 				description='Withdrawal of funds that were transferred to another stash.'
 			),
 			StashIOType(
@@ -233,8 +234,8 @@ class Module(ModuleBase):
 				name='Payment for service activation',
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
+				visible_to_operator=False,
+				visible_to_user=True,
 				description='Initial payment for activation of an auxiliary service.',
 			),
 			StashIOType(
@@ -242,8 +243,8 @@ class Module(ModuleBase):
 				name='Payment for maintaining service',
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
+				visible_to_operator=False,
+				visible_to_user=True,
 				description='Periodic payment for maintaining an auxiliary service.'
 			)
 		)
