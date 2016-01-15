@@ -474,6 +474,11 @@ class NPVariable(Base):
 		}
 	)
 
+	def __init__(self, *args, **kwargs):
+		super(NPVariable, self).__init__(*args, **kwargs)
+		if 'name' in kwargs:
+			NPVariable._var_map[kwargs['name']] = self
+
 	def __str__(self):
 		return '%s' % str(self.name)
 
