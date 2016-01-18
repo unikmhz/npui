@@ -2,9 +2,12 @@
 <%inherit file="netprofile:templates/ddl_function.mak"/>\
 <%block name="sql">\
 	DECLARE xsiotype, ps_entityid, ps_aeid, ps_hostid, ps_stashid, ps_paidid INT UNSIGNED DEFAULT 0;
+	DECLARE stash_currid INT UNSIGNED DEFAULT NULL;
 	DECLARE ps_active ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'N';
+	DECLARE curr_credit ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'Y';
 	DECLARE ps_qpend DATETIME DEFAULT NULL;
 	DECLARE stash_amount, stash_credit, pay, pt_isum, pt_qsum DECIMAL(20,8) DEFAULT 0.0;
+	DECLARE curr_xrate DECIMAL(20,8) DEFAULT 1.0;
 	DECLARE pt_spa, pt_qpa SMALLINT UNSIGNED DEFAULT 1;
 	DECLARE pt_qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'c_hour', 'c_day', 'c_month', 'f_hour', 'f_day', 'f_week', 'f_month') CHARACTER SET ascii DEFAULT 'c_month';
 	DECLARE pt_qpt ENUM('I', 'L', 'O') DEFAULT 'I';
@@ -42,11 +45,25 @@
 		LEAVE psefunc;
 	END IF;
 
-	SELECT `amount`, `credit`
-	INTO stash_amount, stash_credit
+	SELECT `currid`, `amount`, `credit`
+	INTO stash_currid, stash_amount, stash_credit
 	FROM `stashes_def`
 	WHERE `stashid` = ps_stashid
 	FOR UPDATE;
+
+	IF stash_currid IS NOT NULL THEN
+		SELECT `xchange_rate`, `allow_credit`
+		INTO curr_xrate, curr_credit
+		FROM `currencies_def`
+		WHERE `currid` = stash_currid;
+
+		SET pt_isum := pt_isum / curr_xrate;
+		SET pt_qsum := pt_qsum / curr_xrate;
+
+		IF curr_credit = 'N' THEN
+			SET stash_credit := 0.0;
+		END IF;
+	END IF;
 
 	IF ps_qpend IS NULL THEN
 		SET xsiotype := 7;
