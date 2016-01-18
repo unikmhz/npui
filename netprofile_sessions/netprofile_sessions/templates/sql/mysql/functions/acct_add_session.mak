@@ -3,14 +3,15 @@
 <%block name="sql">\
 	DECLARE aeid INT UNSIGNED DEFAULT 0;
 	DECLARE user_stashid, user_rateid, user_aliasid, user_sec, rate_qsec, sdiff INT UNSIGNED DEFAULT 0;
-	DECLARE user_nextrateid, rate_dsid, destid INT UNSIGNED DEFAULT NULL;
+	DECLARE user_nextrateid, stash_currid, rate_dsid, destid INT UNSIGNED DEFAULT NULL;
 	DECLARE user_uin, user_ueg, rate_qti, rate_qte DECIMAL(16,0) UNSIGNED DEFAULT 0;
 	DECLARE user_qpend, user_qporig, upts DATETIME DEFAULT NULL;
 	DECLARE user_state TINYINT UNSIGNED DEFAULT 0;
 	DECLARE user_bcheck, user_pcheck, rate_abf ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'N';
-	DECLARE isok, rate_oqi, rate_oqe ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'Y';
+	DECLARE isok, rate_oqi, rate_oqe, curr_credit ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'Y';
 	DECLARE stash_amount, stash_amorig, stash_credit, rate_qsum, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, payq, payin, payout, paysec DECIMAL(20,8) DEFAULT 0.0;
 	DECLARE rate_auxsum DECIMAL(20,8) DEFAULT NULL;
+	DECLARE curr_xrate DECIMAL(20,8) DEFAULT 1.0;
 	DECLARE rate_type ENUM('prepaid', 'prepaid_cont', 'postpaid', 'free');
 	DECLARE rate_qpa SMALLINT UNSIGNED DEFAULT 1;
 	DECLARE rate_qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'c_hour', 'c_day', 'c_month', 'f_hour', 'f_day', 'f_week', 'f_month') CHARACTER SET ascii DEFAULT 'c_month';
@@ -81,11 +82,29 @@
 		END IF;
 	END IF;
 
-	SELECT `amount`, `credit`
-	INTO stash_amount, stash_credit
+	SELECT `currid`, `amount`, `credit`
+	INTO stash_currid, stash_amount, stash_credit
 	FROM `stashes_def`
 	WHERE `stashid` = user_stashid
 	FOR UPDATE;
+
+	IF stash_currid IS NOT NULL THEN
+		SELECT `xchange_rate`, `allow_credit`
+		INTO curr_xrate, curr_credit
+		FROM `currencies_def`
+		WHERE `currid` = stash_currid;
+
+		SET rate_qsum := rate_qsum / curr_xrate;
+		SET rate_oqsum_in := rate_oqsum_in / curr_xrate;
+		SET rate_oqsum_eg := rate_oqsum_eg / curr_xrate;
+		SET rate_oqsum_sec := rate_oqsum_sec / curr_xrate;
+		IF rate_auxsum IS NOT NULL THEN
+			SET rate_auxsum := rate_auxsum / curr_xrate;
+		END IF;
+		IF curr_credit = 'N' THEN
+			SET stash_credit := 0.0;
+		END IF;
+	END IF;
 
 	SET user_qporig := user_qpend;
 	SET stash_amorig := stash_amount;
@@ -197,11 +216,21 @@
 			FROM `rates_def`
 			WHERE `rateid` = user_rateid;
 
-			SET payq := rate_qsum;
-
 			IF rate_abf = 'Y' THEN
 				CALL acct_rate_mods(ts, user_rateid, aeid, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, newpol_in, newpol_eg);
 			END IF;
+
+			IF stash_currid IS NOT NULL THEN
+				SET rate_qsum := rate_qsum / curr_xrate;
+				SET rate_oqsum_in := rate_oqsum_in / curr_xrate;
+				SET rate_oqsum_eg := rate_oqsum_eg / curr_xrate;
+				SET rate_oqsum_sec := rate_oqsum_sec / curr_xrate;
+				IF rate_auxsum IS NOT NULL THEN
+					SET rate_auxsum := rate_auxsum / curr_xrate;
+				END IF;
+			END IF;
+
+			SET payq := rate_qsum;
 		END IF;
 		SET user_qpend := FROM_UNIXTIME(UNIX_TIMESTAMP(ts) + acct_rate_qpnew(rate_qpa, rate_qpu, ts));
 		SET user_uin := 0;
