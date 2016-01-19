@@ -474,6 +474,11 @@ class NPVariable(Base):
 		}
 	)
 
+	def __init__(self, *args, **kwargs):
+		super(NPVariable, self).__init__(*args, **kwargs)
+		if 'name' in kwargs:
+			NPVariable._var_map[kwargs['name']] = self
+
 	def __str__(self):
 		return '%s' % str(self.name)
 
@@ -8838,8 +8843,13 @@ def _core_before_flush(sess, flush_ctx, instances):
 				update_synctoken.add(obj)
 
 	if (len(update_synctoken) > 0) or (len(add_history) > 0):
-		token = NPVariable.get_rw('DAV:SYNC:ROOT')
-		token.integer_value += 1
+		try:
+			token = NPVariable.get_rw('DAV:SYNC:ROOT')
+		except NoResultFound:
+			token = NPVariable(name='DAV:SYNC:ROOT', integer_value=1)
+		else:
+			token.integer_value += 1
+
 		for obj in add_history:
 			for dh in obj.get_dav_history(sess, token.integer_value):
 				sess.add(dh)
