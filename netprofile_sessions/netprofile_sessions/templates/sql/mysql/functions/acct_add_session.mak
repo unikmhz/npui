@@ -199,7 +199,7 @@
 			END IF;
 			IF (user_pcheck = 'Y') THEN
 				SET isok := 'Y';
-				CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, payq, payin, payout);
+				CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, payq + payin + payout + paysec);
 			END IF;
 			SET stash_amount := stash_amount - payq - payin - payout - paysec;
 			IF (stash_amount + stash_credit) < 0 THEN
@@ -238,7 +238,7 @@
 		SET user_sec := 0;
 		IF (rate_type IN('prepaid', 'prepaid_cont')) AND (user_pcheck = 'Y') THEN
 			SET isok := 'N';
-			CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, payq, payin, payout);
+			CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, payq + payin + payout + paysec);
 		END IF;
 	END IF;
 

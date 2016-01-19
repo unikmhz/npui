@@ -162,7 +162,7 @@
 						SET isok := 'Y';
 						SET pay := pay - rate_qsum;
 						SET @stashio_ignore := 1;
-						CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_qpend, tst_amount, tst_credit, rate_qsum, payin, payout);
+						CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_qpend, tst_amount, tst_credit, rate_qsum + payin + payout + paysec);
 						SET @stashio_ignore := NULL;
 						SET pay := pay + rate_qsum;
 						IF (NEW.amount <> tst_amount) THEN
@@ -174,7 +174,7 @@
 				END IF;
 				IF (rate_type IN('prepaid', 'prepaid_cont')) AND (user_pcheck = 'Y') THEN
 				BEGIN
-					DECLARE payin, payout, tst_amount, tst_credit DECIMAL(20,8) DEFAULT 0.0;
+					DECLARE tst_amount, tst_credit DECIMAL(20,8) DEFAULT 0.0;
 
 					SET user_newend := FROM_UNIXTIME(UNIX_TIMESTAMP(curts) + acct_rate_qpnew(rate_qpa, rate_qpu, curts));
 					SET tst_amount := NEW.amount;
@@ -186,7 +186,7 @@
 					SET isok := 'N';
 					SET pay := pay - rate_qsum;
 					SET @stashio_ignore := 1;
-					CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_newend, tst_amount, tst_credit, rate_qsum, payin, payout);
+					CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_newend, tst_amount, tst_credit, rate_qsum);
 					SET @stashio_ignore := NULL;
 					SET pay := pay + rate_qsum;
 					IF (NEW.amount <> tst_amount) THEN

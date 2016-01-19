@@ -37,7 +37,7 @@
 	END IF;
 
 	OPEN pcur;
-	IF ((stash_amount + stash_credit) < (pt_qsum + payq + payin + payout)) AND (isok = 'N') THEN
+	IF ((stash_amount + stash_credit) < (pt_qsum + pay)) AND (isok = 'N') THEN
 		REPEAT
 			FETCH pcur INTO
 				ps_epid, ps_entityid, ps_hostid,
