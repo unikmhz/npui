@@ -34,6 +34,7 @@ __all__ = [
 	'PSCallbackProcedure',
 	'PSExecuteProcedure',
 	'PSPollProcedure',
+	'AcctPCheckProcedure',
 
 	'PSPollEvent'
 ]
@@ -95,7 +96,10 @@ from pyramid.i18n import (
 	get_localizer
 )
 
-from netprofile_rates.models import QuotaPeriodUnit
+from netprofile_rates.models import (
+	QuotaPeriodUnit,
+	RateType
+)
 
 _ = TranslationStringFactory('netprofile_paidservices')
 
@@ -526,6 +530,26 @@ PSPollProcedure = SQLFunction(
 		InArgument('ts', DateTime()),
 	),
 	comment='Poll paid services',
+	is_procedure=True
+)
+
+AcctPCheckProcedure = SQLFunction(
+	'acct_pcheck',
+	args=(
+		InArgument('aeid', UInt32()),
+		InArgument('ts', DateTime()),
+		InArgument('rate_type', RateType.db_type()),
+		InOutArgument('isok', NPBoolean()),
+		InOutArgument('user_stashid', UInt32()),
+		InOutArgument('user_qpend', DateTime()),
+		InOutArgument('stash_amount', Money()),
+		InOutArgument('stash_credit', Money()),
+		InOutArgument('payq', Money()),
+		InOutArgument('payin', Money()),
+		InOutArgument('payout', Money())
+	),
+	comment='Run linked paid service checks',
+	label='aapfunc',
 	is_procedure=True
 )
 

@@ -58,7 +58,8 @@ class Module(ModuleBase):
 		return (
 			models.PSCallbackProcedure,
 			models.PSExecuteProcedure,
-			models.PSPollProcedure
+			models.PSPollProcedure,
+			models.AcctPCheckProcedure
 		)
 
 	@classmethod
