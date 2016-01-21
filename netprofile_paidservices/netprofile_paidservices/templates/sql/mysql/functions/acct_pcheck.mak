@@ -35,6 +35,7 @@
 	IF done = 1 THEN
 		LEAVE aapfunc;
 	END IF;
+	SET pt_qsum := pt_qsum / xrate;
 
 	OPEN pcur;
 	IF ((stash_amount + stash_credit) < (pt_qsum + pay)) AND (isok = 'N') THEN
@@ -46,6 +47,8 @@
 				pt_qpa, pt_qpu, pt_cb_before,
 				pt_cb_success, pt_cb_failure;
 			IF ps_epid > 0 THEN
+				SET pt_isum := pt_isum / xrate;
+				SET pt_qsum := pt_qsum / xrate;
 				IF pt_cb_before IS NOT NULL THEN
 					CALL ps_callback(pt_cb_before, ps_epid, ts, aeid, ps_hostid, ps_paidid, ps_entityid, user_stashid, user_qpend, pt_qsum);
 				END IF;
@@ -63,6 +66,8 @@
 				pt_qpa, pt_qpu, pt_cb_before,
 				pt_cb_success, pt_cb_failure;
 			IF ps_epid > 0 THEN
+				SET pt_isum := pt_isum / xrate;
+				SET pt_qsum := pt_qsum / xrate;
 				IF pt_cb_before IS NOT NULL THEN
 					CALL ps_callback(pt_cb_before, ps_epid, ts, aeid, ps_hostid, ps_paidid, ps_entityid, user_stashid, user_qpend, pt_qsum);
 				END IF;

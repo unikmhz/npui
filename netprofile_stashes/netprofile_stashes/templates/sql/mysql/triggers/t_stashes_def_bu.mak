@@ -162,7 +162,7 @@
 						SET isok := 'Y';
 						SET pay := pay - rate_qsum;
 						SET @stashio_ignore := 1;
-						CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_qpend, tst_amount, tst_credit, rate_qsum + payin + payout + paysec);
+						CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_qpend, tst_amount, tst_credit, curr_xrate, rate_qsum + payin + payout + paysec);
 						SET @stashio_ignore := NULL;
 						SET pay := pay + rate_qsum;
 						IF (NEW.amount <> tst_amount) THEN
@@ -186,7 +186,7 @@
 					SET isok := 'N';
 					SET pay := pay - rate_qsum;
 					SET @stashio_ignore := 1;
-					CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_newend, tst_amount, tst_credit, rate_qsum);
+					CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_newend, tst_amount, tst_credit, curr_xrate, rate_qsum);
 					SET @stashio_ignore := NULL;
 					SET pay := pay + rate_qsum;
 					IF (NEW.amount <> tst_amount) THEN

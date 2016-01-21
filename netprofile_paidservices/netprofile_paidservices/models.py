@@ -544,6 +544,7 @@ AcctPCheckProcedure = SQLFunction(
 		InOutArgument('user_qpend', DateTime()),
 		InOutArgument('stash_amount', Money()),
 		InOutArgument('stash_credit', Money()),
+		InArgument('xrate', Money()),
 		InArgument('pay', Money())
 	),
 	comment='Run linked paid service checks',

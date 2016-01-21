@@ -199,7 +199,7 @@
 			END IF;
 			IF (user_pcheck = 'Y') THEN
 				SET isok := 'Y';
-				CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, payq + payin + payout + paysec);
+				CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, curr_xrate, payq + payin + payout + paysec);
 			END IF;
 			SET stash_amount := stash_amount - payq - payin - payout - paysec;
 			IF (stash_amount + stash_credit) < 0 THEN
@@ -211,13 +211,27 @@
 		IF (user_nextrateid IS NOT NULL) AND (user_nextrateid <> user_rateid) THEN
 			SET user_rateid := user_nextrateid;
 			SET user_nextrateid := NULL;
-			SELECT `type`, `abf`, `qp_amount`, `qp_unit`, `qt_ingress`, `qt_egress`, `qsum`, `auxsum`, `oqsum_ingress`, `oqsum_egress`, `oqsum_sec`, `oq_ingress`, `oq_egress`, `pol_ingress`, `pol_egress`
-			INTO rate_type, rate_abf, rate_qpa, rate_qpu, rate_qti, rate_qte, rate_qsum, rate_auxsum, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, rate_oqi, rate_oqe, newpol_in, newpol_eg
+			SELECT `type`, `abf`, `dsid`, `qp_amount`, `qp_unit`, `qt_ingress`, `qt_egress`, `qsum`, `auxsum`, `oqsum_ingress`, `oqsum_egress`, `oqsum_sec`, `oq_ingress`, `oq_egress`, `pol_ingress`, `pol_egress`
+			INTO rate_type, rate_abf, rate_dsid, rate_qpa, rate_qpu, rate_qti, rate_qte, rate_qsum, rate_auxsum, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, rate_oqi, rate_oqe, newpol_in, newpol_eg
 			FROM `rates_def`
 			WHERE `rateid` = user_rateid;
 
 			IF rate_abf = 'Y' THEN
 				CALL acct_rate_mods(ts, user_rateid, aeid, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, newpol_in, newpol_eg);
+			END IF;
+
+			SET dtype := 'normal';
+			IF (rate_dsid IS NOT NULL) AND (s_called IS NOT NULL) THEN
+				CALL acct_rate_dest(ts, user_rateid, rate_dsid, s_called, destid, dtype, rate_oqsum_sec);
+				IF (dtype = 'reject') AND (rate_type <> 'postpaid') THEN
+					SELECT
+						NULL AS `diff`,
+						4 AS `state`,
+						NULL AS `policy_in`,
+						NULL AS `policy_eg`;
+					ROLLBACK;
+					LEAVE aasfunc;
+				END IF;
 			END IF;
 
 			IF stash_currid IS NOT NULL THEN
@@ -238,7 +252,7 @@
 		SET user_sec := 0;
 		IF (rate_type IN('prepaid', 'prepaid_cont')) AND (user_pcheck = 'Y') THEN
 			SET isok := 'N';
-			CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, payq + payin + payout + paysec);
+			CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, curr_xrate, payq + payin + payout + paysec);
 		END IF;
 	END IF;
 
