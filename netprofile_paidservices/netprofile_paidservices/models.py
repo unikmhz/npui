@@ -544,6 +544,7 @@ AcctPCheckProcedure = SQLFunction(
 		InOutArgument('user_qpend', DateTime()),
 		InOutArgument('stash_amount', Money()),
 		InOutArgument('stash_credit', Money()),
+		InArgument('xcurrid', UInt32()),
 		InArgument('xrate', Money()),
 		InArgument('pay', Money())
 	),

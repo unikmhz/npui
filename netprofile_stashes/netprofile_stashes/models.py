@@ -663,11 +663,12 @@ class StashIO(Base):
 	__tablename__ = 'stashes_io_def'
 	__table_args__ = (
 		Comment('Stashes input/output operations'),
-		Index('stashes_io_i_siotypeid', 'siotypeid'),
-		Index('stashes_io_i_stashid', 'stashid'),
-		Index('stashes_io_i_uid', 'uid'),
-		Index('stashes_io_i_entityid', 'entityid'),
-		Index('stashes_io_i_ts', 'ts'),
+		Index('stashes_io_def_i_siotypeid', 'siotypeid'),
+		Index('stashes_io_def_i_stashid', 'stashid'),
+		Index('stashes_io_def_i_currid', 'currid'),
+		Index('stashes_io_def_i_uid', 'uid'),
+		Index('stashes_io_def_i_entityid', 'entityid'),
+		Index('stashes_io_def_i_ts', 'ts'),
 		Trigger('before', 'insert', 't_stashes_io_def_bi'),
 		Trigger('after', 'insert', 't_stashes_io_def_ai'),
 		{
@@ -682,9 +683,9 @@ class StashIO(Base):
 				'menu_name'     : _('Operations'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'ts', 'direction': 'DESC' },),
-				'grid_view'     : ('sioid', 'type', 'stash', 'entity', 'user', 'ts', 'diff'),
-				'grid_hidden'   : ('sioid',),
-				'form_view'     : ('type', 'stash', 'entity', 'user', 'ts', 'diff', 'descr'),
+				'grid_view'     : ('sioid', 'type', 'stash', 'currency', 'entity', 'user', 'ts', 'diff'),
+				'grid_hidden'   : ('sioid', 'currency'),
+				'form_view'     : ('type', 'stash', 'currency', 'entity', 'user', 'ts', 'diff', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : Wizard(
@@ -739,6 +740,19 @@ class StashIO(Base):
 			'header_string' : _('Stash'),
 			'filter_type'   : 'none',
 			'column_flex'   : 2
+		}
+	)
+	currency_id = Column(
+		'currid',
+		UInt32(),
+		Comment('Currency ID'),
+		ForeignKey('currencies_def.currid', name='stashes_io_def_fk_currid', onupdate='CASCADE'), # ondelete=RESTRICT
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Currency'),
+			'filter_type'   : 'list'
 		}
 	)
 	user_id = Column(
@@ -817,6 +831,13 @@ class StashIO(Base):
 			'ios',
 			cascade='all, delete-orphan',
 			passive_deletes=True
+		)
+	)
+	currency = relationship(
+		'Currency',
+		backref=backref(
+			'ios',
+			passive_deletes='all'
 		)
 	)
 	user = relationship(

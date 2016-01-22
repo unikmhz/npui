@@ -89,8 +89,8 @@
 		END IF;
 
 		IF (pay > 0) THEN
-			INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`, `descr`)
-			VALUES (xsiotype, ps_stashid, IF(ps_aeid IS NULL, ps_entityid, ps_aeid), ts, -pay, pt_name);
+			INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`, `descr`)
+			VALUES (xsiotype, ps_stashid, stash_currid, IF(ps_aeid IS NULL, ps_entityid, ps_aeid), ts, -pay, pt_name);
 
 			UPDATE `stashes_def`
 			SET `amount` = `amount` - pay

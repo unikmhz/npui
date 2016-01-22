@@ -162,7 +162,7 @@
 						SET isok := 'Y';
 						SET pay := pay - rate_qsum;
 						SET @stashio_ignore := 1;
-						CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_qpend, tst_amount, tst_credit, curr_xrate, rate_qsum + payin + payout + paysec);
+						CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_qpend, tst_amount, tst_credit, OLD.currid, curr_xrate, rate_qsum + payin + payout + paysec);
 						SET @stashio_ignore := NULL;
 						SET pay := pay + rate_qsum;
 						IF (NEW.amount <> tst_amount) THEN
@@ -186,7 +186,7 @@
 					SET isok := 'N';
 					SET pay := pay - rate_qsum;
 					SET @stashio_ignore := 1;
-					CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_newend, tst_amount, tst_credit, curr_xrate, rate_qsum);
+					CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_newend, tst_amount, tst_credit, OLD.currid, curr_xrate, rate_qsum);
 					SET @stashio_ignore := NULL;
 					SET pay := pay + rate_qsum;
 					IF (NEW.amount <> tst_amount) THEN
@@ -204,8 +204,8 @@
 						SET new_balance := new_balance - pay;
 						IF (rate_type = 'postpaid') AND (user_qpend IS NOT NULL) THEN
 							SET @stashio_ignore := 1;
-							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`)
-							VALUES (2, NEW.stashid, aeid, curts, -rate_qsum);
+							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`)
+							VALUES (2, NEW.stashid, OLD.currid, aeid, curts, -rate_qsum);
 							SET @stashio_ignore := NULL;
 							INSERT INTO `stashes_ops` (`stashid`, `type`, `ts`, `entityid`, `diff`, `acct_ingress`, `acct_egress`)
 							VALUES (NEW.stashid, CONCAT_WS('_', 'sub', st_in, st_eg), curts, aeid, -pay, user_uin, user_ueg);
@@ -221,8 +221,8 @@
 						SET user_sec := 0;
 						IF rate_type <> 'postpaid' THEN
 							SET @stashio_ignore := 1;
-							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`)
-							VALUES (1, NEW.stashid, aeid, curts, -rate_qsum);
+							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`)
+							VALUES (1, NEW.stashid, OLD.currid, aeid, curts, -rate_qsum);
 							SET @stashio_ignore := NULL;
 							INSERT INTO `stashes_ops` (`stashid`, `type`, `ts`, `entityid`, `diff`, `acct_ingress`, `acct_egress`)
 							VALUES (NEW.stashid, CONCAT_WS('_', 'sub', st_in, st_eg), curts, aeid, -pay, 0, 0);

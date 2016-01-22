@@ -199,7 +199,7 @@
 			END IF;
 			IF (user_pcheck = 'Y') THEN
 				SET isok := 'Y';
-				CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, curr_xrate, payq + payin + payout + paysec);
+				CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, stash_currid, curr_xrate, payq + payin + payout + paysec);
 			END IF;
 			SET stash_amount := stash_amount - payq - payin - payout - paysec;
 			IF (stash_amount + stash_credit) < 0 THEN
@@ -252,7 +252,7 @@
 		SET user_sec := 0;
 		IF (rate_type IN('prepaid', 'prepaid_cont')) AND (user_pcheck = 'Y') THEN
 			SET isok := 'N';
-			CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, curr_xrate, payq + payin + payout + paysec);
+			CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, stash_currid, curr_xrate, payq + payin + payout + paysec);
 		END IF;
 	END IF;
 
@@ -329,8 +329,8 @@
 
 	IF (stash_amount <> stash_amorig) AND (payq > 0) THEN
 		SET @stashio_ignore := 1;
-		INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`)
-		VALUES (IF(rate_type = 'postpaid', 2, 1), user_stashid, aeid, ts, -payq);
+		INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`)
+		VALUES (IF(rate_type = 'postpaid', 2, 1), user_stashid, stash_currid, aeid, ts, -payq);
 		SET @stashio_ignore := NULL;
 	END IF;
 	IF (@npa_all_traffic IS NULL) OR (@npa_all_traffic <> 1) THEN

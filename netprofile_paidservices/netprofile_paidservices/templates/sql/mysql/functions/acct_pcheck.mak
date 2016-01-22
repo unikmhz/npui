@@ -71,8 +71,8 @@
 				IF pt_cb_before IS NOT NULL THEN
 					CALL ps_callback(pt_cb_before, ps_epid, ts, aeid, ps_hostid, ps_paidid, ps_entityid, user_stashid, user_qpend, pt_qsum);
 				END IF;
-				INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`, `descr`)
-				VALUES (8, user_stashid, aeid, ts, -pt_qsum, pt_name);
+				INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`, `descr`)
+				VALUES (8, user_stashid, xcurrid, aeid, ts, -pt_qsum, pt_name);
 				SET stash_amount := stash_amount - pt_qsum;
 				IF pt_cb_success IS NOT NULL THEN
 					CALL ps_callback(pt_cb_success, ps_epid, ts, aeid, ps_hostid, ps_paidid, ps_entityid, user_stashid, user_qpend, pt_qsum);

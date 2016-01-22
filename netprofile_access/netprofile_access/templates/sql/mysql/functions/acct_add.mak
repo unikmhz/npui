@@ -257,8 +257,8 @@
 
 	IF (stash_amount <> stash_amorig) AND (payq > 0) THEN
 		SET @stashio_ignore := 1;
-		INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`)
-		VALUES (IF(rate_type = 'postpaid', 2, 1), user_stashid, aeid, ts, -payq);
+		INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`)
+		VALUES (IF(rate_type = 'postpaid', 2, 1), user_stashid, stash_currid, aeid, ts, -payq);
 		SET @stashio_ignore := NULL;
 	END IF;
 	IF (@npa_all_traffic IS NULL) OR (@npa_all_traffic <> 1) THEN
