@@ -40,6 +40,11 @@ __all__ = [
 	'FuturesPollEvent'
 ]
 
+from babel.numbers import (
+	format_currency,
+	format_decimal
+)
+
 from sqlalchemy import (
 	CHAR,
 	Column,
@@ -152,7 +157,6 @@ class Currency(Base):
 		Comment('Currencies'),
 		Index('currencies_def_u_name', 'name', unique=True),
 		Index('currencies_def_u_code', 'code', unique=True),
-		Index('currencies_def_u_symbol', 'symbol', unique=True),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -173,7 +177,8 @@ class Currency(Base):
 				'grid_view'     : ('currid', 'name', 'code'),
 				'grid_hidden'   : ('currid',),
 				'form_view'     : (
-					'name', 'code', 'symbol',
+					'name', 'code',
+					'prefix', 'suffix',
 					'xchange_rate',
 					'xchange_from', 'xchange_to',
 					'convert_from', 'convert_to',
@@ -181,7 +186,7 @@ class Currency(Base):
 					'oper_visible', 'user_visible',
 					'descr'
 				),
-				'easy_search'   : ('name', 'code', 'symbol'),
+				'easy_search'   : ('name', 'code', 'prefix', 'suffix'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new currency'))
 			}
@@ -217,14 +222,24 @@ class Currency(Base):
 			'header_string' : _('Code')
 		}
 	)
-	symbol = Column(
+	prefix = Column(
 		Unicode(16),
-		Comment('Currency symbol'),
+		Comment('Currency symbol prefix'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Symbol')
+			'header_string' : _('Prefix')
+		}
+	)
+	suffix = Column(
+		Unicode(16),
+		Comment('Currency symbol suffix'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Suffix')
 		}
 	)
 	exchange_rate = Column(
@@ -358,6 +373,29 @@ class Currency(Base):
 
 	def __str__(self):
 		return str(self.name)
+
+	def format(self, req, amount):
+		loc = req.current_locale
+		if (self.code is not None) and (self.code in loc.currencies):
+			formatted = format_currency(amount, self.code, locale=loc)
+		else:
+			formatted = format_decimal(amount, locale=loc)
+		ret = []
+		if self.prefix:
+			ret.append(self.prefix)
+		ret.append(formatted)
+		if self.suffix:
+			ret.append(self.suffix)
+		return '\xa0'.join(ret)
+
+	def format_long(self, req, amount):
+		loc = req.current_locale
+		if (self.code is not None) and (self.code in loc.currencies):
+			return format_currency(amount, self.code, locale=loc, format='0.######## ¤¤¤', currency_digits=False)
+		return '%s: %s' % (
+			str(self.name),
+			format_decimal(amount, locale=loc, format='0.########')
+		)
 
 class Stash(Base):
 	"""

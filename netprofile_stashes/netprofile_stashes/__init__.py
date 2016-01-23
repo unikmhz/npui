@@ -138,6 +138,18 @@ class Module(ModuleBase):
 				name='Stashes: Delete op. types'
 			),
 			Privilege(
+				code='STASHES_CURRENCIES_CREATE',
+				name='Stashes: Create currencies'
+			),
+			Privilege(
+				code='STASHES_CURRENCIES_EDIT',
+				name='Stashes: Edit currencies'
+			),
+			Privilege(
+				code='STASHES_CURRENCIES_DELETE',
+				name='Stashes: Delete currencies'
+			),
+			Privilege(
 				code='BASE_FUTURES',
 				name='Access: Promised payments'
 			),
