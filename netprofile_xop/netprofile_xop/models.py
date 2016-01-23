@@ -88,10 +88,6 @@ from pyramid.i18n import (
 	get_localizer
 )
 
-#from netprofile_entities.models import Entity
-#from netprofile_stashes.models import Stash
-
-
 _ = TranslationStringFactory('netprofile_xop')
 
 class ExternalOperationState(DeclEnum):
@@ -126,6 +122,8 @@ class ExternalOperation(Base):
 		Index('xop_def_i_ts', 'ts'),
 		Index('xop_def_i_entityid', 'entityid'),
 		Index('xop_def_i_stashid', 'stashid'),
+		Index('xop_def_u_sioid', 'sioid', unique=True),
+		Trigger('before', 'insert', 't_xop_def_bi'),
 		Trigger('before', 'update', 't_xop_def_bu'),
 		{
 			'mysql_engine'  : 'InnoDB',
@@ -141,11 +139,13 @@ class ExternalOperation(Base):
 				'menu_main'	   : True,
 				'show_in_menu' : 'modules',
 				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' },),
-				'grid_view'    : ('xopid', 'provider', 'ts', 'entity', 'diff', 'state'),
-				'grid_hidden'  : ('xopid',),
+				'grid_view'    : ('xopid', 'provider', 'ts', 'entity', 'currency', 'diff', 'state'),
+				'grid_hidden'  : ('xopid', 'currency'),
 				'form_view'    : (
-					'provider', 'ts', 'entity', 'diff', 'state',
-					'stash', 'extid', 'eacct'
+					'provider', 'ts', 'entity',
+					'currency', 'diff', 'state',
+					'stash', 'stash_io',
+					'extid', 'eacct'
 				),
 				'easy_search'  : ('extid', 'eacct'),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
@@ -196,6 +196,19 @@ class ExternalOperation(Base):
 			'column_flex'   : 3
 		}
 	)
+	currency_id = Column(
+		'currid',
+		UInt32(),
+		Comment('Currency ID'),
+		ForeignKey('currencies_def.currid', name='xop_def_fk_currid', onupdate='CASCADE'), # ondelete=RESTRICT
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Currency'),
+			'filter_type'   : 'list'
+		}
+	)
 	timestamp = Column(
 		'ts',
 		TIMESTAMP(),
@@ -234,6 +247,19 @@ class ExternalOperation(Base):
 			'column_flex'   : 3
 		}
 	)
+	stash_io_id = Column(
+		'sioid',
+		UInt32(),
+		ForeignKey('stashes_io_def.sioid', name='xop_def_fk_sioid', onupdate='CASCADE', ondelete='SET NULL'),
+		Comment('Related stash operation ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Operation'),
+			'filter_type'   : 'none'
+		}
+	)
 	difference = Column(
 		'diff',
 		Money(),
@@ -259,7 +285,17 @@ class ExternalOperation(Base):
 	provider = relationship(
 		'ExternalOperationProvider',
 		innerjoin=True,
-		backref='external_operations'
+		backref=backref(
+			'external_operations',
+			passive_deletes='all'
+		)
+	)
+	currency = relationship(
+		'Currency',
+		backref=backref(
+			'external_operations',
+			passive_deletes='all'
+		)
 	)
 	entity = relationship(
 		'Entity',
@@ -270,7 +306,17 @@ class ExternalOperation(Base):
 	)
 	stash = relationship(
 		'Stash',
-		backref='external_operations'
+		backref=backref(
+			'external_operations',
+			passive_deletes=True
+		)
+	)
+	stash_io = relationship(
+		'StashIO',
+		backref=backref(
+			'external_operations',
+			passive_deletes=True
+		)
 	)
 
 	@validates('state')
@@ -286,21 +332,21 @@ class ExternalOperation(Base):
 				ExternalOperationState.canceled
 					):
 				return val
-			raise ValueError('Invalid XOP state')
+			raise ValueError('Invalid XOP state transition')
 		if self.state == ExternalOperationState.checked:
 			if val in (
 				ExternalOperationState.pending,
 				ExternalOperationState.canceled
 					):
 				return val
-			raise ValueError('Invalid XOP state')
+			raise ValueError('Invalid XOP state transition')
 		if self.state == ExternalOperationState.confirmed:
 			if val in (
 				ExternalOperationState.cleared,
 				ExternalOperationState.canceled
 					):
 				return val
-			raise ValueError('Invalid XOP state')
+			raise ValueError('Invalid XOP state transition')
 		raise ValueError('Invalid XOP state')
 
 	def __str__(self):
