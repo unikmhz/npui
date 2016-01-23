@@ -3,6 +3,8 @@
 # and register module directories with distutils.
 # WARNING: Use inside an activated virtualenv only!
 
+test -z "$VIRTUAL_ENV" && exit 1
+
 NPMOD_DEFAULT="netprofile \
 	netprofile_core \
 	netprofile_documents \
@@ -45,21 +47,14 @@ pip install \
 	lxml \
 	tornado \
 	sockjs-tornado \
+	tornado-celery \
 	tornado-redis \
 	cracklib
-
-# FIXME: Remove this as soon as new version of tornado-celery is out.
-#        This fixes inability to install on Py3k.
-#        Version 0.3.4 from PyPI is affected.
-pip install \
-	--upgrade \
-	git+https://github.com/mher/tornado-celery.git
 
 # FIXME: maybe remove this, or let the user choose a driver?
 pip install \
 	--upgrade \
-	--allow-external mysql-connector-python \
-	mysql-connector-python
+	pymysql
 
 for mod in $NPMOD_DEFAULT
 do
