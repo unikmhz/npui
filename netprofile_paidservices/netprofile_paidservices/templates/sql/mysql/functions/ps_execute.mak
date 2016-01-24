@@ -1,9 +1,9 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="netprofile:templates/ddl_function.mak"/>\
 <%block name="sql">\
-	DECLARE xsiotype, ps_entityid, ps_aeid, ps_hostid, ps_stashid, ps_paidid INT UNSIGNED DEFAULT 0;
+	DECLARE ps_entityid, ps_aeid, ps_hostid, ps_stashid, ps_paidid INT UNSIGNED DEFAULT 0;
 	DECLARE stash_currid INT UNSIGNED DEFAULT NULL;
-	DECLARE ps_active ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'N';
+	DECLARE ps_active, is_initial ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'N';
 	DECLARE curr_credit ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'Y';
 	DECLARE ps_qpend DATETIME DEFAULT NULL;
 	DECLARE stash_amount, stash_credit, pay, pt_isum, pt_qsum DECIMAL(20,8) DEFAULT 0.0;
@@ -66,11 +66,11 @@
 	END IF;
 
 	IF ps_qpend IS NULL THEN
-		SET xsiotype := 7;
+		SET is_initial := 'Y';
 		SET pay := pt_isum;
 		SET ps_qpend := FROM_UNIXTIME(UNIX_TIMESTAMP(ts) + acct_rate_qpnew(pt_spa + pt_qpa, pt_qpu, ts));
 	ELSE
-		SET xsiotype := 8;
+		SET is_initial := 'N';
 		SET pay := pt_qsum;
 		SET ps_qpend := FROM_UNIXTIME(UNIX_TIMESTAMP(ts) + acct_rate_qpnew(pt_qpa, pt_qpu, ts));
 	END IF;
@@ -90,7 +90,10 @@
 
 		IF (pay > 0) THEN
 			INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`, `descr`)
-			VALUES (xsiotype, ps_stashid, stash_currid, IF(ps_aeid IS NULL, ps_entityid, ps_aeid), ts, -pay, pt_name);
+			VALUES (
+				(SELECT `siotypeid` FROM `stashes_io_types` WHERE `ftype` = IF(is_initial = 'Y', 'ps_isum', 'ps_qsum')),
+				ps_stashid, stash_currid, IF(ps_aeid IS NULL, ps_entityid, ps_aeid), ts, -pay, pt_name
+			);
 
 			UPDATE `stashes_def`
 			SET `amount` = `amount` - pay

@@ -205,7 +205,10 @@
 						IF (rate_type = 'postpaid') AND (user_qpend IS NOT NULL) THEN
 							SET @stashio_ignore := 1;
 							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`)
-							VALUES (2, NEW.stashid, OLD.currid, aeid, curts, -rate_qsum);
+							VALUES (
+								(SELECT `siotypeid` FROM `stashes_io_types` WHERE `ftype` = 'rate_qsum_post'),
+								NEW.stashid, OLD.currid, aeid, curts, -rate_qsum
+							);
 							SET @stashio_ignore := NULL;
 							INSERT INTO `stashes_ops` (`stashid`, `type`, `ts`, `entityid`, `diff`, `acct_ingress`, `acct_egress`)
 							VALUES (NEW.stashid, CONCAT_WS('_', 'sub', st_in, st_eg), curts, aeid, -pay, user_uin, user_ueg);
@@ -222,7 +225,10 @@
 						IF rate_type <> 'postpaid' THEN
 							SET @stashio_ignore := 1;
 							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`)
-							VALUES (1, NEW.stashid, OLD.currid, aeid, curts, -rate_qsum);
+							VALUES (
+								(SELECT `siotypeid` FROM `stashes_io_types` WHERE `ftype` = 'rate_qsum_pre'),
+								NEW.stashid, OLD.currid, aeid, curts, -rate_qsum
+							);
 							SET @stashio_ignore := NULL;
 							INSERT INTO `stashes_ops` (`stashid`, `type`, `ts`, `entityid`, `diff`, `acct_ingress`, `acct_egress`)
 							VALUES (NEW.stashid, CONCAT_WS('_', 'sub', st_in, st_eg), curts, aeid, -pay, 0, 0);

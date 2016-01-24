@@ -29,7 +29,10 @@
 				SET @stash_ignore := NULL;
 
 				INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`)
-				VALUES (3, NEW.stashid, OLD.entityid, curts, xdiff);
+				VALUES (
+					(SELECT `siotypeid` FROM `stashes_io_types` WHERE `ftype` = 'rate_rollback'),
+					NEW.stashid, OLD.entityid, curts, xdiff
+				);
 			END IF;
 		ELSE
 			SET NEW.rateid := OLD.rateid;
