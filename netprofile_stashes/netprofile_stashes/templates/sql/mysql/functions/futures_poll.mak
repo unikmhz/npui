@@ -26,7 +26,7 @@
 			FROM `stashes_io_def`
 			WHERE (`stashid` = f_stashid)
 			AND (`ts` BETWEEN f_ctime AND f_ptime)
-			AND `siotypeid` IN(101, 105, 106, 107, 108, 109);
+			AND `siotypeid` IN(SELECT `siotypeid` FROM `stashes_io_types` WHERE `pays_futures` = 'Y');
 			IF xpsum >= f_diff THEN
 				UPDATE `futures_def`
 				SET `state` = 'P'

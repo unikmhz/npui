@@ -115,6 +115,19 @@ class IOOperationType(DeclEnum):
 	incoming      = 'in',    _('Incoming'),      20
 	outgoing      = 'out',   _('Outgoing'),      30
 
+class IOFunctionType(DeclEnum):
+	"""
+	Enumeration of special functions assigned to stash I/O types.
+	"""
+	rate_quota_prepaid  = 'rate_qsum_pre',  _('Prepaid subscription fee'),         10
+	rate_quota_postpaid = 'rate_qsum_post', _('Postpaid service fee'),             20
+	rate_rollback       = 'rate_rollback',  _('Reimbursement on rate conversion'), 30
+	future_confirm      = 'future_confirm', _('Confirmation of promised payment'), 40
+	transfer_deposit    = 'xfer_in',        _('Transfer from another account'),    50
+	transfer_withdrawal = 'xfer_out',       _('Transfer to another account'),      60
+	service_initial     = 'ps_isum',        _('Service activation fee'),           70
+	service_quota       = 'ps_qsum',        _('Service subscription fee'),         80
+
 class StashOperationType(DeclEnum):
 	"""
 	Stash operation type enumeration.
@@ -166,11 +179,6 @@ class Currency(Base):
 				'cap_create'    : 'STASHES_CURRENCIES_CREATE',
 				'cap_edit'      : 'STASHES_CURRENCIES_EDIT',
 				'cap_delete'    : 'STASHES_CURRENCIES_DELETE',
-				'cap_menu'      : 'BASE_ADMIN',
-				'cap_read'      : 'BASE_ADMIN',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
 				'menu_name'     : _('Currencies'),
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
@@ -551,6 +559,7 @@ class StashIOType(Base):
 	__table_args__ = (
 		Comment('Stashes input/output operation types'),
 		Index('stashes_io_types_i_type', 'type'),
+		Index('stashes_io_types_u_ftype', 'ftype', unique=True),
 		Index('stashes_io_types_i_oper_visible', 'oper_visible'),
 		Index('stashes_io_types_i_user_visible', 'user_visible'),
 		Index('stashes_io_types_i_oper_cap', 'oper_cap'),
@@ -567,7 +576,7 @@ class StashIOType(Base):
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'class', 'type'),
-				'form_view'     : ('name', 'class', 'type', 'user_visible', 'oper_visible', 'oper_capability', 'descr'),
+				'form_view'     : ('name', 'class', 'type', 'ftype', 'user_visible', 'oper_visible', 'oper_capability', 'pays_futures', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new operation type'))
@@ -615,6 +624,17 @@ class StashIOType(Base):
 			'header_string' : _('Type')
 		}
 	)
+	function_type = Column(
+		'ftype',
+		IOFunctionType.db_type(),
+		Comment('Special built-in function for this I/O type'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Function')
+		}
+	)
 	visible_to_operator = Column(
 		'oper_visible',
 		NPBoolean(),
@@ -635,6 +655,17 @@ class StashIOType(Base):
 		server_default=npbool(False),
 		info={
 			'header_string' : _('Visible to User')
+		}
+	)
+	fulfills_futures = Column(
+		'pays_futures',
+		NPBoolean(),
+		Comment('Servers as a fulfillment for promised payments'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Counts for promised payments')
 		}
 	)
 	oper_capability_code = Column(
