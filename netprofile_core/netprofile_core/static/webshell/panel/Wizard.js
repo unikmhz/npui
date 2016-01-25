@@ -9,6 +9,7 @@ Ext.define('NetProfile.panel.Wizard', {
 		'Ext.form.*',
 		'NetProfile.form.field.IPv4',
 		'NetProfile.form.field.IPv6',
+		'NetProfile.form.field.Money',
 		'NetProfile.form.field.Password',
 		'NetProfile.form.WizardPane'
 	],

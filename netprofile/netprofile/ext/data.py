@@ -213,7 +213,7 @@ _EDITOR_XTYPE_MAP = {
 	IPv4Address   : 'ipv4field',
 	IPv6Address   : 'ipv6field',
 	IPv6Offset    : 'numberfield',
-	Money         : 'numberfield', # ?
+	Money         : 'moneyfield',
 	NPBoolean     : 'checkbox',
 	Numeric       : 'numberfield', # ?
 	SmallInteger  : 'numberfield',
