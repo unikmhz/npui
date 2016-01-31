@@ -714,14 +714,21 @@ def _wizcb_stashio_submit(wiz, em, step, act, val, req):
 	obj = StashIO()
 	em.set_values(obj, val, req, True)
 	sess.add(obj)
+	stash = None
 	if obj.difference:
 		stash = sess.query(Stash).get(obj.stash_id)
 		if stash:
 			stash.amount += obj.difference
-	return {
+	ret = {
 		'do'     : 'close',
 		'reload' : True
 	}
+	if stash is not None:
+		ret['affects'] = (
+			('stashes', 'StashIO'),
+			('stashes', 'Stash', obj.stash_id),
+		)
+	return ret
 
 def _wizcb_future_submit(wiz, em, step, act, val, req):
 	sess = DBSession()

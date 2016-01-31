@@ -152,17 +152,75 @@ Ext.define('NetProfile.controller.DataStores', {
 			this.stores[module][model] = store;
 		return store;
 	},
+	refreshStores: function(module, model)
+	{
+		var vp = Ext.getCmp('npws_viewport'),
+			refreshed = [];
+
+		if(module in NetProfile.StoreManager.stores)
+		{
+			Ext.Object.each(NetProfile.StoreManager.stores[module], function(k, v)
+			{
+				if(k == model)
+				{
+					v.reload();
+					refreshed.push(v);
+				}
+			});
+		}
+
+		if(vp)
+		{
+			Ext.Array.forEach(vp.query('modelgrid'), function(grid)
+			{
+				var store;
+
+				if((grid.apiModule !== module) || (grid.apiClass !== model))
+					return;
+				store = grid.getStore();
+				if(!(store in refreshed))
+				{
+					store.reload();
+					refreshed.push(store);
+				}
+			});
+		}
+	},
 	refreshRelated: function(module, model, rid, except)
 	{
-		if(!(module in NetProfile.StoreManager.stores))
-			return;
-		Ext.Object.each(NetProfile.StoreManager.stores[module], function(k, v)
+		var vp = Ext.getCmp('npws_viewport'),
+			refreshed = [];
+
+		if(module in NetProfile.StoreManager.stores)
 		{
-			if(v === except)
-				return;
-			if((k == model) && v.getById(rid))
-				v.reload();
-		});
+			Ext.Object.each(NetProfile.StoreManager.stores[module], function(k, v)
+			{
+				if(v === except)
+					return;
+				if((k == model) && v.getById(rid))
+				{
+					v.reload();
+					refreshed.push(v);
+				}
+			});
+		}
+
+		if(vp)
+		{
+			Ext.Array.forEach(vp.query('modelgrid'), function(grid)
+			{
+				var store;
+
+				if((grid.apiModule !== module) || (grid.apiClass !== model))
+					return;
+				store = grid.getStore();
+				if(!(store in refreshed) && store.getById(rid))
+				{
+					store.reload();
+					refreshed.push(store);
+				}
+			});
+		}
 	},
 	getConsoleStore: function(type, id)
 	{
