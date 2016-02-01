@@ -474,6 +474,7 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-status-online  { background-image: url(../img/status_online.png) !important; }
 
 .ico-mod-acl                  { background-image: url(../img/key_plus.png) !important; }
+.ico-mod-addressbook          { background-image: url(../img/address_book.png) !important; }
 .ico-mod-calendar             { background-image: url(../img/calendar.png) !important; }
 .ico-mod-calendarimport       { background-image: url(../img/calendar_import.png) !important; }
 .ico-mod-calendars            { background-image: url(../img/calendars.png) !important; }

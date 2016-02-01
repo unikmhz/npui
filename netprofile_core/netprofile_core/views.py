@@ -1552,9 +1552,9 @@ def _menu_custom(name, menu, req, extb):
 		})
 	})
 	menu.append({
-		'leaf'     : False,
-		'expanded' : True,
+		'leaf'     : True,
 		'xview'    : 'grid_core_AddressBook',
+		'iconCls'  : 'ico-mod-addressbook',
 		'text'     : loc.translate(_('Address Books')),
 		'id'       : 'abooks'
 	})
