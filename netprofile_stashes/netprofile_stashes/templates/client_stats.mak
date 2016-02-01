@@ -5,7 +5,7 @@ from netprofile_stashes.models import IOOperationType
 
 %>\
 <%inherit file="netprofile_access:templates/client_layout.mak"/>\
-<%namespace module="netprofile.tpl.filters" import="date_fmt, date_fmt_short, curr_fmt" />\
+<%namespace module="netprofile.tpl.filters" import="date_fmt, date_fmt_short" />\
 <%block name="title">${_('Account Operations')}</%block>
 
 <h1>
@@ -81,7 +81,7 @@ from netprofile_stashes.models import IOOperationType
 % endif
 >
 			<td>${io.timestamp | n,date_fmt_short}</td>
-			<td>${io.difference | n,curr_fmt}</td>
+			<td>${io.formatted_difference(req)}</td>
 			<td>${io.type}</td>
 		</tr>
 		% endfor

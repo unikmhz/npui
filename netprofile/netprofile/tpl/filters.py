@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Filters for Mako templates
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -74,13 +74,6 @@ def date_fmt_long(ctx, obj):
 
 def date_fmt_full(ctx, obj):
 	return date_fmt(ctx, obj, 'full')
-
-def curr_fmt(ctx, obj):
-	loc = ctx.get('i18n', None)
-	# FIXME: RUB
-	if loc:
-		return format_currency(obj, '', locale=loc)
-	return format_currency(obj, '')
 
 def datetime_fmt_tpl(ctx, fmt='medium'):
 	loc = ctx.get('i18n', None)
