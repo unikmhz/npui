@@ -1085,7 +1085,7 @@ class AccessEntityChange(Base):
 		loc = get_localizer(req)
 		eh = EntityHistory(
 			self.entity,
-			loc.translate(_('Entity "%s" changed')) % (str(self.entity)),
+			loc.translate(_('Access entity "%s" changed')) % (str(self.entity)),
 			self.timestamp,
 			None if (self.user is None) else str(self.user)
 		)
