@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -71,6 +71,7 @@ class Module(ModuleBase):
 		return (
 			models.AccessBlock,
 			models.AccessEntity,
+			models.AccessEntityChange,
 			models.AccessEntityLink,
 			models.AccessEntityLinkType,
 			models.PerUserRateModifier

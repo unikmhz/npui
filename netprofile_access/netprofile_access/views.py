@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -43,8 +43,6 @@ from pyramid.security import (
 )
 from pyramid.httpexceptions import (
 	HTTPForbidden,
-	HTTPFound,
-	HTTPNotFound,
 	HTTPSeeOther
 )
 from pyramid.i18n import (
@@ -79,6 +77,7 @@ from netprofile_rates.models import Rate
 
 from .models import (
 	AccessEntity,
+	AccessEntityChange,
 	AccessEntityLink,
 	AccessState
 )
@@ -800,5 +799,30 @@ def _dpane_aent_mods(tabs, model, req):
 		'hideColumns'       : ('entity',),
 		'extraParamProp'    : 'entityid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
+		'title'             : loc.translate(_('History')),
+		'iconCls'           : 'ico-entity-history',
+		'xtype'             : 'historygrid'
 	}))
+
+@register_hook('entities.history.get.all')
+@register_hook('entities.history.get.access_changes')
+def _aent_hist_changes(hist, ent, req, begin, end, max_num):
+	if not isinstance(ent, AccessEntity):
+		return
+
+	sess = DBSession()
+
+	# TODO: check permissions
+	qh = sess.query(AccessEntityChange).options(joinedload(AccessEntityChange.user)).filter(AccessEntityChange.entity == ent)
+	if begin is not None:
+		qh = qh.filter(AccessEntityChange.timestamp >= begin)
+	if end is not None:
+		qh = qh.filter(AccessEntityChange.timestamp <= end)
+	if max_num:
+		qh = qh.limit(max_num)
+	for change in qh:
+		eh = change.get_entity_history(req)
+		if eh:
+			hist.append(eh)
 
