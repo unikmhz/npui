@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: XOP module - Models
-# © Copyright 2014-2015 Alex 'Unik' Unigovsky
+# © Copyright 2014-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -57,6 +57,7 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from netprofile.common.locale import money_format
 from netprofile.common.ipaddr import (
 	IPAddress,
 	IPNetwork
@@ -148,6 +149,7 @@ class ExternalOperation(Base):
 					'extid', 'eacct'
 				),
 				'easy_search'  : ('extid', 'eacct'),
+				'extra_data'   : ('formatted_difference',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
@@ -268,7 +270,9 @@ class ExternalOperation(Base):
 		default=0,
 		server_default=text('0.0'),
 		info={
-			'header_string' : _('Amount')
+			'header_string' : _('Amount'),
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_difference}'
 		}
 	)
 	state = Column(
@@ -292,6 +296,7 @@ class ExternalOperation(Base):
 	)
 	currency = relationship(
 		'Currency',
+		lazy='joined',
 		backref=backref(
 			'external_operations',
 			passive_deletes='all'
@@ -354,6 +359,9 @@ class ExternalOperation(Base):
 			self.provider,
 			self.external_id
 		)
+
+	def formatted_difference(self, req):
+		return money_format(req, self.difference, currency=self.currency)
 
 class ExternalOperationProvider(Base):
 	"""
