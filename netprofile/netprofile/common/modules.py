@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Module detection and loading
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -37,7 +37,7 @@ from zope.interface import (
 	Interface
 )
 
-from distutils import version
+from packaging import version
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -59,7 +59,7 @@ class ModuleBase(object):
 	def version(cls):
 		dist = pkg_resources.get_distribution(cls.__module__)
 		if dist:
-			return version.StrictVersion(dist.version)
+			return version.parse(dist.version)
 
 	@classmethod
 	def get_deps(cls):
@@ -420,7 +420,7 @@ class ModuleManager(object):
 		modprep = getattr(modcls, 'prepare', None)
 		if callable(modprep):
 			modprep()
-		modversion = '0.0.0'
+		modversion = '0'
 		modv = getattr(modcls, 'version', None)
 		if callable(modv):
 			modversion = str(modv())

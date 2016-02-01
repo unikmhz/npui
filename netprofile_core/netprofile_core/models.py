@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
-# NetProfile: Core module - Modules
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# NetProfile: Core module - Models
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -323,8 +323,8 @@ class NPModule(Base):
 		ASCIIString(32),
 		Comment('NetProfile module current version'),
 		nullable=False,
-		default='0.0.1',
-		server_default='0.0.1',
+		default='0',
+		server_default='0',
 		info={
 			'header_string' : _('Version'),
 			'column_flex'   : 1
@@ -372,7 +372,7 @@ class NPModule(Base):
 		passive_deletes=True
 	)
 
-	def __init__(self, id=id, name=None, current_version='1.0.0', enabled=False):
+	def __init__(self, id=id, name=None, current_version='0', enabled=False):
 		self.id = id
 		self.name = name
 		self.current_version = current_version

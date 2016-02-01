@@ -27,6 +27,8 @@ NPMOD_DEFAULT="netprofile \
 
 pip install \
 	--upgrade \
+	packaging \
+	versioneer \
 	python-dateutil \
 	phpserialize \
 	dogpile.cache \
