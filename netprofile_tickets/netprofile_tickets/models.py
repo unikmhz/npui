@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -59,7 +59,6 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
-	func,
 	text,
 	or_
 )
@@ -80,9 +79,7 @@ from netprofile.db.fields import (
 	ASCIIString,
 	NPBoolean,
 	UInt8,
-	UInt16,
 	UInt32,
-	UInt64,
 	npbool
 )
 from netprofile.db.ddl import (
@@ -91,15 +88,8 @@ from netprofile.db.ddl import (
 	Trigger
 )
 from netprofile.db.clauses import IntervalSeconds
-from netprofile.db.util import (
-	populate_related,
-	populate_related_list
-)
+from netprofile.db.util import populate_related_list
 from netprofile.ext.data import ExtModel
-from netprofile.ext.columns import (
-	HybridColumn,
-	MarkupColumn
-)
 from netprofile.ext.wizards import (
 	CompositeWizardField,
 	SimpleWizard,
@@ -111,14 +101,7 @@ from netprofile_core.models import (
 	Group,
 	User
 )
-from netprofile_geo.models import (
-	District,
-	House,
-	Street
-)
-from netprofile_geo.filters import AddressFilter
 
-from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
@@ -1265,7 +1248,6 @@ class Ticket(Base):
 		return True
 
 	def get_entity_history(self, req):
-		sess = DBSession()
 		loc = get_localizer(req)
 		eh = EntityHistory(
 			self.entity,
@@ -1724,7 +1706,6 @@ class TicketChange(Base):
 	)
 
 	def get_entity_history(self, req):
-		sess = DBSession()
 		loc = get_localizer(req)
 		eh = EntityHistory(
 			self.ticket.entity,
