@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Rates module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -69,6 +69,7 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from netprofile.common.locale import money_format
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -755,6 +756,7 @@ class Rate(Base):
 					'descr'
 				),
 				'easy_search'   : ('name',),
+				'extra_data'    : ('formatted_quota_sum', 'formatted_auxiliary_sum'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new payment rate'))
 			}
@@ -927,7 +929,9 @@ class Rate(Base):
 		default=0.0,
 		server_default=text('0.0'),
 		info={
-			'header_string' : _('Quota Sum')
+			'header_string' : _('Quota Sum'),
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_quota_sum}'
 		}
 	)
 	auxiliary_sum = Column(
@@ -938,7 +942,9 @@ class Rate(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Auxiliary Sum')
+			'header_string' : _('Auxiliary Sum'),
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_auxiliary_sum}'
 		}
 	)
 	quota_ingress_traffic = Column(
@@ -1135,6 +1141,12 @@ class Rate(Base):
 
 	def __str__(self):
 		return '%s' % str(self.name)
+
+	def formatted_quota_sum(self, req):
+		return money_format(req, self.quota_sum)
+
+	def formatted_auxiliary_sum(self, req):
+		return money_format(req, self.auxiliary_sum)
 
 class RateClass(Base):
 	"""

@@ -40,11 +40,6 @@ __all__ = [
 	'FuturesPollEvent'
 ]
 
-from babel.numbers import (
-	format_currency,
-	format_decimal
-)
-
 from sqlalchemy import (
 	CHAR,
 	Column,
@@ -66,6 +61,10 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from netprofile.common.locale import (
+	money_format,
+	money_format_long
+)
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -383,27 +382,10 @@ class Currency(Base):
 		return str(self.name)
 
 	def format(self, req, amount):
-		loc = req.current_locale
-		if (self.code is not None) and (self.code in loc.currencies):
-			formatted = format_currency(amount, self.code, locale=loc)
-		else:
-			formatted = format_decimal(amount, locale=loc)
-		ret = []
-		if self.prefix:
-			ret.append(self.prefix)
-		ret.append(formatted)
-		if self.suffix:
-			ret.append(self.suffix)
-		return '\xa0'.join(ret)
+		return money_format(req, amount, code=self.code, prefix=self.prefix, suffix=self.suffix)
 
 	def format_long(self, req, amount):
-		loc = req.current_locale
-		if (self.code is not None) and (self.code in loc.currencies):
-			return format_currency(amount, self.code, locale=loc, format='0.######## ¤¤¤', currency_digits=False)
-		return '%s: %s' % (
-			str(self.name),
-			format_decimal(amount, locale=loc, format='0.########')
-		)
+		return money_format_long(req, amount, code=self.code)
 
 class Stash(Base):
 	"""
@@ -429,10 +411,11 @@ class Stash(Base):
 				'menu_main'     : True,
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('stashid', 'entity', 'name', 'amount', 'credit'),
-				'grid_hidden'   : ('stashid',),
+				'grid_view'     : ('stashid', 'entity', 'name', 'currency', 'amount', 'credit'),
+				'grid_hidden'   : ('stashid', 'currency'),
 				'form_view'     : ('entity', 'name', 'currency', 'amount', 'credit', 'alltime_min', 'alltime_max'),
 				'easy_search'   : ('name',),
+				'extra_data'    : ('formatted_amount', 'formatted_credit'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new stash'))
 			}
@@ -499,7 +482,9 @@ class Stash(Base):
 		server_default=text('0'),
 		info={
 			'header_string' : _('Balance'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_amount}'
 		}
 	)
 	credit = Column(
@@ -510,7 +495,9 @@ class Stash(Base):
 		server_default=text('0'),
 		info={
 			'header_string' : _('Credit'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_credit}'
 		}
 	)
 	alltime_max = Column(
@@ -547,6 +534,7 @@ class Stash(Base):
 	)
 	currency = relationship(
 		'Currency',
+		lazy='joined',
 		backref=backref(
 			'stashes',
 			passive_deletes='all'
@@ -558,6 +546,12 @@ class Stash(Base):
 			self.entity.nick,
 			str(self.name)
 		)
+
+	def formatted_amount(self, req):
+		return money_format(req, self.amount, currency=self.currency)
+
+	def formatted_credit(self, req):
+		return money_format(req, self.credit, currency=self.currency)
 
 class StashIOType(Base):
 	"""
@@ -767,9 +761,10 @@ class StashIO(Base):
 				'menu_name'     : _('Operations'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'ts', 'direction': 'DESC' },),
-				'grid_view'     : ('sioid', 'type', 'stash', 'currency', 'entity', 'user', 'ts', 'diff'),
+				'grid_view'     : ('sioid', 'type', 'stash', 'entity', 'user', 'ts', 'currency', 'diff'),
 				'grid_hidden'   : ('sioid', 'currency'),
 				'form_view'     : ('type', 'stash', 'currency', 'entity', 'user', 'ts', 'diff', 'descr'),
+				'extra_data'    : ('formatted_difference',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : Wizard(
@@ -891,7 +886,9 @@ class StashIO(Base):
 		Comment('Operation result'),
 		nullable=False,
 		info={
-			'header_string' : _('Change')
+			'header_string' : _('Change'),
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_difference}'
 		}
 	)
 	description = Column(
@@ -927,6 +924,7 @@ class StashIO(Base):
 	)
 	currency = relationship(
 		'Currency',
+		lazy='joined',
 		backref=backref(
 			'ios',
 			passive_deletes='all'
@@ -949,6 +947,9 @@ class StashIO(Base):
 			str(self.stash),
 			str(self.type)
 		)
+
+	def formatted_difference(self, req):
+		return money_format(req, self.difference, currency=self.currency)
 
 class StashOperation(Base):
 	"""

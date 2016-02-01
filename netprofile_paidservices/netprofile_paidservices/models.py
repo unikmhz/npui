@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Paid Service module - Models
-# © Copyright 2014-2015 Alex 'Unik' Unigovsky
+# © Copyright 2014-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -61,6 +61,7 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from netprofile.common.locale import money_format
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -142,6 +143,7 @@ class PaidServiceType(Base):
 					'descr'
 				),
 				'easy_search'   : ('name', 'descr'),
+				'extra_data'    : ('formatted_initial_sum', 'formatted_quota_sum'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new type'))
 			}
@@ -176,7 +178,9 @@ class PaidServiceType(Base):
 		server_default=text('0'),
 		info={
 			'header_string' : _('Initial Payment'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_initial_sum}'
 		}
 	)
 	quota_sum = Column(
@@ -188,7 +192,9 @@ class PaidServiceType(Base):
 		server_default=text('0'),
 		info={
 			'header_string' : _('Quota Payment'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_quota_sum}'
 		}
 	)
 	quota_period_type = Column(
@@ -302,6 +308,12 @@ class PaidServiceType(Base):
 		return '%s' % (
 			str(self.name),
 		)
+
+	def formatted_initial_sum(self, req):
+		return money_format(req, self.initial_sum)
+
+	def formatted_quota_sum(self, req):
+		return money_format(req, self.quota_sum)
 
 class PaidService(Base):
 	"""
