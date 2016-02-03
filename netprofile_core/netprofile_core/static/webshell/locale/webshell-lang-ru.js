@@ -115,6 +115,7 @@ Ext.onReady(function()
 		deleteTipText: 'Удалить объект',
 		deleteMsgText: 'Вы уверены в том, что хотите удалить данный объект?',
 		actionTipText: 'Действия для объекта',
+		reportsText: 'Отчёты',
 		exportText: 'Экспорт'
 	});
 
@@ -290,6 +291,12 @@ Ext.onReady(function()
 		textDenied: 'Запрещено',
 		textNotDefined: 'Не определено',
 		textTipACL: 'Редактирование ACL'
+	});
+
+	Ext.define('Ext.locale.ru.NetProfile.window.ReportsWindow', {
+		override: 'NetProfile.window.ReportsWindow',
+
+		titleText: 'Просмотр отчётов'
 	});
 });
 
