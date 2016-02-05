@@ -63,6 +63,8 @@ Ext.define('NetProfile.grid.ModelGrid', {
 	border: 0,
 	scrollable: 'vertical',
 	extraActions: [],
+	reportAggregates: [],
+	reportGroupBy: [],
 
 	emptyText: 'Sorry, but no items were found.',
 	clearText: 'Clear',

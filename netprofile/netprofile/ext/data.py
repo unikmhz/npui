@@ -137,6 +137,10 @@ _INTEGER_SET = (
 	UInt64
 )
 
+_FLOAT_SET = (
+	Float,
+)
+
 _DECIMAL_SET = (
 	IPv6Offset,
 	Money,
@@ -169,6 +173,8 @@ _IPADDR_SET = (
 	IPv4Address,
 	IPv6Address
 )
+
+_NUMBER_SET = _INTEGER_SET + _FLOAT_SET + _DECIMAL_SET
 
 _COLUMN_XTYPE_MAP = {
 	BigInteger   : 'numbercolumn', # ?
@@ -1054,6 +1060,26 @@ class ExtColumn(object):
 	def apply_data(self, obj, data):
 		pass
 
+	def get_aggregates(self):
+		if (self.column.primary_key) or (len(self.column.foreign_keys) > 0):
+			return None
+		ret = ['count', 'count_distinct']
+		typecls = self.column.type.__class__
+		if issubclass(typecls, _NUMBER_SET):
+			ret.extend(('min', 'max', 'avg', 'sum'))
+		elif issubclass(typecls, _DATE_SET):
+			ret.extend(('min', 'max', 'avg'))
+		return ret
+
+	def get_groupby_groups(self):
+		if self.column.primary_key:
+			return False
+		ret = True
+		typecls = self.column.type.__class__
+		if issubclass(typecls, _DATE_SET):
+			ret = ['year', 'month', 'week', 'day', 'hour', 'minute']
+		return ret
+
 class ExtPseudoColumn(ExtColumn):
 	@property
 	def reader(self):
@@ -1169,6 +1195,12 @@ class ExtPseudoColumn(ExtColumn):
 	def apply_data(self, obj, data):
 		pass
 
+	def get_aggregates(self):
+		return None
+
+	def get_groupby_groups(self):
+		return False
+
 class ExtRelationshipColumn(ExtColumn):
 	def __init__(self, sqla_prop, sqla_model):
 		self.prop = sqla_prop
@@ -1190,6 +1222,12 @@ class ExtRelationshipColumn(ExtColumn):
 		if 'align' in conf:
 			del conf['align']
 		return conf
+
+	def get_aggregates(self):
+		return None
+
+	def get_groupby_groups(self):
+		return False
 
 class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 	@property
@@ -1277,6 +1315,16 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 			'type'       : 'string',
 			'persist'    : False
 		}
+
+	def get_aggregates(self):
+		if self.filter_type == 'nplist':
+			return ['count', 'count_distinct']
+		return None
+
+	def get_groupby_groups(self):
+		if self.filter_type == 'nplist':
+			return True
+		return False
 
 class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 	@property
@@ -1660,6 +1708,36 @@ class ExtModel(object):
 				if isinstance(vdata, dict):
 					vitem.update(vdata)
 				ret.append(vitem)
+		return ret
+
+	def get_aggregates(self, req):
+		ret = []
+		loc = req.localizer
+		for cname, col in self.get_read_columns().items():
+			agg = col.get_aggregates()
+			if agg is None:
+				continue
+			ret.append({
+				'name'  : cname,
+				'title' : loc.translate(col.header_string),
+				'func'  : agg
+			})
+		return ret
+
+	def get_groupby_groups(self, req):
+		ret = []
+		loc = req.localizer
+		for cname, col in self.get_read_columns().items():
+			grp = col.get_groupby_groups()
+			if not grp:
+				continue
+			grpdict = {
+				'name'  : cname,
+				'title' : loc.translate(col.header_string)
+			}
+			if grp is not True:
+				grpdict['func'] = grp
+			ret.append(grpdict)
 		return ret
 
 	def _apply_pagination(self, query, trans, params):
