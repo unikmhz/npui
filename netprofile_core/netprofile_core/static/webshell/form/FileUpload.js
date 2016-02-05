@@ -112,7 +112,7 @@ Ext.define('NetProfile.form.FileUpload', {
 		var me = this,
 			cfg = {
 				xtype: 'container',
-				cls: 'np-file-upload-cont',
+				cls: 'np-boxstack-cont',
 				layout: {
 					type: 'hbox',
 					align: 'stretch',
@@ -128,14 +128,14 @@ Ext.define('NetProfile.form.FileUpload', {
 					allowBlank: false
 				}, {
 					xtype: 'tool',
-					cls: 'np-file-upload-close',
-					tooltip: this.uploadRemoveText,
+					cls: 'np-boxstack-close',
+					tooltip: this.removeText,
 					type: 'close',
 					handler: function()
 					{
 						var cont, pcont;
 
-						cont = this.up('container[cls~=np-file-upload-cont]');
+						cont = this.up('container[cls~=np-boxstack-cont]');
 						if(!cont || !cont.ownerCt)
 							return;
 						pcont = cont.ownerCt;

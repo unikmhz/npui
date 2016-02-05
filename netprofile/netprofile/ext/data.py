@@ -1237,6 +1237,8 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 	def append_data(self, obj):
 		k = self.prop.key
 		data = getattr(obj, k)
+		if (data is not None) and hasattr(obj, '__req__'):
+			data.__req__ = obj.__req__
 		if self.value_attr:
 			data = getattr(data, self.value_attr, data)
 		if data is not None:
