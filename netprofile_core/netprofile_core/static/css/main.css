@@ -310,7 +310,7 @@ a.np-file-wrap span
 	border: 1px dotted #39b;
 }
 
-.np-file-upload-cont
+.np-boxstack-cont
 {
 	padding: 6px;
 	background-color: #d9e7f8;
@@ -318,7 +318,7 @@ a.np-file-wrap span
 	border-bottom: 1px solid #99bce8;
 }
 
-.np-file-upload-cont .np-file-upload-close
+.np-boxstack-cont .np-boxstack-close
 {
 	padding: 3px 0px 3px 3px;
 }
