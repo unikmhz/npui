@@ -701,6 +701,10 @@ class StashIOType(Base):
 	)
 
 	def __str__(self):
+		if self.io_class == OperationClass.system:
+			req = getattr(self, '__req__', None)
+			if req:
+				return req.localizer.translate(_(self.name))
 		return str(self.name)
 
 def _wizcb_stashio_submit(wiz, em, step, act, val, req):
