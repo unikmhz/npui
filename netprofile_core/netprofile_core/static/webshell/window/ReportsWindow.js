@@ -57,6 +57,15 @@ Ext.define('NetProfile.window.ReportsWindow', {
 	},
 	groupByOrder: ['year', 'month', 'week', 'day', 'hour', 'minute'],
 
+	dateTemplates: {
+		'year'   : new Ext.Template('{year}', { compiled: true }),
+		'week'   : new Ext.Template('{year}-{week:leftPad(2, "0")}', { compiled: true }),
+		'month'  : new Ext.Template('{year}-{month:leftPad(2, "0")}', { compiled: true }),
+		'day'    : new Ext.Template('{year}-{month:leftPad(2, "0")}-{day:leftPad(2, "0")}', { compiled: true }),
+		'hour'   : new Ext.Template('{year}-{month:leftPad(2, "0")}-{day:leftPad(2, "0")} {hour:leftPad(2, "0")}:00', { compiled: true }),
+		'minute' : new Ext.Template('{year}-{month:leftPad(2, "0")}-{day:leftPad(2, "0")} {hour:leftPad(2, "0")}:{minute:leftPad(2, "0")}', { compiled: true })
+	},
+
 	apiModule: null,
 	apiClass: null,
 	grid: null,
@@ -138,8 +147,16 @@ Ext.define('NetProfile.window.ReportsWindow', {
 
 						me.removeAll(true);
 						me.add({
+							itemId: 'chart',
 							xtype: 'cartesian',
+							theme: 'Muted',
 							border: 0,
+							innerPadding: {
+								'top'    : 0,
+								'right'  : 0,
+								'bottom' : 4,
+								'left'   : 4
+							},
 							store: me.getGraphStore(),
 							axes: [me.getGraphXAxis(), me.getGraphYAxis()],
 							series: me.getGraphSeries()
@@ -462,6 +479,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			df2 = tbar.getComponent('fld_date_to'),
 			d1 = df1.getValue(),
 			d2 = df2.getValue(),
+			chart = me.getComponent('chart'),
 			diff;
 
 		d2.setSeconds(59);
@@ -471,7 +489,9 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		d2 = Ext.Date.subtract(d2, Ext.Date.SECOND, diff);
 		df1.setValue(d1);
 		df2.setValue(d2);
-		// TODO: update store
+
+		if(chart)
+			chart.getStore().reload();
 	},
 	nextDateRange: function()
 	{
@@ -480,7 +500,9 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			df1 = tbar.getComponent('fld_date_from'),
 			df2 = tbar.getComponent('fld_date_to'),
 			d1 = df1.getValue(),
-			d2 = df2.getValue();
+			d2 = df2.getValue(),
+			chart = me.getComponent('chart'),
+			diff;
 
 		d2.setSeconds(59);
 		d2.setMilliseconds(999);
@@ -489,18 +511,30 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		d2 = Ext.Date.add(d2, Ext.Date.SECOND, diff);
 		df1.setValue(d1);
 		df2.setValue(d2);
-		// TODO: update store
+
+		if(chart)
+			chart.getStore().reload();
 	},
 	getDateRange: function()
 	{
 		var me = this,
 			tbar = me.getDockedComponent('tbar'),
 			df1 = tbar.getComponent('fld_date_from'),
-			df2 = tbar.getComponent('fld_date_to');
+			df2 = tbar.getComponent('fld_date_to'),
+			d1, d2;
 
 		if(df1.isDisabled() || df2.isDisabled())
 			return null;
-		return [df1.getValue(), df2.getValue()];
+
+		d1 = df1.getValue();
+		d1.setSeconds(0);
+		d1.setMilliseconds(0);
+
+		d2 = df2.getValue();
+		d2.setSeconds(59);
+		d2.setMilliseconds(999);
+
+		return [d1, d2];
 	},
 	getInitialDateRange: function()
 	{
@@ -535,6 +569,8 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				d1.setMonth(0);
 				d1.setDate(1);
 				d2 = Ext.Date.clone(d1);
+				d2.setMonth(11);
+				d2 = Ext.Date.getLastDateOfMonth(d2);
 				d2.setHours(23);
 				d2.setMinutes(59);
 				d2.setSeconds(59);
@@ -593,7 +629,11 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		var me = this,
 			report_api = NetProfile.api[me.apiClass].report,
 			fields = [],
+			cat_func,
 			store;
+
+		if(!me.usedValues.length || !me.usedGroupBy.length)
+			return null;
 
 		Ext.Array.forEach(me.usedValues, function(aggr)
 		{
@@ -641,6 +681,51 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			}
 		});
 
+		cat_func = function(data)
+		{
+			var ret = [];
+
+			Ext.Array.forEach(me.usedGroupBy, function(gby)
+			{
+				var txt = 'N/A',
+					date_bits;
+
+				if(typeof(gby) === 'undefined')
+					return;
+				if(typeof(gby) === 'string')
+				{
+					// FIXME: use legend dict
+					if(data[gby] && data[gby].toString())
+						txt = data[gby].toString();
+				}
+				else if(gby[0] in me.groupBySubstitutes)
+				{
+					date_bits = [];
+					Ext.Array.forEach(me.groupBySubstitutes[gby[0]], function(gbtype)
+					{
+						date_bits[gbtype] = data[gby[1] + '_' + gbtype];
+					});
+					if(gby[0] in me.dateTemplates)
+						txt = me.dateTemplates[gby[0]].apply(date_bits);
+					else
+						return;
+				}
+				else
+				{
+					txt = data[gby[1] + '_' + gby[0]];
+				}
+
+				ret.push(txt);
+			});
+
+			return ret.join(', ');
+		};
+		fields.push({
+			name: 'report_cat',
+			type: 'string',
+			calculate: cat_func
+		});
+
 		store = Ext.create('Ext.data.Store', {
 			fields: fields,
 			autoLoad: true,
@@ -664,7 +749,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 						op_params = op.getParams(),
 						op_aggregates = [],
 						op_groupby = [],
-						grid_params, tmp_oper;
+						grid_params, tmp_oper, date_range;
 
 					tmp_oper = new Ext.data.operation.Read(grid_store.lastOptions);
 					grid_params = grid_proxy.getParams(tmp_oper);
@@ -707,6 +792,23 @@ Ext.define('NetProfile.window.ReportsWindow', {
 					if(op_groupby.length)
 						op_params.__groupby = op_groupby;
 
+					// TODO: inject date range into __ffilter
+					date_range = me.getDateRange();
+					if(date_range && me.dateRangeField)
+					{
+						op_params.__ffilter = op_params.__ffilter || [];
+						op_params.__ffilter.push({
+							property: me.dateRangeField,
+							operator: 'ge',
+							value:    date_range[0]
+						});
+						op_params.__ffilter.push({
+							property: me.dateRangeField,
+							operator: 'le',
+							value:    date_range[1]
+						});
+					}
+
 					op.setParams(op_params);
 
 					return true;
@@ -719,36 +821,12 @@ Ext.define('NetProfile.window.ReportsWindow', {
 	getGraphXAxis: function()
 	{
 		var me = this,
-			fields = [],
 			cfg = {
 				type: 'category',
-				position: 'bottom'
+				position: 'bottom',
+				fields: ['report_cat']
 			};
 
-		Ext.Array.forEach(me.usedGroupBy, function(gby)
-		{
-			if(typeof(gby) === 'undefined')
-				return;
-
-			if(typeof(gby) === 'string')
-			{
-				fields.push(gby);
-				return;
-			}
-			if(gby[0] in me.groupBySubstitutes)
-			{
-				Ext.Array.forEach(me.groupBySubstitutes[gby[0]], function(gbsubst)
-				{
-					fields.push(gby[1] + '_' + gbsubst);
-				});
-			}
-			else
-			{
-				fields.push(gby[1] + '_' + gby[0]);
-			}
-		});
-		if(fields.length)
-			cfg.fields = fields;
 		return cfg;
 	},
 	getGraphYAxis: function()
@@ -767,9 +845,9 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			y_titles = [],
 			cfg = {
 				type: 'bar',
-				stacked: false
-			},
-			top_gby;
+				stacked: false,
+				xField: 'report_cat'
+			};
 
 		Ext.Array.forEach(me.usedValues, function(aggr)
 		{
@@ -781,13 +859,6 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			cfg.yField = y_fields;
 		if(y_titles.length)
 			cfg.title = y_titles;
-
-		if(me.usedGroupBy.length)
-		{
-			top_gby = me.usedGroupBy[0];
-			if(typeof(top_gby) === 'string')
-				cfg.xField = top_gby;
-		}
 
 		return cfg;
 	}
