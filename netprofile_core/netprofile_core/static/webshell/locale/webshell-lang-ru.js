@@ -296,7 +296,32 @@ Ext.onReady(function()
 	Ext.define('Ext.locale.ru.NetProfile.window.ReportsWindow', {
 		override: 'NetProfile.window.ReportsWindow',
 
-		titleText: 'Просмотр отчётов'
+		titleText: 'Просмотр отчётов',
+		valuesText: 'Показать значения',
+		groupByText: 'Группировать по',
+		addText: 'Добавить',
+		removeText: 'Удалить',
+		newValueText: 'Новое значение',
+		newGroupByText: 'Новая группа',
+		generateText: 'Показать отчёт',
+		naText: 'Н/Д',
+
+		aggregateNames: {
+			'count'          : 'Кол-во ненулевых значений',
+			'count_distinct' : 'Кол-во уникальных значений',
+			'min'            : 'Минимум',
+			'max'            : 'Максимум',
+			'avg'            : 'Среднее значение',
+			'sum'            : 'Сумма'
+		},
+		groupByNames: {
+			'year'   : 'по годам',
+			'month'  : 'по месяцам',
+			'week'   : 'по неделям',
+			'day'    : 'по дням',
+			'hour'   : 'по часам',
+			'minute' : 'по минутам'
+		}
 	});
 });
 

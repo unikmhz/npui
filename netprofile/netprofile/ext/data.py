@@ -2504,7 +2504,7 @@ class ExtModel(object):
 			q = self._apply_sstr(q, trans, params)
 		# TODO: __sort
 		if len(q_groupby) > 0:
-			q = q.group_by(*q_groupby)
+			q = q.group_by(*q_groupby).order_by(*q_groupby)
 		helper = getattr(self.model, '__augment_query__', None)
 		if callable(helper):
 			q = helper(sess, q, params, request)

@@ -6,6 +6,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 	extend: 'Ext.window.Window',
 	alias: 'widget.reportswindow',
 	requires: [
+		'Ext.Template',
 		'Ext.data.Store',
 		'Ext.chart.*',
 		'Ext.form.*',
@@ -16,9 +17,8 @@ Ext.define('NetProfile.window.ReportsWindow', {
 
 	config: {
 		modal: true,
-		shrinkWrap: 3,
 		layout: 'fit',
-		minHeight: 500,
+		height: 500,
 		minWidth: 700,
 		iconCls: 'ico-chart'
 	},
@@ -31,9 +31,10 @@ Ext.define('NetProfile.window.ReportsWindow', {
 	newValueText: 'New Value',
 	newGroupByText: 'New Group',
 	generateText: 'Show Report',
+	naText: 'N/A',
 
 	aggregateNames: {
-		'count'          : 'Number',
+		'count'          : 'Count of set values',
 		'count_distinct' : 'Distinct values',
 		'min'            : 'Minimum',
 		'max'            : 'Maximum',
@@ -58,6 +59,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 	groupByOrder: ['year', 'month', 'week', 'day', 'hour', 'minute'],
 
 	dateTemplates: {
+		// FIXME: this might be ugly, and also interfere with dynamic loading
 		'year'   : new Ext.Template('{year}', { compiled: true }),
 		'week'   : new Ext.Template('{year}-{week:leftPad(2, "0")}', { compiled: true }),
 		'month'  : new Ext.Template('{year}-{month:leftPad(2, "0")}', { compiled: true }),
@@ -145,10 +147,15 @@ Ext.define('NetProfile.window.ReportsWindow', {
 						else
 							me.clearDateRange();
 
+						store = me.getGraphStore();
+						if(!store)
+							return false;
+
 						me.removeAll(true);
 						me.add({
 							itemId: 'chart',
 							xtype: 'cartesian',
+							cls: 'np-chart',
 							theme: 'Muted',
 							border: 0,
 							innerPadding: {
@@ -157,7 +164,10 @@ Ext.define('NetProfile.window.ReportsWindow', {
 								'bottom' : 4,
 								'left'   : 4
 							},
-							store: me.getGraphStore(),
+							legend: {
+								docked: 'bottom'
+							},
+							store: store,
 							axes: [me.getGraphXAxis(), me.getGraphYAxis()],
 							series: me.getGraphSeries()
 						});
@@ -166,6 +176,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 					{
 						me.clearDateRange();
 					}
+					return true;
 				}
 			}]
 		}, {
@@ -250,6 +261,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				anchor: '100%'
 			},
 			collapsible: true,
+			itemId: 'val' + fldidx + '_fset',
 			title: me.newValueText,
 			items: [{
 				xtype: 'combobox',
@@ -345,6 +357,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				anchor: '100%'
 			},
 			collapsible: true,
+			itemId: 'grp' + fldidx + '_fset',
 			title: me.newGroupByText,
 			items: [{
 				xtype: 'combobox',
@@ -431,6 +444,17 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			}
 		};
 		return cfg;
+	},
+	getValueTitle: function(fld)
+	{
+		var me = this,
+			fset_name = fld + '_fset',
+			lbar = me.getDockedComponent('leftbar'),
+			pval = lbar.getComponent('values'),
+			fset = pval.getComponent(fset_name);
+
+		if(fset)
+			return fset.title;
 	},
 	setDateRange: function(d1, d2)
 	{
@@ -687,7 +711,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 
 			Ext.Array.forEach(me.usedGroupBy, function(gby)
 			{
-				var txt = 'N/A',
+				var txt = me.naText,
 					date_bits;
 
 				if(typeof(gby) === 'undefined')
@@ -846,17 +870,31 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			cfg = {
 				type: 'bar',
 				stacked: false,
-				xField: 'report_cat'
+				xField: 'report_cat',
+				label: {
+					display: 'insideEnd',
+					renderer: function(value, sprite, cfg, rdata, idx)
+					{
+						if((typeof(value) === 'number') && (value !== Math.ceil(value)))
+						{
+							value = value.toFixed(2);
+						}
+						return value;
+					}
+				}
 			};
 
 		Ext.Array.forEach(me.usedValues, function(aggr)
 		{
 			y_fields.push(aggr[2]);
-			y_titles.push(aggr[2]); // FIXME
+			y_titles.push(me.getValueTitle(aggr[2]));
 		});
 
 		if(y_fields.length)
+		{
+			cfg.label.field = y_fields;
 			cfg.yField = y_fields;
+		}
 		if(y_titles.length)
 			cfg.title = y_titles;
 

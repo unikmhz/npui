@@ -365,6 +365,11 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 	padding-top: 2px;
 }
 
+.np-chart .x-docked-bottom
+{
+	border: 0;
+}
+
 .x-tree-icon-parent
 {
 	background-image: url(../img/folder.png);
