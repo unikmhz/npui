@@ -17,6 +17,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 	config: {
 		modal: true,
 		shrinkWrap: 3,
+		layout: 'fit',
 		minHeight: 500,
 		minWidth: 700,
 		iconCls: 'ico-chart'
@@ -134,6 +135,15 @@ Ext.define('NetProfile.window.ReportsWindow', {
 							me.setDateRange(daterange[0], daterange[1]);
 						else
 							me.clearDateRange();
+
+						me.removeAll(true);
+						me.add({
+							xtype: 'cartesian',
+							border: 0,
+							store: me.getGraphStore(),
+							axes: [me.getGraphXAxis(), me.getGraphYAxis()],
+							series: me.getGraphSeries()
+						});
 					}
 					else
 					{
@@ -187,13 +197,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				title: me.groupByText
 			}]
 		}];
-		me.items = [{
-			xtype: 'cartesian',
-			layout: 'fit',
-			width: '100%',
-			height: '100%'
-		}];
-
+		me.items = [];
 		me.callParent();
 	},
 	addValueField: function()
@@ -487,6 +491,17 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		df2.setValue(d2);
 		// TODO: update store
 	},
+	getDateRange: function()
+	{
+		var me = this,
+			tbar = me.getDockedComponent('tbar'),
+			df1 = tbar.getComponent('fld_date_from'),
+			df2 = tbar.getComponent('fld_date_to');
+
+		if(df1.isDisabled() || df2.isDisabled())
+			return null;
+		return [df1.getValue(), df2.getValue()];
+	},
 	getInitialDateRange: function()
 	{
 		var me = this,
@@ -604,21 +619,31 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				model_fld = NetProfile.model[me.apiModule][me.apiClass].getField(gby);
 				fld.name = gby;
 				fld.type = model_fld.getType();
+				fields.push(fld);
+				return;
+			}
+
+			if(gby[0] in me.groupBySubstitutes)
+			{
+				Ext.Array.forEach(me.groupBySubstitutes[gby[0]], function(gbsubst)
+				{
+					fields.push({
+						name: gby[1] + '_' + gbsubst,
+						type: 'int'
+					});
+				});
 			}
 			else
 			{
 				fld.name = gby[1] + '_' + gby[0];
-				if(['year', 'month', 'week', 'day', 'hour', 'minute'].indexOf(gby[0]) !== -1)
-					fld.type = 'int';
-				else
-					fld.type = 'auto';
+				fld.type = 'auto';
+				fields.push(fld);
 			}
-			fields.push(fld);
 		});
 
 		store = Ext.create('Ext.data.Store', {
 			fields: fields,
-			autoLoad: false,
+			autoLoad: true,
 			proxy: {
 				type: 'direct',
 				directFn: report_api,
@@ -658,7 +683,23 @@ Ext.define('NetProfile.window.ReportsWindow', {
 					{
 						if(typeof(gby) === 'undefined')
 							return;
-						op_groupby.push(gby);
+						if(typeof(gby) === 'string')
+						{
+							op_groupby.push(gby);
+							return;
+						}
+
+						if(gby[0] in me.groupBySubstitutes)
+						{
+							Ext.Array.forEach(me.groupBySubstitutes[gby[0]], function(gbsubst)
+							{
+								op_groupby.push([gbsubst, gby[1]]);
+							});
+						}
+						else
+						{
+							op_groupby.push(gby);
+						}
 					});
 
 					if(op_aggregates.length)
@@ -674,6 +715,81 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		});
 
 		return store;
+	},
+	getGraphXAxis: function()
+	{
+		var me = this,
+			fields = [],
+			cfg = {
+				type: 'category',
+				position: 'bottom'
+			};
+
+		Ext.Array.forEach(me.usedGroupBy, function(gby)
+		{
+			if(typeof(gby) === 'undefined')
+				return;
+
+			if(typeof(gby) === 'string')
+			{
+				fields.push(gby);
+				return;
+			}
+			if(gby[0] in me.groupBySubstitutes)
+			{
+				Ext.Array.forEach(me.groupBySubstitutes[gby[0]], function(gbsubst)
+				{
+					fields.push(gby[1] + '_' + gbsubst);
+				});
+			}
+			else
+			{
+				fields.push(gby[1] + '_' + gby[0]);
+			}
+		});
+		if(fields.length)
+			cfg.fields = fields;
+		return cfg;
+	},
+	getGraphYAxis: function()
+	{
+		var cfg = {
+			type: 'numeric',
+			position: 'left'
+		};
+
+		return cfg;
+	},
+	getGraphSeries: function()
+	{
+		var me = this,
+			y_fields = [],
+			y_titles = [],
+			cfg = {
+				type: 'bar',
+				stacked: false
+			},
+			top_gby;
+
+		Ext.Array.forEach(me.usedValues, function(aggr)
+		{
+			y_fields.push(aggr[2]);
+			y_titles.push(aggr[2]); // FIXME
+		});
+
+		if(y_fields.length)
+			cfg.yField = y_fields;
+		if(y_titles.length)
+			cfg.title = y_titles;
+
+		if(me.usedGroupBy.length)
+		{
+			top_gby = me.usedGroupBy[0];
+			if(typeof(top_gby) === 'string')
+				cfg.xField = top_gby;
+		}
+
+		return cfg;
 	}
 });
 
