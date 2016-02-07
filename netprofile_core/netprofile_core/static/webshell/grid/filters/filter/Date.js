@@ -225,7 +225,7 @@ Ext.define('NetProfile.grid.filters.filter.Date', {
         return function(data) {
             var value = data.value;
             if (value) {
-                data.value = Ext.Date.format(value, me.getDateFormat());
+                data.value = Ext.Date.format(value, 'Y-m-d H:i:s');
             }
         };
     },
