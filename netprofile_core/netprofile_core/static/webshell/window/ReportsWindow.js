@@ -87,6 +87,8 @@ Ext.define('NetProfile.window.ReportsWindow', {
 
 		me.usedValues = [];
 		me.usedGroupBy = [];
+		me.dateRangeType = null;
+		me.dateRangeField = null;
 		me.valueCnt = 0;
 		me.groupByCnt = 0;
 		me.title = me.titleText;
@@ -107,11 +109,15 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			}, {
 				itemId: 'btn_prev',
 				iconCls: 'ico-prev',
-				disabled: true
+				disabled: true,
+				handler: 'prevDateRange',
+				scope: me
 			}, {
 				itemId: 'btn_next',
 				iconCls: 'ico-next',
-				disabled: true
+				disabled: true,
+				handler: 'nextDateRange',
+				scope: me
 			}, '->', {
 				itemId: 'btn_gen',
 				iconCls: 'ico-report-plus',
@@ -119,7 +125,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				enableToggle: true,
 				toggleHandler: function(btn, pressed)
 				{
-					var daterange;
+					var daterange, store;
 
 					if(pressed)
 					{
@@ -183,7 +189,9 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		}];
 		me.items = [{
 			xtype: 'cartesian',
-			layout: 'fit'
+			layout: 'fit',
+			width: '100%',
+			height: '100%'
 		}];
 
 		me.callParent();
@@ -438,13 +446,53 @@ Ext.define('NetProfile.window.ReportsWindow', {
 
 		df1.setValue('');
 		df2.setValue('');
+
+		me.dateRangeType = null;
+		me.dateRangeField = null;
+	},
+	prevDateRange: function()
+	{
+		var me = this,
+			tbar = me.getDockedComponent('tbar'),
+			df1 = tbar.getComponent('fld_date_from'),
+			df2 = tbar.getComponent('fld_date_to'),
+			d1 = df1.getValue(),
+			d2 = df2.getValue(),
+			diff;
+
+		d2.setSeconds(59);
+		d2.setMilliseconds(999);
+		diff = Ext.Date.diff(d1, d2, Ext.Date.SECOND) + 1;
+		d1 = Ext.Date.subtract(d1, Ext.Date.SECOND, diff);
+		d2 = Ext.Date.subtract(d2, Ext.Date.SECOND, diff);
+		df1.setValue(d1);
+		df2.setValue(d2);
+		// TODO: update store
+	},
+	nextDateRange: function()
+	{
+		var me = this,
+			tbar = me.getDockedComponent('tbar'),
+			df1 = tbar.getComponent('fld_date_from'),
+			df2 = tbar.getComponent('fld_date_to'),
+			d1 = df1.getValue(),
+			d2 = df2.getValue();
+
+		d2.setSeconds(59);
+		d2.setMilliseconds(999);
+		diff = Ext.Date.diff(d1, d2, Ext.Date.SECOND) + 1;
+		d1 = Ext.Date.add(d1, Ext.Date.SECOND, diff);
+		d2 = Ext.Date.add(d2, Ext.Date.SECOND, diff);
+		df1.setValue(d1);
+		df2.setValue(d2);
+		// TODO: update store
 	},
 	getInitialDateRange: function()
 	{
 		var me = this,
 			now = new Date(),
 			max_gby = -1,
-			d1, d2;
+			fld, d1, d2;
 
 		Ext.Array.forEach(me.usedGroupBy, function(gby)
 		{
@@ -454,13 +502,18 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				return;
 			idx = Ext.Array.indexOf(me.groupByOrder, gby[0]);
 			if(idx > max_gby)
+			{
+				fld = gby[1];
 				max_gby = idx;
+			}
 		});
 
 		if(max_gby <= 0)
 			return null;
 
-		switch(me.groupByOrder[max_gby - 1])
+		me.dateRangeType = me.groupByOrder[max_gby - 1];
+		me.dateRangeField = fld;
+		switch(me.dateRangeType)
 		{
 			case 'year':
 				d1 = Ext.Date.clearTime(now, true);
@@ -523,8 +576,104 @@ Ext.define('NetProfile.window.ReportsWindow', {
 	getGraphStore: function()
 	{
 		var me = this,
-			report_api = NetProfile.api[me.apiClass],
+			report_api = NetProfile.api[me.apiClass].report,
+			fields = [],
 			store;
+
+		Ext.Array.forEach(me.usedValues, function(aggr)
+		{
+			if(typeof(aggr) === 'undefined')
+				return;
+
+			var fld = {
+				name: aggr[2],
+				type: 'number'
+			};
+			fields.push(fld);
+		});
+
+		Ext.Array.forEach(me.usedGroupBy, function(gby)
+		{
+			var fld = {},
+				model_fld;
+
+			if(typeof(gby) === 'undefined')
+				return;
+			if(typeof(gby) === 'string')
+			{
+				model_fld = NetProfile.model[me.apiModule][me.apiClass].getField(gby);
+				fld.name = gby;
+				fld.type = model_fld.getType();
+			}
+			else
+			{
+				fld.name = gby[1] + '_' + gby[0];
+				if(['year', 'month', 'week', 'day', 'hour', 'minute'].indexOf(gby[0]) !== -1)
+					fld.type = 'int';
+				else
+					fld.type = 'auto';
+			}
+			fields.push(fld);
+		});
+
+		store = Ext.create('Ext.data.Store', {
+			fields: fields,
+			autoLoad: false,
+			proxy: {
+				type: 'direct',
+				directFn: report_api,
+				reader: {
+					type: 'json',
+					messageProperty: 'message',
+					rootProperty: 'records',
+					successProperty: 'success',
+					totalProperty: 'total'
+				}
+			},
+			listeners: {
+				beforeload: function(st, op)
+				{
+					var grid = me.grid,
+						grid_store = grid.getStore(),
+						grid_proxy = grid_store.getProxy(),
+						op_params = op.getParams(),
+						op_aggregates = [],
+						op_groupby = [],
+						grid_params, tmp_oper;
+
+					tmp_oper = new Ext.data.operation.Read(grid_store.lastOptions);
+					grid_params = grid_proxy.getParams(tmp_oper);
+					if(grid_store.lastExtraParams)
+						Ext.apply(grid_params, grid_store.lastExtraParams);
+
+					op_params = Ext.copyTo(op_params || {}, grid_params, ['__filter', '__ffilter', '__xfilter', '__sstr']);
+
+					Ext.Array.forEach(me.usedValues, function(aggr)
+					{
+						if(typeof(aggr) === 'undefined')
+							return;
+						op_aggregates.push(aggr);
+					});
+					Ext.Array.forEach(me.usedGroupBy, function(gby)
+					{
+						if(typeof(gby) === 'undefined')
+							return;
+						op_groupby.push(gby);
+					});
+
+					if(op_aggregates.length)
+						op_params.__aggregates = op_aggregates;
+					if(op_groupby.length)
+						op_params.__groupby = op_groupby;
+
+					op.setParams(op_params);
+
+					return true;
+				}
+			}
+		});
+
+		return store;
 	}
 });
 
