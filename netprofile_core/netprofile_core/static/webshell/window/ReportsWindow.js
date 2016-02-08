@@ -909,7 +909,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 					{
 						if((typeof(value) === 'number') && (value !== Math.ceil(value)))
 						{
-							value = value.toFixed(2);
+							value = Ext.util.Format.number(value.toFixed(2), '0,000.00');
 						}
 						return value;
 					}

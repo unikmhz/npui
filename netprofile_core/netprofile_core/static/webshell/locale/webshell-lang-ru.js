@@ -1,5 +1,15 @@
 Ext.onReady(function()
 {
+    if(Ext.util && Ext.util.Format)
+	{
+        Ext.apply(Ext.util.Format, {
+            thousandSeparator: '\u00a0',
+            decimalSeparator: ',',
+            currencySign: '\u20bd',
+            dateFormat: 'd.m.Y'
+        });
+    }
+
 	Ext.define('Ext.locale.ru.Date', {
 		override: 'Ext.Date',
 		defaultFormat: 'd.m.Y'
