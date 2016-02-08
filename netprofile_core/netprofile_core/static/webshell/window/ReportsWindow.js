@@ -113,11 +113,19 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			items: [{
 				itemId: 'fld_date_from',
 				xtype: 'datetimefield',
-				disabled: true
+				disabled: true,
+				listeners: {
+					change: 'onDateChanged',
+					scope: me
+				}
 			}, {
 				itemId: 'fld_date_to',
 				xtype: 'datetimefield',
-				disabled: true
+				disabled: true,
+				listeners: {
+					change: 'onDateChanged',
+					scope: me
+				}
 			}, {
 				itemId: 'btn_prev',
 				iconCls: 'ico-prev',
@@ -465,8 +473,13 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			dprev = tbar.getComponent('btn_prev'),
 			dnext = tbar.getComponent('btn_next');
 
+		df1.suspendEvents();
 		df1.setValue(d1);
+		df1.resumeEvents();
+
+		df2.suspendEvents();
 		df2.setValue(d2);
+		df2.resumeEvents();
 
 		df1.enable();
 		df2.enable();
@@ -489,8 +502,8 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		df1.disable();
 		df2.disable();
 
-		df1.setValue('');
-		df2.setValue('');
+		df1.setRawValue('');
+		df2.setRawValue('');
 
 		me.dateRangeType = null;
 		me.dateRangeField = null;
@@ -511,8 +524,14 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		diff = Ext.Date.diff(d1, d2, Ext.Date.SECOND) + 1;
 		d1 = Ext.Date.subtract(d1, Ext.Date.SECOND, diff);
 		d2 = Ext.Date.subtract(d2, Ext.Date.SECOND, diff);
+
+		df1.suspendEvents();
 		df1.setValue(d1);
+		df1.resumeEvents();
+
+		df2.suspendEvents();
 		df2.setValue(d2);
+		df2.resumeEvents();
 
 		if(chart)
 			chart.getStore().reload();
@@ -533,8 +552,14 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		diff = Ext.Date.diff(d1, d2, Ext.Date.SECOND) + 1;
 		d1 = Ext.Date.add(d1, Ext.Date.SECOND, diff);
 		d2 = Ext.Date.add(d2, Ext.Date.SECOND, diff);
+
+		df1.suspendEvents();
 		df1.setValue(d1);
+		df1.resumeEvents();
+
+		df2.suspendEvents();
 		df2.setValue(d2);
+		df2.resumeEvents();
 
 		if(chart)
 			chart.getStore().reload();
@@ -559,6 +584,14 @@ Ext.define('NetProfile.window.ReportsWindow', {
 		d2.setMilliseconds(999);
 
 		return [d1, d2];
+	},
+	onDateChanged: function(fld, newval, oldval)
+	{
+		var me = this,
+			chart = me.getComponent('chart');
+
+		if(chart)
+			chart.getStore().reload();
 	},
 	getInitialDateRange: function()
 	{
@@ -816,11 +849,10 @@ Ext.define('NetProfile.window.ReportsWindow', {
 					if(op_groupby.length)
 						op_params.__groupby = op_groupby;
 
-					// TODO: inject date range into __ffilter
 					date_range = me.getDateRange();
 					if(date_range && me.dateRangeField)
 					{
-						op_params.__ffilter = op_params.__ffilter || [];
+						op_params.__ffilter = Ext.clone(op_params.__ffilter || []);
 						op_params.__ffilter.push({
 							property: me.dateRangeField,
 							operator: 'ge',
