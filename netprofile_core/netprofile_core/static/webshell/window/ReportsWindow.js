@@ -17,6 +17,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 
 	config: {
 		modal: true,
+		maximizable: true,
 		layout: 'fit',
 		height: 500,
 		minWidth: 700,
@@ -97,6 +98,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			data:   me.grid.reportGroupBy
 		});
 
+		me.relatedStores = {};
 		me.usedValues = [];
 		me.usedGroupBy = [];
 		me.dateRangeType = null;
@@ -433,6 +435,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 						{
 							cont.setTitle(rec.get('title'));
 							me.usedGroupBy[fldidx] = rec.get('name');
+							me.getRelatedStore(rec.get('name'));
 						}
 					}
 				}
@@ -681,6 +684,31 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				return null;
 		}
 	},
+	getRelatedStore: function(fld)
+	{
+		var me = this,
+			model = NetProfile.model[me.apiModule][me.apiClass],
+			model_field = model.getField(fld),
+			refspec, store;
+
+		if(!model_field || !model_field.reference)
+			return null;
+		refspec = model_field.reference.type.split('.');
+		if(!refspec || (refspec.length !== 4) || (refspec[0] !== 'NetProfile') || (refspec[1] !== 'model'))
+			return null;
+		if(me.relatedStores.hasOwnProperty(fld))
+			return me.relatedStores[fld];
+
+		store = NetProfile.StoreManager.getStore(
+			refspec[2],
+			refspec[3],
+			null, true
+		);
+		store.setPageSize(-1);
+		store.load();
+		me.relatedStores[fld] = store;
+		return store;
+	},
 	getGraphStore: function()
 	{
 		var me = this,
@@ -745,15 +773,20 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			Ext.Array.forEach(me.usedGroupBy, function(gby)
 			{
 				var txt = me.naText,
-					date_bits;
+					date_bits, rel_store, rel_record;
 
 				if(typeof(gby) === 'undefined')
 					return;
 				if(typeof(gby) === 'string')
 				{
-					// FIXME: use legend dict
-					if(data[gby] && data[gby].toString())
-						txt = data[gby].toString();
+					if(data[gby])
+					{
+						rel_store = me.getRelatedStore(gby);
+						if(rel_store && (rel_record = rel_store.getById(data[gby])))
+							txt = rel_record.get('__str__');
+						else if(data[gby].toString)
+							txt = data[gby].toString();
+					}
 				}
 				else if(gby[0] in me.groupBySubstitutes)
 				{
@@ -775,7 +808,7 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				ret.push(txt);
 			});
 
-			return ret.join(', ');
+			return ret.join('\n');
 		};
 		fields.push({
 			name: 'report_cat',
@@ -880,7 +913,12 @@ Ext.define('NetProfile.window.ReportsWindow', {
 			cfg = {
 				type: 'category',
 				position: 'bottom',
-				fields: ['report_cat']
+				fields: ['report_cat'],
+				label: {
+					rotate: {
+						degrees: -90
+					}
+				}
 			};
 
 		return cfg;
@@ -889,7 +927,15 @@ Ext.define('NetProfile.window.ReportsWindow', {
 	{
 		var cfg = {
 			type: 'numeric',
-			position: 'left'
+			position: 'left',
+			grid: {
+				odd: {
+					fillStyle: 'rgba(245, 245, 245, 0.8)'
+				},
+				even: {
+					fillStyle: 'rgba(255, 255, 255, 0.8)'
+				}
+			}
 		};
 
 		return cfg;
@@ -904,12 +950,17 @@ Ext.define('NetProfile.window.ReportsWindow', {
 				stacked: false,
 				xField: 'report_cat',
 				label: {
+					shadowBlur: 3,
+					shadowColor: 'white',
 					display: 'insideEnd',
 					renderer: function(value, sprite, cfg, rdata, idx)
 					{
-						if((typeof(value) === 'number') && (value !== Math.ceil(value)))
+						if(typeof(value) === 'number')
 						{
-							value = Ext.util.Format.number(value.toFixed(2), '0,000.00');
+							if(value !== Math.ceil(value))
+								value = Ext.util.Format.number(value.toFixed(2), '0,000.00');
+							else
+								value = Ext.util.Format.number(value, '0,000');
 						}
 						return value;
 					}

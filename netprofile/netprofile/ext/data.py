@@ -1074,6 +1074,8 @@ class ExtColumn(object):
 	def get_groupby_groups(self):
 		if self.column.primary_key:
 			return False
+		if (len(self.column.foreign_keys) > 0) and (self.filter_type != 'nplist'):
+			return False
 		ret = True
 		typecls = self.column.type.__class__
 		if issubclass(typecls, _DATE_SET):
@@ -1322,11 +1324,6 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 		if self.filter_type == 'nplist':
 			return ['count', 'count_distinct']
 		return None
-
-	def get_groupby_groups(self):
-		if self.filter_type == 'nplist':
-			return True
-		return False
 
 class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 	@property
