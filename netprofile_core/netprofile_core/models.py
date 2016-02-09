@@ -951,7 +951,10 @@ class User(Base):
 
 	photo = relationship(
 		'File',
-		backref='photo_of',
+		backref=backref(
+			'photo_of',
+			passive_deletes=True
+		),
 		foreign_keys=(photo_id,)
 	)
 	secondary_groupmap = relationship(
@@ -968,7 +971,8 @@ class User(Base):
 	)
 	subordinates = relationship(
 		'User',
-		backref=backref('manager', remote_side=[id])
+		backref=backref('manager', remote_side=[id]),
+		passive_deletes=True
 	)
 	caps = relationship(
 		'UserCapability',
@@ -987,11 +991,13 @@ class User(Base):
 	files = relationship(
 		'File',
 		backref='user',
+		passive_deletes=True,
 		primaryjoin='File.user_id == User.id'
 	)
 	folders = relationship(
 		'FileFolder',
 		backref='user',
+		passive_deletes=True,
 		primaryjoin='FileFolder.user_id == User.id'
 	)
 	password_history = relationship(
@@ -1820,7 +1826,8 @@ class Group(Base):
 	)
 	children = relationship(
 		'Group',
-		backref=backref('parent', remote_side=[id])
+		backref=backref('parent', remote_side=[id]),
+		passive_deletes=True
 	)
 	caps = relationship(
 		'GroupCapability',
@@ -1839,11 +1846,13 @@ class Group(Base):
 	files = relationship(
 		'File',
 		backref='group',
+		passive_deletes=True,
 		primaryjoin='File.group_id == Group.id'
 	)
 	folders = relationship(
 		'FileFolder',
 		backref='group',
+		passive_deletes=True,
 		primaryjoin='FileFolder.group_id == Group.id'
 	)
 	calendars = relationship(
@@ -3979,6 +3988,7 @@ class FileFolder(Base):
 	root_groups = relationship(
 		'Group',
 		backref='root_folder',
+		passive_deletes=True,
 		primaryjoin='FileFolder.id == Group.root_folder_id'
 	)
 

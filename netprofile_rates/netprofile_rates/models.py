@@ -1116,15 +1116,24 @@ class Rate(Base):
 
 	pool = relationship(
 		'IPPool',
-		backref='rates'
+		backref=backref(
+			'rates',
+			passive_deletes=True
+		)
 	)
 	destination_set = relationship(
 		'DestinationSet',
-		backref='rates'
+		backref=backref(
+			'rates',
+			passive_deletes=True
+		)
 	)
 	filter_set = relationship(
 		'FilterSet',
-		backref='rates'
+		backref=backref(
+			'rates',
+			passive_deletes=True
+		)
 	)
 	global_modmap = relationship(
 		'GlobalRateModifier',

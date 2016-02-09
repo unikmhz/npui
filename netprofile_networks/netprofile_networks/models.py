@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Networks module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -363,15 +363,24 @@ class Network(Base):
 	)
 	group = relationship(
 		'NetworkGroup',
-		backref='networks'
+		backref=backref(
+			'networks',
+			passive_deletes=True
+		)
 	)
 	management_device = relationship(
 		'NetworkDevice',
-		backref='networks'
+		backref=backref(
+			'networks',
+			passive_deletes=True
+		)
 	)
 	routing_table = relationship(
 		'RoutingTable',
-		backref='networks'
+		backref=backref(
+			'networks',
+			passive_deletes=True
+		)
 	)
 	services = relationship(
 		'NetworkService',

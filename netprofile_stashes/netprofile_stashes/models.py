@@ -696,7 +696,10 @@ class StashIOType(Base):
 
 	oper_capability = relationship(
 		'Privilege',
-		backref='stash_io_types',
+		backref=backref(
+			'stash_io_types',
+			passive_deletes=True
+		),
 		lazy='joined'
 	)
 
@@ -936,7 +939,10 @@ class StashIO(Base):
 	)
 	user = relationship(
 		'User',
-		backref='stash_ios'
+		backref=backref(
+			'stash_ios',
+			passive_deletes=True
+		)
 	)
 	entity = relationship(
 		'Entity',
@@ -1106,7 +1112,10 @@ class StashOperation(Base):
 	)
 	operator_user = relationship(
 		'User',
-		backref='stash_operations'
+		backref=backref(
+			'stash_operations',
+			passive_deletes=True
+		)
 	)
 	entity = relationship(
 		'Entity',
@@ -1157,9 +1166,9 @@ class FuturePayment(Base):
 				'form_view'     : (
 					'entity', 'stash', 'diff',
 					'state', 'origin',
-					'ctime', 'cby',
-					'mtime', 'mby',
-					'ptime', 'pby'
+					'ctime', 'created_by',
+					'mtime', 'modified_by',
+					'ptime', 'paid_by'
 				),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : Wizard(
@@ -1259,7 +1268,6 @@ class FuturePayment(Base):
 		Comment('Last modification timestamp'),
 		CurrentTimestampDefault(on_update=True),
 		nullable=False,
-#		default=zzz,
 		info={
 			'header_string' : _('Modified'),
 			'read_only'     : True
@@ -1273,7 +1281,7 @@ class FuturePayment(Base):
 		default=None,
 		server_default=FetchedValue(),
 		info={
-			'header_string' : _('Paid'),
+			'header_string' : _('Confirmed'),
 			'read_only'     : True
 		}
 	)
@@ -1327,6 +1335,7 @@ class FuturePayment(Base):
 			'header_string' : _('Description')
 		}
 	)
+
 	stash = relationship(
 		'Stash',
 		innerjoin=True,
@@ -1340,6 +1349,30 @@ class FuturePayment(Base):
 		'Entity',
 		backref=backref(
 			'stash_futures',
+			passive_deletes=True
+		)
+	)
+	created_by = relationship(
+		'User',
+		foreign_keys=created_by_id,
+		backref=backref(
+			'created_futures',
+			passive_deletes=True
+		)
+	)
+	modified_by = relationship(
+		'User',
+		foreign_keys=modified_by_id,
+		backref=backref(
+			'modified_futures',
+			passive_deletes=True
+		)
+	)
+	paid_by = relationship(
+		'User',
+		foreign_keys=paid_by_id,
+		backref=backref(
+			'paid_futures',
 			passive_deletes=True
 		)
 	)

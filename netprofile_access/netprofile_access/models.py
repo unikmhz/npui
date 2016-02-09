@@ -453,7 +453,10 @@ class AccessEntity(Entity):
 	next_rate = relationship(
 		'Rate',
 		foreign_keys=next_rate_id,
-		backref='pending_access_entities'
+		backref=backref(
+			'pending_access_entities',
+			passive_deletes=True
+		)
 	)
 	alias_of = relationship(
 		'AccessEntity',
@@ -463,11 +466,17 @@ class AccessEntity(Entity):
 	)
 	ipv4_address = relationship(
 		'IPv4Address',
-		backref='access_entities'
+		backref=backref(
+			'access_entities',
+			passive_deletes=True
+		)
 	)
 	ipv6_address = relationship(
 		'IPv6Address',
-		backref='access_entities'
+		backref=backref(
+			'access_entities',
+			passive_deletes=True
+		)
 	)
 	blocks = relationship(
 		'AccessBlock',

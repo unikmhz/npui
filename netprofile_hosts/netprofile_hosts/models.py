@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Hosts module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -340,12 +340,18 @@ class Host(Base):
 	created_by = relationship(
 		'User',
 		foreign_keys=created_by_id,
-		backref='created_hosts'
+		backref=backref(
+			'created_hosts',
+			passive_deletes=True
+		)
 	)
 	modified_by = relationship(
 		'User',
 		foreign_keys=modified_by_id,
-		backref='modified_hosts'
+		backref=backref(
+			'modified_hosts',
+			passive_deletes=True
+		)
 	)
 	services = relationship(
 		'Service',

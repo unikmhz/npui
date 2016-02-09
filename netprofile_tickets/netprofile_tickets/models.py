@@ -1139,26 +1139,41 @@ class Ticket(Base):
 	assigned_user = relationship(
 		'User',
 		foreign_keys=assigned_user_id,
-		backref='assigned_tickets'
+		backref=backref(
+			'assigned_tickets',
+			passive_deletes=True
+		)
 	)
 	assigned_group = relationship(
 		'Group',
-		backref='assigned_tickets'
+		backref=backref(
+			'assigned_tickets',
+			passive_deletes=True
+		)
 	)
 	created_by = relationship(
 		'User',
 		foreign_keys=created_by_id,
-		backref='created_tickets'
+		backref=backref(
+			'created_tickets',
+			passive_deletes=True
+		)
 	)
 	modified_by = relationship(
 		'User',
 		foreign_keys=modified_by_id,
-		backref='modified_tickets'
+		backref=backref(
+			'modified_tickets',
+			passive_deletes=True
+		)
 	)
 	transition_by = relationship(
 		'User',
 		foreign_keys=transition_by_id,
-		backref='transitioned_tickets'
+		backref=backref(
+			'transitioned_tickets',
+			passive_deletes=True
+		)
 	)
 	flagmap = relationship(
 		'TicketFlag',
@@ -1686,11 +1701,17 @@ class TicketChange(Base):
 
 	transition = relationship(
 		'TicketStateTransition',
-		backref='ticket_changes'
+		backref=backref(
+			'ticket_changes',
+			passive_deletes=True
+		)
 	)
 	user = relationship(
 		'User',
-		backref='ticket_changes'
+		backref=backref(
+			'ticket_changes',
+			passive_deletes=True
+		)
 	)
 	bits = relationship(
 		'TicketChangeBit',

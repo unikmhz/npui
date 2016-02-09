@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 # © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -1044,17 +1044,26 @@ class Device(Base):
 	created_by = relationship(
 		'User',
 		foreign_keys=created_by_id,
-		backref='created_devices'
+		backref=backref(
+			'created_devices',
+			passive_deletes=True
+		)
 	)
 	modified_by = relationship(
 		'User',
 		foreign_keys=modified_by_id,
-		backref='modified_devices'
+		backref=backref(
+			'modified_devices',
+			passive_deletes=True
+		)
 	)
 	installed_by = relationship(
 		'User',
 		foreign_keys=installed_by_id,
-		backref='installed_devices'
+		backref=backref(
+			'installed_devices',
+			passive_deletes=True
+		)
 	)
 	device_type = relationship(
 		'DeviceType',
@@ -1573,7 +1582,10 @@ class NetworkDevice(Device):
 	host = relationship(
 		'Host',
 		innerjoin=True,
-		backref='network_devices'
+		backref=backref(
+			'network_devices',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):
