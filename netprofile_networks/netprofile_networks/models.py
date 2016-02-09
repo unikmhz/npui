@@ -181,7 +181,7 @@ class Network(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Domain'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -195,7 +195,7 @@ class Network(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -297,7 +297,7 @@ class Network(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Routing Table'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	ipv4_guest_start = Column(
@@ -610,7 +610,7 @@ class NetworkService(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -730,7 +730,7 @@ class RoutingTableEntry(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Table'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)

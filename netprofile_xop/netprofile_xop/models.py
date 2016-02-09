@@ -208,7 +208,7 @@ class ExternalOperation(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Currency'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	timestamp = Column(
@@ -481,7 +481,7 @@ class ExternalOperationProvider(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Operation Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)

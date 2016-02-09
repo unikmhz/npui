@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Documents module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -331,7 +331,7 @@ class DocumentBundleMapping(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Bundle'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -343,7 +343,7 @@ class DocumentBundleMapping(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Document'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)

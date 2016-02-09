@@ -462,7 +462,7 @@ class Stash(Base):
 					'value'    : True
 				}]}
 			},
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	name = Column(
@@ -804,7 +804,7 @@ class StashIO(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'editor_xtype'  : 'simplemodelselect',
 			'editor_config' : {
 				'extraParams' : { '__ffilter' : [{
@@ -846,7 +846,7 @@ class StashIO(Base):
 					'value'    : True
 				}]}
 			},
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	user_id = Column(
@@ -859,7 +859,7 @@ class StashIO(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Operator'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	entity_id = Column(
@@ -1041,7 +1041,7 @@ class StashOperation(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Operator'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	entity_id = Column(

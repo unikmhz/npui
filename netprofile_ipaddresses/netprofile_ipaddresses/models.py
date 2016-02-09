@@ -176,7 +176,7 @@ class IPv4Address(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Pool'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	network_id = Column(
@@ -187,7 +187,7 @@ class IPv4Address(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Network'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	offset = Column(
@@ -376,7 +376,7 @@ class IPv6Address(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Pool'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	network_id = Column(
@@ -387,7 +387,7 @@ class IPv6Address(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Network'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	offset = Column(

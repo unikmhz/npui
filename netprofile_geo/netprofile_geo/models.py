@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -268,7 +268,7 @@ class District(Base):
 		nullable=False,
 		info={
 			'header_string' : _('City'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -355,7 +355,7 @@ class Street(Base):
 		nullable=False,
 		info={
 			'header_string' : _('City'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -369,7 +369,7 @@ class Street(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('District'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -510,7 +510,7 @@ class House(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Street'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)

@@ -230,7 +230,7 @@ class AccessSession(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('NAS'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -501,7 +501,7 @@ class AccessSessionHistory(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('NAS'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)

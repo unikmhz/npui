@@ -188,7 +188,7 @@ class Host(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -212,7 +212,7 @@ class Host(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Domain'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -234,7 +234,7 @@ class Host(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Aliased'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	alias_type = Column(
@@ -725,7 +725,7 @@ class Service(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -859,7 +859,7 @@ class DomainService(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)

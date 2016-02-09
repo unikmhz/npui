@@ -401,7 +401,7 @@ class Entity(Base):
 		server_default=text('1'),
 		info={
 			'header_string' : _('State'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	relative_dn = Column(

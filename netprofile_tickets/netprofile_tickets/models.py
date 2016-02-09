@@ -930,7 +930,7 @@ class Ticket(Base):
 		nullable=False,
 		info={
 			'header_string' : _('State'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -942,7 +942,7 @@ class Ticket(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Origin'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	assigned_user_id = Column(
@@ -955,7 +955,7 @@ class Ticket(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('User'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'write_cap'     : 'TICKETS_CHANGE_UID',
 			'column_flex'   : 1
 		}
@@ -970,7 +970,7 @@ class Ticket(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'write_cap'     : 'TICKETS_CHANGE_GID',
 			'column_flex'   : 1
 		}
@@ -1445,7 +1445,7 @@ class TicketTemplate(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Origin'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	callback_on_create = Column(
@@ -1641,7 +1641,7 @@ class TicketChange(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Transition'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	user_id = Column(
@@ -1654,7 +1654,7 @@ class TicketChange(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('User'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	timestamp = Column(
@@ -1803,7 +1803,7 @@ class TicketChangeBit(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Field'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	old = Column(

@@ -429,7 +429,7 @@ class DeviceTypeFlag(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 
@@ -539,7 +539,7 @@ class DeviceType(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Manufacturer'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -551,7 +551,7 @@ class DeviceType(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Category'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -886,7 +886,7 @@ class Device(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -920,7 +920,7 @@ class Device(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Place'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -1222,7 +1222,7 @@ class DeviceFlag(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 

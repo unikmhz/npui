@@ -280,7 +280,7 @@ class AccessEntity(Entity):
 		nullable=False,
 		info={
 			'header_string' : _('Rate'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -307,7 +307,7 @@ class AccessEntity(Entity):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Next Rate'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	ipv4_address_id = Column(
@@ -542,7 +542,7 @@ class PerUserRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -568,7 +568,7 @@ class PerUserRateModifier(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Rate'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -975,7 +975,7 @@ class AccessEntityChange(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('User'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	timestamp = Column(
@@ -1031,7 +1031,7 @@ class AccessEntityChange(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Old Rate'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -1045,7 +1045,7 @@ class AccessEntityChange(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('New Rate'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)

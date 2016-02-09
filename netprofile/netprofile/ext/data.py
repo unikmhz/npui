@@ -267,7 +267,7 @@ _FILTER_TYPE_MAP = {
 	Boolean      : 'boolean',
 	Date         : 'npdate',
 	DateTime     : 'npdate',
-	DeclEnumType : 'list',
+	DeclEnumType : 'nplist',
 	Float        : 'npnumber',
 	Money        : 'npnumber', # ?
 	NPBoolean    : 'boolean',
@@ -387,11 +387,7 @@ class ExtColumn(object):
 	@property
 	def filter_type(self):
 		typecls = self.column.type.__class__
-		ft = self.column.info.get('filter_type', _FILTER_TYPE_MAP.get(typecls, 'string'))
-		# TODO: remove this hack after all models are updated
-		if ft == 'list':
-			return 'nplist'
-		return ft
+		return self.column.info.get('filter_type', _FILTER_TYPE_MAP.get(typecls, 'string'))
 
 	@property
 	def reader(self):
@@ -1212,11 +1208,7 @@ class ExtRelationshipColumn(ExtColumn):
 
 	@property
 	def filter_type(self):
-		ft = self.column.info.get('filter_type', 'none')
-		# TODO: remove this hack after all models are updated
-		if ft == 'list':
-			return 'nplist'
-		return ft
+		return self.column.info.get('filter_type', 'none')
 
 	def get_column_cfg(self, req):
 		conf = super(ExtRelationshipColumn, self).get_column_cfg(req)

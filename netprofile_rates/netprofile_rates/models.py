@@ -456,7 +456,7 @@ class Destination(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Set'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -640,7 +640,7 @@ class Filter(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Set'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 3
 		}
 	)
@@ -856,7 +856,7 @@ class Rate(Base):
 		server_default=text('1'),
 		info={
 			'header_string' : _('Class'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -870,7 +870,7 @@ class Rate(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('IP Address Pool'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	destination_set_id = Column(
@@ -883,7 +883,7 @@ class Rate(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Destination Set'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	filter_set_id = Column(
@@ -896,7 +896,7 @@ class Rate(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Filter Set'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	quota_period_amount = Column(
@@ -1375,7 +1375,7 @@ class RateModifierType(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Period'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	oq_sum_multiplier_ingress = Column(
@@ -1528,7 +1528,7 @@ class GlobalRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -1540,7 +1540,7 @@ class GlobalRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Rate'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)

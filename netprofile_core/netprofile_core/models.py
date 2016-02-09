@@ -733,7 +733,7 @@ class User(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'ldap_attr'     : 'gidNumber',
 			'column_flex'   : 2
 		}
@@ -1752,7 +1752,7 @@ class Group(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Parent'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 3
 		}
 	)
@@ -1766,7 +1766,7 @@ class Group(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Security Policy'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -2048,7 +2048,7 @@ class Privilege(Base):
 		server_default=text('1'),
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -3403,7 +3403,7 @@ class UserCommunicationChannel(Base):
 		info={
 			'header_string' : _('Type'),
 			'column_flex'   : 2,
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'editor_xtype'  : 'simplemodelselect'
 		}
 	)
@@ -4741,7 +4741,7 @@ class File(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Folder'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -6109,7 +6109,7 @@ class LogData(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	action_id = Column(
@@ -6120,7 +6120,7 @@ class LogData(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Action'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	data = Column(
@@ -6430,7 +6430,7 @@ class GlobalSettingSection(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -6516,7 +6516,7 @@ class UserSettingSection(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -6718,7 +6718,7 @@ class GlobalSetting(Base, DynamicSetting):
 		nullable=False,
 		info={
 			'header_string' : _('Section'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -6730,7 +6730,7 @@ class GlobalSetting(Base, DynamicSetting):
 		nullable=False,
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -6916,7 +6916,7 @@ class UserSettingType(Base, DynamicSetting):
 		nullable=False,
 		info={
 			'header_string' : _('Section'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -6928,7 +6928,7 @@ class UserSettingType(Base, DynamicSetting):
 		nullable=False,
 		info={
 			'header_string' : _('Module'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -7116,7 +7116,7 @@ class UserSetting(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -7560,7 +7560,7 @@ class CalendarImport(Base):
 		info={
 			'header_string' : _('Calendar'),
 			'read_only'     : True,
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -7672,7 +7672,7 @@ class Event(Base):
 		info={
 			'header_string' : _('Calendar'),
 			'read_only'     : True,
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	user_id = Column(
