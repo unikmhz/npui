@@ -365,6 +365,11 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 	padding-top: 2px;
 }
 
+.np-chart .x-docked-bottom
+{
+	border: 0;
+}
+
 .x-tree-icon-parent
 {
 	background-image: url(../img/folder.png);
@@ -406,6 +411,7 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-attach       { background-image: url(../img/attach.png) !important; }
 .ico-add          { background-image: url(../img/add.png) !important; }
 .ico-cancel       { background-image: url(../img/cancel.png) !important; }
+.ico-chart        { background-image: url(../img/chart.png) !important; }
 .ico-clear        { background-image: url(../img/clear.png) !important; }
 .ico-cog          { background-image: url(../img/cog.png) !important; }
 .ico-collapse     { background-image: url(../img/collapse.png) !important; }
@@ -448,6 +454,8 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-props        { background-image: url(../img/props.png) !important; }
 .ico-redo         { background-image: url(../img/redo.png) !important; }
 .ico-remove       { background-image: url(../img/remove.png) !important; }
+.ico-report       { background-image: url(../img/report.png) !important; }
+.ico-report-plus  { background-image: url(../img/report_plus.png) !important; }
 .ico-revert       { background-image: url(../img/revert.png) !important; }
 .ico-rewind       { background-image: url(../img/rewind.png) !important; }
 .ico-run          { background-image: url(../img/run.png) !important; }

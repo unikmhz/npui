@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: ExtJS schema and data generation
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -65,7 +65,6 @@ from sqlalchemy import (
 	or_
 )
 
-from sqlalchemy.types import TypeEngine
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm.interfaces import (
@@ -138,6 +137,10 @@ _INTEGER_SET = (
 	UInt64
 )
 
+_FLOAT_SET = (
+	Float,
+)
+
 _DECIMAL_SET = (
 	IPv6Offset,
 	Money,
@@ -170,6 +173,8 @@ _IPADDR_SET = (
 	IPv4Address,
 	IPv6Address
 )
+
+_NUMBER_SET = _INTEGER_SET + _FLOAT_SET + _DECIMAL_SET
 
 _COLUMN_XTYPE_MAP = {
 	BigInteger   : 'numbercolumn', # ?
@@ -313,6 +318,19 @@ def _recursive_update(dest, src):
 		else:
 			dest[k] = v
 	return dest
+
+def _get_aggregate_column(dialect, func_name, field, colname):
+	if func_name == 'count_distinct':
+		func_name = 'count'
+		field = field.distinct()
+	if func_name in ('min', 'max', 'avg', 'sum', 'count'):
+		return getattr(func, func_name)(field).label(colname)
+	raise ValueError('Invalid aggregate function name: %s' % (func_name,))
+
+def _get_groupby_clause(dialect, gtype, field):
+	if gtype in ('year', 'month', 'week', 'day', 'hour', 'minute'):
+		return func.extract(gtype, field)
+	raise ValueError('Invalid group-by clause name: %s' % (gtype,))
 
 class ExtColumn(object):
 	MIN_PIXELS = 40
@@ -1042,6 +1060,28 @@ class ExtColumn(object):
 	def apply_data(self, obj, data):
 		pass
 
+	def get_aggregates(self):
+		if (self.column.primary_key) or (len(self.column.foreign_keys) > 0):
+			return None
+		ret = ['count', 'count_distinct']
+		typecls = self.column.type.__class__
+		if issubclass(typecls, _NUMBER_SET):
+			ret.extend(('min', 'max', 'avg', 'sum'))
+		elif issubclass(typecls, _DATE_SET):
+			ret.extend(('min', 'max', 'avg'))
+		return ret
+
+	def get_groupby_groups(self):
+		if self.column.primary_key:
+			return False
+		if (len(self.column.foreign_keys) > 0) and (self.filter_type != 'nplist'):
+			return False
+		ret = True
+		typecls = self.column.type.__class__
+		if issubclass(typecls, _DATE_SET):
+			ret = ['year', 'month', 'week', 'day', 'hour', 'minute']
+		return ret
+
 class ExtPseudoColumn(ExtColumn):
 	@property
 	def reader(self):
@@ -1157,6 +1197,12 @@ class ExtPseudoColumn(ExtColumn):
 	def apply_data(self, obj, data):
 		pass
 
+	def get_aggregates(self):
+		return None
+
+	def get_groupby_groups(self):
+		return False
+
 class ExtRelationshipColumn(ExtColumn):
 	def __init__(self, sqla_prop, sqla_model):
 		self.prop = sqla_prop
@@ -1178,6 +1224,12 @@ class ExtRelationshipColumn(ExtColumn):
 		if 'align' in conf:
 			del conf['align']
 		return conf
+
+	def get_aggregates(self):
+		return None
+
+	def get_groupby_groups(self):
+		return False
 
 class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 	@property
@@ -1267,6 +1319,11 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 			'type'       : 'string',
 			'persist'    : False
 		}
+
+	def get_aggregates(self):
+		if self.filter_type == 'nplist':
+			return ['count', 'count_distinct']
+		return None
 
 class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 	@property
@@ -1652,6 +1709,36 @@ class ExtModel(object):
 				ret.append(vitem)
 		return ret
 
+	def get_aggregates(self, req):
+		ret = []
+		loc = req.localizer
+		for cname, col in self.get_read_columns().items():
+			agg = col.get_aggregates()
+			if agg is None:
+				continue
+			ret.append({
+				'name'  : cname,
+				'title' : loc.translate(col.header_string),
+				'func'  : agg
+			})
+		return ret
+
+	def get_groupby_groups(self, req):
+		ret = []
+		loc = req.localizer
+		for cname, col in self.get_read_columns().items():
+			grp = col.get_groupby_groups()
+			if not grp:
+				continue
+			grpdict = {
+				'name'  : cname,
+				'title' : loc.translate(col.header_string)
+			}
+			if grp is not True:
+				grpdict['func'] = grp
+			ret.append(grpdict)
+		return ret
+
 	def _apply_pagination(self, query, trans, params):
 		if '__start' in params:
 			val = int(params['__start'])
@@ -1788,8 +1875,7 @@ class ExtModel(object):
 		return trans
 
 	def read(self, params, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'read')
-		logger.debug('Params: %r', params)
+		logger.debug('Running ExtDirect class:%s method:read params:%r', self.name, params)
 		res = {
 			'records' : [],
 			'success' : True,
@@ -1900,8 +1986,7 @@ class ExtModel(object):
 		return res
 
 	def read_one(self, params, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'read_one')
-		logger.debug('Params: %r', params)
+		logger.debug('Running ExtDirect class:%s method:read_one params:%r', self.name, params)
 		raise RuntimeError('read_one() not implemented')
 
 	def set_values(self, obj, values, request, is_create=False):
@@ -1939,8 +2024,7 @@ class ExtModel(object):
 		request.run_hook('np.object.set_values', obj, values, request, self)
 
 	def create(self, params, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'create')
-		logger.debug('Params: %r', params)
+		logger.debug('Running ExtDirect class:%s method:create params:%r', self.name, params)
 		res = {
 			'records' : [],
 			'success' : True,
@@ -2048,8 +2132,7 @@ class ExtModel(object):
 		return res
 
 	def update(self, params, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'update')
-		logger.debug('Params: %r', params)
+		logger.debug('Running ExtDirect class:%s method:update params:%r', self.name, params)
 		res = {
 			'records' : [],
 			'success' : True,
@@ -2135,8 +2218,7 @@ class ExtModel(object):
 		return res
 
 	def delete(self, params, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'delete')
-		logger.debug('Params: %r', params)
+		logger.debug('Running ExtDirect class:%s method:delete params:%r', self.name, params)
 		res = {
 			'success' : True,
 			'total'   : 0
@@ -2156,7 +2238,7 @@ class ExtModel(object):
 		return res
 
 	def get_fields(self, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'get_fields')
+		logger.debug('Running ExtDirect class:%s method:get_fields', self.name)
 		fields = []
 		for cname, col in self.get_form_columns().items():
 			fdef = col.get_editor_cfg(request, in_form=True)
@@ -2176,8 +2258,7 @@ class ExtModel(object):
 		}
 
 	def validate_fields(self, values, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'validate_fields')
-		logger.debug('Values: %r', values)
+		logger.debug('Running ExtDirect class:%s method:validate_fields values:%r', self.name, values)
 		loc = get_localizer(request)
 		cols = self.get_columns()
 		trans = self._get_trans(cols)
@@ -2235,7 +2316,7 @@ class ExtModel(object):
 		}
 
 	def get_create_wizard(self, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'get_create_wizard')
+		logger.debug('Running ExtDirect class:%s method:get_create_wizard', self.name)
 		wiz = self.create_wizard
 		if wiz:
 			if not wiz.init_done:
@@ -2263,7 +2344,7 @@ class ExtModel(object):
 		}
 
 	def get_wizard(self, wname, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'get_wizard')
+		logger.debug('Running ExtDirect class:%s method:get_wizard wname:%s', self.name, wname)
 		wizdict = self.wizards
 		if wizdict and (wname in wizdict):
 			wiz = wizdict[wname]
@@ -2292,8 +2373,7 @@ class ExtModel(object):
 		}
 
 	def create_wizard_action(self, pane_id, act, values, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'create_wizard_action')
-		logger.debug('Params: %r', (pane_id, act, values))
+		logger.debug('Running ExtDirect class:%s method:create_wizard_action pane_id:%r act:%r values:%r', self.name, pane_id, act, values)
 		wiz = self.create_wizard
 		if wiz:
 			if not wiz.init_done:
@@ -2312,8 +2392,7 @@ class ExtModel(object):
 		return { 'success' : False }
 
 	def wizard_action(self, wname, pane_id, act, values, request):
-		logger.info('Running ExtDirect class:%s method:%s', self.name, 'wizard_action')
-		logger.debug('Params: %r', (wname, pane_id, act, values))
+		logger.debug('Running ExtDirect class:%s method:wizard_action wname:%s pane_id:%r act:%r values:%r', self.name, wname, pane_id, act, values)
 		wizdict = self.wizards
 		if wizdict and (wname in wizdict):
 			wiz = wizdict[wname]
@@ -2365,6 +2444,76 @@ class ExtModel(object):
 		dpview = getattr(mod, dpview[1])
 		if callable(dpview):
 			return dpview(self, req)
+
+	def report(self, params, request):
+		logger.debug('Running ExtDirect class:%s method:report params:%r', self.name, params)
+		res = {
+			'records' : [],
+			'success' : True,
+			'total'   : 0
+		}
+		q_colnames = []
+		q_columns = []
+		q_groupby = []
+		records = []
+		tot = 0
+		cols = self.get_read_columns()
+		trans = self._get_trans(cols)
+		sess = DBSession()
+		engine = sess.get_bind(self.model)
+
+		if '__aggregates' in params:
+			for qcol in params['__aggregates']:
+				if qcol[1] not in trans:
+					continue
+				prop = getattr(self.model, trans[qcol[1]].key)
+				q_colnames.append(qcol[2])
+				q_columns.append(_get_aggregate_column(engine.dialect, qcol[0], prop, qcol[2]))
+		if len(q_columns) == 0:
+			q_colnames.append('cnt')
+			q_columns.append(func.count('*').label('cnt'))
+		if '__groupby' in params:
+			for gbcol in params['__groupby']:
+				if isinstance(gbcol, str):
+					if gbcol not in trans:
+						continue
+					prop = getattr(self.model, trans[gbcol].key)
+					q_colnames.append(gbcol)
+					q_columns.append(prop.label(gbcol))
+					q_groupby.append(prop)
+					continue
+				if gbcol[1] not in trans:
+					continue
+				prop = getattr(self.model, trans[gbcol[1]].key)
+				colname = '_'.join((gbcol[1], gbcol[0]))
+				q_colnames.append(colname)
+				q_columns.append(_get_groupby_clause(engine.dialect, gbcol[0], prop).label(colname))
+				q_groupby.append(_get_groupby_clause(engine.dialect, gbcol[0], prop))
+
+		q = sess.query(*q_columns).select_from(self.model)
+		if '__ffilter' in params:
+			q = self._apply_filters(q, trans, params, pname='__ffilter')
+		if '__filter' in params:
+			q = self._apply_filters(q, trans, params)
+		if '__xfilter' in params:
+			q = self._apply_xfilters(q, params)
+		if '__sstr' in params:
+			q = self._apply_sstr(q, trans, params)
+		# TODO: __sort
+		if len(q_groupby) > 0:
+			q = q.group_by(*q_groupby).order_by(*q_groupby)
+		helper = getattr(self.model, '__augment_query__', None)
+		if callable(helper):
+			q = helper(sess, q, params, request)
+		# TODO: need additional augment-style hook to filter report resultset
+
+		for obj in q:
+			tot += 1
+			records.append(dict((colname, getattr(obj, colname)) for colname in q_colnames))
+
+		res['records'] = records
+		res['total'] = tot
+		return res
 
 class ExtModuleBrowser(object):
 	def __init__(self, mmgr, moddef):

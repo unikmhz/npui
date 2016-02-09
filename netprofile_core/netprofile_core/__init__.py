@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -649,6 +649,7 @@ class Module(ModuleBase):
 		if request.debug_enabled:
 			return (
 				'netprofile_core:static/extern/extjs/build/ext-all-debug.js',
+				'netprofile_core:static/extern/extjs/build/packages/sencha-charts/build/sencha-charts-debug.js',
 				'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic-debug.js',
 				'netprofile_core:static/extern/extensible/lib/extensible-all-debug.js',
 				# TODO: Upstream doesn't distribute unminified source.
@@ -659,6 +660,7 @@ class Module(ModuleBase):
 			)
 		return (
 			'netprofile_core:static/extern/extjs/build/ext-all.js',
+			'netprofile_core:static/extern/extjs/build/packages/sencha-charts/build/sencha-charts.js',
 			'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic.js',
 			'netprofile_core:static/extensible/lib/extensible-all.js',
 			'netprofile_core:static/extern/tinymce/tinymce.min.js',
@@ -677,11 +679,13 @@ class Module(ModuleBase):
 		if request.debug_enabled:
 			return (
 				'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all-debug.css',
+				'netprofile_core:static/extern/extjs/build/packages/sencha-charts/build/classic/resources/sencha-charts-all-debug.css',
 				'netprofile_core:static/extern/extensible/resources/css/extensible-all.css',
 				'netprofile_core:static/css/main.css'
 			)
 		return (
 			'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all.css',
+			'netprofile_core:static/extern/extjs/build/packages/sencha-charts/build/classic/resources/sencha-charts-all.css',
 			'netprofile_core:static/extern/extensible/resources/css/extensible-all.css',
 			'netprofile_core:static/css/main.css'
 		)

@@ -920,6 +920,9 @@ Ext.require([
 % endif
 		canEdit: <%np:jscap code="${mod.cap_edit}" />,
 		canDelete: <%np:jscap code="${mod.cap_delete}" />,
+		canShowReports: true,
+		reportAggregates: ${mod.get_aggregates(req) | n,jsone},
+		reportGroupBy: ${mod.get_groupby_groups(req) | n,jsone},
 		canExport: ${'false' if (mod.export_view is None) else 'true'}
 	});
 % endfor
