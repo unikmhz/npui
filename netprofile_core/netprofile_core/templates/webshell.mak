@@ -882,7 +882,7 @@ Ext.require([
 	});
 	Ext.define('NetProfile.model.${module}.${model}', {
 		extend: 'NetProfile.data.BaseModel',
-		fields: ${mod.get_reader_cfg() | n,jsone},
+		fields: ${mod.get_reader_cfg(req) | n,jsone},
 		idProperty: '${mod.pk}',
 		proxy: {
 			type: '${module}_${model}'
@@ -920,6 +920,9 @@ Ext.require([
 % endif
 		canEdit: <%np:jscap code="${mod.cap_edit}" />,
 		canDelete: <%np:jscap code="${mod.cap_delete}" />,
+		canShowReports: true,
+		reportAggregates: ${mod.get_aggregates(req) | n,jsone},
+		reportGroupBy: ${mod.get_groupby_groups(req) | n,jsone},
 		canExport: ${'false' if (mod.export_view is None) else 'true'}
 	});
 % endfor

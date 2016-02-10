@@ -9,6 +9,7 @@ Ext.define('NetProfile.panel.Wizard', {
 		'Ext.form.*',
 		'NetProfile.form.field.IPv4',
 		'NetProfile.form.field.IPv6',
+		'NetProfile.form.field.Money',
 		'NetProfile.form.field.Password',
 		'NetProfile.form.WizardPane'
 	],
@@ -188,13 +189,16 @@ Ext.define('NetProfile.panel.Wizard', {
 			cbfunc = function(data, res)
 			{
 				var layout = this.getLayout(),
-					form = layout.getActiveItem().getForm(),
-					xfld;
+					active = layout.getActiveItem(),
+					form, xfld;
 
+				if(!active)
+					return false;
 				if(!data || !data.success)
 					return false;
 				if(!data.errors)
 					return true;
+				form = active.getForm();
 				form.getFields().each(function(xfld)
 				{
 					if(!xfld.name)
@@ -272,6 +276,7 @@ Ext.define('NetProfile.panel.Wizard', {
 			return false;
 		}
 		if('disable' in data.action)
+		{
 			Ext.Array.forEach(data.action.disable, function(stepid)
 			{
 				var step = me.getComponent(stepid);
@@ -281,7 +286,9 @@ Ext.define('NetProfile.panel.Wizard', {
 					step.doGetValues = false;
 				}
 			});
+		}
 		if('enable' in data.action)
+		{
 			Ext.Array.forEach(data.action.enable, function(stepid)
 			{
 				var step = me.getComponent(stepid);
@@ -291,13 +298,38 @@ Ext.define('NetProfile.panel.Wizard', {
 					step.doGetValues = true;
 				}
 			});
+		}
 		if('redraw' in data.action)
+		{
 			Ext.Array.forEach(data.action.redraw, function(widget)
 			{
 			});
+		}
 		if(('reload' in data.action) && data.action.reload && this.createInto)
 			this.createInto.reload();
+		if('affects' in data.action)
+		{
+			Ext.Array.forEach(data.action.affects, function(tuple)
+			{
+				var len = tuple.length,
+					pb = Ext.getCmp('npws_propbar'),
+					rec_id;
+
+				if(len === 3)
+				{
+					rec_id = parseInt(tuple[2]);
+					NetProfile.StoreManager.refreshRelated(tuple[0], tuple[1], rec_id);
+					if(pb)
+						pb.refreshRecordTab(tuple[0], tuple[1], rec_id);
+				}
+				else if(len === 2)
+				{
+					NetProfile.StoreManager.refreshStores(tuple[0], tuple[1]);
+				}
+			});
+		}
 		if('do' in data.action)
+		{
 			switch(data.action['do'])
 			{
 				case 'prev':
@@ -318,6 +350,7 @@ Ext.define('NetProfile.panel.Wizard', {
 				default:
 					break;
 			}
+		}
 		if('exec' in data.action)
 		{
 			method = data.action['exec'];

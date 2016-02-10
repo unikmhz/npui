@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 from zope.interface.interfaces import ComponentLookupError
+from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.common.modules import ModuleBase
 from netprofile.common.menus import Menu
@@ -38,9 +39,10 @@ from netprofile.dav import (
 )
 from .models import *
 from .dav import (
-	DAVPluginVFS,
+	DAVPluginAddressBooks,
+	DAVPluginGroups,
 	DAVPluginUsers,
-	DAVPluginGroups
+	DAVPluginVFS
 )
 
 from pyramid.i18n import (
@@ -49,6 +51,14 @@ from pyramid.i18n import (
 )
 
 _ = TranslationStringFactory('netprofile_core')
+
+def _synctoken_cb(node):
+	try:
+		var = NPVariable.get_ro('DAV:SYNC:' + node.__dav_collid__)
+	except NoResultFound:
+		return 1
+	if var:
+		return var.integer_value
 
 class Module(ModuleBase):
 	def __init__(self, mmgr):
@@ -68,6 +78,8 @@ class Module(ModuleBase):
 			dav = cfg.registry.getUtility(IDAVManager)
 			if dav:
 				dav.set_locks_backend(DAVLock)
+				dav.set_history_backend(DAVHistory)
+				dav.set_sync_token_callback(_synctoken_cb)
 		except ComponentLookupError:
 			pass
 
@@ -83,6 +95,7 @@ class Module(ModuleBase):
 	def get_models(cls):
 		return (
 			NPModule,
+			NPVariable,
 			User,
 			Group,
 			Privilege,
@@ -107,9 +120,17 @@ class Module(ModuleBase):
 			UserSettingSection,
 			UserSettingType,
 			DataCache,
+			DAVLock,
+			DAVHistory,
 			Calendar,
 			CalendarImport,
-			Event
+			Event,
+			AddressBook,
+			AddressBookCard,
+			CommunicationType,
+			UserCommunicationChannel,
+			UserPhone,
+			UserEmail
 		)
 
 	@classmethod
@@ -163,6 +184,10 @@ class Module(ModuleBase):
 			Privilege(
 				code='BASE_GROUPS',
 				name='Access: Groups'
+			),
+			Privilege(
+				code='BASE_FILES',
+				name='Access: Files'
 			),
 			Privilege(
 				code='USERS_LIST',
@@ -464,6 +489,114 @@ class Module(ModuleBase):
 
 		sess.add(admin)
 
+		commtypes = (
+			CommunicationType(
+				name='SIP',
+				icon='sip',
+				uri_protocol='sip',
+				description='Text/voice/video via SIP'
+			),
+			CommunicationType(
+				name='Jabber/XMPP',
+				icon='xmpp',
+				uri_protocol='xmpp',
+				uri_format='{proto}:{address}?roster',
+				description='Text/voice/video via XMPP (includes Jabber and Google Talk)'
+			),
+			CommunicationType(
+				name='IRC',
+				icon='irc',
+				uri_protocol='irc',
+				uri_format='{proto}://{address}',
+				description='Text chat via IRC'
+			),
+			CommunicationType(
+				name='Yahoo! Messenger',
+				icon='ymsgr',
+				uri_protocol='ymsgr',
+				uri_format='{proto}:addfriend?{address}',
+				description='Text/voice/video via Yahoo! Messenger'
+			),
+			CommunicationType(
+				name='Skype',
+				icon='skype',
+				uri_protocol='skype',
+				description='Text/voice/video via Skype'
+			),
+			CommunicationType(
+				name='AOL Instant Messenger',
+				icon='aim',
+				uri_protocol='aim',
+				uri_format='{proto}:addbuddy?screenname={address}',
+				description='Text/voice/video via AOL Instant Messenger'
+			),
+			CommunicationType(
+				name='ICQ',
+				icon='icq',
+				uri_protocol='icq',
+				uri_format='{proto}:message?uin={address}',
+				description='Text/voice/video via AOL Instant Messenger'
+			),
+			CommunicationType(
+				name='WhatsApp',
+				icon='whatsapp',
+				uri_protocol='whatsapp',
+				uri_format='{proto}://send?abid={address}',
+				description='Text/voice/video via WhatsApp'
+			),
+			CommunicationType(
+				name='Viber',
+				icon='viber',
+				uri_protocol='viber',
+				description='Text/voice/video via Viber'
+			),
+			CommunicationType(
+				name='FaceTime',
+				icon='facetime',
+				uri_protocol='facetime',
+				uri_format='{proto}://{address}',
+				description='Voice/video via FaceTime'
+			),
+			CommunicationType(
+				name='Apple iMessage',
+				icon='imessage',
+				uri_protocol='imessage',
+				description='Text/voice/video via Apple iMessage'
+			)
+		)
+
+		for obj in commtypes:
+			sess.add(obj)
+
+		gvars = (
+			NPVariable(
+				name='DAV:SYNC:ROOT',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:VFS',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:USERS',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:GROUPS',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:ABOOKS',
+				integer_value=1
+			),
+			NPVariable(
+				name='DAV:SYNC:PLUG:UABOOKS',
+				integer_value=1
+			)
+		)
+		for obj in gvars:
+			sess.add(obj)
+
 	def get_menus(self, request):
 		loc = get_localizer(request)
 		return (
@@ -471,7 +604,7 @@ class Module(ModuleBase):
 			Menu('users', title=loc.translate(_('Users')), order=20, direct='users', options={ # FIXME: add permission= ?
 				'disableSelection' : True
 			}),
-			Menu('folders', title=loc.translate(_('Folders')), order=30, direct='folders', permission='FILES_LIST', options={
+			Menu('folders', title=loc.translate(_('Folders')), order=30, direct='folders', permission='BASE_FILES', options={
 				'rootVisible' : True,
 				'hideHeaders' : True,
 				'columns'     : ({
@@ -516,6 +649,7 @@ class Module(ModuleBase):
 		if request.debug_enabled:
 			return (
 				'netprofile_core:static/extern/extjs/build/ext-all-debug.js',
+				'netprofile_core:static/extern/extjs/build/packages/sencha-charts/build/sencha-charts-debug.js',
 				'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic-debug.js',
 				'netprofile_core:static/extern/extensible/lib/extensible-all-debug.js',
 				# TODO: Upstream doesn't distribute unminified source.
@@ -526,6 +660,7 @@ class Module(ModuleBase):
 			)
 		return (
 			'netprofile_core:static/extern/extjs/build/ext-all.js',
+			'netprofile_core:static/extern/extjs/build/packages/sencha-charts/build/sencha-charts.js',
 			'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/ext-theme-classic.js',
 			'netprofile_core:static/extensible/lib/extensible-all.js',
 			'netprofile_core:static/extern/tinymce/tinymce.min.js',
@@ -544,20 +679,23 @@ class Module(ModuleBase):
 		if request.debug_enabled:
 			return (
 				'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all-debug.css',
+				'netprofile_core:static/extern/extjs/build/packages/sencha-charts/build/classic/resources/sencha-charts-all-debug.css',
 				'netprofile_core:static/extern/extensible/resources/css/extensible-all.css',
 				'netprofile_core:static/css/main.css'
 			)
 		return (
 			'netprofile_core:static/extern/extjs/build/packages/ext-theme-classic/build/resources/ext-theme-classic-all.css',
+			'netprofile_core:static/extern/extjs/build/packages/sencha-charts/build/classic/resources/sencha-charts-all.css',
 			'netprofile_core:static/extern/extensible/resources/css/extensible-all.css',
 			'netprofile_core:static/css/main.css'
 		)
 
 	def get_dav_plugins(self, request):
 		return {
-			'fs'     : DAVPluginVFS,
-			'users'  : DAVPluginUsers,
-			'groups' : DAVPluginGroups
+			'addressbooks' : DAVPluginAddressBooks,
+			'fs'           : DAVPluginVFS,
+			'groups'       : DAVPluginGroups,
+			'users'        : DAVPluginUsers
 		}
 
 	@property

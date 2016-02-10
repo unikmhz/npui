@@ -200,6 +200,48 @@ Ext.define('NetProfile.tab.PropBar', {
 		}
 		this.setActiveTab(tab);
 		return tab;
+	},
+	refreshRecordTab: function(module, model, objid)
+	{
+		var rec_id = NetProfile.model[module][model].entityName + '.' + objid,
+			tab, store, ff;
+
+		if(!this.tabCache.hasOwnProperty(rec_id))
+			return;
+		tab = this.tabCache[rec_id];
+		if(tab.record)
+		{
+			store = NetProfile.StoreManager.getStore(
+				tab.apiModule,
+				tab.apiClass,
+				null, true
+			);
+			ff = { __ffilter: [{
+				property: store.model.prototype.idProperty,
+				operator: 'eq',
+				value:    objid
+			}] };
+			store.load({
+				params: ff,
+				callback: function(recs, op, success)
+				{
+					if(!success || !recs || (recs.length !== 1))
+						return;
+					tab.record = recs[0];
+					Ext.Array.forEach(tab.query('npform'), function(form)
+					{
+						if(form.record.entityName != recs[0].entityName)
+							return;
+						form.suspendEvents();
+						form.record = recs[0];
+						form.getForm().loadRecord(recs[0]);
+						form.resumeEvents();
+					});
+				},
+				scope: this,
+				synchronous: false
+			});
+		}
 	}
 });
 

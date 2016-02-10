@@ -45,7 +45,10 @@ from pyramid.interfaces import IAuthenticationPolicy
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.db.connection import DBSession
-from netprofile.db.clauses import SetVariable
+from netprofile.db.clauses import (
+	SetVariable,
+	SetVariables
+)
 
 from netprofile.common.auth import PluginAuthenticationPolicy
 
@@ -179,12 +182,16 @@ def _auth_to_db(event):
 	sess = DBSession()
 	user = request.user
 
-	sess.execute(SetVariable('accessuid', 0))
-	sess.execute(SetVariable('accessgid', 0))
-	if user:
-		sess.execute(SetVariable('accesslogin', '[XOP:%s]' % user.name))
-	else:
-		sess.execute(SetVariable('accesslogin', '[XOP:GUEST]'))
+	db_vars = {
+		'accessuid'   : 0,
+		'accessgid'   : 0,
+		'accesslogin' : '[XOP:%s]' % (user.name,) if user else '[XOP:GUEST]'
+	}
+	try:
+		sess.execute(SetVariables(**db_vars))
+	except NotImplementedError:
+		for vname in db_vars:
+			sess.execute(SetVariable(vname, db_vars[vname]))
 
 def includeme(config):
 	"""

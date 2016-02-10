@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-21 21:20+0300\n"
-"PO-Revision-Date: 2015-04-21 21:22+0300\n"
+"POT-Creation-Date: 2015-07-16 09:57+0300\n"
+"PO-Revision-Date: 2015-07-16 09:58+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
@@ -19,33 +19,65 @@ msgstr ""
 "Generated-By: Babel 2.0-dev\n"
 "X-Generator: Poedit 1.5.5\n"
 
-#: netprofile/cli.py:73
+#: netprofile/cli.py:75
 msgid "Name"
 msgstr "Название"
 
-#: netprofile/cli.py:74
+#: netprofile/cli.py:76
 msgid "Available"
 msgstr "Доступен"
 
-#: netprofile/cli.py:75
+#: netprofile/cli.py:77
 msgid "Installed"
 msgstr "Установлен"
 
-#: netprofile/cli.py:76
+#: netprofile/cli.py:78
 msgid "Enabled"
 msgstr "Включен"
 
-#: netprofile/cli.py:92 netprofile/cli.py:93
+#: netprofile/cli.py:94 netprofile/cli.py:95
 msgid "- N/A -"
 msgstr "- Н/Д -"
 
-#: netprofile/cli.py:100
+#: netprofile/cli.py:102
 msgid "YES"
 msgstr "ДА"
 
-#: netprofile/cli.py:100
+#: netprofile/cli.py:102
 msgid "NO"
 msgstr "НЕТ"
+
+#: netprofile/cli.py:129
+msgid "Module"
+msgstr "Модуль"
+
+#: netprofile/cli.py:130
+msgid "Summary"
+msgstr "Сводка"
+
+#: netprofile/cli.py:131
+msgid "Homepage"
+msgstr "Сайт"
+
+#: netprofile/cli.py:132
+msgid "Author"
+msgstr "Автор"
+
+#: netprofile/cli.py:133
+msgid "E-Mail"
+msgstr "E-mail"
+
+#: netprofile/cli.py:134
+msgid "License"
+msgstr "Лицензия"
+
+#: netprofile/cli.py:135
+msgid "Location"
+msgstr "Размещение"
+
+#: netprofile/cli.py:136
+msgid "Version"
+msgstr "Версия"
 
 #: netprofile/export/__init__.py:81
 msgid "Export"
@@ -99,19 +131,19 @@ msgstr "Вертикальные поля"
 msgid "{0}, exported at {1}"
 msgstr "{0}, экспортировано {1}"
 
-#: netprofile/ext/data.py:962
+#: netprofile/ext/data.py:987
 msgid "Y-m-d H:i:s"
 msgstr "d.m.Y H:i:s"
 
-#: netprofile/ext/data.py:965
+#: netprofile/ext/data.py:990
 msgid "Y-m-d"
 msgstr "d.m.Y"
 
-#: netprofile/ext/data.py:967
+#: netprofile/ext/data.py:992
 msgid "H:i:s"
 msgstr "H:i:s"
 
-#: netprofile/ext/data.py:2177
+#: netprofile/ext/data.py:2226
 msgid "This field must be unique."
 msgstr "Это поле должно быть уникальным."
 

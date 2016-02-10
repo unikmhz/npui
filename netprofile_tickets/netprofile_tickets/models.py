@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -59,7 +59,6 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
-	func,
 	text,
 	or_
 )
@@ -80,9 +79,7 @@ from netprofile.db.fields import (
 	ASCIIString,
 	NPBoolean,
 	UInt8,
-	UInt16,
 	UInt32,
-	UInt64,
 	npbool
 )
 from netprofile.db.ddl import (
@@ -91,15 +88,8 @@ from netprofile.db.ddl import (
 	Trigger
 )
 from netprofile.db.clauses import IntervalSeconds
-from netprofile.db.util import (
-	populate_related,
-	populate_related_list
-)
+from netprofile.db.util import populate_related_list
 from netprofile.ext.data import ExtModel
-from netprofile.ext.columns import (
-	HybridColumn,
-	MarkupColumn
-)
 from netprofile.ext.wizards import (
 	CompositeWizardField,
 	SimpleWizard,
@@ -111,14 +101,7 @@ from netprofile_core.models import (
 	Group,
 	User
 )
-from netprofile_geo.models import (
-	District,
-	House,
-	Street
-)
-from netprofile_geo.filters import AddressFilter
 
-from pyramid.threadlocal import get_current_request
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
@@ -662,7 +645,7 @@ class TicketFile(Base):
 				'cap_menu'      : 'BASE_TICKETS',
 				'cap_read'      : 'TICKETS_LIST',
 				'cap_create'    : 'FILES_ATTACH_2TICKETS',
-				'cap_edit'      : 'FILES_ATTACH_2TICKETS',
+				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : 'FILES_ATTACH_2TICKETS',
 
 				'menu_name'     : _('Files'),
@@ -703,7 +686,8 @@ class TicketFile(Base):
 		nullable=False,
 		info={
 			'header_string' : _('File'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'editor_xtype'  : 'fileselect'
 		}
 	)
 
@@ -946,7 +930,7 @@ class Ticket(Base):
 		nullable=False,
 		info={
 			'header_string' : _('State'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -958,7 +942,7 @@ class Ticket(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Origin'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	assigned_user_id = Column(
@@ -971,7 +955,7 @@ class Ticket(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('User'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'write_cap'     : 'TICKETS_CHANGE_UID',
 			'column_flex'   : 1
 		}
@@ -986,7 +970,7 @@ class Ticket(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'write_cap'     : 'TICKETS_CHANGE_GID',
 			'column_flex'   : 1
 		}
@@ -1155,26 +1139,41 @@ class Ticket(Base):
 	assigned_user = relationship(
 		'User',
 		foreign_keys=assigned_user_id,
-		backref='assigned_tickets'
+		backref=backref(
+			'assigned_tickets',
+			passive_deletes=True
+		)
 	)
 	assigned_group = relationship(
 		'Group',
-		backref='assigned_tickets'
+		backref=backref(
+			'assigned_tickets',
+			passive_deletes=True
+		)
 	)
 	created_by = relationship(
 		'User',
 		foreign_keys=created_by_id,
-		backref='created_tickets'
+		backref=backref(
+			'created_tickets',
+			passive_deletes=True
+		)
 	)
 	modified_by = relationship(
 		'User',
 		foreign_keys=modified_by_id,
-		backref='modified_tickets'
+		backref=backref(
+			'modified_tickets',
+			passive_deletes=True
+		)
 	)
 	transition_by = relationship(
 		'User',
 		foreign_keys=transition_by_id,
-		backref='transitioned_tickets'
+		backref=backref(
+			'transitioned_tickets',
+			passive_deletes=True
+		)
 	)
 	flagmap = relationship(
 		'TicketFlag',
@@ -1264,7 +1263,6 @@ class Ticket(Base):
 		return True
 
 	def get_entity_history(self, req):
-		sess = DBSession()
 		loc = get_localizer(req)
 		eh = EntityHistory(
 			self.entity,
@@ -1447,7 +1445,7 @@ class TicketTemplate(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Origin'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	callback_on_create = Column(
@@ -1643,7 +1641,7 @@ class TicketChange(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Transition'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	user_id = Column(
@@ -1656,7 +1654,7 @@ class TicketChange(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('User'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	timestamp = Column(
@@ -1703,11 +1701,17 @@ class TicketChange(Base):
 
 	transition = relationship(
 		'TicketStateTransition',
-		backref='ticket_changes'
+		backref=backref(
+			'ticket_changes',
+			passive_deletes=True
+		)
 	)
 	user = relationship(
 		'User',
-		backref='ticket_changes'
+		backref=backref(
+			'ticket_changes',
+			passive_deletes=True
+		)
 	)
 	bits = relationship(
 		'TicketChangeBit',
@@ -1723,7 +1727,6 @@ class TicketChange(Base):
 	)
 
 	def get_entity_history(self, req):
-		sess = DBSession()
 		loc = get_localizer(req)
 		eh = EntityHistory(
 			self.ticket.entity,
@@ -1800,7 +1803,7 @@ class TicketChangeBit(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Field'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	old = Column(

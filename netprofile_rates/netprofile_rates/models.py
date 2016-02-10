@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Rates module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -69,6 +69,7 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from netprofile.common.locale import money_format
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -455,7 +456,7 @@ class Destination(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Set'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -639,7 +640,7 @@ class Filter(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Set'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 3
 		}
 	)
@@ -755,6 +756,7 @@ class Rate(Base):
 					'descr'
 				),
 				'easy_search'   : ('name',),
+				'extra_data'    : ('formatted_quota_sum', 'formatted_auxiliary_sum'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new payment rate'))
 			}
@@ -854,7 +856,7 @@ class Rate(Base):
 		server_default=text('1'),
 		info={
 			'header_string' : _('Class'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -868,7 +870,7 @@ class Rate(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('IP Address Pool'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	destination_set_id = Column(
@@ -881,7 +883,7 @@ class Rate(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Destination Set'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	filter_set_id = Column(
@@ -894,7 +896,7 @@ class Rate(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Filter Set'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	quota_period_amount = Column(
@@ -927,7 +929,9 @@ class Rate(Base):
 		default=0.0,
 		server_default=text('0.0'),
 		info={
-			'header_string' : _('Quota Sum')
+			'header_string' : _('Quota Sum'),
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_quota_sum}'
 		}
 	)
 	auxiliary_sum = Column(
@@ -938,7 +942,9 @@ class Rate(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Auxiliary Sum')
+			'header_string' : _('Auxiliary Sum'),
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_auxiliary_sum}'
 		}
 	)
 	quota_ingress_traffic = Column(
@@ -1110,15 +1116,24 @@ class Rate(Base):
 
 	pool = relationship(
 		'IPPool',
-		backref='rates'
+		backref=backref(
+			'rates',
+			passive_deletes=True
+		)
 	)
 	destination_set = relationship(
 		'DestinationSet',
-		backref='rates'
+		backref=backref(
+			'rates',
+			passive_deletes=True
+		)
 	)
 	filter_set = relationship(
 		'FilterSet',
-		backref='rates'
+		backref=backref(
+			'rates',
+			passive_deletes=True
+		)
 	)
 	global_modmap = relationship(
 		'GlobalRateModifier',
@@ -1135,6 +1150,12 @@ class Rate(Base):
 
 	def __str__(self):
 		return '%s' % str(self.name)
+
+	def formatted_quota_sum(self, req):
+		return money_format(req, self.quota_sum)
+
+	def formatted_auxiliary_sum(self, req):
+		return money_format(req, self.auxiliary_sum)
 
 class RateClass(Base):
 	"""
@@ -1354,7 +1375,7 @@ class RateModifierType(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Period'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	oq_sum_multiplier_ingress = Column(
@@ -1507,7 +1528,7 @@ class GlobalRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -1519,7 +1540,7 @@ class GlobalRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Rate'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)

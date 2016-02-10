@@ -1,9 +1,9 @@
 NetProfile
 ==========
 
-Copyright © 2010-2015 Alex Unigovsky
+Copyright © 2010-2016 Alex Unigovsky
 
-Copyright © 2010-2015 NetProfile project contributors
+Copyright © 2010-2016 NetProfile project contributors
 
 What is this?
 -------------
@@ -37,8 +37,8 @@ usable.
 Current status
 --------------
 
-Current version is 0.3-alpha. The project is in early stages of development,
-although some major subsystems are finished and working.
+The project is in early stages of development, although some major subsystems
+are finished and working.
 
 The most lacking area at the moment is documentation. So please, don't be
 shy, ask questions!
@@ -54,7 +54,7 @@ Source repositories
   Contains all the standard modules as well as basic framework for running
   NetProfile WSGI app.
 
-* rlm_np FreeRADIUS module: To be published
+* rlm_np FreeRADIUS module: `rlm_np on GitHub`_
 
   Contains rlm_np module for FreeRADIUS. Used for network access control and
   accounting.
@@ -76,6 +76,7 @@ Mailing lists
 
 .. _NetProfile UI on GitHub: https://github.com/unikmhz/npui
 .. _NetProfile UI bug tracker: https://github.com/unikmhz/npui/issues
+.. _rlm_np on GitHub: https://github.com/unikmhz/rlm_np
 .. _netprofile-users Google Group: https://groups.google.com/d/forum/netprofile-users
 
 First steps
@@ -112,6 +113,9 @@ Bundled third-party libraries
 * `Extensible Calendar Pro`_ calendar component for ExtJS (ported to
   ExtJS 5), licensed under `GPL version 3`_.
 * `Google ipaddr-py`_ module, licensed under `Apache 2.0`_ license.
+* vobject_ module, licensed under `Apache 2.0`_ license. We use forked
+  and updated version by Ivan Diao and Tim Baxter, found
+  `here <https://github.com/tBaxter/vobject>`_.
 * Modified pyramid_extdirect_ module, licensed under following license::
 
    Copyright (c) 2010-2011 Igor Stroh, All Rights Reserved
@@ -516,6 +520,7 @@ Bundled third-party resources
 .. _Extensible Calendar Pro: http://ext.ensible.com/
 .. _SockJS JavaScript client: https://github.com/sockjs/sockjs-client
 .. _Google ipaddr-py: http://code.google.com/p/ipaddr-py/
+.. _vobject: http://vobject.skyhouseconsulting.com
 .. _pyramid_extdirect: https://github.com/jenner/pyramid_extdirect
 .. _TinyMCE: http://www.tinymce.com/
 .. _Ext.ux.form.TinyMCETextArea: http://www.point-constructor.com/en/tinyta/

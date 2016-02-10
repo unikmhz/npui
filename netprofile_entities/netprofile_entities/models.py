@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -34,7 +34,6 @@ __all__ = [
 	'EntityFlag',
 	'EntityFlagType',
 	'Address',
-	'PhoneType',
 	'Phone',
 	'EntityState',
 	'EntityFile',
@@ -111,6 +110,10 @@ from netprofile.ext.columns import (
 	MarkupColumn
 )
 from netprofile.ext.filters import TextFilter
+from netprofile_core.models import (
+	AddressType,
+	PhoneType
+)
 from netprofile_geo.models import (
 	District,
 	House,
@@ -398,7 +401,7 @@ class Entity(Base):
 		server_default=text('1'),
 		info={
 			'header_string' : _('State'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	relative_dn = Column(
@@ -503,12 +506,18 @@ class Entity(Base):
 	created_by = relationship(
 		'User',
 		foreign_keys=created_by_id,
-		backref='created_entities'
+		backref=backref(
+			'created_entities',
+			passive_deletes=True
+		)
 	)
 	modified_by = relationship(
 		'User',
 		foreign_keys=modified_by_id,
-		backref='modified_entities'
+		backref=backref(
+			'modified_entities',
+			passive_deletes=True
+		)
 	)
 	flagmap = relationship(
 		'EntityFlag',
@@ -841,16 +850,6 @@ class EntityFlag(Base):
 		}
 	)
 
-class AddressType(DeclEnum):
-	"""
-	Address type ENUM.
-	"""
-	home    = 'home', _('Home Address'),    10
-	work    = 'work', _('Work Address'),    20
-	postal  = 'post', _('Postal Address'),  30
-	parcel  = 'parc', _('Parcel Address'),  40
-	billing = 'bill', _('Billing Address'), 50
-
 class Address(Base):
 	"""
 	Entity address.
@@ -1041,17 +1040,6 @@ class Address(Base):
 
 		return ' '.join(ret)
 
-class PhoneType(DeclEnum):
-	"""
-	Phone type ENUM.
-	"""
-	home  = 'home',  _('Home Phone'),   10
-	cell  = 'cell',  _('Cell Phone'),   20
-	work  = 'work',  _('Work Phone'),   30
-	pager = 'pager', _('Pager Number'), 40
-	fax   = 'fax',   _('Fax Number'),   50
-	rec   = 'rec',   _('Receptionist'), 60
-
 class Phone(Base):
 	"""
 	Generic telephone numbers.
@@ -1158,33 +1146,15 @@ class Phone(Base):
 		req = get_current_request()
 		loc = get_localizer(req)
 
-		pfx = None
-		if self.type == PhoneType.home:
-			pfx = _('home')
-		elif self.type == PhoneType.cell:
-			pfx = _('cell')
-		elif self.type == PhoneType.work:
-			pfx = _('work')
-		elif self.type == PhoneType.pager:
-			pfx = _('pg.')
-		elif self.type == PhoneType.fax:
-			pfx = _('fax')
-		elif self.type == PhoneType.rec:
-			pfx = _('rec.')
-		else:
-			pfx = _('tel.')
 		return '%s: %s' % (
-			loc.translate(pfx),
+			loc.translate(PhoneType.prefix(self.type)),
 			self.number
 		)
 
 	@property
 	def data(self):
-		img = 'phone_small'
-		if self.type == PhoneType.cell:
-			img = 'mobile_small'
 		return {
-			'img' : img,
+			'img' : PhoneType.icon(self.type),
 			'str' : str(self)
 		}
 
@@ -1204,7 +1174,7 @@ class EntityFile(Base):
 				'cap_menu'      : 'BASE_ENTITIES',
 				'cap_read'      : 'ENTITIES_LIST',
 				'cap_create'    : 'FILES_ATTACH_2ENTITIES',
-				'cap_edit'      : 'FILES_ATTACH_2ENTITIES',
+				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : 'FILES_ATTACH_2ENTITIES',
 
 				'menu_name'     : _('Files'),
@@ -1245,7 +1215,8 @@ class EntityFile(Base):
 		nullable=False,
 		info={
 			'header_string' : _('File'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'editor_xtype'  : 'fileselect'
 		}
 	)
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Sessions module - Models
-# © Copyright 2014-2015 Alex 'Unik' Unigovsky
+# © Copyright 2014-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -230,7 +230,7 @@ class AccessSession(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('NAS'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -325,23 +325,38 @@ class AccessSession(Base):
 
 	entity = relationship(
 		'AccessEntity',
-		backref='sessions'
+		backref=backref(
+			'sessions',
+			passive_deletes=True
+		)
 	)
 	ipv4_address = relationship(
 		'IPv4Address',
-		backref='sessions'
+		backref=backref(
+			'sessions',
+			passive_deletes=True
+		)
 	)
 	ipv6_address = relationship(
 		'IPv6Address',
-		backref='sessions'
+		backref=backref(
+			'sessions',
+			passive_deletes=True
+		)
 	)
 	destination = relationship(
 		'Destination',
-		backref='sessions'
+		backref=backref(
+			'sessions',
+			passive_deletes=True
+		)
 	)
 	nas = relationship(
 		'NAS',
-		backref='sessions'
+		backref=backref(
+			'sessions',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):
@@ -486,7 +501,7 @@ class AccessSessionHistory(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('NAS'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -581,23 +596,38 @@ class AccessSessionHistory(Base):
 
 	entity = relationship(
 		'AccessEntity',
-		backref='closed_sessions'
+		backref=backref(
+			'closed_sessions',
+			passive_deletes=True
+		)
 	)
 	ipv4_address = relationship(
 		'IPv4Address',
-		backref='closed_sessions'
+		backref=backref(
+			'closed_sessions',
+			passive_deletes=True
+		)
 	)
 	ipv6_address = relationship(
 		'IPv6Address',
-		backref='closed_sessions'
+		backref=backref(
+			'closed_sessions',
+			passive_deletes=True
+		)
 	)
 	destination = relationship(
 		'Destination',
-		backref='closed_sessions'
+		backref=backref(
+			'closed_sessions',
+			passive_deletes=True
+		)
 	)
 	nas = relationship(
 		'NAS',
-		backref='closed_sessions'
+		backref=backref(
+			'closed_sessions',
+			passive_deletes=True
+		)
 	)
 
 	def __str__(self):

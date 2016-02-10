@@ -6,9 +6,10 @@
 	DECLARE user_nextrateid, user_sec, rate_qsec INT UNSIGNED DEFAULT 0;
 	DECLARE user_uin, user_ueg, rate_qti, rate_qte DECIMAL(16,0) UNSIGNED;
 	DECLARE user_state TINYINT UNSIGNED DEFAULT 0;
-	DECLARE user_bcheck, user_pcheck, rate_abf ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'N';
-	DECLARE isok ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'Y';
-	DECLARE pay, rate_qsum, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec DECIMAL(20,8) DEFAULT 0.0;
+	DECLARE user_bcheck, user_pcheck, rate_abf, curr_conv_from, curr_conv_to ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'N';
+	DECLARE isok, curr_credit, curr_accounts ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'Y';
+	DECLARE old_balance, new_balance, pay, rate_qsum, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec DECIMAL(20,8) DEFAULT 0.0;
+	DECLARE curr_xrate, new_xrate DECIMAL(20,8) DEFAULT 1.0;
 	DECLARE rate_auxsum DECIMAL(20,8) DEFAULT NULL;
 	DECLARE rate_type ENUM('prepaid', 'prepaid_cont', 'postpaid', 'free');
 	DECLARE rate_qpa SMALLINT UNSIGNED DEFAULT 1;
@@ -25,6 +26,14 @@
 		SET done := 1;
 
 	SET curts := NOW();
+
+	IF OLD.currid IS NOT NULL THEN
+		SELECT `xchange_rate`, `convert_from`, `allow_credit`, `allow_accounts`
+		INTO curr_xrate, curr_conv_from, curr_credit, curr_accounts
+		FROM `currencies_def`
+		WHERE `currid` = OLD.currid;
+	END IF;
+
 	IF NEW.amount > OLD.alltime_max THEN
 		SET NEW.alltime_max := NEW.amount;
 	ELSE
@@ -35,7 +44,15 @@
 	ELSE
 		SET NEW.alltime_min := OLD.alltime_min;
 	END IF;
-	IF ((NEW.amount + NEW.credit) > (OLD.amount + OLD.credit)) AND ((@stash_ignore IS NULL) OR (@stash_ignore <> 1)) THEN
+
+	SET old_balance := OLD.amount;
+	SET new_balance := NEW.amount;
+	IF curr_credit = 'Y' THEN
+		SET old_balance := old_balance + OLD.credit;
+		SET new_balance := new_balance + NEW.credit;
+	END IF;
+
+	IF (curr_accounts = 'Y') AND (new_balance > old_balance) AND ((@stash_ignore IS NULL) OR (@stash_ignore <> 1)) THEN
 		OPEN cur;
 		sdbic: REPEAT
 			SET pay := 0.0;
@@ -53,6 +70,15 @@
 
 					IF rate_abf = 'Y' THEN
 						CALL acct_rate_mods(curts, user_rateid, aeid, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, newpol_in, newpol_eg);
+					END IF;
+					IF OLD.currid IS NOT NULL THEN
+						SET rate_qsum := rate_qsum / curr_xrate;
+						SET rate_oqsum_in := rate_oqsum_in / curr_xrate;
+						SET rate_oqsum_eg := rate_oqsum_eg / curr_xrate;
+						SET rate_oqsum_sec := rate_oqsum_sec / curr_xrate;
+						IF rate_auxsum IS NOT NULL THEN
+							SET rate_auxsum := rate_auxsum / curr_xrate;
+						END IF;
 					END IF;
 				END IF;
 				IF (user_bcheck = 'Y') THEN
@@ -97,6 +123,15 @@
 						IF rate_abf = 'Y' THEN
 							CALL acct_rate_mods(curts, user_rateid, aeid, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, newpol_in, newpol_eg);
 						END IF;
+						IF OLD.currid IS NOT NULL THEN
+							SET rate_qsum := rate_qsum / curr_xrate;
+							SET rate_oqsum_in := rate_oqsum_in / curr_xrate;
+							SET rate_oqsum_eg := rate_oqsum_eg / curr_xrate;
+							SET rate_oqsum_sec := rate_oqsum_sec / curr_xrate;
+							IF rate_auxsum IS NOT NULL THEN
+								SET rate_auxsum := rate_auxsum / curr_xrate;
+							END IF;
+						END IF;
 					END IF;
 				END IF;
 				IF (rate_type <> 'postpaid') OR (user_qpend IS NOT NULL) THEN
@@ -119,11 +154,15 @@
 					END IF;
 					IF (user_pcheck = 'Y') THEN
 						SET tst_amount := NEW.amount;
-						SET tst_credit := NEW.credit;
+						IF curr_credit = 'Y' THEN
+							SET tst_credit := NEW.credit;
+						ELSE
+							SET tst_credit := 0.0;
+						END IF;
 						SET isok := 'Y';
 						SET pay := pay - rate_qsum;
 						SET @stashio_ignore := 1;
-						CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_qpend, tst_amount, tst_credit, rate_qsum, payin, payout);
+						CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_qpend, tst_amount, tst_credit, OLD.currid, curr_xrate, rate_qsum + payin + payout + paysec);
 						SET @stashio_ignore := NULL;
 						SET pay := pay + rate_qsum;
 						IF (NEW.amount <> tst_amount) THEN
@@ -135,15 +174,19 @@
 				END IF;
 				IF (rate_type IN('prepaid', 'prepaid_cont')) AND (user_pcheck = 'Y') THEN
 				BEGIN
-					DECLARE payin, payout, tst_amount, tst_credit DECIMAL(20,8) DEFAULT 0.0;
+					DECLARE tst_amount, tst_credit DECIMAL(20,8) DEFAULT 0.0;
 
 					SET user_newend := FROM_UNIXTIME(UNIX_TIMESTAMP(curts) + acct_rate_qpnew(rate_qpa, rate_qpu, curts));
 					SET tst_amount := NEW.amount;
-					SET tst_credit := NEW.credit;
+					IF curr_credit = 'Y' THEN
+						SET tst_credit := NEW.credit;
+					ELSE
+						SET tst_credit := 0.0;
+					END IF;
 					SET isok := 'N';
 					SET pay := pay - rate_qsum;
 					SET @stashio_ignore := 1;
-					CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_newend, tst_amount, tst_credit, rate_qsum, payin, payout);
+					CALL acct_pcheck(aeid, curts, rate_type, isok, NEW.stashid, user_newend, tst_amount, tst_credit, OLD.currid, curr_xrate, rate_qsum);
 					SET @stashio_ignore := NULL;
 					SET pay := pay + rate_qsum;
 					IF (NEW.amount <> tst_amount) THEN
@@ -151,17 +194,21 @@
 					END IF;
 				END;
 				END IF;
-				IF (NEW.amount + NEW.credit) >= pay THEN
-					IF (rate_type = 'prepaid_cont') AND (user_state = 1) AND ((NEW.amount + NEW.credit) < rate_auxsum) THEN
+				IF new_balance >= pay THEN
+					IF (rate_type = 'prepaid_cont') AND (user_state = 1) AND (new_balance < rate_auxsum) THEN
 						SET user_state := 1;
 					ELSEIF (rate_type IN('prepaid', 'prepaid_cont')) AND (user_pcheck = 'Y') AND (isok = 'N') THEN
 						SET user_state := 1;
 					ELSE
 						SET NEW.amount := NEW.amount - pay;
+						SET new_balance := new_balance - pay;
 						IF (rate_type = 'postpaid') AND (user_qpend IS NOT NULL) THEN
 							SET @stashio_ignore := 1;
-							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`)
-							VALUES (2, NEW.stashid, aeid, curts, -rate_qsum);
+							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`)
+							VALUES (
+								(SELECT `siotypeid` FROM `stashes_io_types` WHERE `ftype` = 'rate_qsum_post'),
+								NEW.stashid, OLD.currid, aeid, curts, -rate_qsum
+							);
 							SET @stashio_ignore := NULL;
 							INSERT INTO `stashes_ops` (`stashid`, `type`, `ts`, `entityid`, `diff`, `acct_ingress`, `acct_egress`)
 							VALUES (NEW.stashid, CONCAT_WS('_', 'sub', st_in, st_eg), curts, aeid, -pay, user_uin, user_ueg);
@@ -177,8 +224,11 @@
 						SET user_sec := 0;
 						IF rate_type <> 'postpaid' THEN
 							SET @stashio_ignore := 1;
-							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`)
-							VALUES (1, NEW.stashid, aeid, curts, -rate_qsum);
+							INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`)
+							VALUES (
+								(SELECT `siotypeid` FROM `stashes_io_types` WHERE `ftype` = 'rate_qsum_pre'),
+								NEW.stashid, OLD.currid, aeid, curts, -rate_qsum
+							);
 							SET @stashio_ignore := NULL;
 							INSERT INTO `stashes_ops` (`stashid`, `type`, `ts`, `entityid`, `diff`, `acct_ingress`, `acct_egress`)
 							VALUES (NEW.stashid, CONCAT_WS('_', 'sub', st_in, st_eg), curts, aeid, -pay, 0, 0);
@@ -199,6 +249,15 @@
 						IF rate_abf = 'Y' THEN
 							CALL acct_rate_mods(curts, user_rateid, aeid, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, newpol_in, newpol_eg);
 						END IF;
+						IF OLD.currid IS NOT NULL THEN
+							SET rate_qsum := rate_qsum / curr_xrate;
+							SET rate_oqsum_in := rate_oqsum_in / curr_xrate;
+							SET rate_oqsum_eg := rate_oqsum_eg / curr_xrate;
+							SET rate_oqsum_sec := rate_oqsum_sec / curr_xrate;
+							IF rate_auxsum IS NOT NULL THEN
+								SET rate_auxsum := rate_auxsum / curr_xrate;
+							END IF;
+						END IF;
 					END IF;
 				END IF;
 				SET @ae_ignore := 1;
@@ -212,12 +271,28 @@
 					`state` = user_state
 				WHERE `entityid` = aeid;
 				SET @ae_ignore := NULL;
-			ELSEIF (user_qpend >= curts) AND (user_state = 1) AND ((NEW.amount + NEW.credit) > 0) THEN
+			ELSEIF (user_qpend >= curts) AND (user_state = 1) AND (new_balance > 0) THEN
 				UPDATE `entities_access`
 				SET `state` = 0
 				WHERE `entityid` = aeid;
 			END IF;
 		UNTIL done END REPEAT;
 		CLOSE cur;
+	END IF;
+
+	IF (OLD.currid <=> NEW.currid) OR (curr_conv_from = 'N') THEN
+		SET NEW.currid := OLD.currid;
+	ELSE
+		IF NEW.currid IS NOT NULL THEN
+			SELECT `xchange_rate`, `convert_to`
+			INTO new_xrate, curr_conv_to
+			FROM `currencies_def`
+			WHERE `currid` = NEW.currid;
+		END IF;
+
+		SET NEW.amount := NEW.amount * curr_xrate / new_xrate;
+		SET NEW.credit := NEW.credit * curr_xrate / new_xrate;
+		SET NEW.alltime_max := NEW.alltime_max * curr_xrate / new_xrate;
+		SET NEW.alltime_min := NEW.alltime_min * curr_xrate / new_xrate;
 	END IF;
 </%block>

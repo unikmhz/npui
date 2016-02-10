@@ -20,12 +20,15 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		'NetProfile.form.field.DateTime',
 		'NetProfile.form.field.IPv4',
 		'NetProfile.form.field.IPv6',
+		'NetProfile.form.field.Money',
 		'NetProfile.form.field.Password',
 		'NetProfile.form.DynamicCheckboxGroup',
 		'Ext.ux.form.TinyMCETextArea',
 		'NetProfile.window.CenterWindow',
+		'NetProfile.window.ReportsWindow',
 		'NetProfile.form.field.ModelSelect',
 		'NetProfile.form.field.SimpleModelSelect',
+		'NetProfile.form.field.FileSelect',
 		'NetProfile.form.field.NullableComboBox',
 		'NetProfile.panel.Wizard',
 		'NetProfile.grid.filters.filter.Date',
@@ -55,10 +58,13 @@ Ext.define('NetProfile.grid.ModelGrid', {
 	canCreate: false,
 	canEdit: false,
 	canDelete: false,
+	canShowReports: true,
 	canExport: true,
 	border: 0,
 	scrollable: 'vertical',
 	extraActions: [],
+	reportAggregates: [],
+	reportGroupBy: [],
 
 	emptyText: 'Sorry, but no items were found.',
 	clearText: 'Clear',
@@ -70,6 +76,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 	deleteTipText: 'Delete object',
 	deleteMsgText: 'Are you sure you want to delete this object?',
 	actionTipText: 'Object actions',
+	reportsText: 'Reports',
 	exportText: 'Export',
 
 	viewConfig: {
@@ -129,6 +136,13 @@ Ext.define('NetProfile.grid.ModelGrid', {
 				{
 					return this.spawnCreateWizard();
 				},
+				scope: this
+			});
+		if(this.canShowReports)
+			tbitems.push({
+				iconCls: 'ico-chart',
+				text: this.reportsText,
+				handler: 'spawnReports',
 				scope: this
 			});
 		if(this.canExport)
@@ -337,7 +351,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 				}
 				else
 					this.selectRecord(record);
-				return false;
+				return true;
 			},
 			scope: this
 		});
@@ -608,6 +622,17 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		wiz_win.show();
 
 		return true;
+	},
+	spawnReports: function()
+	{
+		var me = this,
+			rep_win;
+
+		rep_win = Ext.create('NetProfile.window.ReportsWindow', {
+			grid: me
+		});
+
+		rep_win.show();
 	}
 });
 

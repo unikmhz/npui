@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV ACL objects
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -157,6 +157,29 @@ class DAVPrincipalValue(DAVValue):
 			return princ == node
 		return False
 
+	def related_node(self, req, node=None):
+		if self.type == self.HREF:
+			try:
+				return req.dav.node(req, self.href)
+			except ValueError:
+				return None
+		if self.type == self.PROPERTY:
+			if node is None:
+				return None
+			pset = set((self.prop,))
+			props = req.dav.props(req, node, pset)
+			if self.prop not in props:
+				return None
+			val = props[self.prop]
+			if not isinstance(val, DAVHrefValue):
+				return None
+			try:
+				return req.dav.node(req, val.value)
+			except ValueError:
+				return None
+		if self.type == self.SELF:
+			return node
+
 def _parse_principal(el):
 	try:
 		el = el[0]
@@ -301,6 +324,12 @@ class DAVACLValue(DAVValue):
 				continue
 			ace.all_privs(privs)
 		return privs
+
+	@property
+	def all_principals(self):
+		for ace in self.aces:
+			if ace.princ:
+				yield ace.princ
 
 def _parse_acl(el):
 	aces = []

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 __all__ = [
+	'Currency',
 	'FuturePayment',
 	'Stash',
 	'StashIO',
@@ -40,6 +41,7 @@ __all__ = [
 ]
 
 from sqlalchemy import (
+	CHAR,
 	Column,
 	FetchedValue,
 	ForeignKey,
@@ -59,6 +61,10 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from netprofile.common.locale import (
+	money_format,
+	money_format_long
+)
 from netprofile.db.connection import (
 	Base,
 	DBSession
@@ -108,6 +114,19 @@ class IOOperationType(DeclEnum):
 	incoming      = 'in',    _('Incoming'),      20
 	outgoing      = 'out',   _('Outgoing'),      30
 
+class IOFunctionType(DeclEnum):
+	"""
+	Enumeration of special functions assigned to stash I/O types.
+	"""
+	rate_quota_prepaid  = 'rate_qsum_pre',  _('Prepaid subscription fee'),         10
+	rate_quota_postpaid = 'rate_qsum_post', _('Postpaid service fee'),             20
+	rate_rollback       = 'rate_rollback',  _('Reimbursement on rate conversion'), 30
+	future_confirm      = 'future_confirm', _('Confirmation of promised payment'), 40
+	transfer_deposit    = 'xfer_in',        _('Transfer from another account'),    50
+	transfer_withdrawal = 'xfer_out',       _('Transfer to another account'),      60
+	service_initial     = 'ps_isum',        _('Service activation fee'),           70
+	service_quota       = 'ps_qsum',        _('Service subscription fee'),         80
+
 class StashOperationType(DeclEnum):
 	"""
 	Stash operation type enumeration.
@@ -141,6 +160,233 @@ class FuturePaymentOrigin(DeclEnum):
 	operator = 'oper', _('Operator'), 10
 	user     = 'user', _('User'),     20
 
+class Currency(Base):
+	"""
+	Stash currency object.
+	"""
+	__tablename__ = 'currencies_def'
+	__table_args__ = (
+		Comment('Currencies'),
+		Index('currencies_def_u_name', 'name', unique=True),
+		Index('currencies_def_u_code', 'code', unique=True),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_STASHES',
+				'cap_read'      : 'STASHES_LIST',
+				'cap_create'    : 'STASHES_CURRENCIES_CREATE',
+				'cap_edit'      : 'STASHES_CURRENCIES_EDIT',
+				'cap_delete'    : 'STASHES_CURRENCIES_DELETE',
+				'menu_name'     : _('Currencies'),
+				'show_in_menu'  : 'admin',
+				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
+				'grid_view'     : ('currid', 'name', 'code'),
+				'grid_hidden'   : ('currid',),
+				'form_view'     : (
+					'name', 'code',
+					'prefix', 'suffix',
+					'xchange_rate',
+					'xchange_from', 'xchange_to',
+					'convert_from', 'convert_to',
+					'allow_credit', 'allow_accounts', 'allow_services', 'allow_futures',
+					'oper_visible', 'user_visible',
+					'descr'
+				),
+				'easy_search'   : ('name', 'code', 'prefix', 'suffix'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new currency'))
+			}
+		}
+	)
+	id = Column(
+		'currid',
+		UInt32(),
+		Sequence('currencies_def_currid_seq'),
+		Comment('Currency ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Currency name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	code = Column(
+		CHAR(3),
+		Comment('ISO 4217 currency code'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Code')
+		}
+	)
+	prefix = Column(
+		Unicode(16),
+		Comment('Currency symbol prefix'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Prefix')
+		}
+	)
+	suffix = Column(
+		Unicode(16),
+		Comment('Currency symbol suffix'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Suffix')
+		}
+	)
+	exchange_rate = Column(
+		'xchange_rate',
+		Money(),
+		Comment('Fallback exchange rate with default currency'),
+		nullable=False,
+		default=1,
+		server_default=text('1'),
+		info={
+			'header_string' : _('Exchange Rate')
+		}
+	)
+	can_exchange_from = Column(
+		'xchange_from',
+		NPBoolean(),
+		Comment('Can exchange from this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Exchange From')
+		}
+	)
+	can_exchange_to = Column(
+		'xchange_to',
+		NPBoolean(),
+		Comment('Can exchange to this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Exchange To')
+		}
+	)
+	can_convert_from = Column(
+		'convert_from',
+		NPBoolean(),
+		Comment('Allow converting stashes from this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Convert From')
+		}
+	)
+	can_convert_to = Column(
+		'convert_to',
+		NPBoolean(),
+		Comment('Allow converting stashes to this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Convert To')
+		}
+	)
+	allow_credit = Column(
+		NPBoolean(),
+		Comment('Allow crediting with this currency'),
+		nullable=False,
+		default=True,
+		server_default=npbool(True),
+		info={
+			'header_string' : _('Crediting')
+		}
+	)
+	allow_accounts = Column(
+		NPBoolean(),
+		Comment('Allow linking accounts to stashes with this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Allow Accounts')
+		}
+	)
+	allow_services = Column(
+		NPBoolean(),
+		Comment('Allow linking paid services to stashes with this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Allow Paid Services')
+		}
+	)
+	allow_futures = Column(
+		NPBoolean(),
+		Comment('Allow promised payments to stashes with this currency'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Allow Promised Payments')
+		}
+	)
+	visible_to_operator = Column(
+		'oper_visible',
+		NPBoolean(),
+		Comment('Visibility in operator interface'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Visible to Operator')
+		}
+	)
+	visible_to_user = Column(
+		'user_visible',
+		NPBoolean(),
+		Comment('Visibility in user interface'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Visible to User')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Currency description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	def __str__(self):
+		return str(self.name)
+
+	def format(self, req, amount):
+		return money_format(req, amount, code=self.code, prefix=self.prefix, suffix=self.suffix)
+
+	def format_long(self, req, amount):
+		return money_format_long(req, amount, code=self.code)
+
 class Stash(Base):
 	"""
 	Stash object.
@@ -149,6 +395,7 @@ class Stash(Base):
 	__table_args__ = (
 		Comment('Stashes of money'),
 		Index('stashes_def_i_entityid', 'entityid'),
+		Index('stashes_def_i_currid', 'currid'),
 		Trigger('before', 'insert', 't_stashes_def_bi'),
 		Trigger('before', 'update', 't_stashes_def_bu'),
 		{
@@ -164,10 +411,11 @@ class Stash(Base):
 				'menu_main'     : True,
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
-				'grid_view'     : ('stashid', 'entity', 'name', 'amount', 'credit'),
-				'grid_hidden'   : ('stashid',),
-				'form_view'     : ('entity', 'name', 'amount', 'credit', 'alltime_min', 'alltime_max'),
+				'grid_view'     : ('stashid', 'entity', 'name', 'currency', 'amount', 'credit'),
+				'grid_hidden'   : ('stashid', 'currency'),
+				'form_view'     : ('entity', 'name', 'currency', 'amount', 'credit', 'alltime_min', 'alltime_max'),
 				'easy_search'   : ('name',),
+				'extra_data'    : ('formatted_amount', 'formatted_credit'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new stash'))
 			}
@@ -196,6 +444,27 @@ class Stash(Base):
 			'column_flex'   : 2
 		}
 	)
+	currency_id = Column(
+		'currid',
+		UInt32(),
+		Comment('Currency ID'),
+		ForeignKey('currencies_def.currid', name='stashes_def_fk_currid', onupdate='CASCADE'), # ondelete=RESTRICT
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Currency'),
+			'editor_xtype'  : 'simplemodelselect',
+			'editor_config' : {
+				'extraParams' : { '__ffilter' : [{
+					'property' : 'oper_visible',
+					'operator' : 'eq',
+					'value'    : True
+				}]}
+			},
+			'filter_type'   : 'nplist'
+		}
+	)
 	name = Column(
 		Unicode(255),
 		Comment('Stash name'),
@@ -213,7 +482,9 @@ class Stash(Base):
 		server_default=text('0'),
 		info={
 			'header_string' : _('Balance'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_amount}'
 		}
 	)
 	credit = Column(
@@ -224,7 +495,9 @@ class Stash(Base):
 		server_default=text('0'),
 		info={
 			'header_string' : _('Credit'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_credit}'
 		}
 	)
 	alltime_max = Column(
@@ -259,12 +532,26 @@ class Stash(Base):
 			passive_deletes=True
 		)
 	)
+	currency = relationship(
+		'Currency',
+		lazy='joined',
+		backref=backref(
+			'stashes',
+			passive_deletes='all'
+		)
+	)
 
 	def __str__(self):
 		return '%s: %s' % (
 			self.entity.nick,
 			str(self.name)
 		)
+
+	def formatted_amount(self, req):
+		return money_format(req, self.amount, currency=self.currency)
+
+	def formatted_credit(self, req):
+		return money_format(req, self.credit, currency=self.currency)
 
 class StashIOType(Base):
 	"""
@@ -274,6 +561,7 @@ class StashIOType(Base):
 	__table_args__ = (
 		Comment('Stashes input/output operation types'),
 		Index('stashes_io_types_i_type', 'type'),
+		Index('stashes_io_types_u_ftype', 'ftype', unique=True),
 		Index('stashes_io_types_i_oper_visible', 'oper_visible'),
 		Index('stashes_io_types_i_user_visible', 'user_visible'),
 		Index('stashes_io_types_i_oper_cap', 'oper_cap'),
@@ -290,7 +578,7 @@ class StashIOType(Base):
 				'show_in_menu'  : 'admin',
 				'default_sort'  : ({ 'property': 'name', 'direction': 'ASC' },),
 				'grid_view'     : ('name', 'class', 'type'),
-				'form_view'     : ('name', 'class', 'type', 'user_visible', 'oper_visible', 'oper_capability', 'descr'),
+				'form_view'     : ('name', 'class', 'type', 'ftype', 'user_visible', 'oper_visible', 'oper_capability', 'pays_futures', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new operation type'))
@@ -338,7 +626,19 @@ class StashIOType(Base):
 			'header_string' : _('Type')
 		}
 	)
-	oper_visible = Column(
+	function_type = Column(
+		'ftype',
+		IOFunctionType.db_type(),
+		Comment('Special built-in function for this I/O type'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Function')
+		}
+	)
+	visible_to_operator = Column(
+		'oper_visible',
 		NPBoolean(),
 		Comment('Visibility in operator interface'),
 		nullable=False,
@@ -348,7 +648,8 @@ class StashIOType(Base):
 			'header_string' : _('Visible to Operator')
 		}
 	)
-	user_visible = Column(
+	visible_to_user = Column(
+		'user_visible',
 		NPBoolean(),
 		Comment('Visibility in user interface'),
 		nullable=False,
@@ -356,6 +657,17 @@ class StashIOType(Base):
 		server_default=npbool(False),
 		info={
 			'header_string' : _('Visible to User')
+		}
+	)
+	fulfills_futures = Column(
+		'pays_futures',
+		NPBoolean(),
+		Comment('Servers as a fulfillment for promised payments'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Counts for promised payments')
 		}
 	)
 	oper_capability_code = Column(
@@ -384,11 +696,18 @@ class StashIOType(Base):
 
 	oper_capability = relationship(
 		'Privilege',
-		backref='stash_io_types',
+		backref=backref(
+			'stash_io_types',
+			passive_deletes=True
+		),
 		lazy='joined'
 	)
 
 	def __str__(self):
+		if self.io_class == OperationClass.system:
+			req = getattr(self, '__req__', None)
+			if req:
+				return req.localizer.translate(_(self.name))
 		return str(self.name)
 
 def _wizcb_stashio_submit(wiz, em, step, act, val, req):
@@ -396,14 +715,21 @@ def _wizcb_stashio_submit(wiz, em, step, act, val, req):
 	obj = StashIO()
 	em.set_values(obj, val, req, True)
 	sess.add(obj)
+	stash = None
 	if obj.difference:
 		stash = sess.query(Stash).get(obj.stash_id)
 		if stash:
 			stash.amount += obj.difference
-	return {
+	ret = {
 		'do'     : 'close',
 		'reload' : True
 	}
+	if stash is not None:
+		ret['affects'] = (
+			('stashes', 'StashIO'),
+			('stashes', 'Stash', obj.stash_id),
+		)
+	return ret
 
 def _wizcb_future_submit(wiz, em, step, act, val, req):
 	sess = DBSession()
@@ -422,11 +748,12 @@ class StashIO(Base):
 	__tablename__ = 'stashes_io_def'
 	__table_args__ = (
 		Comment('Stashes input/output operations'),
-		Index('stashes_io_i_siotypeid', 'siotypeid'),
-		Index('stashes_io_i_stashid', 'stashid'),
-		Index('stashes_io_i_uid', 'uid'),
-		Index('stashes_io_i_entityid', 'entityid'),
-		Index('stashes_io_i_ts', 'ts'),
+		Index('stashes_io_def_i_siotypeid', 'siotypeid'),
+		Index('stashes_io_def_i_stashid', 'stashid'),
+		Index('stashes_io_def_i_currid', 'currid'),
+		Index('stashes_io_def_i_uid', 'uid'),
+		Index('stashes_io_def_i_entityid', 'entityid'),
+		Index('stashes_io_def_i_ts', 'ts'),
 		Trigger('before', 'insert', 't_stashes_io_def_bi'),
 		Trigger('after', 'insert', 't_stashes_io_def_ai'),
 		{
@@ -441,9 +768,10 @@ class StashIO(Base):
 				'menu_name'     : _('Operations'),
 				'show_in_menu'  : 'modules',
 				'default_sort'  : ({ 'property': 'ts', 'direction': 'DESC' },),
-				'grid_view'     : ('sioid', 'type', 'stash', 'entity', 'user', 'ts', 'diff'),
-				'grid_hidden'   : ('sioid',),
-				'form_view'     : ('type', 'stash', 'entity', 'user', 'ts', 'diff', 'descr'),
+				'grid_view'     : ('sioid', 'type', 'stash', 'entity', 'user', 'ts', 'currency', 'diff'),
+				'grid_hidden'   : ('sioid', 'currency'),
+				'form_view'     : ('type', 'stash', 'currency', 'entity', 'user', 'ts', 'diff', 'descr'),
+				'extra_data'    : ('formatted_difference',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
 				'create_wizard' : Wizard(
@@ -476,7 +804,7 @@ class StashIO(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'editor_xtype'  : 'simplemodelselect',
 			'editor_config' : {
 				'extraParams' : { '__ffilter' : [{
@@ -500,6 +828,27 @@ class StashIO(Base):
 			'column_flex'   : 2
 		}
 	)
+	currency_id = Column(
+		'currid',
+		UInt32(),
+		Comment('Currency ID'),
+		ForeignKey('currencies_def.currid', name='stashes_io_def_fk_currid', onupdate='CASCADE'), # ondelete=RESTRICT
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Currency'),
+			'editor_xtype'  : 'simplemodelselect',
+			'editor_config' : {
+				'extraParams' : { '__ffilter' : [{
+					'property' : 'oper_visible',
+					'operator' : 'eq',
+					'value'    : True
+				}]}
+			},
+			'filter_type'   : 'nplist'
+		}
+	)
 	user_id = Column(
 		'uid',
 		UInt32(),
@@ -510,7 +859,7 @@ class StashIO(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Operator'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	entity_id = Column(
@@ -544,7 +893,9 @@ class StashIO(Base):
 		Comment('Operation result'),
 		nullable=False,
 		info={
-			'header_string' : _('Change')
+			'header_string' : _('Change'),
+			'column_xtype'  : 'templatecolumn',
+			'template'      : '{formatted_difference}'
 		}
 	)
 	description = Column(
@@ -578,9 +929,20 @@ class StashIO(Base):
 			passive_deletes=True
 		)
 	)
+	currency = relationship(
+		'Currency',
+		lazy='joined',
+		backref=backref(
+			'ios',
+			passive_deletes='all'
+		)
+	)
 	user = relationship(
 		'User',
-		backref='stash_ios'
+		backref=backref(
+			'stash_ios',
+			passive_deletes=True
+		)
 	)
 	entity = relationship(
 		'Entity',
@@ -595,6 +957,9 @@ class StashIO(Base):
 			str(self.stash),
 			str(self.type)
 		)
+
+	def formatted_difference(self, req):
+		return money_format(req, self.difference, currency=self.currency)
 
 class StashOperation(Base):
 	"""
@@ -676,7 +1041,7 @@ class StashOperation(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Operator'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	entity_id = Column(
@@ -747,7 +1112,10 @@ class StashOperation(Base):
 	)
 	operator_user = relationship(
 		'User',
-		backref='stash_operations'
+		backref=backref(
+			'stash_operations',
+			passive_deletes=True
+		)
 	)
 	entity = relationship(
 		'Entity',
@@ -798,9 +1166,9 @@ class FuturePayment(Base):
 				'form_view'     : (
 					'entity', 'stash', 'diff',
 					'state', 'origin',
-					'ctime', 'cby',
-					'mtime', 'mby',
-					'ptime', 'pby'
+					'ctime', 'created_by',
+					'mtime', 'modified_by',
+					'ptime', 'paid_by'
 				),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : Wizard(
@@ -900,7 +1268,6 @@ class FuturePayment(Base):
 		Comment('Last modification timestamp'),
 		CurrentTimestampDefault(on_update=True),
 		nullable=False,
-#		default=zzz,
 		info={
 			'header_string' : _('Modified'),
 			'read_only'     : True
@@ -914,7 +1281,7 @@ class FuturePayment(Base):
 		default=None,
 		server_default=FetchedValue(),
 		info={
-			'header_string' : _('Paid'),
+			'header_string' : _('Confirmed'),
 			'read_only'     : True
 		}
 	)
@@ -968,6 +1335,7 @@ class FuturePayment(Base):
 			'header_string' : _('Description')
 		}
 	)
+
 	stash = relationship(
 		'Stash',
 		innerjoin=True,
@@ -981,6 +1349,30 @@ class FuturePayment(Base):
 		'Entity',
 		backref=backref(
 			'stash_futures',
+			passive_deletes=True
+		)
+	)
+	created_by = relationship(
+		'User',
+		foreign_keys=created_by_id,
+		backref=backref(
+			'created_futures',
+			passive_deletes=True
+		)
+	)
+	modified_by = relationship(
+		'User',
+		foreign_keys=modified_by_id,
+		backref=backref(
+			'modified_futures',
+			passive_deletes=True
+		)
+	)
+	paid_by = relationship(
+		'User',
+		foreign_keys=paid_by_id,
+		backref=backref(
+			'paid_futures',
 			passive_deletes=True
 		)
 	)

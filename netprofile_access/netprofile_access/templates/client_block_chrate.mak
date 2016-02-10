@@ -1,6 +1,6 @@
 ## -*- coding: utf-8 -*-
 			<div class="row">
-				<label for="fld-rate-${stash.id}" class="col-sm-4">${_('Current Rate')}</label>
+				<label for="fld-rate-${stash.id}" class="col-sm-4">${_('Current Rate', domain='netprofile_access')}</label>
 				<div id="fld-rate-${stash.id}" class="col-sm-8">
 					${a.rate}
 % if not a.next_rate:

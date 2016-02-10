@@ -37,11 +37,17 @@ __all__ = [
 	'DAVMountResponse',
 	'DAVErrorResponse',
 	'DAVMultiStatusResponse',
-	'DAVLockResponse'
+	'DAVSyncCollectionResponse',
+	'DAVLockResponse',
+	'DAVPrincipalSearchPropertySetResponse'
 ]
 
 from lxml import etree
 from pyramid.response import Response
+from pyramid.i18n import (
+	TranslationString,
+	get_localizer
+)
 
 from . import props as dprops
 from .errors import DAVError
@@ -149,6 +155,16 @@ class DAVMultiStatusResponse(DAVXMLResponse):
 	def add_element(self, resp_el):
 		self.xml_root.append(resp_el.to_xml())
 
+class DAVSyncCollectionResponse(DAVMultiStatusResponse):
+	def __init__(self, *args, sync_token=None, **kwargs):
+		super(DAVSyncCollectionResponse, self).__init__(*args, **kwargs)
+		if sync_token is not None:
+			tok = etree.SubElement(self.xml_root, dprops.SYNC_TOKEN)
+			tok.text  = '%s%s' % (
+				dprops.NS_SYNC,
+				str(sync_token)
+			)
+
 class DAVLockResponse(DAVXMLResponse):
 	def __init__(self, *args, lock=None, new_file=False, **kwargs):
 		super(DAVLockResponse, self).__init__(*args, **kwargs)
@@ -166,4 +182,23 @@ class DAVLockResponse(DAVXMLResponse):
 			ld = etree.SubElement(self.xml_root, dprops.LOCK_DISCOVERY)
 			val = DAVLockDiscoveryValue((lock,), show_token=True)
 			val.render(self.req, ld)
+
+class DAVPrincipalSearchPropertySetResponse(DAVXMLResponse):
+	def __init__(self, req, propdef, *args, **kwargs):
+		super(DAVPrincipalSearchPropertySetResponse, self).__init__(*args, request=req, **kwargs)
+		loc = get_localizer(req)
+		ns_map = dprops.NS_MAP.copy()
+		self.xml_root = etree.Element(dprops.PRINC_SEARCH_PROP_SET, nsmap=ns_map)
+		for prop, descr in propdef.items():
+			srcprop = etree.SubElement(self.xml_root, dprops.PRINC_SEARCH_PROP)
+			el = etree.SubElement(srcprop, dprops.PROP)
+			etree.SubElement(el, prop)
+			if descr:
+				el = etree.SubElement(srcprop, dprops.DESCRIPTION)
+				if isinstance(descr, TranslationString):
+					el.set('{http://www.w3.org/XML/1998/namespace}lang', req.locale_name)
+					el.text = loc.translate(descr)
+				else:
+					el.set('{http://www.w3.org/XML/1998/namespace}lang', 'en')
+					el.text = descr
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: High-level WebDAV support
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -41,6 +41,10 @@ from pyramid.view import (
 )
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPNotFound
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
 from pyramid.security import (
 	Allow, Deny,
 	Everyone, Authenticated,
@@ -48,16 +52,21 @@ from pyramid.security import (
 	authenticated_userid,
 	has_permission
 )
+from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from netprofile import dav
 from netprofile.dav import dprops
 from netprofile.db.connection import DBSession
 from .models import (
+	AddressBook,
+	NPVariable,
 	DAVLock,
 	File,
 	FileFolder,
 	Group,
 	User,
+	UserCard,
 
 	F_DEFAULT_FILES,
 	F_DEFAULT_DIRS,
@@ -82,6 +91,8 @@ _re_if = re.compile(
 	re.I | re.M
 )
 
+_ = TranslationStringFactory('netprofile_core')
+
 def dav_decorator(view):
 	def dav_request(context, request):
 		logger.debug('Running WebDAV request: path=%r, method=%r, view_name=%r, subpath=%r' % (
@@ -102,8 +113,9 @@ def dav_decorator(view):
 			return resp
 	return dav_request
 
-@implementer(dav.IDAVCollection)
 class DAVPluginVFS(dav.DAVPlugin):
+	__dav_collid__ = 'PLUG:VFS'
+
 	def __iter__(self):
 		user = self.req.user
 		root = None
@@ -233,7 +245,10 @@ class DAVPluginVFS(dav.DAVPlugin):
 			if bucket is None:
 				continue
 			if ace[2] == 'read':
-				bucket.append(dprops.ACL_READ)
+				bucket.extend((
+					dprops.ACL_READ,
+					dprops.ACL_READ_ACL
+				))
 			elif ace[2] == 'write':
 				bucket.extend((
 					dprops.ACL_WRITE,
@@ -299,7 +314,7 @@ class DAVPluginVFS(dav.DAVPlugin):
 				obj.creation_time = props[dprops.CREATION_DATE]
 			if dprops.LAST_MODIFIED in props:
 				obj.modification_time = props[dprops.LAST_MODIFIED]
-		return obj
+		return (obj, False)
 
 	def dav_append(self, req, ctx, name):
 		if isinstance(ctx, File):
@@ -325,6 +340,29 @@ class DAVPluginVFS(dav.DAVPlugin):
 			t.__plugin__ = self
 			yield t
 
+	@property
+	def dav_collections(self):
+		user = self.req.user
+		root = None
+		if user:
+			root = user.group.effective_root_folder
+		sess = DBSession()
+		for t in sess.query(FileFolder).filter(FileFolder.parent == root):
+			t.__req__ = self.req
+			t.__parent__ = self
+			t.__plugin__ = self
+			yield t
+
+	@property
+	def dav_collection_id(self):
+		user = self.req.user
+		root = None
+		if user:
+			root = user.group.effective_root_folder
+		if root:
+			return root.dav_collection_id
+		return self.__dav_collid__
+
 	def acl_restrictions(self):
 		cls = dav.DAVACLRestrictions
 		princ = dav.DAVPrincipalValue
@@ -334,7 +372,27 @@ class DAVPluginVFS(dav.DAVPlugin):
 			princ(princ.ALL)
 		))
 
-@implementer(dav.IDAVCollection)
+	def dav_props(self, pset):
+		ret = super(DAVPluginVFS, self).dav_props(pset)
+		token = None
+		if dprops.ETAG in pset:
+			etag = None
+			token = NPVariable.get_ro('DAV:SYNC:PLUG:VFS')
+			if token and token.integer_value:
+				etag = '"ST:%d"' % (token.integer_value,)
+			ret[dprops.ETAG] = etag
+		if dprops.CTAG in pset:
+			ctag = None
+			if token is None:
+				token = NPVariable.get_ro('DAV:SYNC:PLUG:VFS')
+			if token and token.integer_value:
+				ctag = '%s%s' % (
+					dprops.NS_SYNC,
+					str(token.integer_value)
+				)
+			ret[dprops.CTAG] = ctag
+		return ret
+
 class DAVPluginUsers(dav.DAVPlugin):
 	def __iter__(self):
 		sess = DBSession()
@@ -361,7 +419,30 @@ class DAVPluginUsers(dav.DAVPlugin):
 			u.__plugin__ = self
 			yield u
 
-@implementer(dav.IDAVCollection)
+	@property
+	def dav_collections(self):
+		return self.dav_children
+
+	def dav_search_principals(self, req, test, query):
+		cond = []
+		for prop, value in query.items():
+			if prop == dprops.DISPLAY_NAME:
+				cond.append(User.login.contains(value))
+		if (test == 'anyof') and (len(cond) > 1):
+			cond = (or_(*cond),)
+		q = DBSession().query(User)
+		if len(cond) > 0:
+			return q.filter(*cond)
+		return q
+
+	def dav_search_fields(self, req):
+		return {
+			dprops.DISPLAY_NAME : _('User name')
+		}
+
+	def dav_match_self(self, req):
+		yield req.user
+
 class DAVPluginGroups(dav.DAVPlugin):
 	def __iter__(self):
 		sess = DBSession()
@@ -388,10 +469,246 @@ class DAVPluginGroups(dav.DAVPlugin):
 			g.__plugin__ = self
 			yield g
 
+	@property
+	def dav_collections(self):
+		return self.dav_children
+
+	def dav_search_principals(self, req, test, query):
+		cond = []
+		for prop, value in query.items():
+			if prop == dprops.DISPLAY_NAME:
+				cond.append(Group.name.contains(value))
+		if (test == 'anyof') and (len(cond) > 1):
+			cond = (or_(*cond),)
+		q = DBSession().query(Group)
+		if len(cond) > 0:
+			return q.filter(*cond)
+		return q
+
+	def dav_search_fields(self, req):
+		return {
+			dprops.DISPLAY_NAME : _('Group name')
+		}
+
+	def dav_match_self(self, req):
+		user = req.user
+		for group in self.dav_children:
+			if user.is_member_of(group):
+				yield group
+
+class DAVPluginAbstractAddressBooks(dav.DAVPlugin):
+	def dav_props(self, pset):
+		ret = super(DAVPluginAbstractAddressBooks, self).dav_props(pset)
+		token = None
+		if dprops.ETAG in pset:
+			etag = None
+			try:
+				token = NPVariable.get_ro('DAV:SYNC:' + self.__dav_collid__)
+				if token and token.integer_value:
+					etag = '"ST:%d"' % (token.integer_value,)
+				ret[dprops.ETAG] = etag
+			except NoResultFound:
+				pass
+		if dprops.CTAG in pset:
+			ctag = None
+			try:
+				if token is None:
+					token = NPVariable.get_ro('DAV:SYNC:' + self.__dav_collid__)
+				if token and token.integer_value:
+					ctag = '%s%s' % (
+						dprops.NS_SYNC,
+						str(token.integer_value)
+					)
+				ret[dprops.CTAG] = ctag
+			except NoResultFound:
+				pass
+		return ret
+
+	@property
+	def dav_collections(self):
+		return self.dav_children
+
+class DAVPluginUserAddressBooks(DAVPluginAbstractAddressBooks):
+	def __init__(self, req, user):
+		super(DAVPluginUserAddressBooks, self).__init__(req)
+		self.user = user
+
+	@property
+	def __name__(self):
+		return self.user.login
+
+	@property
+	def __dav_collid__(self):
+		return 'ABC:%u' % (self.user.id,)
+
+	def __iter__(self):
+		loc = get_localizer(self.req)
+		sess = DBSession()
+		for ab in sess.query(AddressBook).filter(AddressBook.user == self.user):
+			yield ab.name
+
+	def __getitem__(self, name):
+		sess = DBSession()
+		try:
+			ab = sess.query(AddressBook)\
+					.filter(AddressBook.user == self.user, AddressBook.name == name)\
+					.one()
+		except NoResultFound:
+			raise KeyError('No such file or directory')
+		ab.__req__ = self.req
+		ab.__parent__ = self
+		ab.__plugin__ = self
+		return ab
+
+	@property
+	def dav_children(self):
+		sess = DBSession()
+		for ab in sess.query(AddressBook)\
+				.filter(AddressBook.user == self.user):
+			ab.__req__ = self.req
+			ab.__parent__ = self
+			ab.__plugin__ = self
+			yield ab
+
+	@property
+	def dav_sync_token(self):
+		varname = 'DAV:SYNC:ABC:%u' % (self.user.id,)
+		try:
+			var = NPVariable.get_ro(varname)
+		except NoResultFound:
+			sess = DBSession()
+			cvar = NPVariable.get_ro('DAV:SYNC:PLUG:UABOOKS')
+			var = NPVariable(name=varname, integer_value=cvar.integer_value)
+			sess.add(var)
+		return var.integer_value
+
+class DAVPluginUserAddressBookCollections(DAVPluginAbstractAddressBooks):
+	__dav_collid__ = 'PLUG:UABOOKS'
+
+	def __iter__(self):
+		sess = DBSession()
+		for t in sess.query(User.login):
+			yield t[0]
+
+	def __getitem__(self, name):
+		sess = DBSession()
+		try:
+			u = sess.query(User).filter(User.login == name).one()
+		except NoResultFound:
+			raise KeyError('No such file or directory')
+		ab = DAVPluginUserAddressBooks(self.req, u)
+		ab.__req__ = self.req
+		ab.__parent__ = self
+		return ab
+
+	@property
+	def dav_children(self):
+		sess = DBSession()
+		for u in sess.query(User):
+			ab = DAVPluginUserAddressBooks(self.req, u)
+			ab.__req__ = self.req
+			ab.__parent__ = self
+			yield ab
+
+	@property
+	def dav_collections(self):
+		return self.dav_children
+
+@implementer(dav.IDAVAddressBook, dav.IDAVDirectory)
+class DAVPluginSystemAddressBook(DAVPluginAbstractAddressBooks):
+	__dav_collid__ = 'PLUG:USERS'
+
+	def __iter__(self):
+		sess = DBSession()
+		for t in sess.query(User.login):
+			yield '%s.vcf' % (t[0],)
+
+	def __getitem__(self, name):
+		sess = DBSession()
+		try:
+			u = sess.query(User).filter(User.login == name).one()
+		except NoResultFound:
+			raise KeyError('No such file or directory')
+		u.__req__ = self.req
+		uc = UserCard(u, self.req)
+		uc.__parent__ = self
+		uc.__plugin__ = self
+		return uc
+
+	@property
+	def dav_children(self):
+		sess = DBSession()
+		for u in sess.query(User):
+			u.__req__ = self.req
+			uc = UserCard(u, self.req)
+			uc.__parent__ = self
+			uc.__plugin__ = self
+			yield uc
+
+	def dav_props(self, pset):
+		ret = super(DAVPluginSystemAddressBook, self).dav_props(pset)
+		token = None
+		if dprops.ETAG in pset:
+			etag = None
+			token = NPVariable.get_ro('DAV:SYNC:PLUG:USERS')
+			if token and token.integer_value:
+				etag = '"ST:%d"' % (token.integer_value,)
+			ret[dprops.ETAG] = etag
+		if dprops.CTAG in pset:
+			ctag = None
+			if token is None:
+				token = NPVariable.get_ro('DAV:SYNC:PLUG:USERS')
+			if token and token.integer_value:
+				ctag = '%s%s' % (
+					dprops.NS_SYNC,
+					str(token.integer_value)
+				)
+			ret[dprops.CTAG] = ctag
+		if dprops.ADDRESS_BOOK_DESCRIPTION in pset:
+			ret[dprops.ADDRESS_BOOK_DESCRIPTION] = 'Global system users'
+		if dprops.SUPPORTED_ADDRESS_DATA in pset:
+			ret[dprops.SUPPORTED_ADDRESS_DATA] = dav.DAVSupportedAddressDataValue(('text/vcard', '3.0'))
+		return ret
+
+class DAVPluginAddressBooks(DAVPluginAbstractAddressBooks):
+	__dav_collid__ = 'PLUG:ABOOKS'
+	__abooks__ = {
+		'users'  : DAVPluginUserAddressBookCollections,
+		'system' : DAVPluginSystemAddressBook
+	}
+
+	def __iter__(self):
+		return iter(self.__abooks__)
+
+	def __getitem__(self, name):
+		if name not in self.__abooks__:
+			raise KeyError('No such address book class')
+		plug = self.__abooks__[name](self.req)
+		plug.__name__ = name
+		plug.__parent__ = self
+		return plug
+
+	@property
+	def dav_children(self):
+		for name, cls in self.__abooks__.items():
+			plug = cls(self.req)
+			plug.__name__ = name
+			plug.__parent__ = self
+			yield plug
+
+	@property
+	def dav_collections(self):
+		return self.dav_children
+
 @notfound_view_config(request_method='OPTIONS')
 @view_config(route_name='core.home', request_method='OPTIONS')
 def root_options(request):
 	return DAVCollectionHandler(request).notfound_options()
+
+@notfound_view_config(request_method='REPORT')
+@view_config(route_name='core.home', request_method='REPORT')
+def root_report(request):
+	return DAVCollectionHandler(request).report()
 
 class DAVHandler(object):
 	def __init__(self, req):
@@ -605,6 +922,7 @@ class DAVHandler(object):
 		ctx = req.context
 		req.dav.user_acl(req, ctx, dprops.ACL_WRITE_ACL)
 		# TODO: write this
+		raise dav.DAVNotImplementedError('ACL method is yet to be written.')
 
 	def proppatch(self):
 		req = self.req
@@ -642,6 +960,7 @@ class DAVHandler(object):
 			pset = dav.DAVAllPropsSet()
 		else:
 			pset = pfreq.get_props()
+		# FIXME: RFC states default depth SHOULD be infinity
 		depth = req.dav.get_http_depth(req, 1)
 		if depth != 0:
 			depth = 1
@@ -652,8 +971,9 @@ class DAVHandler(object):
 			el = dav.DAVResponseElement(self.req, ctx, node_props, names_only=is_pnames)
 			resp.add_element(el)
 		resp.make_body()
-		self.req.dav.set_features(resp)
+		req.dav.set_features(resp, node=req.context)
 		resp.vary = ('Brief', 'Prefer')
+		resp.headers.add('MS-Author-Via', 'DAV')
 		return resp
 
 	def move(self):
@@ -802,8 +1122,8 @@ class DAVCollectionHandler(DAVHandler):
 	@view_config(request_method='OPTIONS', context=dav.IDAVCollection)
 	def options(self):
 		resp = Response()
-		self.req.dav.set_headers(resp)
-		self.req.dav.set_allow(resp)
+		self.req.dav.set_headers(resp, node=self.req.context)
+		self.req.dav.set_allow(resp, node=self.req.context)
 		return resp
 
 	@notfound_view_config(request_method='OPTIONS', containment=dav.IDAVCollection, decorator=dav_decorator)
@@ -871,10 +1191,13 @@ class DAVCollectionHandler(DAVHandler):
 		creator = getattr(req.context, 'dav_create', None)
 		if creator is None:
 			raise dav.DAVNotImplementedError('Unable to create child node.')
-		obj = creator(req, req.view_name, None, None, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
-		etag = getattr(obj, 'etag', None)
-		if callable(etag):
-			etag = etag(req)
+		obj, modified = creator(req, req.view_name, None, None, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
+		if modified:
+			etag = None
+		else:
+			etag = getattr(obj, 'etag', None)
+			if callable(etag):
+				etag = etag(req)
 		resp = dav.DAVCreateResponse(request=req, etag=etag)
 		return resp
 
@@ -948,7 +1271,7 @@ class DAVCollectionHandler(DAVHandler):
 		if creator is None:
 			raise dav.DAVNotImplementedError('Unable to create child node.')
 		with io.BytesIO(b'') as bio:
-			obj = creator(req, req.view_name, None, None, bio) # TODO: handle IOErrors, handle non-seekable request body
+			obj, modified = creator(req, req.view_name, None, None, bio) # TODO: handle IOErrors, handle non-seekable request body
 		if isinstance(obj, File):
 			lock.file = obj
 		lock.refresh(req.dav.get_http_timeout(req))
@@ -974,8 +1297,8 @@ class DAVFileHandler(DAVHandler):
 	@view_config(request_method='OPTIONS')
 	def options(self):
 		resp = Response()
-		self.req.dav.set_headers(resp)
-		self.req.dav.set_allow(resp)
+		self.req.dav.set_headers(resp, node=self.req.context)
+		self.req.dav.set_allow(resp, node=self.req.context)
 		self.req.dav.set_patch_formats(resp)
 		return resp
 
@@ -1009,10 +1332,13 @@ class DAVFileHandler(DAVHandler):
 		putter = getattr(obj, 'dav_put', None)
 		if putter is None:
 			raise dav.DAVNotImplementedError('Unable to overwrite node.')
-		putter(req, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
-		etag = getattr(obj, 'etag', None)
-		if callable(etag):
-			etag = etag(req)
+		modified = putter(req, req.body_file_seekable) # TODO: handle IOErrors, handle non-seekable request body
+		if modified:
+			etag = None
+		else:
+			etag = getattr(obj, 'etag', None)
+			if callable(etag):
+				etag = etag(req)
 		resp = dav.DAVOverwriteResponse(request=req, etag=etag)
 		return resp
 
@@ -1062,12 +1388,16 @@ class DAVFileHandler(DAVHandler):
 			putter = getattr(obj, 'dav_put', None)
 			if putter is None:
 				raise dav.DAVNotImplementedError('Unable to patch node.')
-			putter(req, req.body_file_seekable, r_start, r_end - r_start) # TODO: handle IOErrors, handle non-seekable request body
-			etag = getattr(obj, 'etag', None)
-			if callable(etag):
-				etag = etag(req)
+			modified = putter(req, req.body_file_seekable, r_start, r_end - r_start) # TODO: handle IOErrors, handle non-seekable request body
+			if modified:
+				etag = None
+			else:
+				etag = getattr(obj, 'etag', None)
+				if callable(etag):
+					etag = etag(req)
 			resp = dav.DAVOverwriteResponse(request=req, etag=etag)
-			req.dav.set_features(resp)
+			req.dav.set_features(resp, node=obj)
+			resp.headers.add('MS-Author-Via', 'DAV')
 			return resp
 		raise dav.DAVUnsupportedMediaTypeError('Unknown content type specified in PATCH request.')
 

@@ -61,7 +61,10 @@ class DAVResponseElement(DAVNodeElement):
 	def to_xml(self):
 		req = self.req
 		el = etree.Element(dprops.RESPONSE)
-		uri = req.dav.node_uri(req, self.ctx)
+		if isinstance(self.ctx, str):
+			uri = self.ctx
+		else:
+			uri = req.dav.node_uri(req, self.ctx)
 		href = etree.SubElement(el, dprops.HREF)
 		href.text = uri
 		if self.status:

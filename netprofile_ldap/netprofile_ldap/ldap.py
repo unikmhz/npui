@@ -30,11 +30,16 @@ from __future__ import (
 import ldap3
 import ssl
 from sqlalchemy import event
+from sqlalchemy.orm import object_mapper
 from pyramid.settings import (
 	asbool,
 	aslist
 )
-from netprofile.common.hooks import register_hook
+from pyramid.threadlocal import get_current_request
+from netprofile.common.hooks import (
+	IHookManager,
+	register_hook
+)
 from netprofile.common.util import make_config_dict
 
 LDAPConn = None
@@ -132,7 +137,7 @@ def _gen_ldap_object_rdn(em, rdn_col):
 		return '%s=%s' % (ldap_attr, getattr(tgt, prop.key))
 	return _ldap_object_rdn
 
-def _gen_ldap_object_load(em, info, settings):
+def _gen_ldap_object_load(em, info, settings, hm):
 	base = _get_base(em, settings)
 	scope = _get_scope(em, settings)
 	rdn_attr = info.get('ldap_rdn')
@@ -140,6 +145,8 @@ def _gen_ldap_object_load(em, info, settings):
 	object_classes = '(objectClass=' + ')(objectClass='.join(object_classes) + ')'
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
 	def _ldap_object_load(tgt, ctx):
+		if getattr(tgt, '__req__', None) is None:
+			tgt.__req__ = get_current_request()
 		ret = None
 		rdn = get_rdn(tgt)
 		flt = '(&(%s)%s)' % (rdn, object_classes)
@@ -147,16 +154,18 @@ def _gen_ldap_object_load(em, info, settings):
 			tgt._ldap_data = lc.search(base, flt, search_scope=scope, attributes=ldap3.ALL_ATTRIBUTES)
 	return _ldap_object_load
 
-def _gen_ldap_object_store(em, info, settings):
+def _gen_ldap_object_store(em, info, settings, hm):
 	cols = em.get_read_columns()
 	base = _get_base(em, settings)
 	rdn_attr = info.get('ldap_rdn')
 	get_attrlist = _gen_attrlist(cols, settings, info)
+	hook_name = 'ldap.attrs.%s.%s' % (em.model.__moddef__, em.name)
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
 	def _ldap_object_store(mapper, conn, tgt):
 		attrs = get_attrlist(tgt)
 		rdn = get_rdn(tgt)
 		dn = '%s,%s' % (rdn, base)
+		hm.run_hook(hook_name, tgt, dn, attrs)
 		ldap_data = getattr(tgt, '_ldap_data', None)
 		with LDAPConn as lc:
 			if isinstance(ldap_data, int):
@@ -180,16 +189,19 @@ def _gen_ldap_object_store(em, info, settings):
 					new_val = attrs[attr]
 					if new_val is None:
 						if old_val:
-							xattrs[attr] = (ldap3.MODIFY_DELETE, old_val)
+							xattrs[attr] = (ldap3.MODIFY_DELETE, ())
 						del_attrs.append(attr)
 					else:
 						xattrs[attr] = (ldap3.MODIFY_REPLACE, new_val)
+				for attr in ldap_data['attributes']:
+					if attr not in attrs:
+						xattrs[attr] = (ldap3.MODIFY_DELETE, ())
 				for attr in del_attrs:
 					del attrs[attr]
 				ret = lc.modify(dn, xattrs)
 				# FIXME: check for errors
 				ret, status = lc.get_response(ret)
-				tgt._ldap_data['attributes'].update(attrs)
+				tgt._ldap_data['attributes'] = attrs
 			else:
 				xattrs = {}
 				for attr in attrs:
@@ -205,7 +217,7 @@ def _gen_ldap_object_store(em, info, settings):
 				}
 	return _ldap_object_store
 
-def _gen_ldap_object_delete(em, info, settings):
+def _gen_ldap_object_delete(em, info, settings, hm):
 	base = _get_base(em, settings)
 	rdn_attr = info.get('ldap_rdn')
 	get_rdn = _gen_ldap_object_rdn(em, rdn_attr)
@@ -221,16 +233,31 @@ def _gen_ldap_object_delete(em, info, settings):
 def _proc_model_ldap(mmgr, model):
 	if not LDAPConn:
 		return
-	info = model.model.__table__.info
+	cls = model.model
+	info = cls.__table__.info
 	if ('ldap_classes' not in info) or ('ldap_rdn' not in info):
 		return
 
-	settings = mmgr.cfg.registry.settings
+	registry = mmgr.cfg.registry
+	settings = registry.settings
+	hm = registry.getUtility(IHookManager)
 
-	event.listen(model.model, 'load', _gen_ldap_object_load(model, info, settings))
-	event.listen(model.model, 'after_insert', _gen_ldap_object_store(model, info, settings))
-	event.listen(model.model, 'after_update', _gen_ldap_object_store(model, info, settings))
-	event.listen(model.model, 'after_delete', _gen_ldap_object_delete(model, info, settings))
+	cls._ldap_load = _gen_ldap_object_load(model, info, settings, hm)
+	cls._ldap_store = _gen_ldap_object_store(model, info, settings, hm)
+	cls._ldap_delete = _gen_ldap_object_delete(model, info, settings, hm)
+
+	event.listen(model.model, 'load', cls._ldap_load)
+	event.listen(model.model, 'after_insert', cls._ldap_store)
+	event.listen(model.model, 'after_update', cls._ldap_store)
+	event.listen(model.model, 'after_delete', cls._ldap_delete)
+
+def store(obj):
+	if not LDAPConn:
+		return
+	cls = obj.__class__
+	callback = getattr(cls, '_ldap_store', None)
+	if callable(callback):
+		return callback(object_mapper(obj), None, obj)
 
 def includeme(config):
 	global _ldap_active, LDAPConn

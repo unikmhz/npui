@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Config Generation module - Models
-# © Copyright 2014-2015 Alex 'Unik' Unigovsky
+# © Copyright 2014-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -234,7 +234,7 @@ class Server(Base):
 		info={
 			'header_string' : _('Type'),
 			'column_flex'   : 1,
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 

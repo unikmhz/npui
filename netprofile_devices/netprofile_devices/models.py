@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Devices module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 # © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -431,7 +431,7 @@ class DeviceTypeFlag(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 
@@ -539,7 +539,7 @@ class DeviceType(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Manufacturer'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -551,7 +551,7 @@ class DeviceType(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Category'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -868,7 +868,7 @@ class Device(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -902,7 +902,7 @@ class Device(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Place'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -1026,17 +1026,26 @@ class Device(Base):
 	created_by = relationship(
 		'User',
 		foreign_keys=created_by_id,
-		backref='created_devices'
+		backref=backref(
+			'created_devices',
+			passive_deletes=True
+		)
 	)
 	modified_by = relationship(
 		'User',
 		foreign_keys=modified_by_id,
-		backref='modified_devices'
+		backref=backref(
+			'modified_devices',
+			passive_deletes=True
+		)
 	)
 	installed_by = relationship(
 		'User',
 		foreign_keys=installed_by_id,
-		backref='installed_devices'
+		backref=backref(
+			'installed_devices',
+			passive_deletes=True
+		)
 	)
 	device_type = relationship(
 		'DeviceType',
@@ -1129,7 +1138,7 @@ class DeviceFlag(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 
@@ -1508,7 +1517,10 @@ class NetworkDevice(Device):
 	host = relationship(
 		'Host',
 		innerjoin=True,
-		backref='network_devices'
+		backref=backref(
+			'network_devices',
+			passive_deletes=True
+		)
 	)
 
 	def get_handler(self, req):
@@ -1618,7 +1630,7 @@ class DeviceTypeFile(Base):
 				'cap_menu'      : 'BASE_DEVICES',
 				'cap_read'      : 'DEVICETYPES_LIST',
 				'cap_create'    : 'FILES_ATTACH_2DEVICETYPES',
-				'cap_edit'      : 'FILES_ATTACH_2DEVICETYPES',
+				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : 'FILES_ATTACH_2DEVICETYPES',
 
 				'menu_name'     : _('Files'),
@@ -1658,7 +1670,8 @@ class DeviceTypeFile(Base):
 		nullable=False,
 		info={
 			'header_string' : _('File'),
-			'column_flex'   : 1
+			'column_flex'   : 1,
+			'editor_xtype'  : 'fileselect'
 		}
 	)
 

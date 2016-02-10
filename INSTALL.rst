@@ -86,7 +86,8 @@ compile various needed Python modules later on. Here is the list:
 * Python ``virtualenv`` package
 
   - In Fedora/RHEL/CentOS: package ``python-virtualenv``
-  - In Debian/Ubuntu/Mint: package ``python3-virtualenv`` or ``python-virtualenv``
+  - In Debian/Ubuntu/Mint: package ``virtualenv`` and one of
+    (``python3-virtualenv``, ``python-virtualenv``)
   - In Arch: package ``python-virtualenv`` or ``python2-virtualenv``
   - In Gentoo: package ``dev-python/virtualenv``
 

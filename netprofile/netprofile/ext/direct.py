@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: ExtDirect server
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -296,6 +296,15 @@ class ExtDirectRouter(object):
 				accepts_files=False,
 				permission=model.cap_create # FIXME!
 			)
+		self.add_action(
+			name,
+			method_name='report',
+			callback=model.report,
+			numargs=1,
+			accepts_files=False,
+			request_as_last_param=True,
+			permission=model.cap_read
+		)
 
 	def get_actions(self):
 		"""
@@ -396,7 +405,9 @@ class ExtDirectRouter(object):
 		except Exception as e:
 			# Let a user defined view for specific exception prevent returning
 			# a server error.
-			exception_view = render_view_to_response(e, request)
+			exception_view = None
+			if not isinstance(e, AccessDeniedException):
+				exception_view = render_view_to_response(e, request)
 			if exception_view is not None:
 				ret['result'] = exception_view
 				return ret

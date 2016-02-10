@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV-related nodes for Pyramid traversal
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -58,6 +58,7 @@ from . import props as dprops
 from .interfaces import IDAVCollection
 from .values import DAVResourceTypeValue
 from .acls import (
+	DAVACLRestrictions,
 	DAVACEValue,
 	DAVACLValue,
 	DAVPrincipalValue
@@ -73,6 +74,7 @@ class DAVRoot(object):
 	"""
 	__parent__ = None
 	__name__ = 'dav'
+	__dav_collid__ = 'ROOT'
 
 	@property
 	def name(self):
@@ -90,7 +92,7 @@ class DAVRoot(object):
 		return DAVACLValue((
 			DAVACEValue(
 				DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
-				grant=(dprops.ACL_READ,),
+				grant=(dprops.ACL_READ, dprops.ACL_READ_ACL),
 				protected=True
 			),
 		))
@@ -114,8 +116,6 @@ class DAVRoot(object):
 
 	def dav_props(self, pset):
 		ret = {}
-		if dprops.RESOURCE_TYPE in pset:
-			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.COLLECTION)
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = 'dav'
 		if dprops.IS_COLLECTION in pset:
@@ -129,10 +129,12 @@ class DAVRoot(object):
 	def dav_create(self, req, name, rtype=None, props=None, data=None):
 		raise DAVForbiddenError('Unable to create child node.')
 
-	def resolve_uri(self, uri, exact=False):
+	def resolve_uri(self, uri, exact=False, accept_path=True):
 		url = urlparse(uri)
 		url_loc = url.netloc
-		if not url.port:
+		if accept_path and (uri[0] == '/') and (url_loc == ''):
+			url_loc = self.req.host
+		elif not url.port:
 			url_loc += ':80'
 		if url_loc != self.req.host:
 			raise ValueError('Alien URL supplied.')
@@ -151,6 +153,24 @@ class DAVRoot(object):
 			pl.__parent__ = self
 			yield pl
 
+	@property
+	def dav_collections(self):
+		return self.dav_children
+
+	@property
+	def dav_collection_id(self):
+		return 'ROOT'
+
+	@property
+	def dav_sync_token(self):
+		get_st = self.req.dav.get_synctoken
+		if callable(get_st):
+			return get_st(self)
+
+	def dav_changes(self, since_token):
+		pass
+
+@implementer(IDAVCollection)
 class DAVPlugin(object):
 	def __init__(self, req):
 		self.req = req
@@ -162,8 +182,6 @@ class DAVPlugin(object):
 
 	def dav_props(self, pset):
 		ret = {}
-		if dprops.RESOURCE_TYPE in pset:
-			ret[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(dprops.COLLECTION)
 		if dprops.DISPLAY_NAME in pset:
 			ret[dprops.DISPLAY_NAME] = self.__name__
 		if dprops.IS_COLLECTION in pset:
@@ -193,8 +211,24 @@ class DAVPlugin(object):
 		return DAVACLValue((
 			DAVACEValue(
 				DAVPrincipalValue(DAVPrincipalValue.AUTHENTICATED),
-				grant=(dprops.ACL_READ,),
+				grant=(dprops.ACL_READ, dprops.ACL_READ_ACL),
 				protected=True
 			),
 		))
+
+	def acl_restrictions(self):
+		return DAVACLRestrictions(
+			DAVACLRestrictions.GRANT_ONLY |
+			DAVACLRestrictions.NO_INVERT
+		)
+
+	@property
+	def dav_collection_id(self):
+		return self.__dav_collid__
+
+	@property
+	def dav_sync_token(self):
+		get_st = self.req.dav.get_synctoken
+		if callable(get_st):
+			return get_st(self)
 

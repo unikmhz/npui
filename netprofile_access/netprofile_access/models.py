@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -30,6 +30,7 @@ from __future__ import (
 __all__ = [
 	'AccessBlock',
 	'AccessEntity',
+	'AccessEntityChange',
 	'AccessEntityLink',
 	'AccessEntityLinkType',
 	'PerUserRateModifier',
@@ -58,7 +59,6 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
-	func,
 	text
 )
 
@@ -66,8 +66,6 @@ from sqlalchemy.orm import (
 	backref,
 	relationship
 )
-
-from sqlalchemy.ext.associationproxy import association_proxy
 
 from netprofile.db.connection import (
 	Base,
@@ -104,20 +102,17 @@ from netprofile.ext.wizards import (
 	ExternalWizardField
 )
 
-from netprofile.ext.data import (
-	ExtModel,
-	_name_to_class
-)
+from netprofile.ext.data import ExtModel
 from netprofile.common.hooks import register_hook
 from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
 
-from pyramid.threadlocal import get_current_request
-
 from netprofile_entities.models import (
 	Entity,
+	EntityHistory,
+	EntityHistoryPart,
 	EntityType
 )
 
@@ -177,6 +172,7 @@ class AccessEntity(Entity):
 		Comment('Access entities'),
 		Index('entities_access_i_stashid', 'stashid'),
 		Index('entities_access_i_rateid', 'rateid'),
+		Index('entities_access_i_aliasid', 'aliasid'),
 		Index('entities_access_i_ipaddrid', 'ipaddrid'),
 		Index('entities_access_i_ip6addrid', 'ip6addrid'),
 		Index('entities_access_i_nextrateid', 'nextrateid'),
@@ -284,6 +280,7 @@ class AccessEntity(Entity):
 		nullable=False,
 		info={
 			'header_string' : _('Rate'),
+			'filter_type'   : 'nplist',
 			'column_flex'   : 2
 		}
 	)
@@ -309,7 +306,8 @@ class AccessEntity(Entity):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Next Rate')
+			'header_string' : _('Next Rate'),
+			'filter_type'   : 'nplist'
 		}
 	)
 	ipv4_address_id = Column(
@@ -344,7 +342,8 @@ class AccessEntity(Entity):
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : _('Used Ingress')
+			'header_string' : _('Used Ingress'),
+			'read_only'     : True
 		}
 	)
 	used_traffic_egress = Column(
@@ -355,7 +354,8 @@ class AccessEntity(Entity):
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : _('Used Egress')
+			'header_string' : _('Used Egress'),
+			'read_only'     : True
 		}
 	)
 	used_seconds = Column(
@@ -366,7 +366,8 @@ class AccessEntity(Entity):
 		default=0,
 		server_default=text('0'),
 		info={
-			'header_string' : _('Used Seconds')
+			'header_string' : _('Used Seconds'),
+			'read_only'     : True
 		}
 	)
 	quota_period_end = Column(
@@ -377,7 +378,8 @@ class AccessEntity(Entity):
 		default=None,
 		server_default=FetchedValue(),
 		info={
-			'header_string' : _('Ends')
+			'header_string' : _('Ends'),
+			'read_only'     : True
 		}
 	)
 	access_state = Column(
@@ -451,7 +453,10 @@ class AccessEntity(Entity):
 	next_rate = relationship(
 		'Rate',
 		foreign_keys=next_rate_id,
-		backref='pending_access_entities'
+		backref=backref(
+			'pending_access_entities',
+			passive_deletes=True
+		)
 	)
 	alias_of = relationship(
 		'AccessEntity',
@@ -461,11 +466,17 @@ class AccessEntity(Entity):
 	)
 	ipv4_address = relationship(
 		'IPv4Address',
-		backref='access_entities'
+		backref=backref(
+			'access_entities',
+			passive_deletes=True
+		)
 	)
 	ipv6_address = relationship(
 		'IPv6Address',
-		backref='access_entities'
+		backref=backref(
+			'access_entities',
+			passive_deletes=True
+		)
 	)
 	blocks = relationship(
 		'AccessBlock',
@@ -531,7 +542,7 @@ class PerUserRateModifier(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -557,7 +568,7 @@ class PerUserRateModifier(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Rate'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -895,11 +906,220 @@ class AccessEntityLink(Base):
 		)
 	)
 
+class AccessEntityChange(Base):
+	"""
+	Access entity change log object.
+	"""
+	__tablename__ = 'entities_access_changes'
+	__table_args__ = (
+		Comment('Changes to access entities'),
+		Index('entities_access_changes_i_entityid', 'entityid'),
+		Index('entities_access_changes_i_uid', 'uid'),
+		Index('entities_access_changes_i_ts', 'ts'),
+		Index('entities_access_changes_i_rateid_old', 'rateid_old'),
+		Index('entities_access_changes_i_rateid_new', 'rateid_new'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'     : 'BASE_ENTITIES',
+				'cap_read'     : 'ENTITIES_LIST',
+				'cap_create'   : '__NOPRIV__',
+				'cap_edit'     : '__NOPRIV__',
+				'cap_delete'   : '__NOPRIV__',
+
+				'menu_name'    : _('Access Entity Changes'),
+				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' },),
+				'grid_view'    : ('aecid', 'entity', 'user', 'ts'),
+				'grid_hidden'  : ('aecid',),
+				'form_view'    : (
+					'entity', 'user', 'ts',
+					'pwchanged',
+					'state_old', 'state_new',
+					'old_rate', 'new_rate',
+					'descr'
+				),
+				'easy_search'  : ('descr',)
+			}
+		}
+	)
+	id = Column(
+		'aecid',
+		UInt64(),
+		Sequence('entities_access_changes_aecid_seq'),
+		Comment('Access entity change ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	entity_id = Column(
+		'entityid',
+		UInt32(),
+		Comment('Access entity ID'),
+		ForeignKey('entities_access.entityid', name='entities_access_changes_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
+		nullable=False,
+		info={
+			'header_string' : _('Entity'),
+			'column_flex'   : 2
+		}
+	)
+	user_id = Column(
+		'uid',
+		UInt32(),
+		Comment('User ID'),
+		ForeignKey('users.uid', name='entities_access_changes_fk_uid', ondelete='SET NULL', onupdate='CASCADE'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('User'),
+			'filter_type'   : 'nplist'
+		}
+	)
+	timestamp = Column(
+		'ts',
+		TIMESTAMP(),
+		Comment('Entity change timestamp'),
+		CurrentTimestampDefault(),
+		nullable=False,
+		info={
+			'header_string' : _('Time')
+		}
+	)
+	password_changed = Column(
+		'pwchanged',
+		NPBoolean(),
+		Comment('Password was changed'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Changed Password')
+		}
+	)
+	old_access_state = Column(
+		'state_old',
+		UInt8(),
+		Comment('Old access code'),
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('Old Access Code')
+		}
+	)
+	new_access_state = Column(
+		'state_new',
+		UInt8(),
+		Comment('New access code'),
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('New Access Code')
+		}
+	)
+	old_rate_id = Column(
+		'rateid_old',
+		UInt32(),
+		Comment('Old rate ID'),
+		ForeignKey('rates_def.rateid', name='entities_access_changes_fk_rateid_old', ondelete='SET NULL', onupdate='CASCADE'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Old Rate'),
+			'filter_type'   : 'nplist',
+			'column_flex'   : 1
+		}
+	)
+	new_rate_id = Column(
+		'rateid_new',
+		UInt32(),
+		Comment('New rate ID'),
+		ForeignKey('rates_def.rateid', name='entities_access_changes_fk_rateid_new', ondelete='SET NULL', onupdate='CASCADE'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('New Rate'),
+			'filter_type'   : 'nplist',
+			'column_flex'   : 1
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Access entity change description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	entity = relationship(
+		'AccessEntity',
+		innerjoin=True,
+		backref=backref(
+			'changes',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+	user = relationship(
+		'User',
+		backref=backref(
+			'access_entity_changes',
+			passive_deletes=True
+		)
+	)
+	old_rate = relationship(
+		'Rate',
+		lazy='joined',
+		foreign_keys=old_rate_id
+		# No backref
+	)
+	new_rate = relationship(
+		'Rate',
+		lazy='joined',
+		foreign_keys=new_rate_id
+		# No backref
+	)
+
+	def get_entity_history(self, req):
+		loc = get_localizer(req)
+		eh = EntityHistory(
+			self.entity,
+			loc.translate(_('Access entity "%s" changed')) % (str(self.entity)),
+			self.timestamp,
+			None if (self.user is None) else str(self.user)
+		)
+		if self.password_changed:
+			eh.parts.append(EntityHistoryPart('access:password', loc.translate(_('Password was changed'))))
+		if self.old_access_state != self.new_access_state:
+			recognized = AccessState.values()
+			if self.old_access_state in recognized:
+				eh.parts.append(EntityHistoryPart('access:state_old', loc.translate(AccessState.from_string(self.old_access_state).description)))
+			if self.new_access_state in recognized:
+				eh.parts.append(EntityHistoryPart('access:state_new', loc.translate(AccessState.from_string(self.new_access_state).description)))
+		if self.old_rate != self.new_rate:
+			if self.old_rate:
+				eh.parts.append(EntityHistoryPart('access:rate_old', str(self.old_rate)))
+			if self.new_rate:
+				eh.parts.append(EntityHistoryPart('access:rate_new', str(self.new_rate)))
+		if self.description:
+			eh.parts.append(EntityHistoryPart('access:comment', self.description))
+		return eh
+
 CheckAuthFunction = SQLFunction(
 	'check_auth',
 	args=(
 		SQLFunctionArgument('name', Unicode(255)),
-		SQLFunctionArgument('pass', Unicode(255)),
+		SQLFunctionArgument('pass', Unicode(255))
 	),
 	returns=Boolean(),
 	comment='Check auth information',

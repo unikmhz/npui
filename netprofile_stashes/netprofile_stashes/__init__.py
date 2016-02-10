@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -55,6 +55,7 @@ class Module(ModuleBase):
 	def get_models(cls):
 		from netprofile_stashes import models
 		return (
+			models.Currency,
 			models.FuturePayment,
 			models.Stash,
 			models.StashIO,
@@ -80,6 +81,7 @@ class Module(ModuleBase):
 	def get_sql_data(cls, modobj, sess):
 		from netprofile_stashes.models import (
 			IOOperationType,
+			IOFunctionType,
 			OperationClass,
 			StashIOType
 		)
@@ -137,6 +139,18 @@ class Module(ModuleBase):
 				name='Stashes: Delete op. types'
 			),
 			Privilege(
+				code='STASHES_CURRENCIES_CREATE',
+				name='Stashes: Create currencies'
+			),
+			Privilege(
+				code='STASHES_CURRENCIES_EDIT',
+				name='Stashes: Edit currencies'
+			),
+			Privilege(
+				code='STASHES_CURRENCIES_DELETE',
+				name='Stashes: Delete currencies'
+			),
+			Privilege(
 				code='BASE_FUTURES',
 				name='Access: Promised payments'
 			),
@@ -176,77 +190,90 @@ class Module(ModuleBase):
 		siotypes = (
 			StashIOType(
 				id=1,
-				name='Subscription fee',
+				name=_('Prepaid subscription fee'),
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
-				description='Periodic withdrawal of funds for an active service.'
+				function_type=IOFunctionType.rate_quota_prepaid,
+				visible_to_operator=False,
+				visible_to_user=True,
+				description=_('Periodic withdrawal of funds for an active service.')
 			),
 			StashIOType(
 				id=2,
-				name='Postpaid service fee',
+				name=_('Postpaid service fee'),
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
-				description='Withdrawal of funds for used service.'
+				function_type=IOFunctionType.rate_quota_postpaid,
+				visible_to_operator=False,
+				visible_to_user=True,
+				description=_('Withdrawal of funds for used service.')
 			),
 			StashIOType(
 				id=3,
-				name='Reimbursement for unused subscription fee.',
+				name=_('Reimbursement on rate conversion'),
 				io_class=OperationClass.system,
 				type=IOOperationType.incoming,
-				oper_visible=False,
-				user_visible=True,
-				description='Addition of funds that is a result of tariff recalculation or operator action.'
+				function_type=IOFunctionType.rate_rollback,
+				visible_to_operator=False,
+				visible_to_user=True,
+				description=_('Addition of funds that is a result of tariff recalculation or operator action.')
 			),
+			# XXX: following one might be deprecated.
 			StashIOType(
 				id=4,
-				name='Confirmation of promised payment',
+				name=_('Confirmation of promised payment'),
 				io_class=OperationClass.system,
 				type=IOOperationType.bidirectional,
-				oper_visible=False,
-				user_visible=True,
-				description='This operation is a result of a payment promise being fulfilled.'
+				function_type=IOFunctionType.future_confirm,
+				visible_to_operator=False,
+				visible_to_user=True,
+				fulfills_futures=True,
+				description=_('This operation is a result of a payment promise being fulfilled.')
 			),
 			StashIOType(
 				id=5,
-				name='Transfer from another stash',
+				name=_('Transfer from another account'),
 				io_class=OperationClass.system,
 				type=IOOperationType.incoming,
-				oper_visible=False,
-				user_visible=True,
-				description='Addition of funds that were transferred from another stash.'
+				function_type=IOFunctionType.transfer_deposit,
+				visible_to_operator=False,
+				visible_to_user=True,
+				description=_('Addition of funds that were transferred from another account.')
 			),
 			StashIOType(
 				id=6,
-				name='Transfer to another stash',
+				name=_('Transfer to another account'),
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
-				description='Withdrawal of funds that were transferred to another stash.'
+				function_type=IOFunctionType.transfer_withdrawal,
+				visible_to_operator=False,
+				visible_to_user=True,
+				description=_('Withdrawal of funds that were transferred to another account.')
 			),
 			StashIOType(
 				id=7,
-				name='Payment for service activation',
+				name=_('Service activation fee'),
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
-				description='Initial payment for activation of an auxiliary service.',
+				function_type=IOFunctionType.service_initial,
+				visible_to_operator=False,
+				visible_to_user=True,
+				description=_('Initial payment for activation of an auxiliary service.')
 			),
 			StashIOType(
 				id=8,
-				name='Payment for maintaining service',
+				name=_('Service subscription fee'),
 				io_class=OperationClass.system,
 				type=IOOperationType.outgoing,
-				oper_visible=False,
-				user_visible=True,
-				description='Periodic payment for maintaining an auxiliary service.'
+				function_type=IOFunctionType.service_quota,
+				visible_to_operator=False,
+				visible_to_user=True,
+				description=_('Periodic payment for maintaining an auxiliary service.')
 			)
 		)
+
+		for siotype in siotypes:
+			sess.add(siotype)
 
 	def get_css(self, request):
 		return (

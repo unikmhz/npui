@@ -9,14 +9,9 @@ Ext.define('NetProfile.form.FileUpload', {
 	cls: 'np-file-upload',
 	border: false,
 	layout: 'anchor',
-	resizable: {
-		handles: 'e',
-		pinned: true
-	},
 	defaults: {
 		anchor: '100%'
 	},
-	minWidth: 280,
 
 	titleText: 'Upload Files',
 	closeText: 'Close',
@@ -59,7 +54,7 @@ Ext.define('NetProfile.form.FileUpload', {
 	onButtonClose: function()
 	{
 		var me = this,
-			fb = me.ownerCt,
+			fb = me.up('filebrowser'),
 			tbar = fb.down('toolbar[dock=top]'),
 			btn = tbar.getComponent('btn_upload');
 
@@ -75,7 +70,7 @@ Ext.define('NetProfile.form.FileUpload', {
 	{
 		var me = this,
 			form = me.getForm(),
-			fb = me.ownerCt;
+			fb = me.up('filebrowser');
 
 		if(!form || !form.isValid())
 			return;
@@ -117,7 +112,7 @@ Ext.define('NetProfile.form.FileUpload', {
 		var me = this,
 			cfg = {
 				xtype: 'container',
-				cls: 'np-file-upload-cont',
+				cls: 'np-boxstack-cont',
 				layout: {
 					type: 'hbox',
 					align: 'stretch',
@@ -133,14 +128,14 @@ Ext.define('NetProfile.form.FileUpload', {
 					allowBlank: false
 				}, {
 					xtype: 'tool',
-					cls: 'np-file-upload-close',
-					tooltip: this.uploadRemoveText,
+					cls: 'np-boxstack-close',
+					tooltip: this.removeText,
 					type: 'close',
 					handler: function()
 					{
 						var cont, pcont;
 
-						cont = this.up('container[cls~=np-file-upload-cont]');
+						cont = this.up('container[cls~=np-boxstack-cont]');
 						if(!cont || !cont.ownerCt)
 							return;
 						pcont = cont.ownerCt;

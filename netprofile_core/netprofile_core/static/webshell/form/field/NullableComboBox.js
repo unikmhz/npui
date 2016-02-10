@@ -37,7 +37,7 @@ Ext.define('NetProfile.form.field.NullableComboBox', {
 					hf.set(me.hiddenField, '');
 			}
 		}
-		me.setValue('');
+		me.setValue(null);
 	}
 });
 

@@ -1,7 +1,7 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="netprofile_access:templates/client_layout.mak"/>\
 <%namespace module="netprofile.common.hooks" import="gen_block" />\
-<%namespace module="netprofile.tpl.filters" import="date_fmt, curr_fmt" />\
+<%namespace module="netprofile.tpl.filters" import="date_fmt" />\
 <%block name="title">${_('My Accounts')}</%block>
 
 % if sname:
@@ -18,15 +18,13 @@
 	<div class="col-sm-4">
 		<h4 class="money">
 			<span class="balance${' negative' if (stash.amount < 0) else ''}" title="${_('Current account balance')}">
-				<span class="fa fa-rub"></span>
-				${stash.amount | n,curr_fmt}
+				${stash.formatted_amount(req)}
 			</span>
 % if stash.credit != 0:
 			<small class="single-line">
 				${'Credit:'}
 				<span class="balance${' negative' if (stash.credit < 0) else ''}" title="${_('Current credit limit for this account')}">
-					<span class="fa fa-rub"></span>
-					${stash.credit | n,curr_fmt}
+					${stash.formatted_credit(req)}
 				</span>
 			</small>
 % endif

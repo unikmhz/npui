@@ -2,14 +2,15 @@
 <%inherit file="netprofile:templates/ddl_function.mak"/>\
 <%block name="sql">\
 	DECLARE user_stashid, user_rateid, user_aliasid INT UNSIGNED DEFAULT 0;
-	DECLARE user_nextrateid INT UNSIGNED DEFAULT NULL;
+	DECLARE user_nextrateid, stash_currid INT UNSIGNED DEFAULT NULL;
 	DECLARE user_uin, user_ueg, rate_qti, rate_qte DECIMAL(16,0) UNSIGNED DEFAULT 0;
 	DECLARE user_qpend, user_qporig DATETIME DEFAULT NULL;
 	DECLARE user_state TINYINT UNSIGNED DEFAULT 0;
 	DECLARE user_bcheck, user_pcheck, rate_abf ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'N';
-	DECLARE isok, rate_oqi, rate_oqe ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'Y';
+	DECLARE isok, rate_oqi, rate_oqe, curr_credit ENUM('Y', 'N') CHARACTER SET ascii DEFAULT 'Y';
 	DECLARE stash_amount, stash_amorig, stash_credit, rate_qsum, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, payq, payin, payout DECIMAL(20,8) DEFAULT 0.0;
 	DECLARE rate_auxsum DECIMAL(20,8) DEFAULT NULL;
+	DECLARE curr_xrate DECIMAL(20,8) DEFAULT 1.0;
 	DECLARE rate_type ENUM('prepaid', 'prepaid_cont', 'postpaid', 'free');
 	DECLARE rate_qpa SMALLINT UNSIGNED DEFAULT 1;
 	DECLARE rate_qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'c_hour', 'c_day', 'c_month', 'f_hour', 'f_day', 'f_week', 'f_month') CHARACTER SET ascii DEFAULT 'c_month';
@@ -56,11 +57,28 @@
 		CALL acct_rate_mods(ts, user_rateid, aeid, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, newpol_in, newpol_eg);
 	END IF;
 
-	SELECT `amount`, `credit`
-	INTO stash_amount, stash_credit
+	SELECT `currid`, `amount`, `credit`
+	INTO stash_currid, stash_amount, stash_credit
 	FROM `stashes_def`
 	WHERE `stashid` = user_stashid
 	FOR UPDATE;
+
+	IF stash_currid IS NOT NULL THEN
+		SELECT `xchange_rate`, `allow_credit`
+		INTO curr_xrate, curr_credit
+		FROM `currencies_def`
+		WHERE `currid` = stash_currid;
+
+		SET rate_qsum := rate_qsum / curr_xrate;
+		SET rate_oqsum_in := rate_oqsum_in / curr_xrate;
+		SET rate_oqsum_eg := rate_oqsum_eg / curr_xrate;
+		IF rate_auxsum IS NOT NULL THEN
+			SET rate_auxsum := rate_auxsum / curr_xrate;
+		END IF;
+		IF curr_credit = 'N' THEN
+			SET stash_credit := 0.0;
+		END IF;
+	END IF;
 
 	SET user_qporig := user_qpend;
 	SET stash_amorig := stash_amount;
@@ -134,7 +152,7 @@
 			END IF;
 			IF (user_pcheck = 'Y') THEN
 				SET isok := 'Y';
-				CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, payq, payin, payout);
+				CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, curr_xrate, payq + payin + payout);
 			END IF;
 			SET stash_amount := stash_amount - payq - payin - payout;
 			IF (stash_amount + stash_credit) < 0 THEN
@@ -151,18 +169,27 @@
 			FROM `rates_def`
 			WHERE `rateid` = user_rateid;
 
-			SET payq := rate_qsum;
-
 			IF rate_abf = 'Y' THEN
 				CALL acct_rate_mods(ts, user_rateid, aeid, rate_oqsum_in, rate_oqsum_eg, rate_oqsum_sec, newpol_in, newpol_eg);
 			END IF;
+
+			IF stash_currid IS NOT NULL THEN
+				SET rate_qsum := rate_qsum / curr_xrate;
+				SET rate_oqsum_in := rate_oqsum_in / curr_xrate;
+				SET rate_oqsum_eg := rate_oqsum_eg / curr_xrate;
+				IF rate_auxsum IS NOT NULL THEN
+					SET rate_auxsum := rate_auxsum / curr_xrate;
+				END IF;
+			END IF;
+
+			SET payq := rate_qsum;
 		END IF;
 		SET user_qpend := FROM_UNIXTIME(UNIX_TIMESTAMP(ts) + acct_rate_qpnew(rate_qpa, rate_qpu, ts));
 		SET user_uin := 0;
 		SET user_ueg := 0;
 		IF (rate_type IN('prepaid', 'prepaid_cont')) AND (user_pcheck = 'Y') THEN
 			SET isok := 'N';
-			CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, payq, payin, payout);
+			CALL acct_pcheck(aeid, ts, rate_type, isok, user_stashid, user_qpend, stash_amount, stash_credit, curr_xrate, payq + payin + payout);
 		END IF;
 	END IF;
 
@@ -230,8 +257,11 @@
 
 	IF (stash_amount <> stash_amorig) AND (payq > 0) THEN
 		SET @stashio_ignore := 1;
-		INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `entityid`, `ts`, `diff`)
-		VALUES (IF(rate_type = 'postpaid', 2, 1), user_stashid, aeid, ts, -payq);
+		INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `entityid`, `ts`, `diff`)
+		VALUES (
+			(SELECT `siotypeid` FROM `stashes_io_types` WHERE `ftype` = IF(rate_type = 'postpaid', 'rate_qsum_post', 'rate_qsum_pre')),
+			user_stashid, stash_currid, aeid, ts, -payq
+		);
 		SET @stashio_ignore := NULL;
 	END IF;
 	IF (@npa_all_traffic IS NULL) OR (@npa_all_traffic <> 1) THEN

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Networks module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -181,7 +181,7 @@ class Network(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Domain'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -195,7 +195,7 @@ class Network(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Group'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -297,7 +297,7 @@ class Network(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Routing Table'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	ipv4_guest_start = Column(
@@ -363,15 +363,24 @@ class Network(Base):
 	)
 	group = relationship(
 		'NetworkGroup',
-		backref='networks'
+		backref=backref(
+			'networks',
+			passive_deletes=True
+		)
 	)
 	management_device = relationship(
 		'NetworkDevice',
-		backref='networks'
+		backref=backref(
+			'networks',
+			passive_deletes=True
+		)
 	)
 	routing_table = relationship(
 		'RoutingTable',
-		backref='networks'
+		backref=backref(
+			'networks',
+			passive_deletes=True
+		)
 	)
 	services = relationship(
 		'NetworkService',
@@ -601,7 +610,7 @@ class NetworkService(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)
@@ -721,7 +730,7 @@ class RoutingTableEntry(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Table'),
-			'filter_type'   : 'list',
+			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
 	)

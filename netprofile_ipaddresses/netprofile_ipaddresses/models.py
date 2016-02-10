@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: IP addresses module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -176,7 +176,7 @@ class IPv4Address(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Pool'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	network_id = Column(
@@ -187,7 +187,7 @@ class IPv4Address(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Network'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	offset = Column(
@@ -263,7 +263,10 @@ class IPv4Address(Base):
 	)
 	pool = relationship(
 		'IPPool',
-		backref='ipv4_addresses'
+		backref=backref(
+			'ipv4_addresses',
+			passive_deletes=True
+		)
 	)
 	network = relationship(
 		'Network',
@@ -373,7 +376,7 @@ class IPv6Address(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Pool'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	network_id = Column(
@@ -384,7 +387,7 @@ class IPv6Address(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Network'),
-			'filter_type'   : 'list'
+			'filter_type'   : 'nplist'
 		}
 	)
 	offset = Column(
@@ -460,7 +463,10 @@ class IPv6Address(Base):
 	)
 	pool = relationship(
 		'IPPool',
-		backref='ipv6_addresses'
+		backref=backref(
+			'ipv6_addresses',
+			passive_deletes=True
+		)
 	)
 	network = relationship(
 		'Network',

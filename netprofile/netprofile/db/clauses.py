@@ -69,6 +69,25 @@ def visit_set_variable(element, compiler, **kw):
 		rvalue = compiler.render_literal_value(str(element.value), sqltypes.STRINGTYPE)
 	return 'SET %s = %s' % (element.name, rvalue)
 
+class SetVariables(Executable, ClauseElement):
+	def __init__(self, **kwargs):
+		self.values = kwargs
+
+@compiles(SetVariables, 'mysql')
+def visit_set_variables_mysql(element, compiler, **kw):
+	clauses = []
+	for name, rvalue in element.values.items():
+		if isinstance(rvalue, ClauseElement):
+			rvalue = compiler.process(rvalue)
+		else:
+			rvalue = compiler.render_literal_value(str(rvalue), sqltypes.STRINGTYPE)
+		clauses.append('@%s := %s' % (name, rvalue))
+	return 'SET ' + ', '.join(clauses)
+
+@compiles(SetVariables)
+def visit_set_variables(element, compiler, **kw):
+	raise NotImplementedError
+
 class IntervalSeconds(FunctionElement):
 	type = DateTime()
 	name = 'intervalseconds'

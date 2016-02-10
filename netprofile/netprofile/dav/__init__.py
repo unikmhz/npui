@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: WebDAV low-level library
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2015 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -35,6 +35,9 @@ else:
 	from urlparse import urlparse
 	from urllib import quote
 
+import string
+import unicodedata
+
 from dateutil.parser import parse as _dparse
 from zope.interface import implementer
 from zope.interface.verify import verifyObject
@@ -42,6 +45,7 @@ from zope.interface.exceptions import DoesNotImplement
 from webob.util import status_reasons
 
 from netprofile.db.connection import DBSession
+from netprofile import vobject
 
 from . import props as dprops
 from .interfaces import *
@@ -54,11 +58,18 @@ from .responses import *
 from .reports import *
 from .acls import *
 
+if PY3:
+	_tr_ascii_tolower = str.maketrans(string.ascii_uppercase, string.ascii_lowercase)
+else:
+	_tr_ascii_tolower = dict((ord(uc), ord(lc)) for uc, lc in zip(string.ascii_uppercase, string.ascii_lowercase))
+
 def _parse_datetime(el):
 	return _dparse(el.text)
 
 class DAVAllPropsSet(object):
 	def __contains__(self, el):
+		if el in dprops.ALLPROPS_EXEMPT:
+			return False
 		return True
 
 	def __len__(self):
@@ -69,19 +80,23 @@ class DAVManager(object):
 	def __init__(self, config):
 		self.cfg = config
 		self.lock_cls = None
-		self.features = ['1', '2', '3', 'extended-mkcol', 'access-control', 'sabredav-partialupdate']
+		self.history_cls = None
+		self.get_synctoken = None
+		self.features = ['1', '2', '3', 'extended-mkcol', 'access-control', 'addressbook', 'sabredav-partialupdate']
 		self.methods = [
 			'OPTIONS', 'GET', 'HEAD', 'DELETE', 'PROPFIND',
 			'PUT', 'PROPPATCH', 'COPY', 'MOVE', 'REPORT',
 			'PATCH', 'LOCK', 'UNLOCK', 'ACL'
 		]
+		self.collations = ['i;ascii-casemap', 'i;unicode-casemap', 'i;octet', 'i;unicasemap']
 		self.parsers = {
-			dprops.RESOURCE_TYPE    : _parse_resource_type,
-			dprops.CREATION_DATE    : _parse_datetime,
-			dprops.LAST_MODIFIED    : _parse_datetime,
-			dprops.GROUP_MEMBER_SET : _parse_hreflist,
-			dprops.ACE              : _parse_ace,
-			dprops.ACL              : _parse_acl
+			dprops.RESOURCE_TYPE          : _parse_resource_type,
+			dprops.CREATION_DATE          : _parse_datetime,
+			dprops.LAST_MODIFIED          : _parse_datetime,
+			dprops.GROUP_MEMBER_SET       : _parse_hreflist,
+			dprops.ACE                    : _parse_ace,
+			dprops.ACL                    : _parse_acl,
+			dprops.SUPPORTED_ADDRESS_DATA : _parse_supported_addressdata
 		}
 		self.default_priv_set = (
 			DAVPrivilegeValue(
@@ -111,15 +126,45 @@ class DAVManager(object):
 		)
 		self.reports = {
 			dprops.EXPAND_PROPERTY       : DAVExpandPropertyReport,
-			dprops.PRINC_PROP_SEARCH     : DAVReport,
-			dprops.PRINC_SEARCH_PROP_SET : DAVReport
+			dprops.PRINC_PROP_SEARCH     : DAVPrincipalPropertySearchReport,
+			dprops.PRINC_SEARCH_PROP_SET : DAVPrincipalSearchPropertySetReport,
+			dprops.ACL_PRINC_PROP_SET    : DAVACLPrincipalPropertySetReport,
+			dprops.PRINC_MATCH           : DAVPrincipalMatchReport,
+			dprops.SYNC_COLLECTION       : DAVSyncCollectionReport,
+			dprops.ADDRESS_BOOK_QUERY    : DAVAddressBookQueryReport,
+			dprops.ADDRESS_BOOK_MULTIGET : DAVAddressBookMultiGetReport
 		}
+		self.resource_map = (
+			(IDAVCollection,  dprops.COLLECTION),
+			(IDAVPrincipal,   dprops.PRINCIPAL),
+			(IDAVCalendar,    dprops.CALENDAR),
+			(IDAVAddressBook, dprops.ADDRESS_BOOK),
+			(IDAVDirectory,   dprops.DIRECTORY)
+		)
+		self.vcard_accepts = [
+			'text/vcard',
+			('text/x-vcard', 0.9),
+			('text/vcard; version=3.0', 0.9),
+			('text/vcard; version=4.0', 0.8),
+			('application/vcard+json', 0.7)
+		]
 
 	def principal_collections(self, req):
 		dr = DAVRoot(req)
 		hlist = [ dr['users'], dr['groups'] ]
 		# TODO: add hooks for other modules here
 		return hlist
+
+	def set_sync_token_callback(self, cb):
+		self.get_synctoken = cb
+
+	def set_history_backend(self, cls):
+		self.history_cls = cls
+
+	def get_history(self, ctx, since_token, until_token=None):
+		if self.history_cls is None:
+			return []
+		return self.history_cls.find(ctx.dav_collection_id, since_token, until_token)
 
 	def set_locks_backend(self, cls):
 		self.lock_cls = cls
@@ -133,10 +178,10 @@ class DAVManager(object):
 		self.reports[name] = cls
 
 	def add_method(self, meth):
-		self.methods.add(meth)
+		self.methods.append(meth)
 
 	def add_feature(self, feat):
-		self.features.add(feat)
+		self.features.append(feat)
 
 	def supported_report_set(self, node):
 		rset = set()
@@ -149,43 +194,69 @@ class DAVManager(object):
 	def report(self, name, rreq):
 		if name not in self.reports:
 			raise DAVReportNotSupportedError('Requested report type is not supported.')
-		return self.reports[name](name, rreq)
+		cls = self.reports[name]
+		supports = getattr(cls, 'supports', None)
+		if callable(supports) and rreq.ctx and (not supports(rreq.ctx)):
+			raise DAVReportNotSupportedError('Report type is not supported by current request URI.')
+		return cls(name, rreq)
 
-	def set_headers(self, resp):
+	def set_headers(self, resp, node=None):
 		resp.status = 200
 		resp.content_type = None
-		resp.headers.add('DAV', ', '.join(self.features))
+		self.set_features(resp, node)
 		resp.headers.add('MS-Author-Via', 'DAV')
 		resp.accept_ranges = 'bytes'
 
-	def set_features(self, resp):
-		resp.headers.add('DAV', ', '.join(self.features))
+	def set_features(self, resp, node=None):
+		feats = self.features.copy()
+		if node:
+			mod = getattr(node, 'dav_features', None)
+			if callable(mod):
+				mod(feats)
+		resp.headers.add('DAV', ', '.join(feats))
 
 	def set_patch_formats(self, resp):
 		resp.headers.add('Accept-Patch', 'application/x-sabredav-partialupdate')
 
-	def set_allow(self, resp, more=None):
-		result = list(self.methods)
+	def set_allow(self, resp, more=None, node=None):
+		result = self.methods.copy()
 		if more:
 			result.extend(more)
+		if node:
+			mod = getattr(node, 'http_methods', None)
+			if callable(mod):
+				mod(result)
 		return result
 
-	def uri(self, req, tr=None):
+	def uri(self, req, tr=None, path_only=False):
 		if tr is None:
 			tr = '/'
+		if path_only:
+			return req.route_path('core.dav', traverse=tr)
 		return req.route_url('core.dav', traverse=tr)
 
-	def node_uri(self, req, node):
+	def node_uri(self, req, node, path_only=False):
+		extra = None
+		if isinstance(node, (list, tuple)):
+			if len(node) <= 0:
+				raise ValueError('Empty node specification.')
+			extra = node[1:]
+			node = node[0]
 		uri = node.get_uri()
-		try:
-			if verifyObject(IDAVCollection, node):
-				uri.append('')
-		except DoesNotImplement:
+		if extra is None:
 			try:
-				if verifyObject(IDAVPrincipal, node):
+				if verifyObject(IDAVCollection, node):
 					uri.append('')
 			except DoesNotImplement:
-				pass
+				try:
+					if verifyObject(IDAVPrincipal, node):
+						uri.append('')
+				except DoesNotImplement:
+					pass
+		else:
+			uri.extend(extra)
+		if path_only:
+			return req.route_path('core.dav', traverse=uri)
 		return req.route_url('core.dav', traverse=uri)
 
 	def node(self, req, uri):
@@ -282,6 +353,20 @@ class DAVManager(object):
 				ret.add(data.tag)
 		return ret
 
+	def assert_http_depth(self, req, value=0, dd=0):
+		d = req.headers.get('Depth')
+		if d is None:
+			if value != dd:
+				raise DAVBadRequestError('Need to specify HTTP Depth: header')
+			return
+		if d == 'infinity':
+			if value != dprops.DEPTH_INFINITY:
+				raise DAVBadRequestError('Invalid HTTP Depth: infinity header')
+			return
+		d = int(d)
+		if value != d:
+			raise DAVBadRequestError('Invalid HTTP Depth: header')
+
 	def get_http_depth(self, req, dd=dprops.DEPTH_INFINITY):
 		d = req.headers.get('Depth')
 		if d is None:
@@ -346,18 +431,34 @@ class DAVManager(object):
 				obj.dav_append(req, newch, ch.__name__)
 		return obj
 
-	def get_path_props(self, req, ctx, pset, depth, get_404=True):
-		ret = {}
+	def get_path_props(self, req, ctx, pset, depth, get_404=True, append_to=None):
+		if append_to is not None:
+			ret = append_to
+		else:
+			ret = {}
 		ret[ctx] = self.get_node_props(req, ctx, pset, get_404=get_404) # catch exceptions
 		if depth:
+			if depth == dprops.DEPTH_INFINITY:
+				new_depth = depth
+			else:
+				new_depth = depth - 1
 			for ch in self.children(ctx):
-				ret[ch] = self.get_node_props(req, ch, pset, get_404=get_404) # catch exceptions
+				self.get_path_props(req, ch, pset, new_depth, get_404=get_404, append_to=ret) # catch exceptions
 		return ret
 
 	def props(self, req, node, pset, set403=None):
 		# TODO: split this and clean up
 		# First, get properties from an object
 		props = node.dav_props(pset)
+		if (dprops.RESOURCE_TYPE in pset) and (dprops.RESOURCE_TYPE not in props):
+			rtypes = []
+			for rtpair in self.resource_map:
+				try:
+					if verifyObject(rtpair[0], node):
+						rtypes.append(rtpair[1])
+				except DoesNotImplement:
+					pass
+			props[dprops.RESOURCE_TYPE] = DAVResourceTypeValue(*rtypes)
 		# Now, append lock-related stuff
 		if (dprops.SUPPORTED_LOCK in pset) and (dprops.SUPPORTED_LOCK not in props):
 			props[dprops.SUPPORTED_LOCK] = DAVSupportedLockValue()
@@ -384,7 +485,10 @@ class DAVManager(object):
 		if (dprops.PRINCIPAL_COLL_SET in pset) and (dprops.PRINCIPAL_COLL_SET not in props):
 			props[dprops.PRINCIPAL_COLL_SET] = DAVHrefListValue(req.dav.principal_collections(req))
 		if (dprops.CUR_USER_PRINCIPAL in pset) and (dprops.CUR_USER_PRINCIPAL not in props):
-			props[dprops.CUR_USER_PRINCIPAL] = DAVHrefValue(req.user)
+			if req.user:
+				props[dprops.CUR_USER_PRINCIPAL] = DAVHrefValue(req.user)
+			else:
+				props[dprops.CUR_USER_PRINCIPAL] = DAVTagValue(dprops.UNAUTHENTICATED)
 		# TODO: check {DAV:}read-current-user-privilege-set
 		if (dprops.CUR_USER_PRIVILEGE_SET in pset) and (dprops.CUR_USER_PRIVILEGE_SET not in props):
 			if hasattr(node, 'dav_acl'):
@@ -401,9 +505,11 @@ class DAVManager(object):
 				privset = self.default_priv_set
 			props[dprops.SUPPORTED_PRIVILEGE_SET] = DAVPrivilegeSetValue(privset)
 		if (dprops.ACL in pset) and (dprops.ACL not in props):
-			# TODO: check ACL: {DAV:}read-acl
 			if hasattr(node, 'dav_acl'):
-				props[dprops.ACL] = node.dav_acl(req)
+				if self.has_user_acl(req, node, dprops.ACL_READ_ACL):
+					props[dprops.ACL] = node.dav_acl(req)
+				elif set403 is not None:
+					set403.add(dprops.ACL)
 			else:
 				props[dprops.ACL] = None
 		if (dprops.ACL_RESTRICTIONS in pset) and (dprops.ACL_RESTRICTIONS not in props):
@@ -423,6 +529,12 @@ class DAVManager(object):
 			group = node.dav_group
 			if group:
 				props[dprops.GROUP] = DAVHrefValue(group)
+		if dprops.DIRECTORY_GATEWAY in pset:
+			props[dprops.DIRECTORY_GATEWAY] = DAVHrefValue('addressbooks/system/', prefix=True)
+		if (dprops.SUPPORTED_COLLSET_CAL in pset) and (dprops.SUPPORTED_COLLSET_CAL not in props):
+			props[dprops.SUPPORTED_COLLSET_CAL] = CalDAVSupportedCollationSetValue(*self.collations)
+		if (dprops.SUPPORTED_COLLSET_CARD in pset) and (dprops.SUPPORTED_COLLSET_CARD not in props):
+			props[dprops.SUPPORTED_COLLSET_CARD] = CardDAVSupportedCollationSetValue(*self.collations)
 		return props
 
 	def get_node_props(self, req, ctx, pset=None, get_404=True):
@@ -450,8 +562,11 @@ class DAVManager(object):
 				for pn in pset:
 					if pn in props:
 						ret[200][pn] = props[pn]
-					elif (not all_props) and get_404:
-						ret[404][pn] = None
+					elif not all_props:
+						if pn in forbidden:
+							ret[403][pn] = None
+						elif get_404:
+							ret[404][pn] = None
 			del props
 		return ret
 
@@ -495,7 +610,7 @@ class DAVManager(object):
 		creator = getattr(parent, 'dav_create', None)
 		if (creator is None) or (not callable(creator)):
 			raise DAVNotImplementedError('Unable to create child node.')
-		obj = creator(req, name, rtype.types, props)
+		obj, modified = creator(req, name, rtype.types, props)
 		if len(props) == 0:
 			pset = set(dprops.DEFAULT_PROPS)
 		else:
@@ -503,6 +618,55 @@ class DAVManager(object):
 		sess.flush()
 		obj.__parent__ = parent
 		return (obj, self.get_node_props(req, obj, pset))
+
+	def negotiate_vcard_format(self, req):
+		return req.accept.best_match(self.vcard_accepts)
+
+	def verify_vcard(self, data):
+		vcard = None
+		datastr = data
+		if isinstance(data, (bytes, bytearray)):
+			datastr = data.decode()
+		try:
+			for obj in vobject.readComponents(datastr):
+				if vcard is None:
+					vcard = obj
+				else:
+					raise DAVUnsupportedMediaTypeError('Only one component is allowed inside vCard.')
+		except vobject.base.ParseError as e:
+			if len(e.args):
+				err = 'Unable to parse vCard: %s.' % (e.args[0],)
+			else:
+				err = 'Unable to parse vCard.'
+			raise DAVUnsupportedMediaTypeError(err)
+		if vcard.name != 'VCARD':
+			raise DAVUnsupportedMediaTypeError('Only VCARD objects are allowed in this collection.')
+		mod = False
+		# TODO: convert to UTF-8
+		# TODO: generate UID if missing
+		# TODO: convert to canonical format (vCard 3.0 as of now)
+		return mod
+
+	def match_text(self, superstr, substr, collation='i;unicode-casemap', matchtype='contains'):
+		# TODO: investigate use of i;ascii-numeric collation
+		if collation not in self.collations:
+			raise DAVBadRequestError('Unsupported collation: %s.' % (collation,))
+		if collation == 'i;ascii-casemap':
+			superstr = superstr.translate(_tr_ascii_tolower)
+			substr = substr.translate(_tr_ascii_tolower)
+		elif collation in ('i;unicode-casemap', 'i;unicasemap'):
+			superstr = unicodedata.normalize('NFKD', superstr.lower())
+			substr = unicodedata.normalize('NFKD', substr.lower())
+
+		if matchtype in ('contains', 'substring'):
+			return substr in superstr
+		if matchtype == 'equals':
+			return substr == superstr
+		if matchtype == 'starts-with':
+			return superstr.startswith(substr)
+		if matchtype == 'ends-with':
+			return superstr.endswith(substr)
+		raise DAVBadRequestError('Unsupported text match type: %s.' % (matchtype,))
 
 def _get_davm(request):
 	return request.registry.getUtility(IDAVManager)
