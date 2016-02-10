@@ -319,226 +319,9 @@ Ext.require([
 				Ext.callback(me.handler, me.scope, [field, me, e], 0, field);
 		}
 	});
-	Ext.define('Ext.overrides.bugfix.EXTJS16183.menu', {
-		override: 'Ext.menu.Menu',
-		compatibility: '5.1.0.107',
-		onFocusLeave: function(e)
-		{
-			var me = this;
-
-			me.callSuper([e]);
-			me.mixins.focusablecontainer.onFocusLeave.call(me, e);
-			if(me.floating)
-				me.hide();
-		},
-		beforeShow: function()
-		{
-			var me = this,
-				activeEl, viewHeight;
-
-			// Constrain the height to the containing element's viewable area
-			if(me.floating)
-			{
-				if(!me.parentMenu && !me.allowOtherMenus)
-					Ext.menu.Manager.hideAll();
-				// Only register a focusAnchor to return to on hide if the active element is not the document
-				// If there's no focusAnchor, we return to the ownerCmp, or first focusable ancestor.
-				activeEl = Ext.Element.getActiveElement();
-				me.focusAnchor = activeEl === document.body ? null : activeEl;
-
-				me.savedMaxHeight = me.maxHeight;
-				viewHeight = me.container.getViewSize().height;
-				me.maxHeight = Math.min(me.maxHeight || viewHeight, viewHeight);
-			}
-
-			me.callSuper(arguments);
-
-			// Add a touch start listener to check for taps outside the menu.
-			// iOS in particular does not trigger blur on document tap, so
-			// we have to check for taps outside this menu.
-			if(Ext.supports.Touch)
-			{
-				me.tapListener = Ext.getBody().on({
-					touchstart: me.onBodyTap,
-					scope: me,
-					destroyable: true
-				});
-			}
-		},
-		afterShow: function()
-		{
-			var me = this;
-
-			me.callSuper(arguments);
-			Ext.menu.Manager.onShow(me);
-
-			// Restore configured maxHeight
-			if(me.floating && me.autoFocus)
-			{
-				me.maxHeight = me.savedMaxHeight;
-				me.focus();
-			}
-		},
-		onHide: function(animateTarget, cb, scope)
-		{
-			var me = this,
-				focusTarget;
-
-			// If we contain focus just before element hide, move it elsewhere before hiding
-			if(me.el.contains(Ext.Element.getActiveElement()))
-			{
-				// focusAnchor was the active element before this menu was shown.
-				focusTarget = me.focusAnchor || me.ownerCmp || me.up(':focusable');
-
-				// Component hide processing will focus the "previousFocus" element.
-				if(focusTarget)
-					me.previousFocus = focusTarget;
-			}
-			this.callSuper([animateTarget, cb, scope]);
-			Ext.menu.Manager.onHide(me);
-		}
-	});
-	Ext.define('Ext.overrides.bugfix.EXTJS16183.menuMgr', {
-		override: 'Ext.menu.Manager',
-		compatibility: '5.1.0.107',
-		visible: [],
-		onShow: function(menu)
-		{
-			if(menu.floating)
-				Ext.Array.include(this.visible, menu);
-		},
-		onHide: function(menu)
-		{
-			if(menu.floating)
-				Ext.Array.remove(this.visible, menu);
-		},
-		hideAll: function()
-		{
-			var allMenus = this.visible,
-				len = allMenus.length,
-				i,
-				result = false;
-
-			for(i = 0; i < len; i++)
-			{
-				allMenus[i].hide();
-				result = true;
-			}
-			return result;
-		},
-		checkActiveMenus: function(e)
-		{
-			var allMenus = this.visible,
-				len = allMenus.length,
-				i, menu;
-
-			for(i = 0; i < len; ++i)
-			{
-				menu = allMenus[i];
-				if(!menu.containsFocus && !menu.owns(e))
-					menu.hide();
-			}
-		}
-	});
-	Ext.onReady(function()
-	{
-		Ext.getDoc().on('mousedown', Ext.menu.Manager.checkActiveMenus, Ext.menu.Manager);
-	});
-	Ext.define('Ext.overrides.bugfix.EXTJS15525', {
-		override: 'Ext.util.Collection',
-		compatibility: '5.1.0.107',
-		updateKey: function (item, oldKey) {
-			var me = this,
-				map = me.map,
-				indices = me.indices,
-				source = me.getSource(),
-				newKey;
-
-			if (source && !source.updating) {
-				// If we are being told of the key change and the source has the same idea
-				// on keying the item, push the change down instead.
-				source.updateKey(item, oldKey);
-			}
-			// If there *is* an existing item by the oldKey and the key yielded by the new item is different from the oldKey...
-			else if (map[oldKey] && (newKey = me.getKey(item)) !== oldKey) {
-				if (oldKey in map || map[newKey] !== item) {
-					if (oldKey in map) {
-						//<debug>
-						if (map[oldKey] !== item) {
-							Ext.Error.raise('Incorrect oldKey "' + oldKey +
-											'" for item with newKey "' + newKey + '"');
-						}
-						//</debug>
-
-						delete map[oldKey];
-					}
-
-					// We need to mark ourselves as updating so that observing collections
-					// don't reflect the updateKey back to us (see above check) but this is
-					// not really a normal update cycle so we don't call begin/endUpdate.
-					me.updating++;
-
-					me.generation++;
-					map[newKey] = item;
-					if (indices) {
-						indices[newKey] = indices[oldKey];
-						delete indices[oldKey];
-					}
-
-					me.notify('updatekey', [{
-						item: item,
-						newKey: newKey,
-						oldKey: oldKey
-					}]);
-
-					me.updating--;
-				}
-			}
-		}
-	});
-	Ext.define('Ext.overrides.bugfix.EXTJS16166', {
-		override: 'Ext.view.View',
-		compatibility: '5.1.0.107',
-		handleEvent: function(e) {
-			var me = this,
-				isKeyEvent = me.keyEventRe.test(e.type),
-				nm = me.getNavigationModel();
-
-			e.view = me;
-
-			if (isKeyEvent) {
-				e.item = nm.getItem();
-				e.record = nm.getRecord();
-			}
-
-			// If the key event was fired programatically, it will not have triggered the focus
-			// so the NavigationModel will not have this information.
-			if (!e.item) {
-				e.item = e.getTarget(me.itemSelector);
-			}
-			if (e.item && !e.record) {
-				e.record = me.getRecord(e.item);
-			}
-
-			if (me.processUIEvent(e) !== false) {
-				me.processSpecialEvent(e);
-			}
-
-			// We need to prevent default action on navigation keys
-			// that can cause View element scroll unless the event is from an input field.
-			// We MUST prevent browser's default action on SPACE which is to focus the event's target element.
-			// Focusing causes the browser to attempt to scroll the element into view.
-
-			if (isKeyEvent && !Ext.fly(e.target).isInputField()) {
-				if (e.getKey() === e.SPACE || e.isNavKeyPress(true)) {
-					e.preventDefault();
-				}
-			}
-		}
-	});
 	Ext.define('Ext.overrides.bugfix.EXTJS16347', {
 		override: 'Ext.data.AbstractStore',
-		compatibility: '5.1.0.107',
+		compatibility: '5.1.1.451',
 		applyState: function(state)
 		{
 			var me = this,
@@ -568,7 +351,7 @@ Ext.require([
 	});
 	Ext.define('Ext.overrides.bugfix.EXTJS16347.filters', {
 		override: 'Ext.grid.filters.Filters',
-		compatibility: '5.1.0.107',
+		compatibility: '5.1.1.451',
 		initColumns: function()
 		{
 			var grid = this.grid,
@@ -576,7 +359,7 @@ Ext.require([
 				columns = grid.columnManager.getColumns(),
 				len = columns.length,
 				i, column,
-				filter, filterCollection, block;
+				filter, filterCollection;
 
 			// We start with filters defined on any columns.
 			for(i = 0; i < len; i++)
@@ -588,11 +371,6 @@ Ext.require([
 					this.createColumnFilter(column);
 			}
 		}
-	});
-	Ext.define('Ext.overrides.bugfix.EXTJS16023', {
-		override: 'Ext.form.field.ComboBox',
-		compatibility: '5.1.0.107',
-		checkChangeEvents: Ext.isIE ? ['change', 'propertychange', 'keyup'] : ['change', 'input', 'textInput', 'keyup', 'dragdrop']
 	});
 
 	Ext.define('NetProfile.data.field.IPv4', {

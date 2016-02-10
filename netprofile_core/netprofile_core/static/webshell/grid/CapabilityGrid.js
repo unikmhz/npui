@@ -47,12 +47,14 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 			header: this.textName,
 			dataIndex: 'name',
 			name: 'name',
+			draggable: false,
 			flex: 2
 		}, {
 			header: this.textValue,
 			dataIndex: 'value',
 			name: 'value',
 			sortable: false,
+			draggable: false,
 			width: 120,
 		    renderer: function(value, meta, record, rowidx, colidx, store)
 			{
@@ -81,7 +83,7 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 				editable: false,
 				valueField: 'xid',
 				displayField: 'value',
-				forceSelection: false,
+				forceSelection: true,
 				allowBlank: true,
 				queryMode: 'local',
 				emptyText: this.textNotDefined,
@@ -153,7 +155,8 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 
 		this.plugins.push({
 			ptype: 'cellediting',
-			clicksToEdit: 1
+			pluginId: 'editcell',
+			triggerEvent: 'cellclick'
 		});
 
 		if(!this.store)

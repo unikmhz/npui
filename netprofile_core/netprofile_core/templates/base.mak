@@ -6,7 +6,8 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1" />
 	<meta name="referrer" content="none" />
 	<meta name="keywords" content="netprofile" />
-	<meta name="description" content="NetProfile administrative UI" />
+	<meta name="description" content="${_('NetProfile administrative UI') | h}" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 	<title>NetProfile :: <%block name="title">${_('Home') | h}</%block></title>
 	<link rel="shortcut icon" href="${req.static_url('netprofile_core:static/favicon.ico')}" />
 
