@@ -755,7 +755,11 @@ class Place(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.number)
+		fmt = _('#%s')
+		req = getattr(self, '__req__', None)
+		if req:
+			fmt = req.localizer.translate(fmt)
+		return fmt % (str(self.number),)
 
 class HouseGroup(Base):
 	"""
