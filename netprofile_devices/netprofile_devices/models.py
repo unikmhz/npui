@@ -49,6 +49,8 @@ __all__ = [
 	'SimpleDevice',
 	'NetworkDevice',
 
+	'NetworkDeviceMediaType',
+
 	'SNMPTypeField',
 	'SNMPV3SchemeField',
 	'SNMPV3ProtoField',
@@ -62,43 +64,28 @@ import pkg_resources
 
 from sqlalchemy import (
 	Column,
-	Date,
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
-	literal_column,
-	func,
-	select,
-	text,
-	or_
+	text
 )
 
 from sqlalchemy.orm import (
 	backref,
-	contains_eager,
-	joinedload,
-	relationship,
-	validates
+	relationship
 )
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from netprofile.db.connection import (
-	Base,
-	DBSession
-)
+from netprofile.db.connection import Base
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
-	Int16,
 	NPBoolean,
-	UInt8,
-	UInt16,
 	UInt32,
 	UInt64,
 	npbool
@@ -106,41 +93,15 @@ from netprofile.db.fields import (
 from netprofile.db.ddl import (
 	Comment,
 	CurrentTimestampDefault,
-	Trigger,
-	View
+	Trigger
 )
-from netprofile.db.util import (
-	populate_related,
-	populate_related_list
-)
-from netprofile.tpl import TemplateObject
-from netprofile.ext.data import (
-	ExtModel,
-	_name_to_class
-)
-from netprofile.ext.columns import (
-	HybridColumn,
-	MarkupColumn
-)
-from netprofile.ext.filters import TextFilter
-from netprofile_geo.models import (
-	District,
-	House,
-	Street
-)
-from netprofile_geo.filters import AddressFilter
+from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import (
 	ExternalWizardField,
-	SimpleWizard,
-	Step,
-	Wizard
+	SimpleWizard
 )
 
-from pyramid.threadlocal import get_current_request
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_devices')
 
@@ -222,7 +183,7 @@ class DeviceTypeManufacturer(Base):
 	)
 
 	def __str__(self):
-		return "%s" % str(self.name)
+		return str(self.name)
 
 class DeviceFlagType(Base):
 	"""
@@ -299,7 +260,7 @@ class DeviceFlagType(Base):
 	)
 
 	def __str__(self):
-		return "%s" % str(self.name)
+		return str(self.name)
 
 class DeviceTypeFlagType(Base):
 	"""
@@ -376,7 +337,7 @@ class DeviceTypeFlagType(Base):
 	)
 
 	def __str__(self):
-		return "%s" % str(self.name)
+		return str(self.name)
 
 class DeviceTypeFlag(Base):
 	"""
@@ -486,7 +447,7 @@ class DeviceTypeCategory(Base):
 	)
 
 	def __str__(self):
-		return "%s" % str(self.name)
+		return str(self.name)
 
 class DeviceType(Base):
 	"""
@@ -1076,13 +1037,15 @@ class Device(Base):
 
 	def __str__(self):
 		if self.serial:
-			return '%s: S/N %s' % (
-				str(self.device_type),
-				str(self.serial)
-			)
-		return '%s @%s' % (
+			fmt = _('%s: S/N %s')
+		else:
+			fmt = _('%s @%s')
+		req = getattr(self, '__req__', None)
+		if req:
+			fmt = req.localizer.translate(fmt)
+		return fmt % (
 			str(self.device_type),
-			str(self.place)
+			str(self.serial if self.serial else self.place)
 		)
 
 class DeviceFlag(Base):
@@ -1685,5 +1648,114 @@ class DeviceTypeFile(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.file)
+		return str(self.file)
+
+class NetworkDeviceMediaType(Base):
+	"""
+	Interface media type.
+
+	Used by network devices to specify interfaces.
+	"""
+	__tablename__ = 'netdev_media'
+	__table_args__ = (
+		Comment('Network device interfaces\' media types'),
+		Index('netdev_media_u_name', 'name', unique=True),
+		Index('netdev_media_i_iftype', 'iftype'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DEVICES',
+				'cap_read'      : 'DEVICETYPES_LIST',
+				'cap_create'    : 'DEVICETYPES_EDIT',
+				'cap_edit'      : 'DEVICETYPES_EDIT',
+				'cap_delete'    : 'DEVICETYPES_EDIT',
+
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Media Types'),
+				'grid_view'     : ('ndmid', 'name', 'physical'),
+				'grid_hidden'   : ('ndmid',),
+				'form_view'     : ('name', 'iftype', 'iftype_alt', 'physical', 'speed'),
+				'easy_search'   : ('name', 'descr'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new media type'))
+			}
+		}
+	)
+	id = Column(
+		'ndmid',
+		UInt32(),
+		Sequence('netdev_media_ndmid_seq'),
+		Comment('Network device media ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Network device media name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	iftype = Column(
+		UInt32(),
+		Comment('IANA ifType MIB value'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('ifType')
+		}
+	)
+	iftype_alternate = Column(
+		'iftype_alt',
+		UInt32(),
+		Comment('Alternate IANA ifType MIB value'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Alt. ifType')
+		}
+	)
+	is_physical = Column(
+		'physical',
+		NPBoolean(),
+		Comment('Is media type physical'),
+		nullable=False,
+		default=True,
+		server_default=npbool(True),
+		info={
+			'header_string' : _('Physical')
+		}
+	)
+	speed = Column(
+		UInt64(),
+		Comment('Fixed speed of the media (if any, in bps)'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Speed')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Media type description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	def __str__(self):
+		return str(self.name)
 

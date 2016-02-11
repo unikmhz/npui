@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Devices module
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 # © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -37,7 +37,6 @@ from netprofile.common.modules import ModuleBase
 from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
-
 _ = TranslationStringFactory('netprofile_devices')
 
 class Module(ModuleBase):
@@ -71,7 +70,9 @@ class Module(ModuleBase):
 
 			models.Device,
 			models.SimpleDevice,
-			models.NetworkDevice
+			models.NetworkDevice,
+
+			models.NetworkDeviceMediaType
 		)
 
 	@classmethod
@@ -199,6 +200,42 @@ class Module(ModuleBase):
 				cap.privilege = priv
 		except NoResultFound:
 			pass
+
+		medias = (
+			# Name,                        ifT, ifTA, Physical, Speed,       Description
+			(_('Other'),                   1,   None, False,    None,        'None of the following'),
+			(_('BBN 1822 Regular'),        2,   None, True,     None,        'BBN Report 1822 regular connection'),
+			(_('BBN 1822 HDH'),            3,   None, True,     None,        'BBN Report 1822 HDH sync serial'),
+			('DDN X.25',                   4,   None, True,     None,        'Defence Data Network X.25'),
+			('RFC877 X.25',                5,   None, True,     None,        'RFC877 IP over X.25'),
+			('IEEE 802.3a 10Base2',        6,   7,    True,     10000000,    '10Base2 Ethernet over 50-ohm thin coax'),
+			('IEEE 802.3b 10Broad36',      6,   7,    True,     10000000,    '10Broad36 Ethernet over 75-ohm CATV coax'),
+			('IEEE 802.3e 10Base5',        6,   7,    True,     10000000,    '10Base5 Ethernet over 50-ohm thick coax'),
+			('IEEE 802.3i 10BaseT',        6,   7,    True,     10000000,    '10BaseT Ethernet over cat3 2-twisted-pair cable'),
+			('IEEE 802.3j 10BaseFL',       6,   7,    True,     10000000,    '10BaseFL Ethernet over multi-mode fiber pair'),
+			('IEEE 802.3u 100Base-TX',     6,   62,   True,     100000000,   '100Base-TX Ethernet over cat5 2-twisted-pair cable'),
+			('IEEE 802.3u 100Base-T4',     6,   62,   True,     100000000,   '100Base-T4 Ethernet over cat3 4-twisted-pair cable'),
+			('IEEE 802.3u 100Base-FX',     6,   69,   True,     100000000,   '100Base-FX Ethernet over single-/multi-mode fiber pair'),
+			('IEEE 802.3y 100Base-T2',     6,   62,   True,     100000000,   '100Base-T2 Ethernet over cat3 2-twisted-pair cable'),
+			('Ethernet 100Base-SX',        6,   69,   True,     100000000,   '100Base-SX Ethernet over multi-mode fiber pair'),
+			('Ethernet 100Base-BX',        6,   69,   True,     100000000,   '100Base-BX Ethernet over one single-mode fiber'),
+			('IEEE 802.3ah 100Base-LX10',  6,   69,   True,     100000000,   '100Base-LX Ethernet over single-mode fiber pair'),
+			('IEEE 802.3z 1000Base-LX',    6,   117,  True,     1000000000,  '1000Base-X Ethernet over single-/multi-mode fiber pair'),
+			('IEEE 802.3ah 1000Base-LX10', 6,   117,  True,     1000000000,  '1000Base-X Ethernet over single-mode fiber pair (1000Base-LH)'),
+			('IEEE 802.3z 1000Base-SX',    6,   117,  True,     1000000000,  '1000Base-X Ethernet over multi-mode fiber pair'),
+			('IEEE 802.3z 1000Base-CX',    6,   117,  True,     1000000000,  '1000Base-X Ethernet over 150-ohm balanced STP cable'),
+			('IEEE 802.3ab 1000Base-T',    6,   117,  True,     1000000000,  '1000Base-T Ethernet over cat5/5e 4-twisted-pair cable'),
+		)
+		for mdata in medias:
+			media = models.NetworkDeviceMediaType(
+				name=mdata[0],
+				iftype=mdata[1],
+				iftype_alternate=mdata[2],
+				is_physical=mdata[3],
+				speed=mdata[4],
+				description=mdata[5]
+			)
+			sess.add(media)
 
 	def get_css(self, request):
 		return (
