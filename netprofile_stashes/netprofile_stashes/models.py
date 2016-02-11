@@ -662,7 +662,7 @@ class StashIOType(Base):
 	fulfills_futures = Column(
 		'pays_futures',
 		NPBoolean(),
-		Comment('Servers as a fulfillment for promised payments'),
+		Comment('Serves as a fulfillment for promised payments'),
 		nullable=False,
 		default=False,
 		server_default=npbool(False),
