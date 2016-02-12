@@ -72,7 +72,8 @@ class Module(ModuleBase):
 			models.SimpleDevice,
 			models.NetworkDevice,
 
-			models.NetworkDeviceMediaType
+			models.NetworkDeviceMediaType,
+			models.NetworkDeviceInterface
 		)
 
 	@classmethod

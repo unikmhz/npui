@@ -50,6 +50,7 @@ __all__ = [
 	'NetworkDevice',
 
 	'NetworkDeviceMediaType',
+	'NetworkDeviceInterface',
 
 	'SNMPTypeField',
 	'SNMPV3SchemeField',
@@ -1640,6 +1641,7 @@ class DeviceTypeFile(Base):
 
 	file = relationship(
 		'File',
+		innerjoin=True,
 		backref=backref(
 			'linked_device_types',
 			cascade='all, delete-orphan',
@@ -1675,7 +1677,7 @@ class NetworkDeviceMediaType(Base):
 				'menu_name'     : _('Media Types'),
 				'grid_view'     : ('ndmid', 'name', 'physical'),
 				'grid_hidden'   : ('ndmid',),
-				'form_view'     : ('name', 'iftype', 'iftype_alt', 'physical', 'speed'),
+				'form_view'     : ('name', 'iftype', 'iftype_alt', 'physical', 'speed', 'descr'),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : SimpleWizard(title=_('Add new media type'))
@@ -1757,5 +1759,131 @@ class NetworkDeviceMediaType(Base):
 	)
 
 	def __str__(self):
+		req = getattr(self, '__req__', None)
+		name = self.name
+		if req and name:
+			name = req.localizer.translate(_(name))
+		return str(name)
+
+class NetworkDeviceInterface(Base):
+	"""
+	Network device interface definition.
+	"""
+	__tablename__ = 'netdev_ifaces'
+	__table_args__ = (
+		Comment('Network device interfaces'),
+		Index('netdev_ifaces_u_devifname', 'did', 'name', unique=True),
+		Index('netdev_ifaces_u_devifindex', 'did', 'index', unique=True),
+		Index('netdev_ifaces_i_ndmid', 'ndmid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DEVICES',
+				'cap_read'      : 'DEVICES_LIST',
+				'cap_create'    : 'DEVICES_EDIT',
+				'cap_edit'      : 'DEVICES_EDIT',
+				'cap_delete'    : 'DEVICES_EDIT',
+
+				'menu_name'     : _('Interfaces'),
+				'grid_view'     : ('ifid', 'device', 'media', 'name'),
+				'grid_hidden'   : ('ifid',),
+				'form_view'     : ('device', 'media', 'name', 'index', 'descr'),
+				'easy_search'   : ('name', 'descr'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new interface'))
+			}
+		}
+	)
+	id = Column(
+		'ifid',
+		UInt32(),
+		Sequence('netdev_ifaces_ifid_seq'),
+		Comment('Network device interface ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	device_id = Column(
+		'did',
+		UInt32(),
+		ForeignKey('devices_network.did', name='netdev_ifaces_fk_did', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Network device ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Device'),
+			'filter_type'   : 'none',
+			'column_flex'   : 2
+		}
+	)
+	media_id = Column(
+		'ndmid',
+		UInt32(),
+		ForeignKey('netdev_media.ndmid', name='netdev_ifaces_fk_ndmid', onupdate='CASCADE'), # ondelete='RESTRICT'
+		Comment('Network device media ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Media'),
+			'filter_type'   : 'nplist',
+			'column_flex'   : 2
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Interface name (filled manually or via SNMP)'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	index = Column(
+		UInt32(),
+		Comment('Interface SNMP ifIndex'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : 'ifIndex'
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Interface description (filled manually or via SNMP)'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	device = relationship(
+		'NetworkDevice',
+		innerjoin=True,
+		backref=backref(
+			'interfaces',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+	media = relationship(
+		'NetworkDeviceMediaType',
+		innerjoin=True,
+		backref=backref(
+			'interfaces',
+			passive_deletes='all'
+		)
+	)
+
+	def __str__(self):
+		if self.device:
+			return '%s: %s' % (
+				str(self.device),
+				str(self.name)
+			)
 		return str(self.name)
 

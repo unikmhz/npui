@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Devices module - Views
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 # © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -29,6 +29,21 @@ from __future__ import (
 )
 
 from pyramid.i18n import TranslationStringFactory
+from netprofile.common.hooks import register_hook
 
 _ = TranslationStringFactory('netprofile_devices')
+
+@register_hook('core.dpanetabs.devices.NetworkDevice')
+def _dpane_netdev_ifaces(tabs, model, req):
+	loc = req.localizer
+	tabs.append({
+		'title'             : loc.translate(_('Interfaces')),
+		'iconCls'           : 'ico-mod-networkdeviceinterface',
+		'xtype'             : 'grid_devices_NetworkDeviceInterface',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('device',),
+		'extraParamProp'    : 'did',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
 
