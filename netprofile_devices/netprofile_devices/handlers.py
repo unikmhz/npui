@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 import snimpy.manager as mgr
+from snimpy.snmp import SNMPNoSuchObject
 
 from pyramid.decorator import reify
 
@@ -82,4 +83,19 @@ class NetworkDeviceHandler(object):
 			tbl = self.snmp_ro.dot1qVlanFdbId.proxy.table
 			for timemark, vlanid in self.snmp_ro.dot1qVlanFdbId:
 				yield TableProxy(self, tbl, (timemark, vlanid))
+
+	def arp_table(self, ifindex=None):
+		tfilter = []
+		if ifindex is not None:
+			tfilter.append(ifindex)
+		tbl = []
+		if self.type.has_flag('SNMP: IP-MIB'):
+			mgr.load('IP-MIB')
+			try:
+				for idx, phys in self.snmp_ro.ipNetToPhysicalPhysAddress.iteritems(*tfilter):
+					pass
+			except SNMPNoSuchObject:
+				for idx, phys in self.snmp_ro.ipNetToMediaPhysAddress.iteritems(*tfilter):
+					pass
+		return tbl
 
