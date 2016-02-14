@@ -188,6 +188,10 @@ class Module(ModuleBase):
 			Privilege(
 				code='DEVICETYPES_CATEGORIES_DELETE',
 				name='Devices: Delete categories'
+			),
+			Privilege(
+				code='HOSTS_PROBE',
+				name='Devices: Probe hosts'
 			)
 		)
 		for priv in privs:
@@ -372,6 +376,11 @@ class Module(ModuleBase):
 	def get_css(self, request):
 		return (
 			'netprofile_devices:static/css/main.css',
+		)
+
+	def get_task_imports(self):
+		return (
+			'netprofile_devices.tasks',
 		)
 
 	@property

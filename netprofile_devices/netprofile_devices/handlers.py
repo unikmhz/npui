@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Devices module - Bundled device handlers
-# © Copyright 2015 Alex 'Unik' Unigovsky
+# © Copyright 2015-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -31,6 +31,8 @@ import snimpy.manager as mgr
 from snimpy.snmp import SNMPNoSuchObject
 
 from pyramid.decorator import reify
+
+from netprofile.common import ipaddr
 
 class TableProxy(object):
 	def __init__(self, hdl, table, idx):
@@ -92,10 +94,10 @@ class NetworkDeviceHandler(object):
 		if self.type.has_flag('SNMP: IP-MIB'):
 			mgr.load('IP-MIB')
 			try:
-				for idx, phys in self.snmp_ro.ipNetToPhysicalPhysAddress.iteritems(*tfilter):
-					pass
-			except SNMPNoSuchObject:
 				for idx, phys in self.snmp_ro.ipNetToMediaPhysAddress.iteritems(*tfilter):
-					pass
+					tbl.append((int(idx[0]), ipaddr.IPv4Address(idx[1]), phys._toBytes()))
+			except SNMPNoSuchObject:
+				for idx, phys in self.snmp_ro.ipNetToPhysicalPhysAddress.iteritems(*tfilter):
+					tbl.append((int(idx[0]), ipaddr.IPv4Address(idx[1]), phys._toBytes()))
 		return tbl
 

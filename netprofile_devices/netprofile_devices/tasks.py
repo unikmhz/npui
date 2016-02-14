@@ -26,3 +26,23 @@ from __future__ import (
 	absolute_import,
 	division
 )
+
+import logging
+import transaction
+
+from netprofile.celery import (
+	app,
+	task_cap
+)
+
+logger = logging.getLogger(__name__)
+
+@task_cap('HOSTS_PROBE')
+@app.task
+def task_probe_hosts(probe_type='hosts', probe_ids=()):
+	cfg = app.settings
+
+	sess = DBSession()
+
+	transaction.abort()
+
