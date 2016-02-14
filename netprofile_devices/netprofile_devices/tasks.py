@@ -28,12 +28,14 @@ from __future__ import (
 )
 
 import logging
+import pkg_resources
 import transaction
 
 from netprofile.celery import (
 	app,
 	task_cap
 )
+from netprofile.common.hooks import IHookManager
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +43,9 @@ logger = logging.getLogger(__name__)
 @app.task
 def task_probe_hosts(probe_type='hosts', probe_ids=()):
 	cfg = app.settings
+	hm = app.config.registry.getUtility(IHookManager)
 
+	hosts = []
 	sess = DBSession()
 
 	transaction.abort()

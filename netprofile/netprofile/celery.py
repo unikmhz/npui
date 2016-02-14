@@ -373,18 +373,19 @@ def _setup(conf=None, **kwargs):
 	mmgr.load_enabled()
 
 	_parse_ini_settings(cfg.registry, conf)
+	app.config = cfg
 	app.settings = settings
 	app.mmgr = mmgr
 
 def setup_celery(reg):
 	_parse_ini_settings(reg, app)
 
-if __name__ == '__main__':
-	app.start()
-
 def includeme(config):
 	"""
 	For inclusion by Pyramid.
 	"""
 	_parse_ini_settings(config.registry, app)
+
+if __name__ == '__main__':
+	app.start()
 

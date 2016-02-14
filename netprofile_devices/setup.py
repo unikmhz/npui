@@ -59,6 +59,10 @@ setup(
 		],
 		'netprofile.devices.handlers' : [
 			'default = netprofile_devices.handlers:NetworkDeviceHandler'
+		],
+		'netprofile.devices.host_probers' : [
+			'fping = netprofile_devices.probe:FPingProber',
+			'fping+arp = netprofile_devices.probe:FPingARPProber'
 		]
 	},
 	message_extractors={'.' : [
