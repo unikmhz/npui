@@ -30,6 +30,7 @@ from __future__ import (
 import logging
 import pkg_resources
 import transaction
+from collections import defaultdict
 
 from netprofile.celery import (
 	app,
@@ -46,9 +47,27 @@ def task_probe_hosts(probe_type='hosts', probe_ids=()):
 
 	cfg = app.settings
 	hm = app.config.registry.getUtility(IHookManager)
+	default_prober = cfg.get('netprofile.devices.host_probers.default', 'fping')
 
-	hosts = []
-	sess = DBSession()
+	# TODO: support non-default probers
+	prober = tuple(pkg_resources.iter_entry_points('netprofile.devices.host_probers', default_prober))
+	if len(prober) == 0:
+		raise RuntimeError('Misconfigured default prober type.')
+	cls = prober[0].load()
+	prober = cls(cfg)
+
+	queries = []
+	ret = defaultdict(dict)
+
+	hm.run_hook('devices.probe_hosts', probe_type, probe_ids, cfg, hm, queries)
+
+	if len(queries) == 0:
+		raise ValueError('Invalid probe parameters specified.')
+	for q in queries:
+		for host, addrs in prober.probe(q).items():
+			for addr, result in addrs.items():
+				ret[host.id][addr.id] = result
 
 	transaction.abort()
+	return ret
 
