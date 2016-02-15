@@ -54,17 +54,9 @@ from sqlalchemy.orm import (
 	relationship
 )
 
-from sqlalchemy.ext.associationproxy import association_proxy
-
-from sqlalchemy.ext.hybrid import hybrid_property
-
 from netprofile.common import ipaddr
-from netprofile.db.connection import (
-	Base,
-	DBSession
-)
+from netprofile.db.connection import Base
 from netprofile.db.fields import (
-	ASCIIString,
 	NPBoolean,
 	UInt8,
 	UInt16,
@@ -81,16 +73,8 @@ from netprofile.db.ddl import (
 from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
 
-from netprofile.ext.wizards import (
-	ExternalWizardField,
-	SimpleWizard,
-	Step,
-	Wizard
-)
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from netprofile.ext.wizards import SimpleWizard
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_networks')
 

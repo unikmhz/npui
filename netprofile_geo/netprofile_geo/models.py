@@ -63,7 +63,6 @@ from sqlalchemy import (
 	UnicodeText,
 	event,
 	func,
-	literal_column,
 	text
 )
 
@@ -73,9 +72,7 @@ from sqlalchemy.orm import (
 	relationship
 )
 
-from sqlalchemy.ext.associationproxy import (
-	association_proxy
-)
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from netprofile.db.connection import (
 	Base,
@@ -90,9 +87,7 @@ from netprofile.db.fields import (
 	npbool
 )
 from netprofile.ext.columns import MarkupColumn
-from netprofile.ext.filters import (
-	CheckboxGroupFilter
-)
+from netprofile.ext.filters import CheckboxGroupFilter
 from netprofile.ext.wizards import (
 	SimpleWizard,
 	Step,
