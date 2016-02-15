@@ -42,6 +42,8 @@ logger = logging.getLogger(__name__)
 @task_cap('HOSTS_PROBE')
 @app.task
 def task_probe_hosts(probe_type='hosts', probe_ids=()):
+	app.mmgr.assert_loaded('ipaddresses')
+
 	cfg = app.settings
 	hm = app.config.registry.getUtility(IHookManager)
 

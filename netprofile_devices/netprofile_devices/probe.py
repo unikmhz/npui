@@ -27,6 +27,13 @@ from __future__ import (
 	division
 )
 
+__all__ = [
+	'HostProbeResult',
+	'HostProber',
+	'FPingProber',
+	'FPingARPProber'
+]
+
 import io
 import os
 import subprocess
@@ -36,6 +43,16 @@ from collections import (
 )
 
 HostProbeResult = namedtuple('HostProbeResult', ('sent', 'returned', 'min', 'max', 'avg', 'detected'))
+
+def _clone_with_detected(result, detected):
+	return HostProbeResult(
+		sent=result.sent,
+		returned=result.returned,
+		min=result.min,
+		max=result.max,
+		avg=result.avg,
+		detected=detected
+	)
 
 class HostProber(object):
 	def __init__(self, cfg):
@@ -164,11 +181,23 @@ class FPingARPProber(FPingProber):
 	def probe(self, hosts):
 		v4addrs = []
 		v6addrs = []
+		nets = set()
+		failed = set()
+		netmgmt = dict()
 		ret = defaultdict(dict)
 
 		for host in hosts:
-			v4addrs.extend(host.ipv4_addresses)
-			v6addrs.extend(host.ipv6_addresses)
+			for v4addr in host.ipv4_addresses:
+				nets.add(v4addr.network)
+				v4addrs.append(v4addr)
+			for v6addr in host.ipv6_addresses:
+				nets.add(v6addr.network)
+				v6addrs.append(v6addr)
+
+		for net in nets:
+			mgmt = net.management_device
+			if (mgmt is not None) and (mgmt not in netmgmt):
+				netmgmt[mgmt] = mgmt.get_handler()
 
 		if len(v4addrs) > 0:
 			self._fping_addrs(v4addrs, ret, False)
