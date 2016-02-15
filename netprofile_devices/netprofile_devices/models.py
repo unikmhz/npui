@@ -1487,7 +1487,7 @@ class NetworkDevice(Device):
 		)
 	)
 
-	def get_handler(self, req):
+	def get_handler(self):
 		devtype = self.device_type
 		if devtype is None:
 			return None
@@ -1498,9 +1498,9 @@ class NetworkDevice(Device):
 		if len(itp) == 0:
 			return None
 		cls = itp[0].load()
-		return cls(devtype, self, req)
+		return cls(devtype, self)
 
-	def snmp_context(self, req, is_rw=False):
+	def snmp_context(self, is_rw=False):
 		snmp_type = self.snmp_type
 		if snmp_type is None:
 			raise RuntimeError('SNMP is not configured for a device')

@@ -44,20 +44,19 @@ class TableProxy(object):
 		return getattr(self._hdl.snmp_ro, attr)[self._idx]
 
 class NetworkDeviceHandler(object):
-	def __init__(self, devtype, dev, req):
+	def __init__(self, devtype, dev):
 		self.type = devtype
 		self.dev = dev
-		self.req = req
 
 	@reify
 	def snmp_ro(self):
-		return self.dev.snmp_context(self.req)
+		return self.dev.snmp_context()
 
 	@reify
 	def snmp_rw(self):
 		if not self.dev.snmp_has_rw_context:
 			return self.snmp_ro
-		return self.dev.snmp_context(self.req, is_rw=True)
+		return self.dev.snmp_context(is_rw=True)
 
 	@property
 	def interfaces(self):
@@ -85,6 +84,29 @@ class NetworkDeviceHandler(object):
 			tbl = self.snmp_ro.dot1qVlanFdbId.proxy.table
 			for timemark, vlanid in self.snmp_ro.dot1qVlanFdbId:
 				yield TableProxy(self, tbl, (timemark, vlanid))
+
+	def ifindex_by_address(self, addr):
+		if not self.type.has_flag('SNMP: IP-MIB'):
+			return None
+		mgr.load('IP-MIB')
+
+		if isinstance(addr, ipaddr.IPv4Address):
+			addrtype = 1
+		elif isinstance(addr, ipaddr.IPv6Address):
+			addrtype = 2
+		else:
+			return None
+
+		try:
+			return int(self.snmp_ro.ipAddressIfIndex[addrtype, str(addr)])
+		except SNMPNoSuchObject:
+			pass
+		if addrtype == 1:
+			try:
+				return int(self.snmp_ro.ipAdEntIfIndex[str(addr)])
+			except SNMPNoSuchObject:
+				pass
+		return None
 
 	def arp_table(self, ifindex=None):
 		tfilter = []
