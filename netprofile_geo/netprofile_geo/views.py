@@ -30,10 +30,7 @@ from __future__ import (
 
 from collections import defaultdict
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 
 from netprofile_core.models import AddressType
@@ -42,7 +39,7 @@ _ = TranslationStringFactory('netprofile_geo')
 
 @register_hook('core.dpanetabs.geo.City')
 def _dpane_city_districts(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.extend(({
 		'title'             : loc.translate(_('Districts')),
 		'iconCls'           : 'ico-mod-district',
@@ -65,7 +62,7 @@ def _dpane_city_districts(tabs, model, req):
 
 @register_hook('core.dpanetabs.geo.District')
 def _dpane_district_streets(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.append({
 		'title'             : loc.translate(_('Streets')),
 		'iconCls'           : 'ico-mod-street',
@@ -79,7 +76,7 @@ def _dpane_district_streets(tabs, model, req):
 
 @register_hook('core.dpanetabs.geo.Street')
 def _dpane_street_houses(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.append({
 		'title'             : loc.translate(_('Houses')),
 		'iconCls'           : 'ico-mod-house',
@@ -93,7 +90,7 @@ def _dpane_street_houses(tabs, model, req):
 
 @register_hook('core.dpanetabs.geo.House')
 def _dpane_house_places(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.append({
 		'title'             : loc.translate(_('Places')),
 		'iconCls'           : 'ico-mod-place',
@@ -107,7 +104,7 @@ def _dpane_house_places(tabs, model, req):
 
 @register_hook('core.dpanetabs.core.User')
 def _dpane_user_locations(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.append({
 		'title'             : loc.translate(_('Addresses')),
 		'iconCls'           : 'ico-mod-userlocation',

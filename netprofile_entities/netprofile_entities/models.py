@@ -53,22 +53,16 @@ from sqlalchemy import (
 	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
 	literal_column,
-	func,
-	select,
-	text,
-	or_
+	text
 )
 
 from sqlalchemy.orm import (
 	backref,
-	contains_eager,
-	joinedload,
 	relationship,
 	validates
 )
@@ -87,7 +81,6 @@ from netprofile.db.fields import (
 	UInt8,
 	UInt16,
 	UInt32,
-	UInt64,
 	npbool
 )
 from netprofile.db.ddl import (
@@ -115,7 +108,6 @@ from netprofile_core.models import (
 	PhoneType
 )
 from netprofile_geo.models import (
-	District,
 	House,
 	Street
 )
@@ -127,11 +119,7 @@ from netprofile.ext.wizards import (
 	Wizard
 )
 
-from pyramid.threadlocal import get_current_request
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_entities')
 
@@ -1016,25 +1004,27 @@ class Address(Base):
 	)
 
 	def __str__(self):
-		req = get_current_request()
-		loc = get_localizer(req)
+		loc = str
+		req = getattr(self, '__req__', None)
+		if req is not None:
+			loc = req.localizer.translate
 
 		ret = []
 		if self.house:
 			ret.append(str(self.house))
 		if self.entrance:
 			ret.extend((
-				loc.translate(_('entr.')),
+				loc(_('entr.')),
 				str(self.entrance)
 			))
 		if self.floor:
 			ret.extend((
-				loc.translate(_('fl.')),
+				loc(_('fl.')),
 				str(self.floor)
 			))
 		if self.flat:
 			ret.extend((
-				loc.translate(_('app.')),
+				loc(_('app.')),
 				str(self.flat)
 			))
 
@@ -1143,11 +1133,13 @@ class Phone(Base):
 	)
 
 	def __str__(self):
-		req = get_current_request()
-		loc = get_localizer(req)
+		loc = str
+		req = getattr(self, '__req__', None)
+		if req is not None:
+			loc = req.localizer.translate
 
 		return '%s: %s' % (
-			loc.translate(PhoneType.prefix(self.type)),
+			loc(PhoneType.prefix(self.type)),
 			self.number
 		)
 
@@ -1569,8 +1561,6 @@ class PhysicalEntity(Entity):
 	)
 
 	def data(self, req):
-		loc = get_localizer(req)
-
 		ret = super(PhysicalEntity, self).data
 
 		ret['addrs'] = []
@@ -1883,8 +1873,6 @@ class LegalEntity(Entity):
 	)
 
 	def data(self, req):
-		loc = get_localizer(req)
-
 		ret = super(LegalEntity, self).data
 
 		ret['addrs'] = []

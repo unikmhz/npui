@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Networks module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,17 +27,14 @@ from __future__ import (
 	division
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 
 _ = TranslationStringFactory('netprofile_networks')
 
 @register_hook('core.dpanetabs.networks.Network')
 def _dpane_network_services(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.append({
 		'title'             : loc.translate(_('Services')),
 		'iconCls'           : 'ico-mod-networkservice',
@@ -51,7 +48,7 @@ def _dpane_network_services(tabs, model, req):
 
 @register_hook('core.dpanetabs.networks.NetworkGroup')
 def _dpane_netgroup_nets(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.append({
 		'title'             : loc.translate(_('Networks')),
 		'iconCls'           : 'ico-mod-network',
@@ -65,7 +62,7 @@ def _dpane_netgroup_nets(tabs, model, req):
 
 @register_hook('core.dpanetabs.networks.RoutingTable')
 def _dpane_rt_bits(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.append({
 		'title'             : loc.translate(_('Entries')),
 		'iconCls'           : 'ico-mod-routingtableentry',

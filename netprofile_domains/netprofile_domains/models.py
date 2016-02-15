@@ -3,7 +3,7 @@
 #
 # NetProfile: Domains module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -51,16 +51,13 @@ from sqlalchemy import (
 	Unicode,
 	UnicodeText,
 	literal_column,
-	text,
-	Text
+	text
 )
 
 from sqlalchemy.orm import (
 	backref,
 	relationship
 )
-
-from sqlalchemy.ext.associationproxy import association_proxy
 
 from netprofile.db.connection import (
 	Base,
@@ -73,7 +70,6 @@ from netprofile.db.fields import (
 	DeclEnum,
 	NPBoolean,
 	UInt8,
-	UInt16,
 	UInt32,
 	npbool
 )
@@ -92,10 +88,7 @@ from netprofile.ext.wizards import (
 	Wizard
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_domains')
 

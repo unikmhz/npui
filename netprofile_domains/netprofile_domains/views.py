@@ -3,7 +3,7 @@
 #
 # NetProfile: Domains module - Views
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,17 +28,14 @@ from __future__ import (
 	division
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 
 _ = TranslationStringFactory('netprofile_domains')
 
 @register_hook('core.dpanetabs.domains.Domain')
 def _dpane_domain_aliases(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.extend(({
 		'title'             : loc.translate(_('Subdomains')),
 		'iconCls'           : 'ico-mod-domain',

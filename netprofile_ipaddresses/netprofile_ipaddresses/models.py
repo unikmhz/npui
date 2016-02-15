@@ -55,13 +55,10 @@ from sqlalchemy.orm import (
 	relationship
 )
 
-from sqlalchemy.ext.associationproxy import association_proxy
-
 from netprofile.common import ipaddr
 from netprofile.db.connection import Base
 from netprofile.db import fields
 from netprofile.db.fields import (
-	DeclEnum,
 	IPv6Offset,
 	MACAddress,
 	NPBoolean,
@@ -78,16 +75,9 @@ from netprofile.db.ddl import (
 	Trigger
 )
 from netprofile.ext.columns import MarkupColumn
-from netprofile.ext.wizards import (
-	SimpleWizard,
-	Step,
-	Wizard
-)
+from netprofile.ext.wizards import SimpleWizard
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 from netprofile_domains.models import ObjectVisibility
 

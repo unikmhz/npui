@@ -1,9 +1,11 @@
+# -*- mode: gitignore; -*-
 # Fetched and edited from
 # https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*$py.class
 
 # C extensions
 *.so
@@ -14,7 +16,9 @@ env/
 build/
 develop-eggs/
 dist/
+downloads/
 eggs/
+.eggs/
 lib/
 lib64/
 parts/
@@ -38,9 +42,12 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .coverage
+.coverage.*
 .cache
 nosetests.xml
 coverage.xml
+*,cover
+.hypothesis/
 
 # Translations
 *.mo
@@ -49,12 +56,45 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# VirtualEnv
+pyvenv.cfg
+.venv
+pip-selfcheck.json
+
 # PyBuilder
 target/
 
-# Editor backup files
-*.swp
+# Ipython Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Editor backup/configuration files
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+Session.vim
+.netrwhist
 *~
+\#*\#
+.\#*
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+sftp-config.json
+
+# OS X
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
 
 # Test deployments
 *-local.ini
