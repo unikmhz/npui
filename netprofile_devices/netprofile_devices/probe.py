@@ -30,24 +30,35 @@ from __future__ import (
 import io
 import os
 import subprocess
-from collections import namedtuple
+from collections import (
+	defaultdict,
+	namedtuple
+)
 
-HostProbeResult = namedtuple('HostProbeResult', ('sent', 'returned', 'min', 'max', 'avg'))
+HostProbeResult = namedtuple('HostProbeResult', ('sent', 'returned', 'min', 'max', 'avg', 'detected'))
 
 class HostProber(object):
 	def __init__(self, cfg):
 		self.cfg = cfg
 
-	def probe(self, addrs):
+	def probe(self, hosts):
 		raise NotImplementedError
 
 class FPingProber(HostProber):
 	def _arg(self, name, kwargs, defvalue=None):
 		return kwargs.get(name, self.cfg.get('netprofile.devices.fping.' + name, defvalue))
 
-	def _fping_args(self, **kwargs):
+	def _arg6(self, name, kwargs, defvalue=None):
+		return kwargs.get(name, self.cfg.get('netprofile.devices.fping6.' + name, defvalue))
+
+	def _fping_args(self, v6=False, **kwargs):
 		cfg = self.cfg
-		fping_bin = cfg.get('netprofile.devices.fping.path')
+		if v6:
+			arg = self._arg6
+			fping_bin = cfg.get('netprofile.devices.fping6.path')
+		else:
+			arg = self._arg
+			fping_bin = cfg.get('netprofile.devices.fping.path')
 		if fping_bin is None:
 			raise RuntimeError('Path to fping binary is not configured.')
 		if not os.path.isfile(fping_bin):
@@ -55,13 +66,13 @@ class FPingProber(HostProber):
 		if not os.access(fping_bin, os.X_OK):
 			raise RuntimeError('Configured fping binary is not executable by current user.')
 
-		fping_interval = int(self._arg('packet_interval', kwargs, 12))
-		fping_tgt_interval = int(self._arg('per_target_packet_interval', kwargs, 110))
-		fping_bytes = int(self._arg('packet_size', kwargs, 1400))
-		fping_count = int(self._arg('packet_count', kwargs, 3))
+		fping_interval = int(arg('packet_interval', kwargs, 12))
+		fping_tgt_interval = int(arg('per_target_packet_interval', kwargs, 110))
+		fping_bytes = int(arg('packet_size', kwargs, 1400))
+		fping_count = int(arg('packet_count', kwargs, 3))
 
-		fping_srcaddr = self._arg('source_address', kwargs)
-		fping_srcif = self._arg('source_interface', kwargs)
+		fping_srcaddr = arg('source_address', kwargs)
+		fping_srcif = arg('source_interface', kwargs)
 
 		ret = [
 			fping_bin,
@@ -78,8 +89,8 @@ class FPingProber(HostProber):
 			ret.extend(('-I', str(fping_srcif)))
 		return ret
 
-	def _fping_run(self, addrs, **kwargs):
-		args = self._fping_args(**kwargs)
+	def _fping_run(self, addrs, v6=False, **kwargs):
+		args = self._fping_args(v6=v6, **kwargs)
 		proc = subprocess.Popen(
 			args,
 			shell=False,
@@ -116,16 +127,53 @@ class FPingProber(HostProber):
 				returned=(cnt_total - cnt_failed),
 				min=rtt_min,
 				max=rtt_max,
-				avg=rtt_sum / (cnt_total - cnt_failed)
+				avg=None if (cnt_total == cnt_failed) else (rtt_sum / (cnt_total - cnt_failed)),
+				detected=True if cnt_total > cnt_failed else False
 			)
 
 		return ret
 
-	def probe(self, addrs):
-		return self._fping_run(addrs)
+	def _fping_addrs(self, addrs, ret, v6=False):
+		ping_addrs = dict()
+		for addr in addrs:
+			addrobj = addr.address
+			if addrobj is not None:
+				ping_addrs[str(addrobj)] = addr
+		if len(ping_addrs) > 0:
+			for addrobj, proberes in self._fping_run(ping_addrs.keys(), v6).items():
+				addr = ping_addrs[addrobj]
+				ret[addr.host][addr] = proberes
+
+	def probe(self, hosts):
+		v4addrs = []
+		v6addrs = []
+		ret = defaultdict(dict)
+
+		for host in hosts:
+			v4addrs.extend(host.ipv4_addresses)
+			v6addrs.extend(host.ipv6_addresses)
+
+		if len(v4addrs) > 0:
+			self._fping_addrs(v4addrs, ret, False)
+		if len(v6addrs) > 0:
+			self._fping_addrs(v6addrs, ret, True)
+
+		return ret
 
 class FPingARPProber(FPingProber):
-	def probe(self, addrs):
-		ret = self._fping_run(addrs)
+	def probe(self, hosts):
+		v4addrs = []
+		v6addrs = []
+		ret = defaultdict(dict)
+
+		for host in hosts:
+			v4addrs.extend(host.ipv4_addresses)
+			v6addrs.extend(host.ipv6_addresses)
+
+		if len(v4addrs) > 0:
+			self._fping_addrs(v4addrs, ret, False)
+		if len(v6addrs) > 0:
+			self._fping_addrs(v6addrs, ret, True)
+
 		return ret
 
