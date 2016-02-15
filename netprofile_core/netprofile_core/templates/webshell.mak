@@ -33,6 +33,7 @@ Ext.require([
 	${i_ajs | jsone},
 % endfor
 	'NetProfile.data.BaseModel',
+	'NetProfile.data.SockJS',
 	'NetProfile.grid.CapabilityGrid',
 	'NetProfile.form.field.MultiField',
 	'NetProfile.window.CenterWindow',
@@ -40,6 +41,11 @@ Ext.require([
 	'NetProfile.panel.Calendar'
 ], function()
 {
+% if req.debug_enabled:
+	NetProfile.debugEnabled = true;
+% else:
+	NetProfile.debugEnabled = false;
+% endif
 	NetProfile.currentLocale = ${cur_loc | jsone};
 	NetProfile.currentUser = ${req.user.login | jsone};
 	NetProfile.currentUserId = ${req.user.id | n,jsone};
@@ -1029,103 +1035,10 @@ Ext.require([
 % endif
 
 			// Init SockJS connection to realtime server
-			// TODO: move this to a separate component
 			if(NetProfile.rtURL)
-			{
-				rt_sock = SockJS(NetProfile.rtURL + '/sock');
-				rt_sock.onopen = function()
-				{
-% if req.debug_enabled:
-					Ext.log.info('SockJS connected');
-% endif
-					var msg = {
-						type:    'auth',
-						user:    NetProfile.currentUser,
-						uid:     NetProfile.currentUserId,
-						session: NetProfile.currentSession
-					};
-					rt_sock.send(Ext.JSON.encode(msg));
-				};
-				rt_sock.onmessage = function(ev)
-				{
-					ev.data = Ext.JSON.decode(ev.data);
-% if req.debug_enabled:
-					Ext.log.info({ dump: ev }, 'SockJS event received');
-% endif
-					if(typeof(ev.data.type) !== 'string')
-						return;
-					switch(ev.data.type)
-					{
-						case 'user_enters':
-						case 'user_leaves':
-							var uid = ev.data.uid,
-								obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
-							if(!obj)
-								return;
-							if(ev.data.type === 'user_enters')
-								obj.set('iconCls', 'ico-status-online');
-							else
-								obj.set('iconCls', 'ico-status-offline');
-							break;
-						case 'user_list':
-							var u, uid, obj;
-							NetProfile.rtSocketReady = true;
-							NetProfile.rtActiveUIDs = ev.data.users;
-							for(u in ev.data.users)
-							{
-								uid = ev.data.users[u];
-								obj = Ext.getCmp('npmenu_tree_users').getStore().getNodeById('user-' + uid);
-								if(!obj)
-									continue;
-								obj.set('iconCls', 'ico-status-online');
-							}
-							break;
-						case 'direct':
-							var store = NetProfile.StoreManager.getConsoleStore(ev.data.msgtype, ev.data.fromid),
-								rec;
-							if(store)
-							{
-								rec = Ext.create('NetProfile.model.ConsoleMessage');
-								rec.set('ts', new Date(ev.data.ts));
-								if(ev.data.fromstr)
-									rec.set('from', ev.data.fromstr);
-								if(ev.data.bodytype)
-									rec.set('bodytype', ev.data.bodytype);
-								if(ev.data.msg)
-									rec.set('data', ev.data.msg);
-								store.add(rec);
-							}
-							break;
-						case 'task_result':
-							var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
-								rec;
-							if(store)
-							{
-								rec = Ext.create('NetProfile.model.ConsoleMessage');
-								rec.set('ts', new Date(ev.data.ts));
-								rec.set('bodytype', 'task_result');
-								rec.set('data', ev.data.value);
-								store.add(rec);
-							}
-							NetProfile.showConsole();
-							break;
-						case 'task_error':
-							var store = NetProfile.StoreManager.getConsoleStore('system', 'log'),
-								rec;
-							if(store)
-							{
-								rec = Ext.create('NetProfile.model.ConsoleMessage');
-								rec.set('ts', new Date(ev.data.ts));
-								rec.set('bodytype', 'task_error');
-								rec.set('data', [ev.data.errno, ev.data.value]);
-								store.add(rec);
-							}
-							NetProfile.showConsole();
-							break;
-					}
-				};
-				NetProfile.rtSocket = rt_sock;
-			}
+				NetProfile.rtSocket = Ext.create('NetProfile.data.SockJS', {
+					url: NetProfile.rtURL + '/sock'
+				});
 		},
 		showStartupMessages: function()
 		{

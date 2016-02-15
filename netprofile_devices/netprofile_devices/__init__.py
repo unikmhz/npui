@@ -383,6 +383,11 @@ class Module(ModuleBase):
 			'netprofile_devices.tasks',
 		)
 
+	def get_controllers(self, request):
+		return (
+			'NetProfile.devices.controller.HostProbe',
+		)
+
 	@property
 	def name(self):
 		return _('Devices')
