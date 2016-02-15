@@ -28,7 +28,10 @@ from __future__ import (
 )
 
 import snimpy.manager as mgr
-from snimpy.snmp import SNMPNoSuchObject
+from snimpy.snmp import (
+	SNMPNoCreation,
+	SNMPNoSuchObject
+)
 
 from pyramid.decorator import reify
 
@@ -107,6 +110,55 @@ class NetworkDeviceHandler(object):
 			except SNMPNoSuchObject:
 				pass
 		return None
+
+	def get_arp_entry(self, ifindex, addr):
+		if not self.type.has_flag('SNMP: IP-MIB'):
+			raise NotImplementedError('Current device doesn\'t implement IP-MIB')
+		mgr.load('IP-MIB')
+
+		if isinstance(addr, ipaddr.IPv4Address):
+			addrtype = 1
+		elif isinstance(addr, ipaddr.IPv6Address):
+			addrtype = 2
+		else:
+			return None
+
+		try:
+			return int(self.snmp_ro.ipNetToPhysicalType[ifindex, addrtype, str(addr)])
+		except SNMPNoSuchObject:
+			pass
+		if addrtype == 1:
+			try:
+				return int(self.snmp_ro.ipNetToMediaType[ifindex, str(addr)])
+			except SNMPNoSuchObject:
+				pass
+		return None
+
+	def clear_arp_entry(self, ifindex, addr):
+		if not self.type.has_flag('SNMP: IP-MIB'):
+			raise NotImplementedError('Current device doesn\'t implement IP-MIB')
+		mgr.load('IP-MIB')
+
+		if isinstance(addr, ipaddr.IPv4Address):
+			addrtype = 1
+		elif isinstance(addr, ipaddr.IPv6Address):
+			addrtype = 2
+		else:
+			return False
+
+		try:
+			self.snmp_rw.ipNetToPhysicalType[ifindex, addrtype, str(addr)] = 2 # 2=invalid
+			return True
+		except (SNMPNoCreation, SNMPNoSuchObject):
+			pass
+		if addrtype == 1:
+			try:
+				self.snmp_rw.ipNetToMediaType[ifindex, str(addr)] = 2 # 2=invalid
+				return True
+			except (SNMPNoCreation, SNMPNoSuchObject):
+				pass
+
+		return False
 
 	def arp_table(self, ifindex=None):
 		tfilter = []

@@ -41,6 +41,9 @@ from collections import (
 	defaultdict,
 	namedtuple
 )
+from sqlalchemy.orm import joinedload
+
+from netprofile.db.connection import DBSession
 
 HostProbeResult = namedtuple('HostProbeResult', ('sent', 'returned', 'min', 'max', 'avg', 'detected'))
 
@@ -179,12 +182,16 @@ class FPingProber(HostProber):
 
 class FPingARPProber(FPingProber):
 	def probe(self, hosts):
+		from netprofile_networks.models import NetworkService
+
+		sess = DBSession()
 		v4addrs = []
 		v6addrs = []
 		nets = set()
 		failed = set()
 		netmgmt = dict()
 		ret = defaultdict(dict)
+		gw_ifindexes = defaultdict(set)
 
 		for host in hosts:
 			for v4addr in host.ipv4_addresses:
@@ -196,13 +203,58 @@ class FPingARPProber(FPingProber):
 
 		for net in nets:
 			mgmt = net.management_device
-			if (mgmt is not None) and (mgmt not in netmgmt):
-				netmgmt[mgmt] = mgmt.get_handler()
+			if (mgmt is None) or (mgmt.host is None):
+				continue
+			if mgmt in netmgmt:
+				handler = netmgmt[mgmt]
+			else:
+				handler = mgmt.get_handler()
+				if handler is None:
+					continue
+				netmgmt[mgmt] = handler
 
+			# Get network gateway IPs
+			gwq = sess.query(NetworkService).filter(
+				NetworkService.network == net,
+				NetworkService.type_id == 4
+			).options(joinedload(NetworkService.host))
+			for service in gwq:
+				# Get ifIndex of gateway interfaces
+				for addr in service.host.ipv4_addresses + service.host.ipv6_addresses:
+					ifindex = handler.ifindex_by_address(addr.address)
+					if ifindex is not None:
+						gw_ifindexes[net].add(ifindex)
+
+		# Try to clear addresses from neighbor tables
+		for addr in v4addrs + v6addrs:
+			net = addr.network
+			mgmt = net.management_device
+			if (net not in gw_ifindexes) or (mgmt not in netmgmt):
+				failed.add(addr)
+				continue
+			cleared = False
+			for gw_ifindex in gw_ifindexes[net]:
+				if netmgmt[mgmt].clear_arp_entry(gw_ifindex, addr.address):
+					cleared = True
+					break
+			if not cleared:
+				failed.add(addr)
+
+		# Spawn fping, collect results
 		if len(v4addrs) > 0:
 			self._fping_addrs(v4addrs, ret, False)
 		if len(v6addrs) > 0:
 			self._fping_addrs(v6addrs, ret, True)
+
+		# Check newly created neighbor entries to detect hosts behind firewalls
+		for host, addrs in ret.items():
+			for addr, proberes in addrs.items():
+				if addr in failed:
+					continue
+				if not proberes.detected:
+					mgmt = addr.network.management_device
+					if netmgmt[mgmt].get_arp_entry == 3:
+						ret[host][addr] = _clone_with_detected(proberes, True)
 
 		return ret
 
