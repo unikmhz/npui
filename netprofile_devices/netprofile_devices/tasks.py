@@ -36,6 +36,7 @@ from netprofile.celery import (
 	app,
 	task_cap
 )
+from netprofile.common import ipaddr
 from netprofile.common.hooks import IHookManager
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ def task_probe_hosts(probe_type='hosts', probe_ids=()):
 	prober = cls(cfg)
 
 	queries = []
-	ret = defaultdict(dict)
+	ret = []
 
 	hm.run_hook('devices.probe_hosts', probe_type, probe_ids, cfg, hm, queries)
 
@@ -66,7 +67,25 @@ def task_probe_hosts(probe_type='hosts', probe_ids=()):
 	for q in queries:
 		for host, addrs in prober.probe(q).items():
 			for addr, result in addrs.items():
-				ret[host.id][addr.id] = result
+				if isinstance(addr, ipaddr.IPv4Address):
+					addrtype = 'v4'
+				elif isinstance(addr, ipaddr.IPv6Address):
+					addrtype = 'v6'
+				else:
+					continue
+				ret.append({
+					'hostid'   : host.id,
+					'host'     : str(host),
+					'addrid'   : addr.id,
+					'addrtype' : addrtype,
+					'addr'     : str(addr),
+					'sent'     : result.sent,
+					'returned' : result.returned,
+					'min'      : result.min,
+					'max'      : result.max,
+					'avg'      : result.avg,
+					'detected' : result.detected
+				})
 
 	transaction.abort()
 	return ret
