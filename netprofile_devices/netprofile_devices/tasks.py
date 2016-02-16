@@ -67,9 +67,10 @@ def task_probe_hosts(probe_type='hosts', probe_ids=()):
 	for q in queries:
 		for host, addrs in prober.probe(q).items():
 			for addr, result in addrs.items():
-				if isinstance(addr, ipaddr.IPv4Address):
+				ipa = addr.address
+				if isinstance(ipa, ipaddr.IPv4Address):
 					addrtype = 'v4'
-				elif isinstance(addr, ipaddr.IPv6Address):
+				elif isinstance(ipa, ipaddr.IPv6Address):
 					addrtype = 'v6'
 				else:
 					continue
@@ -78,7 +79,7 @@ def task_probe_hosts(probe_type='hosts', probe_ids=()):
 					'host'     : str(host),
 					'addrid'   : addr.id,
 					'addrtype' : addrtype,
-					'addr'     : str(addr),
+					'addr'     : str(ipa),
 					'sent'     : result.sent,
 					'returned' : result.returned,
 					'min'      : result.min,
