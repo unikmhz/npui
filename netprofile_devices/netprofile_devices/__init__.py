@@ -35,6 +35,7 @@ import snimpy.mib
 from netprofile.common.modules import ModuleBase
 
 from sqlalchemy.orm.exc import NoResultFound
+from pyramid.config import aslist
 from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_devices')
@@ -396,10 +397,23 @@ def includeme(config):
 	"""
 	For inclusion by Pyramid.
 	"""
+	mib_paths = []
+	cfg = config.registry.settings
+
+	# Add user-configured MIB paths
+	if 'netprofile.devices.mib_paths' in cfg:
+		for path in aslist(cfg['netprofile.devices.mib_paths']):
+			if os.path.isdir(path):
+				mib_paths.append(path)
+
+	# Add path to bundles MIBs
 	dist = pkg_resources.get_distribution('netprofile_devices')
 	if dist:
 		new_path = os.path.join(dist.location, 'netprofile_devices', 'mibs')
 		if os.path.isdir(new_path):
-			cur_path = snimpy.mib.path()
-			snimpy.mib.path(new_path + ':' + cur_path)
+			mib_paths.append(new_path)
+
+	if len(mib_paths) > 0:
+		cur_path = snimpy.mib.path()
+		snimpy.mib.path(':'.join(mib_paths) + ':' + cur_path)
 
