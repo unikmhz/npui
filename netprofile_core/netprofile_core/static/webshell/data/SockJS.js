@@ -1,6 +1,5 @@
 /**
  * @class NetProfile.data.SockJS
- * @extends Ext.Component
  */
 Ext.define('NetProfile.data.SockJS', {
 	mixins: ['Ext.mixin.Observable'],

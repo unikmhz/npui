@@ -6,7 +6,8 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 	extend: 'Ext.app.Controller',
 	requires: [
 		'Ext.mixin.Observable',
-		'NetProfile.data.SockJS'
+		'NetProfile.data.SockJS',
+		'NetProfile.devices.grid.ProbeResults'
 	],
 
 	init: function()
