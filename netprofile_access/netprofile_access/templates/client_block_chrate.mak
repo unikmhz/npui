@@ -10,7 +10,7 @@
 			</div>
 % if a.next_rate:
 			<div class="row">
-				<label for="fld-nextrate-${stash.id}" class="col-sm-4">${_('Next Rate')}</label>
+				<label for="fld-nextrate-${stash.id}" class="col-sm-4">${_('Next Rate', domain='netprofile_access')}</label>
 				<div id="fld-nextrate-${stash.id}" class="col-sm-8">
 					${a.next_rate}
 					<button type="button" class="btn btn-link js-only" data-toggle="collapse" data-target="#form-chrate-${a.id}">${_('Change', domain='netprofile_access')}</button>

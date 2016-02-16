@@ -6,13 +6,14 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1" />
 	<meta name="referrer" content="none" />
 	<meta name="keywords" content="netprofile" />
-	<meta name="description" content="NetProfile administrative UI" />
+	<meta name="description" content="${_('NetProfile administrative UI') | h}" />
 	<title>NetProfile :: <%block name="title">${_('Home') | h}</%block></title>
 	<link rel="shortcut icon" href="${req.static_url('netprofile_core:static/favicon.ico')}" />
 
 % for i_css in res_css:
 	<link rel="stylesheet" href="${req.static_url(i_css)}" type="text/css" media="screen, projection" />
 % endfor
+<%block name="head_css"/>
 
 % for i_js in res_js:
 	<script type="text/javascript" src="${req.static_url(i_js)}" charset="UTF-8"></script>

@@ -29,6 +29,12 @@ div#login_outer img
 {
 	display: inline-block;
 	padding-left: 4px;
+
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 
 div.elem
@@ -60,5 +66,14 @@ div.footer
 {
 	padding-top: 1em;
 	text-align: right;
+}
+
+button, select
+{
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 

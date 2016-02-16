@@ -132,6 +132,12 @@ div.controls span.req
 	}
 }
 
+a.flag-toggle img, a.lang-select img
+{
+	width: 32px;
+	height: 32px;
+}
+
 #recaptcha_widget_div
 {
 	position: relative;
