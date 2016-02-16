@@ -61,37 +61,35 @@ class NetworkDeviceHandler(object):
 			return self.snmp_ro
 		return self.dev.snmp_context(is_rw=True)
 
+	def load_mib(self, mib):
+		flagname = 'SNMP: ' + mib
+		if not self.type.has_flag(flagname):
+			raise NotImplementedError('Current device does not implement %s' % (mib,))
+		mgr.load(mib)
+
 	@property
 	def interfaces(self):
-		mgr.load('IF-MIB')
+		self.load_mib('IF-MIB')
 		tbl = self.snmp_ro.ifIndex.proxy.table
 		for idx in self.snmp_ro.ifIndex:
 			yield TableProxy(self, tbl, idx)
 
 	@property
 	def base_ports(self):
-		mgr.load('BRIDGE-MIB')
+		self.load_mib('BRIDGE-MIB')
 		tbl = self.snmp_ro.dot1dBasePort.proxy.table
 		for baseport in self.snmp_ro.dot1dBasePort:
 			yield TableProxy(self, tbl, baseport)
 
 	@property
 	def vlans(self):
-		if self.type.has_flag('SNMP: CISCO-VTP-MIB'):
-			mgr.load('CISCO-VTP-MIB')
-			tbl = self.snmp_ro.vtpVlanState.proxy.table
-			for mgmtid, vlanid in self.snmp_ro.vtpVlanState:
-				yield TableProxy(self, tbl, (mgmtid, vlanid))
-		else:
-			mgr.load('Q-BRIDGE-MIB')
-			tbl = self.snmp_ro.dot1qVlanFdbId.proxy.table
-			for timemark, vlanid in self.snmp_ro.dot1qVlanFdbId:
-				yield TableProxy(self, tbl, (timemark, vlanid))
+		self.load_mib('Q-BRIDGE-MIB')
+		tbl = self.snmp_ro.dot1qVlanFdbId.proxy.table
+		for timemark, vlanid in self.snmp_ro.dot1qVlanFdbId:
+			yield TableProxy(self, tbl, (timemark, vlanid))
 
 	def ifindex_by_address(self, addr):
-		if not self.type.has_flag('SNMP: IP-MIB'):
-			return None
-		mgr.load('IP-MIB')
+		self.load_mib('IP-MIB')
 
 		if isinstance(addr, ipaddr.IPv4Address):
 			addrtype = 1
@@ -112,9 +110,7 @@ class NetworkDeviceHandler(object):
 		return None
 
 	def get_arp_entry(self, ifindex, addr):
-		if not self.type.has_flag('SNMP: IP-MIB'):
-			raise NotImplementedError('Current device doesn\'t implement IP-MIB')
-		mgr.load('IP-MIB')
+		self.load_mib('IP-MIB')
 
 		if isinstance(addr, ipaddr.IPv4Address):
 			addrtype = 1
@@ -135,9 +131,7 @@ class NetworkDeviceHandler(object):
 		return None
 
 	def clear_arp_entry(self, ifindex, addr):
-		if not self.type.has_flag('SNMP: IP-MIB'):
-			raise NotImplementedError('Current device doesn\'t implement IP-MIB')
-		mgr.load('IP-MIB')
+		self.load_mib('IP-MIB')
 
 		if isinstance(addr, ipaddr.IPv4Address):
 			addrtype = 1
@@ -160,18 +154,26 @@ class NetworkDeviceHandler(object):
 
 		return False
 
-	def arp_table(self, ifindex=None):
+	def get_arp_table(self, ifindex=None):
+		self.load_mib('IP-MIB')
+
 		tfilter = []
 		if ifindex is not None:
 			tfilter.append(ifindex)
 		tbl = []
-		if self.type.has_flag('SNMP: IP-MIB'):
-			mgr.load('IP-MIB')
-			try:
-				for idx, phys in self.snmp_ro.ipNetToMediaPhysAddress.iteritems(*tfilter):
-					tbl.append((int(idx[0]), ipaddr.IPv4Address(idx[1]), phys._toBytes()))
-			except SNMPNoSuchObject:
-				for idx, phys in self.snmp_ro.ipNetToPhysicalPhysAddress.iteritems(*tfilter):
-					tbl.append((int(idx[0]), ipaddr.IPv4Address(idx[1]), phys._toBytes()))
+
+		try:
+			for idx, phys in self.snmp_ro.ipNetToPhysicalPhysAddress.iteritems(*tfilter):
+				if idx[1] == 1:
+					addr = ipaddr.IPv4Address(str(idx[2]))
+				elif idx[1] == 2:
+					addr = ipaddr.IPv6Address(str(idx[2]))
+				else:
+					continue
+				tbl.append((int(idx[0]), addr, phys._toBytes()))
+		except SNMPNoSuchObject:
+			for idx, phys in self.snmp_ro.ipNetToMediaPhysAddress.iteritems(*tfilter):
+				tbl.append((int(idx[0]), ipaddr.IPv4Address(idx[1]), phys._toBytes()))
+
 		return tbl
 
