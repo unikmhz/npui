@@ -7,7 +7,10 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 	requires: [
 		'Ext.mixin.Observable',
 		'NetProfile.data.SockJS',
-		'NetProfile.devices.grid.ProbeResults'
+		'NetProfile.window.CenterWindow',
+		'NetProfile.devices.grid.ProbeResults',
+		'NetProfile.devices.data.ProbeResultsModel',
+		'NetProfile.devices.data.ProbeResultsStore'
 	],
 
 	init: function()
@@ -24,6 +27,34 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 	},
 	onTaskResult: function(me, sock, ev)
 	{
+		var data = ev.data,
+			results, store, grid, win;
+
+		if(data.tname !== 'netprofile_devices.tasks.task_probe_hosts')
+			return false;
+		results = data.value;
+
+		if(!results || !results.length)
+		{
+			// FIXME: display error
+			return false;
+		}
+
+		store = Ext.create('NetProfile.devices.data.ProbeResultsStore', {
+		});
+
+		Ext.Array.forEach(results, function(res)
+		{
+			store.add(Ext.create('NetProfile.devices.data.ProbeResultsModel', res));
+		});
+
+		grid = Ext.create('NetProfile.devices.grid.ProbeResults', {
+			store: store
+		});
+		win = Ext.create('NetProfile.window.CenterWindow', {
+			items: [ grid ]
+		});
+		win.show();
 		return true;
 	}
 });
