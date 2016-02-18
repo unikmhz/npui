@@ -28,6 +28,7 @@ from __future__ import (
 	division
 )
 
+from pyramid.security import has_permission
 from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 
@@ -46,4 +47,13 @@ def _dpane_netdev_ifaces(tabs, model, req):
 		'extraParamProp'    : 'did',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
+
+@register_hook('np.model.actions.hosts.Host')
+def _action_probe_hosts(actions, req, model):
+	if has_permission('HOSTS_PROBE', req.context, req):
+		actions.append({
+			'iconCls' : 'ico-netmon',
+			'tooltip' : _('Probe this host'),
+			'itemId'  : 'probe'
+		})
 

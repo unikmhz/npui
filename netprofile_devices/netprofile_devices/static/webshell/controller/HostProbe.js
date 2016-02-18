@@ -5,6 +5,7 @@
 Ext.define('NetProfile.devices.controller.HostProbe', {
 	extend: 'Ext.app.Controller',
 	requires: [
+		'Ext.JSON',
 		'Ext.mixin.Observable',
 		'NetProfile.data.SockJS',
 		'NetProfile.window.CenterWindow',
@@ -25,7 +26,27 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 				taskresult: 'onTaskResult',
 				scope: me
 			});
+
+			me.control({
+				'grid_hosts_Host' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('hosts', [record.getId()]);
+					}
+				}
+			});
 		}
+	},
+	onProbe: function(type, ids)
+	{
+		if(!NetProfile.rtSocket)
+			return false; // FIXME: Print some error to console?
+
+		NetProfile.rtSocket.send(Ext.JSON.encode({
+			'type'  : 'task',
+			'tname' : 'netprofile_devices.tasks.task_probe_hosts',
+			'args'  : [type, ids]
+		}));
 	},
 	onTaskResult: function(me, sock, ev)
 	{
@@ -40,7 +61,7 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 		if(!results || !results.length)
 		{
 			// FIXME: display error
-			return false;
+			return true;
 		}
 
 		store = Ext.create('NetProfile.devices.data.ProbeResultsStore', {
