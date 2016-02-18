@@ -53,6 +53,7 @@ def task_probe_hosts(probe_type='hosts', probe_ids=()):
 	# TODO: support non-default probers
 	prober = tuple(pkg_resources.iter_entry_points('netprofile.devices.host_probers', default_prober))
 	if len(prober) == 0:
+		transaction.abort()
 		raise RuntimeError('Misconfigured default prober type.')
 	cls = prober[0].load()
 	prober = cls(cfg)
@@ -63,30 +64,35 @@ def task_probe_hosts(probe_type='hosts', probe_ids=()):
 	hm.run_hook('devices.probe_hosts', probe_type, probe_ids, cfg, hm, queries)
 
 	if len(queries) == 0:
+		transaction.abort()
 		raise ValueError('Invalid probe parameters specified.')
-	for q in queries:
-		for host, addrs in prober.probe(q).items():
-			for addr, result in addrs.items():
-				ipa = addr.address
-				if isinstance(ipa, ipaddr.IPv4Address):
-					addrtype = 'v4'
-				elif isinstance(ipa, ipaddr.IPv6Address):
-					addrtype = 'v6'
-				else:
-					continue
-				ret.append({
-					'hostid'   : host.id,
-					'host'     : str(host),
-					'addrid'   : addr.id,
-					'addrtype' : addrtype,
-					'addr'     : str(ipa),
-					'sent'     : result.sent,
-					'returned' : result.returned,
-					'min'      : result.min,
-					'max'      : result.max,
-					'avg'      : result.avg,
-					'detected' : result.detected
-				})
+	try:
+		for q in queries:
+			for host, addrs in prober.probe(q).items():
+				for addr, result in addrs.items():
+					ipa = addr.address
+					if isinstance(ipa, ipaddr.IPv4Address):
+						addrtype = 'v4'
+					elif isinstance(ipa, ipaddr.IPv6Address):
+						addrtype = 'v6'
+					else:
+						continue
+					ret.append({
+						'hostid'   : host.id,
+						'host'     : str(host),
+						'addrid'   : addr.id,
+						'addrtype' : addrtype,
+						'addr'     : str(ipa),
+						'sent'     : result.sent,
+						'returned' : result.returned,
+						'min'      : result.min,
+						'max'      : result.max,
+						'avg'      : result.avg,
+						'detected' : result.detected
+					})
+	except:
+		transaction.abort()
+		raise
 
 	transaction.abort()
 	return ret
