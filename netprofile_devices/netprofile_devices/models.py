@@ -1111,7 +1111,6 @@ class SimpleDevice(Device):
 	"""
 	Simple device.
 	"""
-
 	__tablename__ = 'devices_simple'
 	__table_args__ = (
 		Comment('Simple devices'),
@@ -1225,6 +1224,7 @@ class NetworkDevice(Device):
 	__tablename__ = 'devices_network'
 	__table_args__ = (
 		Comment('Network devices'),
+		Index('devices_network_u_hostid', 'hostid', unique=True),
 		Trigger('after', 'delete', 't_devices_network_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
