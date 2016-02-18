@@ -72,6 +72,7 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
+	VARBINARY,
 	text
 )
 
@@ -1475,6 +1476,18 @@ class NetworkDevice(Device):
 			'editor_xtype'  : 'passwordfield',
 			'read_cap'      : 'DEVICES_PASSWORDS',
 			'write_cap'     : 'DEVICES_PASSWORDS'
+		}
+	)
+	remote_id = Column(
+		'remoteid',
+		VARBINARY(134),
+		Comment('Binary agent remote ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Remote ID')
+			# xtype
 		}
 	)
 
