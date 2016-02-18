@@ -1542,9 +1542,11 @@ class ExtModel(object):
 	def extra_data(self):
 		return self.model.__table__.info.get('extra_data', ())
 
-	@property
-	def extra_actions(self):
-		return self.model.__table__.info.get('extra_actions', ())
+	def get_extra_actions(self, req):
+		extra = list(self.model.__table__.info.get('extra_actions', []))
+		req.run_hook('np.model.actions', extra, req, self)
+		req.run_hook('np.model.actions.%s.%s' % (self.model.__moddef__, self.name), extra, req, self)
+		return extra
 
 	def get_column(self, colname):
 		if isinstance(colname, PseudoColumn):
