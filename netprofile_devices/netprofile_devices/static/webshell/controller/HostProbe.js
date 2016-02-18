@@ -33,6 +33,36 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 					{
 						me.onProbe('hosts', [record.getId()]);
 					}
+				},
+				'grid_entities_Entity' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('entities', [record.getId()]);
+					}
+				},
+				'grid_entities_PhysicalEntity' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('entities', [record.getId()]);
+					}
+				},
+				'grid_entities_LegalEntity' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('entities', [record.getId()]);
+					}
+				},
+				'grid_entities_StructuralEntity' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('entities', [record.getId()]);
+					}
+				},
+				'grid_domains_Domain' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('domains', [record.getId()]);
+					}
 				}
 			});
 		}

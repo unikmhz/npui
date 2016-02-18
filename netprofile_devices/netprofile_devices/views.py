@@ -57,3 +57,24 @@ def _action_probe_hosts(actions, req, model):
 			'itemId'  : 'probe'
 		})
 
+@register_hook('np.model.actions.entities.Entity')
+@register_hook('np.model.actions.entities.PhysicalEntity')
+@register_hook('np.model.actions.entities.LegalEntity')
+@register_hook('np.model.actions.entities.StructuralEntity')
+def _action_probe_entities(actions, req, model):
+	if has_permission('HOSTS_PROBE', req.context, req):
+		actions.append({
+			'iconCls' : 'ico-netmon',
+			'tooltip' : _('Probe this entity'),
+			'itemId'  : 'probe'
+		})
+
+@register_hook('np.model.actions.domains.Domain')
+def _action_probe_domains(actions, req, model):
+	if has_permission('HOSTS_PROBE', req.context, req):
+		actions.append({
+			'iconCls' : 'ico-netmon',
+			'tooltip' : _('Probe this domain'),
+			'itemId'  : 'probe'
+		})
+

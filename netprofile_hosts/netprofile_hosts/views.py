@@ -95,4 +95,8 @@ def _dpane_domain_services(tabs, model, req):
 def _probe_query_hosts(probe_type, ids, cfg, hm, queries):
 	if probe_type == 'hosts':
 		queries.append(DBSession().query(Host).filter(Host.id.in_(ids)))
+	elif probe_type == 'entities':
+		queries.append(DBSession().query(Host).filter(Host.entity_id.in_(ids)))
+	elif probe_type == 'domains':
+		queries.append(DBSession().query(Host).filter(Host.domain_id.in_(ids)))
 
