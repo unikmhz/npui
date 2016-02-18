@@ -374,6 +374,11 @@ class Module(ModuleBase):
 			)
 			sess.add(media)
 
+	def get_local_js(self, request, lang):
+		return (
+			'netprofile_devices:static/webshell/locale/webshell-lang-' + lang + '.js',
+		)
+
 	def get_css(self, request):
 		return (
 			'netprofile_devices:static/css/main.css',

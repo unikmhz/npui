@@ -25,6 +25,10 @@ Ext.define('NetProfile.devices.grid.ProbeResults', {
 	stateText: 'State',
 	detailsText: 'Details',
 
+	hostUnreachableText: 'Host unreachable',
+	behindFirewallText: 'Host is behind a firewall',
+	hostDetailsTpl: '{0}/{1} min.:{2} avg.:{3} max.:{4}',
+
 	initComponent: function()
 	{
 		var me = this;
@@ -50,6 +54,8 @@ Ext.define('NetProfile.devices.grid.ProbeResults', {
 		}, {
 			name: 'details',
 			header: me.detailsText,
+			renderer: 'renderDetails',
+			scope: me,
 			flex: 3
 		}];
 
@@ -87,6 +93,29 @@ Ext.define('NetProfile.devices.grid.ProbeResults', {
 		return Ext.String.format(
 			'<img class="np-cap-icon" src="{0}/static/devices/img/probe_{1}.png" alt="{2}" title="{2}" />{2}',
 			NetProfile.staticURL, state_icon, state_text
+		);
+	},
+	renderDetails: function(value, meta, rec, rowidx, colidx, store, view)
+	{
+		var me = this,
+			detected = rec.get('detected'),
+			sent = rec.get('sent'),
+			returned = rec.get('returned'),
+			min = rec.get('min'),
+			max = rec.get('max'),
+			avg = rec.get('avg');
+
+		if(!detected)
+			return me.hostUnreachableText;
+		if((returned === 0) && (returned !== sent))
+			return me.behindFirewallText;
+
+		return Ext.String.format(
+			me.hostDetailsTpl,
+			returned, sent,
+			Ext.util.Format.number(min, '0.00#'),
+			Ext.util.Format.number(avg, '0.00#'),
+			Ext.util.Format.number(max, '0.00#')
 		);
 	}
 });
