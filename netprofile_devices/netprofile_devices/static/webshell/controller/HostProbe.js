@@ -13,6 +13,8 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 		'NetProfile.devices.data.ProbeResultsStore'
 	],
 
+	probeResultsText: 'Probe Results',
+
 	init: function()
 	{
 		var me = this;
@@ -27,7 +29,8 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 	},
 	onTaskResult: function(me, sock, ev)
 	{
-		var data = ev.data,
+		var me = this,
+			data = ev.data,
 			results, store, grid, win;
 
 		if(data.tname !== 'netprofile_devices.tasks.task_probe_hosts')
@@ -52,6 +55,10 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 			store: store
 		});
 		win = Ext.create('NetProfile.window.CenterWindow', {
+			title: me.probeResultsText,
+			iconCls: 'ico-netmon',
+			minWidth: 650,
+			width: 650,
 			items: [ grid ]
 		});
 		win.show();
