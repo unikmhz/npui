@@ -28,11 +28,7 @@ from __future__ import (
 )
 
 from pyramid.i18n import TranslationStringFactory
-
-from netprofile.db.connection import DBSession
 from netprofile.common.hooks import register_hook
-
-from .models import Host
 
 _ = TranslationStringFactory('netprofile_hosts')
 
@@ -90,13 +86,4 @@ def _dpane_domain_services(tabs, model, req):
 		'extraParamProp'    : 'domainid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
-
-@register_hook('devices.probe_hosts')
-def _probe_query_hosts(probe_type, ids, cfg, hm, queries):
-	if probe_type == 'hosts':
-		queries.append(DBSession().query(Host).filter(Host.id.in_(ids)))
-	elif probe_type == 'entities':
-		queries.append(DBSession().query(Host).filter(Host.entity_id.in_(ids)))
-	elif probe_type == 'domains':
-		queries.append(DBSession().query(Host).filter(Host.domain_id.in_(ids)))
 

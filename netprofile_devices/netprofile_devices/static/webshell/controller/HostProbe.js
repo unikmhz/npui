@@ -63,6 +63,36 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 					{
 						me.onProbe('domains', [record.getId()]);
 					}
+				},
+				'grid_geo_House' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('houses', [record.getId()]);
+					}
+				},
+				'grid_geo_Street' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('streets', [record.getId()]);
+					}
+				},
+				'grid_geo_District' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('districts', [record.getId()]);
+					}
+				},
+				'grid_geo_City' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('cities', [record.getId()]);
+					}
+				},
+				'grid_geo_HouseGroup' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('housegroups', [record.getId()]);
+					}
 				}
 			});
 		}
