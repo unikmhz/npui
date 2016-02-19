@@ -34,6 +34,7 @@ from sqlalchemy.orm import with_polymorphic
 from netprofile.db.connection import DBSession
 from netprofile.common.hooks import register_hook
 
+from .models import NetworkDevice
 from netprofile_hosts.models import Host
 from netprofile_entities.models import (
 	Address,
@@ -136,6 +137,15 @@ def _action_probe_housegroup(actions, req, model):
 			'itemId'  : 'probe'
 		})
 
+@register_hook('np.model.actions.geo.Place')
+def _action_probe_place(actions, req, model):
+	if has_permission('HOSTS_PROBE', req.context, req):
+		actions.append({
+			'iconCls' : 'ico-netmon',
+			'tooltip' : _('Probe network devices located here'),
+			'itemId'  : 'probe'
+		})
+
 @register_hook('devices.probe_hosts')
 def _probe_query_hosts(probe_type, ids, cfg, hm, queries):
 	if probe_type == 'hosts':
@@ -186,5 +196,10 @@ def _probe_query_hosts(probe_type, ids, cfg, hm, queries):
 			.join(House)\
 			.join(HouseGroupMapping)\
 			.filter(HouseGroupMapping.group_id.in_(ids))
+		)
+	elif probe_type == 'places':
+		queries.append(DBSession().query(Host)\
+			.join(NetworkDevice)\
+			.filter(NetworkDevice.place_id.in_(ids))
 		)
 

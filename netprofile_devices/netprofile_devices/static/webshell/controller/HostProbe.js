@@ -93,6 +93,12 @@ Ext.define('NetProfile.devices.controller.HostProbe', {
 					{
 						me.onProbe('housegroups', [record.getId()]);
 					}
+				},
+				'grid_geo_Place' : {
+					action_probe: function(grid, item, ev, record)
+					{
+						me.onProbe('places', [record.getId()]);
+					}
 				}
 			});
 		}
