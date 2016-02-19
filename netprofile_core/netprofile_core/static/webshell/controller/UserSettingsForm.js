@@ -1,6 +1,7 @@
 Ext.define('NetProfile.controller.UserSettingsForm', {
 	requires: [
 		'Ext.form.*',
+		'NetProfile.form.field.HardwareAddress',
 		'NetProfile.form.field.IPv4',
 		'NetProfile.form.field.IPv6',
 		'NetProfile.form.field.Money',

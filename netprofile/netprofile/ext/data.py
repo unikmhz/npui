@@ -61,6 +61,7 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
+	VARBINARY,
 	func,
 	or_
 )
@@ -174,6 +175,11 @@ _IPADDR_SET = (
 	IPv6Address
 )
 
+_BINARY_SET = (
+	LargeBinary,
+	VARBINARY
+)
+
 _NUMBER_SET = _INTEGER_SET + _FLOAT_SET + _DECIMAL_SET
 
 _COLUMN_XTYPE_MAP = {
@@ -218,6 +224,7 @@ _EDITOR_XTYPE_MAP = {
 	IPv4Address   : 'ipv4field',
 	IPv6Address   : 'ipv6field',
 	IPv6Offset    : 'numberfield',
+	MACAddress    : 'hwaddrfield',
 	Money         : 'moneyfield',
 	NPBoolean     : 'checkbox',
 	Numeric       : 'numberfield', # ?

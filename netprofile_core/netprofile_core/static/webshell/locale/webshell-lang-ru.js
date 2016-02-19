@@ -221,6 +221,10 @@ Ext.onReady(function()
 		override: 'NetProfile.form.field.IPv6',
 		invalidAddressText: 'Некорректный адрес IPv6'
 	});
+	Ext.define('Ext.locale.ru.NetProfile.form.field.HardwareAddress', {
+		override: 'NetProfile.form.field.HardwareAddress',
+		invalidAddressText: 'Некорректный аппаратный адрес'
+	});
 
 	Ext.define('Ext.locale.ru.NetProfile.panel.FileBrowser', {
 		override: 'NetProfile.panel.FileBrowser',

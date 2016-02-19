@@ -7,6 +7,7 @@ Ext.define('NetProfile.form.Panel', {
 	alias: 'widget.npform',
 	requires: [
 		'Ext.form.*',
+		'NetProfile.form.field.HardwareAddress',
 		'NetProfile.form.field.IPv4',
 		'NetProfile.form.field.IPv6',
 		'NetProfile.form.field.Money',
