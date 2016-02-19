@@ -31,6 +31,7 @@ from __future__ import (
 )
 
 from collections import defaultdict
+import binascii
 import json
 import traceback
 import datetime as dt
@@ -101,6 +102,8 @@ class JsonReprEncoder(json.JSONEncoder):
 			return tuple(obj.packed)
 		if isinstance(obj, decimal.Decimal):
 			return str(obj)
+		if isinstance(obj, bytes):
+			return binascii.hexlify(obj).decode()
 
 		return super(JsonReprEncoder, self).default(obj)
 

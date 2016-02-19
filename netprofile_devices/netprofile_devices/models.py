@@ -1261,6 +1261,7 @@ class NetworkDevice(Device):
 					'v3authproto', 'v3authpass',
 					'v3privproto', 'v3privpass',
 					'mgmttype', 'mgmtuser', 'mgmtpass', 'mgmtepass',
+					'remoteid',
 					'ctime', 'created_by',
 					'mtime', 'modified_by',
 					'itime', 'installed_by',
