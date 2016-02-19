@@ -48,7 +48,7 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return ('entities', 'hosts')
+		return ('entities', 'hosts', 'rates')
 
 	@classmethod
 	def get_models(cls):
@@ -74,7 +74,8 @@ class Module(ModuleBase):
 			models.NetworkDevice,
 
 			models.NetworkDeviceMediaType,
-			models.NetworkDeviceInterface
+			models.NetworkDeviceInterface,
+			models.NetworkDeviceBinding
 		)
 
 	@classmethod

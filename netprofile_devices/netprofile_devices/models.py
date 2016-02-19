@@ -51,6 +51,7 @@ __all__ = [
 
 	'NetworkDeviceMediaType',
 	'NetworkDeviceInterface',
+	'NetworkDeviceBinding',
 
 	'SNMPTypeField',
 	'SNMPV3SchemeField',
@@ -1488,7 +1489,6 @@ class NetworkDevice(Device):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Remote ID')
-			# xtype
 		}
 	)
 
@@ -1892,6 +1892,11 @@ class NetworkDeviceInterface(Base):
 			passive_deletes='all'
 		)
 	)
+	bindings = relationship(
+		'NetworkDeviceBinding',
+		backref=backref('interface', lazy='joined'),
+		passive_deletes=True
+	)
 
 	def __str__(self):
 		if self.device:
@@ -1900,4 +1905,202 @@ class NetworkDeviceInterface(Base):
 				str(self.name)
 			)
 		return str(self.name)
+
+class NetworkDeviceBinding(Base):
+	"""
+	Definition for customer binding to network device interface.
+	"""
+	__tablename__ = 'netdev_bindings'
+	__table_args__ = (
+		Comment('Network device interface bindings'),
+		Index('netdev_bindings_i_hostid', 'hostid'),
+		Index('netdev_bindings_i_did', 'did'),
+		Index('netdev_bindings_i_ifid', 'ifid'),
+		Index('netdev_bindings_i_index', 'index'),
+		Index('netdev_bindings_i_circuitid', 'circuitid'),
+		Index('netdev_bindings_i_att_did', 'att_did'),
+		Index('netdev_bindings_i_rateid', 'rateid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DEVICES',
+				'cap_read'      : 'DEVICES_LIST',
+				'cap_create'    : 'DEVICES_EDIT',
+				'cap_edit'      : 'DEVICES_EDIT',
+				'cap_delete'    : 'DEVICES_EDIT',
+
+				'menu_name'     : _('Bindings'),
+				'grid_view'     : ('ndbid', 'device', 'interface', 'host'),
+				'grid_hidden'   : ('ndbid',),
+				'form_view'     : (
+					'host', 'device',
+					'interface', 'index', 'circuitid',
+					'rate',
+					'att_cable', 'attached_device',
+					'descr'
+				),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new binding'))
+			}
+		}
+	)
+	id = Column(
+		'ndbid',
+		UInt32(),
+		Sequence('netdev_bindings_ndbid_seq'),
+		Comment('Network device binding ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	host_id = Column(
+		'hostid',
+		UInt32(),
+		ForeignKey('hosts_def.hostid', name='netdev_bindings_fk_hostid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Host ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Host'),
+			'filter_type'   : 'none',
+			'column_flex'   : 3
+		}
+	)
+	device_id = Column(
+		'did',
+		UInt32(),
+		ForeignKey('devices_network.did', name='netdev_bindings_fk_did', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Device ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Device'),
+			'filter_type'   : 'none',
+			'column_flex'   : 2
+		}
+	)
+	interface_id = Column(
+		'ifid',
+		UInt32(),
+		ForeignKey('netdev_ifaces.ifid', name='netdev_bindings_fk_ifid', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Network device interface ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Interface'),
+			'filter_type'   : 'none',
+			'column_flex'   : 2
+		}
+	)
+	index = Column(
+		UInt32(),
+		Comment('Interface SNMP ifIndex'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : 'ifIndex'
+		}
+	)
+	circuit_id = Column(
+		'circuitid',
+		VARBINARY(32),
+		Comment('Binary agent circuit ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Remote ID')
+		}
+	)
+	rate_id = Column(
+		'rateid',
+		UInt32(),
+		ForeignKey('rates_def.rateid', name='netdev_bindings_fk_rateid', onupdate='CASCADE'), # ondelete=RESTRICT
+		Comment('Optional rate ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Rate'),
+			'filter_type'   : 'nplist'
+		}
+	)
+	cable_length = Column(
+		'att_cable',
+		UInt32(),
+		Comment('Cable length (in meters)'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Cable Length')
+		}
+	)
+	attached_device_id = Column(
+		'att_did',
+		UInt32(),
+		ForeignKey('devices_network.did', name='netdev_bindings_fk_att_did', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Attached device ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Device'),
+			'filter_type'   : 'none'
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Network device binding description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	host = relationship(
+		'Host',
+		innerjoin=True,
+		backref=backref(
+			'interface_bindings',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+	device = relationship(
+		'NetworkDevice',
+		foreign_keys=device_id,
+		innerjoin=True,
+		backref=backref(
+			'interface_bindings',
+			cascade='all, delete-orphan',
+		)
+	)
+	rate = relationship(
+		'Rate',
+		backref=backref(
+			'interface_bindings',
+			passive_deletes='all'
+		)
+	)
+	attached_device = relationship(
+		'NetworkDevice',
+		foreign_keys=attached_device_id,
+		backref=backref(
+			'upstream_bindings',
+			passive_deletes=True
+		)
+	)
+
+	def __str__(self):
+		return '%s → %s' % (
+			str(self.interface),
+			str(self.host)
+		)
 

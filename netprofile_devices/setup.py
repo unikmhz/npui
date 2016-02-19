@@ -13,6 +13,7 @@ requires = [
 	'setuptools',
 	'netprofile_entities >= 0.3',
 	'netprofile_hosts >= 0.3',
+	'netprofile_rates >= 0.3',
 
 	'snimpy'
 ]
