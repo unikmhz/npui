@@ -594,6 +594,32 @@ Ext.require([
 		compatibility: '5.1.0.107',
 		checkChangeEvents: Ext.isIE ? ['change', 'propertychange', 'keyup'] : ['change', 'input', 'textInput', 'keyup', 'dragdrop']
 	});
+	Ext.define('Ext.overrides.bugfix.Editor', {
+		override: 'Ext.Editor',
+		initComponent: function()
+		{
+			var me = this,
+				field = me.field = Ext.ComponentManager.create(me.field || {}, 'textfield');
+
+			if(field.ownerCt)
+				field = me.field = field.cloneConfig();
+
+			field.msgTarget = field.msgTarget || 'qtip';
+			me.mon(field, {
+				scope: me,
+				specialkey: me.onSpecialKey
+			});
+
+			if(field.grow)
+				me.mon(field, 'autosize', me.onFieldAutosize,  me, {delay: 1});
+			me.floating = {
+				constrain: me.constrain
+			};
+			me.items = field;
+
+			me.callParent(arguments);
+		}
+	});
 
 	Ext.define('NetProfile.data.field.IPv4', {
 		extend: 'Ext.data.field.Field',

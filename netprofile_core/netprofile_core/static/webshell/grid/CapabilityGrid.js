@@ -153,7 +153,8 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 
 		this.plugins.push({
 			ptype: 'cellediting',
-			clicksToEdit: 1
+			pluginId: 'editcell',
+			triggerEvent: 'cellclick'
 		});
 
 		if(!this.store)
