@@ -47,7 +47,6 @@ from pyramid.httpexceptions import (
 )
 from pyramid.i18n import (
 	TranslationStringFactory,
-	get_localizer,
 	get_locale_name
 )
 from pyramid.response import (
@@ -97,10 +96,9 @@ def client_home(request):
 
 @notfound_view_config(vhost='client', renderer='netprofile_access:templates/client_error.mak')
 def client_notfound(request):
-	loc = get_localizer(request)
 	request.response.status_code = 404
 	tpldef = {
-		'error' : loc.translate(_('Page Not Found'))
+		'error' : request.localizer.translate(_('Page Not Found'))
 	}
 	request.run_hook('access.cl.tpldef', tpldef, request)
 	request.run_hook('access.cl.tpldef.error', tpldef, request)
@@ -108,11 +106,11 @@ def client_notfound(request):
 
 @forbidden_view_config(vhost='client', renderer='netprofile_access:templates/client_error.mak')
 def client_forbidden(request):
-	loc = get_localizer(request)
+	loc = request.localizer
 	if not authenticated_userid(request):
 		request.session.flash({
 			'class' : 'warning',
-			'text'  : loc.translate(_('You need to log in to access this page'))
+			'text'  : request.localizer.translate(_('You need to log in to access this page'))
 		})
 		return HTTPSeeOther(location=request.route_url('access.cl.login'))
 	request.response.status_code = 403
@@ -126,7 +124,7 @@ def client_forbidden(request):
 @view_config(route_name='access.cl.chpass', renderer='netprofile_access:templates/client_chpass.mak', permission='USAGE')
 def client_chpass(request):
 	cfg = request.registry.settings
-	loc = get_localizer(request)
+	loc = request.localizer
 	min_pwd_len = int(cfg.get('netprofile.client.registration.min_password_length', 8))
 	errors = {}
 	if 'submit' in request.POST:
@@ -282,7 +280,7 @@ def client_register(request):
 	if authenticated_userid(request):
 		return HTTPSeeOther(location=request.route_url('access.cl.home'))
 	cur_locale = locale_neg(request)
-	loc = get_localizer(request)
+	loc = request.localizer
 	cfg = request.registry.settings
 	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_reg = asbool(cfg.get('netprofile.client.registration.enabled', False))
@@ -474,7 +472,6 @@ def client_check_nick(request):
 		.filter(Entity.nick == str(login))\
 		.scalar()
 	if login_clash == 0:
-		loc = get_localizer(request)
 		ret['valid'] = True
 	return ret
 
@@ -539,7 +536,7 @@ def client_restorepass(request):
 		return HTTPSeeOther(location=request.route_url('access.cl.home'))
 	did_fail = True
 	cur_locale = locale_neg(request)
-	loc = get_localizer(request)
+	loc = request.localizer
 	cfg = request.registry.settings
 	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	can_rp = asbool(cfg.get('netprofile.client.password_recovery.enabled', False))
@@ -706,7 +703,7 @@ def _cl_tpldef(tpldef, req):
 	cfg = req.registry.settings
 	comb_js = asbool(cfg.get('netprofile.client.combine_js', False))
 	cur_locale = get_locale_name(req)
-	loc = get_localizer(req)
+	loc = req.localizer
 	menu = [{
 		'route' : 'access.cl.home',
 		'text'  : _('Portal')
@@ -730,7 +727,7 @@ def _cl_tpldef(tpldef, req):
 	permission='USAGE'
 )
 def client_chrate(ctx, request):
-	loc = get_localizer(request)
+	loc = request.localizer
 	csrf = request.POST.get('csrf', '')
 	rate_id = int(request.POST.get('rateid'), 0)
 	aent_id = int(request.POST.get('entityid'))
@@ -771,7 +768,7 @@ def _tpldef_list_accounts(tpldef, req):
 
 @register_hook('core.dpanetabs.access.AccessEntity')
 def _dpane_aent_mods(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.extend(({
 		'title'             : loc.translate(_('Rate Modifiers')),
 		'iconCls'           : 'ico-mod-ratemodifiertype',

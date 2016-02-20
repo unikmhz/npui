@@ -104,10 +104,7 @@ from netprofile.ext.wizards import (
 
 from netprofile.ext.data import ExtModel
 from netprofile.common.hooks import register_hook
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 from netprofile_entities.models import (
 	Entity,
@@ -486,10 +483,9 @@ class AccessEntity(Entity):
 	)
 
 	def access_state_string(self, req):
-		loc = get_localizer(req)
 		if self.access_state is None:
 			return None
-		return loc.translate(AccessState.from_string(self.access_state).description)
+		return req.localizer.translate(AccessState.from_string(self.access_state).description)
 
 	def grid_icon(self, req):
 		return req.static_url('netprofile_access:static/img/access.png')
@@ -1091,7 +1087,7 @@ class AccessEntityChange(Base):
 	)
 
 	def get_entity_history(self, req):
-		loc = get_localizer(req)
+		loc = req.localizer
 		eh = EntityHistory(
 			self.entity,
 			loc.translate(_('Access entity "%s" changed')) % (str(self.entity)),
