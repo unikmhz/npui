@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: High-level WebDAV support
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -49,8 +49,7 @@ from pyramid.security import (
 	Allow, Deny,
 	Everyone, Authenticated,
 	DENY_ALL,
-	authenticated_userid,
-	has_permission
+	authenticated_userid
 )
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload

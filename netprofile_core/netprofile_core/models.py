@@ -204,16 +204,11 @@ from pyramid.response import (
 	FileIter,
 	Response
 )
-from pyramid.threadlocal import get_current_request
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 from pyramid.security import (
 	Allow, Deny,
 	Everyone, Authenticated,
-	DENY_ALL,
-	has_permission
+	DENY_ALL
 )
 from zope.interface import implementer
 
@@ -390,10 +385,9 @@ class NPModule(Base):
 		return '%s' % str(self.name)
 
 	def get_tree_node(self, req, mod):
-		loc = get_localizer(req)
 		return {
 			'id'       : self.name,
-			'text'     : loc.translate(mod.name),
+			'text'     : req.localizer.translate(mod.name),
 			'leaf'     : False,
 			'expanded' : True,
 			'iconCls'  : 'ico-module'
@@ -639,8 +633,7 @@ def _validate_user_password(model, colname, values, req):
 	checkpw = secpol.check_new_password(req, user, newpwd, ts)
 	if checkpw is True:
 		return
-	loc = get_localizer(req)
-	return secpol_errors(checkpw, loc)
+	return secpol_errors(checkpw, req.localizer)
 
 def secpol_errors(checkpw, loc):
 	errors = []
@@ -3154,11 +3147,13 @@ class UserPhone(Base):
 	)
 
 	def __str__(self):
-		req = get_current_request()
-		loc = get_localizer(req)
+		loc = str
+		req = getattr(self, '__req__', None)
+		if req:
+			loc = req.localizer.translate
 
 		return '%s: %s' % (
-			loc.translate(PhoneType.prefix(self.type)),
+			loc(PhoneType.prefix(self.type)),
 			self.number
 		)
 
@@ -6553,10 +6548,9 @@ class UserSettingSection(Base):
 		return '%s' % str(self.name)
 
 	def get_tree_node(self, req):
-		loc = get_localizer(req)
 		return {
 			'id'      : 'ss' + str(self.id),
-			'text'    : loc.translate(_(self.name)),
+			'text'    : req.localizer.translate(_(self.name)),
 			'leaf'    : True,
 			'iconCls' : 'ico-cog'
 		}
