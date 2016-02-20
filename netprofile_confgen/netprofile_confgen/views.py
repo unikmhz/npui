@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Config Generation module - Views
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,19 +27,15 @@ from __future__ import (
 	division
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 
 _ = TranslationStringFactory('netprofile_confgen')
 
 @register_hook('core.dpanetabs.confgen.ServerType')
 def _dpane_srvtype_servers(tabs, model, req):
-	loc = get_localizer(req)
 	tabs.append({
-		'title'             : loc.translate(_('Servers')),
+		'title'             : req.localizer.translate(_('Servers')),
 		'iconCls'           : 'ico-mod-server',
 		'xtype'             : 'grid_confgen_Server',
 		'stateId'           : None,
@@ -51,9 +47,8 @@ def _dpane_srvtype_servers(tabs, model, req):
 
 @register_hook('core.dpanetabs.confgen.Server')
 def _dpane_srv_params(tabs, model, req):
-	loc = get_localizer(req)
 	tabs.append({
-		'title'             : loc.translate(_('Parameters')),
+		'title'             : req.localizer.translate(_('Parameters')),
 		'iconCls'           : 'ico-mod-serverparameter',
 		'xtype'             : 'grid_confgen_ServerParameter',
 		'stateId'           : None,
@@ -65,9 +60,10 @@ def _dpane_srv_params(tabs, model, req):
 
 @register_hook('core.dpanetabs.hosts.Host')
 def _dpane_district_streets(tabs, model, req):
-	loc = get_localizer(req)
+	if not req.has_permission('SRV_LIST'):
+		return
 	tabs.append({
-		'title'             : loc.translate(_('Servers')),
+		'title'             : req.localizer.translate(_('Servers')),
 		'iconCls'           : 'ico-mod-server',
 		'xtype'             : 'grid_confgen_Server',
 		'stateId'           : None,

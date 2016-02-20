@@ -63,10 +63,7 @@ from netprofile.ext.wizards import SimpleWizard
 from netprofile.db.ddl import Comment
 from netprofile.ext.columns import MarkupColumn
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_confgen')
 
