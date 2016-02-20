@@ -119,7 +119,6 @@ from netprofile.ext.columns import (
 )
 from netprofile.common import ipaddr
 from netprofile.tpl import TemplateObject
-from pyramid.security import has_permission
 from pyramid.i18n import (
 	TranslationString,
 	TranslationStringFactory,
@@ -595,7 +594,7 @@ class ExtColumn(object):
 		if cap:
 			return True
 		cap = self.read_cap
-		if cap and (not has_permission(cap, req.context, req)):
+		if cap and not req.has_permission(cap):
 			return True
 		return False
 
@@ -604,7 +603,7 @@ class ExtColumn(object):
 		if cap:
 			return True
 		cap = self.write_cap
-		if cap and (not has_permission(cap, req.context, req)):
+		if cap and not req.has_permission(cap):
 			return True
 		return False
 
@@ -2260,7 +2259,7 @@ class ExtModel(object):
 					fdef = col.get_editor_multivalue(request, fdef)
 				fields.append(fdef)
 		is_ro = False
-		if self.cap_edit and (not has_permission(self.cap_edit, request.context, request)):
+		if self.cap_edit and not request.has_permission(self.cap_edit):
 			is_ro = True
 		request.run_hook('np.fields.get', fields, request, self)
 		return {
@@ -2563,7 +2562,7 @@ class ExtBrowser(object):
 	def get_menu_data(self, request):
 		ret = []
 		for menu in self.mmgr.menu_generator(request):
-			if menu.perm and (not has_permission(menu.perm, request.context, request)):
+			if menu.perm and not request.has_permission(menu.perm):
 				continue
 			ret.append(menu)
 		return sorted(ret, key=lambda m: m.order)
@@ -2583,7 +2582,7 @@ class ExtBrowser(object):
 				em = extmodule[model]
 
 				cap = em.cap_menu
-				if cap and (not has_permission(cap, req.context, req)):
+				if cap and not req.has_permission(cap):
 					continue
 
 				item = em.get_menu_tree(req, name)

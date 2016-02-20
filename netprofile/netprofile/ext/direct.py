@@ -38,7 +38,6 @@ import datetime as dt
 import decimal
 from dateutil.tz import tzlocal
 
-from pyramid.security import has_permission
 from pyramid.view import render_view_to_response
 from pyramid.threadlocal import get_current_request
 from webob import Response
@@ -50,7 +49,6 @@ import venusian
 from netprofile.ext.data import ExtModel
 from netprofile.common.modules import IModuleManager
 from netprofile.common.hooks import register_hook
-from netprofile.common.factory import RootFactory
 from netprofile.common import ipaddr
 
 # form parameters sent by ExtDirect when using a form-submit
@@ -376,29 +374,17 @@ class ExtDirectRouter(object):
 
 		append_request = settings.get('request_as_last_param', False)
 		session_ok = True
-		permission_ok = True
+
+		if permission is not None:
+			permission_ok = request.has_permission(permission)
+		else:
+			permission_ok = request.has_permission('USAGE')
+
 		if session_checks:
 			if request.session.get('sess.pwage') in ('force', 'drop'):
 				session_ok = False
-		if hasattr(callback, '__self__'):
-			if isinstance(callback.__self__, ExtModel):
-				instance = callback.__self__
-				pinst = RootFactory(request)
-				if permission is not None:
-					permission_ok = has_permission(permission, pinst, request)
-				else:
-					permission_ok = has_permission('USAGE', pinst, request)
-				if append_request:
-					params.append(request)
-			else:
-				cls = callback.__self__.__class__
-				instance = cls(request)
-				params.insert(0, instance)
-				if permission is not None:
-					permission_ok = has_permission(permission, instance, request)
-				else:
-					permission_ok = has_permission('USAGE', pinst, request)
-		elif append_request:
+
+		if append_request:
 			params.append(request)
 
 		try:
