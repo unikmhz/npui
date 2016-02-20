@@ -617,7 +617,7 @@ Ext.require([
 			};
 			me.items = field;
 
-			me.callParent(arguments);
+			me.callSuper(arguments);
 		}
 	});
 
