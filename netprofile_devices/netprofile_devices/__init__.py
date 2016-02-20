@@ -375,6 +375,14 @@ class Module(ModuleBase):
 			)
 			sess.add(media)
 
+		mibs = ('IF-MIB', 'BRIDGE-MIB', 'P-BRIDGE-MIB', 'Q-BRIDGE-MIB', 'IP-MIB', 'LLDP-MIB')
+
+		for mib in mibs:
+			sess.add(models.DeviceTypeFlagType(
+				name='SNMP: %s' % (mib,),
+				description='Support for %s SNMP values and tables' % (mib,)
+			))
+
 	def get_local_js(self, request, lang):
 		return (
 			'netprofile_devices:static/webshell/locale/webshell-lang-' + lang + '.js',
