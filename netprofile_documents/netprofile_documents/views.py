@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Documents module - Views
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -34,7 +34,6 @@ from pyramid.i18n import (
 	TranslationStringFactory,
 	get_localizer
 )
-from pyramid.security import has_permission
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 from netprofile.ext.direct import extdirect_method
@@ -67,7 +66,7 @@ def _dpane_docbundle_documents(tabs, model, req):
 @register_hook('core.dpane.entities.ExternalEntity')
 @register_hook('core.dpane.entities.AccessEntity')
 def _dpane_make_doc(cont, model, req):
-	if not has_permission('DOCUMENTS_GENERATE', req.context, req):
+	if not req.has_permission('DOCUMENTS_GENERATE'):
 		return
 	loc = get_localizer(req)
 	button = {

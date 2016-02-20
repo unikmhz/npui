@@ -37,7 +37,6 @@ from collections import (
 from dateutil.parser import parse as dparse
 
 from pyramid.response import Response
-from pyramid.security import has_permission
 from pyramid.i18n import get_locale_name
 from pyramid.view import (
 	forbidden_view_config,
@@ -327,7 +326,7 @@ def data_export(request):
 	if model.export_view is None:
 		return HTTPForbidden()
 	rcap = model.cap_read
-	if rcap and (not has_permission(rcap, request.context, request)):
+	if rcap and not request.has_permission(rcap):
 		return HTTPForbidden()
 	csrf = request.POST.get('csrf')
 	fmt = request.POST.get('format')

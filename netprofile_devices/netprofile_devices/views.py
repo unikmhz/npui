@@ -28,7 +28,6 @@ from __future__ import (
 	division
 )
 
-from pyramid.security import has_permission
 from pyramid.i18n import TranslationStringFactory
 from sqlalchemy.orm import with_polymorphic
 from netprofile.db.connection import DBSession
@@ -101,7 +100,7 @@ def _dpane_host_bindings(tabs, model, req):
 
 @register_hook('np.model.actions.hosts.Host')
 def _action_probe_host(actions, req, model):
-	if has_permission('HOSTS_PROBE', req.context, req):
+	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
 			'tooltip' : _('Probe this host'),
@@ -113,7 +112,7 @@ def _action_probe_host(actions, req, model):
 @register_hook('np.model.actions.entities.LegalEntity')
 @register_hook('np.model.actions.entities.StructuralEntity')
 def _action_probe_entity(actions, req, model):
-	if has_permission('HOSTS_PROBE', req.context, req):
+	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
 			'tooltip' : _('Probe this entity\'s hosts'),
@@ -122,7 +121,7 @@ def _action_probe_entity(actions, req, model):
 
 @register_hook('np.model.actions.domains.Domain')
 def _action_probe_domain(actions, req, model):
-	if has_permission('HOSTS_PROBE', req.context, req):
+	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
 			'tooltip' : _('Probe hosts in this domain'),
@@ -131,7 +130,7 @@ def _action_probe_domain(actions, req, model):
 
 @register_hook('np.model.actions.geo.House')
 def _action_probe_house(actions, req, model):
-	if has_permission('HOSTS_PROBE', req.context, req):
+	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
 			'tooltip' : _('Probe hosts in this house'),
@@ -140,7 +139,7 @@ def _action_probe_house(actions, req, model):
 
 @register_hook('np.model.actions.geo.Street')
 def _action_probe_street(actions, req, model):
-	if has_permission('HOSTS_PROBE', req.context, req):
+	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
 			'tooltip' : _('Probe hosts on this street'),
@@ -149,7 +148,7 @@ def _action_probe_street(actions, req, model):
 
 @register_hook('np.model.actions.geo.District')
 def _action_probe_district(actions, req, model):
-	if has_permission('HOSTS_PROBE', req.context, req):
+	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
 			'tooltip' : _('Probe hosts in this district'),
@@ -158,7 +157,7 @@ def _action_probe_district(actions, req, model):
 
 @register_hook('np.model.actions.geo.City')
 def _action_probe_city(actions, req, model):
-	if has_permission('HOSTS_PROBE', req.context, req):
+	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
 			'tooltip' : _('Probe hosts in this city'),
@@ -167,7 +166,7 @@ def _action_probe_city(actions, req, model):
 
 @register_hook('np.model.actions.geo.HouseGroup')
 def _action_probe_housegroup(actions, req, model):
-	if has_permission('HOSTS_PROBE', req.context, req):
+	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
 			'tooltip' : _('Probe hosts in this house group'),
@@ -176,7 +175,7 @@ def _action_probe_housegroup(actions, req, model):
 
 @register_hook('np.model.actions.geo.Place')
 def _action_probe_place(actions, req, model):
-	if has_permission('HOSTS_PROBE', req.context, req):
+	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
 			'tooltip' : _('Probe network devices located here'),

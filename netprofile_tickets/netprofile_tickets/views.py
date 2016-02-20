@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -80,7 +80,6 @@ from pyramid.i18n import (
 	get_localizer
 )
 from netprofile.common.hooks import register_hook
-from pyramid.security import has_permission
 from pyramid.httpexceptions import (
 	HTTPForbidden,
 	HTTPSeeOther
@@ -254,15 +253,15 @@ def dyn_ticket_uwiz(params, request):
 	model = ExtModel(Ticket)
 	ch_model = ExtModel(TicketChange)
 	fields = []
-	if has_permission('ENTITIES_LIST', request.context, request):
+	if request.has_permission('ENTITIES_LIST'):
 		fields.append(ExternalWizardField(
 			model, 'entity',
 			value=ticket.entity,
 			extra_config={
-				'readOnly' : not bool(has_permission('TICKETS_CHANGE_ENTITY', request.context, request))
+				'readOnly' : not bool(request.has_permission('TICKETS_CHANGE_ENTITY'))
 			}
 		))
-	if has_permission('TICKETS_CHANGE_STATE', request.context, request):
+	if request.has_permission('TICKETS_CHANGE_STATE'):
 		for tr in ticket.state.transitionmap_to:
 			label = '<div class="np-xradiolabel"><div class="title">%s</div>%s</div>' % (
 				html_escape(tr.name, True),
@@ -280,25 +279,25 @@ def dyn_ticket_uwiz(params, request):
 			'columns'    : 1,
 			'items'      : trans
 		}))
-	if has_permission('TICKETS_CHANGE_FLAGS', request.context, request):
+	if request.has_permission('TICKETS_CHANGE_FLAGS'):
 		fields.append(ExternalWizardField(
 			model, 'flags',
 			value=ticket.flags
 		))
-	if has_permission('USERS_LIST', request.context, request):
+	if request.has_permission('USERS_LIST'):
 		fields.append(ExternalWizardField(
 			model, 'assigned_user',
 			value=ticket.assigned_user,
 			extra_config={
-				'readOnly' : not bool(has_permission('TICKETS_CHANGE_UID', request.context, request))
+				'readOnly' : not bool(request.has_permission('TICKETS_CHANGE_UID'))
 			}
 		))
-	if has_permission('GROUPS_LIST', request.context, request):
+	if request.has_permission('GROUPS_LIST'):
 		fields.append(ExternalWizardField(
 			model, 'assigned_group',
 			value=ticket.assigned_group,
 			extra_config={
-				'readOnly' : not bool(has_permission('TICKETS_CHANGE_GID', request.context, request))
+				'readOnly' : not bool(request.has_permission('TICKETS_CHANGE_GID'))
 			}
 		))
 	fields.extend((
@@ -311,7 +310,7 @@ def dyn_ticket_uwiz(params, request):
 				model, 'assigned_time',
 				value=ticket.assigned_time,
 				extra_config={
-					'readOnly' : not bool(has_permission('TICKETS_CHANGE_DATE', request.context, request))
+					'readOnly' : not bool(request.has_permission('TICKETS_CHANGE_DATE'))
 				}
 			),
 			ExtJSWizardField({
@@ -326,12 +325,12 @@ def dyn_ticket_uwiz(params, request):
 			model, 'archived',
 			value=ticket.archived,
 			extra_config={
-				'readOnly' : not bool(has_permission('TICKETS_ARCHIVAL', request.context, request))
+				'readOnly' : not bool(request.has_permission('TICKETS_ARCHIVAL'))
 			}
 		),
 		ExternalWizardField(ch_model, 'show_client', value=False)
 	))
-	if has_permission('TICKETS_COMMENT', request.context, request):
+	if request.has_permission('TICKETS_COMMENT'):
 		fields.append(ExternalWizardField(ch_model, 'comments'))
 	wiz = Wizard(Step(*fields), title=_('Update ticket'))
 	ret = {
@@ -355,10 +354,10 @@ def dyn_ticket_uwiz_update(params, request):
 			del params[param]
 
 #	TODO: ENTITIES_LIST
-	if not has_permission('TICKETS_CHANGE_STATE', request.context, request):
+	if not request.has_permission('TICKETS_CHANGE_STATE'):
 		if 'ttrid' in params:
 			del params['ttrid']
-	if not has_permission('TICKETS_CHANGE_FLAGS', request.context, request):
+	if not request.has_permission('TICKETS_CHANGE_FLAGS'):
 		if 'flags' in params:
 			del params['flags']
 #	TODO: USERS_LIST
@@ -384,7 +383,7 @@ def dyn_ticket_uwiz_update(params, request):
 	else:
 		show_cl = False
 	sess.execute(SetVariable('show_client', npbool(show_cl)))
-	if ('comments' in params) and has_permission('TICKETS_COMMENT', request.context, request):
+	if ('comments' in params) and request.has_permission('TICKETS_COMMENT', request.context, request):
 		sess.execute(SetVariable('comments', params['comments']))
 		del params['comments']
 	else:
@@ -471,13 +470,13 @@ _cal['cancreate'] = False
 
 @register_hook('core.calendar.calendars.read')
 def _cal_calendars(cals, params, req):
-	if not has_permission('TICKETS_LIST', req.context, req):
+	if not req.has_permission('TICKETS_LIST'):
 		return
 	cals.append(_cal)
 
 @register_hook('core.calendar.events.read')
 def _cal_events(evts, params, req):
-	if not has_permission('TICKETS_LIST', req.context, req):
+	if not req.has_permission('TICKETS_LIST'):
 		return
 	# TODO: fancy permissions/ACLs
 	ts_from = params.get('startDate')
@@ -522,7 +521,7 @@ def _cal_events_update(params, req):
 	if evtype != 'ticket':
 		return
 	evid = int(evid)
-	if not has_permission('TICKETS_UPDATE', req.context, req):
+	if not req.has_permission('TICKETS_UPDATE'):
 		return
 	# TODO: fancy permissions/ACLs
 	sess = DBSession()

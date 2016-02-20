@@ -21,7 +21,7 @@ requires = [
 	'transaction',
 
 	'waitress >= 0.7',
-	'pyramid >= 1.5a1',
+	'pyramid >= 1.5',
 	'pyramid_mako >= 0.3',
 	'pyramid_rpc >= 0.5.2',
 	'pyramid_debugtoolbar >= 1.0',
