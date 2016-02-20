@@ -1,6 +1,16 @@
+.ico-netmon   { background-image: url(../img/netmon.png) !important; }
+.ico-probe-error { background-image: url(../img/probe_error.png) !important; }
+.ico-probe-info  { background-image: url(../img/probe_info.png) !important; }
+.ico-probe-ok    { background-image: url(../img/probe_ok.png) !important; }
+.ico-probe-warn  { background-image: url(../img/probe_warning.png) !important; }
+
 .ico-mod-device, .ico-mod-devicetype               { background-image: url(../img/device.png) !important; }
 .ico-mod-simpledevice, .ico-mod-simpledevicetype   { background-image: url(../img/device_simple.png) !important; }
 .ico-mod-networkdevice, .ico-mod-networkdevicetype { background-image: url(../img/device_network.png) !important; }
+
+.ico-mod-networkdevicebinding   { background-image: url(../img/iface_binding.png) !important; }
+.ico-mod-networkdeviceinterface { background-image: url(../img/iface.png) !important; }
+.ico-mod-networkdevicemediatype { background-image: url(../img/iface_media.png) !important; }
 
 .ico-mod-deviceflagtype         { background-image: url(../img/device_flag.png) !important; }
 .ico-mod-devicetypeflagtype     { background-image: url(../img/device_type_flag.png) !important; }

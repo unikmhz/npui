@@ -27,6 +27,7 @@ from __future__ import (
 	division
 )
 
+import binascii
 import importlib
 import logging
 import decimal
@@ -43,6 +44,7 @@ from collections import (
 
 from sqlalchemy import (
 	BigInteger,
+	BINARY,
 	Boolean,
 	CHAR,
 	Date,
@@ -61,6 +63,7 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
+	VARBINARY,
 	func,
 	or_
 )
@@ -174,6 +177,12 @@ _IPADDR_SET = (
 	IPv6Address
 )
 
+_BINARY_SET = (
+	BINARY,
+	LargeBinary,
+	VARBINARY
+)
+
 _NUMBER_SET = _INTEGER_SET + _FLOAT_SET + _DECIMAL_SET
 
 _COLUMN_XTYPE_MAP = {
@@ -218,6 +227,8 @@ _EDITOR_XTYPE_MAP = {
 	IPv4Address   : 'ipv4field',
 	IPv6Address   : 'ipv6field',
 	IPv6Offset    : 'numberfield',
+	LargeBinary   : 'textareafield',
+	MACAddress    : 'hwaddrfield',
 	Money         : 'moneyfield',
 	NPBoolean     : 'checkbox',
 	Numeric       : 'numberfield', # ?
@@ -429,6 +440,8 @@ class ExtColumn(object):
 					if len(sym.description) > xlen:
 						xlen = len(sym.description)
 				return xlen
+			if issubclass(typecls, _BINARY_SET):
+				return self.column.type.length * 2
 			return self.column.type.length
 		except AttributeError:
 			if issubclass(typecls, Int8):
@@ -612,6 +625,12 @@ class ExtColumn(object):
 					return True
 				return False
 			return bool(param)
+		if issubclass(typecls, _BINARY_SET):
+			if isinstance(param, bytes):
+				return param
+			if isinstance(param, str):
+				return binascii.unhexlify(param)
+			return None
 		if issubclass(typecls, _DECIMAL_SET):
 			return decimal.Decimal(str(param))
 		if typecls is DeclEnumType:
@@ -1542,9 +1561,11 @@ class ExtModel(object):
 	def extra_data(self):
 		return self.model.__table__.info.get('extra_data', ())
 
-	@property
-	def extra_actions(self):
-		return self.model.__table__.info.get('extra_actions', ())
+	def get_extra_actions(self, req):
+		extra = list(self.model.__table__.info.get('extra_actions', []))
+		req.run_hook('np.model.actions', extra, req, self)
+		req.run_hook('np.model.actions.%s.%s' % (self.model.__moddef__, self.name), extra, req, self)
+		return extra
 
 	def get_column(self, colname):
 		if isinstance(colname, PseudoColumn):

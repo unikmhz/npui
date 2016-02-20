@@ -12,7 +12,10 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 requires = [
 	'setuptools',
 	'netprofile_entities >= 0.3',
-	'netprofile_hosts >= 0.3'
+	'netprofile_hosts >= 0.3',
+	'netprofile_rates >= 0.3',
+
+	'snimpy'
 ]
 
 setup(
@@ -51,10 +54,18 @@ setup(
 	zip_safe=False,
 	test_suite='netprofile_devices',
 	install_requires=requires,
-	entry_points="""\
-		[netprofile.modules]
-		devices = netprofile_devices:Module
-	""",
+	entry_points={
+		'netprofile.modules' : [
+			'devices = netprofile_devices:Module'
+		],
+		'netprofile.devices.handlers' : [
+			'default = netprofile_devices.handlers:NetworkDeviceHandler'
+		],
+		'netprofile.devices.host_probers' : [
+			'fping = netprofile_devices.probe:FPingProber',
+			'fping+arp = netprofile_devices.probe:FPingARPProber'
+		]
+	},
 	message_extractors={'.' : [
 		('**.py', 'python', None),
 		('**.pt', 'xml', None),

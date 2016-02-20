@@ -18,6 +18,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		'Ext.event.Event',
 		'NetProfile.grid.column.EnumColumn',
 		'NetProfile.form.field.DateTime',
+		'NetProfile.form.field.HardwareAddress',
 		'NetProfile.form.field.IPv4',
 		'NetProfile.form.field.IPv6',
 		'NetProfile.form.field.Money',
