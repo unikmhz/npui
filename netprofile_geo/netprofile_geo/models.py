@@ -750,11 +750,13 @@ class Place(Base):
 	)
 
 	def __str__(self):
-		fmt = _('#%s')
-		req = getattr(self, '__req__', None)
-		if req:
-			fmt = req.localizer.translate(fmt)
-		return fmt % (str(self.number),)
+		if self.number:
+			fmt = _('#%s')
+			req = getattr(self, '__req__', None)
+			if req:
+				fmt = req.localizer.translate(fmt)
+			return fmt % (str(self.number),)
+		return str(self.name)
 
 class HouseGroup(Base):
 	"""

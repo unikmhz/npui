@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Config Generation module - Tasks
-# © Copyright 2014-2015 Alex 'Unik' Unigovsky
+# © Copyright 2014-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 import logging
-import redis
 import transaction
 
 from pyramid.i18n import TranslationStringFactory
@@ -52,12 +51,10 @@ _ = TranslationStringFactory('netprofile_confgen')
 @app.task
 def task_generate(srv_ids=(), station_ids=()):
 	cfg = app.settings
-	rconf = make_config_dict(cfg, 'netprofile.rt.redis.')
 	factory = ConfigGeneratorFactory(cfg, app.mmgr)
 
 	ret = []
 	sess = DBSession()
-	rsess = redis.Redis(**rconf)
 	loc = sys_localizer(app.mmgr.cfg.registry)
 
 	q = sess.query(Server)
