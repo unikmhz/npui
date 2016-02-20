@@ -51,7 +51,7 @@ _ = TranslationStringFactory('netprofile_devices')
 @register_hook('core.dpanetabs.devices.NetworkDevice')
 def _dpane_netdev_ifaces(tabs, model, req):
 	loc = req.localizer
-	tabs.append({
+	tabs.extend(({
 		'title'             : loc.translate(_('Interfaces')),
 		'iconCls'           : 'ico-mod-networkdeviceinterface',
 		'xtype'             : 'grid_devices_NetworkDeviceInterface',
@@ -59,6 +59,43 @@ def _dpane_netdev_ifaces(tabs, model, req):
 		'stateful'          : False,
 		'hideColumns'       : ('device',),
 		'extraParamProp'    : 'did',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
+		'title'             : loc.translate(_('Bindings')),
+		'iconCls'           : 'ico-mod-networkdevicebinding',
+		'xtype'             : 'grid_devices_NetworkDeviceBinding',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('device',),
+		'extraParamProp'    : 'did',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}))
+
+@register_hook('core.dpanetabs.devices.NetworkDeviceInterface')
+def _dpane_iface_bindings(tabs, model, req):
+	loc = req.localizer
+	tabs.append({
+		'title'             : loc.translate(_('Bindings')),
+		'iconCls'           : 'ico-mod-networkdevicebinding',
+		'xtype'             : 'grid_devices_NetworkDeviceBinding',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('device', 'interface'),
+		'extraParamProp'    : 'ifid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
+@register_hook('core.dpanetabs.hosts.Host')
+def _dpane_host_bindings(tabs, model, req):
+	loc = req.localizer
+	tabs.append({
+		'title'             : loc.translate(_('Bindings')),
+		'iconCls'           : 'ico-mod-networkdevicebinding',
+		'xtype'             : 'grid_devices_NetworkDeviceBinding',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('host',),
+		'extraParamProp'    : 'hostid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
