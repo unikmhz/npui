@@ -99,10 +99,7 @@ from .models import (
 	secpol_errors
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_core')
 
@@ -341,7 +338,7 @@ def data_export(request):
 @extdirect_method('User', 'get_chpass_wizard', request_as_last_param=True, permission='USAGE', session_checks=False)
 def dyn_user_chpass_wizard(request):
 	sess = DBSession()
-	loc = get_localizer(request)
+	loc = request.localizer
 	model = ExtModel(User)
 	user = request.user
 	wiz = Wizard(
@@ -411,7 +408,7 @@ def dyn_user_chpass_submit(values, request):
 
 @register_hook('core.validators.ChangePassword')
 def dyn_user_chpass_validate(ret, values, request):
-	loc = get_localizer(request)
+	loc = request.localizer
 	errors = defaultdict(list)
 	user = request.user
 	cfg = request.registry.settings
@@ -479,13 +476,12 @@ def dpane_simple(model, request):
 	return cont
 
 def dpane_wide_content(model, request):
-	loc = get_localizer(request)
 	tabs = [{
 		'xtype'   : 'npform',
 		'iconCls' : 'ico-props',
 		'border'  : True,
 		'padding' : '4',
-		'title'   : loc.translate(_('Properties'))
+		'title'   : request.localizer.translate(_('Properties'))
 	}]
 	request.run_hook(
 		'core.dpanetabs.%s.%s' % (model.__parent__.moddef, model.name),
@@ -1195,20 +1191,20 @@ def dyn_acl_user_set(px, request):
 
 @register_hook('core.dpanetabs.core.Group')
 def _dpane_group_caps(tabs, model, req):
-	loc = get_localizer(req)
-	tabs.append({
-		'title'             : loc.translate(_('Privileges')),
-		'iconCls'           : 'ico-mod-privilege',
-		'xtype'             : 'capgrid',
-		'stateId'           : None,
-		'stateful'          : False,
-		'apiGet'            : 'NetProfile.api.Privilege.group_get',
-		'apiSet'            : 'NetProfile.api.Privilege.group_set'
-	})
+	if req.has_permission('GROUPS_GETCAP'):
+		tabs.append({
+			'title'             : req.localizer.translate(_('Privileges')),
+			'iconCls'           : 'ico-mod-privilege',
+			'xtype'             : 'capgrid',
+			'stateId'           : None,
+			'stateful'          : False,
+			'apiGet'            : 'NetProfile.api.Privilege.group_get',
+			'apiSet'            : 'NetProfile.api.Privilege.group_set'
+		})
 
 @register_hook('core.dpanetabs.core.User')
 def _dpane_user_caps(tabs, model, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	tabs.extend(({
 		'title'             : loc.translate(_('Phones')),
 		'iconCls'           : 'ico-mod-userphone',
@@ -1236,15 +1232,17 @@ def _dpane_user_caps(tabs, model, req):
 		'hideColumns'       : ('user',),
 		'extraParamProp'    : 'uid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	}, {
-		'title'             : loc.translate(_('Privileges')),
-		'iconCls'           : 'ico-mod-privilege',
-		'xtype'             : 'capgrid',
-		'stateId'           : None,
-		'stateful'          : False,
-		'apiGet'            : 'NetProfile.api.Privilege.user_get',
-		'apiSet'            : 'NetProfile.api.Privilege.user_set'
 	}))
+	if req.has_permission('USERS_GETCAP'):
+		tabs.append({
+			'title'             : loc.translate(_('Privileges')),
+			'iconCls'           : 'ico-mod-privilege',
+			'xtype'             : 'capgrid',
+			'stateId'           : None,
+			'stateful'          : False,
+			'apiGet'            : 'NetProfile.api.Privilege.user_get',
+			'apiSet'            : 'NetProfile.api.Privilege.user_set'
+		})
 
 _cal_serial = 1
 def generate_calendar(name, color):
@@ -1263,11 +1261,10 @@ def generate_calendar(name, color):
 @extdirect_method('Calendar', 'cal_read', request_as_last_param=True, permission='USAGE')
 def cals_read(params, req):
 	cals = []
-	loc = get_localizer(req)
 	req.run_hook('core.calendar.calendars.read', cals, params, req)
 	for cal in cals:
 		if 'title' in cal:
-			cal['title'] = loc.translate(cal['title'])
+			cal['title'] = req.localizer.translate(cal['title'])
 	sess = DBSession()
 	my_login = str(req.user)
 	for cal in sess.query(Calendar).filter(Calendar.user_id == req.user.id):
@@ -1501,7 +1498,7 @@ def _cal_events_delete(params, req):
 
 @register_hook('core.validators.ImportCalendar')
 def import_calendar_validator(ret, values, request):
-	loc = get_localizer(request)
+	loc = request.localizer
 	errors = defaultdict(list)
 	if ('caldef' not in values) or (values['caldef'][:5] != 'user-'):
 		errors['caldef'].append(loc.translate(_('Invalid calendar selected.')))
@@ -1528,7 +1525,7 @@ def import_calendar_validator(ret, values, request):
 def _menu_custom(name, menu, req, extb):
 	if name != 'modules':
 		return
-	loc = get_localizer(req)
+	loc = req.localizer
 	menu.append({
 		'leaf'     : False,
 		'expanded' : True,
