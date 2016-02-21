@@ -143,6 +143,124 @@ class DestinationMatchType(DeclEnum):
 	suffix = 'suffix', _('Suffix Match'),       30
 	regex  = 'regex',  _('Regular Expression'), 40
 
+# Taken from http://www.iana.org/assignments/radius-types/radius-types.xhtml
+# Section: "Values for RADIUS Attribute 61, NAS-Port-Type"
+_radattr_nas_port_type = {
+	0  : 'Async',
+	1  : 'Sync',
+	2  : 'ISDN Sync',
+	3  : 'ISDN Async V.120',
+	4  : 'ISDN Async V.110',
+	5  : 'Virtual - VPN/tunnel',
+	6  : 'PIAFS',
+	7  : 'HDLC Clear Channel',
+	8  : 'X.25',
+	9  : 'X.75',
+	10 : 'G.3 Fax',
+	11 : 'SDSL - Symmetric DSL',
+	12 : 'ADSL-CAP - ADSL, CAP mod.',
+	13 : 'ADSL-DMT - ADSL, DMT mod.',
+	14 : 'IDSL - ISDN Digital Subscriber Line',
+	15 : 'Ethernet',
+	16 : 'xDSL - Unspecified DSL',
+	17 : 'Cable',
+	18 : 'Wireless - Other',
+	19 : 'Wireless - IEEE 802.11',
+	20 : 'Token-Ring',
+	21 : 'FDDI',
+	22 : 'Wireless - CDMA2000',
+	23 : 'Wireless - UMTS',
+	24 : 'Wireless - 1X-EV',
+	25 : 'IAPP',
+	26 : 'FTTP - Fiber To The Premises',
+	27 : 'Wireless - IEEE 802.16',
+	28 : 'Wireless - IEEE 802.20',
+	29 : 'Wireless - IEEE 802.22',
+	30 : 'PPPoA - PPP over ATM',
+	31 : 'PPPoEoA - PPPoE over ATM',
+	32 : 'PPPoEoE - PPPoE over Ethernet',
+	33 : 'PPPoEoVLAN - PPPoE over VLAN',
+	34 : 'PPPoEoQinQ - PPPoE over IEEE 802.1QinQ',
+	35 : 'xPON - Passive Optical Network',
+	36 : 'Wireless - XGP',
+	37 : 'WiMAX Pre-Release 8 IWK function',
+	38 : 'WIMAX-WIFI-IWK: WiMAX WiFi Interworking',
+	39 : 'WIMAX-SFF: Signal Forward for LTE/3GPP2',
+	40 : 'WIMAX-HA-LMA: WiMAX HA/LMA function',
+	41 : 'WIMAX-DHCP: WiMAX DCHP service',
+	42 : 'WIMAX-LBS: WiMAX location based service',
+	43 : 'WIMAX-WVS: WiMAX voice service'
+}
+# Section: "Values for RADIUS Attribute 6, Service-Type"
+_radattr_service_type = {
+	1  : 'Login',
+	2  : 'Framed',
+	3  : 'Callback Login',
+	4  : 'Callback Framed',
+	5  : 'Outbound',
+	6  : 'Administrative',
+	7  : 'NAS Prompt',
+	8  : 'Authenticate Only',
+	9  : 'Callback NAS Prompt',
+	10 : 'Call Check',
+	11 : 'Callback Administrative',
+	12 : 'Voice',
+	13 : 'Fax',
+	14 : 'Modem Relay',
+	15 : 'IAPP-Register',
+	16 : 'IAPP-AP-Check',
+	17 : 'Authorize Only',
+	18 : 'Framed-Management',
+	19 : 'Additional-Authorization'
+}
+# Section: "Values for RADIUS Attribute 7, Framed-Protocol"
+# Note: values 9, 1008 are not assigned by IANA
+_radattr_framed_protocol = {
+	1 : 'PPP',
+	2 : 'SLIP',
+	3 : 'ARAP',
+	4 : 'Gandalf SingleLink/MultiLink',
+	5 : 'Xylogics IPX/SLIP',
+	6 : 'X.75 Synchronous',
+	7 : 'GPRS PDP Context',
+	9 : 'PPTP (non-standard)',
+	1008 : 'Dynamic ATM (non-standard)'
+}
+# Section: "Values for RADIUS Attribute 64, Tunnel-Type"
+_radattr_tunnel_type = {
+	1  : 'PPTP',
+	2  : 'L2F',
+	3  : 'L2TP',
+	4  : 'ATMP',
+	5  : 'VTP',
+	6  : 'IPsec AH tunnel mode',
+	7  : 'IP-IP encapsulation',
+	8  : 'Minimal IP-IP encapsulation',
+	9  : 'IPsec ESP tunnel mode',
+	10 : 'GRE',
+	11 : 'Bay DVS',
+	12 : 'IP-in-IP tunneling',
+	13 : 'VLAN'
+}
+# Section "Values for RADIUS Attribute 65, Tunnel-Medium-Type"
+_radattr_tunnel_medium_type = {
+	1  : 'IPv4',
+	2  : 'IPv6',
+	3  : 'NSAP',
+	4  : 'HDLC',
+	5  : 'BBN 1822',
+	6  : 'IEEE 802 - all types',
+	7  : 'E.163 - POTS',
+	8  : 'E.164 - SMDS, Frame Relay, ATM',
+	9  : 'F.69 - Telex',
+	10 : 'X.121 - X.25, Frame Relay',
+	11 : 'IPX',
+	12 : 'AppleTalk',
+	13 : 'Decnet IV',
+	14 : 'Banyan Vines',
+	15 : 'E.164 + NSAP subaddress'
+}
+
 class BillingPeriod(Base):
 	"""
 	Billing Periods definition
@@ -645,6 +763,7 @@ class Filter(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : 'NAS-Port-Type',
+			'choices'       : _radattr_nas_port_type,
 			'column_flex'   : 1
 		}
 	)
@@ -657,6 +776,7 @@ class Filter(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : 'Service-Type',
+			'choices'       : _radattr_service_type,
 			'column_flex'   : 1
 		}
 	)
@@ -669,6 +789,7 @@ class Filter(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : 'Framed-Protocol',
+			'choices'       : _radattr_framed_protocol,
 			'column_flex'   : 1
 		}
 	)
@@ -681,6 +802,7 @@ class Filter(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : 'Tunnel-Type',
+			'choices'       : _radattr_tunnel_type,
 			'column_flex'   : 1
 		}
 	)
@@ -693,6 +815,7 @@ class Filter(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : 'Tunnel-Medium-Type',
+			'choices'       : _radattr_tunnel_medium_type,
 			'column_flex'   : 1
 		}
 	)

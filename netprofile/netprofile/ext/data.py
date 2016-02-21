@@ -29,6 +29,7 @@ from __future__ import (
 
 import binascii
 import importlib
+import inspect
 import logging
 import decimal
 
@@ -68,12 +69,10 @@ from sqlalchemy import (
 	or_
 )
 
-from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm.interfaces import (
 	ONETOMANY,
-	MANYTOONE,
-	MANYTOMANY
+	MANYTOONE
 )
 from sqlalchemy.sql.functions import Function
 from sqlalchemy.orm.attributes import QueryableAttribute
@@ -83,6 +82,7 @@ from netprofile.db.fields import (
 	ASCIIString,
 	ASCIIText,
 	ASCIITinyText,
+	DeclEnum,
 	DeclEnumType,
 	EnumSymbol,
 	ExactUnicode,
@@ -585,9 +585,21 @@ class ExtColumn(object):
 	def write_cap(self):
 		return self.column.info.get('write_cap')
 
-	@property
-	def choices(self):
-		return self.column.info.get('choices')
+	def get_choices(self, req):
+		ch = self.column.info.get('choices')
+		if ch is None:
+			return None
+		if inspect.isclass(ch) and issubclass(ch, DeclEnum):
+			ret = dict()
+			for val in ch:
+				descr = val.description
+				if isinstance(descr, TranslationString):
+					descr = req.localizer.translate(descr)
+				ret[val.value] = descr
+			return ret
+		elif callable(ch):
+			ch = ch(self, req)
+		return ch
 
 	def get_secret_value(self, req):
 		cap = self.secret_value
@@ -734,10 +746,8 @@ class ExtColumn(object):
 		ed_xtype = self.editor_xtype
 		if ed_xtype is None:
 			return None
-		choices = self.choices
+		choices = self.get_choices(req)
 		if choices:
-			if callable(choices):
-				choices = choices(self, req)
 			ed_xtype = 'combobox'
 		if ed_xtype == 'combobox' and self.column.nullable:
 			ed_xtype = 'nullablecombobox'
@@ -1005,16 +1015,18 @@ class ExtColumn(object):
 			conf['filterable'] = False
 		else:
 			filter_conf = { 'type' : ftype }
-		if issubclass(typecls, _DECIMAL_SET):
-			conf.update({
-				'align'  : 'right',
-				'format' : ('0.00' if self.column.type.scale > 0 else '0')
-			})
-		if issubclass(typecls, _INTEGER_SET):
-			conf.update({
-				'align'  : 'right',
-				'format' : '0'
-			})
+		choices = self.get_choices(req)
+		if not choices:
+			if issubclass(typecls, _DECIMAL_SET):
+				conf.update({
+					'align'  : 'right',
+					'format' : ('0.00' if self.column.type.scale > 0 else '0')
+				})
+			if issubclass(typecls, _INTEGER_SET):
+				conf.update({
+					'align'  : 'right',
+					'format' : '0'
+				})
 		if issubclass(typecls, _DATE_SET):
 			def_width = 80
 			# FIXME: configurable formats
@@ -1044,10 +1056,7 @@ class ExtColumn(object):
 					'labelField' : 'value',
 					'options'    : chf
 				})
-		choices = self.choices
 		if choices:
-			if callable(choices):
-				choices = choices(self, req)
 			chx = {}
 			chf = []
 			for k, v in choices.items():
