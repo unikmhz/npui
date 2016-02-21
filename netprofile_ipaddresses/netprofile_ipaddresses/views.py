@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: IP addresses module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,17 +27,16 @@ from __future__ import (
 	division
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 
 _ = TranslationStringFactory('netprofile_ipaddresses')
 
 @register_hook('core.dpanetabs.hosts.Host')
 def _dpane_host_ipaddrs(tabs, model, req):
-	loc = get_localizer(req)
+	if not req.has_permission('IPADDR_LIST'):
+		return
+	loc = req.localizer
 	tabs.extend(({
 		'title'             : loc.translate(_('IPv4')),
 		'iconCls'           : 'ico-mod-ipv4address',
@@ -60,7 +59,9 @@ def _dpane_host_ipaddrs(tabs, model, req):
 
 @register_hook('core.dpanetabs.dialup.IPPool')
 def _dpane_pool_ipaddrs(tabs, model, req):
-	loc = get_localizer(req)
+	if not req.has_permission('IPADDR_LIST'):
+		return
+	loc = req.localizer
 	tabs.extend(({
 		'title'             : loc.translate(_('IPv4')),
 		'iconCls'           : 'ico-mod-ipv4address',

@@ -102,10 +102,7 @@ from netprofile_core.models import (
 	User
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 from netprofile_entities.models import (
 	Entity,
@@ -706,7 +703,6 @@ class TicketFile(Base):
 
 def _wizfld_ticket_state(fld, model, req, **kwargs):
 	sess = DBSession()
-	loc = get_localizer(req)
 	data = []
 	for ts in sess.query(TicketState).filter(TicketState.is_start == True).order_by('title', 'subtitle'):
 		data.append({
@@ -729,12 +725,11 @@ def _wizfld_ticket_state(fld, model, req, **kwargs):
 			'fields' : ('id', 'value'),
 			'data'   : data
 		},
-		'fieldLabel'     : loc.translate(_('State'))
+		'fieldLabel'     : req.localizer.translate(_('State'))
 	}
 
 def _wizfld_ticket_tpl(fld, model, req, **kwargs):
 	sess = DBSession()
-	loc = get_localizer(req)
 	data = []
 	for tpl in sess.query(TicketTemplate):
 		data.append({
@@ -757,7 +752,7 @@ def _wizfld_ticket_tpl(fld, model, req, **kwargs):
 			'fields' : ('id', 'value'),
 			'data'   : data
 		},
-		'fieldLabel'     : loc.translate(_('Template'))
+		'fieldLabel'     : req.localizer.translate(_('Template'))
 	}
 
 def _wizcb_ticket_submit(wiz, em, step, act, val, req):
@@ -1263,10 +1258,9 @@ class Ticket(Base):
 		return True
 
 	def get_entity_history(self, req):
-		loc = get_localizer(req)
 		eh = EntityHistory(
 			self.entity,
-			loc.translate(_('Ticket #%d Created: %s')) % (self.id, self.name),
+			req.localizer.translate(_('Ticket #%d Created: %s')) % (self.id, self.name),
 			self.creation_time,
 			None if (self.created_by is None) else str(self.created_by)
 		)
@@ -1727,10 +1721,9 @@ class TicketChange(Base):
 	)
 
 	def get_entity_history(self, req):
-		loc = get_localizer(req)
 		eh = EntityHistory(
 			self.ticket.entity,
-			loc.translate(_('Ticket #%d Changed: %s')) % (self.ticket_id, self.ticket.name),
+			req.localizer.translate(_('Ticket #%d Changed: %s')) % (self.ticket_id, self.ticket.name),
 			self.timestamp,
 			None if (self.user is None) else str(self.user)
 		)

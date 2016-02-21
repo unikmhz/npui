@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module - Views
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or

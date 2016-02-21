@@ -50,7 +50,6 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
-	func,
 	text
 )
 
@@ -58,8 +57,6 @@ from sqlalchemy.orm import (
 	backref,
 	relationship
 )
-
-from sqlalchemy.ext.associationproxy import association_proxy
 
 from netprofile.common.locale import (
 	money_format,
@@ -92,10 +89,7 @@ from netprofile.ext.wizards import (
 	Step,
 	Wizard
 )
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_stashes')
 

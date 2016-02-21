@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Sessions module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,10 +27,7 @@ from __future__ import (
 	division
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 import math
 import datetime as dt
@@ -55,7 +52,9 @@ _st = TranslationStringFactory('netprofile_stashes')
 
 @register_hook('core.dpanetabs.access.AccessEntity')
 def _dpane_access_sessions(tabs, model, req):
-	loc = get_localizer(req)
+	if not req.has_permission('SESSIONS_LIST'):
+		return
+	loc = req.localizer
 	tabs.extend(({
 		'title'             : loc.translate(_('Active Sessions')),
 		'iconCls'           : 'ico-mod-accesssession',
@@ -82,7 +81,7 @@ def _dpane_access_sessions(tabs, model, req):
 	permission='USAGE'
 )
 def client_sessions(ctx, request):
-	loc = get_localizer(request)
+	loc = request.localizer
 	page = int(request.params.get('page', 1))
 	# FIXME: make per_page configurable
 	per_page = 30

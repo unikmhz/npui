@@ -111,10 +111,7 @@ from netprofile_geo.filters import AddressFilter
 from netprofile import vobject
 
 from pyramid.threadlocal import get_current_request
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_geo')
 
@@ -629,8 +626,10 @@ class House(Base):
 		return res
 
 	def __str__(self):
-		req = get_current_request()
-		loc = get_localizer(req)
+		loc = str
+		req = getattr(self, '__req__', None)
+		if req:
+			loc = req.localizer.translate
 
 		l = [str(self.street), str(self.number)]
 		if self.number_suffix:
@@ -638,7 +637,7 @@ class House(Base):
 		if self.second_number:
 			l.append('/' + str(self.second_number))
 		if self.building:
-			l.append(loc.translate(_('bld.')))
+			l.append(loc(_('bld.')))
 			l.append(str(self.building))
 		return ' '.join(l)
 
@@ -1125,7 +1124,7 @@ class UserLocation(Base):
 
 	def __str__(self):
 		req = self.__req__ or get_current_request()
-		loc = get_localizer(req)
+		loc = req.localizer
 		locale_cur = req.current_locale
 		locale_en = req.locales['en']
 

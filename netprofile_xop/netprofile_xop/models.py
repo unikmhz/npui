@@ -36,16 +36,13 @@ import pkg_resources
 
 from sqlalchemy import (
 	Column,
-	FetchedValue,
 	ForeignKey,
 	Index,
-	Numeric,
 	PickleType,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
-	func,
 	text
 )
 
@@ -55,26 +52,18 @@ from sqlalchemy.orm import (
 	validates
 )
 
-from sqlalchemy.ext.associationproxy import association_proxy
-
 from netprofile.common.locale import money_format
 from netprofile.common.ipaddr import (
 	IPAddress,
 	IPNetwork
 )
-from netprofile.db.connection import (
-	Base,
-	DBSession
-)
+from netprofile.db.connection import Base
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
 	Money,
 	NPBoolean,
-	UInt8,
-	UInt16,
 	UInt32,
-	UInt64,
 	npbool
 )
 from netprofile.db.ddl import (
@@ -82,12 +71,8 @@ from netprofile.db.ddl import (
 	CurrentTimestampDefault,
 	Trigger
 )
-from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import SimpleWizard
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_xop')
 

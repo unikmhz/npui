@@ -35,16 +35,18 @@ _ = TranslationStringFactory('netprofile_hosts')
 @register_hook('core.dpanetabs.hosts.Host')
 def _dpane_host_services(tabs, model, req):
 	loc = req.localizer
-	tabs.extend(({
-		'title'             : loc.translate(_('Services')),
-		'iconCls'           : 'ico-mod-service',
-		'xtype'             : 'grid_hosts_Service',
-		'stateId'           : None,
-		'stateful'          : False,
-		'hideColumns'       : ('host',),
-		'extraParamProp'    : 'hostid',
-		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	}, {
+	if req.has_permission('SERVICES_LIST'):
+		tabs.append({
+			'title'             : loc.translate(_('Services')),
+			'iconCls'           : 'ico-mod-service',
+			'xtype'             : 'grid_hosts_Service',
+			'stateId'           : None,
+			'stateful'          : False,
+			'hideColumns'       : ('host',),
+			'extraParamProp'    : 'hostid',
+			'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+		})
+	tabs.append({
 		'title'             : loc.translate(_('Aliases')),
 		'iconCls'           : 'ico-mod-hostalias',
 		'xtype'             : 'grid_hosts_Host',
@@ -53,7 +55,7 @@ def _dpane_host_services(tabs, model, req):
 		'extraParamProp'    : 'aliasid',
 		'extraParamRelProp' : 'hostid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	}))
+	})
 
 @register_hook('core.dpanetabs.entities.Entity')
 @register_hook('core.dpanetabs.entities.PhysicalEntity')
@@ -61,9 +63,10 @@ def _dpane_host_services(tabs, model, req):
 @register_hook('core.dpanetabs.entities.StructuralEntity')
 @register_hook('core.dpanetabs.entities.ExternalEntity')
 def _dpane_entity_hosts(tabs, model, req):
-	loc = req.localizer
+	if not req.has_permission('HOSTS_LIST'):
+		return
 	tabs.append({
-		'title'             : loc.translate(_('Hosts')),
+		'title'             : req.localizer.translate(_('Hosts')),
 		'iconCls'           : 'ico-mod-host',
 		'xtype'             : 'grid_hosts_Host',
 		'stateId'           : None,
@@ -75,9 +78,8 @@ def _dpane_entity_hosts(tabs, model, req):
 
 @register_hook('core.dpanetabs.domains.Domain')
 def _dpane_domain_services(tabs, model, req):
-	loc = req.localizer
 	tabs.append({
-		'title'             : loc.translate(_('Services')),
+		'title'             : req.localizer.translate(_('Services')),
 		'iconCls'           : 'ico-mod-domainservice',
 		'xtype'             : 'grid_hosts_DomainService',
 		'stateId'           : None,

@@ -75,10 +75,7 @@ from .models import (
 
 from pyramid.view import view_config
 from pyramid.settings import asbool
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 from pyramid.httpexceptions import (
 	HTTPForbidden,
@@ -89,7 +86,7 @@ _ = TranslationStringFactory('netprofile_tickets')
 _a = TranslationStringFactory('netprofile_access')
 
 def dpane_tickets(model, request):
-	loc = get_localizer(request)
+	loc = request.localizer
 	tabs = [{
 		'title'          : loc.translate(_('Update')),
 		'iconCls'        : 'ico-ticket-update',
@@ -165,9 +162,10 @@ def dpane_tickets(model, request):
 @register_hook('core.dpanetabs.entities.LegalEntity')
 @register_hook('core.dpanetabs.entities.StructuralEntity')
 def _dpane_entity_tickets(tabs, model, req):
-	loc = get_localizer(req)
+	if not req.has_permission('TICKETS_LIST'):
+		return
 	tabs.append({
-		'title'             : loc.translate(_('Tickets')),
+		'title'             : req.localizer.translate(_('Tickets')),
 		'iconCls'           : 'ico-mod-ticket',
 		'xtype'             : 'grid_tickets_Ticket',
 		'stateId'           : None,
@@ -180,9 +178,10 @@ def _dpane_entity_tickets(tabs, model, req):
 # FIXME: use something more sane?
 @register_hook('core.dpanetabs.core.User')
 def _dpane_user_sched(tabs, model, req):
-	loc = get_localizer(req)
+	if not req.has_permission('TICKETS_CREATE'):
+		return
 	tabs.append({
-		'title'             : loc.translate(_('Scheduler')),
+		'title'             : req.localizer.translate(_('Scheduler')),
 		'iconCls'           : 'ico-mod-ticketscheduler',
 		'xtype'             : 'grid_tickets_TicketSchedulerUserAssignment',
 		'stateId'           : None,
@@ -195,9 +194,10 @@ def _dpane_user_sched(tabs, model, req):
 # FIXME: use something more sane?
 @register_hook('core.dpanetabs.core.Group')
 def _dpane_group_sched(tabs, model, req):
-	loc = get_localizer(req)
+	if not req.has_permission('TICKETS_CREATE'):
+		return
 	tabs.append({
-		'title'             : loc.translate(_('Scheduler')),
+		'title'             : req.localizer.translate(_('Scheduler')),
 		'iconCls'           : 'ico-mod-ticketscheduler',
 		'xtype'             : 'grid_tickets_TicketSchedulerGroupAssignment',
 		'stateId'           : None,
@@ -237,7 +237,7 @@ def _ent_hist_tickets(hist, ent, req, begin, end, max_num):
 def dyn_ticket_uwiz(params, request):
 	tid = int(params['ticketid'])
 	sess = DBSession()
-	loc = get_localizer(request)
+	loc = request.localizer
 	trans = [{
 		'name'       : 'ttrid',
 		'boxLabel'   : '<div class="np-xradiolabel"><div class="title">%s</div>%s</div>' % (
@@ -670,7 +670,7 @@ def client_issue_list(ctx, req):
 	renderer='netprofile_tickets:templates/client_create.mak'
 )
 def client_issue_new(ctx, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	cfg = req.registry.settings
 	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
 		raise HTTPForbidden(detail=_('Issues view is disabled'))
@@ -742,7 +742,7 @@ def client_issue_new(ctx, req):
 	renderer='netprofile_tickets:templates/client_append.mak'
 )
 def client_issue_append(ctx, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	cfg = req.registry.settings
 	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
 		raise HTTPForbidden(detail=_('Issues view is disabled'))
@@ -805,7 +805,7 @@ def client_issue_append(ctx, req):
 	renderer='netprofile_tickets:templates/client_view.mak'
 )
 def client_issue_view(ctx, req):
-	loc = get_localizer(req)
+	loc = req.localizer
 	cfg = req.registry.settings
 	if not asbool(cfg.get('netprofile.client.ticket.enabled', True)):
 		raise HTTPForbidden(detail=_('Issues view is disabled'))

@@ -70,10 +70,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.ext.associationproxy import association_proxy
 
 from netprofile.common.locale import money_format
-from netprofile.db.connection import (
-	Base,
-	DBSession
-)
+from netprofile.db.connection import Base
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
@@ -85,7 +82,6 @@ from netprofile.db.fields import (
 	UInt8,
 	UInt16,
 	UInt32,
-	UInt64,
 	npbool
 )
 from netprofile.db.ddl import (
@@ -100,11 +96,7 @@ from netprofile.db.ddl import (
 
 from netprofile.ext.wizards import SimpleWizard
 
-from pyramid.threadlocal import get_current_request
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_rates')
 
@@ -706,9 +698,11 @@ class Filter(Base):
 	)
 
 	def __str__(self):
-		req = get_current_request()
-		loc = get_localizer(req)
-		return loc.translate(_('Filter #%d')) % self.id
+		loc = str
+		req = getattr(self, '__req__', None)
+		if req:
+			loc = req.localizer.translate
+		return loc(_('Filter #%d')) % (self.id,)
 
 class Rate(Base):
 	"""

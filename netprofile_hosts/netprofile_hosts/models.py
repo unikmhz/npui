@@ -49,7 +49,6 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
-	func,
 	literal_column,
 	text
 )
@@ -58,8 +57,6 @@ from sqlalchemy.orm import (
 	backref,
 	relationship
 )
-
-from sqlalchemy.ext.associationproxy import association_proxy
 
 from netprofile.db.connection import (
 	Base,
@@ -70,7 +67,6 @@ from netprofile.db.fields import (
 	ASCIIText,
 	DeclEnum,
 	NPBoolean,
-	UInt8,
 	UInt16,
 	UInt32,
 	UInt64,
@@ -84,7 +80,6 @@ from netprofile.db.ddl import (
 	Trigger,
 	View
 )
-from netprofile.tpl import TemplateObject
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import (
 	SimpleWizard,
@@ -92,10 +87,7 @@ from netprofile.ext.wizards import (
 	Wizard
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 from netprofile_domains.models import ObjectVisibility
 

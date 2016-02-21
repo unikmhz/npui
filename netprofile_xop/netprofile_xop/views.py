@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: XOP module - Views
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2014-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,11 +27,7 @@ from __future__ import (
 	division
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
-
+from pyramid.i18n import TranslationStringFactory
 from pyramid.view import view_config
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPForbidden
@@ -50,9 +46,10 @@ _ = TranslationStringFactory('netprofile_xop')
 
 @register_hook('core.dpanetabs.stashes.Stash')
 def _dpane_stash_futures(tabs, model, req):
-	loc = get_localizer(req)
+	if not req.has_permission('STASHES_IO'):
+		return
 	tabs.append({
-		'title'             : loc.translate(_('External Operations')),
+		'title'             : req.localizer.translate(_('External Operations')),
 		'iconCls'           : 'ico-mod-externaloperation',
 		'xtype'             : 'grid_xop_ExternalOperation',
 		'stateId'           : None,

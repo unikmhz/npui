@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module - Views
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,10 +27,7 @@ from __future__ import (
 	division
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 import math
 import datetime as dt
@@ -38,10 +35,7 @@ from dateutil.parser import parse as dparse
 from dateutil.relativedelta import relativedelta
 
 from pyramid.view import view_config
-from pyramid.httpexceptions import (
-	HTTPForbidden,
-	HTTPSeeOther
-)
+from pyramid.httpexceptions import HTTPSeeOther
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -64,9 +58,10 @@ _ = TranslationStringFactory('netprofile_stashes')
 @register_hook('core.dpanetabs.entities.StructuralEntity')
 @register_hook('core.dpanetabs.entities.ExternalEntity')
 def _dpane_entity_stashes(tabs, model, req):
-	loc = get_localizer(req)
+	if not req.has_permission('STASHES_LIST'):
+		return
 	tabs.append({
-		'title'             : loc.translate(_('Stashes')),
+		'title'             : req.localizer.translate(_('Stashes')),
 		'iconCls'           : 'ico-mod-stash',
 		'xtype'             : 'grid_stashes_Stash',
 		'stateId'           : None,
@@ -77,32 +72,30 @@ def _dpane_entity_stashes(tabs, model, req):
 	})
 
 @register_hook('core.dpanetabs.stashes.Stash')
-def _dpane_stash_futures(tabs, model, req):
-	loc = get_localizer(req)
-	tabs.append({
-		'title'             : loc.translate(_('Promised Payments')),
-		'iconCls'           : 'ico-mod-stashio',
-		'xtype'             : 'grid_stashes_FuturePayment',
-		'stateId'           : None,
-		'stateful'          : False,
-		'hideColumns'       : ('stash',),
-		'extraParamProp'    : 'stashid',
-		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	})
-
-@register_hook('core.dpanetabs.stashes.Stash')
-def _dpane_stash_ios(tabs, model, req):
-	loc = get_localizer(req)
-	tabs.append({
-		'title'             : loc.translate(_('Operations')),
-		'iconCls'           : 'ico-mod-stashio',
-		'xtype'             : 'grid_stashes_StashIO',
-		'stateId'           : None,
-		'stateful'          : False,
-		'hideColumns'       : ('stash',),
-		'extraParamProp'    : 'stashid',
-		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	})
+def _dpane_stash_tabs(tabs, model, req):
+	loc = req.localizer
+	if req.has_permission('STASHES_IO'):
+		tabs.append({
+			'title'             : loc.translate(_('Operations')),
+			'iconCls'           : 'ico-mod-stashio',
+			'xtype'             : 'grid_stashes_StashIO',
+			'stateId'           : None,
+			'stateful'          : False,
+			'hideColumns'       : ('stash',),
+			'extraParamProp'    : 'stashid',
+			'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+		})
+	if req.has_permission('FUTURES_LIST'):
+		tabs.append({
+			'title'             : loc.translate(_('Promised Payments')),
+			'iconCls'           : 'ico-mod-stashio',
+			'xtype'             : 'grid_stashes_FuturePayment',
+			'stateId'           : None,
+			'stateful'          : False,
+			'hideColumns'       : ('stash',),
+			'extraParamProp'    : 'stashid',
+			'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+		})
 
 class ClientRootFactory(RootFactory):
 	def __getitem__(self, name):
@@ -141,7 +134,6 @@ class ClientRootFactory(RootFactory):
 	renderer='netprofile_stashes:templates/client_stashes.mak'
 )
 def client_list(ctx, request):
-	loc = get_localizer(request)
 	tpldef = {
 		'stashes' : None,
 		'sname'   : None
@@ -150,7 +142,7 @@ def client_list(ctx, request):
 		tpldef['sname'] = ctx.name
 		tpldef['stashes'] = (ctx,)
 		tpldef['crumbs'] = [{
-			'text' : loc.translate(_('My Accounts')),
+			'text' : request.localizer.translate(_('My Accounts')),
 			'url'  : request.route_url('stashes.cl.accounts', traverse=())
 		}, {
 			'text' : ctx.name
@@ -169,7 +161,7 @@ def client_list(ctx, request):
 	permission='USAGE'
 )
 def client_promise(ctx, request):
-	loc = get_localizer(request)
+	loc = request.localizer
 	csrf = request.POST.get('csrf', '')
 	diff = request.POST.get('diff', '')
 
@@ -214,7 +206,7 @@ def client_promise(ctx, request):
 	permission='USAGE'
 )
 def client_ops(ctx, request):
-	loc = get_localizer(request)
+	loc = request.localizer
 	page = int(request.params.get('page', 1))
 	# FIXME: make per_page configurable
 	per_page = 30
