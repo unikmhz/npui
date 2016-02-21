@@ -86,6 +86,8 @@ def _dpane_iface_bindings(tabs, model, req):
 
 @register_hook('core.dpanetabs.hosts.Host')
 def _dpane_host_bindings(tabs, model, req):
+	if not req.has_permission('DEVICES_LIST'):
+		return
 	loc = req.localizer
 	tabs.append({
 		'title'             : loc.translate(_('Bindings')),

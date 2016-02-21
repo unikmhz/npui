@@ -15,7 +15,7 @@ requires = [
 	'netprofile_hosts >= 0.3',
 	'netprofile_rates >= 0.3',
 
-	'snimpy'
+	'snimpy >= 0.8.10'
 ]
 
 setup(
