@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Dial-Up module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -98,7 +98,6 @@ class NAS(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'nasid',
 		UInt32(),
@@ -153,7 +152,6 @@ class IPPool(Base):
 	"""
 	IP Address Pools
 	"""
-
 	__tablename__ = 'ippool_def'
 	__table_args__ = (
 		Comment('IP address pools'),
@@ -179,7 +177,6 @@ class IPPool(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'poolid',
 		UInt32(),
@@ -253,7 +250,6 @@ class NASPool(Base):
 	"""
 	NAS IP Pools
 	"""
-
 	__tablename__ = 'nas_pools'
 	__table_args__ = (
 		Comment('NAS IP pools'),
@@ -264,7 +260,7 @@ class NASPool(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_ADMIN',
-				'cap_read'      : 'NAS_EDIT',
+				'cap_read'      : 'NAS_LIST',
 				'cap_create'    : 'NAS_EDIT',
 				'cap_edit'      : 'NAS_EDIT',
 				'cap_delete'    : 'NAS_EDIT',
@@ -277,7 +273,6 @@ class NASPool(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'npid',
 		UInt32(),

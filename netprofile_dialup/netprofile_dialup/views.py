@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Dial-Up module - Views
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,25 +27,36 @@ from __future__ import (
 	division
 )
 
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 
 _ = TranslationStringFactory('netprofile_dialup')
 
 @register_hook('core.dpanetabs.dialup.NAS')
 def _dpane_nas_pools(tabs, model, req):
-	loc = get_localizer(req)
 	tabs.append({
-		'title'             : loc.translate(_('Pools')),
+		'title'             : req.localizer.translate(_('Pools')),
 		'iconCls'           : 'ico-mod-naspool',
 		'xtype'             : 'grid_dialup_NASPool',
 		'stateId'           : None,
 		'stateful'          : False,
 		'hideColumns'       : ('nas',),
 		'extraParamProp'    : 'nasid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	})
+
+@register_hook('core.dpanetabs.dialup.IPPool')
+def _dpane_ippool_pools(tabs, model, req):
+	if not req.has_permission('NAS_LIST'):
+		return
+	tabs.append({
+		'title'             : req.localizer.translate(_('NASes')),
+		'iconCls'           : 'ico-mod-naspool',
+		'xtype'             : 'grid_dialup_NASPool',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('pool',),
+		'extraParamProp'    : 'poolid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	})
 
