@@ -30,26 +30,19 @@ from __future__ import (
 from pyramid.view import (
 	view_config
 )
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 from netprofile.ext.direct import extdirect_method
 
-from .models import (
-	Document,
-	DocumentType
-)
+from .models import Document
 
 _ = TranslationStringFactory('netprofile_documents')
 
 @register_hook('core.dpanetabs.documents.DocumentBundle')
 def _dpane_docbundle_documents(tabs, model, req):
-	loc = get_localizer(req)
 	tabs.append({
-		'title'             : loc.translate(_('Contents')),
+		'title'             : req.localizer.translate(_('Contents')),
 		'iconCls'           : 'ico-mod-document',
 		'xtype'             : 'grid_documents_DocumentBundleMapping',
 		'stateId'           : None,
@@ -68,7 +61,7 @@ def _dpane_docbundle_documents(tabs, model, req):
 def _dpane_make_doc(cont, model, req):
 	if not req.has_permission('DOCUMENTS_GENERATE'):
 		return
-	loc = get_localizer(req)
+	loc = req.localizer
 	button = {
 		'text'    : loc.translate(_('Documents')),
 		'iconCls' : 'ico-print',

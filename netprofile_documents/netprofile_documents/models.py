@@ -51,10 +51,7 @@ from sqlalchemy.orm import (
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from netprofile.db.connection import (
-	Base,
-	DBSession
-)
+from netprofile.db.connection import Base
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
@@ -65,10 +62,7 @@ from netprofile.db.fields import (
 )
 from netprofile.db.ddl import Comment
 from netprofile.ext.wizards import SimpleWizard
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
+from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_documents')
 
