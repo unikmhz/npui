@@ -239,7 +239,10 @@ class ModuleManager(object):
 			return False
 		if not self.is_installed(req, DBSession()):
 			if moddef != 'core':
-				logger.error('Can\'t load uninstalled module \'%s\'. Please install it first.', moddef)
+				logger.error(
+					'Can\'t load uninstalled/obsolete module \'%s\'. Please install/upgrade it first.',
+					moddef
+				)
 			return False
 		mstack.append(moddef)
 		try:
@@ -280,18 +283,20 @@ class ModuleManager(object):
 			self._import_model(moddef, model, mb, hm)
 		return True
 
-	def load(self, moddef):
+	def load(self, req):
 		"""
 		Load previously discovered module.
 		"""
 		mstack = []
-		return self._load(Requirement(moddef), mstack)
+		if not isinstance(req, Requirement):
+			req = Requirement(req)
+		return self._load(req, mstack)
 
 	def unload(self, moddef):
 		"""
 		Unload currently active module.
 		"""
-		pass
+		raise NotImplementedError
 
 	def enable(self, moddef):
 		"""
@@ -323,7 +328,7 @@ class ModuleManager(object):
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
 		if moddef in self.loaded:
-			if not self.upload(moddef):
+			if not self.unload(moddef):
 				logger.error('Can\'t unload module \'%s\'.', moddef)
 				return False
 		sess = DBSession()
@@ -375,45 +380,52 @@ class ModuleManager(object):
 			return False
 		return True
 
-	# TODO: convert this to req
 	def is_installed(self, req, sess):
 		"""
 		Check if a module is installed.
 		"""
-		if isinstance(req, str):
+		if not isinstance(req, Requirement):
 			req = Requirement(req)
 		moddef = req.name
 		modspec = req.specifier
 		if ('core' not in self.loaded) and (moddef != 'core'):
 			return False
 		if moddef in self.loaded:
-			return True
+			return self.loaded[moddef].version() in modspec
 
 		if self.installed is None:
 			try:
 				from netprofile_core.models import NPModule
 			except ImportError:
 				return False
-			self.installed = set()
+			self.installed = dict()
 
 			try:
 				for mod in sess.query(NPModule):
-					self.installed.add(mod.name)
+					self.installed[mod.name] = parse(mod.current_version)
 			except ProgrammingError:
 				return False
 
-		return moddef in self.installed
+		if moddef not in self.installed:
+			return False
+		return self.installed[moddef] in modspec
 
-	def install(self, moddef, sess):
+	# TODO: add circular dependency checking, like we do in _load()
+	def install(self, req, sess):
 		"""
 		Run module's installation hooks and register the module in DB.
 		"""
 		from netprofile_core.models import NPModule
 
+		if not isinstance(req, Requirement):
+			req = Requirement(req)
+		moddef = req.name
+		modspec = req.specifier
 		if ('core' not in self.loaded) and (moddef != 'core'):
 			raise ModuleError('Unable to install anything prior to loading core module.')
-		if self.is_installed(moddef, sess):
+		if self.is_installed(req, sess):
 			return False
+		# TODO: check if we need upgrade instead
 
 		ep = None
 		if moddef in self.modules:
@@ -437,19 +449,26 @@ class ModuleManager(object):
 		except ImportError as e:
 			raise ModuleError('Can\'t locate ModuleBase class for module \'%s\'.' % (moddef,)) from e
 
+		modv = getattr(modcls, 'version', None)
+		if callable(modv):
+			modversion = modv()
+		else:
+			modversion = parse('0')
+		if modversion not in modspec:
+			raise ModuleError('Module \'%s\' version %s can\'t satisfy requirements: %s.' % (
+				moddef, str(modversion), str(modspec)
+			))
+
 		get_deps = getattr(modcls, 'get_deps', None)
 		if callable(get_deps):
 			for dep in get_deps():
-				if not self.is_installed(dep, sess):
-					self.install(dep, sess)
+				depreq = Requirement(dep)
+				if not self.is_installed(depreq, sess):
+					self.install(depreq, sess)
 
 		modprep = getattr(modcls, 'prepare', None)
 		if callable(modprep):
 			modprep()
-		modversion = '0'
-		modv = getattr(modcls, 'version', None)
-		if callable(modv):
-			modversion = str(modv())
 
 		get_models = getattr(modcls, 'get_models', None)
 		if callable(get_models):
@@ -468,7 +487,7 @@ class ModuleManager(object):
 
 		modobj = NPModule(id=None)
 		modobj.name = moddef
-		modobj.current_version = modversion
+		modobj.current_version = str(modversion)
 		if moddef == 'core':
 			modobj.enabled = True
 		sess.add(modobj)
@@ -483,8 +502,8 @@ class ModuleManager(object):
 			mod_install(sess)
 
 		if self.installed is None:
-			self.installed = set()
-		self.installed.add(moddef)
+			self.installed = dict()
+		self.installed[moddef] = modversion
 		transaction.commit()
 
 		get_sql_events = getattr(modcls, 'get_sql_events', None)
@@ -497,15 +516,19 @@ class ModuleManager(object):
 			self.load('core')
 		return True
 
-	def uninstall(self, moddef, sess):
+	def uninstall(self, req, sess):
 		"""
 		Unregister the module from DB and run module's uninstallation hooks.
 		"""
 		from netprofile_core.models import NPModule
 
+		if not isinstance(req, Requirement):
+			req = Requirement(req)
+		moddef = req.name
+		modspec = req.specifier
 		if ('core' not in self.loaded) and (moddef != 'core'):
 			raise ModuleError('Unable to uninstall anything prior to loading core module.')
-		if not self.is_installed(moddef, sess):
+		if not self.is_installed(req, sess):
 			return False
 
 		mod_uninstall = getattr(modcls, 'uninstall', None)
