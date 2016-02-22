@@ -1566,8 +1566,10 @@ class PhysicalEntity(Entity):
 		ret['addrs'] = []
 		ret['phones'] = []
 		for obj in self.addresses:
+			obj.__req__ = req
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
+			obj.__req__ = req
 			ret['phones'].append(obj.data)
 		return ret
 
@@ -1878,8 +1880,10 @@ class LegalEntity(Entity):
 		ret['addrs'] = []
 		ret['phones'] = []
 		for obj in self.addresses:
+			obj.__req__ = req
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
+			obj.__req__ = req
 			ret['phones'].append(obj.data)
 		return ret
 
@@ -1968,15 +1972,16 @@ class StructuralEntity(Entity):
 		}
 	)
 
-	@property
-	def data(self):
+	def data(self, req):
 		ret = super(StructuralEntity, self).data
 
 		ret['addrs'] = []
 		ret['phones'] = []
 		for obj in self.addresses:
+			obj.__req__ = req
 			ret['addrs'].append(str(obj))
 		for obj in self.phones:
+			obj.__req__ = req
 			ret['phones'].append(obj.data)
 		return ret
 
