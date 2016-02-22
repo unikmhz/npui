@@ -223,7 +223,10 @@ class ModuleManager(object):
 		"""
 		moddef = req.name
 		modspec = req.specifier
-		if (moddef in self.loaded) or (moddef in mstack):
+		if moddef in mstack:
+			# Try to prevent circular deps.
+			return True
+		if moddef in self.loaded:
 			# Module is already loaded, need to only check version.
 			curversion = self.loaded[moddef].version()
 			if curversion not in modspec:
@@ -292,7 +295,7 @@ class ModuleManager(object):
 			req = Requirement(req)
 		return self._load(req, mstack)
 
-	def unload(self, moddef):
+	def unload(self, req):
 		"""
 		Unload currently active module.
 		"""

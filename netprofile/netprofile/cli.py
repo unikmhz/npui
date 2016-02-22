@@ -254,7 +254,7 @@ class UninstallModule(Command):
 
 	def take_action(self, args):
 		vlevel = self.app.options.verbose_level
-		raise RuntimeError('Not implemented.')
+		raise NotImplementedError('Not implemented.')
 
 class EnableModule(Command):
 	"""
