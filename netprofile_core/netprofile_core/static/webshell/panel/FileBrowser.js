@@ -11,6 +11,7 @@ Ext.define('NetProfile.panel.FileBrowser', {
 		'Ext.menu.*',
 		'Ext.grid.*',
 		'Ext.util.KeyMap',
+		'Ext.Ajax',
 		'Ext.XTemplate',
 		'NetProfile.form.FileUpload',
 		'NetProfile.store.core.File',

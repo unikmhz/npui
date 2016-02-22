@@ -439,6 +439,7 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-info         { background-image: url(../img/info.png) !important; }
 .ico-key          { background-image: url(../img/key.png) !important; }
 .ico-last         { background-image: url(../img/last.png) !important; }
+.ico-license      { background-image: url(../img/license.png) !important; }
 .ico-locale       { background-image: url(../img/locale.png) !important; }
 .ico-lock         { background-image: url(../img/lock.png) !important; }
 .ico-logout       { background-image: url(../img/logout.png) !important; }
