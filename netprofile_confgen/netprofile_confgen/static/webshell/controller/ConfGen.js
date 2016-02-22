@@ -86,7 +86,7 @@ Ext.define('NetProfile.confgen.controller.ConfGen', {
 							}]
 						}
 					});
-					menu.menu.add(item);
+					menu.menu.insert(3, item);
 				}
 			}
 		});

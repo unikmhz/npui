@@ -85,6 +85,7 @@ class Module(ModuleBase):
 
 	def add_routes(self, config):
 		config.add_route('core.noop', '/noop', vhost='MAIN')
+		config.add_route('core.about', '/about', vhost='MAIN')
 		config.add_route('core.js.webshell', '/js/webshell', vhost='MAIN')
 		config.add_route('core.file.download', '/file/dl/{fileid:\d+}*filename', vhost='MAIN')
 		config.add_route('core.file.upload', '/file/ul', vhost='MAIN')

@@ -30,6 +30,8 @@ from __future__ import (
 import json
 import logging
 import datetime as dt
+import os
+import pkg_resources
 from collections import (
 	defaultdict,
 	Iterable
@@ -334,6 +336,29 @@ def data_export(request):
 		raise ValueError('No export format specified')
 	fmt = mmgr.get_export_format(fmt)
 	return fmt.export(model, json.loads(params), request)
+
+@view_config(route_name='core.about', permission='USAGE', renderer='json')
+def about(request):
+	try:
+		dist = pkg_resources.get_distribution('netprofile')
+	except pkg_resources.DistributionNotFound:
+		dist = None
+	mmgr = request.registry.getUtility(IModuleManager)
+	license = ''
+	modules = []
+
+	if dist and dist.location:
+		with open(os.path.join(dist.location, 'LICENSE.txt'), 'rt') as license_file:
+			license = license_file.read()
+
+	if mmgr:
+		for name, mod in mmgr.loaded.items():
+			modules.append((name, str(mod.version())))
+
+	return {
+		'license' : license,
+		'modules' : modules
+	}
 
 @extdirect_method('User', 'get_chpass_wizard', request_as_last_param=True, permission='USAGE', session_checks=False)
 def dyn_user_chpass_wizard(request):

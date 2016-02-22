@@ -153,7 +153,15 @@ Ext.onReady(function()
 		chPassText: 'Изменить пароль',
 		chLangText: 'Переключение языка',
 		showConsoleText: 'Показать консоль',
-		aboutText: 'О программе…'
+		aboutText: 'О программе…',
+		aboutNetProfileText: 'О программе NetProfile',
+		infoText: 'Информация',
+		contributorsText: 'участники проекта NetProfile',
+		licenseText: 'Лицензия',
+		modulesText: 'Модули',
+		currentModulesText: 'Модули, загруженные в данный момент:',
+		modLineTpl: '<li><strong>{0}</strong>, версия {1}</li>',
+		downloadTpl: 'Исходный код NetProfile вы можете получить <a href="{0}">по этому адресу</a>.'
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.form.Panel', {
