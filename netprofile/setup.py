@@ -11,6 +11,7 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
 	'setuptools',
+	'packaging >= 16.1',
 	'python-dateutil',
 	'phpserialize',
 	'dogpile.cache >= 0.4.1',

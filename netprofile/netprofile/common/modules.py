@@ -37,7 +37,8 @@ from zope.interface import (
 	Interface
 )
 
-from packaging import version
+from packaging.requirements import Requirement
+from packaging.version import parse
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -59,7 +60,7 @@ class ModuleBase(object):
 	def version(cls):
 		dist = pkg_resources.get_distribution(cls.__module__)
 		if dist:
-			return version.parse(dist.version)
+			return parse(dist.version)
 
 	@classmethod
 	def get_deps(cls):
@@ -216,16 +217,27 @@ class ModuleManager(object):
 			return pkg_resources.get_distribution('netprofile')
 		return pkg_resources.get_distribution('netprofile_' + moddef)
 
-	def _load(self, moddef, mstack):
+	def _load(self, req, mstack):
 		"""
 		Private method which actually loads a module.
 		"""
+		moddef = req.name
+		modspec = req.specifier
 		if (moddef in self.loaded) or (moddef in mstack):
+			# Module is already loaded, need to only check version.
+			curversion = self.loaded[moddef].version()
+			if curversion not in modspec:
+				logger.error(
+					'Module \'%s\' version %s is already loaded, but required version is %s.',
+					moddef, str(curversion), str(modspec)
+				)
+				return False
 			return True
 		if moddef not in self.modules:
+			# Can't find module in installed Python packages.
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
-		if not self.is_installed(moddef, DBSession()):
+		if not self.is_installed(req, DBSession()):
 			if moddef != 'core':
 				logger.error('Can\'t load uninstalled module \'%s\'. Please install it first.', moddef)
 			return False
@@ -238,8 +250,16 @@ class ModuleManager(object):
 		if not issubclass(modcls, ModuleBase):
 			logger.error('Module \'%s\' is invalid. Verify installation and try again.', moddef)
 			return False
+		curversion = modcls.version()
+		if curversion not in modspec:
+			logger.error(
+				'Module \'%s\' has version %s, but required version is %s.',
+				moddef, str(curversion), str(modspec)
+			)
+			return False
 		for depmod in modcls.get_deps():
-			if not self._load(depmod, mstack):
+			depreq = Requirement(depmod)
+			if not self._load(depreq, mstack):
 				logger.error('Can\'t load module \'%s\', which is needed for module \'%s\'.', depmod, moddef)
 				return False
 		mod = self.loaded[moddef] = modcls(self)
@@ -247,6 +267,7 @@ class ModuleManager(object):
 			lambda conf: mod.add_routes(conf),
 			route_prefix='/' + moddef
 		)
+		# TODO: make cache_max_age configurable
 		self.cfg.add_static_view(
 			'static/' + moddef,
 			self.modules[moddef].module_name + ':static',
@@ -264,7 +285,7 @@ class ModuleManager(object):
 		Load previously discovered module.
 		"""
 		mstack = []
-		return self._load(moddef, mstack)
+		return self._load(Requirement(moddef), mstack)
 
 	def unload(self, moddef):
 		"""
@@ -354,10 +375,15 @@ class ModuleManager(object):
 			return False
 		return True
 
-	def is_installed(self, moddef, sess):
+	# TODO: convert this to req
+	def is_installed(self, req, sess):
 		"""
 		Check if a module is installed.
 		"""
+		if isinstance(req, str):
+			req = Requirement(req)
+		moddef = req.name
+		modspec = req.specifier
 		if ('core' not in self.loaded) and (moddef != 'core'):
 			return False
 		if moddef in self.loaded:
