@@ -20,6 +20,7 @@ requires = [
 	'SQLAlchemy >= 1.0',
 	'zope.sqlalchemy',
 	'transaction',
+	'alembic >= 0.8.3',
 
 	'waitress >= 0.7',
 	'pyramid >= 1.5',

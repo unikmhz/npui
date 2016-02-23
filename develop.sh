@@ -36,6 +36,7 @@ pip install \
 	SQLAlchemy \
 	zope.sqlalchemy \
 	transaction \
+	alembic \
 	waitress \
 	pyramid \
 	pyramid_mako \
