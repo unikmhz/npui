@@ -564,7 +564,7 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	def __init__(self, enum):
 		self.enum = enum
 		self.name = 'ck%s' % re.sub(
-			'([A-Z])',
+			'([A-Z][^A-Z]|[A-Z]+(?=[A-Z][^A-Z]))',
 			lambda m: '_' + m.group(1).lower(),
 			enum.__name__
 		)
