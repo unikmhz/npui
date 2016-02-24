@@ -179,6 +179,29 @@ class CLIApplication(App):
 		return cfg
 
 	@reify
+	def alembic_config(self):
+		from alembic.config import Config
+
+		# TODO: make config section configurable
+		cfg = Config(file_self.options.ini_file, ini_section='alembic', stdout=self.stdout)
+
+		migration_paths = []
+		for mod in self.mm.modules.values():
+			if mod.dist and mod.dist.location:
+				path = os.path.join(mod.dist.location, 'migrations')
+				if os.path.isdir(path):
+					migration_paths.append(path)
+		if len(dists) > 0:
+			cfg.set_main_option('version_locations', ' '.join(migration_paths))
+
+		return cfg
+
+	@reify
+	def alembic_scriptdir(self):
+		from alembic.script import ScriptDirectory
+		return ScriptDirectory.from_config(self.alembic_config)
+
+	@reify
 	def hooks(self):
 		return self.app_config.registry.getUtility(IHookManager)
 
