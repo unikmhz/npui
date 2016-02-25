@@ -182,9 +182,15 @@ class CLIApplication(App):
 	def alembic_config(self):
 		from alembic.config import Config
 
+		appcfg = self.app_config.registry.settings
+
 		# TODO: make config section configurable
 		cfg = Config(file_=self.options.ini_file, ini_section='migrations', stdout=self.stdout)
 
+		if cfg.get_main_option('script_location') is None:
+			cfg.set_main_option('script_location', 'netprofile:alembic')
+		if cfg.get_main_option('sqlalchemy.url') is None:
+			cfg.set_main_option('sqlalchemy.url', appcfg.get('sqlalchemy.url'))
 		migration_paths = []
 		for mod in self.mm.modules.values():
 			if mod.dist and mod.dist.location:

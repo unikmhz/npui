@@ -27,6 +27,7 @@ from __future__ import (
 	division
 )
 
+import inspect
 import logging
 import os
 import pkg_resources
@@ -373,12 +374,167 @@ class DisableModule(Command):
 				raise RuntimeError('Module \'%s\' wasn\'t found or is not installed.' % (args.name,))
 		raise RuntimeError('Unknown result.')
 
+# Taken nearly verbatim from alembic.config:CommandLine
 class Alembic(Command):
 	"""
 	Invoke alembic migration commands directly.
 	"""
 
 	log = logging.getLogger(__name__)
+
+	def get_parser(self, prog_name):
+		from alembic import command
+
+		kwargs_opts = {
+			'template': (
+				'-t', '--template',
+				dict(
+					default='generic',
+					type=str,
+					help='Setup template for use with \'init\'.'
+				)
+			),
+			'message': (
+				'-m', '--message',
+				dict(
+					type=str,
+					help='Message string to use with \'revision\'.'
+				)
+			),
+			'sql': (
+				'--sql',
+				dict(
+					action='store_true',
+					help='Don\'t emit SQL to database - dump to standard output/file instead.'
+				)
+			),
+			'tag': (
+				'--tag',
+				dict(
+					type=str,
+					help='Arbitrary \'tag\' name - can be used by custom env.py scripts.'
+				)
+			),
+			'head': (
+				'--head',
+				dict(
+					type=str,
+					help='Specify head revision or <branchname>@head to base new revision on.'
+				)
+			),
+			'splice': (
+				'--splice',
+				dict(
+					action='store_true',
+					help='Allow a non-head revision as the \'head\' to splice onto.'
+				)
+			),
+			'depends_on': (
+				'--depends-on',
+				dict(
+					action='append',
+					help='Specify one or more revision identifiers which this revision should depend on.'
+				)
+			),
+			'rev_id': (
+				'--rev-id',
+				dict(
+					type=str,
+					help='Specify a hardcoded revision id instead of generating one.'
+				)
+			),
+			'version_path': (
+				'--version-path',
+				dict(
+					type=str,
+					help='Specify specific path from config for version file.'
+				)
+			),
+			'branch_label': (
+				'--branch-label',
+				dict(
+					type=str,
+					help='Specify a branch label to apply to the new revision.'
+				)
+			),
+			'verbose': (
+				'-V', '--alembic-verbose',
+				dict(
+					action='store_true',
+					help='Use more verbose output.'
+				)
+			),
+			'resolve_dependencies': (
+				'--resolve-dependencies',
+				dict(
+					action='store_true',
+					help='Treat dependency versions as down revisions.'
+				)
+			),
+			'autogenerate': (
+				'--autogenerate',
+				dict(
+					action='store_true',
+					help='Populate revision script with candidate migration operations, based on comparison of database to model.'
+				)
+			),
+			'head_only': (
+				'--head-only',
+				dict(
+					action='store_true',
+					help='Deprecated.  Use --verbose for additional output.'
+				)
+			),
+			'rev_range': (
+				'-r', '--rev-range',
+				dict(
+					action='store',
+					help='Specify a revision range; format is [start]:[end].'
+				)
+			)
+		}
+		positional_help = {
+			'directory' : 'Location of scripts directory.',
+			'revision'  : 'Revision identifier.',
+			'revisions' : 'One or more revisions, or \'heads\' for all heads.'
+		}
+
+		parser = super(Alembic, self).get_parser(prog_name)
+		parser.add_argument(
+			'-x', action='append',
+			help='Additional arguments consumed by custom env.py scripts, e.g. -x setting1=somesetting -x setting2=somesetting.'
+		)
+		subparsers = parser.add_subparsers(help='Help for Alembic commands.')
+
+		for fn in [getattr(command, n) for n in dir(command)]:
+			if inspect.isfunction(fn) and fn.__name__[0] != '_' and fn.__module__ == 'alembic.command':
+				spec = inspect.getargspec(fn)
+				if spec[3]:
+					positional = spec[0][1:-len(spec[3])]
+					kwargs = spec[0][-len(spec[3]):]
+				else:
+					positional = spec[0][1:]
+					kwargs = []
+
+				subparser = subparsers.add_parser(
+					fn.__name__,
+					help=fn.__doc__
+				)
+
+				for arg in kwargs:
+					if arg in kwargs_opts:
+						pa_args = kwargs_opts[arg]
+						pa_args, pa_kwargs = pa_args[0:-1], pa_args[-1]
+						subparser.add_argument(*pa_args, **pa_kwargs)
+				for arg in positional:
+					if arg == 'revisions':
+						subparser.add_argument(arg, nargs='+', help=positional_help.get(arg))
+					else:
+						subparser.add_argument(arg, help=positional_help.get(arg))
+
+				subparser.set_defaults(cmd=(fn, positional, kwargs))
+
+		return parser
 
 	def take_action(self, args):
 		from alembic import command
@@ -391,7 +547,23 @@ class Alembic(Command):
 		else:
 			mm.scan()
 
-		command.history(cfg)
+		if not hasattr(args, 'cmd'):
+			raise RuntimeError('too few arguments')
+
+		if self.app.options.verbose_level > 1:
+			args.verbose = True
+		elif 'alembic_verbose' in args:
+			args.verbose = args.alembic_verbose
+		else:
+			args.verbose = False
+
+		fn, positional, kwargs = args.cmd
+
+		fn(
+			cfg,
+			*[getattr(args, k) for k in positional],
+			**dict((k, getattr(args, k)) for k in kwargs)
+		)
 
 class Deploy(Command):
 	"""
