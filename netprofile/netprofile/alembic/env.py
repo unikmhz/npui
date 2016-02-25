@@ -23,6 +23,11 @@
 from __future__ import with_statement
 import os
 from alembic import context
+from alembic.autogenerate.render import (
+	_ident,
+	_render_server_default,
+	_repr_type
+)
 from sqlalchemy import engine_from_config, pool
 #from logging.config import fileConfig
 
@@ -51,6 +56,25 @@ def render_item(type_, obj, autogen_context):
 		if obj.__module__ == 'netprofile.db.fields':
 			autogen_context.imports.add('from netprofile.db import fields as npf')
 			return 'npf.%r' % (obj,)
+	elif type_ == 'column' and hasattr(obj, 'comment'):
+		autogen_context.imports.add('from netprofile.db import ddl as npd')
+		# Copied from alembic.autogenerate.render:_render_column
+		opts = []
+		if obj.server_default:
+			rendered = _render_server_default(obj.server_default, autogen_context)
+			if rendered:
+				opts.append(('server_default', rendered))
+		if not obj.autoincrement:
+			opts.append(('autoincrement', obj.autoincrement))
+		if obj.nullable is not None:
+			opts.append(('nullable', obj.nullable))
+
+		return 'sa.Column(%(name)r, %(type)s, npd.Comment(%(comment)r), %(kw)s)' % {
+			'name'    : _ident(obj.name),
+			'type'    : _repr_type(obj.type, autogen_context),
+			'comment' : obj.comment,
+			'kw'      : ', '.join(['%s=%s' % (kwname, val) for kwname, val in opts])
+		}
 	return False
 
 
@@ -91,7 +115,8 @@ def run_migrations_online():
             connection=connection,
             target_metadata=target_metadata,
 			render_item=render_item,
-			compare_type=True
+			compare_type=True,
+			compare_server_default=True
         )
 
         with context.begin_transaction():
