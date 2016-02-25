@@ -183,7 +183,7 @@ class CLIApplication(App):
 		from alembic.config import Config
 
 		# TODO: make config section configurable
-		cfg = Config(file_self.options.ini_file, ini_section='alembic', stdout=self.stdout)
+		cfg = Config(file_=self.options.ini_file, ini_section='migrations', stdout=self.stdout)
 
 		migration_paths = []
 		for mod in self.mm.modules.values():
@@ -191,7 +191,7 @@ class CLIApplication(App):
 				path = os.path.join(mod.dist.location, 'migrations')
 				if os.path.isdir(path):
 					migration_paths.append(path)
-		if len(dists) > 0:
+		if len(migration_paths) > 0:
 			cfg.set_main_option('version_locations', ' '.join(migration_paths))
 
 		return cfg

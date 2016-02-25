@@ -38,6 +38,7 @@ from cliff.command import Command
 
 from pyramid.i18n import TranslationStringFactory
 from sqlalchemy.exc import ProgrammingError
+from alembic import command as alembic_cmd
 
 from netprofile.common.modules import ModuleError
 
@@ -371,6 +372,26 @@ class DisableModule(Command):
 			else:
 				raise RuntimeError('Module \'%s\' wasn\'t found or is not installed.' % (args.name,))
 		raise RuntimeError('Unknown result.')
+
+class Alembic(Command):
+	"""
+	Invoke alembic migration commands directly.
+	"""
+
+	log = logging.getLogger(__name__)
+
+	def take_action(self, args):
+		from alembic import command
+
+		mm = self.app.mm
+		cfg = self.app.alembic_config
+
+		if len(mm.modules) > 0:
+			mm.rescan()
+		else:
+			mm.scan()
+
+		command.history(cfg)
 
 class Deploy(Command):
 	"""
