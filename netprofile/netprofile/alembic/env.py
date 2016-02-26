@@ -28,31 +28,24 @@ from alembic.autogenerate.render import (
 	_render_server_default,
 	_repr_type
 )
-from sqlalchemy import engine_from_config, pool
-#from logging.config import fileConfig
-
-from pyramid.paster import get_appsettings
-from netprofile import setup_config
-from netprofile.common.modules import ModuleManager
+from sqlalchemy import (
+	DefaultClause,
+	engine_from_config,
+	pool
+)
 from netprofile.db import fields as npf
-
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
-config = context.config
-
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-#fileConfig(config.config_file_name)
-
-
 from netprofile.db.connection import Base
+
+
+config = context.config
 target_metadata = Base.metadata
 
 
 def render_item(type_, obj, autogen_context):
 	if type_ == 'type':
 		if isinstance(obj, npf.DeclEnumType):
-			return 'sa.%r' % (obj.impl,)
+			if obj.enum:
+				return 'npf.DeclEnumType(name=%r, values=%r)' % (obj.enum.__name__, list(obj.enum.values()))
 		if obj.__module__ == 'netprofile.db.fields':
 			autogen_context.imports.add('from netprofile.db import fields as npf')
 			return 'npf.%r' % (obj,)
@@ -75,6 +68,10 @@ def render_item(type_, obj, autogen_context):
 			'comment' : obj.comment,
 			'kw'      : ', '.join(['%s=%s' % (kwname, val) for kwname, val in opts])
 		}
+	elif type_ == 'server_default':
+		if isinstance(obj, DefaultClause):
+			if isinstance(obj.arg, npf.npbool):
+				return 'npf.npbool(%r)' % (obj.arg.val,)
 	return False
 
 

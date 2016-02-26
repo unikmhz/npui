@@ -561,21 +561,30 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	"""
 	Enum type which is auto-configured based on provided DeclEnum class.
 	"""
-	def __init__(self, enum):
+	def __init__(self, enum=None, name=None, values=None):
 		self.enum = enum
-		self.name = 'ck%s' % re.sub(
-			'([A-Z][^A-Z]|[A-Z]+(?=[A-Z][^A-Z]))',
-			lambda m: '_' + m.group(1).lower(),
-			enum.__name__
-		)
-		self.impl = types.Enum(*enum.values(), name=self.name)
+		if enum:
+			self.name = enum.__name__
+			self.values = list(enum.values())
+		else:
+			self.name = name
+			self.values = values
+		if self.name:
+			self.name = 'ck%s' % re.sub(
+				'([A-Z][^A-Z]|[A-Z]+(?=[A-Z][^A-Z]))',
+				lambda m: '_' + m.group(1).lower(),
+				self.name
+			)
+		self.impl = types.Enum(*self.values, name=self.name)
 
 	def update_impl(self):
-		self.impl = types.Enum(*self.enum.values(), name=self.name)
+		if self.enum:
+			self.values = list(self.enum.values())
+		self.impl = types.Enum(*self.values, name=self.name)
 
 	def load_dialect_impl(self, dialect):
 		if _is_mysql(dialect):
-			return mysql.ENUM(*self.enum.values(), charset='ascii', collation='ascii_bin')
+			return mysql.ENUM(*self.values, charset='ascii', collation='ascii_bin')
 		return self.impl
 
 	def _set_table(self, column, table):
@@ -586,7 +595,7 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 		return EnumSymbol
 
 	def copy(self):
-		return DeclEnumType(self.enum)
+		return DeclEnumType(enum=self.enum, name=self.name, values=self.values)
 
 	def process_bind_param(self, value, dialect):
 		if value is None:
@@ -598,7 +607,10 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 			return None
 		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
-		return self.enum.from_string(value.strip())
+		value = value.strip()
+		if self.enum:
+			return self.enum.from_string(value)
+		return value
 
 	def coerce_compared_value(self, op, value):
 		if isinstance(value, str):
