@@ -538,7 +538,9 @@ class Alembic(Command):
 
 	def take_action(self, args):
 		from alembic import command
+		from netprofile.db import migrations
 
+		self.app.setup_mako_sql()
 		mm = self.app.mm
 		cfg = self.app.alembic_config
 
@@ -546,6 +548,7 @@ class Alembic(Command):
 			mm.rescan()
 		else:
 			mm.scan()
+		mm.load_all()
 
 		if not hasattr(args, 'cmd'):
 			raise RuntimeError('too few arguments')
