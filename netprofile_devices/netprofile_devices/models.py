@@ -635,8 +635,7 @@ class DeviceType(Base):
 		Comment('Device class ID'),
 		nullable=False,
 		info={
-			'header_string' : _('Class'),
-			'read_only'     : True
+			'header_string' : _('Class')
 		}
 	)
 	manufacturer_id = Column(
@@ -955,7 +954,8 @@ class Device(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Class'),
-			'read_only'     : True
+			'filter_type'   : 'nplist',
+			'editor_xtype'  : 'simplemodelselect'
 		}
 	)
 	serial = Column(

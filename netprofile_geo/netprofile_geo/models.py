@@ -207,7 +207,7 @@ class City(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class District(Base):
 	"""
@@ -293,7 +293,7 @@ class District(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class Street(Base):
 	"""
@@ -834,7 +834,7 @@ class HouseGroup(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class HouseGroupMapping(Base):
 	"""

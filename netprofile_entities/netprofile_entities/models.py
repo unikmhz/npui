@@ -541,7 +541,8 @@ class Entity(Base):
 		server_default=text('1'),
 		info={
 			'header_string' : _('State'),
-			'filter_type'   : 'nplist'
+			'filter_type'   : 'nplist',
+			'editor_xtype'  : 'simplemodelselect'
 		}
 	)
 	relative_dn = Column(
@@ -561,7 +562,8 @@ class Entity(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Type'),
-			'read_only'     : True
+			'filter_type'   : 'nplist',
+			'editor_xtype'  : 'simplemodelselect'
 		}
 	)
 	creation_time = Column(
@@ -1163,6 +1165,8 @@ class Address(Base):
 
 		ret = []
 		if self.house:
+			if req and not hasattr(self.house, '__req__'):
+				self.house.__req__ = req
 			ret.append(str(self.house))
 		if self.entrance:
 			ret.extend((
