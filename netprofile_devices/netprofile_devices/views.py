@@ -117,7 +117,7 @@ def _action_probe_entity(actions, req, model):
 	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
-			'tooltip' : _('Probe this entity\'s hosts'),
+			'tooltip' : req.localizer.translate(_('Probe this entity\'s hosts')),
 			'itemId'  : 'probe'
 		})
 
@@ -126,7 +126,7 @@ def _action_probe_domain(actions, req, model):
 	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
-			'tooltip' : _('Probe hosts in this domain'),
+			'tooltip' : req.localizer.translate(_('Probe hosts in this domain')),
 			'itemId'  : 'probe'
 		})
 
@@ -135,7 +135,7 @@ def _action_probe_house(actions, req, model):
 	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
-			'tooltip' : _('Probe hosts in this house'),
+			'tooltip' : req.localizer.translate(_('Probe hosts in this house')),
 			'itemId'  : 'probe'
 		})
 
@@ -144,7 +144,7 @@ def _action_probe_street(actions, req, model):
 	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
-			'tooltip' : _('Probe hosts on this street'),
+			'tooltip' : req.localizer.translate(_('Probe hosts on this street')),
 			'itemId'  : 'probe'
 		})
 
@@ -153,7 +153,7 @@ def _action_probe_district(actions, req, model):
 	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
-			'tooltip' : _('Probe hosts in this district'),
+			'tooltip' : req.localizer.translate(_('Probe hosts in this district')),
 			'itemId'  : 'probe'
 		})
 
@@ -162,7 +162,7 @@ def _action_probe_city(actions, req, model):
 	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
-			'tooltip' : _('Probe hosts in this city'),
+			'tooltip' : req.localizer.translate(_('Probe hosts in this city')),
 			'itemId'  : 'probe'
 		})
 
@@ -171,7 +171,7 @@ def _action_probe_housegroup(actions, req, model):
 	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
-			'tooltip' : _('Probe hosts in this house group'),
+			'tooltip' : req.localizer.translate(_('Probe hosts in this house group')),
 			'itemId'  : 'probe'
 		})
 
@@ -180,7 +180,7 @@ def _action_probe_place(actions, req, model):
 	if req.has_permission('HOSTS_PROBE'):
 		actions.append({
 			'iconCls' : 'ico-netmon',
-			'tooltip' : _('Probe network devices located here'),
+			'tooltip' : req.localizer.translate(_('Probe network devices located here')),
 			'itemId'  : 'probe'
 		})
 

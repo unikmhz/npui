@@ -54,6 +54,8 @@ class Module(ModuleBase):
 	def get_models(cls):
 		from netprofile_devices import models
 		return (
+			models.DeviceClass,
+
 			models.DeviceTypeCategory,
 			models.DeviceTypeManufacturer,
 
@@ -207,6 +209,28 @@ class Module(ModuleBase):
 				cap.privilege = priv
 		except NoResultFound:
 			pass
+
+		classes = (
+			models.DeviceClass(
+				id=1,
+				name=_('Simple'),
+				model='SimpleDevice',
+				long_name=_('Simple Device'),
+				plural=_('Simple Devices'),
+				description=_('Non-networking equipment.')
+			),
+			models.DeviceClass(
+				id=2,
+				name=_('Network'),
+				model='NetworkDevice',
+				long_name=_('Network Device'),
+				plural=_('Network Devices'),
+				description=_('Networking equipment.')
+			)
+		)
+		for dcls in classes:
+			dcls.module = modobj
+			sess.add(dcls)
 
 		medias = (
 			# Name,                             ifT, ifTA, Physical, Speed,       Description

@@ -29,9 +29,10 @@ from __future__ import (
 )
 
 __all__ = [
+	'DeviceClass',
+
 	'DeviceTypeCategory',
 	'DeviceTypeManufacturer',
-	'DeviceMetatypeField',
 
 	'DeviceTypeFlagType',
 	'DeviceTypeFlag',
@@ -99,21 +100,152 @@ from netprofile.db.ddl import (
 	Trigger
 )
 from netprofile.ext.columns import MarkupColumn
-from netprofile.ext.wizards import (
-	ExternalWizardField,
-	SimpleWizard
-)
+from netprofile.ext.wizards import SimpleWizard
 
-from pyramid.i18n import TranslationStringFactory
+from pyramid.i18n import (
+	TranslationString,
+	TranslationStringFactory
+)
 
 _ = TranslationStringFactory('netprofile_devices')
 
-class DeviceMetatypeField(DeclEnum):
+class DeviceClass(Base):
 	"""
-	Device metatype ENUM.
+	Defines a class of devices and device types.
 	"""
-	simple  = 'simple',  _('Simple'),  10
-	network = 'network', _('Network'), 20
+	__tablename__ = 'devices_classes'
+	__table_args__ = (
+		Comment('Device classes'),
+		Index('devices_classes_u_name', 'name', unique=True),
+		Index('devices_classes_u_spec', 'npmodid', 'model', unique=True),
+		Index('devices_classes_u_longname', 'longname', unique=True),
+		Index('devices_classes_u_plural', 'plural', unique=True),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_DEVICES',
+				'cap_read'      : 'DEVICES_LIST',
+				'cap_create'    : 'BASE_ADMIN',
+				'cap_edit'      : 'BASE_ADMIN',
+				'cap_delete'    : 'BASE_ADMIN',
+
+				'menu_name'     : _('Classes'),
+				'show_in_menu'  : 'admin',
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('dclsid', 'module', 'name', 'model'),
+				'grid_hidden'   : ('dclsid',),
+				'form_view'     : ('module', 'model', 'name', 'longname', 'plural', 'descr'),
+				'easy_search'   : ('name', 'model', 'longname', 'plural'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new device class'))
+			}
+		}
+	)
+	id = Column(
+		'dclsid',
+		UInt32(),
+		Sequence('devices_classes_dclsid_seq', start=101, increment=1),
+		Comment('Device class ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Device class name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	module_id = Column(
+		'npmodid',
+		UInt32(),
+		ForeignKey('np_modules.npmodid', name='devices_classes_fk_npmodid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('NetProfile module ID'),
+		nullable=False,
+		default=1,
+		server_default=text('1'),
+		info={
+			'header_string' : _('Module'),
+			'filter_type'   : 'nplist',
+			'column_flex'   : 2
+		}
+	)
+	model = Column(
+		ASCIIString(255),
+		Comment('ORM declarative model class name'),
+		nullable=False,
+		info={
+			'header_string' : _('Model'),
+			'column_flex'   : 2
+		}
+	)
+	long_name = Column(
+		'longname',
+		Unicode(255),
+		Comment('Long device class name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Long Name')
+		}
+	)
+	plural = Column(
+		Unicode(255),
+		Comment('Device class plural string'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Plural')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Device class description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	module = relationship(
+		'NPModule',
+		innerjoin=True,
+		backref=backref(
+			'device_classes',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+
+	device_types = relationship(
+		'DeviceType',
+		backref=backref('class', innerjoin=True),
+		passive_deletes='all'
+	)
+	devices = relationship(
+		'Device',
+		backref=backref('class', innerjoin=True),
+		passive_deletes='all'
+	)
+
+	def __str__(self):
+		req = getattr(self, '__req__', None)
+		if req is not None:
+			if self.module:
+				domain = 'netprofile_' + self.module.name
+				return req.localizer.translate(TranslationString(self.name, domain=domain))
+		return str(self.name)
 
 class DeviceTypeManufacturer(Base):
 	"""
@@ -461,6 +593,7 @@ class DeviceType(Base):
 		Comment('Device types'),
 		Index('devices_types_def_u_dt', 'dtmid', 'name', unique=True),
 		Index('devices_types_def_i_dtcid', 'dtcid'),
+		Index('devices_types_def_i_dclsid', 'dclsid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -495,6 +628,17 @@ class DeviceType(Base):
 			'header_string' : _('ID')
 		}
 	)
+	class_id = Column(
+		'dclsid',
+		UInt32(),
+		ForeignKey('devices_classes.dclsid', name='devices_types_def_fk_dclsid', onupdate='CASCADE'),
+		Comment('Device class ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Class'),
+			'read_only'     : True
+		}
+	)
 	manufacturer_id = Column(
 		'dtmid',
 		UInt32(),
@@ -519,17 +663,6 @@ class DeviceType(Base):
 			'column_flex'   : 2
 		}
 	)
-	type = Column(
-		'dtype',
-		DeviceMetatypeField.db_type(),
-		Comment('Device metatype'),
-		nullable=False,
-		default=DeviceMetatypeField.simple,
-		server_default=DeviceMetatypeField.simple,
-		info={
-			'header_string' : _('Type')
-		}
-	)
 	name = Column(
 		Unicode(255),
 		Comment('Device type name'),
@@ -551,8 +684,8 @@ class DeviceType(Base):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : 'deviceType',
-		'polymorphic_on'       : type,
+		'polymorphic_identity' : 0,
+		'polymorphic_on'       : class_id,
 		'with_polymorphic'     : '*'
 	}
 
@@ -635,7 +768,7 @@ class SimpleDeviceType(DeviceType):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : DeviceMetatypeField.simple
+		'polymorphic_identity' : 1
 	}
 	id = Column(
 		'dtid',
@@ -687,7 +820,7 @@ class NetworkDeviceType(DeviceType):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : DeviceMetatypeField.network
+		'polymorphic_identity' : 2
 	}
 	id = Column(
 		'dtid',
@@ -748,6 +881,7 @@ class Device(Base):
 	__tablename__ = 'devices_def'
 	__table_args__ = (
 		Comment('Devices'),
+		Index('devices_def_i_dclsid', 'dclsid'),
 		Index('devices_def_i_dtid', 'dtid'),
 		Index('devices_def_i_placeid', 'placeid'),
 		Index('devices_def_i_entityid', 'entityid'),
@@ -813,6 +947,17 @@ class Device(Base):
 			'header_string' : _('ID')
 		}
 	)
+	class_id = Column(
+		'dclsid',
+		UInt32(),
+		ForeignKey('devices_classes.dclsid', name='devices_def_fk_dclsid', onupdate='CASCADE'),
+		Comment('Device class ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Class'),
+			'read_only'     : True
+		}
+	)
 	serial = Column(
 		Unicode(64),
 		Comment('Device serial'),
@@ -834,17 +979,6 @@ class Device(Base):
 			'header_string' : _('Type'),
 			'filter_type'   : 'nplist',
 			'column_flex'   : 2
-		}
-	)
-	type = Column(
-		'dtype',
-		DeviceMetatypeField.db_type(),
-		Comment('Device metatype shortcut'),
-		nullable=False,
-		default=DeviceMetatypeField.simple,
-		server_default=DeviceMetatypeField.simple,
-		info={
-			'header_string' : _('Type') # this is never shown to the user, so repeating header is irrelevant
 		}
 	)
 	operational = Column(
@@ -970,8 +1104,8 @@ class Device(Base):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : 'device',
-		'polymorphic_on'       : type,
+		'polymorphic_identity' : 0,
+		'polymorphic_on'       : class_id,
 		'with_polymorphic'     : '*'
 	}
 
@@ -1159,7 +1293,7 @@ class SimpleDevice(Device):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : DeviceMetatypeField.simple
+		'polymorphic_identity' : 1
 	}
 	id = Column(
 		'did',
@@ -1276,7 +1410,7 @@ class NetworkDevice(Device):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : DeviceMetatypeField.network
+		'polymorphic_identity' : 2
 	}
 	id = Column(
 		'did',
