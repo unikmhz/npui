@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-02-01 09:13+0300\n"
-"PO-Revision-Date: 2016-02-01 09:13+0300\n"
+"POT-Creation-Date: 2016-02-27 17:21+0300\n"
+"PO-Revision-Date: 2016-02-27 17:22+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -21,274 +21,283 @@ msgstr ""
 "Generated-By: Babel 2.2.0\n"
 "X-Generator: Poedit 1.8.5\n"
 
-#: netprofile_access/__init__.py:138 netprofile_access/models.py:121
+#: netprofile_access/__init__.py:129 netprofile_access/__init__.py:132
+#: netprofile_access/models.py:550 netprofile_access/models.py:682
+msgid "Account"
+msgstr "Учётная запись"
+
+#: netprofile_access/__init__.py:133
+msgid "Accounts"
+msgstr "Учётные записи"
+
+#: netprofile_access/__init__.py:136
+msgid "Account details for network admission and client UI access."
+msgstr "Параметры учётной записи для сетевого входа и пользовательского портала."
+
+#: netprofile_access/__init__.py:146
 msgid "Access"
 msgstr "Учётные записи"
 
-#: netprofile_access/models.py:143 netprofile_access/models.py:233
+#: netprofile_access/models.py:137 netprofile_access/models.py:227
 msgid "Access entity properties"
 msgstr "Свойства учётной записи"
 
-#: netprofile_access/models.py:152
+#: netprofile_access/models.py:146
 msgid "OK"
 msgstr "ОК"
 
-#: netprofile_access/models.py:153
+#: netprofile_access/models.py:147
 msgid "Blocked automatically"
 msgstr "Заблокировано автоматически"
 
-#: netprofile_access/models.py:154
+#: netprofile_access/models.py:148
 msgid "Blocked manually"
 msgstr "Заблокировано вручную"
 
-#: netprofile_access/models.py:155
+#: netprofile_access/models.py:149
 msgid "Blocked after reaching max sessions"
 msgstr "Заблокировано из-за лимита сессий"
 
-#: netprofile_access/models.py:156
+#: netprofile_access/models.py:150
 msgid "Rejected"
 msgstr "Отклонено"
 
-#: netprofile_access/models.py:157
+#: netprofile_access/models.py:151
 msgid "Inactive"
 msgstr "Неактивно"
 
-#: netprofile_access/models.py:158
+#: netprofile_access/models.py:152
 msgid "Error"
 msgstr "Ошибка"
 
-#: netprofile_access/models.py:161
+#: netprofile_access/models.py:155
 msgid "Planned"
 msgstr "Запланирована"
 
-#: netprofile_access/models.py:162
+#: netprofile_access/models.py:156
 msgid "Active"
 msgstr "Активна"
 
-#: netprofile_access/models.py:163
+#: netprofile_access/models.py:157
 msgid "Expired"
 msgstr "Истекла"
 
-#: netprofile_access/models.py:194
+#: netprofile_access/models.py:188
 msgid "Access Entities"
 msgstr "Учётные записи"
 
-#: netprofile_access/models.py:201
+#: netprofile_access/models.py:195
 msgid "Entity icon"
 msgstr "Иконка объекта"
 
-#: netprofile_access/models.py:203
+#: netprofile_access/models.py:197
 msgid "Icon"
 msgstr "Иконка"
 
-#: netprofile_access/models.py:229
+#: netprofile_access/models.py:223
 msgid "Generic entity properties"
 msgstr "Общие свойства объекта"
 
-#: netprofile_access/models.py:235
+#: netprofile_access/models.py:229
 msgid "Add new access entity"
 msgstr "Добавить новую учётную запись"
 
-#: netprofile_access/models.py:251 netprofile_access/models.py:525
-#: netprofile_access/models.py:669 netprofile_access/models.py:770
-#: netprofile_access/models.py:834 netprofile_access/models.py:945
+#: netprofile_access/models.py:245 netprofile_access/models.py:528
+#: netprofile_access/models.py:672 netprofile_access/models.py:773
+#: netprofile_access/models.py:837 netprofile_access/models.py:948
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_access/models.py:259
+#: netprofile_access/models.py:253
 #: netprofile_access/templates/client_login.mak:19
 #: netprofile_access/templates/client_register.mak:80
 msgid "Password"
 msgstr "Пароль"
 
-#: netprofile_access/models.py:271
+#: netprofile_access/models.py:265
 msgid "Stash"
 msgstr "Счёт"
 
-#: netprofile_access/models.py:282 netprofile_access/models.py:561
+#: netprofile_access/models.py:276 netprofile_access/models.py:564
 msgid "Rate"
 msgstr "Тариф"
 
-#: netprofile_access/models.py:296
+#: netprofile_access/models.py:290
 msgid "Alias Of"
 msgstr "Псевдоним"
 
-#: netprofile_access/models.py:309
+#: netprofile_access/models.py:303
 #: netprofile_access/templates/client_block_chrate.mak:13
 #: netprofile_access/templates/client_block_chrate.mak:26
 msgid "Next Rate"
 msgstr "Следующий тариф"
 
-#: netprofile_access/models.py:322
+#: netprofile_access/models.py:316
 msgid "IPv4 Address"
 msgstr "Адрес IPv4"
 
-#: netprofile_access/models.py:334
+#: netprofile_access/models.py:328
 msgid "IPv6 Address"
 msgstr "Адрес IPv6"
 
-#: netprofile_access/models.py:345
+#: netprofile_access/models.py:339
 msgid "Used Ingress"
 msgstr "Использовано входящего"
 
-#: netprofile_access/models.py:357
+#: netprofile_access/models.py:351
 msgid "Used Egress"
 msgstr "Использовано исходящего"
 
-#: netprofile_access/models.py:369
+#: netprofile_access/models.py:363
 msgid "Used Seconds"
 msgstr "Использовано секунд"
 
-#: netprofile_access/models.py:381
+#: netprofile_access/models.py:375
 msgid "Ends"
 msgstr "Заканчивается"
 
-#: netprofile_access/models.py:393
+#: netprofile_access/models.py:387
 msgid "Access Code"
 msgstr "Код доступа"
 
-#: netprofile_access/models.py:405
+#: netprofile_access/models.py:400
 msgid "Ingress Policy"
 msgstr "Входящая политика"
 
-#: netprofile_access/models.py:416
+#: netprofile_access/models.py:411
 msgid "Egress Policy"
 msgstr "Исходящая политика"
 
-#: netprofile_access/models.py:427
+#: netprofile_access/models.py:422
 msgid "Check Blocks"
 msgstr "Проверять блокировки"
 
-#: netprofile_access/models.py:438
+#: netprofile_access/models.py:433
 msgid "Check Services"
 msgstr "Проверять услуги"
 
-#: netprofile_access/models.py:509 netprofile_access/views.py:776
+#: netprofile_access/models.py:512 netprofile_access/views.py:773
 msgid "Rate Modifiers"
 msgstr "Модификаторы тарифов"
 
-#: netprofile_access/models.py:513
+#: netprofile_access/models.py:516
 msgid "Add new rate modifier"
 msgstr "Добавить новый модификатор тарифов"
 
-#: netprofile_access/models.py:535 netprofile_access/models.py:855
+#: netprofile_access/models.py:538 netprofile_access/models.py:858
 msgid "Type"
 msgstr "Тип"
 
-#: netprofile_access/models.py:547 netprofile_access/models.py:679
-msgid "Account"
-msgstr "Учётная запись"
-
-#: netprofile_access/models.py:574
+#: netprofile_access/models.py:577
 msgid "Created"
 msgstr "Создан"
 
-#: netprofile_access/models.py:585
+#: netprofile_access/models.py:588
 msgid "Enabled"
 msgstr "Включен"
 
-#: netprofile_access/models.py:596
+#: netprofile_access/models.py:599
 msgid "Lookup Order"
 msgstr "Порядок поиска"
 
-#: netprofile_access/models.py:651 netprofile_access/views.py:785
+#: netprofile_access/models.py:654 netprofile_access/views.py:782
 msgid "Access Blocks"
 msgstr "Блокировки"
 
-#: netprofile_access/models.py:657
+#: netprofile_access/models.py:660
 msgid "Add new access block"
 msgstr "Добавить новую блокировку"
 
-#: netprofile_access/models.py:691
+#: netprofile_access/models.py:694
 msgid "Start"
 msgstr "Начало"
 
-#: netprofile_access/models.py:701
+#: netprofile_access/models.py:704
 msgid "End"
 msgstr "Конец"
 
-#: netprofile_access/models.py:713
+#: netprofile_access/models.py:716
 msgid "State"
 msgstr "Состояние"
 
-#: netprofile_access/models.py:724
+#: netprofile_access/models.py:727
 msgid "Access State"
 msgstr "Статус уч. записи"
 
-#: netprofile_access/models.py:751
+#: netprofile_access/models.py:754
 msgid "Link Types"
 msgstr "Типы связей"
 
-#: netprofile_access/models.py:758
+#: netprofile_access/models.py:761
 msgid "Add new link type"
 msgstr "Добавить новый тип связей"
 
-#: netprofile_access/models.py:778
+#: netprofile_access/models.py:781
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_access/models.py:790 netprofile_access/models.py:1051
+#: netprofile_access/models.py:793 netprofile_access/models.py:1054
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_access/models.py:817 netprofile_access/views.py:794
+#: netprofile_access/models.py:820 netprofile_access/views.py:791
 msgid "Links"
 msgstr "Связи"
 
-#: netprofile_access/models.py:822
+#: netprofile_access/models.py:825
 msgid "Add new link"
 msgstr "Добавить новую связь"
 
-#: netprofile_access/models.py:844 netprofile_access/models.py:955
+#: netprofile_access/models.py:847 netprofile_access/models.py:958
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_access/models.py:867
+#: netprofile_access/models.py:870
 msgid "Timestamp"
 msgstr "Время"
 
-#: netprofile_access/models.py:876
+#: netprofile_access/models.py:879
 msgid "Value"
 msgstr "Значение"
 
-#: netprofile_access/models.py:922
+#: netprofile_access/models.py:925
 msgid "Access Entity Changes"
 msgstr "История учётной записи"
 
-#: netprofile_access/models.py:968
+#: netprofile_access/models.py:971
 msgid "User"
 msgstr "Пользователь"
 
-#: netprofile_access/models.py:979
+#: netprofile_access/models.py:982
 msgid "Time"
 msgstr "Время"
 
-#: netprofile_access/models.py:990
+#: netprofile_access/models.py:993
 msgid "Changed Password"
 msgstr "Пароль изменён"
 
-#: netprofile_access/models.py:1001
+#: netprofile_access/models.py:1004
 msgid "Old Access Code"
 msgstr "Старый код доступа"
 
-#: netprofile_access/models.py:1012
+#: netprofile_access/models.py:1015
 msgid "New Access Code"
 msgstr "Новый код доступа"
 
-#: netprofile_access/models.py:1024
+#: netprofile_access/models.py:1027
 msgid "Old Rate"
 msgstr "Старый тариф"
 
-#: netprofile_access/models.py:1038
+#: netprofile_access/models.py:1041
 msgid "New Rate"
 msgstr "Новый тариф"
 
-#: netprofile_access/models.py:1088
+#: netprofile_access/models.py:1091
 #, python-format
 msgid "Access entity \"%s\" changed"
 msgstr "Учётная запись \"%s\" изменена"
 
-#: netprofile_access/models.py:1093
+#: netprofile_access/models.py:1096
 msgid "Password was changed"
 msgstr "Пароль был изменён"
 
@@ -316,104 +325,104 @@ msgstr "Текущий запрос был просрочен"
 msgid "reCAPTCHA service is not reachable"
 msgstr "Сервис reCAPTCHA недоступен"
 
-#: netprofile_access/views.py:103
+#: netprofile_access/views.py:101
 msgid "Page Not Found"
 msgstr "Страница не найдена"
 
-#: netprofile_access/views.py:115
+#: netprofile_access/views.py:113
 msgid "You need to log in to access this page"
 msgstr "Вы должны войти в систему чтобы получить доступ к этой странице"
 
-#: netprofile_access/views.py:120
+#: netprofile_access/views.py:118
 msgid "Access Denied"
 msgstr "Доступ запрещён"
 
-#: netprofile_access/views.py:138 netprofile_access/views.py:308
-#: netprofile_access/views.py:562
+#: netprofile_access/views.py:136 netprofile_access/views.py:306
+#: netprofile_access/views.py:559
 msgid "Error submitting form"
 msgstr "Ошибка при отправке формы"
 
-#: netprofile_access/views.py:142 netprofile_access/views.py:340
+#: netprofile_access/views.py:140 netprofile_access/views.py:338
 msgid "Password is too short"
 msgstr "Пароль слишком короткий"
 
-#: netprofile_access/views.py:144 netprofile_access/views.py:342
+#: netprofile_access/views.py:142 netprofile_access/views.py:340
 msgid "Password is too long"
 msgstr "Пароль слишком длинный"
 
-#: netprofile_access/views.py:146 netprofile_access/views.py:344
+#: netprofile_access/views.py:144 netprofile_access/views.py:342
 msgid "Passwords do not match"
 msgstr "Пароли не совпадают"
 
-#: netprofile_access/views.py:148
+#: netprofile_access/views.py:146
 msgid "Wrong password"
 msgstr "Некорректный пароль"
 
-#: netprofile_access/views.py:152
+#: netprofile_access/views.py:150
 msgid "Password successfully changed"
 msgstr "Ваш пароль был успешно изменён"
 
-#: netprofile_access/views.py:200
+#: netprofile_access/views.py:198
 msgid "Error uploading file"
 msgstr "Ошибка при заливке файла"
 
-#: netprofile_access/views.py:327 netprofile_access/views.py:335
-#: netprofile_access/views.py:347 netprofile_access/views.py:350
-#: netprofile_access/views.py:353 netprofile_access/views.py:576
-#: netprofile_access/views.py:584
+#: netprofile_access/views.py:325 netprofile_access/views.py:333
+#: netprofile_access/views.py:345 netprofile_access/views.py:348
+#: netprofile_access/views.py:351 netprofile_access/views.py:573
+#: netprofile_access/views.py:581
 msgid "Invalid field length"
 msgstr "Некорректная длина поля"
 
-#: netprofile_access/views.py:329 netprofile_access/views.py:578
+#: netprofile_access/views.py:327 netprofile_access/views.py:575
 #: netprofile_access/templates/client_register.mak:69
 #: netprofile_access/templates/client_restorepass.mak:71
 msgid "Invalid e-mail format"
 msgstr "Некорректный формат e-mail"
 
-#: netprofile_access/views.py:337 netprofile_access/views.py:586
+#: netprofile_access/views.py:335 netprofile_access/views.py:583
 msgid "Invalid character used in username"
 msgstr "В имени пользователя находится запрещённый символ"
 
-#: netprofile_access/views.py:361
+#: netprofile_access/views.py:359
 #: netprofile_access/templates/client_register.mak:41
 msgid "This username is already taken"
 msgstr "Это имя пользователя уже используется"
 
-#: netprofile_access/views.py:374
+#: netprofile_access/views.py:372
 msgid "Primary Account"
 msgstr "Основная учётная запись"
 
-#: netprofile_access/views.py:431
+#: netprofile_access/views.py:429
 #, python-format
 msgid "Activation required for user %s"
 msgstr "Требуется подтверждение для пользователя %s"
 
-#: netprofile_access/views.py:636
+#: netprofile_access/views.py:633
 #, python-format
 msgid "Password recovery for user %s"
 msgstr "Восстановление пароля для пользователя %s"
 
-#: netprofile_access/views.py:648
+#: netprofile_access/views.py:645
 msgid "Username and/or e-mail are unknown to us"
 msgstr "Имя пользователя и/или адрес e-mail нам не известны"
 
-#: netprofile_access/views.py:712
+#: netprofile_access/views.py:709
 msgid "Portal"
 msgstr "Портал"
 
-#: netprofile_access/views.py:753
+#: netprofile_access/views.py:750
 msgid "Error scheduling rate change"
 msgstr "Ошибка при выборе следующего тарифа"
 
-#: netprofile_access/views.py:758
+#: netprofile_access/views.py:755
 msgid "Rate change successfully scheduled"
 msgstr "Запланировано изменение тарифа"
 
-#: netprofile_access/views.py:762
+#: netprofile_access/views.py:759
 msgid "Rate change successfully cancelled"
 msgstr "Запланированное изменение тарифа отменено"
 
-#: netprofile_access/views.py:803
+#: netprofile_access/views.py:800
 msgid "History"
 msgstr "История"
 
@@ -664,11 +673,15 @@ msgstr "Пользовательское меню"
 msgid "Log Out"
 msgstr "Выйти"
 
-#: netprofile_access/templates/client_layout.mak:104
+#: netprofile_access/templates/client_layout.mak:79
+msgid "You are here:"
+msgstr "Вы находитесь здесь:"
+
+#: netprofile_access/templates/client_layout.mak:108
 msgid "NetProfile.ru Team"
 msgstr "Команда NetProfile.ru"
 
-#: netprofile_access/templates/client_layout.mak:105
+#: netprofile_access/templates/client_layout.mak:109
 msgid "License:"
 msgstr "Лиценизия:"
 

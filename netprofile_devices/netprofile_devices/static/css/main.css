@@ -12,6 +12,7 @@
 .ico-mod-networkdeviceinterface { background-image: url(../img/iface.png) !important; }
 .ico-mod-networkdevicemediatype { background-image: url(../img/iface_media.png) !important; }
 
+.ico-mod-deviceclass            { background-image: url(../img/class.png) !important; }
 .ico-mod-deviceflagtype         { background-image: url(../img/device_flag.png) !important; }
 .ico-mod-devicetypeflagtype     { background-image: url(../img/device_type_flag.png) !important; }
 .ico-mod-devicetypemanufacturer { background-image: url(../img/manufacturer.png) !important; }

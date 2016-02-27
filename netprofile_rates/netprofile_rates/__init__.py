@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Rates module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -42,7 +42,7 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_deps(cls):
-		return ('dialup',)
+		return ('dialup', 'entities')
 
 	@classmethod
 	def get_models(cls):

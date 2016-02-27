@@ -25,6 +25,7 @@ div.change_details div.change_text
 .ico-entity-history       { background-image: url(../img/history.png) !important; }
 
 .ico-mod-entity           { background-image: url(../img/entity.png) !important; }
+.ico-mod-entitytype       { background-image: url(../img/entity_type.png) !important; }
 .ico-mod-entityflagtype   { background-image: url(../img/flag.png) !important; }
 .ico-mod-entitystate      { background-image: url(../img/entity_state.png) !important; }
 

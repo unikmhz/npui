@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -50,6 +50,7 @@ class Module(ModuleBase):
 		return (
 			models.Address,
 			models.Phone,
+			models.EntityType,
 			models.Entity,
 			models.EntityComment,
 			models.EntityFile,
@@ -162,6 +163,44 @@ class Module(ModuleBase):
 				cap.privilege = priv
 		except NoResultFound:
 			pass
+
+		types = (
+			models.EntityType(
+				id=1,
+				name=_('Individual'),
+				model='PhysicalEntity',
+				long_name=_('Individual'),
+				plural=_('Individuals'),
+				description=_('Definition of a single person.')
+			),
+			models.EntityType(
+				id=2,
+				name=_('Legal'),
+				model='LegalEntity',
+				long_name=_('Legal Entity'),
+				plural=_('Legal Entities'),
+				description=_('Definition of a legal entity (a company, corporation etc.).')
+			),
+			models.EntityType(
+				id=3,
+				name=_('Structure'),
+				model='StructuralEntity',
+				long_name=('Structure'),
+				plural=_('Structures'),
+				description=_('Definition of a building or a comparable structure.')
+			),
+			models.EntityType(
+				id=4,
+				name=_('Misc.'),
+				model='ExternalEntity',
+				long_name=('Miscellaneous'),
+				plural=_('Miscellaneous'),
+				description=_('Definition of an object without well-defined metadata.')
+			)
+		)
+		for et in types:
+			et.module = modobj
+			sess.add(et)
 
 		sess.add(models.EntityState(
 			name='Default',

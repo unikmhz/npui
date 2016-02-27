@@ -47,6 +47,7 @@ __all__ = [
 ]
 
 import datetime as dt
+from babel.dates import format_datetime
 
 from sqlalchemy import (
 	Boolean,
@@ -109,13 +110,10 @@ from pyramid.i18n import TranslationStringFactory
 from netprofile_entities.models import (
 	Entity,
 	EntityHistory,
-	EntityHistoryPart,
-	EntityType
+	EntityHistoryPart
 )
 
 _ = TranslationStringFactory('netprofile_access')
-
-EntityType.add_symbol('access', ('access', _('Access'), 50))
 
 @register_hook('np.wizard.init.entities.Entity')
 def _wizcb_aent_init(wizard, model, req):
@@ -137,7 +135,7 @@ def _wizcb_aent_init(wizard, model, req):
 		ExternalWizardField('AccessEntity', 'password'),
 		ExternalWizardField('AccessEntity', 'stash'),
 		ExternalWizardField('AccessEntity', 'rate'),
-		id='ent_access1', title=_('Access entity properties'),
+		id='ent_accessentity1', title=_('Access entity properties'),
 		on_prev='generic',
 		on_submit=_wizcb_aent_submit
 	))
@@ -235,7 +233,7 @@ class AccessEntity(Entity):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : EntityType.access
+		'polymorphic_identity' : 5
 	}
 	id = Column(
 		'entityid',
@@ -482,6 +480,28 @@ class AccessEntity(Entity):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+
+	def data(self, req):
+		ret = super(AccessEntity, self).data
+
+		if self.rate:
+			ret['rate'] = str(self.rate)
+		if self.next_rate:
+			ret['nextrate'] = str(self.next_rate)
+		if self.quota_period_end:
+			ret['qpend'] = format_datetime(self.quota_period_end, locale=req.current_locale)
+
+		ret['accessstate'] = self.access_state_string(req)
+		if self.access_state == AccessState.ok.value:
+			ret['accessimg'] = 'ok'
+		elif self.access_state == AccessState.block_auto.value:
+			ret['accessimg'] = 'stop'
+		elif self.access_state == AccessState.block_manual.value:
+			ret['accessimg'] = 'manual'
+		else:
+			ret['accessimg'] = 'misc'
+
+		return ret
 
 	def access_state_string(self, req):
 		if self.access_state is None:

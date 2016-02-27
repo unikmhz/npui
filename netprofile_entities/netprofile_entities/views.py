@@ -36,7 +36,10 @@ from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 from netprofile.ext.direct import extdirect_method
 
-from .models import Entity
+from .models import (
+	Entity,
+	EntityType
+)
 
 _ = TranslationStringFactory('netprofile_entities')
 
@@ -103,21 +106,28 @@ def _dpane_entities(tabs, model, req):
 @register_hook('core.validators.CreateEntity')
 def new_entity_validator(ret, values, request):
 	# FIXME: handle permissions
-	if 'etype' not in values:
+	if 'etypeid' not in values:
 		return
-	mod = request.registry.getUtility(IModuleManager).get_module_browser()['entities']
-	em = None
-	etype = values['etype']
-	if etype == 'physical':
-		em = mod['PhysicalEntity']
-	elif etype == 'legal':
-		em = mod['LegalEntity']
-	elif etype == 'structural':
-		em = mod['StructuralEntity']
-	elif etype == 'external':
-		em = mod['ExternalEntity']
-	else:
+	sess = DBSession()
+	try:
+		ent_type = sess.query(EntityType).get(int(values['etypeid']))
+	except (TypeError, ValueError):
+		ent_type = None
+	# FIXME: error out on non-existent types
+	if ent_type is None:
 		return
+	parent_id = values.get('parentid')
+	if not parent_id and not ent_type.root:
+		ret['errors']['parent'].append(request.localizer.translate(_('This entity requires a parent.')))
+	if parent_id:
+		try:
+			parent = sess.query(Entity).get(int(parent_id))
+			if parent and parent.type.leaf:
+				ret['errors']['parent'].append(request.localizer.translate(_('This entity can\'t have children.')))
+		except (TypeError, ValueError):
+			pass
+	mod = request.registry.getUtility(IModuleManager).get_module_browser()[ent_type.module.name]
+	em = mod[ent_type.model]
 	xret = em.validate_fields(values, request)
 	if 'errors' in xret:
 		ret['errors'].update(xret['errors'])
@@ -126,8 +136,7 @@ def new_entity_validator(ret, values, request):
 def _doc_gen_obj(tpl_vars, objid, objtype, req):
 	if objtype != 'entity':
 		return
-	sess = DBSession()
-	obj = sess.query(Entity).get(objid)
+	obj = DBSession().query(Entity).get(objid)
 	if not obj:
 		return
 	v = obj.template_vars(req)
@@ -145,8 +154,7 @@ def dyn_entity_history(params, request):
 	maxnum = params.get('maxnum')
 	sort = params.get('sort')
 	sdir = params.get('dir')
-	sess = DBSession()
-	e = sess.query(Entity).get(int(eid))
+	e = DBSession().query(Entity).get(int(eid))
 	if not e:
 		raise KeyError('No such entity found')
 	if begin:

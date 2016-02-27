@@ -13,7 +13,7 @@
 	SELECT `entityid`
 	INTO entid
 	FROM `entities_def`
-	WHERE `nick` = ename AND `etype` = 'access';
+	WHERE `nick` = ename AND `etypeid` = 5;
 
 	SELECT `ipaddrid`, `rateid`
 	INTO ipid, rid

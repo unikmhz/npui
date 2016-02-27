@@ -1362,8 +1362,8 @@ class EntityTypeRateClass(Base):
 	__tablename__ = 'rates_classes_etypes'
 	__table_args__ = (
 		Comment('Rate class mappings to entity types'),
-		Index('rates_classes_etypes_u_mapping', 'rcid', 'etype', unique=True),
-		Index('rates_classes_etypes_i_etype', 'etype'),
+		Index('rates_classes_etypes_u_mapping', 'rcid', 'etypeid', unique=True),
+		Index('rates_classes_etypes_i_etypeid', 'etypeid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -1374,11 +1374,10 @@ class EntityTypeRateClass(Base):
 				'cap_edit'      : 'RATES_CLASSES_EDIT',
 				'cap_delete'    : 'RATES_CLASSES_EDIT',
 				'menu_name'     : _('Entity Type Mappings'),
-				'default_sort'  : ({ 'property': 'etype', 'direction': 'ASC' },),
-				'grid_view'     : ('rcmapid', 'class', 'etype'),
+				'default_sort'  : ({ 'property': 'etypeid', 'direction': 'ASC' },),
+				'grid_view'     : ('rcmapid', 'class', 'entity_type'),
 				'grid_hidden'   : ('rcmapid',),
-				'form_view'     : ('class', 'etype'),
-				'easy_search'   : ('etype',),
+				'form_view'     : ('class', 'entity_type'),
 				'create_wizard' : SimpleWizard(title=_('Add new mapping'))
 			}
 		}
@@ -1405,15 +1404,25 @@ class EntityTypeRateClass(Base):
 			'column_flex'   : 1
 		}
 	)
-	entity_type = Column(
-		'etype',
-		ASCIIString(32), # FIXME: 32 is too low?
-		Comment('Entity type'),
+	entity_type_id = Column(
+		'etypeid',
+		UInt32(),
+		ForeignKey('entities_types.etypeid', name='rates_classes_etypes_fk_etypeid', onupdate='CASCADE'),
+		Comment('Entity type ID'),
 		nullable=False,
 		info={
 			'header_string' : _('Entity Type'),
 			'column_flex'   : 1
 		}
+	)
+
+	entity_type = relationship(
+		'EntityType',
+		innerjoin=True,
+		backref=backref(
+			'rate_classes',
+			passive_deletes='all'
+		)
 	)
 
 class RateModifierType(Base):

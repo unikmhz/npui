@@ -54,6 +54,7 @@ class Module(ModuleBase):
 		mmgr.cfg.add_route('access.cl.check.nick', '/check/nick', vhost='client')
 		mmgr.cfg.add_route('access.cl.robots', '/robots.txt', vhost='client')
 		mmgr.cfg.add_route('access.cl.favicon', '/favicon.ico', vhost='client')
+		mmgr.cfg.register_block('entities.block.data', TemplateObject('netprofile_access:templates/entity_data.mak'))
 		mmgr.cfg.register_block('stashes.cl.block.info', TemplateObject('netprofile_access:templates/client_block_chrate.mak'))
 		mmgr.cfg.scan()
 
@@ -99,16 +100,12 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_sql_data(cls, modobj, sess):
-		from netprofile_entities.models import Entity
-		from netprofile_access import models
 		from netprofile_core.models import (
 			Group,
 			GroupCapability,
 			Privilege
 		)
-
-		etab = Entity.__table__
-		sess.execute(AlterTableAlterColumn(etab, etab.c['etype']))
+		from netprofile_entities.models import EntityType
 
 		privs = (
 			Privilege(
@@ -127,6 +124,18 @@ class Module(ModuleBase):
 				cap.privilege = priv
 		except NoResultFound:
 			pass
+
+		sess.add(EntityType(
+			id=5,
+			name=_('Account'),
+			module=modobj,
+			model='AccessEntity',
+			long_name=_('Account'),
+			plural=_('Accounts'),
+			root=False,
+			leaf=True,
+			description=_('Account details for network admission and client UI access.')
+		))
 
 	def get_css(self, request):
 		return (
