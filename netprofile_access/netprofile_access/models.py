@@ -109,13 +109,10 @@ from pyramid.i18n import TranslationStringFactory
 from netprofile_entities.models import (
 	Entity,
 	EntityHistory,
-	EntityHistoryPart,
-	EntityType
+	EntityHistoryPart
 )
 
 _ = TranslationStringFactory('netprofile_access')
-
-EntityType.add_symbol('access', ('access', _('Access'), 50))
 
 @register_hook('np.wizard.init.entities.Entity')
 def _wizcb_aent_init(wizard, model, req):
@@ -137,7 +134,7 @@ def _wizcb_aent_init(wizard, model, req):
 		ExternalWizardField('AccessEntity', 'password'),
 		ExternalWizardField('AccessEntity', 'stash'),
 		ExternalWizardField('AccessEntity', 'rate'),
-		id='ent_access1', title=_('Access entity properties'),
+		id='ent_accessentity1', title=_('Access entity properties'),
 		on_prev='generic',
 		on_submit=_wizcb_aent_submit
 	))
@@ -235,7 +232,7 @@ class AccessEntity(Entity):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : EntityType.access
+		'polymorphic_identity' : 5
 	}
 	id = Column(
 		'entityid',

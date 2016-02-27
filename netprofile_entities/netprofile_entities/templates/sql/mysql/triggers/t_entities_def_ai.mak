@@ -5,7 +5,7 @@
 	VALUES (@accesslogin, 2, 1, CONCAT_WS(" ",
 		"New entity",
 		CONCAT("[ID ", NEW.entityid, "]"),
-		CONCAT("[TYPE ", NEW.etype, "]"),
+		CONCAT("[TYPE ", NEW.etypeid, "]"),
 		CONCAT("'", NEW.nick, "'")
 	));
 </%block>

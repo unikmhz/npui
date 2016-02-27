@@ -99,16 +99,12 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_sql_data(cls, modobj, sess):
-		from netprofile_entities.models import Entity
-		from netprofile_access import models
 		from netprofile_core.models import (
 			Group,
 			GroupCapability,
 			Privilege
 		)
-
-		etab = Entity.__table__
-		sess.execute(AlterTableAlterColumn(etab, etab.c['etype']))
+		from netprofile_entities.models import EntityType
 
 		privs = (
 			Privilege(
@@ -127,6 +123,17 @@ class Module(ModuleBase):
 				cap.privilege = priv
 		except NoResultFound:
 			pass
+
+		sess.add(EntityType(
+			id=5,
+			name=_('Account'),
+			model='AccessEntity',
+			long_name=_('Account'),
+			plural=_('Accounts'),
+			root=False,
+			leaf=True,
+			description=_('Account details for network admission and client UI access.')
+		))
 
 	def get_css(self, request):
 		return (

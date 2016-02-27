@@ -119,31 +119,176 @@ from netprofile.ext.wizards import (
 	Wizard
 )
 
-from pyramid.i18n import TranslationStringFactory
+from pyramid.i18n import (
+	TranslationString,
+	TranslationStringFactory
+)
 
 _ = TranslationStringFactory('netprofile_entities')
 
-class EntityType(DeclEnum):
+class EntityType(Base):
 	"""
-	Entity type ENUM.
+	Defines a type of entity object.
 	"""
-	physical   = 'physical',   _('Physical'),   10
-	legal      = 'legal',      _('Legal'),      20
-	structural = 'structural', _('Structural'), 30
-	external   = 'external',   _('External'),   40
+	__tablename__ = 'entities_types'
+	__table_args__ = (
+		Comment('Entity types'),
+		Index('entities_types_u_name', 'name', unique=True),
+		Index('entities_types_u_spec', 'npmodid', 'model', unique=True),
+		Index('entities_types_u_longname', 'longname', unique=True),
+		Index('entities_types_u_plural', 'plural', unique=True),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_ENTITIES',
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'BASE_ADMIN',
+				'cap_edit'      : 'BASE_ADMIN',
+				'cap_delete'    : 'BASE_ADMIN',
+
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Entity Types'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('module', 'name', 'model'),
+				'grid_hidden'   : ('etypeid',),
+				'easy_search'   : ('name', 'model', 'longname', 'plural'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard' : SimpleWizard(title=_('Add new entity type'))
+			}
+		}
+	)
+	id = Column(
+		'etypeid',
+		UInt32(),
+		Sequence('entities_types_etypeid_seq', start=101, increment=1),
+		Comment('Entity type ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Entity type name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	module_id = Column(
+		'npmodid',
+		UInt32(),
+		ForeignKey('np_modules.npmodid', name='entities_types_fk_npmodid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('NetProfile module ID'),
+		nullable=False,
+		default=1,
+		server_default=text('1'),
+		info={
+			'header_string' : _('Module'),
+			'filter_type'   : 'nplist',
+			'column_flex'   : 2
+		}
+	)
+	model = Column(
+		ASCIIString(255),
+		Comment('ORM declarative model class name'),
+		nullable=False,
+		info={
+			'header_string' : _('Model'),
+			'column_flex'   : 2
+		}
+	)
+	long_name = Column(
+		'longname',
+		Unicode(255),
+		Comment('Long entity type name'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Long Name')
+		}
+	)
+	plural = Column(
+		Unicode(255),
+		Comment('Entity type plural string'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Long Name')
+		}
+	)
+	root = Column(
+		NPBoolean(),
+		Comment('Can be root node (can have no parent)'),
+		nullable=False,
+		default=True,
+		server_default=npbool(True),
+		info={
+			'header_string' : _('Can be Root')
+		}
+	)
+	leaf = Column(
+		NPBoolean(),
+		Comment('Leaf node (can\'t have any children)'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Is Leaf')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Entity type description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	module = relationship(
+		'NPModule',
+		innerjoin=True,
+		backref=backref(
+			'entity_types',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+
+	def __str__(self):
+		req = getattr(self, '__req__', None)
+		if req is not None:
+			if self.module:
+				domain = 'netprofile_' + self.module.name
+				return req.localizer.translate(TranslationString(self.name, domain=domain))
+		return str(self.name)
 
 def _wizcb_ent_generic_next(wiz, em, step, act, val, req):
 	ret = {
 		'do'      : 'goto',
-		'goto'    : 'ent_physical1'
+		'goto'    : 'ent_physicalentity1'
 	}
-	if 'etype' in val:
+	if 'etypeid' in val:
+		ent_type = DBSession().query(EntityType).get(int(val['etypeid']))
+		if ent_type is None:
+			return ret
+		ent_name = ent_type.model.lower()
 		ret.update({
-			'goto'    : 'ent_%s1' % val['etype'],
+			'goto'    : 'ent_%s1' % (ent_name,),
 			'enable'  : [
 				st.id
 				for st in wiz.steps
-				if st.id.startswith('ent_' + val['etype'])
+				if st.id.startswith('ent_' + ent_name)
 			],
 			'disable' : [
 				st.id
@@ -213,7 +358,7 @@ class Entity(Base):
 		Index('entities_def_i_mby', 'mby'),
 		Index('entities_def_i_esid', 'esid'),
 		Index('entities_def_i_nick', 'nick'),
-		Index('entities_def_u_nt', 'etype', 'nick', unique=True),
+		Index('entities_def_u_nt', 'etypeid', 'nick', unique=True),
 		Trigger('after', 'insert', 't_entities_def_ai'),
 		Trigger('after', 'update', 't_entities_def_au'),
 		Trigger('after', 'delete', 't_entities_def_ad'),
@@ -275,7 +420,7 @@ class Entity(Base):
 
 				'create_wizard' : Wizard(
 					Step(
-						'nick', 'etype', 'parent',
+						'nick', 'type', 'parent',
 						'state', 'flags', 'descr',
 						id='generic', title=_('Generic entity properties'),
 						on_next=_wizcb_ent_generic_next
@@ -286,7 +431,7 @@ class Entity(Base):
 						ExternalWizardField('PhysicalEntity', 'name_given'),
 						ExternalWizardField('PhysicalEntity', 'name_middle'),
 						ExternalWizardField('PhysicalEntity', 'gender'),
-						id='ent_physical1', title=_('Physical entity properties'),
+						id='ent_physicalentity1', title=_('Person\'s name'),
 						on_prev='generic'
 					),
 					Step(
@@ -298,14 +443,14 @@ class Entity(Base):
 						ExternalWizardField('PhysicalEntity', 'icq'),
 						ExternalWizardField('PhysicalEntity', 'homepage'),
 						ExternalWizardField('PhysicalEntity', 'birthdate'),
-						id='ent_physical2', title=_('Physical entity properties'),
+						id='ent_physicalentity2', title=_('Personal details'),
 						on_submit=_wizcb_ent_submit('PhysicalEntity')
 					),
 					Step(
 						ExternalWizardField('LegalEntity', 'contractid'),
 						ExternalWizardField('LegalEntity', 'name'),
 						ExternalWizardField('LegalEntity', 'homepage'),
-						id='ent_legal1', title=_('Legal entity properties'),
+						id='ent_legalentity1', title=_('Legal entity properties'),
 						on_prev='generic'
 					),
 					Step(
@@ -315,7 +460,7 @@ class Entity(Base):
 						ExternalWizardField('LegalEntity', 'cp_title'),
 						ExternalWizardField('LegalEntity', 'cp_email'),
 						ExternalWizardField('LegalEntity', 'cp_icq'),
-						id='ent_legal2', title=_('Legal entity contact person')
+						id='ent_legalentity2', title=_('Legal entity contact person')
 					),
 					Step(
 						ExternalWizardField('LegalEntity', 'address_legal'),
@@ -325,19 +470,19 @@ class Entity(Base):
 						ExternalWizardField('LegalEntity', 'props_rs'),
 						ExternalWizardField('LegalEntity', 'props_cs'),
 						ExternalWizardField('LegalEntity', 'props_bank'),
-						id='ent_legal3', title=_('Legal entity details'),
+						id='ent_legalentity3', title=_('Legal entity details'),
 						on_submit=_wizcb_ent_submit('LegalEntity')
 					),
 					Step(
 						# FIXME?
-						id='ent_structural1', title=_('Structural entity properties'),
+						id='ent_structuralentity1', title=_('Structure properties'),
 						on_prev='generic',
 						on_submit=_wizcb_ent_submit('StructuralEntity')
 					),
 					Step(
 						ExternalWizardField('ExternalEntity', 'name'),
 						ExternalWizardField('ExternalEntity', 'address'),
-						id='ent_external1', title=_('External entity properties'),
+						id='ent_externalentity1', title=_('Misc. entity properties'),
 						on_prev='generic',
 						on_submit=_wizcb_ent_submit('ExternalEntity')
 					),
@@ -401,13 +546,12 @@ class Entity(Base):
 			'header_string' : _('LDAP RDN')
 		}
 	)
-	type = Column(
-		'etype',
-		EntityType.db_type(),
+	type_id = Column(
+		'etypeid',
+		UInt32(),
+		ForeignKey('entities_types.etypeid', name='entities_def_fk_etypeid', onupdate='CASCADE'),
 		Comment('Entity type'),
 		nullable=False,
-		default=EntityType.physical,
-		server_default=EntityType.physical,
 		info={
 			'header_string' : _('Type')
 		}
@@ -474,8 +618,8 @@ class Entity(Base):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : 'entity',
-		'polymorphic_on'       : type,
+		'polymorphic_identity' : 0,
+		'polymorphic_on'       : type_id,
 		'with_polymorphic'     : '*',
 		'confirm_deleted_rows' : False
 	}
@@ -484,6 +628,14 @@ class Entity(Base):
 		'EntityState',
 		innerjoin=True,
 		backref='entities'
+	)
+	type = relationship(
+		'EntityType',
+		innerjoin=True,
+		backref=backref(
+			'entities',
+			passive_deletes='all'
+		)
 	)
 	children = relationship(
 		'Entity',
@@ -616,7 +768,7 @@ class Entity(Base):
 		return v
 
 	def __str__(self):
-		return '%s' % str(self.nick)
+		return str(self.nick)
 
 	def get_history(self, req, begin=None, end=None, category=None, max_num=20, sort=None, sdir=None):
 		hcat = 'entities.history.get.%s' % ('all' if category is None else category)
@@ -704,7 +856,7 @@ class EntityState(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class EntityFlagType(Base):
 	__tablename__ = 'entities_flags_types'
@@ -780,7 +932,7 @@ class EntityFlagType(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class EntityFlag(Base):
 	"""
@@ -1222,7 +1374,7 @@ class EntityFile(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.file)
+		return str(self.file)
 
 class EntityComment(Base):
 	"""
@@ -1353,7 +1505,7 @@ class PhysicalEntity(Entity):
 				'cap_delete'    : 'ENTITIES_DELETE',
 
 				'show_in_menu'  : 'modules',
-				'menu_name'     : _('Physical entities'),
+				'menu_name'     : _('Individuals'),
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1399,20 +1551,20 @@ class PhysicalEntity(Entity):
 						'contractid',
 						'name_family', 'name_given', 'name_middle',
 						'gender',
-						id='ent_physical1', title=_('Physical entity properties')
+						id='ent_physical1', title=_('Person\'s name')
 					),
 					Step(
 						'pass_series', 'pass_num', 'pass_issuedby', 'pass_issuedate',
 						'email', 'icq', 'homepage', 'birthdate',
-						id='ent_physical3', title=_('Physical entity properties')
+						id='ent_physical3', title=_('Personal details')
 					),
-					title=_('Add new physical entity')
+					title=_('Add new individual')
 				)
 			}
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : EntityType.physical
+		'polymorphic_identity' : 1
 	}
 	id = Column(
 		'entityid',
@@ -1626,7 +1778,7 @@ class LegalEntity(Entity):
 				'cap_delete'    : 'ENTITIES_DELETE',
 
 				'show_in_menu'  : 'modules',
-				'menu_name'     : _('Legal entities'),
+				'menu_name'     : _('Legal Entities'),
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1691,7 +1843,7 @@ class LegalEntity(Entity):
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : EntityType.legal
+		'polymorphic_identity' : 2
 	}
 	id = Column(
 		'entityid',
@@ -1913,7 +2065,7 @@ class StructuralEntity(Entity):
 				'cap_delete'    : 'ENTITIES_DELETE',
 
 				'show_in_menu'  : 'modules',
-				'menu_name'     : _('Structural entities'),
+				'menu_name'     : _('Structures'),
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -1950,15 +2102,15 @@ class StructuralEntity(Entity):
 					),
 					Step(
 						'house',
-						id='ent_structural1', title=_('Structural entity properties')
+						id='ent_structural1', title=_('Structure properties')
 					),
-					title=_('Add new structural entity')
+					title=_('Add new structure')
 				)
 			}
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : EntityType.structural
+		'polymorphic_identity' : 3
 	}
 	id = Column(
 		'entityid',
@@ -2012,7 +2164,7 @@ class ExternalEntity(Entity):
 				'cap_delete'    : 'ENTITIES_DELETE',
 
 				'show_in_menu'  : 'modules',
-				'menu_name'     : _('External entities'),
+				'menu_name'     : _('Miscellaneous'),
 				'default_sort'  : ({ 'property': 'nick' ,'direction': 'ASC' },),
 				'grid_view'     : (
 					MarkupColumn(
@@ -2044,15 +2196,15 @@ class ExternalEntity(Entity):
 					),
 					Step(
 						'name', 'address',
-						id='ent_external1', title=_('External entity properties')
+						id='ent_external1', title=_('Misc. entity properties')
 					),
-					title=_('Add new external entity')
+					title=_('Add new miscellaneous entity')
 				)
 			}
 		}
 	)
 	__mapper_args__ = {
-		'polymorphic_identity' : EntityType.external
+		'polymorphic_identity' : 4
 	}
 	id = Column(
 		'entityid',
@@ -2140,7 +2292,7 @@ EntitiesBaseView = View(
 		Entity.nick.label('nick'),
 		Entity.state_id.label('esid'),
 		Entity.relative_dn.label('rdn'),
-		Entity.type.label('etype'),
+		Entity.type_id.label('etypeid'),
 		Entity.creation_time.label('ctime'),
 		Entity.modification_time.label('mtime'),
 		Entity.created_by_id.label('cby'),
