@@ -568,7 +568,7 @@ def localstorage_load(request):
 def custom_valid(name, values, request):
 	ret = {
 		'success' : True,
-		'errors'  : {}
+		'errors'  : defaultdict(list)
 	}
 	request.run_hook(
 		'core.validators.%s' % str(name),

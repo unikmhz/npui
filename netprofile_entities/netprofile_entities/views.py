@@ -108,10 +108,24 @@ def new_entity_validator(ret, values, request):
 	# FIXME: handle permissions
 	if 'etypeid' not in values:
 		return
-	ent_type = DBSession().query(EntityType).get(int(values['etypeid']))
+	sess = DBSession()
+	try:
+		ent_type = sess.query(EntityType).get(int(values['etypeid']))
+	except (TypeError, ValueError):
+		ent_type = None
 	# FIXME: error out on non-existent types
 	if ent_type is None:
 		return
+	parent_id = values.get('parentid')
+	if not parent_id and not ent_type.root:
+		ret['errors']['parent'].append(request.localizer.translate(_('This entity requires a parent.')))
+	if parent_id:
+		try:
+			parent = sess.query(Entity).get(int(parent_id))
+			if parent and parent.type.leaf:
+				ret['errors']['parent'].append(request.localizer.translate(_('This entity can\'t have children.')))
+		except (TypeError, ValueError):
+			pass
 	mod = request.registry.getUtility(IModuleManager).get_module_browser()[ent_type.module.name]
 	em = mod[ent_type.model]
 	xret = em.validate_fields(values, request)
