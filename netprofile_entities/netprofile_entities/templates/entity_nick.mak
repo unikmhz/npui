@@ -1,3 +1,4 @@
+## -*- coding: utf-8 -*-
 {__str__}
 <tpl if="data.flags && data.flags.length">
 	<br />

@@ -54,6 +54,7 @@ class Module(ModuleBase):
 		mmgr.cfg.add_route('access.cl.check.nick', '/check/nick', vhost='client')
 		mmgr.cfg.add_route('access.cl.robots', '/robots.txt', vhost='client')
 		mmgr.cfg.add_route('access.cl.favicon', '/favicon.ico', vhost='client')
+		mmgr.cfg.register_block('entities.block.data', TemplateObject('netprofile_access:templates/entity_data.mak'))
 		mmgr.cfg.register_block('stashes.cl.block.info', TemplateObject('netprofile_access:templates/client_block_chrate.mak'))
 		mmgr.cfg.scan()
 
