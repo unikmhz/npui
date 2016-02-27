@@ -127,6 +127,7 @@ class Module(ModuleBase):
 		sess.add(EntityType(
 			id=5,
 			name=_('Account'),
+			module=modobj,
 			model='AccessEntity',
 			long_name=_('Account'),
 			plural=_('Accounts'),
