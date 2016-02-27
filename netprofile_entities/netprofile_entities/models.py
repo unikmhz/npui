@@ -133,7 +133,6 @@ class EntityType(Base):
 	__tablename__ = 'entities_types'
 	__table_args__ = (
 		Comment('Entity types'),
-		Index('entities_types_i_npmodid', 'npmodid'),
 		Index('entities_types_u_name', 'name', unique=True),
 		Index('entities_types_u_spec', 'npmodid', 'model', unique=True),
 		Index('entities_types_u_longname', 'longname', unique=True),
@@ -151,7 +150,8 @@ class EntityType(Base):
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Entity Types'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('module', 'name', 'model'),
+				'grid_view'     : ('etypeid', 'module', 'name', 'model'),
+				'form_view'     : ('module', 'model', 'name', 'longname', 'plural', 'root', 'leaf', 'descr'),
 				'grid_hidden'   : ('etypeid',),
 				'easy_search'   : ('name', 'model', 'longname', 'plural'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
