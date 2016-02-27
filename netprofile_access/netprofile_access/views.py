@@ -802,6 +802,20 @@ def _dpane_aent_mods(tabs, model, req):
 		'xtype'             : 'historygrid'
 	}))
 
+@register_hook('core.dpanetabs.stashes.Stash')
+def _dpane_stash_aents(tabs, model, req):
+	if req.has_permission('ENTITIES_LIST'):
+		tabs.append({
+			'title'             : req.localizer.translate(_('Access Entities')),
+			'iconCls'           : 'ico-mod-accessentity',
+			'xtype'             : 'grid_access_AccessEntity',
+			'stateId'           : None,
+			'stateful'          : False,
+			'hideColumns'       : ('stash',),
+			'extraParamProp'    : 'stashid',
+			'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+		})
+
 @register_hook('entities.history.get.all')
 @register_hook('entities.history.get.access_changes')
 def _aent_hist_changes(hist, ent, req, begin, end, max_num):
