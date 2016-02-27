@@ -133,6 +133,7 @@ class EntityType(Base):
 	__tablename__ = 'entities_types'
 	__table_args__ = (
 		Comment('Entity types'),
+		Index('entities_types_i_npmodid', 'npmodid'),
 		Index('entities_types_u_name', 'name', unique=True),
 		Index('entities_types_u_spec', 'npmodid', 'model', unique=True),
 		Index('entities_types_u_longname', 'longname', unique=True),
@@ -220,7 +221,7 @@ class EntityType(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Long Name')
+			'header_string' : _('Plural')
 		}
 	)
 	root = Column(
@@ -263,6 +264,12 @@ class EntityType(Base):
 			cascade='all, delete-orphan',
 			passive_deletes=True
 		)
+	)
+
+	entities = relationship(
+		'Entity',
+		backref=backref('type', innerjoin=True),
+		passive_deletes='all'
 	)
 
 	def __str__(self):
@@ -553,7 +560,8 @@ class Entity(Base):
 		Comment('Entity type'),
 		nullable=False,
 		info={
-			'header_string' : _('Type')
+			'header_string' : _('Type'),
+			'read_only'     : True
 		}
 	)
 	creation_time = Column(
@@ -628,14 +636,6 @@ class Entity(Base):
 		'EntityState',
 		innerjoin=True,
 		backref='entities'
-	)
-	type = relationship(
-		'EntityType',
-		innerjoin=True,
-		backref=backref(
-			'entities',
-			passive_deletes='all'
-		)
 	)
 	children = relationship(
 		'Entity',
