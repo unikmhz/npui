@@ -892,28 +892,6 @@ class User(Base):
 			'column_flex'   : 2
 		}
 	)
-	ip_address = Column(
-		'ipaddr',
-		IPv4Address(),
-		Comment('Lock-in IP address'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('IP Address')
-		}
-	)
-	random_key = Column(
-		'randomkey',
-		ASCIIString(64),
-		Comment('Activation random key'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Random Key')
-		}
-	)
 	photo_id = Column(
 		'phfileid',
 		UInt32(),
