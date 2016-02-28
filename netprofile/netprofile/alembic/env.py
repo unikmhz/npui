@@ -35,6 +35,7 @@ from sqlalchemy import (
 	engine_from_config,
 	pool
 )
+from netprofile.db import ddl as npd
 from netprofile.db import fields as npf
 from netprofile.db import migrations as npm
 from netprofile.db.connection import DBMeta
@@ -83,8 +84,12 @@ def render_item(type_, obj, autogen_context):
 			'kw'      : ', '.join(['%s=%s' % (kwname, val) for kwname, val in opts])
 		}
 	elif type_ == 'server_default':
+		if isinstance(obj, npd.CurrentTimestampDefault):
+			autogen_context.imports.add('from netprofile.db import ddl as npd')
+			return 'npd.CurrentTimestampDefault(on_update=%r)' % (obj.on_update,)
 		if isinstance(obj, DefaultClause):
 			if isinstance(obj.arg, npf.npbool):
+				autogen_context.imports.add('from netprofile.db import fields as npf')
 				return 'npf.npbool(%r)' % (obj.arg.val,)
 	return False
 
