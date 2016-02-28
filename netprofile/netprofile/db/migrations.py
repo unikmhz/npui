@@ -31,6 +31,26 @@ from alembic.operations import (
 	MigrateOperation,
 	Operations
 )
+from alembic.autogenerate import renderers
+
+from netprofile.db.ddl import SetTableComment
+
+@Operations.register_operation('set_table_comment')
+class SetTableCommentOp(MigrateOperation):
+	"""
+	Create comment on a table.
+	"""
+	def __init__(self, table, comment):
+		self.table = table
+		self.comment = comment
+
+	@classmethod
+	def set_table_comment(cls, operations, table, comment):
+		"""
+		Create comment on a table.
+		"""
+		op = SetTableCommentOp(table, comment)
+		return operations.invoke(op)
 
 @Operations.register_operation('create_trigger')
 class CreateTriggerOp(MigrateOperation):
@@ -78,11 +98,19 @@ class DropTriggerOp(MigrateOperation):
 		op = DropTriggerOp(module, table, when, action, **kwargs)
 		return operations.invoke(op)
 
+@Operations.implementation_for(SetTableCommentOp)
+def _set_table_comment(operations, op):
+	operations.execute(SetTableComment(op.table, op.comment))
+
+@renderers.dispatch_for(SetTableCommentOp)
+def _render_set_table_comment(context, op):
+	return 'op.set_table_comment(%r, %r)' % (op.table, op.comment)
+
 @Operations.implementation_for(CreateTriggerOp)
-def create_trigger(operations, op):
+def _create_trigger(operations, op):
 	pass
 
 @Operations.implementation_for(DropTriggerOp)
-def drop_trigger(operations, op):
+def _drop_trigger(operations, op):
 	pass
 

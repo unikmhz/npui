@@ -23,6 +23,8 @@
 from __future__ import with_statement
 import os
 from alembic import context
+from alembic.operations import ops
+from alembic.autogenerate import rewriter
 from alembic.autogenerate.render import (
 	_ident,
 	_render_server_default,
@@ -34,11 +36,23 @@ from sqlalchemy import (
 	pool
 )
 from netprofile.db import fields as npf
-from netprofile.db.connection import Base
+from netprofile.db import migrations as npm
+from netprofile.db.connection import DBMeta
 
 
 config = context.config
-target_metadata = Base.metadata
+writer = rewriter.Rewriter()
+
+
+@writer.rewrites(ops.CreateTableOp)
+def _create_table(context, revision, op):
+	train = [op]
+	table = op.to_table(context)
+	if hasattr(table, 'comment'):
+		train.append(npm.SetTableCommentOp(op.table_name, table.comment))
+	if len(train) > 1:
+		return train
+	return op
 
 
 def render_item(type_, obj, autogen_context):
@@ -89,7 +103,11 @@ def run_migrations_offline():
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True)
+        url=url,
+        target_metadata=DBMeta,
+        literal_binds=True,
+        process_revision_directives=writer
+    )
 
     with context.begin_transaction():
         context.run_migrations()
@@ -110,14 +128,16 @@ def run_migrations_online():
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=target_metadata,
-			render_item=render_item,
-			compare_type=True,
-			compare_server_default=True
+            target_metadata=DBMeta,
+            render_item=render_item,
+            compare_type=True,
+            compare_server_default=True,
+            process_revision_directives=writer
         )
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

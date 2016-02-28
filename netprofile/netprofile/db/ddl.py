@@ -193,16 +193,26 @@ def visit_set_column_comment(element, compiler, **kw):
 
 @compiles(SetTableComment, 'mysql')
 def visit_set_table_comment_mysql(element, compiler, **kw):
+	tbl = element.table
+	if isinstance(tbl, str):
+		tbl = compiler.sql_compiler.preparer.quote(tbl)
+	else:
+		tbl = compiler.sql_compiler.preparer.format_table(tbl)
 	return 'ALTER TABLE %s COMMENT=%s' % (
-		compiler.sql_compiler.preparer.format_table(element.table),
+		tbl,
 		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
 @compiles(SetTableComment, 'postgresql')
 @compiles(SetTableComment, 'oracle')
 def visit_set_table_comment_pgsql(element, compiler, **kw):
+	tbl = element.table
+	if isinstance(tbl, str):
+		tbl = compiler.sql_compiler.preparer.quote(tbl)
+	else:
+		tbl = compiler.sql_compiler.preparer.format_table(tbl)
 	return 'COMMENT ON TABLE %s IS %s' % (
-		compiler.sql_compiler.preparer.format_table(element.table),
+		tbl,
 		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
