@@ -51,6 +51,9 @@ def _create_table(context, revision, op):
 	table = op.to_table(context)
 	if hasattr(table, 'comment'):
 		train.append(npm.SetTableCommentOp(op.table_name, table.comment))
+	if hasattr(table, 'triggers'):
+		for trigger in table.triggers:
+			train.append(npm.CreateTriggerOp(trigger.module, op.table_name, trigger.when, trigger.event))
 	if len(train) > 1:
 		return train
 	return op

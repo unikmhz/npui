@@ -247,24 +247,30 @@ def ddl_fmt(ctx, obj):
 	raise ValueError('Unable to format value for DDL')
 
 class CreateTrigger(DDLElement):
-	def __init__(self, table, trigger):
+	def __init__(self, table, trigger, module=None):
 		self.table = table
 		self.trigger = trigger
+		if module is None:
+			module = trigger.module
+		self.module = module
 
 class DropTrigger(DDLElement):
-	def __init__(self, table, trigger):
+	def __init__(self, table, trigger, module=None):
 		self.table = table
 		self.trigger = trigger
+		if module is None:
+			module = trigger.module
+		self.module = module
 
 @compiles(CreateTrigger)
 def visit_create_trigger(element, compiler, **kw):
 	table = element.table
-	cls = _table_to_class(table.name)
-	module = cls.__module__.split('.')[0]
+	module = element.module
 	trigger = element.trigger
+	if isinstance(table, str):
+		table = text(compiler.sql_compiler.preparer.quote(table))
 	tpldef = {
 		'table'    : table,
-		'class'    : cls,
 		'module'   : module,
 		'compiler' : compiler,
 		'dialect'  : compiler.dialect,
@@ -302,9 +308,19 @@ class Trigger(SchemaItem):
 		self.event = event
 		self.name = name
 
+	@property
+	def module(self):
+		if self.parent is None:
+			return None
+		cls = _table_to_class(self.parent.name)
+		return cls.__module__.split('.')[0]
+
 	def _set_parent(self, parent):
 		if isinstance(parent, Table):
 			self.parent = parent
+			if not hasattr(parent, 'triggers'):
+				parent.triggers = []
+			parent.triggers.append(self)
 			CreateTrigger(parent, self).execute_at('after_create', parent)
 			DropTrigger(parent, self).execute_at('before_drop', parent)
 
