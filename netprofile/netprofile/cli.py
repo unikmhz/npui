@@ -542,12 +542,12 @@ class Alembic(Command):
 
 		self.app.setup_mako_sql()
 		mm = self.app.mm
-		cfg = self.app.alembic_config
 
 		if len(mm.modules) > 0:
 			mm.rescan()
 		else:
 			mm.scan()
+		mm.load('core')
 		mm.load_all()
 
 		if not hasattr(args, 'cmd'):
@@ -562,6 +562,7 @@ class Alembic(Command):
 
 		fn, positional, kwargs = args.cmd
 
+		cfg = self.app.alembic_config
 		fn(
 			cfg,
 			*[getattr(args, k) for k in positional],
