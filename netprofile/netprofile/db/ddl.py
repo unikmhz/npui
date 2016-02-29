@@ -88,6 +88,14 @@ class SQLFunctionArgument(DDLElement):
 		self.type = arg_type
 		self.dir = arg_dir
 
+	def __repr__(self):
+		return '%s(%r, %r, %r)' % (
+			self.__class__.__name__,
+			self.name,
+			self.type,
+			self.dir
+		)
+
 class InArgument(SQLFunctionArgument):
 	def __init__(self, name, arg_type):
 		super(InArgument, self).__init__(name, arg_type, 'IN')
@@ -396,6 +404,19 @@ class SQLFunction(object):
 		self.writes_sql = writes_sql
 		self.is_procedure = is_procedure
 		self.label = label
+
+	def __repr__(self):
+		return '%s(%r, args=%r, returns=%r, comment=%r, reads_sql=%r, writes_sql=%r, is_procedure=%r, label=%r)' % (
+			self.__class__.__name__,
+			self.name,
+			self.args,
+			self.returns,
+			self.comment,
+			self.reads_sql,
+			self.writes_sql,
+			self.is_procedure,
+			self.label
+		)
 
 	def create(self, modname):
 		return CreateFunction(self, modname)

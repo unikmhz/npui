@@ -31,7 +31,10 @@ from alembic.operations import (
 	MigrateOperation,
 	Operations
 )
-from alembic.autogenerate import renderers
+from alembic.autogenerate import (
+	comparators,
+	renderers
+)
 
 from netprofile.db.ddl import (
 	CreateEvent,
@@ -114,6 +117,46 @@ class DropTriggerOp(MigrateOperation):
 		op = DropTriggerOp(module, table, when, action, **kwargs)
 		return operations.invoke(op)
 
+@Operations.register_operation('create_function')
+class CreateFunctionOp(MigrateOperation):
+	"""
+	Create SQL function or procedure.
+	"""
+	def __init__(self, module, func):
+		self.module = module
+		self.func = func
+
+	def reverse(self):
+		return DropFunctionOp(self.module, self.func)
+
+	@classmethod
+	def create_function(cls, operations, module, func):
+		"""
+		Issue "CREATE FUNCTION" or "CREATE PROCEDURE" DDL command.
+		"""
+		op = CreateFunctionOp(module, func)
+		return operations.invoke(op)
+
+@Operations.register_operation('drop_function')
+class DropFunctionOp(MigrateOperation):
+	"""
+	Drop SQL function or procedure.
+	"""
+	def __init__(self, module, func):
+		self.module = module
+		self.func = func
+
+	def reverse(self):
+		return CreateFunctionOp(self.module, self.func)
+
+	@classmethod
+	def drop_function(cls, operations, module, func):
+		"""
+		Issue "DROP FUNCTION" or "DROP PROCEDURE" DDL command.
+		"""
+		op = DropFunctionOp(module, func)
+		return operations.invoke(op)
+
 @Operations.implementation_for(SetTableCommentOp)
 def _set_table_comment(operations, op):
 	operations.execute(SetTableComment(op.table, op.comment))
@@ -158,4 +201,24 @@ def _render_create_trigger(context, op):
 		op.action,
 		op.migration
 	)
+
+@Operations.implementation_for(CreateFunctionOp)
+def _create_function(operations, op):
+	operations.execute(CreateFunction(op.func, op.module))
+
+@renderers.dispatch_for(CreateFunctionOp)
+def _render_create_function(context, op):
+	context.imports.add('from netprofile.db import ddl as npd')
+	context.imports.add('from netprofile.db.ddl import InArgument, OutArgument, InOutArgument')
+	return 'op.create_function(%r, npd.%r)' % (op.module, op.func)
+
+@Operations.implementation_for(DropFunctionOp)
+def _drop_function(operations, op):
+	operations.execute(DropFunction(op.func))
+
+@renderers.dispatch_for(DropFunctionOp)
+def _render_drop_function(context, op):
+	context.imports.add('from netprofile.db import ddl as npd')
+	context.imports.add('from netprofile.db.ddl import InArgument, OutArgument, InOutArgument')
+	return 'op.drop_function(%r, npd.%r)' % (op.module, op.func)
 
