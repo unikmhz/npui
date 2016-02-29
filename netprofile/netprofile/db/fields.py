@@ -247,6 +247,11 @@ class MACAddress(types.TypeDecorator):
 		if _is_pgsql(dialect):
 			return postgresql.MACADDR()
 		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_pgsql(dialect):
+			return isinstance(conn_type, postgresql.MACADDR)
+		return isinstance(conn_type, types.BINARY) and conn_type.length == 6
 	
 	@property
 	def python_type(self):
@@ -282,6 +287,15 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
 		if _is_mysql(dialect):
 			return mysql.ENUM('Y', 'N', charset='ascii', collation='ascii_bin')
 		return types.Boolean(name='ck_boolean')
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			if not isinstance(conn_type, mysql.ENUM):
+				return False
+			if conn_type.enums == ('Y', 'N'):
+				return True
+			return False
+		return isinstance(conn_type, types.Boolean)
 
 	def _should_create_constraint(self, compiler):
 		return (not compiler.dialect.supports_native_boolean) \
@@ -370,6 +384,11 @@ class ASCIIString(types.TypeDecorator):
 			return mysql.VARCHAR(self.impl.length, charset='ascii', collation='ascii_bin')
 		return self.impl
 
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.VARCHAR) and conn_type.charset == 'ascii' and conn_type.length == self.impl.length
+		return isinstance(conn_type, types.String) and conn_type.length == self.impl.length
+
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
@@ -388,6 +407,11 @@ class ASCIIFixedString(types.TypeDecorator):
 			return mysql.CHAR(self.impl.length, charset='ascii', collation='ascii_bin')
 		return self.impl
 
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.CHAR) and conn_type.charset == 'ascii' and conn_type.length == self.impl.length
+		return isinstance(conn_type, types.CHAR) and conn_type.length == self.impl.length
+
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
@@ -405,6 +429,11 @@ class ExactUnicode(types.TypeDecorator):
 		if _is_mysql(dialect):
 			return mysql.VARCHAR(self.impl.length, charset='utf8', collation='utf8_bin')
 		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.VARCHAR) and conn_type.charset == 'utf8' and conn_type.length == self.impl.length
+		return isinstance(conn_type, types.Unicode) and conn_type.length == self.impl.length
 
 	def process_result_value(self, value, dialect):
 		if value is None:
@@ -426,6 +455,11 @@ class Int8(types.TypeDecorator):
 			return mysql.TINYINT()
 		return self.impl
 
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.TINYINT) and conn_type.unsigned == False
+		return isinstance(conn_type, types.SmallInteger)
+
 class Int16(types.TypeDecorator):
 	"""
 	16-bit signed integer field.
@@ -438,6 +472,11 @@ class Int16(types.TypeDecorator):
 		if _is_mysql(dialect):
 			return mysql.SMALLINT()
 		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.SMALLINT) and conn_type.unsigned == False
+		return isinstance(conn_type, types.SmallInteger)
 
 class Int32(types.TypeDecorator):
 	"""
@@ -452,6 +491,11 @@ class Int32(types.TypeDecorator):
 			return mysql.INTEGER()
 		return self.impl
 
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.INTEGER) and conn_type.unsigned == False
+		return isinstance(conn_type, types.Integer)
+
 class Int64(types.TypeDecorator):
 	"""
 	64-bit signed integer field.
@@ -464,6 +508,11 @@ class Int64(types.TypeDecorator):
 		if _is_mysql(dialect):
 			return mysql.BIGINT()
 		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.BIGINT) and conn_type.unsigned == False
+		return isinstance(conn_type, types.BigInteger)
 
 class UInt8(types.TypeDecorator):
 	"""
@@ -478,6 +527,11 @@ class UInt8(types.TypeDecorator):
 			return mysql.TINYINT(unsigned=True)
 		return self.impl
 
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.TINYINT) and conn_type.unsigned == True
+		return isinstance(conn_type, types.SmallInteger)
+
 class UInt16(types.TypeDecorator):
 	"""
 	16-bit unsigned integer field.
@@ -490,6 +544,11 @@ class UInt16(types.TypeDecorator):
 		if _is_mysql(dialect):
 			return mysql.SMALLINT(unsigned=True)
 		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.SMALLINT) and conn_type.unsigned == True
+		return isinstance(conn_type, types.SmallInteger)
 
 class UInt32(types.TypeDecorator):
 	"""
@@ -504,6 +563,11 @@ class UInt32(types.TypeDecorator):
 			return mysql.INTEGER(unsigned=True)
 		return self.impl
 
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.INTEGER) and conn_type.unsigned == True
+		return isinstance(conn_type, types.Integer)
+
 class UInt64(types.TypeDecorator):
 	"""
 	64-bit unsigned integer field.
@@ -517,6 +581,11 @@ class UInt64(types.TypeDecorator):
 			return mysql.BIGINT(unsigned=True)
 		return self.impl
 
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.BIGINT) and conn_type.unsigned == True
+		return isinstance(conn_type, types.BigInteger)
+
 class ASCIITinyText(types.TypeDecorator):
 	"""
 	256-byte ASCII text field.
@@ -527,6 +596,11 @@ class ASCIITinyText(types.TypeDecorator):
 		if _is_mysql(dialect):
 			return mysql.TINYTEXT(charset='ascii', collation='ascii_bin')
 		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.TINYTEXT) and conn_type.charset == 'ascii'
+		return isinstance(conn_type, types.Text)
 
 	def process_result_value(self, value, dialect):
 		if value is None:
@@ -545,6 +619,11 @@ class ASCIIText(types.TypeDecorator):
 		if _is_mysql(dialect):
 			return mysql.TEXT(charset='ascii', collation='ascii_bin')
 		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_mysql(dialect):
+			return isinstance(conn_type, mysql.TEXT) and conn_type.charset == 'ascii'
+		return isinstance(conn_type, types.Text)
 
 	def process_result_value(self, value, dialect):
 		if value is None:

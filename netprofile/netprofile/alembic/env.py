@@ -21,6 +21,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import with_statement
+import decimal
 import os
 from alembic import context
 from alembic.operations import ops
@@ -33,14 +34,27 @@ from alembic.autogenerate.render import (
 from sqlalchemy import (
 	DefaultClause,
 	engine_from_config,
-	pool
+	pool,
+	types
 )
+from sqlalchemy.sql.elements import TextClause
 from netprofile.db import ddl as npd
 from netprofile.db import fields as npf
 from netprofile.db import migrations as npm
 from netprofile.db.connection import DBMeta
+from netprofile.ext.data import (
+	_INTEGER_SET,
+	_FLOAT_SET,
+	_DECIMAL_SET,
+	_DATE_SET
+)
 
 
+_NULL_DATES = (
+	'0000-00-00',
+	'0000-00-00 00:00',
+	'0000-00-00 00:00:00'
+)
 config = context.config
 writer = rewriter.Rewriter()
 
@@ -67,6 +81,51 @@ def _create_table(context, revision, op):
 	if len(train) > 1:
 		return train
 	return op
+
+
+def _compare_default(context, insp_col, meta_col, insp_default, meta_default, rendered_meta_default):
+	if isinstance(meta_col.type, _DATE_SET):
+		if isinstance(insp_default, str):
+			insp_default = insp_default.strip('\'')
+		if (meta_default is None) and (insp_default in _NULL_DATES):
+			return False
+
+	if isinstance(meta_default, npd.CurrentTimestampDefault):
+		on_update = meta_default.on_update
+		if npf._is_mysql(context.dialect):
+			compare_to = 'CURRENT_TIMESTAMP'
+			if on_update:
+				compare_to += ' ON UPDATE CURRENT_TIMESTAMP'
+			return compare_to != insp_default
+		# TODO: compare for other dialects
+		return False
+	elif isinstance(meta_default, DefaultClause):
+		meta_arg = meta_default.arg
+		if isinstance(meta_arg, npf.npbool):
+			proc = meta_col.type.result_processor(context.dialect, types.Unicode)
+			insp_default = insp_default.strip('\'')
+			if proc:
+				insp_default = proc(insp_default)
+			return meta_arg.val != insp_default
+		elif isinstance(meta_arg, TextClause):
+			meta_text = meta_arg.text
+
+			if (meta_text.upper() == 'NULL') and (insp_default is None):
+				return False
+
+			meta_text = meta_text.strip('\'')
+			if isinstance(insp_default, str):
+				insp_default = insp_default.strip('\'')
+
+			if isinstance(meta_col.type, _INTEGER_SET):
+				meta_text = int(meta_text)
+				insp_default = int(insp_default) if isinstance(insp_default, str) else None
+			elif isinstance(meta_col.type, _FLOAT_SET + _DECIMAL_SET):
+				meta_text = decimal.Decimal(meta_text)
+				insp_default = decimal.Decimal(insp_default) if isinstance(insp_default, str) else None
+
+			return meta_text != insp_default
+	return None
 
 
 def render_item(type_, obj, autogen_context):
@@ -149,7 +208,7 @@ def run_migrations_online():
             target_metadata=DBMeta,
             render_item=render_item,
             compare_type=True,
-            compare_server_default=True,
+            compare_server_default=_compare_default,
             process_revision_directives=writer
         )
 
