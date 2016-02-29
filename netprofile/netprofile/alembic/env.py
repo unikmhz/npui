@@ -47,13 +47,23 @@ writer = rewriter.Rewriter()
 
 @writer.rewrites(ops.CreateTableOp)
 def _create_table(context, revision, op):
+	rctx = context.opts.get('revision_context')
+	new_rev_id = None
+	if rctx and (len(rctx.generated_revisions) == 1):
+		new_rev_id = rctx.generated_revisions[0].rev_id
 	train = [op]
 	table = op.to_table(context)
 	if hasattr(table, 'comment'):
 		train.append(npm.SetTableCommentOp(op.table_name, table.comment))
 	if hasattr(table, 'triggers'):
 		for trigger in table.triggers:
-			train.append(npm.CreateTriggerOp(trigger.module, op.table_name, trigger.when, trigger.event))
+			train.append(npm.CreateTriggerOp(
+				trigger.module,
+				op.table_name,
+				trigger.when,
+				trigger.event,
+				new_rev_id
+			))
 	if len(train) > 1:
 		return train
 	return op

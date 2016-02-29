@@ -247,12 +247,13 @@ def ddl_fmt(ctx, obj):
 	raise ValueError('Unable to format value for DDL')
 
 class CreateTrigger(DDLElement):
-	def __init__(self, table, trigger, module=None):
+	def __init__(self, table, trigger, module=None, migration=None):
 		self.table = table
 		self.trigger = trigger
 		if module is None:
 			module = trigger.module
 		self.module = module
+		self.migration = migration
 
 class DropTrigger(DDLElement):
 	def __init__(self, table, trigger, module=None):
@@ -279,10 +280,13 @@ def visit_create_trigger(element, compiler, **kw):
 	}
 	tpldef.update(Base._decl_class_registry.items())
 
+	file_bits = [trigger.name]
+	if self.migration:
+		file_bits.append(self.migration)
 	tplname = '%s:templates/sql/%s/triggers/%s.mak' % (
 		module,
 		compiler.dialect.name,
-		trigger.name
+		'.'.join(file_bits)
 	)
 	return render(tplname, tpldef, package=sys.modules[module])
 

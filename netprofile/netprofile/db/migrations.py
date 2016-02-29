@@ -71,15 +71,16 @@ class CreateTriggerOp(MigrateOperation):
 	"""
 	Create a trigger on a table.
 	"""
-	def __init__(self, module, table, when, action):
+	def __init__(self, module, table, when, action, migration=None):
 		self.module = module
 		self.table = table
 		self.when = when
 		self.action = action
+		self.migration = migration
 		self.name = 't_%s_%s%s' % (table, when[0].lower(), action[0].lower())
 
 	def reverse(self):
-		return DropTriggerOp(self.module, self.table, self.when, self.action)
+		return DropTriggerOp(self.module, self.table, self.when, self.action, self.migration)
 
 	@classmethod
 	def create_trigger(cls, operations, module, table, when, action, **kwargs):
@@ -94,15 +95,16 @@ class DropTriggerOp(MigrateOperation):
 	"""
 	Drop table trigger.
 	"""
-	def __init__(self, module, table, when, action):
+	def __init__(self, module, table, when, action, migration=None):
 		self.module = module
 		self.table = table
 		self.when = when
 		self.action = action
+		self.migration = migration
 		self.name = 't_%s_%s%s' % (table, when[0].lower(), action[0].lower())
 
 	def reverse(self):
-		return CreateTriggerOp(self.module, self.table, self.when, self.action)
+		return CreateTriggerOp(self.module, self.table, self.when, self.action, self.migration)
 
 	@classmethod
 	def drop_trigger(cls, operations, module, table, when, action, **kwargs):
@@ -122,17 +124,38 @@ def _render_set_table_comment(context, op):
 
 @Operations.implementation_for(CreateTriggerOp)
 def _create_trigger(operations, op):
-	operations.execute(CreateTrigger(op.table, Trigger(op.when, op.action, op.name), module=op.module))
+	operations.execute(CreateTrigger(
+		op.table,
+		Trigger(op.when, op.action, op.name),
+		module=op.module,
+		migration=op.migration
+	))
 
 @renderers.dispatch_for(CreateTriggerOp)
 def _render_create_trigger(context, op):
-	return 'op.create_trigger(%r, %r, %r, %r)' % (op.module, op.table, op.when, op.action)
+	return 'op.create_trigger(%r, %r, %r, %r, %r)' % (
+		op.module,
+		op.table,
+		op.when,
+		op.action,
+		op.migration
+	)
 
 @Operations.implementation_for(DropTriggerOp)
 def _drop_trigger(operations, op):
-	operations.execute(DropTrigger(op.table, Trigger(op.when, op.action, op.name), module=op.module))
+	operations.execute(DropTrigger(
+		op.table,
+		Trigger(op.when, op.action, op.name),
+		module=op.module
+	))
 
 @renderers.dispatch_for(DropTriggerOp)
 def _render_create_trigger(context, op):
-	return 'op.drop_trigger(%r, %r, %r, %r)' % (op.module, op.table, op.when, op.action)
+	return 'op.drop_trigger(%r, %r, %r, %r, %r)' % (
+		op.module,
+		op.table,
+		op.when,
+		op.action,
+		op.migration
+	)
 
