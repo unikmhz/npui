@@ -281,8 +281,8 @@ def visit_create_trigger(element, compiler, **kw):
 	tpldef.update(Base._decl_class_registry.items())
 
 	file_bits = [trigger.name]
-	if self.migration:
-		file_bits.append(self.migration)
+	if element.migration:
+		file_bits.append(element.migration)
 	tplname = '%s:templates/sql/%s/triggers/%s.mak' % (
 		module,
 		compiler.dialect.name,

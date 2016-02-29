@@ -83,11 +83,11 @@ class CreateTriggerOp(MigrateOperation):
 		return DropTriggerOp(self.module, self.table, self.when, self.action, self.migration)
 
 	@classmethod
-	def create_trigger(cls, operations, module, table, when, action, **kwargs):
+	def create_trigger(cls, operations, module, table, when, action, migration=None, **kwargs):
 		"""
 		Issue "CREATE TRIGGER" DDL command.
 		"""
-		op = CreateTriggerOp(module, table, when, action, **kwargs)
+		op = CreateTriggerOp(module, table, when, action, migration, **kwargs)
 		return operations.invoke(op)
 
 @Operations.register_operation('drop_trigger')
