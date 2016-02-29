@@ -284,6 +284,28 @@ class ModuleManager(object):
 		hm = self.cfg.registry.getUtility(IHookManager)
 		for model in mod.get_models():
 			self._import_model(moddef, model, mb, hm)
+
+		get_sql_functions = getattr(modcls, 'get_sql_functions', None)
+		if callable(get_sql_functions):
+			func_store = Base.metadata.info.setdefault('functions', set())
+			for func in get_sql_functions():
+				func.__moddef__ = moddef
+				func_store.add(func)
+
+		get_sql_views = getattr(modcls, 'get_sql_views', None)
+		if callable(get_sql_views):
+			view_store = Base.metadata.info.setdefault('views', set())
+			for view in get_sql_views():
+				view.__moddef__ = moddef
+				view_store.add(view)
+
+		get_sql_events = getattr(modcls, 'get_sql_events', None)
+		if callable(get_sql_events):
+			event_store = Base.metadata.info.setdefault('events', set())
+			for evt in get_sql_events():
+				evt.__moddef__ = moddef
+				event_store.add(evt)
+
 		return True
 
 	def load(self, req):
