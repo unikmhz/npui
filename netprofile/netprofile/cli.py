@@ -383,8 +383,6 @@ class Alembic(Command):
 	log = logging.getLogger(__name__)
 
 	def get_parser(self, prog_name):
-		from alembic import command
-
 		kwargs_opts = {
 			'template': (
 				'-t', '--template',
@@ -506,7 +504,7 @@ class Alembic(Command):
 		)
 		subparsers = parser.add_subparsers(help='Help for Alembic commands.')
 
-		for fn in [getattr(command, n) for n in dir(command)]:
+		for fn in [getattr(alembic_cmd, n) for n in dir(alembic_cmd)]:
 			if inspect.isfunction(fn) and fn.__name__[0] != '_' and fn.__module__ == 'alembic.command':
 				spec = inspect.getargspec(fn)
 				if spec[3]:
@@ -537,7 +535,6 @@ class Alembic(Command):
 		return parser
 
 	def take_action(self, args):
-		from alembic import command
 		from netprofile.db import migrations
 
 		self.app.setup_mako_sql()
@@ -615,7 +612,6 @@ class DBRevision(Command):
 		return parser
 
 	def take_action(self, args):
-		from alembic import command
 		from netprofile.db import migrations
 
 		self.app.setup_mako_sql()
@@ -625,12 +621,12 @@ class DBRevision(Command):
 			mm.rescan()
 		else:
 			mm.scan()
-		if not mm.load('core'):
+		if not mm.preload('core'):
 			raise RuntimeError('Unable to proceed without core module.')
 		moddef = args.name
 		if moddef != 'core':
-			if not mm.load(moddef):
-				raise RuntimeError('Requested module \'%s\'% can\'t be loaded.' % (moddef,))
+			if not mm.preload(moddef):
+				raise RuntimeError('Requested module \'%s\' can\'t be loaded.' % (moddef,))
 		mod = mm.modules[moddef]
 		version_dir = os.path.join(mod.dist.location, 'migrations')
 
@@ -638,7 +634,10 @@ class DBRevision(Command):
 		cfg.attributes['module'] = moddef
 		if not os.path.isdir(version_dir):
 			# TODO: create dir, append to version_locations
-			pass
+			if args.initial:
+				pass
+			else:
+				raise RuntimeError('Can\'t find version directory: \'%s\'.' % (version_dir,))
 
 		kwargs = {
 			'head'         : moddef + '@head',
@@ -653,12 +652,13 @@ class DBRevision(Command):
 		if args.rev_id:
 			kwargs['rev_id'] = args.rev_id
 		if args.depends_on:
+			# TODO: get alembic deps from module deps
 			kwargs['depends_on'] = args.depends_on
 		if args.initial:
 			kwargs['head'] = 'base'
 			kwargs['branch_label'] = moddef
 
-		command.revision(cfg, **kwargs)
+		alembic_cmd.revision(cfg, **kwargs)
 
 class Deploy(Command):
 	"""

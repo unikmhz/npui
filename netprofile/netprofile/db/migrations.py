@@ -27,6 +27,10 @@ from __future__ import (
 	division
 )
 
+import os
+import sys
+
+from alembic.config import Config
 from alembic.operations import (
 	MigrateOperation,
 	Operations
@@ -51,6 +55,27 @@ from netprofile.db.ddl import (
 
 	Trigger
 )
+
+def get_alembic_config(mm, ini_file=None, ini_section='migrations', stdout=sys.stdout):
+	appcfg = mm.cfg.get_settings()
+	cfg = Config(file_=ini_file, ini_section=ini_section, stdout=stdout)
+
+	if cfg.get_main_option('script_location') is None:
+		cfg.set_main_option('script_location', 'netprofile:alembic')
+	if cfg.get_main_option('sqlalchemy.url') is None:
+		cfg.set_main_option('sqlalchemy.url', appcfg.get('sqlalchemy.url'))
+	if cfg.get_main_option('output_encoding') is None:
+		cfg.set_main_option('output_encoding', 'utf-8')
+	migration_paths = []
+	for mod in mm.modules.values():
+		if mod.dist and mod.dist.location:
+			path = os.path.join(mod.dist.location, 'migrations')
+			if os.path.isdir(path):
+				migration_paths.append(path)
+	if len(migration_paths) > 0:
+		cfg.set_main_option('version_locations', ' '.join(migration_paths))
+
+	return cfg
 
 @Operations.register_operation('set_table_comment')
 class SetTableCommentOp(MigrateOperation):

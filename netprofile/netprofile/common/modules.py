@@ -48,6 +48,7 @@ from netprofile.db.connection import (
 )
 from netprofile.ext.data import ExtBrowser
 from netprofile.common.hooks import IHookManager
+from netprofile.db.migrations import get_alembic_config
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +218,7 @@ class ModuleManager(object):
 			return pkg_resources.get_distribution('netprofile')
 		return pkg_resources.get_distribution('netprofile_' + moddef)
 
-	def _load(self, req, mstack):
+	def _load(self, req, mstack, activate=True):
 		"""
 		Private method which actually loads a module.
 		"""
@@ -240,7 +241,7 @@ class ModuleManager(object):
 			# Can't find module in installed Python packages.
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
-		if not self.is_installed(req, DBSession()):
+		if activate and not self.is_installed(req, DBSession()):
 			if moddef != 'core':
 				logger.error(
 					'Can\'t load uninstalled/obsolete module \'%s\'. Please install/upgrade it first.',
@@ -265,10 +266,12 @@ class ModuleManager(object):
 			return False
 		for depmod in modcls.get_deps():
 			depreq = Requirement(depmod)
-			if not self._load(depreq, mstack):
+			if not self._load(depreq, mstack, activate=activate):
 				logger.error('Can\'t load module \'%s\', which is needed for module \'%s\'.', depmod, moddef)
 				return False
-		mod = self.loaded[moddef] = modcls(self)
+		mod = modcls(self)
+		if activate:
+			self.loaded[moddef] = mod
 		self.cfg.include(
 			lambda conf: mod.add_routes(conf),
 			route_prefix='/' + moddef
@@ -279,11 +282,12 @@ class ModuleManager(object):
 			self.modules[moddef].module_name + ':static',
 			cache_max_age=3600
 		)
-		self.models[moddef] = {}
+		if activate:
+			self.models[moddef] = {}
 		mb = self.get_module_browser()
 		hm = self.cfg.registry.getUtility(IHookManager)
 		for model in mod.get_models():
-			self._import_model(moddef, model, mb, hm)
+			self._import_model(moddef, model, mb, hm, activate=activate)
 
 		get_sql_functions = getattr(modcls, 'get_sql_functions', None)
 		if callable(get_sql_functions):
@@ -316,6 +320,15 @@ class ModuleManager(object):
 		if not isinstance(req, Requirement):
 			req = Requirement(req)
 		return self._load(req, mstack)
+
+	def preload(self, req):
+		"""
+		Discover module's data structures without loading it.
+		"""
+		mstack = []
+		if not isinstance(req, Requirement):
+			req = Requirement(req)
+		return self._load(req, mstack, activate=False)
 
 	def unload(self, req):
 		"""
@@ -440,6 +453,7 @@ class ModuleManager(object):
 		"""
 		Run module's installation hooks and register the module in DB.
 		"""
+		from alembic import command
 		from netprofile_core.models import NPModule
 
 		if not isinstance(req, Requirement):
@@ -537,6 +551,9 @@ class ModuleManager(object):
 				sess.execute(evt.create(moddef))
 			transaction.commit()
 
+		alembic_cfg = get_alembic_config(self)
+		command.stamp(alembic_cfg, moddef + '@head')
+
 		if moddef == 'core':
 			self.load('core')
 		return True
@@ -571,11 +588,12 @@ class ModuleManager(object):
 		if len(not_loaded) > 0:
 			raise ModuleError('These modules aren\'t loaded, but are required: %s.' % (', '.join(not_loaded),))
 
-	def _import_model(self, moddef, model, mb, hm):
+	def _import_model(self, moddef, model, mb, hm, activate=True):
 		mname = model.__name__
 		model.__moddef__ = moddef
-		self.models[moddef][mname] = model
-		hm.run_hook('np.model.load', self, mb[moddef][mname])
+		if activate:
+			self.models[moddef][mname] = model
+			hm.run_hook('np.model.load', self, mb[moddef][mname])
 
 	def get_module_browser(self):
 		"""

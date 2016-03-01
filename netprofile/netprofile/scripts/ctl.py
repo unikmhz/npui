@@ -48,6 +48,7 @@ import pyramid_mako
 from netprofile import setup_config
 from netprofile.db.connection import DBSession
 from netprofile.db.clauses import SetVariable
+from netprofile.db.migrations import get_alembic_config
 from netprofile.common.modules import ModuleManager
 from netprofile.common.hooks import IHookManager
 from netprofile.common.locale import sys_localizer
@@ -180,27 +181,13 @@ class CLIApplication(App):
 
 	@reify
 	def alembic_config(self):
-		from alembic.config import Config
-
-		appcfg = self.app_config.registry.settings
-
 		# TODO: make config section configurable
-		cfg = Config(file_=self.options.ini_file, ini_section='migrations', stdout=self.stdout)
-
-		if cfg.get_main_option('script_location') is None:
-			cfg.set_main_option('script_location', 'netprofile:alembic')
-		if cfg.get_main_option('sqlalchemy.url') is None:
-			cfg.set_main_option('sqlalchemy.url', appcfg.get('sqlalchemy.url'))
-		migration_paths = []
-		for mod in self.mm.modules.values():
-			if mod.dist and mod.dist.location:
-				path = os.path.join(mod.dist.location, 'migrations')
-				if os.path.isdir(path):
-					migration_paths.append(path)
-		if len(migration_paths) > 0:
-			cfg.set_main_option('version_locations', ' '.join(migration_paths))
-
-		return cfg
+		return get_alembic_config(
+			self.mm,
+			ini_file=self.options.ini_file,
+			ini_section='migrations',
+			stdout=self.stdout
+		)
 
 	@reify
 	def alembic_scriptdir(self):
