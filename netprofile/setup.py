@@ -103,6 +103,8 @@ setup(
 			'module disable = netprofile.cli:DisableModule',
 
 			'alembic = netprofile.cli:Alembic',
+			'db revision = netprofile.cli:DBRevision',
+
 			'deploy = netprofile.cli:Deploy'
 		],
 		'netprofile.export.formats' : [

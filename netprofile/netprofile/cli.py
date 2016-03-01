@@ -402,7 +402,7 @@ class Alembic(Command):
 				)
 			),
 			'sql': (
-				'--sql',
+				'-S', '--sql',
 				dict(
 					action='store_true',
 					help='Don\'t emit SQL to database - dump to standard output/file instead.'
@@ -430,14 +430,14 @@ class Alembic(Command):
 				)
 			),
 			'depends_on': (
-				'--depends-on',
+				'-D', '--depends-on',
 				dict(
 					action='append',
 					help='Specify one or more revision identifiers which this revision should depend on.'
 				)
 			),
 			'rev_id': (
-				'--rev-id',
+				'-R', '--rev-id',
 				dict(
 					type=str,
 					help='Specify a hardcoded revision id instead of generating one.'
@@ -472,7 +472,7 @@ class Alembic(Command):
 				)
 			),
 			'autogenerate': (
-				'--autogenerate',
+				'-A', '--autogenerate',
 				dict(
 					action='store_true',
 					help='Populate revision script with candidate migration operations, based on comparison of database to model.'
@@ -547,7 +547,8 @@ class Alembic(Command):
 			mm.rescan()
 		else:
 			mm.scan()
-		mm.load('core')
+		if not mm.load('core'):
+			raise RuntimeError('Unable to proceed without core module.')
 		mm.load_all()
 
 		if not hasattr(args, 'cmd'):
@@ -568,6 +569,95 @@ class Alembic(Command):
 			*[getattr(args, k) for k in positional],
 			**dict((k, getattr(args, k)) for k in kwargs)
 		)
+
+class DBRevision(Command):
+	"""
+	Create new database revision.
+	"""
+
+	log = logging.getLogger(__name__)
+
+	def get_parser(self, prog_name):
+		parser = super(DBRevision, self).get_parser(prog_name)
+		parser.add_argument(
+			'-m', '--message',
+			help='Message string to use.'
+		)
+		parser.add_argument(
+			'-A', '--autogenerate',
+			action='store_true',
+			help='Populate revision script with candidate migration operations, based on comparison of database to model.'
+		)
+		parser.add_argument(
+			'-S', '--sql',
+			action='store_true',
+			help='Don\'t emit SQL to database - dump to standard output/file instead.'
+		)
+		parser.add_argument(
+			'-R', '--rev-id',
+			help='Specify a hardcoded revision id instead of generating one.'
+		)
+		parser.add_argument(
+			'-D', '--depends-on',
+			action='append',
+			help='Specify one or more revision identifiers which this revision should depend on.'
+		)
+		# this is equivalent to alembic's --branch-label=moddef
+		parser.add_argument(
+			'-I', '--initial',
+			action='store_true',
+			help='This revision is an initial one for a module.'
+		)
+		parser.add_argument(
+			'name',
+			help='Name of the module to create DB revision for.'
+		)
+		return parser
+
+	def take_action(self, args):
+		from alembic import command
+		from netprofile.db import migrations
+
+		self.app.setup_mako_sql()
+		mm = self.app.mm
+
+		if len(mm.modules) > 0:
+			mm.rescan()
+		else:
+			mm.scan()
+		if not mm.load('core'):
+			raise RuntimeError('Unable to proceed without core module.')
+		moddef = args.name
+		if moddef != 'core':
+			if not mm.load(moddef):
+				raise RuntimeError('Requested module \'%s\'% can\'t be loaded.' % (moddef,))
+		mod = mm.modules[moddef]
+		version_dir = os.path.join(mod.dist.location, 'migrations')
+
+		cfg = self.app.alembic_config
+		cfg.attributes['module'] = moddef
+		if not os.path.isdir(version_dir):
+			# TODO: create dir, append to version_locations
+			pass
+
+		kwargs = {
+			'head'         : moddef + '@head',
+			'version_path' : version_dir
+		}
+		if args.message:
+			kwargs['message'] = args.message
+		if args.autogenerate:
+			kwargs['autogenerate'] = True
+		if args.sql:
+			kwargs['sql'] = True
+		if args.rev_id:
+			kwargs['rev_id'] = args.rev_id
+		if args.depends_on:
+			kwargs['depends_on'] = args.depends_on
+		if args.initial:
+			kwargs['branch_label'] = moddef
+
+		command.revision(cfg, **kwargs)
 
 class Deploy(Command):
 	"""
