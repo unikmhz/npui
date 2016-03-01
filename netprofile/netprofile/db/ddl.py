@@ -47,6 +47,7 @@ from sqlalchemy.sql.functions import FunctionElement
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm import Query
+from alembic.autogenerate.render import _repr_type
 
 from pyramid.renderers import render
 
@@ -88,11 +89,11 @@ class SQLFunctionArgument(DDLElement):
 		self.type = arg_type
 		self.dir = arg_dir
 
-	def __repr__(self):
-		return '%s(%r, %r, %r)' % (
+	def _autogen_repr(self, context):
+		return 'npd.%s(%r, %s, %r)' % (
 			self.__class__.__name__,
 			self.name,
-			self.type,
+			_repr_type(self.type, context),
 			self.dir
 		)
 
@@ -340,9 +341,10 @@ class CreateFunction(DDLElement):
 	"""
 	SQL function template DDL object.
 	"""
-	def __init__(self, func, module):
+	def __init__(self, func, module, migration=None):
 		self.func = func
 		self.module = module
+		self.migration = migration
 
 @compiles(CreateFunction)
 def visit_create_function(element, compiler, **kw):
@@ -359,10 +361,13 @@ def visit_create_function(element, compiler, **kw):
 	}
 	tpldef.update(Base._decl_class_registry.items())
 
+	file_bits = [name]
+	if element.migration:
+		file_bits.append(element.migration)
 	tplname = '%s:templates/sql/%s/functions/%s.mak' % (
 		module,
 		compiler.dialect.name,
-		name
+		'.'.join(file_bits)
 	)
 	return render(tplname, tpldef, package=sys.modules[module])
 
@@ -405,12 +410,12 @@ class SQLFunction(object):
 		self.is_procedure = is_procedure
 		self.label = label
 
-	def __repr__(self):
-		return '%s(%r, args=%r, returns=%r, comment=%r, reads_sql=%r, writes_sql=%r, is_procedure=%r, label=%r)' % (
+	def _autogen_repr(self, context):
+		return 'npd.%s(%r, args=(%s), returns=%s, comment=%r, reads_sql=%r, writes_sql=%r, is_procedure=%r, label=%r)' % (
 			self.__class__.__name__,
 			self.name,
-			self.args,
-			self.returns,
+			', '.join(arg._autogen_repr(context) for arg in self.args),
+			_repr_type(self.returns, context) if self.returns is not None else 'None',
 			self.comment,
 			self.reads_sql,
 			self.writes_sql,

@@ -40,6 +40,7 @@ from alembic.autogenerate import (
 	renderers
 )
 
+from netprofile.db.fields import _is_mysql
 from netprofile.db.ddl import (
 	CreateEvent,
 	CreateFunction,
@@ -135,11 +136,11 @@ class DropTriggerOp(MigrateOperation):
 		return CreateTriggerOp(self.module, self.table, self.when, self.action, self.migration)
 
 	@classmethod
-	def drop_trigger(cls, operations, module, table, when, action, **kwargs):
+	def drop_trigger(cls, operations, module, table, when, action, migration=None, **kwargs):
 		"""
 		Issue "DROP TRIGGER" DDL command.
 		"""
-		op = DropTriggerOp(module, table, when, action, **kwargs)
+		op = DropTriggerOp(module, table, when, action, migration, **kwargs)
 		return operations.invoke(op)
 
 @Operations.register_operation('create_function')
@@ -147,19 +148,20 @@ class CreateFunctionOp(MigrateOperation):
 	"""
 	Create SQL function or procedure.
 	"""
-	def __init__(self, module, func):
+	def __init__(self, module, func, migration=None):
 		self.module = module
 		self.func = func
+		self.migration = migration
 
 	def reverse(self):
-		return DropFunctionOp(self.module, self.func)
+		return DropFunctionOp(self.module, self.func, self.migration)
 
 	@classmethod
-	def create_function(cls, operations, module, func):
+	def create_function(cls, operations, module, func, migration=None):
 		"""
 		Issue "CREATE FUNCTION" or "CREATE PROCEDURE" DDL command.
 		"""
-		op = CreateFunctionOp(module, func)
+		op = CreateFunctionOp(module, func, migration)
 		return operations.invoke(op)
 
 @Operations.register_operation('drop_function')
@@ -167,19 +169,20 @@ class DropFunctionOp(MigrateOperation):
 	"""
 	Drop SQL function or procedure.
 	"""
-	def __init__(self, module, func):
+	def __init__(self, module, func, migration=None):
 		self.module = module
 		self.func = func
+		self.migration = migration
 
 	def reverse(self):
-		return CreateFunctionOp(self.module, self.func)
+		return CreateFunctionOp(self.module, self.func, self.migration)
 
 	@classmethod
-	def drop_function(cls, operations, module, func):
+	def drop_function(cls, operations, module, func, migration=None):
 		"""
 		Issue "DROP FUNCTION" or "DROP PROCEDURE" DDL command.
 		"""
-		op = DropFunctionOp(module, func)
+		op = DropFunctionOp(module, func, migration)
 		return operations.invoke(op)
 
 @Operations.implementation_for(SetTableCommentOp)
@@ -218,7 +221,7 @@ def _drop_trigger(operations, op):
 	))
 
 @renderers.dispatch_for(DropTriggerOp)
-def _render_create_trigger(context, op):
+def _render_drop_trigger(context, op):
 	return 'op.drop_trigger(%r, %r, %r, %r, %r)' % (
 		op.module,
 		op.table,
@@ -229,13 +232,20 @@ def _render_create_trigger(context, op):
 
 @Operations.implementation_for(CreateFunctionOp)
 def _create_function(operations, op):
-	operations.execute(CreateFunction(op.func, op.module))
+	operations.execute(CreateFunction(
+		op.func,
+		op.module,
+		migration=op.migration
+	))
 
 @renderers.dispatch_for(CreateFunctionOp)
 def _render_create_function(context, op):
 	context.imports.add('from netprofile.db import ddl as npd')
-	context.imports.add('from netprofile.db.ddl import InArgument, OutArgument, InOutArgument')
-	return 'op.create_function(%r, npd.%r)' % (op.module, op.func)
+	return 'op.create_function(%r, %s, %r)' % (
+		op.module,
+		op.func._autogen_repr(context),
+		op.migration
+	)
 
 @Operations.implementation_for(DropFunctionOp)
 def _drop_function(operations, op):
@@ -244,6 +254,40 @@ def _drop_function(operations, op):
 @renderers.dispatch_for(DropFunctionOp)
 def _render_drop_function(context, op):
 	context.imports.add('from netprofile.db import ddl as npd')
-	context.imports.add('from netprofile.db.ddl import InArgument, OutArgument, InOutArgument')
-	return 'op.drop_function(%r, npd.%r)' % (op.module, op.func)
+	return 'op.drop_function(%r, %s)' % (op.module, op.func._autogen_repr(context))
+
+@comparators.dispatch_for('schema')
+def _compare_functions(context, ops, schemas):
+	# XXX: this will only add new routines to DB.
+	#      Deletion, modification, renaming etc. of routines is not detected.
+	attrs = context.migration_context.config.attributes
+	dialect = context.dialect
+	moddef_filter = attrs.get('module')
+	rctx = context.opts.get('revision_context')
+	new_rev_id = None
+	if rctx and (len(rctx.generated_revisions) == 1):
+		new_rev_id = rctx.generated_revisions[0].rev_id
+
+	meta_funcs = dict((func.name, func) for func in context.metadata.info.get('functions', set()))
+	insp_funcs = set()
+
+	if _is_mysql(dialect):
+		for sch in schemas:
+			res = context.connection.execute(
+				'SELECT ROUTINE_NAME,ROUTINE_TYPE'
+				' FROM information_schema.ROUTINES'
+				' WHERE ROUTINE_SCHEMA = %(schema_name)s',
+				schema_name=context.dialect.default_schema_name if sch is None else sch
+			)
+			for row in res:
+				insp_funcs.add(row[0])
+	else:
+		# Catch-all for unsupported dialects
+		meta_funcs = dict()
+
+	for fname in set(meta_funcs) - insp_funcs:
+		func = meta_funcs[fname]
+		if moddef_filter and (func.__moddef__ != moddef_filter):
+			continue
+		ops.ops.append(CreateFunctionOp(func.__moddef__, func, new_rev_id))
 
