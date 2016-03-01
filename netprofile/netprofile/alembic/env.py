@@ -46,7 +46,9 @@ from netprofile.ext.data import (
 	_INTEGER_SET,
 	_FLOAT_SET,
 	_DECIMAL_SET,
-	_DATE_SET
+	_DATE_SET,
+
+	_table_to_class
 )
 
 
@@ -56,6 +58,7 @@ _NULL_DATES = (
 	'0000-00-00 00:00:00'
 )
 config = context.config
+moddef_filter = config.attributes.get('module', None)
 writer = rewriter.Rewriter()
 
 
@@ -81,6 +84,17 @@ def _create_table(context, revision, op):
 	if len(train) > 1:
 		return train
 	return op
+
+
+def _include_object(obj, name, type_, reflected, compare_to):
+	if reflected:
+		return True
+	if moddef_filter:
+		if type_ == 'table':
+			cls = _table_to_class(obj.name)
+			if cls.__moddef__ != moddef_filter:
+				return False
+	return True
 
 
 def _compare_default(context, insp_col, meta_col, insp_default, meta_default, rendered_meta_default):
@@ -206,6 +220,7 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=DBMeta,
+            include_object=_include_object,
             render_item=render_item,
             compare_type=True,
             compare_server_default=_compare_default,

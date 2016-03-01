@@ -655,6 +655,7 @@ class DBRevision(Command):
 		if args.depends_on:
 			kwargs['depends_on'] = args.depends_on
 		if args.initial:
+			kwargs['head'] = 'base'
 			kwargs['branch_label'] = moddef
 
 		command.revision(cfg, **kwargs)
