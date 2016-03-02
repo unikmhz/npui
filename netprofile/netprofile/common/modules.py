@@ -102,7 +102,7 @@ class ModuleBase(object):
 		return ()
 
 	@classmethod
-	def get_sql_data(cls, modobj, sess):
+	def get_sql_data(cls, modobj, vpair, sess):
 		pass
 
 	def get_menus(self, request):
@@ -150,6 +150,53 @@ class IModuleManager(Interface):
 	Interface for NetProfile module manager.
 	"""
 	pass
+
+class VersionPair(object):
+	def __init__(self, old, new):
+		if isinstance(old, str):
+			old = parse(old)
+		if isinstance(new, str):
+			new = parse(new)
+		self.old = old
+		self.new = new
+
+	@property
+	def is_install(self):
+		return self.old is None and self.new is not None
+
+	@property
+	def is_uninstall(self):
+		return self.old is not None and self.new is None
+
+	@property
+	def is_upgrade(self):
+		if self.old is None or self.new is None:
+			return False
+		return self.old < self.new
+
+	@property
+	def is_downgrade(self):
+		if self.old is None or self.new is None:
+			return False
+		return self.old > self.new
+
+	@property
+	def is_noop(self):
+		return self.old == self.new
+
+	def is_upgrade_from(self, version):
+		if not self.is_upgrade:
+			return False
+		if isinstance(version, str):
+			version = parse(version)
+		return version >= self.old
+
+	def is_downgrade_to(self, version):
+		if not self.is_downgrade:
+			return False
+		if isinstance(version, str):
+			version = parse(version)
+		return version >= self.new
 
 class ModuleError(RuntimeError):
 	pass
@@ -497,6 +544,7 @@ class ModuleManager(object):
 			raise ModuleError('Module \'%s\' version %s can\'t satisfy requirements: %s.' % (
 				moddef, str(modversion), str(modspec)
 			))
+		vpair = VersionPair(None, modversion)
 
 		get_deps = getattr(modcls, 'get_deps', None)
 		if callable(get_deps):
@@ -534,7 +582,7 @@ class ModuleManager(object):
 
 		get_sql_data = getattr(modcls, 'get_sql_data', None)
 		if callable(get_sql_data):
-			get_sql_data(modobj, sess)
+			get_sql_data(modobj, vpair, sess)
 
 		mod_install = getattr(modcls, 'install', None)
 		if callable(mod_install):

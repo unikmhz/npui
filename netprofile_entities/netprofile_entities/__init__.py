@@ -71,7 +71,7 @@ class Module(ModuleBase):
 		)
 
 	@classmethod
-	def get_sql_data(cls, modobj, sess):
+	def get_sql_data(cls, modobj, vpair, sess):
 		from netprofile_entities import models
 		from netprofile_core.models import (
 			Group,
@@ -79,6 +79,9 @@ class Module(ModuleBase):
 			LogType,
 			Privilege
 		)
+
+		if not vpair.is_install:
+			return
 
 		sess.add(LogType(
 			id=2,

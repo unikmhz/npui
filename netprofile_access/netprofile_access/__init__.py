@@ -99,13 +99,16 @@ class Module(ModuleBase):
 		)
 
 	@classmethod
-	def get_sql_data(cls, modobj, sess):
+	def get_sql_data(cls, modobj, vpair, sess):
 		from netprofile_core.models import (
 			Group,
 			GroupCapability,
 			Privilege
 		)
 		from netprofile_entities.models import EntityType
+
+		if not vpair.is_install:
+			return
 
 		privs = (
 			Privilege(
