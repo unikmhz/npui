@@ -2105,7 +2105,6 @@ class StructuralEntity(Entity):
 						id='generic', title=_('Generic entity properties')
 					),
 					Step(
-						'house',
 						id='ent_structural1', title=_('Structure properties')
 					),
 					title=_('Add new structure')
