@@ -190,6 +190,11 @@ class InstallModule(Command):
 	def get_parser(self, prog_name):
 		parser = super(InstallModule, self).get_parser(prog_name)
 		parser.add_argument(
+			'-U', '--upgrade',
+			action='store_true',
+			help='Allow upgrading obsolete installed modules.'
+		)
+		parser.add_argument(
 			'name',
 			help='Name of the module to install or a special value \'all\'.'
 		)
@@ -209,13 +214,13 @@ class InstallModule(Command):
 		mm.load_all()
 
 		if args.name.lower() == 'all':
-			mm.install('core', sess)
+			mm.install('core', sess, allow_upgrades=args.upgrade)
 			is_ok = True
 			for mod in mm.modules:
 				if mod != 'core':
 					try:
 						self.app.hooks.run_hook('np.cli.module.install.before', self.app, mod, sess)
-						ret = mm.install(mod, sess)
+						ret = mm.install(mod, sess, allow_upgrades=args.upgrade)
 						self.app.hooks.run_hook('np.cli.module.install.after', self.app, mod, sess, ret)
 					except ModuleError as e:
 						if self.app.options.debug:
@@ -230,7 +235,7 @@ class InstallModule(Command):
 			return
 
 		self.app.hooks.run_hook('np.cli.module.install.before', self.app, args.name, sess)
-		ret = mm.install(args.name, sess)
+		ret = mm.install(args.name, sess, allow_upgrades=args.upgrade)
 		self.app.hooks.run_hook('np.cli.module.install.after', self.app, args.name, sess, ret)
 		if isinstance(ret, bool):
 			if ret:

@@ -76,7 +76,7 @@ class ModuleBase(object):
 		pass
 
 	@classmethod
-	def upgrade(cls, sess, from_version):
+	def upgrade(cls, sess, vpair):
 		pass
 
 	def __init__(self, mmgr):
@@ -497,7 +497,7 @@ class ModuleManager(object):
 		return self.installed[moddef] in modspec
 
 	# TODO: add circular dependency checking, like we do in _load()
-	def install(self, req, sess):
+	def install(self, req, sess, allow_upgrades=False):
 		"""
 		Run module's installation hooks and register the module in DB.
 		"""
@@ -514,33 +514,13 @@ class ModuleManager(object):
 			return False
 		# TODO: check if we need upgrade instead
 
-		ep = None
-		if moddef in self.modules:
-			ep = self.modules[moddef]
-		else:
-			match = list(pkg_resources.iter_entry_points('netprofile.modules', moddef))
-			if len(match) == 0:
-				raise ModuleError('Can\'t find module: \'%s\'.' % (moddef,))
-			if len(match) > 1:
-				raise ModuleError('Can\'t resolve module to single distribution: \'%s\'.' % (moddef,))
-			ep = match[0]
-			if ep.name != moddef:
-				raise ModuleError('Loaded module source \'%s\', but was asked to load \'%s\'.' % (
-					ep.name,
-					moddef
-				))
-			self.modules[moddef] = ep
-
+		ep = self._find_ep(moddef)
 		try:
 			modcls = ep.load()
 		except ImportError as e:
 			raise ModuleError('Can\'t locate ModuleBase class for module \'%s\'.' % (moddef,)) from e
 
-		modv = getattr(modcls, 'version', None)
-		if callable(modv):
-			modversion = modv()
-		else:
-			modversion = parse('0')
+		modversion = self._cls_version(modcls)
 		if modversion not in modspec:
 			raise ModuleError('Module \'%s\' version %s can\'t satisfy requirements: %s.' % (
 				moddef, str(modversion), str(modspec)
@@ -552,7 +532,7 @@ class ModuleManager(object):
 			for dep in get_deps():
 				depreq = Requirement(dep)
 				if not self.is_installed(depreq, sess):
-					self.install(depreq, sess)
+					self.install(depreq, sess, allow_upgrades=allow_upgrades)
 
 		modprep = getattr(modcls, 'prepare', None)
 		if callable(modprep):
@@ -604,7 +584,71 @@ class ModuleManager(object):
 		command.stamp(alembic_cfg, moddef + '@head')
 
 		if moddef == 'core':
-			self.load('core')
+			self.load(moddef)
+		return True
+
+	# TODO: add circular dependency checking, like we do in _load()
+	def upgrade(self, req, sess):
+		"""
+		Update DB schema, run module's upgrade hooks and register
+		the new version in DB.
+		"""
+		from alembic import command
+		from netprofile_core.models import NPModule
+
+		if not isinstance(req, Requirement):
+			req = Requirement(req)
+		moddef = req.name
+		modspec = req.specifier
+		if ('core' not in self.loaded) and (moddef != 'core'):
+			raise ModuleError('Unable to upgrade anything prior to loading core module.')
+		if not self.is_installed(Requirement(moddef), sess):
+			raise ModuleError('Can\'t upgrade uninstalled module \'%s\', use install command instead.' % (moddef,))
+
+		ep = self._find_ep(moddef)
+		try:
+			modcls = ep.load()
+		except ImportError as e:
+			raise ModuleError('Can\'t locate ModuleBase class for module \'%s\'.' % (moddef,)) from e
+
+		new_modversion = self._cls_version(modcls)
+		modobj = sess.query(NPModule).filter(NPModule.name == moddef).one()
+		old_modversion = modobj.parsed_version
+		if old_modversion not in modspec:
+			raise ModuleError('Module \'%s\' version %s can\'t satisfy requirements: %s.' % (
+				moddef, str(old_modversion), str(modspec)
+			))
+		if old_modversion == new_modversion:
+			return False
+		if old_modversion > new_modversion:
+			pass
+		vpair = VersionPair(old_modversion, new_modversion)
+
+		get_deps = getattr(modcls, 'get_deps', None)
+		if callable(get_deps):
+			for dep in get_deps():
+				depreq = Requirement(dep)
+				if not self.is_installed(depreq, sess):
+					self.install(depreq, sess, allow_upgrades=True)
+
+		modprep = getattr(modcls, 'prepare', None)
+		if callable(modprep):
+			modprep()
+
+		if moddef != 'core':
+			self.preload(moddef)
+
+		alembic_cfg = get_alembic_config(self, stdout=self.stdout)
+		command.upgrade(alembic_cfg, moddef + '@head')
+
+		# get_sql_data
+
+		mod_upgrade = getattr(modcls, 'upgrade', None)
+		if callable(mod_upgrade):
+			mod_upgrade(sess, vpair)
+
+		if moddef == 'core':
+			self.load(moddef)
 		return True
 
 	def uninstall(self, req, sess):
@@ -636,6 +680,28 @@ class ModuleManager(object):
 		not_loaded = set(mods) - set(self.loaded)
 		if len(not_loaded) > 0:
 			raise ModuleError('These modules aren\'t loaded, but are required: %s.' % (', '.join(not_loaded),))
+
+	def _find_ep(self, moddef):
+		if moddef in self.modules:
+			return self.modules[moddef]
+		match = list(pkg_resources.iter_entry_points('netprofile.modules', moddef))
+		if len(match) == 0:
+			raise ModuleError('Can\'t find module: \'%s\'.' % (moddef,))
+		if len(match) > 1:
+			raise ModuleError('Can\'t resolve module to single distribution: \'%s\'.' % (moddef,))
+		ep = match[0]
+		if ep.name != moddef:
+			raise ModuleError('Loaded module source \'%s\', but was asked to load \'%s\'.' % (
+				ep.name, moddef
+			))
+		self.modules[moddef] = ep
+		return ep
+
+	def _cls_version(self, modcls):
+		modv = getattr(modcls, 'version', None)
+		if callable(modv):
+			return modv()
+		return parse('0')
 
 	def _import_model(self, moddef, model, mb, hm, activate=True):
 		mname = model.__name__
