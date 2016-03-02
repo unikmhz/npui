@@ -211,7 +211,6 @@ class InstallModule(Command):
 			mm.scan()
 		if args.name != 'core':
 			mm.load('core')
-		mm.load_all()
 
 		if args.name.lower() == 'all':
 			mm.install('core', sess, allow_upgrades=args.upgrade)
@@ -228,7 +227,8 @@ class InstallModule(Command):
 						is_ok = False
 						self.log.error(e)
 					else:
-						self.log.info('Module \'%s\' successfully installed.', mod)
+						if ret:
+							self.log.info('Module \'%s\' successfully installed.', mod)
 			if not is_ok:
 				raise RuntimeError('Some modules failed to install.')
 			self.log.info('All done.')
@@ -242,6 +242,65 @@ class InstallModule(Command):
 				self.log.info('Module \'%s\' successfully installed.', args.name)
 				return
 			raise RuntimeError('Module \'%s\' is already installed.' % (args.name,))
+		raise RuntimeError('Unknown result.')
+
+class UpgradeModule(Command):
+	"""
+	Upgrade module's database schema.
+	"""
+
+	log = logging.getLogger(__name__)
+
+	def get_parser(self, prog_name):
+		parser = super(UpgradeModule, self).get_parser(prog_name)
+		parser.add_argument(
+			'name',
+			help='Name of the module to upgrade or a special value \'all\'.'
+		)
+		return parser
+
+	def take_action(self, args):
+		self.app.setup_mako_sql()
+		sess = self.app.db_session
+		mm = self.app.mm
+
+		if len(mm.modules) > 0:
+			mm.rescan()
+		else:
+			mm.scan()
+		if args.name != 'core':
+			mm.load('core')
+
+		if args.name.lower() == 'all':
+			mm.upgrade('core', sess)
+			is_ok = True
+			for mod in mm.modules:
+				if mod != 'core':
+					try:
+						self.app.hooks.run_hook('np.cli.module.upgrade.before', self.app, mod, sess)
+						ret = mm.upgrade(mod, sess)
+						self.app.hooks.run_hook('np.cli.module.upgrade.after', self.app, mod, sess, ret)
+					except ModuleError as e:
+						if self.app.options.debug:
+							raise e
+						is_ok = False
+						self.log.error(e)
+					else:
+						if ret:
+							self.log.info('Module \'%s\' successfully upgraded.', mod)
+			if not is_ok:
+				raise RuntimeError('Some modules failed to upgrade.')
+			self.log.info('All done.')
+			return
+
+		self.app.hooks.run_hook('np.cli.module.upgrade.before', self.app, args.name, sess)
+		ret = mm.upgrade(args.name, sess)
+		self.app.hooks.run_hook('np.cli.module.upgrade.after', self.app, args.name, sess, ret)
+		if isinstance(ret, bool):
+			if ret:
+				self.log.info('Module \'%s\' successfully upgraded.', args.name)
+				return
+			raise RuntimeError('Module \'%s\' is already up to date.' % (args.name,))
 		raise RuntimeError('Unknown result.')
 
 class UninstallModule(Command):

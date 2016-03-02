@@ -539,6 +539,9 @@ class ModuleManager(object):
 		if callable(modprep):
 			modprep()
 
+		if moddef != 'core':
+			self.preload(moddef)
+
 		get_models = getattr(modcls, 'get_models', None)
 		if callable(get_models):
 			tables = [model.__table__ for model in get_models()]

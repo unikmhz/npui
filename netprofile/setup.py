@@ -98,6 +98,7 @@ setup(
 			'module info = netprofile.cli:ShowModule',
 
 			'module install = netprofile.cli:InstallModule',
+			'module upgrade = netprofile.cli:UpgradeModule',
 			'module uninstall = netprofile.cli:UninstallModule',
 			'module enable = netprofile.cli:EnableModule',
 			'module disable = netprofile.cli:DisableModule',
