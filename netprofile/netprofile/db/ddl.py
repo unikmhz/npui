@@ -486,6 +486,18 @@ class SQLEvent(object):
 		self.sched_interval = sched_interval
 		self.starts = starts
 
+	def __repr__(self):
+		return '%s(%r, sched_unit=%r, sched_interval=%r, starts=%r, preserve=%r, enabled=%r, comment=%r)' % (
+			self.__class__.__name__,
+			self.name,
+			self.sched_unit,
+			self.sched_interval,
+			self.starts,
+			self.preserve,
+			self.enabled,
+			self.comment
+		)
+
 	def create(self, modname):
 		return CreateEvent(self, modname)
 

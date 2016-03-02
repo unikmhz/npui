@@ -185,6 +185,48 @@ class DropFunctionOp(MigrateOperation):
 		op = DropFunctionOp(module, func, migration)
 		return operations.invoke(op)
 
+@Operations.register_operation('create_event')
+class CreateEventOp(MigrateOperation):
+	"""
+	Create SQL periodically run routine.
+	"""
+	def __init__(self, module, evt, migration=None):
+		self.module = module
+		self.event = evt
+		self.migration = migration
+
+	def reverse(self):
+		return DropEventOp(self.module, self.event, self.migration)
+
+	@classmethod
+	def create_event(cls, operations, module, evt, migration=None):
+		"""
+		Issue "CREATE EVENT" or similar DDL command.
+		"""
+		op = CreateEventOp(module, evt, migration)
+		return operations.invoke(op)
+
+@Operations.register_operation('drop_event')
+class DropEventOp(MigrateOperation):
+	"""
+	Drop SQL periodically run routine.
+	"""
+	def __init__(self, module, evt, migration=None):
+		self.module = module
+		self.event = evt
+		self.migration = migration
+
+	def reverse(self):
+		return CreateEventOp(self.module, self.event, self.migration)
+
+	@classmethod
+	def drop_event(cls, operations, module, evt, migration=None):
+		"""
+		Issue "DROP EVENT" or similar DDL command.
+		"""
+		op = DropEventOp(module, evt, migration)
+		return operations.invoke(op)
+
 @Operations.implementation_for(SetTableCommentOp)
 def _set_table_comment(operations, op):
 	operations.execute(SetTableComment(op.table, op.comment))
@@ -256,10 +298,36 @@ def _render_drop_function(context, op):
 	context.imports.add('from netprofile.db import ddl as npd')
 	return 'op.drop_function(%r, %s)' % (op.module, op.func._autogen_repr(context))
 
+@Operations.implementation_for(CreateEventOp)
+def _create_event(operations, op):
+	operations.execute(CreateEvent(op.event, op.module))
+
+@renderers.dispatch_for(CreateEventOp)
+def _render_create_event(context, op):
+	context.imports.add('from netprofile.db import ddl as npd')
+	return 'op.create_event(%r, npd.%r, %r)' % (
+		op.module,
+		op.event,
+		op.migration
+	)
+
+@Operations.implementation_for(DropEventOp)
+def _drop_event(operations, op):
+	operations.execute(DropEvent(op.event))
+
+@renderers.dispatch_for(DropEventOp)
+def _render_drop_event(context, op):
+	context.imports.add('from netprofile.db import ddl as npd')
+	return 'op.drop_event(%r, npd.%r, %r)' % (
+		op.module,
+		op.event,
+		op.migration
+	)
+
 @comparators.dispatch_for('schema')
 def _compare_functions(context, ops, schemas):
-	# XXX: this will only add new routines to DB.
-	#      Deletion, modification, renaming etc. of routines is not detected.
+	# XXX: this will only add new routines/events to DB.
+	#      Deletion, modification, renaming etc. is not detected.
 	attrs = context.migration_context.config.attributes
 	dialect = context.dialect
 	moddef_filter = attrs.get('module')
@@ -271,16 +339,28 @@ def _compare_functions(context, ops, schemas):
 	meta_funcs = dict((func.name, func) for func in context.metadata.info.get('functions', set()))
 	insp_funcs = set()
 
+	meta_events = dict((evt.name, evt) for evt in context.metadata.info.get('events', set()))
+	insp_events = set()
+
 	if _is_mysql(dialect):
 		for sch in schemas:
 			res = context.connection.execute(
-				'SELECT ROUTINE_NAME,ROUTINE_TYPE'
+				'SELECT ROUTINE_NAME'
 				' FROM information_schema.ROUTINES'
 				' WHERE ROUTINE_SCHEMA = %(schema_name)s',
 				schema_name=context.dialect.default_schema_name if sch is None else sch
 			)
 			for row in res:
 				insp_funcs.add(row[0])
+
+			res = context.connection.execute(
+				'SELECT EVENT_NAME'
+				' FROM information_schema.EVENTS'
+				' WHERE EVENT_SCHEMA = %(schema_name)s',
+				schema_name=context.dialect.default_schema_name if sch is None else sch
+			)
+			for row in res:
+				insp_events.add(row[0])
 	else:
 		# Catch-all for unsupported dialects
 		meta_funcs = dict()
@@ -290,4 +370,10 @@ def _compare_functions(context, ops, schemas):
 		if moddef_filter and (func.__moddef__ != moddef_filter):
 			continue
 		ops.ops.append(CreateFunctionOp(func.__moddef__, func, new_rev_id))
+
+	for ename in set(meta_events) - insp_events:
+		evt = meta_events[ename]
+		if moddef_filter and (evt.__moddef__ != moddef_filter):
+			continue
+		ops.ops.append(CreateEventOp(evt.__moddef__, evt, new_rev_id))
 
