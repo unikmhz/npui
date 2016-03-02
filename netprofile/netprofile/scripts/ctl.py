@@ -157,7 +157,7 @@ class CLIApplication(App):
 
 	@reify
 	def mm(self):
-		return ModuleManager(self.app_config)
+		return ModuleManager(self.app_config, stdout=self.stdout)
 
 	@reify
 	def db_session(self):

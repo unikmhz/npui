@@ -208,8 +208,9 @@ class ModuleManager(object):
 	and (un)installing modules.
 	"""
 
-	def __init__(self, cfg, vhost=None):
+	def __init__(self, cfg, vhost=None, stdout=sys.stdout):
 		self.cfg = cfg
+		self.stdout = stdout
 		self.modules = {}
 		self.installed = None
 		self.loaded = {}
@@ -599,7 +600,7 @@ class ModuleManager(object):
 				sess.execute(evt.create(moddef))
 			transaction.commit()
 
-		alembic_cfg = get_alembic_config(self)
+		alembic_cfg = get_alembic_config(self, stdout=self.stdout)
 		command.stamp(alembic_cfg, moddef + '@head')
 
 		if moddef == 'core':
