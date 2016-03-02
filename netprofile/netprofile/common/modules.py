@@ -488,7 +488,7 @@ class ModuleManager(object):
 
 			try:
 				for mod in sess.query(NPModule):
-					self.installed[mod.name] = parse(mod.current_version)
+					self.installed[mod.name] = mod.parsed_version
 			except ProgrammingError:
 				return False
 
@@ -511,8 +511,9 @@ class ModuleManager(object):
 		if ('core' not in self.loaded) and (moddef != 'core'):
 			raise ModuleError('Unable to install anything prior to loading core module.')
 		if self.is_installed(req, sess):
+			if allow_upgrades and self.is_installed(Requirement(moddef), sess):
+				return self.upgrade(req, sess)
 			return False
-		# TODO: check if we need upgrade instead
 
 		ep = self._find_ep(moddef)
 		try:
@@ -582,6 +583,7 @@ class ModuleManager(object):
 
 		alembic_cfg = get_alembic_config(self, stdout=self.stdout)
 		command.stamp(alembic_cfg, moddef + '@head')
+		transaction.commit()
 
 		if moddef == 'core':
 			self.load(moddef)
@@ -618,10 +620,8 @@ class ModuleManager(object):
 			raise ModuleError('Module \'%s\' version %s can\'t satisfy requirements: %s.' % (
 				moddef, str(old_modversion), str(modspec)
 			))
-		if old_modversion == new_modversion:
+		if old_modversion >= new_modversion:
 			return False
-		if old_modversion > new_modversion:
-			pass
 		vpair = VersionPair(old_modversion, new_modversion)
 
 		get_deps = getattr(modcls, 'get_deps', None)
@@ -641,7 +641,12 @@ class ModuleManager(object):
 		alembic_cfg = get_alembic_config(self, stdout=self.stdout)
 		command.upgrade(alembic_cfg, moddef + '@head')
 
-		# get_sql_data
+		modobj.current_version = str(new_modversion)
+		sess.flush()
+		get_sql_data = getattr(modcls, 'get_sql_data', None)
+		if callable(get_sql_data):
+			get_sql_data(modobj, vpair, sess)
+		transaction.commit()
 
 		mod_upgrade = getattr(modcls, 'upgrade', None)
 		if callable(mod_upgrade):
