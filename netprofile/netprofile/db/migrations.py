@@ -325,7 +325,7 @@ def _render_drop_event(context, op):
 	)
 
 @comparators.dispatch_for('schema')
-def _compare_functions(context, ops, schemas):
+def _compare_dbobjects(context, ops, schemas):
 	# XXX: this will only add new routines/events to DB.
 	#      Deletion, modification, renaming etc. is not detected.
 	attrs = context.migration_context.config.attributes
