@@ -40,7 +40,10 @@ from alembic.autogenerate import (
 	renderers
 )
 
-from netprofile.db.fields import _is_mysql
+from netprofile.db.fields import (
+	_is_mysql,
+	render_variants
+)
 from netprofile.db.ddl import (
 	CreateEvent,
 	CreateFunction,
@@ -227,6 +230,48 @@ class DropEventOp(MigrateOperation):
 		op = DropEventOp(module, evt, migration)
 		return operations.invoke(op)
 
+@Operations.register_operation('create_view')
+class CreateViewOp(MigrateOperation):
+	"""
+	Create SQL view.
+	"""
+	def __init__(self, name, select, check_option=False):
+		self.name = name
+		self.select = select
+		self.check_option = check_option
+
+	def reverse(self):
+		return DropViewOp(self.name, self.select, self.check_option)
+
+	@classmethod
+	def create_view(cls, operations, name, select, check_option=False):
+		"""
+		Issue "CREATE VIEW" DDL command.
+		"""
+		op = CreateViewOp(name, select, check_option)
+		return operations.invoke(op)
+
+@Operations.register_operation('drop_view')
+class DropViewOp(MigrateOperation):
+	"""
+	Drop SQL view.
+	"""
+	def __init__(self, name, select, check_option=False):
+		self.name = name
+		self.select = select
+		self.check_option = check_option
+
+	def reverse(self):
+		return CreateViewOp(self.name, self.select, self.check_option)
+
+	@classmethod
+	def drop_view(cls, operations, name, select, check_option=False):
+		"""
+		Issue "DROP VIEW" DDL command.
+		"""
+		op = DropViewOp(name, select, check_option)
+		return operations.invoke(op)
+
 @Operations.implementation_for(SetTableCommentOp)
 def _set_table_comment(operations, op):
 	operations.execute(SetTableComment(op.table, op.comment))
@@ -324,6 +369,32 @@ def _render_drop_event(context, op):
 		op.migration
 	)
 
+@Operations.implementation_for(CreateViewOp)
+def _create_view(operations, op):
+	operations.execute(CreateView(op.name, op.select, op.check_option))
+
+@renderers.dispatch_for(CreateViewOp)
+def _render_create_view(context, op):
+	context.imports.add('from netprofile.db import ddl as npd')
+	return 'op.create_view(%r, %r, check_option=%r)' % (
+		op.name,
+		render_variants(op.select),
+		op.check_option
+	)
+
+@Operations.implementation_for(DropViewOp)
+def _drop_view(operations, op):
+	operations.execute(DropView(op.name))
+
+@renderers.dispatch_for(DropViewOp)
+def _render_drop_view(context, op):
+	context.imports.add('from netprofile.db import ddl as npd')
+	return 'op.drop_view(%r, %r, check_option=%r)' % (
+		op.name,
+		render_variants(op.select),
+		op.check_option
+	)
+
 @comparators.dispatch_for('schema')
 def _compare_dbobjects(context, ops, schemas):
 	# XXX: this will only add new routines/events to DB.
@@ -341,6 +412,9 @@ def _compare_dbobjects(context, ops, schemas):
 
 	meta_events = dict((evt.name, evt) for evt in context.metadata.info.get('events', set()))
 	insp_events = set()
+
+	meta_views = dict((view.name, view) for view in context.metadata.info.get('views', set()))
+	insp_views = set()
 
 	if _is_mysql(dialect):
 		for sch in schemas:
@@ -361,6 +435,15 @@ def _compare_dbobjects(context, ops, schemas):
 			)
 			for row in res:
 				insp_events.add(row[0])
+
+			res = context.connection.execute(
+				'SELECT TABLE_NAME'
+				' FROM information_schema.VIEWS'
+				' WHERE TABLE_SCHEMA = %(schema_name)s',
+				schema_name=context.dialect.default_schema_name if sch is None else sch
+			)
+			for row in res:
+				insp_views.add(row[0])
 	else:
 		# Catch-all for unsupported dialects
 		meta_funcs = dict()
@@ -376,4 +459,10 @@ def _compare_dbobjects(context, ops, schemas):
 		if moddef_filter and (evt.__moddef__ != moddef_filter):
 			continue
 		ops.ops.append(CreateEventOp(evt.__moddef__, evt, new_rev_id))
+
+	for vname in set(meta_views) - insp_views:
+		view = meta_views[vname]
+		if moddef_filter and (view.__moddef__ != moddef_filter):
+			continue
+		ops.ops.append(CreateViewOp(view.name, view.select, view.check))
 

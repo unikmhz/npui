@@ -526,6 +526,10 @@ def visit_create_view(element, compiler, **kw):
 	co = ''
 	if callable(sel):
 		sel = sel()
+	if isinstance(sel, dict):
+		sel = sel[compiler.dialect.name]
+	if isinstance(sel, str):
+		sel = text(sel)
 	if isinstance(sel, Query):
 		sel = sel.statement.compile(
 			compile_kwargs={ 'literal_binds' : True },

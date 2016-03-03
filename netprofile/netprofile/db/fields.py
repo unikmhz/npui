@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Custom database fields
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -97,6 +97,13 @@ _D_MSSQL = frozenset([
 	mssql.pymssql.dialect,
 	mssql.pyodbc.dialect,
 	mssql.zxjdbc.dialect
+])
+
+_D_STD = frozenset([
+	mysql.dialect,
+	postgresql.dialect,
+	oracle.dialect,
+	mssql.dialect
 ])
 
 def _is_mysql(d):
@@ -695,4 +702,14 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 		if isinstance(value, str):
 			return ASCIIString()
 		return self
+
+def render_variants(query):
+	ret = {}
+	for dcls in _D_STD:
+		dialect = dcls()
+		ret[dialect.name] = str(query.statement.compile(
+			compile_kwargs={ 'literal_binds' : True },
+			dialect=dialect
+		))
+	return ret
 
