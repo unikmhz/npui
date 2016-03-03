@@ -59,6 +59,12 @@ from netprofile.db.ddl import (
 
 	Trigger
 )
+from netprofile.tpl.util import new_sqltpl_revision
+
+def _get_new_rev(context):
+	rctx = context.opts.get('revision_context')
+	if rctx and (len(rctx.generated_revisions) == 1):
+		return rctx.generated_revisions[0].rev_id
 
 def get_alembic_config(mm, ini_file=None, ini_section='migrations', stdout=sys.stdout):
 	appcfg = mm.cfg.get_settings()
@@ -79,6 +85,7 @@ def get_alembic_config(mm, ini_file=None, ini_section='migrations', stdout=sys.s
 	if len(migration_paths) > 0:
 		cfg.set_main_option('version_locations', ' '.join(migration_paths))
 
+	cfg.attributes['mm'] = mm
 	return cfg
 
 @Operations.register_operation('set_table_comment')
@@ -291,6 +298,18 @@ def _create_trigger(operations, op):
 
 @renderers.dispatch_for(CreateTriggerOp)
 def _render_create_trigger(context, op):
+	if op.migration:
+		attrs = context.migration_context.config.attributes
+		new_rev_id = _get_new_rev(context)
+		if new_rev_id:
+			new_sqltpl_revision(
+				attrs.get('mm'),
+				context.dialect,
+				op.module,
+				'triggers',
+				op.name,
+				op.migration
+			)
 	return 'op.create_trigger(%r, %r, %r, %r, %r)' % (
 		op.module,
 		op.table,
@@ -328,6 +347,18 @@ def _create_function(operations, op):
 @renderers.dispatch_for(CreateFunctionOp)
 def _render_create_function(context, op):
 	context.imports.add('from netprofile.db import ddl as npd')
+	if op.migration:
+		attrs = context.migration_context.config.attributes
+		new_rev_id = _get_new_rev(context)
+		if new_rev_id:
+			new_sqltpl_revision(
+				attrs.get('mm'),
+				context.dialect,
+				op.module,
+				'functions',
+				op.func.name,
+				op.migration
+			)
 	return 'op.create_function(%r, %s, %r)' % (
 		op.module,
 		op.func._autogen_repr(context),
@@ -341,7 +372,10 @@ def _drop_function(operations, op):
 @renderers.dispatch_for(DropFunctionOp)
 def _render_drop_function(context, op):
 	context.imports.add('from netprofile.db import ddl as npd')
-	return 'op.drop_function(%r, %s)' % (op.module, op.func._autogen_repr(context))
+	return 'op.drop_function(%r, %s)' % (
+		op.module,
+		op.func._autogen_repr(context)
+	)
 
 @Operations.implementation_for(CreateEventOp)
 def _create_event(operations, op):
@@ -350,6 +384,18 @@ def _create_event(operations, op):
 @renderers.dispatch_for(CreateEventOp)
 def _render_create_event(context, op):
 	context.imports.add('from netprofile.db import ddl as npd')
+	if op.migration:
+		attrs = context.migration_context.config.attributes
+		new_rev_id = _get_new_rev(context)
+		if new_rev_id:
+			new_sqltpl_revision(
+				attrs.get('mm'),
+				context.dialect,
+				op.module,
+				'events',
+				op.event.name,
+				op.migration
+			)
 	return 'op.create_event(%r, npd.%r, %r)' % (
 		op.module,
 		op.event,
@@ -375,7 +421,6 @@ def _create_view(operations, op):
 
 @renderers.dispatch_for(CreateViewOp)
 def _render_create_view(context, op):
-	context.imports.add('from netprofile.db import ddl as npd')
 	return 'op.create_view(%r, %r, check_option=%r)' % (
 		op.name,
 		render_variants(op.select),
@@ -388,7 +433,6 @@ def _drop_view(operations, op):
 
 @renderers.dispatch_for(DropViewOp)
 def _render_drop_view(context, op):
-	context.imports.add('from netprofile.db import ddl as npd')
 	return 'op.drop_view(%r, %r, check_option=%r)' % (
 		op.name,
 		render_variants(op.select),
@@ -402,10 +446,7 @@ def _compare_dbobjects(context, ops, schemas):
 	attrs = context.migration_context.config.attributes
 	dialect = context.dialect
 	moddef_filter = attrs.get('module')
-	rctx = context.opts.get('revision_context')
-	new_rev_id = None
-	if rctx and (len(rctx.generated_revisions) == 1):
-		new_rev_id = rctx.generated_revisions[0].rev_id
+	new_rev_id = _get_new_rev(context)
 
 	meta_funcs = dict((func.name, func) for func in context.metadata.info.get('functions', set()))
 	insp_funcs = set()

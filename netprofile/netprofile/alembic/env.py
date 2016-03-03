@@ -87,10 +87,10 @@ def _create_table(context, revision, op):
 
 
 def _include_object(obj, name, type_, reflected, compare_to):
-	if reflected:
-		return True
 	if moddef_filter:
 		if type_ == 'table':
+			if reflected:
+				return False
 			cls = _table_to_class(obj.name)
 			if cls.__moddef__ != moddef_filter:
 				return False

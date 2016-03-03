@@ -90,8 +90,7 @@ class SQLFunctionArgument(DDLElement):
 		self.dir = arg_dir
 
 	def _autogen_repr(self, context):
-		return 'npd.%s(%r, %s, %r)' % (
-			self.__class__.__name__,
+		return 'npd.SQLFunctionArgument(%r, %s, %r)' % (
 			self.name,
 			_repr_type(self.type, context),
 			self.dir
@@ -411,7 +410,7 @@ class SQLFunction(object):
 		self.label = label
 
 	def _autogen_repr(self, context):
-		return 'npd.%s(%r, args=(%s), returns=%s, comment=%r, reads_sql=%r, writes_sql=%r, is_procedure=%r, label=%r)' % (
+		return 'npd.%s(%r, args=[%s], returns=%s, comment=%r, reads_sql=%r, writes_sql=%r, is_procedure=%r, label=%r)' % (
 			self.__class__.__name__,
 			self.name,
 			', '.join(arg._autogen_repr(context) for arg in self.args),
