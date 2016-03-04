@@ -20,6 +20,7 @@ requires = [
 	'SQLAlchemy >= 1.0',
 	'zope.sqlalchemy',
 	'transaction',
+	'alembic >= 0.8.3',
 
 	'waitress >= 0.7',
 	'pyramid >= 1.5',
@@ -97,9 +98,13 @@ setup(
 			'module info = netprofile.cli:ShowModule',
 
 			'module install = netprofile.cli:InstallModule',
+			'module upgrade = netprofile.cli:UpgradeModule',
 			'module uninstall = netprofile.cli:UninstallModule',
 			'module enable = netprofile.cli:EnableModule',
 			'module disable = netprofile.cli:DisableModule',
+
+			'alembic = netprofile.cli:Alembic',
+			'db revision = netprofile.cli:DBRevision',
 
 			'deploy = netprofile.cli:Deploy'
 		],

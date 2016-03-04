@@ -27,6 +27,7 @@ from __future__ import (
 	division
 )
 
+import inspect
 import logging
 import os
 import pkg_resources
@@ -38,6 +39,7 @@ from cliff.command import Command
 
 from pyramid.i18n import TranslationStringFactory
 from sqlalchemy.exc import ProgrammingError
+from alembic import command as alembic_cmd
 
 from netprofile.common.modules import ModuleError
 
@@ -188,6 +190,11 @@ class InstallModule(Command):
 	def get_parser(self, prog_name):
 		parser = super(InstallModule, self).get_parser(prog_name)
 		parser.add_argument(
+			'-U', '--upgrade',
+			action='store_true',
+			help='Allow upgrading obsolete installed modules.'
+		)
+		parser.add_argument(
 			'name',
 			help='Name of the module to install or a special value \'all\'.'
 		)
@@ -204,16 +211,15 @@ class InstallModule(Command):
 			mm.scan()
 		if args.name != 'core':
 			mm.load('core')
-		mm.load_all()
 
 		if args.name.lower() == 'all':
-			mm.install('core', sess)
+			mm.install('core', sess, allow_upgrades=args.upgrade)
 			is_ok = True
 			for mod in mm.modules:
 				if mod != 'core':
 					try:
 						self.app.hooks.run_hook('np.cli.module.install.before', self.app, mod, sess)
-						ret = mm.install(mod, sess)
+						ret = mm.install(mod, sess, allow_upgrades=args.upgrade)
 						self.app.hooks.run_hook('np.cli.module.install.after', self.app, mod, sess, ret)
 					except ModuleError as e:
 						if self.app.options.debug:
@@ -221,20 +227,80 @@ class InstallModule(Command):
 						is_ok = False
 						self.log.error(e)
 					else:
-						self.log.info('Module \'%s\' successfully installed.', mod)
+						if ret:
+							self.log.info('Module \'%s\' successfully installed.', mod)
 			if not is_ok:
 				raise RuntimeError('Some modules failed to install.')
 			self.log.info('All done.')
 			return
 
 		self.app.hooks.run_hook('np.cli.module.install.before', self.app, args.name, sess)
-		ret = mm.install(args.name, sess)
+		ret = mm.install(args.name, sess, allow_upgrades=args.upgrade)
 		self.app.hooks.run_hook('np.cli.module.install.after', self.app, args.name, sess, ret)
 		if isinstance(ret, bool):
 			if ret:
 				self.log.info('Module \'%s\' successfully installed.', args.name)
 				return
 			raise RuntimeError('Module \'%s\' is already installed.' % (args.name,))
+		raise RuntimeError('Unknown result.')
+
+class UpgradeModule(Command):
+	"""
+	Upgrade module's database schema.
+	"""
+
+	log = logging.getLogger(__name__)
+
+	def get_parser(self, prog_name):
+		parser = super(UpgradeModule, self).get_parser(prog_name)
+		parser.add_argument(
+			'name',
+			help='Name of the module to upgrade or a special value \'all\'.'
+		)
+		return parser
+
+	def take_action(self, args):
+		self.app.setup_mako_sql()
+		sess = self.app.db_session
+		mm = self.app.mm
+
+		if len(mm.modules) > 0:
+			mm.rescan()
+		else:
+			mm.scan()
+		if args.name != 'core':
+			mm.load('core')
+
+		if args.name.lower() == 'all':
+			mm.upgrade('core', sess)
+			is_ok = True
+			for mod in mm.modules:
+				if mod != 'core':
+					try:
+						self.app.hooks.run_hook('np.cli.module.upgrade.before', self.app, mod, sess)
+						ret = mm.upgrade(mod, sess)
+						self.app.hooks.run_hook('np.cli.module.upgrade.after', self.app, mod, sess, ret)
+					except ModuleError as e:
+						if self.app.options.debug:
+							raise e
+						is_ok = False
+						self.log.error(e)
+					else:
+						if ret:
+							self.log.info('Module \'%s\' successfully upgraded.', mod)
+			if not is_ok:
+				raise RuntimeError('Some modules failed to upgrade.')
+			self.log.info('All done.')
+			return
+
+		self.app.hooks.run_hook('np.cli.module.upgrade.before', self.app, args.name, sess)
+		ret = mm.upgrade(args.name, sess)
+		self.app.hooks.run_hook('np.cli.module.upgrade.after', self.app, args.name, sess, ret)
+		if isinstance(ret, bool):
+			if ret:
+				self.log.info('Module \'%s\' successfully upgraded.', args.name)
+				return
+			raise RuntimeError('Module \'%s\' is already up to date.' % (args.name,))
 		raise RuntimeError('Unknown result.')
 
 class UninstallModule(Command):
@@ -371,6 +437,294 @@ class DisableModule(Command):
 			else:
 				raise RuntimeError('Module \'%s\' wasn\'t found or is not installed.' % (args.name,))
 		raise RuntimeError('Unknown result.')
+
+# Taken nearly verbatim from alembic.config:CommandLine
+class Alembic(Command):
+	"""
+	Invoke alembic migration commands directly.
+	"""
+
+	log = logging.getLogger(__name__)
+
+	def get_parser(self, prog_name):
+		kwargs_opts = {
+			'template': (
+				'-t', '--template',
+				dict(
+					default='generic',
+					type=str,
+					help='Setup template for use with \'init\'.'
+				)
+			),
+			'message': (
+				'-m', '--message',
+				dict(
+					type=str,
+					help='Message string to use with \'revision\'.'
+				)
+			),
+			'sql': (
+				'-S', '--sql',
+				dict(
+					action='store_true',
+					help='Don\'t emit SQL to database - dump to standard output/file instead.'
+				)
+			),
+			'tag': (
+				'--tag',
+				dict(
+					type=str,
+					help='Arbitrary \'tag\' name - can be used by custom env.py scripts.'
+				)
+			),
+			'head': (
+				'--head',
+				dict(
+					type=str,
+					help='Specify head revision or <branchname>@head to base new revision on.'
+				)
+			),
+			'splice': (
+				'--splice',
+				dict(
+					action='store_true',
+					help='Allow a non-head revision as the \'head\' to splice onto.'
+				)
+			),
+			'depends_on': (
+				'-D', '--depends-on',
+				dict(
+					action='append',
+					help='Specify one or more revision identifiers which this revision should depend on.'
+				)
+			),
+			'rev_id': (
+				'-R', '--rev-id',
+				dict(
+					type=str,
+					help='Specify a hardcoded revision id instead of generating one.'
+				)
+			),
+			'version_path': (
+				'--version-path',
+				dict(
+					type=str,
+					help='Specify specific path from config for version file.'
+				)
+			),
+			'branch_label': (
+				'--branch-label',
+				dict(
+					type=str,
+					help='Specify a branch label to apply to the new revision.'
+				)
+			),
+			'verbose': (
+				'-V', '--alembic-verbose',
+				dict(
+					action='store_true',
+					help='Use more verbose output.'
+				)
+			),
+			'resolve_dependencies': (
+				'--resolve-dependencies',
+				dict(
+					action='store_true',
+					help='Treat dependency versions as down revisions.'
+				)
+			),
+			'autogenerate': (
+				'-A', '--autogenerate',
+				dict(
+					action='store_true',
+					help='Populate revision script with candidate migration operations, based on comparison of database to model.'
+				)
+			),
+			'head_only': (
+				'--head-only',
+				dict(
+					action='store_true',
+					help='Deprecated.  Use --verbose for additional output.'
+				)
+			),
+			'rev_range': (
+				'-r', '--rev-range',
+				dict(
+					action='store',
+					help='Specify a revision range; format is [start]:[end].'
+				)
+			)
+		}
+		positional_help = {
+			'directory' : 'Location of scripts directory.',
+			'revision'  : 'Revision identifier.',
+			'revisions' : 'One or more revisions, or \'heads\' for all heads.'
+		}
+
+		parser = super(Alembic, self).get_parser(prog_name)
+		parser.add_argument(
+			'-x', action='append',
+			help='Additional arguments consumed by custom env.py scripts, e.g. -x setting1=somesetting -x setting2=somesetting.'
+		)
+		subparsers = parser.add_subparsers(help='Help for Alembic commands.')
+
+		for fn in [getattr(alembic_cmd, n) for n in dir(alembic_cmd)]:
+			if inspect.isfunction(fn) and fn.__name__[0] != '_' and fn.__module__ == 'alembic.command':
+				spec = inspect.getargspec(fn)
+				if spec[3]:
+					positional = spec[0][1:-len(spec[3])]
+					kwargs = spec[0][-len(spec[3]):]
+				else:
+					positional = spec[0][1:]
+					kwargs = []
+
+				subparser = subparsers.add_parser(
+					fn.__name__,
+					help=fn.__doc__
+				)
+
+				for arg in kwargs:
+					if arg in kwargs_opts:
+						pa_args = kwargs_opts[arg]
+						pa_args, pa_kwargs = pa_args[0:-1], pa_args[-1]
+						subparser.add_argument(*pa_args, **pa_kwargs)
+				for arg in positional:
+					if arg == 'revisions':
+						subparser.add_argument(arg, nargs='+', help=positional_help.get(arg))
+					else:
+						subparser.add_argument(arg, help=positional_help.get(arg))
+
+				subparser.set_defaults(cmd=(fn, positional, kwargs))
+
+		return parser
+
+	def take_action(self, args):
+		from netprofile.db import migrations
+
+		self.app.setup_mako_sql()
+		mm = self.app.mm
+
+		if len(mm.modules) > 0:
+			mm.rescan()
+		else:
+			mm.scan()
+		if not mm.load('core'):
+			raise RuntimeError('Unable to proceed without core module.')
+		mm.load_all()
+
+		if not hasattr(args, 'cmd'):
+			raise RuntimeError('too few arguments')
+
+		if self.app.options.verbose_level > 1:
+			args.verbose = True
+		elif 'alembic_verbose' in args:
+			args.verbose = args.alembic_verbose
+		else:
+			args.verbose = False
+
+		fn, positional, kwargs = args.cmd
+
+		cfg = self.app.alembic_config
+		fn(
+			cfg,
+			*[getattr(args, k) for k in positional],
+			**dict((k, getattr(args, k)) for k in kwargs)
+		)
+
+class DBRevision(Command):
+	"""
+	Create new database revision.
+	"""
+
+	log = logging.getLogger(__name__)
+
+	def get_parser(self, prog_name):
+		parser = super(DBRevision, self).get_parser(prog_name)
+		parser.add_argument(
+			'-m', '--message',
+			help='Message string to use.'
+		)
+		parser.add_argument(
+			'-A', '--autogenerate',
+			action='store_true',
+			help='Populate revision script with candidate migration operations, based on comparison of database to model.'
+		)
+		parser.add_argument(
+			'-S', '--sql',
+			action='store_true',
+			help='Don\'t emit SQL to database - dump to standard output/file instead.'
+		)
+		parser.add_argument(
+			'-R', '--rev-id',
+			help='Specify a hardcoded revision id instead of generating one.'
+		)
+		parser.add_argument(
+			'-D', '--depends-on',
+			action='append',
+			help='Specify one or more revision identifiers which this revision should depend on.'
+		)
+		# this is equivalent to alembic's --branch-label=moddef
+		parser.add_argument(
+			'-I', '--initial',
+			action='store_true',
+			help='This revision is an initial one for a module.'
+		)
+		parser.add_argument(
+			'name',
+			help='Name of the module to create DB revision for.'
+		)
+		return parser
+
+	def take_action(self, args):
+		from netprofile.db import migrations
+
+		self.app.setup_mako_sql()
+		mm = self.app.mm
+
+		if len(mm.modules) > 0:
+			mm.rescan()
+		else:
+			mm.scan()
+		if not mm.preload('core'):
+			raise RuntimeError('Unable to proceed without core module.')
+		moddef = args.name
+		if moddef != 'core':
+			if not mm.preload(moddef):
+				raise RuntimeError('Requested module \'%s\' can\'t be loaded.' % (moddef,))
+		mod = mm.modules[moddef]
+		version_dir = os.path.join(mod.dist.location, 'migrations')
+
+		cfg = self.app.alembic_config
+		cfg.attributes['module'] = moddef
+		if not os.path.isdir(version_dir):
+			# TODO: create dir, append to version_locations
+			if args.initial:
+				pass
+			else:
+				raise RuntimeError('Can\'t find version directory: \'%s\'.' % (version_dir,))
+
+		kwargs = {
+			'head'         : moddef + '@head',
+			'version_path' : version_dir
+		}
+		if args.message:
+			kwargs['message'] = args.message
+		if args.autogenerate:
+			kwargs['autogenerate'] = True
+		if args.sql:
+			kwargs['sql'] = True
+		if args.rev_id:
+			kwargs['rev_id'] = args.rev_id
+		if args.depends_on:
+			# TODO: get alembic deps from module deps?
+			kwargs['depends_on'] = args.depends_on
+		# TODO: autoset initial flag if revisions are empty,
+		#       or if migrations dir doesn't exist?
+		if args.initial:
+			kwargs['head'] = 'base'
+			kwargs['branch_label'] = moddef
+
+		alembic_cmd.revision(cfg, **kwargs)
 
 class Deploy(Command):
 	"""

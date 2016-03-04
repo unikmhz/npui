@@ -32,6 +32,7 @@ from sqlalchemy.orm import (
 	sessionmaker,
 	attributes
 )
+from sqlalchemy.schema import MetaData
 from sqlalchemy.orm.session import make_transient
 from sqlalchemy.ext.declarative import declarative_base
 from zope.sqlalchemy import ZopeTransactionExtension
@@ -75,10 +76,20 @@ def _cb_before_flush(sess, flush_ctx, instances):
 		if oldv and callable(oldv) and old_id:
 			oldv(sess, old_id)
 
+_db_naming = {
+	'fk' : '%(table_name)s_fk_%(column_0_name)s', # foreign key
+	'pk' : '%(table_name)s_pk',                   # primary key
+	'ix' : '%(table_name)s_i_%(column_0_name)s',  # index
+	'ck' : '%(table_name)s_c_%(column_0_name)s',  # check constraint
+	'uq' : '%(table_name)s_u_%(column_0_name)s',  # unique constraint
+}
+
+DBMeta = MetaData(naming_convention=_db_naming)
+
 DBSession = scoped_session(sessionmaker(
 	extension=ZopeTransactionExtension()
 ))
-Base = declarative_base()
+Base = declarative_base(metadata=DBMeta)
 
 event.listen(Base, 'instrument_class', _cb_instrument_class, propagate=True)
 event.listen(DBSession, 'before_flush', _cb_before_flush)

@@ -96,6 +96,7 @@ import base64
 
 from collections import defaultdict
 from dateutil.tz import tzutc
+from packaging import version
 
 from sqlalchemy import (
 	BINARY,
@@ -366,6 +367,11 @@ class NPModule(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+
+	@property
+	def parsed_version(self):
+		if self.current_version:
+			return version.parse(self.current_version)
 
 	def __init__(self, id=id, name=None, current_version='0', enabled=False):
 		self.id = id
@@ -890,28 +896,6 @@ class User(Base):
 		info={
 			'header_string' : _('Manager'),
 			'column_flex'   : 2
-		}
-	)
-	ip_address = Column(
-		'ipaddr',
-		IPv4Address(),
-		Comment('Lock-in IP address'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('IP Address')
-		}
-	)
-	random_key = Column(
-		'randomkey',
-		ASCIIString(64),
-		Comment('Activation random key'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Random Key')
 		}
 	)
 	photo_id = Column(

@@ -48,6 +48,7 @@ import pyramid_mako
 from netprofile import setup_config
 from netprofile.db.connection import DBSession
 from netprofile.db.clauses import SetVariable
+from netprofile.db.migrations import get_alembic_config
 from netprofile.common.modules import ModuleManager
 from netprofile.common.hooks import IHookManager
 from netprofile.common.locale import sys_localizer
@@ -156,7 +157,7 @@ class CLIApplication(App):
 
 	@reify
 	def mm(self):
-		return ModuleManager(self.app_config)
+		return ModuleManager(self.app_config, stdout=self.stdout)
 
 	@reify
 	def db_session(self):
@@ -177,6 +178,21 @@ class CLIApplication(App):
 		cfg = setup_config(settings)
 		cfg.commit()
 		return cfg
+
+	@reify
+	def alembic_config(self):
+		# TODO: make config section configurable
+		return get_alembic_config(
+			self.mm,
+			ini_file=self.options.ini_file,
+			ini_section='migrations',
+			stdout=self.stdout
+		)
+
+	@reify
+	def alembic_scriptdir(self):
+		from alembic.script import ScriptDirectory
+		return ScriptDirectory.from_config(self.alembic_config)
 
 	@reify
 	def hooks(self):

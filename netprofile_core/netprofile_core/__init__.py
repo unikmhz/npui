@@ -144,8 +144,12 @@ class Module(ModuleBase):
 		)
 
 	@classmethod
-	def get_sql_data(cls, modobj, sess):
+	def get_sql_data(cls, modobj, vpair, sess):
 		from netprofile_core.models import UserState
+
+		if not vpair.is_install:
+			return
+
 		# FIXME: localization
 		log = (
 			LogAction(id=1, name='Created'),
@@ -160,6 +164,7 @@ class Module(ModuleBase):
 			LogAction(id=10, name='Logged in'),
 			LogAction(id=11, name='Logged out'),
 			LogAction(id=12, name='Failed login'),
+
 			LogType(id=1, name='Generic'),
 			LogType(id=7, name='Users'),
 			LogType(id=11, name='Groups'),

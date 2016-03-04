@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -73,7 +73,7 @@ class Module(ModuleBase):
 		)
 
 	@classmethod
-	def get_sql_data(cls, modobj, sess):
+	def get_sql_data(cls, modobj, vpair, sess):
 		from netprofile_tickets.models import (
 			TicketChangeField,
 			TicketOrigin
@@ -84,6 +84,9 @@ class Module(ModuleBase):
 			LogType,
 			Privilege
 		)
+
+		if not vpair.is_install:
+			return
 
 		sess.add(LogType(
 			id=3,

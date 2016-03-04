@@ -47,6 +47,7 @@ from sqlalchemy.sql.functions import FunctionElement
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm import Query
+from alembic.autogenerate.render import _repr_type
 
 from pyramid.renderers import render
 
@@ -87,6 +88,13 @@ class SQLFunctionArgument(DDLElement):
 		self.name = name
 		self.type = arg_type
 		self.dir = arg_dir
+
+	def _autogen_repr(self, context):
+		return 'npd.SQLFunctionArgument(%r, %s, %r)' % (
+			self.name,
+			_repr_type(self.type, context),
+			self.dir
+		)
 
 class InArgument(SQLFunctionArgument):
 	def __init__(self, name, arg_type):
@@ -193,16 +201,26 @@ def visit_set_column_comment(element, compiler, **kw):
 
 @compiles(SetTableComment, 'mysql')
 def visit_set_table_comment_mysql(element, compiler, **kw):
+	tbl = element.table
+	if isinstance(tbl, str):
+		tbl = compiler.sql_compiler.preparer.quote(tbl)
+	else:
+		tbl = compiler.sql_compiler.preparer.format_table(tbl)
 	return 'ALTER TABLE %s COMMENT=%s' % (
-		compiler.sql_compiler.preparer.format_table(element.table),
+		tbl,
 		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
 @compiles(SetTableComment, 'postgresql')
 @compiles(SetTableComment, 'oracle')
 def visit_set_table_comment_pgsql(element, compiler, **kw):
+	tbl = element.table
+	if isinstance(tbl, str):
+		tbl = compiler.sql_compiler.preparer.quote(tbl)
+	else:
+		tbl = compiler.sql_compiler.preparer.format_table(tbl)
 	return 'COMMENT ON TABLE %s IS %s' % (
-		compiler.sql_compiler.preparer.format_table(element.table),
+		tbl,
 		compiler.sql_compiler.render_literal_value(element.text, sqltypes.STRINGTYPE)
 	)
 
@@ -237,24 +255,31 @@ def ddl_fmt(ctx, obj):
 	raise ValueError('Unable to format value for DDL')
 
 class CreateTrigger(DDLElement):
-	def __init__(self, table, trigger):
+	def __init__(self, table, trigger, module=None, migration=None):
 		self.table = table
 		self.trigger = trigger
+		if module is None:
+			module = trigger.module
+		self.module = module
+		self.migration = migration
 
 class DropTrigger(DDLElement):
-	def __init__(self, table, trigger):
+	def __init__(self, table, trigger, module=None):
 		self.table = table
 		self.trigger = trigger
+		if module is None:
+			module = trigger.module
+		self.module = module
 
 @compiles(CreateTrigger)
 def visit_create_trigger(element, compiler, **kw):
 	table = element.table
-	cls = _table_to_class(table.name)
-	module = cls.__module__.split('.')[0]
+	module = element.module
 	trigger = element.trigger
+	if isinstance(table, str):
+		table = text(compiler.sql_compiler.preparer.quote(table))
 	tpldef = {
 		'table'    : table,
-		'class'    : cls,
 		'module'   : module,
 		'compiler' : compiler,
 		'dialect'  : compiler.dialect,
@@ -263,10 +288,13 @@ def visit_create_trigger(element, compiler, **kw):
 	}
 	tpldef.update(Base._decl_class_registry.items())
 
+	file_bits = [trigger.name]
+	if element.migration:
+		file_bits.append(element.migration)
 	tplname = '%s:templates/sql/%s/triggers/%s.mak' % (
 		module,
 		compiler.dialect.name,
-		trigger.name
+		'.'.join(file_bits)
 	)
 	return render(tplname, tpldef, package=sys.modules[module])
 
@@ -292,9 +320,19 @@ class Trigger(SchemaItem):
 		self.event = event
 		self.name = name
 
+	@property
+	def module(self):
+		if self.parent is None:
+			return None
+		cls = _table_to_class(self.parent.name)
+		return cls.__module__.split('.')[0]
+
 	def _set_parent(self, parent):
 		if isinstance(parent, Table):
 			self.parent = parent
+			if not hasattr(parent, 'triggers'):
+				parent.triggers = []
+			parent.triggers.append(self)
 			CreateTrigger(parent, self).execute_at('after_create', parent)
 			DropTrigger(parent, self).execute_at('before_drop', parent)
 
@@ -302,9 +340,10 @@ class CreateFunction(DDLElement):
 	"""
 	SQL function template DDL object.
 	"""
-	def __init__(self, func, module):
+	def __init__(self, func, module, migration=None):
 		self.func = func
 		self.module = module
+		self.migration = migration
 
 @compiles(CreateFunction)
 def visit_create_function(element, compiler, **kw):
@@ -321,10 +360,13 @@ def visit_create_function(element, compiler, **kw):
 	}
 	tpldef.update(Base._decl_class_registry.items())
 
+	file_bits = [name]
+	if element.migration:
+		file_bits.append(element.migration)
 	tplname = '%s:templates/sql/%s/functions/%s.mak' % (
 		module,
 		compiler.dialect.name,
-		name
+		'.'.join(file_bits)
 	)
 	return render(tplname, tpldef, package=sys.modules[module])
 
@@ -366,6 +408,19 @@ class SQLFunction(object):
 		self.writes_sql = writes_sql
 		self.is_procedure = is_procedure
 		self.label = label
+
+	def _autogen_repr(self, context):
+		return 'npd.%s(%r, args=[%s], returns=%s, comment=%r, reads_sql=%r, writes_sql=%r, is_procedure=%r, label=%r)' % (
+			self.__class__.__name__,
+			self.name,
+			', '.join(arg._autogen_repr(context) for arg in self.args),
+			_repr_type(self.returns, context) if self.returns is not None else 'None',
+			self.comment,
+			self.reads_sql,
+			self.writes_sql,
+			self.is_procedure,
+			self.label
+		)
 
 	def create(self, modname):
 		return CreateFunction(self, modname)
@@ -430,6 +485,18 @@ class SQLEvent(object):
 		self.sched_interval = sched_interval
 		self.starts = starts
 
+	def __repr__(self):
+		return '%s(%r, sched_unit=%r, sched_interval=%r, starts=%r, preserve=%r, enabled=%r, comment=%r)' % (
+			self.__class__.__name__,
+			self.name,
+			self.sched_unit,
+			self.sched_interval,
+			self.starts,
+			self.preserve,
+			self.enabled,
+			self.comment
+		)
+
 	def create(self, modname):
 		return CreateEvent(self, modname)
 
@@ -458,6 +525,10 @@ def visit_create_view(element, compiler, **kw):
 	co = ''
 	if callable(sel):
 		sel = sel()
+	if isinstance(sel, dict):
+		sel = sel[compiler.dialect.name]
+	if isinstance(sel, str):
+		sel = text(sel)
 	if isinstance(sel, Query):
 		sel = sel.statement.compile(
 			compile_kwargs={ 'literal_binds' : True },

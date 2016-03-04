@@ -48,6 +48,7 @@ from netprofile.db.connection import (
 )
 from netprofile.ext.data import ExtBrowser
 from netprofile.common.hooks import IHookManager
+from netprofile.db.migrations import get_alembic_config
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +76,7 @@ class ModuleBase(object):
 		pass
 
 	@classmethod
-	def upgrade(cls, sess, from_version):
+	def upgrade(cls, sess, vpair):
 		pass
 
 	def __init__(self, mmgr):
@@ -101,7 +102,7 @@ class ModuleBase(object):
 		return ()
 
 	@classmethod
-	def get_sql_data(cls, modobj, sess):
+	def get_sql_data(cls, modobj, vpair, sess):
 		pass
 
 	def get_menus(self, request):
@@ -150,6 +151,53 @@ class IModuleManager(Interface):
 	"""
 	pass
 
+class VersionPair(object):
+	def __init__(self, old, new):
+		if isinstance(old, str):
+			old = parse(old)
+		if isinstance(new, str):
+			new = parse(new)
+		self.old = old
+		self.new = new
+
+	@property
+	def is_install(self):
+		return self.old is None and self.new is not None
+
+	@property
+	def is_uninstall(self):
+		return self.old is not None and self.new is None
+
+	@property
+	def is_upgrade(self):
+		if self.old is None or self.new is None:
+			return False
+		return self.old < self.new
+
+	@property
+	def is_downgrade(self):
+		if self.old is None or self.new is None:
+			return False
+		return self.old > self.new
+
+	@property
+	def is_noop(self):
+		return self.old == self.new
+
+	def is_upgrade_from(self, version):
+		if not self.is_upgrade:
+			return False
+		if isinstance(version, str):
+			version = parse(version)
+		return version >= self.old
+
+	def is_downgrade_to(self, version):
+		if not self.is_downgrade:
+			return False
+		if isinstance(version, str):
+			version = parse(version)
+		return version >= self.new
+
 class ModuleError(RuntimeError):
 	pass
 
@@ -160,8 +208,9 @@ class ModuleManager(object):
 	and (un)installing modules.
 	"""
 
-	def __init__(self, cfg, vhost=None):
+	def __init__(self, cfg, vhost=None, stdout=sys.stdout):
 		self.cfg = cfg
+		self.stdout = stdout
 		self.modules = {}
 		self.installed = None
 		self.loaded = {}
@@ -217,7 +266,7 @@ class ModuleManager(object):
 			return pkg_resources.get_distribution('netprofile')
 		return pkg_resources.get_distribution('netprofile_' + moddef)
 
-	def _load(self, req, mstack):
+	def _load(self, req, mstack, activate=True):
 		"""
 		Private method which actually loads a module.
 		"""
@@ -240,7 +289,7 @@ class ModuleManager(object):
 			# Can't find module in installed Python packages.
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
-		if not self.is_installed(req, DBSession()):
+		if activate and not self.is_installed(req, DBSession()):
 			if moddef != 'core':
 				logger.error(
 					'Can\'t load uninstalled/obsolete module \'%s\'. Please install/upgrade it first.',
@@ -265,10 +314,12 @@ class ModuleManager(object):
 			return False
 		for depmod in modcls.get_deps():
 			depreq = Requirement(depmod)
-			if not self._load(depreq, mstack):
+			if not self._load(depreq, mstack, activate=activate):
 				logger.error('Can\'t load module \'%s\', which is needed for module \'%s\'.', depmod, moddef)
 				return False
-		mod = self.loaded[moddef] = modcls(self)
+		mod = modcls(self)
+		if activate:
+			self.loaded[moddef] = mod
 		self.cfg.include(
 			lambda conf: mod.add_routes(conf),
 			route_prefix='/' + moddef
@@ -279,11 +330,34 @@ class ModuleManager(object):
 			self.modules[moddef].module_name + ':static',
 			cache_max_age=3600
 		)
-		self.models[moddef] = {}
+		if activate:
+			self.models[moddef] = {}
 		mb = self.get_module_browser()
 		hm = self.cfg.registry.getUtility(IHookManager)
 		for model in mod.get_models():
-			self._import_model(moddef, model, mb, hm)
+			self._import_model(moddef, model, mb, hm, activate=activate)
+
+		get_sql_functions = getattr(modcls, 'get_sql_functions', None)
+		if callable(get_sql_functions):
+			func_store = Base.metadata.info.setdefault('functions', set())
+			for func in get_sql_functions():
+				func.__moddef__ = moddef
+				func_store.add(func)
+
+		get_sql_views = getattr(modcls, 'get_sql_views', None)
+		if callable(get_sql_views):
+			view_store = Base.metadata.info.setdefault('views', set())
+			for view in get_sql_views():
+				view.__moddef__ = moddef
+				view_store.add(view)
+
+		get_sql_events = getattr(modcls, 'get_sql_events', None)
+		if callable(get_sql_events):
+			event_store = Base.metadata.info.setdefault('events', set())
+			for evt in get_sql_events():
+				evt.__moddef__ = moddef
+				event_store.add(evt)
+
 		return True
 
 	def load(self, req):
@@ -294,6 +368,15 @@ class ModuleManager(object):
 		if not isinstance(req, Requirement):
 			req = Requirement(req)
 		return self._load(req, mstack)
+
+	def preload(self, req):
+		"""
+		Discover module's data structures without loading it.
+		"""
+		mstack = []
+		if not isinstance(req, Requirement):
+			req = Requirement(req)
+		return self._load(req, mstack, activate=False)
 
 	def unload(self, req):
 		"""
@@ -405,7 +488,7 @@ class ModuleManager(object):
 
 			try:
 				for mod in sess.query(NPModule):
-					self.installed[mod.name] = parse(mod.current_version)
+					self.installed[mod.name] = mod.parsed_version
 			except ProgrammingError:
 				return False
 
@@ -414,10 +497,11 @@ class ModuleManager(object):
 		return self.installed[moddef] in modspec
 
 	# TODO: add circular dependency checking, like we do in _load()
-	def install(self, req, sess):
+	def install(self, req, sess, allow_upgrades=False):
 		"""
 		Run module's installation hooks and register the module in DB.
 		"""
+		from alembic import command
 		from netprofile_core.models import NPModule
 
 		if not isinstance(req, Requirement):
@@ -427,51 +511,36 @@ class ModuleManager(object):
 		if ('core' not in self.loaded) and (moddef != 'core'):
 			raise ModuleError('Unable to install anything prior to loading core module.')
 		if self.is_installed(req, sess):
+			if allow_upgrades and self.is_installed(Requirement(moddef), sess):
+				return self.upgrade(req, sess)
 			return False
-		# TODO: check if we need upgrade instead
 
-		ep = None
-		if moddef in self.modules:
-			ep = self.modules[moddef]
-		else:
-			match = list(pkg_resources.iter_entry_points('netprofile.modules', moddef))
-			if len(match) == 0:
-				raise ModuleError('Can\'t find module: \'%s\'.' % (moddef,))
-			if len(match) > 1:
-				raise ModuleError('Can\'t resolve module to single distribution: \'%s\'.' % (moddef,))
-			ep = match[0]
-			if ep.name != moddef:
-				raise ModuleError('Loaded module source \'%s\', but was asked to load \'%s\'.' % (
-					ep.name,
-					moddef
-				))
-			self.modules[moddef] = ep
-
+		ep = self._find_ep(moddef)
 		try:
 			modcls = ep.load()
 		except ImportError as e:
 			raise ModuleError('Can\'t locate ModuleBase class for module \'%s\'.' % (moddef,)) from e
 
-		modv = getattr(modcls, 'version', None)
-		if callable(modv):
-			modversion = modv()
-		else:
-			modversion = parse('0')
+		modversion = self._cls_version(modcls)
 		if modversion not in modspec:
 			raise ModuleError('Module \'%s\' version %s can\'t satisfy requirements: %s.' % (
 				moddef, str(modversion), str(modspec)
 			))
+		vpair = VersionPair(None, modversion)
 
 		get_deps = getattr(modcls, 'get_deps', None)
 		if callable(get_deps):
 			for dep in get_deps():
 				depreq = Requirement(dep)
 				if not self.is_installed(depreq, sess):
-					self.install(depreq, sess)
+					self.install(depreq, sess, allow_upgrades=allow_upgrades)
 
 		modprep = getattr(modcls, 'prepare', None)
 		if callable(modprep):
 			modprep()
+
+		if moddef != 'core':
+			self.preload(moddef)
 
 		get_models = getattr(modcls, 'get_models', None)
 		if callable(get_models):
@@ -498,7 +567,7 @@ class ModuleManager(object):
 
 		get_sql_data = getattr(modcls, 'get_sql_data', None)
 		if callable(get_sql_data):
-			get_sql_data(modobj, sess)
+			get_sql_data(modobj, vpair, sess)
 
 		mod_install = getattr(modcls, 'install', None)
 		if callable(mod_install):
@@ -515,8 +584,79 @@ class ModuleManager(object):
 				sess.execute(evt.create(moddef))
 			transaction.commit()
 
+		alembic_cfg = get_alembic_config(self, stdout=self.stdout)
+		command.stamp(alembic_cfg, moddef + '@head')
+		transaction.commit()
+
 		if moddef == 'core':
-			self.load('core')
+			self.load(moddef)
+		return True
+
+	# TODO: add circular dependency checking, like we do in _load()
+	def upgrade(self, req, sess):
+		"""
+		Update DB schema, run module's upgrade hooks and register
+		the new version in DB.
+		"""
+		from alembic import command
+		from netprofile_core.models import NPModule
+
+		if not isinstance(req, Requirement):
+			req = Requirement(req)
+		moddef = req.name
+		modspec = req.specifier
+		if ('core' not in self.loaded) and (moddef != 'core'):
+			raise ModuleError('Unable to upgrade anything prior to loading core module.')
+		if not self.is_installed(Requirement(moddef), sess):
+			raise ModuleError('Can\'t upgrade uninstalled module \'%s\', use install command instead.' % (moddef,))
+
+		ep = self._find_ep(moddef)
+		try:
+			modcls = ep.load()
+		except ImportError as e:
+			raise ModuleError('Can\'t locate ModuleBase class for module \'%s\'.' % (moddef,)) from e
+
+		new_modversion = self._cls_version(modcls)
+		modobj = sess.query(NPModule).filter(NPModule.name == moddef).one()
+		old_modversion = modobj.parsed_version
+		if old_modversion not in modspec:
+			raise ModuleError('Module \'%s\' version %s can\'t satisfy requirements: %s.' % (
+				moddef, str(old_modversion), str(modspec)
+			))
+		if old_modversion >= new_modversion:
+			return False
+		vpair = VersionPair(old_modversion, new_modversion)
+
+		get_deps = getattr(modcls, 'get_deps', None)
+		if callable(get_deps):
+			for dep in get_deps():
+				depreq = Requirement(dep)
+				if not self.is_installed(depreq, sess):
+					self.install(depreq, sess, allow_upgrades=True)
+
+		modprep = getattr(modcls, 'prepare', None)
+		if callable(modprep):
+			modprep()
+
+		if moddef != 'core':
+			self.preload(moddef)
+
+		alembic_cfg = get_alembic_config(self, stdout=self.stdout)
+		command.upgrade(alembic_cfg, moddef + '@head')
+
+		modobj.current_version = str(new_modversion)
+		sess.flush()
+		get_sql_data = getattr(modcls, 'get_sql_data', None)
+		if callable(get_sql_data):
+			get_sql_data(modobj, vpair, sess)
+		transaction.commit()
+
+		mod_upgrade = getattr(modcls, 'upgrade', None)
+		if callable(mod_upgrade):
+			mod_upgrade(sess, vpair)
+
+		if moddef == 'core':
+			self.load(moddef)
 		return True
 
 	def uninstall(self, req, sess):
@@ -549,11 +689,34 @@ class ModuleManager(object):
 		if len(not_loaded) > 0:
 			raise ModuleError('These modules aren\'t loaded, but are required: %s.' % (', '.join(not_loaded),))
 
-	def _import_model(self, moddef, model, mb, hm):
+	def _find_ep(self, moddef):
+		if moddef in self.modules:
+			return self.modules[moddef]
+		match = list(pkg_resources.iter_entry_points('netprofile.modules', moddef))
+		if len(match) == 0:
+			raise ModuleError('Can\'t find module: \'%s\'.' % (moddef,))
+		if len(match) > 1:
+			raise ModuleError('Can\'t resolve module to single distribution: \'%s\'.' % (moddef,))
+		ep = match[0]
+		if ep.name != moddef:
+			raise ModuleError('Loaded module source \'%s\', but was asked to load \'%s\'.' % (
+				ep.name, moddef
+			))
+		self.modules[moddef] = ep
+		return ep
+
+	def _cls_version(self, modcls):
+		modv = getattr(modcls, 'version', None)
+		if callable(modv):
+			return modv()
+		return parse('0')
+
+	def _import_model(self, moddef, model, mb, hm, activate=True):
 		mname = model.__name__
 		model.__moddef__ = moddef
-		self.models[moddef][mname] = model
-		hm.run_hook('np.model.load', self, mb[moddef][mname])
+		if activate:
+			self.models[moddef][mname] = model
+			hm.run_hook('np.model.load', self, mb[moddef][mname])
 
 	def get_module_browser(self):
 		"""

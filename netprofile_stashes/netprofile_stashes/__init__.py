@@ -78,7 +78,7 @@ class Module(ModuleBase):
 		)
 
 	@classmethod
-	def get_sql_data(cls, modobj, sess):
+	def get_sql_data(cls, modobj, vpair, sess):
 		from netprofile_stashes.models import (
 			IOOperationType,
 			IOFunctionType,
@@ -91,6 +91,9 @@ class Module(ModuleBase):
 			LogType,
 			Privilege
 		)
+
+		if not vpair.is_install:
+			return
 
 		sess.add(LogType(
 			id=12,
