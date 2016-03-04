@@ -141,6 +141,12 @@ class ModuleBase(object):
 	def unload(self):
 		pass
 
+	def get_global_settings(self, request):
+		pass
+
+	def get_user_settings(self, request):
+		pass
+
 	@property
 	def name(self):
 		return self.__module__
@@ -830,6 +836,24 @@ class ModuleManager(object):
 		for moddef, mod in self.loaded.items():
 			ret.extend(mod.get_task_imports())
 		return ret
+
+	def get_global_settings(self, request):
+		"""
+		Get a dict of all global settings of all modules.
+		"""
+		return dict((moddef, mod.get_global_settings(request))
+			for moddef, mod
+			in self.loaded.items()
+		)
+
+	def get_user_settings(self, request):
+		"""
+		Get a dict of all user settings of all modules.
+		"""
+		return dict((moddef, mod.get_user_settings(request))
+			for moddef, mod
+			in self.loaded.items()
+		)
 
 	def menu_generator(self, request):
 		"""
