@@ -716,8 +716,10 @@ class DBRevision(Command):
 		if args.rev_id:
 			kwargs['rev_id'] = args.rev_id
 		if args.depends_on:
-			# TODO: get alembic deps from module deps
+			# TODO: get alembic deps from module deps?
 			kwargs['depends_on'] = args.depends_on
+		# TODO: autoset initial flag if revisions are empty,
+		#       or if migrations dir doesn't exist?
 		if args.initial:
 			kwargs['head'] = 'base'
 			kwargs['branch_label'] = moddef

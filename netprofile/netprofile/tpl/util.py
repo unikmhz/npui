@@ -27,13 +27,11 @@ from __future__ import (
 	division
 )
 
+import filecmp
 import glob
-import hashlib
 import os
 import shutil
 from sqlalchemy.engine.interfaces import Dialect
-
-_sha1sum_cache = dict()
 
 def _check_objtype(objtype):
 	if objtype not in ('triggers', 'functions', 'events'):
@@ -69,16 +67,6 @@ def get_sqltpl_path(mm, dialect, modname, objtype, name, rev=None):
 	path.extend((objtype, '.'.join(fname)))
 	return os.path.join(*path)
 
-def get_sqltpl_sha1sum(mm, dialect, moddef, objtype, name, rev=None):
-	path = get_sqltpl_path(mm, dialect, moddef, objtype, name, rev)
-	if path in _sha1sum_cache:
-		return _sha1sum_cache[path]
-	ctx = hashlib.sha1()
-	with open(path, 'rb') as tplfile:
-		ctx.update(tplfile.read())
-	_sha1sum_cache[path] = ctx.hexdigest()
-	return _sha1sum_cache[path]
-
 def get_sqltpl_revisions(mm, dialect, moddef, objtype, name):
 	glob_path = get_sqltpl_path(mm, dialect, moddef, objtype, '*')
 	ret = set()
@@ -88,8 +76,10 @@ def get_sqltpl_revisions(mm, dialect, moddef, objtype, name):
 			ret.add(fname[1])
 	return ret
 
-#def find_sqltpl_revision(mm, dialect, moddef, objtype, name):
-#	head_sha1 = get_sqltpl_sha1sum(mm, dialect, moddef, objtype, name)
+def diff_sqltpl(mm, dialect, moddef, objtype, name, rev):
+	src_path = get_sqltpl_path(mm, dialect, moddef, objtype, name)
+	dst_path = get_sqltpl_path(mm, dialect, moddef, objtype, name, rev)
+	return not filecmp.cmp(src_path, dst_path, False)
 
 def new_sqltpl_revision(mm, dialect, moddef, objtype, name, rev):
 	src_path = get_sqltpl_path(mm, dialect, moddef, objtype, name)

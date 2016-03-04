@@ -59,12 +59,22 @@ from netprofile.db.ddl import (
 
 	Trigger
 )
-from netprofile.tpl.util import new_sqltpl_revision
+from netprofile.tpl.util import (
+	diff_sqltpl,
+	get_sqltpl_revisions,
+	new_sqltpl_revision
+)
 
 def _get_new_rev(context):
 	rctx = context.opts.get('revision_context')
 	if rctx and (len(rctx.generated_revisions) == 1):
 		return rctx.generated_revisions[0].rev_id
+
+def _find_newest_rev(script, moddef, revs):
+	for insp in script.walk_revisions(head=moddef + '@head', base=moddef + '@base'):
+		rev_id = insp.revision
+		if rev_id in revs:
+			return rev_id
 
 def get_alembic_config(mm, ini_file=None, ini_section='migrations', stdout=sys.stdout):
 	appcfg = mm.cfg.get_settings()
@@ -372,9 +382,10 @@ def _drop_function(operations, op):
 @renderers.dispatch_for(DropFunctionOp)
 def _render_drop_function(context, op):
 	context.imports.add('from netprofile.db import ddl as npd')
-	return 'op.drop_function(%r, %s)' % (
+	return 'op.drop_function(%r, %s, %r)' % (
 		op.module,
-		op.func._autogen_repr(context)
+		op.func._autogen_repr(context),
+		op.migration
 	)
 
 @Operations.implementation_for(CreateEventOp)
@@ -443,8 +454,11 @@ def _render_drop_view(context, op):
 def _compare_dbobjects(context, ops, schemas):
 	# XXX: this will only add new routines/events to DB.
 	#      Deletion, modification, renaming etc. is not detected.
-	attrs = context.migration_context.config.attributes
+	mctx = context.migration_context
+	script = mctx.script
+	attrs = mctx.config.attributes
 	dialect = context.dialect
+	mm = attrs.get('mm')
 	moddef_filter = attrs.get('module')
 	new_rev_id = _get_new_rev(context)
 
@@ -463,7 +477,7 @@ def _compare_dbobjects(context, ops, schemas):
 				'SELECT ROUTINE_NAME'
 				' FROM information_schema.ROUTINES'
 				' WHERE ROUTINE_SCHEMA = %(schema_name)s',
-				schema_name=context.dialect.default_schema_name if sch is None else sch
+				schema_name=dialect.default_schema_name if sch is None else sch
 			)
 			for row in res:
 				insp_funcs.add(row[0])
@@ -472,7 +486,7 @@ def _compare_dbobjects(context, ops, schemas):
 				'SELECT EVENT_NAME'
 				' FROM information_schema.EVENTS'
 				' WHERE EVENT_SCHEMA = %(schema_name)s',
-				schema_name=context.dialect.default_schema_name if sch is None else sch
+				schema_name=dialect.default_schema_name if sch is None else sch
 			)
 			for row in res:
 				insp_events.add(row[0])
@@ -481,13 +495,15 @@ def _compare_dbobjects(context, ops, schemas):
 				'SELECT TABLE_NAME'
 				' FROM information_schema.VIEWS'
 				' WHERE TABLE_SCHEMA = %(schema_name)s',
-				schema_name=context.dialect.default_schema_name if sch is None else sch
+				schema_name=dialect.default_schema_name if sch is None else sch
 			)
 			for row in res:
 				insp_views.add(row[0])
 	else:
 		# Catch-all for unsupported dialects
 		meta_funcs = dict()
+		meta_events = dict()
+		meta_views = dict()
 
 	for fname in set(meta_funcs) - insp_funcs:
 		func = meta_funcs[fname]
@@ -495,11 +511,37 @@ def _compare_dbobjects(context, ops, schemas):
 			continue
 		ops.ops.append(CreateFunctionOp(func.__moddef__, func, new_rev_id))
 
+	for fname in set(meta_funcs).intersection(insp_funcs):
+		func = meta_funcs[fname]
+		moddef = func.__moddef__
+		if moddef_filter and (moddef != moddef_filter):
+			continue
+		revs = get_sqltpl_revisions(mm, dialect, moddef, 'functions', fname)
+		prev_rev_id = _find_newest_rev(script, moddef, revs)
+		if prev_rev_id and diff_sqltpl(mm, dialect, moddef, 'functions', fname, prev_rev_id):
+			ops.ops.extend((
+				DropFunctionOp(func.__moddef__, func, prev_rev_id),
+				CreateFunctionOp(func.__moddef__, func, new_rev_id)
+			))
+
 	for ename in set(meta_events) - insp_events:
 		evt = meta_events[ename]
 		if moddef_filter and (evt.__moddef__ != moddef_filter):
 			continue
 		ops.ops.append(CreateEventOp(evt.__moddef__, evt, new_rev_id))
+
+	for ename in set(meta_events).intersection(insp_events):
+		evt = meta_events[ename]
+		moddef = evt.__moddef__
+		if moddef_filter and (moddef != moddef_filter):
+			continue
+		revs = get_sqltpl_revisions(mm, dialect, moddef, 'events', ename)
+		prev_rev_id = _find_newest_rev(script, moddef, revs)
+		if prev_rev_id and diff_sqltpl(mm, dialect, moddef, 'events', ename, prev_rev_id):
+			ops.ops.extend((
+				DropEventOp(evt.__moddef__, evt, prev_rev_id),
+				CreateEventOp(evt.__moddef__, evt, new_rev_id)
+			))
 
 	for vname in set(meta_views) - insp_views:
 		view = meta_views[vname]
