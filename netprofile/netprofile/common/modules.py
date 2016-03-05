@@ -37,6 +37,7 @@ from zope.interface import (
 	Interface
 )
 
+from collections import defaultdict
 from packaging.requirements import Requirement
 from packaging.version import parse
 from sqlalchemy.exc import ProgrammingError
@@ -141,11 +142,8 @@ class ModuleBase(object):
 	def unload(self):
 		pass
 
-	def get_global_settings(self, request):
-		pass
-
-	def get_user_settings(self, request):
-		pass
+	def get_settings(self, request, vhost='MAIN'):
+		return ()
 
 	@property
 	def name(self):
@@ -837,23 +835,19 @@ class ModuleManager(object):
 			ret.extend(mod.get_task_imports())
 		return ret
 
-	def get_global_settings(self, request):
+	def get_settings(self, request, vhost='MAIN'):
 		"""
-		Get a dict of all global settings of all modules.
+		Get a dict of settings for all modules.
 		"""
-		return dict((moddef, mod.get_global_settings(request))
-			for moddef, mod
-			in self.loaded.items()
-		)
-
-	def get_user_settings(self, request):
-		"""
-		Get a dict of all user settings of all modules.
-		"""
-		return dict((moddef, mod.get_user_settings(request))
-			for moddef, mod
-			in self.loaded.items()
-		)
+		ret = defaultdict(list)
+		for moddef, mod in self.loaded.items():
+			for section in mod.get_settings(request, vhost):
+				if section.vhost != vhost:
+					continue
+				if section.read_cap and not request.has_permission(section.read_cap):
+					continue
+				ret[moddef].append(section)
+		return ret
 
 	def menu_generator(self, request):
 		"""

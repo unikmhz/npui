@@ -27,9 +27,81 @@ from __future__ import (
 	division
 )
 
-class SettingSection(object):
-	pass
+from sqlalchemy.orm.exc import NoResultFound
+from netprofile.common.cache import cache
+from netprofile.db.connection import DBSession
 
-class SettingType(object):
-	pass
+class SettingSection(object):
+	def __init__(self, name, *settings, vhost='MAIN', scope='global', title=None, read_cap=None, helptext=None):
+		self.name = name
+		self.settings = dict((setting.name, setting) for setting in settings)
+		self.vhost = vhost
+		self.scope = scope
+		self.title = title
+		self.read_cap = read_cap
+		self.helptext = helptext
+
+	def __iter__(self):
+		return iter(self.settings)
+
+	def __getitem__(self, name):
+		return self.settings[name]
+
+	def get_tree_cfg(self, req, moddef):
+		if self.read_cap and not req.has_permission(self.read_cap):
+			return None
+		loc = req.localizer
+		ret = {
+			'id'      : '.'.join((moddef, self.name)),
+			'text'    : loc.translate(self.title) if self.title else self.name,
+			'leaf'    : True,
+			'iconCls' : 'ico-cog'
+		}
+		return ret
+
+	def get_form_cfg(self, req, moddef):
+		if self.read_cap and not req.has_permission(self.read_cap):
+			return None
+		fields = []
+		for setting in settings:
+			fld = setting.get_form_cfg(req, moddef, self)
+			if fld:
+				fields.append(fld)
+		return {
+			'success' : True,
+			'fields'  : fields,
+			'section' : {
+				'id'    : '.'.join((moddef, self.name)),
+				'name'  : loc.translate(self.title) if self.title else self.name,
+				'descr' : loc.translate(self.helptext) if self.helptext else None
+			}
+		}
+
+class Setting(object):
+	def __init__(self, name, title=None, type='string', pass_to_client=True, read_cap=None, write_cap=None, default=None, helptext=None, field_cfg={'xtype' : 'textfield'}):
+		self.name = name
+		self.title = title
+		self.type = type
+		self.client_ok = pass_to_client
+		self.read_cap = read_cap
+		self.write_cap = write_cap
+		self.default = default
+		self.helptext = helptext
+		self.field_cfg = field_cfg
+
+	def get_form_cfg(self, req, moddef, section):
+		if self.read_cap and not req.has_permission(self.read_cap):
+			return None
+		field_name = '.'.join((moddef, section.name, self.name))
+		loc = req.localizer
+		if callable(self.field_cfg):
+			cfg = self.field_cfg(req, moddef, section)
+		else:
+			cfg = self.field_cfg.copy()
+		cfg.update({
+			'name'        : field_name,
+			'fieldLabel'  : loc.translate(self.title) if self.title else self.name,
+			'description' : loc.translate(self.helptext) if self.helptext else None
+		})
+		return cfg
 
