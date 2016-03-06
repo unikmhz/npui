@@ -52,7 +52,7 @@ class SettingSection(object):
 	def __getitem__(self, name):
 		return self.settings[name]
 
-	def get_tree_cfg(self, req, moddef):
+	def get_tree_cfg(self, req, moddef, handler=None):
 		if self.read_cap and not req.has_permission(self.read_cap):
 			return None
 		loc = req.localizer
@@ -62,16 +62,19 @@ class SettingSection(object):
 			'leaf'    : True,
 			'iconCls' : 'ico-cog'
 		}
+		if handler:
+			ret['xhandler'] = handler
 		return ret
 
-	def get_form_cfg(self, req, moddef):
+	def get_form_cfg(self, req, moddef, values={}):
 		if self.read_cap and not req.has_permission(self.read_cap):
 			return None
 		fields = []
-		for setting in settings:
-			fld = setting.get_form_cfg(req, moddef, self)
+		for sname, setting in self.settings.items():
+			fld = setting.get_form_cfg(req, moddef, self, values.get(sname))
 			if fld:
 				fields.append(fld)
+		loc = req.localizer
 		return {
 			'success' : True,
 			'fields'  : fields,
@@ -99,11 +102,32 @@ class Setting(object):
 		if field_cfg is None:
 			if self.type == 'bool':
 				field_cfg = self.field_bool
+			elif self.type == 'int':
+				field_cfg = self.field_int
+			elif self.type == 'string':
+				field_cfg = self.field_string
 			else:
-				raise ValueError('Unrecognized setting type: \'%s\'.' % (self.type,))
+				raise ValueError('Unrecognized setting type: %r.' % (self.type,))
 
 		self.field_cfg = field_cfg
 		self.field_extra = field_extra
+
+	def parse_param(self, param):
+		if self.type == 'bool':
+			if isinstance(param, bool):
+				return param
+			return param.lower() in {'true', '1', 'on', 'yes'}
+		if self.type == 'int':
+			return int(param)
+		if self.type == 'float':
+			return float(param)
+		return param
+
+	def format_param(self, param):
+		param = self.parse_param(param)
+		if self.type == 'bool':
+			return 'true' if param else 'false'
+		return str(param)
 
 	def field_bool(self, req, moddef, section):
 		return {
@@ -118,7 +142,13 @@ class Setting(object):
 			'allowDecimals' : False
 		}
 
-	def get_form_cfg(self, req, moddef, section):
+	def field_string(self, req, moddef, section):
+		return {
+			'xtype'     : 'textfield',
+			'maxLength' : 255
+		}
+
+	def get_form_cfg(self, req, moddef, section, value=None):
 		if self.read_cap and not req.has_permission(self.read_cap):
 			return None
 		field_name = '.'.join((moddef, section.name, self.name))
@@ -132,6 +162,10 @@ class Setting(object):
 			'fieldLabel'  : loc.translate(self.title) if self.title else self.name,
 			'description' : loc.translate(self.help_text) if self.help_text else None
 		})
+		if value is None and self.default is not None:
+			value = self.default
+		if value is not None:
+			pass
 		extra = self.field_extra
 		if extra:
 			if callable(extra):
