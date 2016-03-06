@@ -142,7 +142,7 @@ class ModuleBase(object):
 	def unload(self):
 		pass
 
-	def get_settings(self, request, vhost='MAIN'):
+	def get_settings(self, request, vhost='MAIN', scope='global'):
 		return ()
 
 	@property
@@ -835,18 +835,21 @@ class ModuleManager(object):
 			ret.extend(mod.get_task_imports())
 		return ret
 
-	def get_settings(self, request, vhost='MAIN'):
+	def get_settings(self, request, scope='global'):
 		"""
 		Get a dict of settings for all modules.
 		"""
-		ret = defaultdict(list)
+		ret = defaultdict(dict)
+		vhost = 'MAIN' if self.vhost is None else self.vhost
 		for moddef, mod in self.loaded.items():
-			for section in mod.get_settings(request, vhost):
+			for section in mod.get_settings(request, vhost, scope):
 				if section.vhost != vhost:
+					continue
+				if section.scope != scope:
 					continue
 				if section.read_cap and not request.has_permission(section.read_cap):
 					continue
-				ret[moddef].append(section)
+				ret[moddef][section.name] = section
 		return ret
 
 	def menu_generator(self, request):
