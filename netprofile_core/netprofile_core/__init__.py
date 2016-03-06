@@ -32,6 +32,10 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.common.modules import ModuleBase
 from netprofile.common.menus import Menu
+from netprofile.common.settings import (
+	Setting,
+	SettingSection
+)
 from netprofile.dav import (
 	IDAVManager,
 	DAVRoot,
@@ -194,6 +198,26 @@ class Module(ModuleBase):
 			Privilege(
 				code='BASE_FILES',
 				name='Access: Files'
+			),
+			Privilege(
+				code='ADMIN_SETTINGS',
+				name='Administrative: Settings'
+			),
+			Privilege(
+				code='ADMIN_LOCKDOWN',
+				name='Administrative: Site Lockdown'
+			),
+			Privilege(
+				code='ADMIN_DB',
+				name='Administrative: Database Ops'
+			),
+			Privilege(
+				code='ADMIN_VFS',
+				name='Administrative: File System'
+			),
+			Privilege(
+				code='ADMIN_DEV',
+				name='Administrative: Development'
 			),
 			Privilege(
 				code='USERS_LIST',
@@ -703,6 +727,92 @@ class Module(ModuleBase):
 			'groups'       : DAVPluginGroups,
 			'users'        : DAVPluginUsers
 		}
+
+	def get_settings(self, request, vhost='MAIN', scope='global'):
+		if vhost == 'MAIN' and scope == 'global':
+			return (
+				SettingSection(
+					'admin',
+					Setting(
+						'login_allowed',
+						title=_('Allow logging in'),
+						help_text=_('Allow logging in to the user interface for non-admin users.'),
+						type='bool',
+						write_cap='ADMIN_LOCKDOWN',
+						default=True
+					),
+					title=_('Administrative'),
+					help_text=_('Administrative settings.'),
+					read_cap='BASE_ADMIN'
+				),
+				SettingSection(
+					'vfs',
+					Setting(
+						'vfs_root_uid',
+						title=_('Root User ID'),
+						help_text=_('User ID of the owner of the root folder.'),
+						type='int',
+						default=1,
+						field_extra={ 'minValue' : 1 }
+					),
+					Setting(
+						'vfs_root_gid',
+						title=_('Root Group ID'),
+						help_text=_('Group ID of the owning group of the root folder.'),
+						type='int',
+						default=1,
+						field_extra={ 'minValue' : 1 }
+					),
+					Setting(
+						'vfs_root_rights',
+						title=_('Root Rights'),
+						help_text=_('Bitmask specifying access rights for the root folder.'),
+						type='int',
+						default=509
+					),
+					title=_('File System'),
+					help_text=_('Virtual File System setup.'),
+					read_cap='ADMIN_VFS'
+				)
+			)
+		if vhost == 'MAIN' and scope == 'user':
+			return (
+				SettingSection(
+					'ui',
+					Setting(
+						'datagrid_perpage',
+						title=_('Number of elements per page'),
+						help_text=_('Maximum number of rows to display on a single page of a table or grid.'),
+						type='int',
+						default=30,
+						field_extra={ 'minValue' : 1, 'maxValue' : 200 }
+					),
+					Setting(
+						'datagrid_showrange',
+						title=_('Show result range'),
+						help_text=_('Maximum number of rows to display on a single page of a table or grid.'),
+						type='bool',
+						default=True
+					),
+					scope='user',
+					title=_('Look and Feel'),
+					help_text=_('Basic settings for customizing NetProfile user interface.')
+				),
+				SettingSection(
+					'locale',
+					Setting(
+						'csv_charset',
+						title=_('CSV charset'),
+						help_text=_('Maximum number of rows to display on a single page of a table or grid.'),
+						type='string',
+						default='UTF-8'
+					),
+					scope='user',
+					title=_('Localization'),
+					help_text=_('Options related to language and regional settings.')
+				)
+			)
+		return ()
 
 	@property
 	def name(self):
