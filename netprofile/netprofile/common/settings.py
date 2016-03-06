@@ -32,11 +32,12 @@ __all__ = [
 	'SettingSection'
 ]
 
+from collections import MutableMapping
 from sqlalchemy.orm.exc import NoResultFound
 from netprofile.common.cache import cache
 from netprofile.db.connection import DBSession
 
-class SettingSection(object):
+class SettingSection(MutableMapping):
 	def __init__(self, name, *settings, vhost='MAIN', scope='global', title=None, read_cap=None, help_text=None):
 		self.name = name
 		self.settings = dict((setting.name, setting) for setting in settings)
@@ -47,10 +48,23 @@ class SettingSection(object):
 		self.help_text = help_text
 
 	def __iter__(self):
-		return iter(self.settings)
+		for key in self.settings:
+			yield key
 
 	def __getitem__(self, name):
 		return self.settings[name]
+
+	def __setitem__(self, name, value):
+		self.settings[name] = value
+
+	def __delitem__(self, name):
+		del self.settings[name]
+
+	def __contains__(self, name):
+		return name in self.settings
+
+	def keys(self):
+		return self.settings.keys()
 
 	def get_tree_cfg(self, req, moddef, handler=None):
 		if self.read_cap and not req.has_permission(self.read_cap):
@@ -70,8 +84,11 @@ class SettingSection(object):
 		if self.read_cap and not req.has_permission(self.read_cap):
 			return None
 		fields = []
-		for sname, setting in self.settings.items():
-			fld = setting.get_form_cfg(req, moddef, self, values.get(sname))
+		for setting_name, setting in self.settings.items():
+			fld = setting.get_form_cfg(
+				req, moddef, self,
+				values.get('%s.%s.%s' % (moddef, self.name, setting_name))
+			)
 			if fld:
 				fields.append(fld)
 		loc = req.localizer
@@ -113,6 +130,8 @@ class Setting(object):
 		self.field_extra = field_extra
 
 	def parse_param(self, param):
+		if self.nullable and param in {'', None}:
+			return None
 		if self.type == 'bool':
 			if isinstance(param, bool):
 				return param
@@ -124,25 +143,24 @@ class Setting(object):
 		return param
 
 	def format_param(self, param):
-		param = self.parse_param(param)
 		if self.type == 'bool':
 			return 'true' if param else 'false'
 		return str(param)
 
-	def field_bool(self, req, moddef, section):
+	def field_bool(self, req, moddef, section, value):
 		return {
 			'xtype'          : 'checkbox',
 			'inputValue'     : 'true',
 			'uncheckedValue' : 'false'
 		}
 
-	def field_int(self, req, moddef, section):
+	def field_int(self, req, moddef, section, value):
 		return {
 			'xtype'         : 'numberfield',
 			'allowDecimals' : False
 		}
 
-	def field_string(self, req, moddef, section):
+	def field_string(self, req, moddef, section, value):
 		return {
 			'xtype'     : 'textfield',
 			'maxLength' : 255
@@ -154,7 +172,7 @@ class Setting(object):
 		field_name = '.'.join((moddef, section.name, self.name))
 		loc = req.localizer
 		if callable(self.field_cfg):
-			cfg = self.field_cfg(req, moddef, section)
+			cfg = self.field_cfg(req, moddef, section, value)
 		else:
 			cfg = self.field_cfg.copy()
 		cfg.update({
@@ -165,11 +183,13 @@ class Setting(object):
 		if value is None and self.default is not None:
 			value = self.default
 		if value is not None:
-			pass
+			cfg['value'] = self.format_param(value)
+			if self.type == 'bool':
+				cfg['checked'] = value
 		extra = self.field_extra
 		if extra:
 			if callable(extra):
-				extra = extra(req, moddef, section)
+				extra = extra(req, moddef, section, value)
 			cfg.update(extra)
 		return cfg
 
