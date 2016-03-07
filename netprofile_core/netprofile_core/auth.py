@@ -142,7 +142,7 @@ def get_settings(request):
 				for setting_name, setting in section.items():
 					fullname = '%s.%s.%s' % (moddef, sname, setting.name)
 					if fullname in ret:
-						ret.set(fullname, setting.parse_param(ret[fullname]))
+						ret[fullname] = setting.parse_param(ret[fullname])
 					elif setting.default is not None:
 						ret[fullname] = setting.default
 	request.session['auth.settings'] = ret

@@ -874,7 +874,7 @@ def dyn_usersettings_form(param, request):
 	for setting_name, setting in section.items():
 		fullname = '%s.%s.%s' % (moddef, sname, setting_name)
 		if fullname in values:
-			values.set(fullname, setting.parse_param(values[fullname]))
+			values[fullname] = setting.parse_param(values[fullname])
 	return section.get_form_cfg(request, moddef, values)
 
 @extdirect_method('UserSetting', 'usform_submit', request_as_last_param=True, permission='USAGE', accepts_files=True)
