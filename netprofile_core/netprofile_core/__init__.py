@@ -41,6 +41,7 @@ from netprofile.dav import (
 	DAVRoot,
 	DAVTraverser
 )
+from netprofile.export.csv import csv_encodings
 from .models import *
 from .dav import (
 	DAVPluginAddressBooks,
@@ -63,6 +64,22 @@ def _synctoken_cb(node):
 		return 1
 	if var:
 		return var.integer_value
+
+def _csv_encodings_menu(req, moddef, section, value):
+	return {
+		'xtype'          : 'combobox',
+		'queryMode'      : 'local',
+		'displayField'   : 'value',
+		'valueField'     : 'id',
+		'editable'       : False,
+		'forceSelection' : True,
+		'store'          : {
+			'fields'  : ('id', 'value'),
+			'sorters' : [{ 'property' : 'value', 'direction' : 'ASC' }],
+			'data'    : [(k, v[1]) for k, v in csv_encodings.items()]
+		},
+		'value'          : value
+	}
 
 class Module(ModuleBase):
 	def __init__(self, mmgr):
@@ -686,7 +703,8 @@ class Module(ModuleBase):
 						title=_('CSV charset'),
 						help_text=_('Maximum number of rows to display on a single page of a table or grid.'),
 						type='string',
-						default='UTF-8'
+						default='utf_8',
+						field_cfg=_csv_encodings_menu
 					),
 					scope='user',
 					title=_('Localization'),

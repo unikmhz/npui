@@ -43,7 +43,7 @@ from pyramid.response import Response
 
 _ = TranslationStringFactory('netprofile')
 
-_encodings = {
+csv_encodings = {
 	'ascii'           : ('US-ASCII',         'US ASCII'),
 	'big5'            : ('Big5',             'Big5'),
 	'big5hkscs'       : ('Big5-HKSCS',       'Big5 HKSCS'),
@@ -150,10 +150,10 @@ class CSVExportFormat(ExportFormat):
 		return 'ico-csv'
 
 	def options(self, req, name):
-		loc = get_localizer(req)
+		loc = req.localizer
 		return ({
 			'name'           : 'csv_dialect',
-			'fieldLabel'     : _('Dialect'),
+			'fieldLabel'     : loc.translate(_('Dialect')),
 			'xtype'          : 'combobox',
 			'displayField'   : 'value',
 			'valueField'     : 'id',
@@ -190,7 +190,7 @@ class CSVExportFormat(ExportFormat):
 			'queryMode'      : 'local',
 			'grow'           : True,
 			'shrinkWrap'     : True,
-			'value'          : 'utf_8',
+			'value'          : req.settings.get('core.locale.csv_charset') or 'utf_8',
 			'allowBlank'     : False,
 			'forceSelection' : True,
 			'editable'       : False,
@@ -198,7 +198,7 @@ class CSVExportFormat(ExportFormat):
 				'xtype'   : 'simplestore',
 				'sorters' : [{ 'property' : 'value', 'direction' : 'ASC' }],
 				'fields'  : ('id', 'value'),
-				'data'    : tuple({ 'id' : k, 'value' : v[1] } for k, v in _encodings.items())
+				'data'    : tuple({ 'id' : k, 'value' : v[1] } for k, v in csv_encodings.items())
 			}
 		})
 
@@ -211,17 +211,17 @@ class CSVExportFormat(ExportFormat):
 				continue
 			fields.append(field)
 
-		if csv_encoding not in _encodings:
+		if csv_encoding not in csv_encodings:
 			raise ValueError('Unknown encoding specified')
 		res = Response()
-		loc = get_localizer(req)
+		loc = req.localizer
 		now = datetime.datetime.now()
 		res.last_modified = now
 		if csv_dialect in ('excel', 'excel-tab'):
 			res.content_type = 'application/vnd.ms-excel'
 		else:
 			res.content_type = 'text/csv'
-		res.charset = _encodings[csv_encoding][0]
+		res.charset = csv_encodings[csv_encoding][0]
 		res.cache_control.no_cache = True
 		res.cache_control.no_store = True
 		res.cache_control.private = True
