@@ -3,20 +3,25 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 	alias: 'widget.maintoolbar',
 	requires: [
 		'Ext.menu.Menu',
-		'Ext.container.ButtonGroup',
+		'Ext.menu.CheckItem',
 		'Ext.tab.Panel',
 		'Ext.JSON',
 		'Ext.XTemplate',
-		'Ext.form.*',
-		'NetProfile.form.Panel',
-		'NetProfile.panel.Wizard',
+		'NetProfile.store.Language',
 		'NetProfile.window.CenterWindow'
 	],
-	id: 'npws_maintoolbar',
-	stateId: 'npws_maintoolbar',
-	stateful: true,
-	collapsible: false,
-	height: 32,
+	config: {
+		id: 'npws_maintoolbar',
+		stateId: 'npws_maintoolbar',
+		stateful: true,
+		collapsible: false,
+		height: 32,
+		langMenuConfig: {
+			xtype: 'menucheckitem',
+			group: 'lang',
+			checkHandler: 'doChangeLocale'
+		}
+	},
 
 	toolsText: 'Tools',
 	toolsTipText: 'Various tools and windows',
@@ -39,81 +44,78 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 
 	initComponent: function()
 	{
-		this.items = [{
-			text: this.toolsText,
+		var me = this,
+			lang_store = Ext.create('NetProfile.store.Language'),
+			lang_menu = [];
+
+		lang_store.each(function(rec, idx, len)
+		{
+			var lang_code = rec.get('code'),
+				item;
+
+			item = Ext.apply({
+				itemId: lang_code,
+				iconCls: 'ico-lang-' + lang_code,
+				text: rec.get('name'),
+				scope: me,
+				checked: lang_code === NetProfile.currentLocale
+			}, me.getLangMenuConfig() || {});
+			lang_menu.push(item);
+		});
+
+		me.items = [{
+			text: me.toolsText,
 			iconCls: 'ico-tool',
 			itemId: 'sub_tools',
-			tooltip: { text: this.toolsTipText, title: this.toolsText },
+			tooltip: { text: me.toolsTipText, title: me.toolsText },
 			menu: {
 				xtype: 'menu',
 				items: [{
 					xtype: 'menuitem',
 					iconCls: 'ico-lock',
-					text: this.chPassText,
-					handler: function(el, ev)
-					{
-						NetProfile.changePassword();
-					}
+					text: me.chPassText,
+					handler: NetProfile.changePassword
 				}, {
 					xtype: 'menuitem',
 					showSeparator: false,
 					iconCls: 'ico-locale',
-					text: this.chLangText,
+					text: me.chLangText,
 					menu: {
 						xtype: 'menu',
-						plain: true,
-						showSeparator: false,
-						items: [{
-							xtype: 'buttongroup',
-							plain: true,
-							title: this.chLangText,
-							titleAlign: 'left',
-							columns: 1,
-							defaults: {
-								margin: 3,
-							},
-							items: [{
-								xtype: 'combo',
-								editable: false,
-								itemId: 'ch_lang',
-								store: Ext.create('NetProfile.store.Language'),
-								displayField: 'name',
-								valueField: 'code',
-								value: NetProfile.currentLocale,
-								listeners: {
-									change: function(fld, newval)
-									{
-										window.location = '/core/noop?__locale=' + newval;
-									}
-								}
-							}]
-						}]
+						items: lang_menu
 					}
 				}, {
 					xtype: 'menuitem',
 					iconCls: 'ico-console',
-					text: this.showConsoleText,
+					text: me.showConsoleText,
 					handler: function(el, ev)
 					{
 						NetProfile.showConsole();
 					}
 				}, '-', {
-					text: this.aboutText,
+					text: me.aboutText,
 					iconCls: 'ico-info',
 					handler: 'showAboutWindow',
-					scope: this
+					scope: me
 				}]
 			}
 		}, '->', {
-			text: this.logoutText,
+			text: me.logoutText,
 			iconCls: 'ico-logout',
-			tooltip: { text: this.logoutTipText, title: this.logoutText },
-			handler: function()
-			{
-				NetProfile.logOut(true);
-			}
+			tooltip: { text: me.logoutTipText, title: me.logoutText },
+			handler: 'doLogout',
+			scope: me
 		}];
-		this.callParent(arguments);
+		me.callParent(arguments);
+	},
+	doLogout: function()
+	{
+		NetProfile.logOut(true);
+	},
+	doChangeLocale: function(menuitem, checked)
+	{
+		if(checked)
+			window.location = '/core/noop?__locale=' + menuitem.getItemId();
 	},
 	showAboutWindow: function()
 	{

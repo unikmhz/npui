@@ -483,6 +483,9 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-status-offline { background-image: url(../img/status_offline.png) !important; }
 .ico-status-online  { background-image: url(../img/status_online.png) !important; }
 
+.ico-lang-en    { background-image: url(../img/flags/en.png) !important; }
+.ico-lang-ru    { background-image: url(../img/flags/ru.png) !important; }
+
 .ico-mod-acl                  { background-image: url(../img/key_plus.png) !important; }
 .ico-mod-addressbook          { background-image: url(../img/address_book.png) !important; }
 .ico-mod-calendar             { background-image: url(../img/calendar.png) !important; }
