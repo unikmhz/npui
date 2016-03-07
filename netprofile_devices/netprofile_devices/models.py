@@ -126,9 +126,9 @@ class DeviceClass(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_DEVICES',
 				'cap_read'      : 'DEVICES_LIST',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
+				'cap_create'    : 'ADMIN_DEV',
+				'cap_edit'      : 'ADMIN_DEV',
+				'cap_delete'    : 'ADMIN_DEV',
 
 				'menu_name'     : _('Classes'),
 				'show_in_menu'  : 'admin',

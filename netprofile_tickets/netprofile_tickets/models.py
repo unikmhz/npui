@@ -1284,12 +1284,11 @@ class TicketTemplate(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				# FIXME: add proper capabilities
 				'cap_menu'      : 'BASE_ADMIN',
 				'cap_read'      : 'TICKETS_CREATE',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
+				'cap_create'    : 'TICKETS_TEMPLATES_CREATE',
+				'cap_edit'      : 'TICKETS_TEMPLATES_EDIT',
+				'cap_delete'    : 'TICKETS_TEMPLATES_DELETE',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Templates'),
@@ -1528,12 +1527,11 @@ class TicketChangeField(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				# FIXME: add proper capabilities
 				'cap_menu'      : 'BASE_ADMIN',
 				'cap_read'      : 'TICKETS_LIST',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
+				'cap_create'    : 'ADMIN_DEV',
+				'cap_edit'      : 'ADMIN_DEV',
+				'cap_delete'    : 'ADMIN_DEV',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Change Fields'),
@@ -1876,9 +1874,9 @@ class TicketScheduler(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_ADMIN',
 				'cap_read'      : 'TICKETS_CREATE',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
+				'cap_create'    : 'TICKETS_SCHEDULES_CREATE',
+				'cap_edit'      : 'TICKETS_SCHEDULES_EDIT',
+				'cap_delete'    : 'TICKETS_SCHEDULES_DELETE',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Schedulers'),
@@ -2144,9 +2142,9 @@ class TicketSchedulerUserAssignment(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_ADMIN',
 				'cap_read'      : 'TICKETS_CREATE',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
+				'cap_create'    : 'TICKETS_SCHEDULES_EDIT',
+				'cap_edit'      : 'TICKETS_SCHEDULES_EDIT',
+				'cap_delete'    : 'TICKETS_SCHEDULES_EDIT',
 
 				'menu_name'     : _('Scheduler Assignments for Users'),
 				'grid_view'     : ('tschedassid', 'user', 'scheduler'),
@@ -2218,9 +2216,9 @@ class TicketSchedulerGroupAssignment(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_ADMIN',
 				'cap_read'      : 'TICKETS_CREATE',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
+				'cap_create'    : 'TICKETS_SCHEDULES_EDIT',
+				'cap_edit'      : 'TICKETS_SCHEDULES_EDIT',
+				'cap_delete'    : 'TICKETS_SCHEDULES_EDIT',
 
 				'menu_name'     : _('Scheduler Assignments for Groups'),
 				'grid_view'     : ('tschedassid', 'group', 'scheduler'),

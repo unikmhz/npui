@@ -214,6 +214,30 @@ class Module(ModuleBase):
 			Privilege(
 				code='TICKETS_TRANSITIONS_DELETE',
 				name='Tickets: Delete transitions'
+			),
+			Privilege(
+				code='TICKETS_TEMPLATES_CREATE',
+				name='Tickets: Create templates'
+			),
+			Privilege(
+				code='TICKETS_TEMPLATES_EDIT',
+				name='Tickets: Edit templates'
+			),
+			Privilege(
+				code='TICKETS_TEMPLATES_DELETE',
+				name='Tickets: Delete templates'
+			),
+			Privilege(
+				code='TICKETS_SCHEDULES_CREATE',
+				name='Tickets: Create schedules'
+			),
+			Privilege(
+				code='TICKETS_SCHEDULES_EDIT',
+				name='Tickets: Edit schedules'
+			),
+			Privilege(
+				code='TICKETS_SCHEDULES_DELETE',
+				name='Tickets: Delete schedules'
 			)
 		)
 		for priv in privs:

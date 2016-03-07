@@ -143,9 +143,9 @@ class EntityType(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_ENTITIES',
 				'cap_read'      : 'ENTITIES_LIST',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
+				'cap_create'    : 'ADMIN_DEV',
+				'cap_edit'      : 'ADMIN_DEV',
+				'cap_delete'    : 'ADMIN_DEV',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Entity Types'),
