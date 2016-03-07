@@ -6022,7 +6022,7 @@ class LogData(Base):
 	)
 	id = Column(
 		'logid',
-		UInt32(),
+		UInt64(),
 		Sequence('logs_data_logid_seq'),
 		Comment('Log entry ID'),
 		primary_key=True,
