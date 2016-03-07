@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Custom authentication plugin for Pyramid
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -119,7 +119,7 @@ def get_settings(request):
 	if 'auth.settings' in request.session:
 		return request.session['auth.settings']
 	mmgr = request.registry.getUtility(IModuleManager)
-	all_settings = mmgr.get_settings(request, 'user')
+	all_settings = mmgr.get_settings('user')
 	user = request.user
 
 	if user is None:
