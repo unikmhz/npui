@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Setup and entry points
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -54,6 +54,7 @@ from netprofile.common.factory import RootFactory
 from netprofile.db.connection import DBSession
 
 inst_id = 'ru.netprofile'
+inst_mm = None
 
 def locale_neg(request):
 	avail = request.locales

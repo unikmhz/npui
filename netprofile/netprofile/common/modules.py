@@ -32,6 +32,11 @@ import pkg_resources
 import logging
 import transaction
 
+try:
+	from functools import lru_cache
+except ImportError:
+	from functools32 import lru_cache
+
 from zope.interface import (
 	implementer,
 	Interface
@@ -142,7 +147,7 @@ class ModuleBase(object):
 	def unload(self):
 		pass
 
-	def get_settings(self, request, vhost='MAIN', scope='global'):
+	def get_settings(self, vhost='MAIN', scope='global'):
 		return ()
 
 	@property
@@ -835,19 +840,18 @@ class ModuleManager(object):
 			ret.extend(mod.get_task_imports())
 		return ret
 
-	def get_settings(self, request, scope='global'):
+	@lru_cache(maxsize=8)
+	def get_settings(self, scope='global'):
 		"""
 		Get a dict of settings for all modules.
 		"""
 		ret = defaultdict(dict)
 		vhost = 'MAIN' if self.vhost is None else self.vhost
 		for moddef, mod in self.loaded.items():
-			for section in mod.get_settings(request, vhost, scope):
+			for section in mod.get_settings(vhost, scope):
 				if section.vhost != vhost:
 					continue
 				if section.scope != scope:
-					continue
-				if section.read_cap and not request.has_permission(section.read_cap):
 					continue
 				ret[moddef][section.name] = section
 		return ret
@@ -866,10 +870,14 @@ def includeme(config):
 	For inclusion by Pyramid.
 	"""
 
+	import netprofile
+
 	config.add_translation_dirs('netprofile:locale/')
 
 	mmgr = ModuleManager(config)
 	mmgr.scan()
 
 	config.registry.registerUtility(mmgr, IModuleManager)
+	if netprofile.inst_mm is None:
+		netprofile.inst_mm = mmgr
 

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -10,7 +9,7 @@ README_LOCAL = open(os.path.join(here, 'README.rst')).read()
 README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
-	'setuptools',
+	'setuptools >= 17.1',
 	'packaging >= 16.1',
 	'python-dateutil',
 	'phpserialize',
@@ -45,6 +44,9 @@ requires = [
 
 	'reportlab >= 3.1'
 ]
+extras_require = {
+	':python_version<"3"' : [ 'functools32' ]
+}
 
 setup(
 	name='netprofile',
@@ -82,6 +84,7 @@ setup(
 	zip_safe=False,
 	test_suite='netprofile',
 	install_requires=requires,
+	extras_require=extras_require,
 	entry_points={
 		'paste.app_factory' : [
 			'main = netprofile:main'
