@@ -57,10 +57,7 @@ __all__ = [
 	'LogData',
 	'NPSession',
 	'PasswordHistory',
-	'GlobalSettingSection',
-	'UserSettingSection',
 	'GlobalSetting',
-	'UserSettingType',
 	'UserSetting',
 	'DataCache',
 	'DAVLock',
@@ -137,10 +134,11 @@ from netprofile import (
 	BASE_VERSION,
 	PY3,
 	inst_id,
+	inst_mm,
 	vobject
 )
 from netprofile.common import ipaddr
-from netprofile.common.phps import HybridPickler
+from netprofile.common.modules import IModuleManager
 from netprofile.common.threadlocal import magic
 from netprofile.common.cache import cache
 from netprofile.db.connection import (
@@ -189,9 +187,6 @@ from netprofile.dav import (
 	DAVSupportedAddressDataValue,
 
 	dprops
-)
-from netprofile.ext.filters import (
-	SelectFilter
 )
 from netprofile.db.ddl import (
 	Comment,
@@ -258,13 +253,6 @@ def _gen_xacl(cls, k, v):
 		raise KeyError('Unknown privilege %s' % k[0])
 	return cls(privilege=priv, resource=k[1], value=v)
 
-def _gen_user_setting(k, v):
-	"""
-	Creator for user-setting-related attribute-mapped collections.
-	"""
-	ust = DBSession.query(UserSettingType).filter(UserSettingType.name == k).one()
-	return UserSetting(type=ust, value=ust.param_to_db(v))
-
 class NPModule(Base):
 	"""
 	NetProfile module registry.
@@ -279,10 +267,10 @@ class NPModule(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
+				'cap_read'     : 'ADMIN_MODULES',
+				'cap_create'   : 'ADMIN_DEV',
+				'cap_edit'     : 'ADMIN_DEV',
+				'cap_delete'   : 'ADMIN_DEV',
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Modules'),
@@ -343,30 +331,6 @@ class NPModule(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
-	global_sections = relationship(
-		'GlobalSettingSection',
-		backref=backref('module', innerjoin=True),
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
-	user_sections = relationship(
-		'UserSettingSection',
-		backref=backref('module', innerjoin=True),
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
-	global_settings = relationship(
-		'GlobalSetting',
-		backref=backref('module', innerjoin=True),
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
-	user_setting_types = relationship(
-		'UserSettingType',
-		backref=backref('module', innerjoin=True),
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
 
 	@property
 	def parsed_version(self):
@@ -412,10 +376,10 @@ class NPVariable(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
+				'cap_read'     : 'ADMIN_DEV',
+				'cap_create'   : 'ADMIN_DEV',
+				'cap_edit'     : 'ADMIN_DEV',
+				'cap_delete'   : 'ADMIN_DEV',
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('System Variables'),
@@ -1062,8 +1026,8 @@ class User(Base):
 	)
 	settings = association_proxy(
 		'setting_map',
-		'python_value',
-		creator=_gen_user_setting
+		'value',
+		creator=lambda v: UserSetting(name=v)
 	)
 	data_cache = association_proxy(
 		'data_cache_map',
@@ -1226,15 +1190,20 @@ class User(Base):
 		return secpol
 
 	def client_settings(self, req):
-		sess = DBSession()
+		mmgr = req.registry.getUtility(IModuleManager)
+		all_settings = mmgr.get_settings('user')
 		ret = {}
-		for ust in sess.query(UserSettingType):
-			if not ust.client_ok:
-				continue
-			if ust.name in self.settings:
-				ret[ust.name] = self.settings[ust.name]
-			else:
-				ret[ust.name] = ust.parse_param(ust.default)
+
+		for moddef, sections in all_settings.items():
+			for sname, section in sections.items():
+				for setting_name, setting in section.items():
+					if not setting.client_ok:
+						continue
+					fullname = '%s.%s.%s' % (moddef, sname, setting_name)
+					if fullname in self.settings:
+						ret[fullname] = setting.parse_param(self.settings[fullname])
+					else:
+						ret[fullname] = setting.default
 		return ret
 
 	def client_acls(self, req):
@@ -1295,9 +1264,9 @@ class User(Base):
 			return None
 		ff = self.group.effective_root_folder
 		if ff is None:
-			root_uid = global_setting('vfs_root_uid')
-			root_gid = global_setting('vfs_root_gid')
-			root_rights = global_setting('vfs_root_rights')
+			root_uid = global_setting('core.vfs.root_uid')
+			root_gid = global_setting('core.vfs.root_gid')
+			root_rights = global_setting('core.vfs.root_rights')
 			allow_read = False
 			allow_write = False
 			allow_traverse = False
@@ -1325,9 +1294,9 @@ class User(Base):
 		if ff.parent:
 			p_wr = ff.parent.can_write(self)
 		else:
-			root_uid = global_setting('vfs_root_uid')
-			root_gid = global_setting('vfs_root_gid')
-			root_rights = global_setting('vfs_root_rights')
+			root_uid = global_setting('core.vfs.root_uid')
+			root_gid = global_setting('core.vfs.root_gid')
+			root_rights = global_setting('core.vfs.root_rights')
 			if self.id == root_uid:
 				p_wr = bool(root_rights & F_OWNER_WRITE)
 			elif root_gid in self.group_vector():
@@ -1348,9 +1317,9 @@ class User(Base):
 		ff = self.group.effective_root_folder
 		if ff is not None:
 			return ff.can_read(self)
-		root_uid = global_setting('vfs_root_uid')
-		root_gid = global_setting('vfs_root_gid')
-		root_rights = global_setting('vfs_root_rights')
+		root_uid = global_setting('core.vfs.root_uid')
+		root_gid = global_setting('core.vfs.root_gid')
+		root_rights = global_setting('core.vfs.root_rights')
 		if self.id == root_uid:
 			return bool(root_rights & F_OWNER_READ)
 		if root_gid in self.group_vector():
@@ -1362,9 +1331,9 @@ class User(Base):
 		ff = self.group.effective_root_folder
 		if ff is not None:
 			return ff.can_write(self)
-		root_uid = global_setting('vfs_root_uid')
-		root_gid = global_setting('vfs_root_gid')
-		root_rights = global_setting('vfs_root_rights')
+		root_uid = global_setting('core.vfs.root_uid')
+		root_gid = global_setting('core.vfs.root_gid')
+		root_rights = global_setting('core.vfs.root_rights')
 		if self.id == root_uid:
 			return bool(root_rights & F_OWNER_WRITE)
 		if root_gid in self.group_vector():
@@ -2918,9 +2887,9 @@ class CommunicationType(Base):
 				# FIXME
 				'cap_menu'      : 'BASE_ADMIN',
 				# no read cap
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
+				'cap_create'    : 'ADMIN_SETTINGS',
+				'cap_edit'      : 'ADMIN_SETTINGS',
+				'cap_delete'    : 'ADMIN_SETTINGS',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Communication Types'),
@@ -5455,7 +5424,7 @@ class FileChunk(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_ADMIN',
-				'cap_read'      : 'BASE_ADMIN',
+				'cap_read'      : 'ADMIN_VFS',
 				'cap_create'    : '__NOPRIV__',
 				'cap_edit'      : '__NOPRIV__',
 				'cap_delete'    : '__NOPRIV__'
@@ -5861,9 +5830,9 @@ class Tag(Base):
 			'info'          : {
 				'cap_menu'      : 'BASE_ADMIN',
 				# no read cap
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
+				'cap_create'    : 'ADMIN_SETTINGS',
+				'cap_edit'      : 'ADMIN_SETTINGS',
+				'cap_delete'    : 'ADMIN_SETTINGS',
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Tags'),
@@ -5930,9 +5899,9 @@ class LogType(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_ADMIN',
-				'cap_read'      : 'BASE_ADMIN',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
+				'cap_read'      : 'ADMIN_AUDIT',
+				'cap_create'    : 'ADMIN_DEV',
+				'cap_edit'      : 'ADMIN_DEV',
 				'cap_delete'    : '__NOPRIV__',
 
 				'show_in_menu'  : 'admin',
@@ -5983,9 +5952,9 @@ class LogAction(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
+				'cap_read'     : 'ADMIN_AUDIT',
+				'cap_create'   : 'ADMIN_DEV',
+				'cap_edit'     : 'ADMIN_DEV',
 				'cap_delete'   : '__NOPRIV__',
 
 				'show_in_menu' : 'admin',
@@ -6035,8 +6004,8 @@ class LogData(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
+				'cap_read'     : 'ADMIN_AUDIT',
+				'cap_create'   : 'ADMIN_DEV',
 				'cap_edit'     : '__NOPRIV__',
 				'cap_delete'   : '__NOPRIV__',
 
@@ -6148,10 +6117,10 @@ class NPSession(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
+				'cap_read'     : 'ADMIN_SECURITY',
+				'cap_create'   : '__NOPRIV__',
+				'cap_edit'     : '__NOPRIV__',
+				'cap_delete'   : 'ADMIN_SECURITY',
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('UI Sessions'),
@@ -6359,715 +6328,126 @@ class PasswordHistory(Base):
 		}
 	)
 
-class GlobalSettingSection(Base):
-	"""
-	Categories for global settings.
-	"""
-	__tablename__ = 'np_globalsettings_sections'
-	__table_args__ = (
-		Comment('NetProfile UI global setting sections'),
-		Index('np_globalsettings_sections_u_section', 'npmodid', 'name', unique=True),
-		{
-			'mysql_engine'  : 'InnoDB',
-			'mysql_charset' : 'utf8',
-			'info'          : {
-				'cap_menu'      : 'BASE_ADMIN',
-				'cap_read'      : 'BASE_ADMIN',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
-
-				'show_in_menu'  : 'admin',
-				'menu_section'  : _('Settings'),
-				'menu_name'     : _('Global Setting Sections'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('npgssid', 'module', 'name', 'descr'),
-				'grid_hidden'   : ('npgssid',),
-				'easy_search'   : ('name', 'descr'),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-
-				'create_wizard' : SimpleWizard(title=_('Add new section'))
-			}
-		}
-	)
-	id = Column(
-		'npgssid',
-		UInt32(),
-		Sequence('np_globalsettings_sections_npgssid_seq'),
-		Comment('Global parameter section ID'),
-		primary_key=True,
-		nullable=False,
-		info={
-			'header_string' : _('ID')
-		}
-	)
-	module_id = Column(
-		'npmodid',
-		UInt32(),
-		ForeignKey('np_modules.npmodid', name='np_globalsettings_sections_fk_npmodid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('NetProfile module ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Module'),
-			'filter_type'   : 'nplist',
-			'column_flex'   : 1
-		}
-	)
-	name = Column(
-		Unicode(255),
-		Comment('Global parameter section name'),
-		nullable=False,
-		info={
-			'header_string' : _('Name'),
-			'column_flex'   : 1
-		}
-	)
-	description = Column(
-		'descr',
-		UnicodeText(),
-		Comment('Global parameter section description'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Description'),
-			'column_flex'   : 2
-		}
-	)
-
-	settings = relationship(
-		'GlobalSetting',
-		backref=backref('section', innerjoin=True),
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
-
-	def __str__(self):
-		return '%s' % str(self.name)
-
-class UserSettingSection(Base):
-	"""
-	Categories for per-user settings.
-	"""
-	__tablename__ = 'np_usersettings_sections'
-	__table_args__ = (
-		Comment('NetProfile UI user setting sections'),
-		Index('np_usersettings_sections_u_section', 'npmodid', 'name', unique=True),
-		{
-			'mysql_engine'  : 'InnoDB',
-			'mysql_charset' : 'utf8',
-			'info'          : {
-				'cap_menu'      : 'BASE_ADMIN',
-				'cap_read'      : 'BASE_ADMIN',
-				'cap_create'    : 'BASE_ADMIN',
-				'cap_edit'      : 'BASE_ADMIN',
-				'cap_delete'    : 'BASE_ADMIN',
-
-				'show_in_menu'  : 'admin',
-				'menu_section'  : _('Settings'),
-				'menu_name'     : _('User Setting Sections'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('npussid', 'module', 'name', 'descr'),
-				'grid_hidden'   : ('npussid',),
-				'easy_search'   : ('name', 'descr'),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
-
-				'create_wizard' : SimpleWizard(title=_('Add new section'))
-			}
-		}
-	)
-	id = Column(
-		'npussid',
-		UInt32(),
-		Sequence('np_usersettings_sections_npussid_seq'),
-		Comment('User parameter section ID'),
-		primary_key=True,
-		nullable=False,
-		info={
-			'header_string' : _('ID')
-		}
-	)
-	module_id = Column(
-		'npmodid',
-		UInt32(),
-		ForeignKey('np_modules.npmodid', name='np_usersettings_sections_fk_npmodid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('NetProfile module ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Module'),
-			'filter_type'   : 'nplist',
-			'column_flex'   : 1
-		}
-	)
-	name = Column(
-		Unicode(255),
-		Comment('User parameter section name'),
-		nullable=False,
-		info={
-			'header_string' : _('Name'),
-			'column_flex'   : 1
-		}
-	)
-	description = Column(
-		'descr',
-		UnicodeText(),
-		Comment('User parameter section description'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Description'),
-			'column_flex'   : 2
-		}
-	)
-
-	setting_types = relationship(
-		'UserSettingType',
-		backref=backref('section', innerjoin=True),
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
-
-	def __str__(self):
-		return '%s' % str(self.name)
-
-	def get_tree_node(self, req):
-		return {
-			'id'      : 'ss' + str(self.id),
-			'text'    : req.localizer.translate(_(self.name)),
-			'leaf'    : True,
-			'iconCls' : 'ico-cog'
-		}
-
-class DynamicSetting(object):
-	def has_constraint(self, name):
-		if self.constraints and (name in self.constraints):
-			return True
-		return False
-
-	def get_constraint(self, name, default=None):
-		if self.constraints and (name in self.constraints):
-			return self.constraints[name]
-		return default
-
-	def has_option(self, name):
-		if self.options and (name in self.options):
-			return True
-		return False
-
-	def get_option(self, name, default=None):
-		if self.options and (name in self.options):
-			return self.options[name]
-		return default
-
-	def parse_param(self, param):
-		if self.type == 'checkbox':
-			if isinstance(param, bool):
-				return param
-			if param.lower() in {'true', '1', 'on', 'yes'}:
-				return True
-			return False
-		cast = self.get_constraint('cast')
-		if cast == 'int':
-			return int(param)
-		if cast == 'float':
-			return float(param)
-		return param
-
-	def param_to_db(self, param):
-		param = self.parse_param(param)
-		if self.type == 'checkbox':
-			if param:
-				return 'true'
-			return 'false'
-		return str(param)
-
-	def get_field_cfg(self, req):
-		cfg = {
-			'xtype'       : 'textfield',
-			'allowBlank'  : self.get_constraint('nullok', False),
-			'name'        : self.name,
-			'fieldLabel'  : self.title,
-			'description' : self.description
-		}
-		if self.type == 'text':
-			if self.get_constraint('cast') == 'int':
-				cfg['xtype'] = 'numberfield'
-				cfg['allowDecimals'] = False
-				if self.has_constraint('minval'):
-					cfg['minValue'] = int(self.get_constraint('minval'))
-				if self.has_constraint('maxval'):
-					cfg['maxValue'] = int(self.get_constraint('maxval'))
-			else:
-				if self.has_constraint('minlen'):
-					cfg['minLength'] = int(self.get_constraint('minlen'))
-				if self.has_constraint('maxlen'):
-					cfg['maxLength'] = int(self.get_constraint('maxlen'))
-				if self.has_constraint('regex'):
-					cfg['regex'] = int(self.get_constraint('regex'))
-		if self.type == 'checkbox':
-			cfg.update({
-				'xtype'          : 'checkbox',
-				'inputValue'     : 'true',
-				'uncheckedValue' : 'false'
-			})
-		if self.type == 'select':
-			chx = []
-			if self.get_constraint('nullok', False):
-				chx.append({
-					'id'    : '',
-					'value' : ''
-				})
-			opts = self.get_option('options')
-			if opts:
-				for k, v in opts.items():
-					chx.append({
-						'id'    : k,
-						'value' : v
-					})
-			cfg.update({
-				'xtype'          : 'combobox',
-				'format'         : 'string',
-				'displayField'   : 'value',
-				'hiddenName'     : self.name,
-				'valueField'     : 'id',
-				'queryMode'      : 'local',
-				'editable'       : False,
-				'forceSelection' : True,
-				'store'          : {
-					'xtype'  : 'simplestore',
-					'fields' : ('id', 'value'),
-					'data'   : chx
-				}
-			})
-		if self.type == 'password':
-			cfg['xtype'] = 'passwordfield'
-		if self.type == 'textarea':
-			cfg['xtype'] = 'textareafield'
-		return cfg
-
-class GlobalSetting(Base, DynamicSetting):
+class GlobalSetting(Base):
 	"""
 	Global application settings.
 	"""
-	__tablename__ = 'np_globalsettings_def'
+	__tablename__ = 'np_settings_global'
 	__table_args__ = (
 		Comment('NetProfile UI global settings'),
-		Index('np_globalsettings_def_u_name', 'name', unique=True),
-		Index('np_globalsettings_def_i_npmodid', 'npmodid'),
-		Index('np_globalsettings_def_i_npgssid', 'npgssid'),
+		Index('np_settings_global_u_name', 'name', unique=True),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
+				'cap_read'     : 'ADMIN_DEV',
+				'cap_create'   : 'ADMIN_DEV',
+				'cap_edit'     : 'ADMIN_DEV',
+				'cap_delete'   : 'ADMIN_DEV',
 
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('Global Settings'),
 				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('npglobid', 'module', 'section', 'name', 'title', 'type', 'value', 'default'),
+				'grid_view'    : ('npglobid', 'name', 'value'),
 				'grid_hidden'  : ('npglobid',),
-				'easy_search'  : ('name', 'title'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'easy_search'  : ('name',)
 			}
 		}
 	)
 	id = Column(
 		'npglobid',
 		UInt32(),
-		Sequence('np_globalsettings_def_npglobid_seq'),
-		Comment('Global parameter ID'),
+		Sequence('np_settings_global_npglobid_seq'),
+		Comment('Global setting ID'),
 		primary_key=True,
 		nullable=False,
 		info={
 			'header_string' : _('ID')
 		}
 	)
-	section_id = Column(
-		'npgssid',
-		UInt32(),
-		ForeignKey('np_globalsettings_sections.npgssid', name='np_globalsettings_def_fk_npgssid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('Global parameter section ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Section'),
-			'filter_type'   : 'nplist',
-			'column_flex'   : 2
-		}
-	)
-	module_id = Column(
-		'npmodid',
-		UInt32(),
-		ForeignKey('np_modules.npmodid', name='np_globalsettings_def_fk_npmodid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('NetProfile module ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Module'),
-			'filter_type'   : 'nplist',
-			'column_flex'   : 2
-		}
-	)
 	name = Column(
 		ASCIIString(255),
-		Comment('Global parameter name'),
+		Comment('Global setting name'),
 		nullable=False,
 		info={
 			'header_string' : _('Name'),
 			'column_flex'   : 2
 		}
 	)
-	title = Column(
-		Unicode(255),
-		Comment('Global parameter title'),
-		nullable=False,
-		info={
-			'header_string' : _('Title'),
-			'column_flex'   : 3
-		}
-	)
-	type = Column(
-		ASCIIString(64),
-		Comment('Global parameter type'),
-		nullable=False,
-		default='text',
-		server_default='text',
-		info={
-			'header_string' : _('Type'),
-			'column_flex'   : 1
-		}
-	)
 	value = Column(
 		ASCIIString(255),
-		Comment('Global parameter current value'),
+		Comment('Current value of the setting'),
 		nullable=False,
 		info={
 			'header_string' : _('Value'),
 			'column_flex'   : 3
 		}
 	)
-	default = Column(
-		ASCIIString(255),
-		Comment('Global parameter default value'),
-		nullable=True,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Default'),
-			'column_flex'   : 3
-		}
-	)
-	options = Column(
-		'opt',
-		PickleType(pickler=HybridPickler),
-		Comment('Serialized options array'),
-		nullable=True,
-		info={
-			'header_string' : _('Options')
-		}
-	)
-	dynamic_options = Column(
-		'dynopt',
-		PickleType(pickler=HybridPickler),
-		Comment('Serialized dynamic options array'),
-		nullable=True,
-		info={
-			'header_string' : _('Dynamic Options')
-		}
-	)
-	constraints = Column(
-		'constr',
-		PickleType(pickler=HybridPickler),
-		Comment('Serialized constraints array'),
-		nullable=True,
-		info={
-			'header_string' : _('Constraints')
-		}
-	)
-	client_ok = Column(
-		'clientok',
-		NPBoolean(),
-		Comment('OK to pass to clientside?'),
-		nullable=False,
-		default=True,
-		server_default=npbool(True),
-		info={
-			'header_string' : _('Client-side')
-		}
-	)
-	description = Column(
-		'descr',
-		UnicodeText(),
-		Comment('Global parameter description'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Description')
-		}
-	)
-
-	@hybrid_property
-	def python_value(self):
-		return self.parse_param(self.value)
-
-	@python_value.setter
-	def python_value_set(self, value):
-		self.value = self.param_to_db(value)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 @cache.cache_on_arguments()
 def global_setting(name):
+	if inst_mm is None:
+		raise RuntimeError('Module manager has not registered yet')
+	path = name.split('.')
+	if len(path) != 3:
+		raise ValueError('Invalid setting name: %r' % (name,))
 	sess = DBSession()
+	setting = inst_mm.get_settings('global')[path[0]][path[1]][path[2]]
 	try:
 		gs = sess.query(GlobalSetting).filter(GlobalSetting.name == name).one()
 	except NoResultFound:
-		return None
+		return setting.default
 	if gs.value is None:
-		return None
-	return gs.python_value
-
-def _set_gs(mapper, conn, tgt):
-	if tgt.name:
-		global_setting.set(tgt.python_value, tgt.name)
+		return setting.default
+	return setting.parse_param(gs.value)
 
 def _del_gs(mapper, conn, tgt):
 	if tgt.name:
 		global_setting.invalidate(tgt.name)
 
 event.listen(GlobalSetting, 'after_delete', _del_gs)
-event.listen(GlobalSetting, 'after_insert', _set_gs)
-event.listen(GlobalSetting, 'after_update', _set_gs)
-
-class UserSettingType(Base, DynamicSetting):
-	"""
-	Per-user application setting types.
-	"""
-	__tablename__ = 'np_usersettings_types'
-	__table_args__ = (
-		Comment('NetProfile UI user setting types'),
-		Index('np_usersettings_types_u_name', 'name', unique=True),
-		Index('np_usersettings_types_i_npmodid', 'npmodid'),
-		Index('np_usersettings_types_i_npussid', 'npussid'),
-		{
-			'mysql_engine'  : 'InnoDB',
-			'mysql_charset' : 'utf8',
-			'info'          : {
-				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
-
-				'show_in_menu' : 'admin',
-				'menu_section' : _('Settings'),
-				'menu_name'    : _('User Setting Types'),
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'    : ('npustid', 'module', 'section', 'name', 'title', 'type', 'default', 'clientok'),
-				'grid_hidden'  : ('npustid', 'clientok'),
-				'easy_search'  : ('name', 'title'),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
-			}
-		}
-	)
-	id = Column(
-		'npustid',
-		UInt32(),
-		Sequence('np_usersettings_types_npustid_seq'),
-		Comment('User parameter type ID'),
-		primary_key=True,
-		nullable=False,
-		info={
-			'header_string' : _('ID')
-		}
-	)
-	section_id = Column(
-		'npussid',
-		UInt32(),
-		ForeignKey('np_usersettings_sections.npussid', name='np_usersettings_types_fk_npussid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('User parameter section ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Section'),
-			'filter_type'   : 'nplist',
-			'column_flex'   : 2
-		}
-	)
-	module_id = Column(
-		'npmodid',
-		UInt32(),
-		ForeignKey('np_modules.npmodid', name='np_usersettings_types_fk_npmodid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('NetProfile module ID'),
-		nullable=False,
-		info={
-			'header_string' : _('Module'),
-			'filter_type'   : 'nplist',
-			'column_flex'   : 2
-		}
-	)
-	name = Column(
-		ASCIIString(255),
-		Comment('User parameter name'),
-		nullable=False,
-		info={
-			'header_string' : _('Name'),
-			'column_flex'   : 2
-		}
-	)
-	title = Column(
-		Unicode(255),
-		Comment('User parameter title'),
-		nullable=False,
-		info={
-			'header_string' : _('Title'),
-			'column_flex'   : 3
-		}
-	)
-	type = Column(
-		ASCIIString(64),
-		Comment('User parameter type'),
-		nullable=False,
-		default='text',
-		server_default='text',
-		info={
-			'header_string' : _('Type'),
-			'column_flex'   : 1
-		}
-	)
-	default = Column(
-		ASCIIString(255),
-		Comment('User parameter default value'),
-		nullable=True,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Default'),
-			'column_flex'   : 3
-		}
-	)
-	options = Column(
-		'opt',
-		PickleType(pickler=HybridPickler),
-		Comment('Serialized options array'),
-		nullable=True,
-		info={
-			'header_string' : _('Options')
-		}
-	)
-	dynamic_options = Column(
-		'dynopt',
-		PickleType(pickler=HybridPickler),
-		Comment('Serialized dynamic options array'),
-		nullable=True,
-		info={
-			'header_string' : _('Dynamic Options')
-		}
-	)
-	constraints = Column(
-		'constr',
-		PickleType(pickler=HybridPickler),
-		Comment('Serialized constraints array'),
-		nullable=True,
-		info={
-			'header_string' : _('Constraints')
-		}
-	)
-	client_ok = Column(
-		'clientok',
-		NPBoolean(),
-		Comment('OK to pass to clientside?'),
-		nullable=False,
-		default=True,
-		server_default=npbool(True),
-		info={
-			'header_string' : _('Client-side')
-		}
-	)
-	description = Column(
-		'descr',
-		UnicodeText(),
-		Comment('Global parameter description'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('Description')
-		}
-	)
-
-	settings = relationship(
-		'UserSetting',
-		backref=backref('type', innerjoin=True),
-		cascade='all, delete-orphan',
-		passive_deletes=True
-	)
-
-	@classmethod
-	def __augment_pg_query__(cls, sess, query, params, req):
-		lim = query._limit
-		if lim and (lim < 50):
-			return query.options(
-				joinedload(UserSettingType.module),
-				joinedload(UserSettingType.section)
-			)
-		return query
-
-	def __str__(self):
-		return '%s' % str(self.name)
+event.listen(GlobalSetting, 'after_insert', _del_gs)
+event.listen(GlobalSetting, 'after_update', _del_gs)
 
 class UserSetting(Base):
 	"""
 	Per-user application settings.
 	"""
-
-	@classmethod
-	def _filter_section(cls, query, value):
-		if isinstance(value, int):
-			return query.join(UserSettingType, UserSettingSection).filter(UserSettingSection.id == value)
-		return query
-
-	__tablename__ = 'np_usersettings_def'
+	__tablename__ = 'np_settings_user'
 	__table_args__ = (
 		Comment('NetProfile UI user settings'),
-		Index('np_usersettings_def_u_us', 'uid', 'npustid', unique=True),
-		Index('np_usersettings_def_i_npustid', 'npustid'),
+		Index('np_settings_user_u_us', 'uid', 'name', unique=True),
+		Index('np_settings_user_i_name', 'name'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
+				'cap_read'     : 'ADMIN_SETTINGS',
+				'cap_create'   : 'ADMIN_DEV',
+				'cap_edit'     : 'ADMIN_DEV',
+				'cap_delete'   : 'ADMIN_DEV',
 
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('User Settings'),
 				'default_sort' : (),
-				'grid_view'    : ('npusid', 'user', 'type', 'value'),
+				'grid_view'    : ('npusid', 'user', 'name', 'value'),
 				'grid_hidden'  : ('npusid',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
-				'extra_search' : (
-					SelectFilter('section', _filter_section,
-						title=_('Section'),
-						data='NetProfile.store.core.UserSettingSection',
-						value_field='npussid',
-						display_field='name'
-					),
-				)
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
 			}
 		}
 	)
 	id = Column(
 		'npusid',
 		UInt32(),
-		Sequence('np_usersettings_def_npusid_seq'),
-		Comment('User parameter ID'),
+		Sequence('np_settings_user_npusid_seq'),
+		Comment('User setting ID'),
 		primary_key=True,
 		nullable=False,
 		info={
@@ -7077,7 +6457,7 @@ class UserSetting(Base):
 	user_id = Column(
 		'uid',
 		UInt32(),
-		ForeignKey('users.uid', name='np_usersettings_def_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
+		ForeignKey('users.uid', name='np_settings_user_fk_uid', ondelete='CASCADE', onupdate='CASCADE'),
 		Comment('User ID'),
 		nullable=False,
 		info={
@@ -7086,39 +6466,24 @@ class UserSetting(Base):
 			'column_flex'   : 1
 		}
 	)
-	type_id = Column(
-		'npustid',
-		UInt32(),
-		ForeignKey('np_usersettings_types.npustid', name='np_usersettings_def_fk_npustid', ondelete='CASCADE', onupdate='CASCADE'),
-		Comment('User parameter type ID'),
+	name = Column(
+		ASCIIString(255),
+		Comment('User setting name'),
 		nullable=False,
 		info={
-			'header_string' : _('Type'),
-			'filter_type'   : 'nplist',
+			'header_string' : _('Name'),
 			'column_flex'   : 1
 		}
 	)
 	value = Column(
 		ASCIIString(255),
-		Comment('User parameter current value'),
+		Comment('Current value of the setting'),
 		nullable=False,
 		info={
 			'header_string' : _('Value'),
 			'column_flex'   : 2
 		}
 	)
-
-	@property
-	def name(self):
-		return self.type.name
-
-	@hybrid_property
-	def python_value(self):
-		return self.type.parse_param(self.value)
-
-	@python_value.setter
-	def python_value_set(self, value):
-		self.value = self.type.param_to_db(value)
 
 	def __str__(self):
 		return '%s.%s' % (
@@ -7139,10 +6504,10 @@ class DataCache(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
-				'cap_read'     : 'BASE_ADMIN',
-				'cap_create'   : 'BASE_ADMIN',
-				'cap_edit'     : 'BASE_ADMIN',
-				'cap_delete'   : 'BASE_ADMIN',
+				'cap_read'     : 'ADMIN_DEV',
+				'cap_create'   : 'ADMIN_DEV',
+				'cap_edit'     : 'ADMIN_DEV',
+				'cap_delete'   : 'ADMIN_DEV',
 
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Settings'),

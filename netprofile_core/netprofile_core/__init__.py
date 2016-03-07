@@ -120,10 +120,7 @@ class Module(ModuleBase):
 			NPSession,
 			PasswordHistory,
 			GlobalSetting,
-			GlobalSettingSection,
 			UserSetting,
-			UserSettingSection,
-			UserSettingType,
 			DataCache,
 			DAVLock,
 			DAVHistory,
@@ -204,8 +201,12 @@ class Module(ModuleBase):
 				name='Administrative: Settings'
 			),
 			Privilege(
-				code='ADMIN_LOCKDOWN',
-				name='Administrative: Site Lockdown'
+				code='ADMIN_SECURITY',
+				name='Administrative: Security'
+			),
+			Privilege(
+				code='ADMIN_MODULES',
+				name='Administrative: Modules'
 			),
 			Privilege(
 				code='ADMIN_DB',
@@ -218,6 +219,10 @@ class Module(ModuleBase):
 			Privilege(
 				code='ADMIN_DEV',
 				name='Administrative: Development'
+			),
+			Privilege(
+				code='ADMIN_AUDIT',
+				name='Administrative: Audit Log'
 			),
 			Privilege(
 				code='USERS_LIST',
@@ -361,149 +366,21 @@ class Module(ModuleBase):
 			sess.add(priv)
 		sess.flush()
 		for priv in privs:
+			if priv.code in {'ADMIN_DEV'}:
+				continue
 			cap = GroupCapability()
 			cap.group = grp_admins
 			cap.privilege = priv
 			sess.add(cap)
 
-		gss_admin = GlobalSettingSection( # no old id
-			module=modobj,
-			name='Administrative',
-			description='Administrative settings.'
+		global_settings = (
+			GlobalSetting(name='core.admin.login_allowed', value='true'),
+			GlobalSetting(name='core.vfs.root_uid', value='1'),
+			GlobalSetting(name='core.vfs.root_gid', value='1'),
+			GlobalSetting(name='core.vfs.root_rights', value='509')
 		)
-		gss_vfs = GlobalSettingSection( # old id 8
-			module=modobj,
-			name='File System',
-			description='Virtual File System setup.'
-		)
-
-		sess.add(gss_admin)
-		sess.add(gss_vfs)
-
-		uss_looknfeel = UserSettingSection( # old id 1
-			module=modobj,
-			name='Look and Feel',
-			description='Basic settings for customizing NetProfile user interface.'
-		)
-		uss_locale = UserSettingSection( # old id 5
-			module=modobj,
-			name='Localization',
-			description='Options related to language and regional settings.'
-		)
-		uss_outbox = UserSettingSection ( # old id 3
-			module=modobj,
-			name='Outgoing Messages',
-			description='Configuration of protocol and server for outgoing messages.'
-		)
-		uss_inbox = UserSettingSection ( # old id 4
-			module=modobj,
-			name='Incoming Messages',
-			description='Configuration of protocol and server for incoming messages.'
-		)
-
-		sess.add(uss_looknfeel)
-		sess.add(uss_locale)
-		sess.add(uss_outbox)
-		sess.add(uss_inbox)
-
-		ust_datagrid_perpage = UserSettingType(
-			section=uss_looknfeel,
-			module=modobj,
-			name='datagrid_perpage',
-			title='Number of elements per page',
-			type='text',
-			default='20',
-			constraints={
-				'cast'   : 'int',
-				'minval' : 1,
-				'maxval' : 200
-			},
-			description='Maximum number of rows to display on a single page of a table or grid.'
-		)
-		ust_datagrid_showrange = UserSettingType(
-			section=uss_looknfeel,
-			module=modobj,
-			name='datagrid_showrange',
-			title='Show result range',
-			type='checkbox',
-			default='true',
-			description='Show current range of displayed entries in grid footer.'
-		)
-		ust_csv_charset = UserSettingType(
-			section=uss_locale,
-			module=modobj,
-			name='csv_charset',
-			title='CSV charset',
-			type='text',
-			default='UTF-8',
-			description='Character set and encoding used when generating CSV files. Be warned that specifying non-unicode character set here can corrupt the data in the CSV.'
-		)
-
-		sess.add(ust_datagrid_perpage)
-		sess.add(ust_datagrid_showrange)
-		sess.add(ust_csv_charset)
-
-		gs_login_allowed = GlobalSetting(
-			section=gss_admin,
-			module=modobj,
-			name='login_allowed',
-			title='Allow logging in',
-			type='checkbox',
-			value='true',
-			default='true',
-			description='Allow logging in to the user interface for non-admin users.'
-		)
-		gs_vfs_root_uid = GlobalSetting(
-			section=gss_vfs,
-			module=modobj,
-			name='vfs_root_uid',
-			title='Root User ID',
-			type='text',
-			value='1',
-			default='1',
-			constraints={
-				'cast'   : 'int',
-				'nullok' : False,
-				'minval' : 0
-			},
-			description='User ID of the owner of the root folder.'
-		)
-		gs_vfs_root_gid = GlobalSetting(
-			section=gss_vfs,
-			module=modobj,
-			name='vfs_root_gid',
-			title='Root Group ID',
-			type='text',
-			value='1',
-			default='1',
-			constraints={
-				'cast'   : 'int',
-				'nullok' : False,
-				'minval' : 0
-			},
-			description='Group ID of the owning group of the root folder.'
-		)
-		gs_vfs_root_rights = GlobalSetting(
-			section=gss_vfs,
-			module=modobj,
-			name='vfs_root_rights',
-			title='Root Rights',
-			type='text',
-			value='509',
-			default='509',
-			constraints={
-				'cast'   : 'int',
-				'nullok' : False,
-				'minval' : 0,
-				'maxval' : 1023
-			},
-			description='Bitmask specifying access rights for the root folder.'
-		)
-
-		sess.add(gs_login_allowed)
-		sess.add(gs_vfs_root_uid)
-		sess.add(gs_vfs_root_gid)
-		sess.add(gs_vfs_root_rights)
+		for gs in global_settings:
+			sess.add(gs)
 
 		admin = User(
 			group=grp_admins,
@@ -728,7 +605,7 @@ class Module(ModuleBase):
 			'users'        : DAVPluginUsers
 		}
 
-	def get_settings(self, request, vhost='MAIN', scope='global'):
+	def get_settings(self, vhost='MAIN', scope='global'):
 		if vhost == 'MAIN' and scope == 'global':
 			return (
 				SettingSection(
@@ -738,7 +615,7 @@ class Module(ModuleBase):
 						title=_('Allow logging in'),
 						help_text=_('Allow logging in to the user interface for non-admin users.'),
 						type='bool',
-						write_cap='ADMIN_LOCKDOWN',
+						write_cap='ADMIN_SECURITY',
 						default=True
 					),
 					title=_('Administrative'),
@@ -748,27 +625,30 @@ class Module(ModuleBase):
 				SettingSection(
 					'vfs',
 					Setting(
-						'vfs_root_uid',
+						'root_uid',
 						title=_('Root User ID'),
 						help_text=_('User ID of the owner of the root folder.'),
 						type='int',
 						default=1,
+						write_cap='ADMIN_VFS',
 						field_extra={ 'minValue' : 1 }
 					),
 					Setting(
-						'vfs_root_gid',
+						'root_gid',
 						title=_('Root Group ID'),
 						help_text=_('Group ID of the owning group of the root folder.'),
 						type='int',
 						default=1,
+						write_cap='ADMIN_VFS',
 						field_extra={ 'minValue' : 1 }
 					),
 					Setting(
-						'vfs_root_rights',
+						'root_rights',
 						title=_('Root Rights'),
 						help_text=_('Bitmask specifying access rights for the root folder.'),
 						type='int',
-						default=509
+						default=509,
+						write_cap='ADMIN_VFS'
 					),
 					title=_('File System'),
 					help_text=_('Virtual File System setup.'),

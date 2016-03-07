@@ -23,14 +23,8 @@ Ext.define('NetProfile.controller.UserSettingsForm', {
 
 	process: function(xid)
 	{
-		var m;
-
 		if(!xid)
 			throw 'Missing configuration section';
-		m = xid.match(/^ss(\d+)$/);
-		if(m === null)
-			throw 'Invalid configuration section';
-		xid = parseInt(m[1]);
 
 		NetProfile.api.UserSetting.usform_get({ section: xid }, this.onFormLoad.bind(this));
 	},

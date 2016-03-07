@@ -93,8 +93,6 @@ from .models import (
 	User,
 	UserCapability,
 	UserSetting,
-	UserSettingSection,
-	UserSettingType,
 	UserState,
 
 	F_DEFAULT_FILES,
@@ -771,40 +769,50 @@ def menu_settings(params, request):
 	ExtDirect method for settings menu tree.
 	"""
 
-	menu = []
+	ret = []
+	total = 0
+	node = params['node']
+	path = node.split('.')
+	path_len = len(path)
+	if path_len >= 2 or path_len == 0:
+		raise ValueError('Invalid node ID specified: %r' % (node,))
 	mmgr = request.registry.getUtility(IModuleManager)
-	sess = DBSession()
+	menu = mmgr.get_settings('user')
 
-	if params['node'] == 'root':
-		for mod in sess \
-					.query(NPModule) \
-					.filter(NPModule.name.in_(mmgr.loaded.keys())) \
-					.filter(NPModule.enabled == True):
-			mod_name = mod.name
-			if isinstance(mod_name, bytes):
-				mod_name = mod_name.decode()
-			mi = mod.get_tree_node(request, mmgr.loaded[mod.name])
-			mi['expanded'] = False
-			menu.append(mi)
-		return {
-			'success' : True,
-			'records' : menu,
-			'total'   : len(menu)
-		}
-
-	if params['node'] not in mmgr.loaded:
-		raise ValueError('Unknown module name requested: %s' % params['node'])
-
-	mod = sess.query(NPModule).filter(NPModule.name == params['node']).one()
-	for uss in sess.query(UserSettingSection).filter(UserSettingSection.module == mod):
-		mi = uss.get_tree_node(request)
-		mi['xhandler'] = 'NetProfile.controller.UserSettingsForm'
-		menu.append(mi)
+	if node == 'root':
+		for moddef, sections in menu.items():
+			modnode = {
+				'id'       : moddef,
+				'text'     : request.localizer.translate(mmgr.loaded[moddef].name),
+				'leaf'     : False,
+				'expanded' : True,
+				'children' : list(
+					sect.get_tree_cfg(request, moddef, 'NetProfile.controller.UserSettingsForm')
+					for sect
+					in sections.values()
+					if (not sect.read_cap or request.has_permission(sect.read_cap))
+				),
+				'iconCls'  : 'ico-module'
+			}
+			total += len(modnode['children']) + 1
+			ret.append(modnode)
+	else:
+		moddef = path[0]
+		if moddef not in mmgr.loaded:
+			raise ValueError('Unknown, uninstalled or disabled module name requested: %r' % (moddef,))
+		if moddef not in menu:
+			raise ValueError('Menu node doesn\'t exist: %r' % (moddef,))
+		ret = list(
+			sect.get_tree_cfg(request, moddef, 'NetProfile.controller.UserSettingsForm')
+			for sect
+			in menu[moddef].values()
+		)
+		total = len(ret)
 
 	return {
 		'success' : True,
-		'records' : menu,
-		'total'   : len(menu)
+		'records' : ret,
+		'total'   : total
 	}
 
 @extdirect_method('MenuTree', 'users_read', request_as_last_param=True, permission='USAGE')
@@ -839,39 +847,35 @@ def dyn_usersettings_form(param, request):
 	ExtDirect method to populate setting section form.
 	"""
 
-	sid = int(param['section'])
+	node = param['section']
+	path = node.split('.')
+	if len(path) != 2:
+		raise ValueError('Invalid section node ID specified: %r' % (node,))
+	moddef = path[0]
+	sname = path[1]
+	mmgr = request.registry.getUtility(IModuleManager)
+	if moddef not in mmgr.loaded:
+		raise ValueError('Unknown, uninstalled or disabled module name requested: %r' % (moddef,))
+	settings = mmgr.get_settings('user')
+	if moddef not in settings or sname not in settings[moddef]:
+		raise ValueError('Setting doesn\'t exist: %r' % (node,))
 	form = []
+	section = settings[moddef][sname]
+
 	sess = DBSession()
-	sect = sess.query(UserSettingSection).get(sid)
-	for (ust, us) in sess \
-			.query(UserSettingType, UserSetting) \
-			.outerjoin(UserSetting, and_(
-				UserSettingType.id == UserSetting.type_id,
-				UserSetting.user_id == request.user.id
-			)) \
-			.filter(UserSettingType.section_id == sid):
-		field = ust.get_field_cfg(request)
-		if field:
-			if us and (us.value is not None):
-				field['value'] = ust.parse_param(us.value)
-				if (ust.type == 'checkbox') and field['value']:
-					field['checked'] = True
-				else:
-					field['checked'] = False
-			elif ust.default is not None:
-				field['value'] = ust.parse_param(ust.default)
-			else:
-				field['value'] = None
-			form.append(field)
-	return {
-		'success' : True,
-		'fields'  : form,
-		'section' : {
-			'id'    : sect.id,
-			'name'  : sect.name,
-			'descr' : sect.description
-		}
-	}
+	values = dict(
+		(s.name, s.value)
+		for s
+		in sess.query(UserSetting).filter(
+			UserSetting.user == request.user,
+			UserSetting.name.startswith('%s.%s.' % (moddef, sname))
+		)
+	)
+	for setting_name, setting in section.items():
+		fullname = '%s.%s.%s' % (moddef, sname, setting_name)
+		if fullname in values:
+			values.set(fullname, setting.parse_param(values[fullname]))
+	return section.get_form_cfg(request, moddef, values)
 
 @extdirect_method('UserSetting', 'usform_submit', request_as_last_param=True, permission='USAGE', accepts_files=True)
 def dyn_usersettings_submit(param, request):
@@ -880,32 +884,54 @@ def dyn_usersettings_submit(param, request):
 	"""
 
 	sess = DBSession()
-	s = None
+	mmgr = request.registry.getUtility(IModuleManager)
+	cached = None
 	if 'auth.settings' in request.session:
-		s = request.session['auth.settings']
-	for (ust, us) in sess \
-		.query(UserSettingType, UserSetting) \
-		.outerjoin(UserSetting, and_(
-			UserSettingType.id == UserSetting.type_id,
-			UserSetting.user_id == request.user.id
-		)) \
-		.filter(UserSettingType.name.in_(param.keys())):
-			if ust.name in param:
-				if us:
-					us.value = ust.param_to_db(param[ust.name])
-				else:
-					us = UserSetting()
-					us.user = request.user
-					us.type = ust
-					us.value = ust.param_to_db(param[ust.name])
-					sess.add(us)
-				if s:
-					s[ust.name] = ust.parse_param(param[ust.name])
-	if s:
-		request.session['auth.settings'] = s
-	return {
-		'success' : True
-	}
+		cached = request.session['auth.settings']
+
+	all_settings = mmgr.get_settings('user')
+	values = dict(
+		(s.name, s)
+		for s
+		in sess.query(UserSetting).filter(UserSetting.user == request.user)
+	)
+
+	for moddef, sections in all_settings.items():
+		for sname, section in sections.items():
+			for setting_name, setting in section.items():
+				if setting.write_cap and not req.has_permission(setting.write_cap):
+					continue
+				fullname = '%s.%s.%s' % (moddef, sname, setting_name)
+				old_value = setting.default
+				if fullname in values:
+					old_value = setting.parse_param(values[fullname].value)
+				new_value = old_value
+				if fullname in param:
+					new_value = setting.parse_param(param[fullname])
+
+				if new_value == setting.default:
+					if fullname in values:
+						sess.delete(values[fullname])
+						del values[fullname]
+					if cached:
+						cached[fullname] = setting.default
+					continue
+				if new_value != old_value:
+					if fullname in values:
+						values[fullname].value = setting.format_param(new_value)
+					else:
+						values[fullname] = UserSetting(
+							user=request.user,
+							name=fullname,
+							value=setting.format_param(new_value)
+						)
+						sess.add(values[fullname])
+					if cached:
+						cached[fullname] = new_value
+
+	if cached:
+		request.session['auth.settings'] = cached
+	return { 'success' : True }
 
 @extdirect_method('UserSetting', 'client_get', request_as_last_param=True, permission='USAGE')
 def dyn_usersettings_client(request):
