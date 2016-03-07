@@ -7,7 +7,7 @@
 	DECLARE cur CURSOR FOR
 		SELECT `stationid`, `name`
 		FROM `sessions_def`
-		WHERE `updatets` < NOW() - INTERVAL (SELECT CAST(`value` AS SIGNED) FROM `np_globalsettings_def` WHERE `name` = 'acct_stale_cutoff') SECOND;
+		WHERE `updatets` < NOW() - INTERVAL (SELECT CAST(`value` AS SIGNED) FROM `np_settings_global` WHERE `name` = 'sessions.acct.stale_cutoff') SECOND;
 	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000'
 		SET done := 1;
 
