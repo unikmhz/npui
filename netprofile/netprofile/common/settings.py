@@ -63,6 +63,9 @@ class SettingSection(MutableMapping):
 	def __contains__(self, name):
 		return name in self.settings
 
+	def __len__(self):
+		return len(self.settings)
+
 	def keys(self):
 		return self.settings.keys()
 
@@ -182,7 +185,7 @@ class Setting(object):
 		})
 		if value is None and self.default is not None:
 			value = self.default
-		if value is not None:
+		if value is not None and self.client_ok:
 			cfg['value'] = self.format_param(value)
 			if self.type == 'bool':
 				cfg['checked'] = value
