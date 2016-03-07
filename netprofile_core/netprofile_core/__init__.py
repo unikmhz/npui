@@ -170,7 +170,8 @@ class Module(ModuleBase):
 			LogType(id=7, name='Users'),
 			LogType(id=11, name='Groups'),
 			LogType(id=17, name='Files'),
-			LogType(id=20, name='Folders')
+			LogType(id=20, name='Folders'),
+			LogType(id=21, name='Global Settings'),
 		)
 		for obj in log:
 			sess.add(obj)

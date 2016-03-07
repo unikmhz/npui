@@ -6336,6 +6336,9 @@ class GlobalSetting(Base):
 	__table_args__ = (
 		Comment('NetProfile UI global settings'),
 		Index('np_settings_global_u_name', 'name', unique=True),
+		Trigger('after', 'insert', 't_np_settings_global_ai'),
+		Trigger('after', 'update', 't_np_settings_global_au'),
+		Trigger('after', 'delete', 't_np_settings_global_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
