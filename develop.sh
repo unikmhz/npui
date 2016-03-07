@@ -30,7 +30,6 @@ pip install \
 	packaging \
 	versioneer \
 	python-dateutil \
-	phpserialize \
 	dogpile.cache \
 	repoze.tm2 \
 	SQLAlchemy \

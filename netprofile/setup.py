@@ -12,7 +12,6 @@ requires = [
 	'setuptools >= 17.1',
 	'packaging >= 16.1',
 	'python-dateutil',
-	'phpserialize',
 	'dogpile.cache >= 0.4.1',
 	'repoze.tm2',
 
