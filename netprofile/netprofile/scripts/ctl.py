@@ -44,6 +44,7 @@ from pyramid.paster import get_appsettings
 from pyramid.interfaces import IRendererFactory
 from pyramid.path import DottedNameResolver
 import pyramid_mako
+from sqlalchemy import event
 
 from netprofile import setup_config
 from netprofile.db.connection import DBSession
@@ -161,10 +162,13 @@ class CLIApplication(App):
 
 	@reify
 	def db_session(self):
+		def _after_begin(sess, trans, conn):
+			sess.execute(SetVariable('accessuid', 0))
+			sess.execute(SetVariable('accessgid', 0))
+			sess.execute(SetVariable('accesslogin', '[NPCTL]'))
+
 		sess = DBSession()
-		sess.execute(SetVariable('accessuid', 0))
-		sess.execute(SetVariable('accessgid', 0))
-		sess.execute(SetVariable('accesslogin', '[NPCTL]'))
+		event.listen(sess, 'after_begin', _after_begin)
 		return sess
 
 	@reify
