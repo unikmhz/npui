@@ -10,10 +10,8 @@ Ext.define('NetProfile.controller.UserSettingsForm', {
 	],
 
 	btnResetText: 'Reset',
-	btnResetTipTitleText: 'Reset Settings',
 	btnResetTipText: 'Reset form fields to original values.',
 	btnSaveText: 'Save',
-	btnSaveTipTitleText: 'Save Settings',
 	btnSaveTipText: 'Validate and save your settings.',
 
 	descriptionStyle: {
@@ -86,7 +84,8 @@ Ext.define('NetProfile.controller.UserSettingsForm', {
 				{
 					this.up('form').getForm().reset();
 				},
-				tooltip: { text: this.btnResetTipText, title: this.btnResetTipTitleText }
+				tooltip: this.btnResetTipText,
+				tooltipType: 'title'
 			}, {
 				text: this.btnSaveText,
 				iconCls: 'ico-accept',
@@ -115,7 +114,8 @@ Ext.define('NetProfile.controller.UserSettingsForm', {
 							scope: this
 						});
 				},
-				tooltip: { text: this.btnSaveTipText, title: this.btnSaveTipTitleText }
+				tooltip: this.btnSaveTipText,
+				tooltipType: 'title'
 			}]
 		});
 		mainbar.replaceWith(form);

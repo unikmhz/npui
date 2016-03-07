@@ -185,10 +185,8 @@ Ext.onReady(function()
 	Ext.define('Ext.locale.ru.NetProfile.controller.UserSettingsForm', {
 		override: 'NetProfile.controller.UserSettingsForm',
 		btnResetText: 'Сбросить',
-		btnResetTipTitleText: 'Сбросить настройки',
 		btnResetTipText: 'Вернуть значения полей в этой форме к исходным.',
 		btnSaveText: 'Сохранить',
-		btnSaveTipTitleText: 'Сохранить настройки',
 		btnSaveTipText: 'Проверить и сохранить ваши настройки'
 	});
 
