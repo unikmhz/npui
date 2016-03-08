@@ -144,7 +144,7 @@ Ext.define('NetProfile.panel.SideBar', {
 	},
 	onMenuBeforeSelect: function(row, record, idx, opts)
 	{
-		if(record.get('iconCls') == 'ico-module')
+		if(Ext.Array.contains(['ico-module', 'ico-tool'], record.get('iconCls')))
 			return false;
 		return true;
 	},

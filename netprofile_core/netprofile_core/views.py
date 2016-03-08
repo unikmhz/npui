@@ -1574,9 +1574,36 @@ def import_calendar_validator(ret, values, request):
 
 @register_hook('np.menu')
 def _menu_custom(name, menu, req, extb):
+	loc = req.localizer
+	if name == 'admin' and req.has_permission('ADMIN_SETTINGS'):
+		mmgr = req.registry.getUtility(IModuleManager)
+		modnodes = []
+		all_settings = mmgr.get_settings('global')
+		for moddef, sections in all_settings.items():
+			modnodes.append({
+				'id'       : 'gs.' + moddef,
+				'text'     : loc.translate(mmgr.loaded[moddef].name),
+				'leaf'     : False,
+				'expanded' : True,
+				'children' : list(
+					sect.get_tree_cfg(req, moddef, 'NetProfile.controller.GlobalSettingsForm')
+					for sect
+					in sections.values()
+					if (not sect.read_cap or req.has_permission(sect.read_cap))
+				),
+				'iconCls'  : 'ico-module'
+			})
+		if len(modnodes) > 0:
+			menu.append({
+				'leaf'     : False,
+				'expanded' : True,
+				'iconCls'  : 'ico-tool',
+				'text'     : loc.translate(_('System Settings')),
+				'id'       : 'gs',
+				'children' : modnodes
+			})
 	if name != 'modules':
 		return
-	loc = req.localizer
 	menu.append({
 		'leaf'     : False,
 		'expanded' : True,
