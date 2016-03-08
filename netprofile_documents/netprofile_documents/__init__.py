@@ -62,6 +62,10 @@ class Module(ModuleBase):
 
 		privs = (
 			Privilege(
+				code='BASE_DOCUMENTS',
+				name='Access: Documents'
+			),
+			Privilege(
 				code='DOCUMENTS_LIST',
 				name='Documents: List'
 			),

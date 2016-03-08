@@ -87,7 +87,7 @@ class Document(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				#'cap_menu'      : '',
+				'cap_menu'      : 'BASE_DOCUMENTS',
 				'cap_read'      : 'DOCUMENTS_LIST',
 				'cap_create'    : 'DOCUMENTS_CREATE',
 				'cap_edit'      : 'DOCUMENTS_EDIT',
@@ -224,7 +224,7 @@ class DocumentBundle(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				#'cap_menu'      : '',
+				'cap_menu'      : 'BASE_DOCUMENTS',
 				'cap_read'      : 'DOCUMENTS_LIST',
 				'cap_create'    : 'DOCUMENTS_BUNDLES_CREATE',
 				'cap_edit'      : 'DOCUMENTS_BUNDLES_EDIT',
@@ -291,7 +291,7 @@ class DocumentBundleMapping(Base):
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
 			'info'          : {
-				#'cap_menu'      : '',
+				'cap_menu'      : 'BASE_DOCUMENTS',
 				'cap_read'      : 'DOCUMENTS_LIST',
 				'cap_create'    : 'DOCUMENTS_BUNDLES_EDIT',
 				'cap_edit'      : 'DOCUMENTS_BUNDLES_EDIT',
