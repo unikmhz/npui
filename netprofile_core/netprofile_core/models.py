@@ -6409,13 +6409,25 @@ def global_setting(name):
 		return setting.default
 	return setting.parse_param(gs.value)
 
+def _set_gs(mapper, conn, tgt):
+	name = tgt.name
+	if name:
+		if inst_mm is None:
+			global_setting.invalidate(name)
+		else:
+			path = name.split('.')
+			if len(path) != 3:
+				raise ValueError('Invalid setting name: %r' % (name,))
+			setting = inst_mm.get_settings('global')[path[0]][path[1]][path[2]]
+			global_setting.set(setting.parse_param(tgt.value), name)
+
 def _del_gs(mapper, conn, tgt):
 	if tgt.name:
 		global_setting.invalidate(tgt.name)
 
 event.listen(GlobalSetting, 'after_delete', _del_gs)
-event.listen(GlobalSetting, 'after_insert', _del_gs)
-event.listen(GlobalSetting, 'after_update', _del_gs)
+event.listen(GlobalSetting, 'after_insert', _set_gs)
+event.listen(GlobalSetting, 'after_update', _set_gs)
 
 class UserSetting(Base):
 	"""
