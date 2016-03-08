@@ -86,6 +86,7 @@ from .models import (
 	Event,
 	File,
 	FileFolder,
+	GlobalSetting,
 	Group,
 	GroupCapability,
 	NPModule,
@@ -777,10 +778,10 @@ def menu_settings(params, request):
 	if path_len >= 2 or path_len == 0:
 		raise ValueError('Invalid node ID specified: %r' % (node,))
 	mmgr = request.registry.getUtility(IModuleManager)
-	menu = mmgr.get_settings('user')
+	all_settings = mmgr.get_settings('user')
 
 	if node == 'root':
-		for moddef, sections in menu.items():
+		for moddef, sections in all_settings.items():
 			modnode = {
 				'id'       : moddef,
 				'text'     : request.localizer.translate(mmgr.loaded[moddef].name),
@@ -800,12 +801,12 @@ def menu_settings(params, request):
 		moddef = path[0]
 		if moddef not in mmgr.loaded:
 			raise ValueError('Unknown, uninstalled or disabled module name requested: %r' % (moddef,))
-		if moddef not in menu:
+		if moddef not in all_settings:
 			raise ValueError('Menu node doesn\'t exist: %r' % (moddef,))
 		ret = list(
 			sect.get_tree_cfg(request, moddef, 'NetProfile.controller.UserSettingsForm')
 			for sect
-			in menu[moddef].values()
+			in all_settings[moddef].values()
 		)
 		total = len(ret)
 
@@ -844,7 +845,7 @@ def menu_users(params, request):
 @extdirect_method('UserSetting', 'usform_get', request_as_last_param=True, permission='USAGE')
 def dyn_usersettings_form(param, request):
 	"""
-	ExtDirect method to populate setting section form.
+	ExtDirect method to populate a user settings form.
 	"""
 
 	node = param['section']
@@ -856,11 +857,11 @@ def dyn_usersettings_form(param, request):
 	mmgr = request.registry.getUtility(IModuleManager)
 	if moddef not in mmgr.loaded:
 		raise ValueError('Unknown, uninstalled or disabled module name requested: %r' % (moddef,))
-	settings = mmgr.get_settings('user')
-	if moddef not in settings or sname not in settings[moddef]:
+	all_settings = mmgr.get_settings('user')
+	if moddef not in all_settings or sname not in all_settings[moddef]:
 		raise ValueError('Setting doesn\'t exist: %r' % (node,))
 	form = []
-	section = settings[moddef][sname]
+	section = all_settings[moddef][sname]
 
 	sess = DBSession()
 	values = dict(
@@ -877,10 +878,45 @@ def dyn_usersettings_form(param, request):
 			values[fullname] = setting.parse_param(values[fullname])
 	return section.get_form_cfg(request, moddef, values)
 
+@extdirect_method('GlobalSetting', 'gsform_get', request_as_last_param=True, permission='ADMIN_SETTINGS')
+def dyn_globalsettings_form(param, request):
+	"""
+	ExtDirect method to populate a global settings form.
+	"""
+
+	node = param['section']
+	path = node.split('.')
+	if len(path) != 2:
+		raise ValueError('Invalid section node ID specified: %r' % (node,))
+	moddef = path[0]
+	sname = path[1]
+	mmgr = request.registry.getUtility(IModuleManager)
+	if moddef not in mmgr.loaded:
+		raise ValueError('Unknown, uninstalled or disabled module name requested: %r' % (moddef,))
+	all_settings = mmgr.get_settings('global')
+	if moddef not in all_settings or sname not in all_settings[moddef]:
+		raise ValueError('Setting doesn\'t exist: %r' % (node,))
+	form = []
+	section = all_settings[moddef][sname]
+
+	sess = DBSession()
+	values = dict(
+		(s.name, s.value)
+		for s
+		in sess.query(GlobalSetting).filter(
+			GlobalSetting.name.startswith('%s.%s.' % (moddef, sname))
+		)
+	)
+	for setting_name, setting in section.items():
+		fullname = '%s.%s.%s' % (moddef, sname, setting_name)
+		if fullname in values:
+			values[fullname] = setting.parse_param(values[fullname])
+	return section.get_form_cfg(request, moddef, values)
+
 @extdirect_method('UserSetting', 'usform_submit', request_as_last_param=True, permission='USAGE', accepts_files=True)
 def dyn_usersettings_submit(param, request):
 	"""
-	ExtDirect method for submitting user setting section form.
+	ExtDirect method for submitting user settings form.
 	"""
 
 	sess = DBSession()
@@ -898,8 +934,12 @@ def dyn_usersettings_submit(param, request):
 
 	for moddef, sections in all_settings.items():
 		for sname, section in sections.items():
+			if section.read_cap and not request.has_permission(section.read_cap):
+				continue
 			for setting_name, setting in section.items():
-				if setting.write_cap and not req.has_permission(setting.write_cap):
+				if setting.read_cap and not request.has_permission(setting.read_cap):
+					continue
+				if setting.write_cap and not request.has_permission(setting.write_cap):
 					continue
 				fullname = '%s.%s.%s' % (moddef, sname, setting_name)
 				old_value = setting.default
@@ -931,6 +971,54 @@ def dyn_usersettings_submit(param, request):
 
 	if cached:
 		request.session['auth.settings'] = cached
+	return { 'success' : True }
+
+@extdirect_method('GlobalSetting', 'gsform_submit', request_as_last_param=True, permission='ADMIN_SETTINGS', accepts_files=True)
+def dyn_globalsettings_submit(param, request):
+	"""
+	ExtDirect method for submitting global settings form.
+	"""
+
+	sess = DBSession()
+	mmgr = request.registry.getUtility(IModuleManager)
+
+	all_settings = mmgr.get_settings('global')
+	values = dict(
+		(s.name, s)
+		for s
+		in sess.query(GlobalSetting)
+	)
+
+	for moddef, sections in all_settings.items():
+		for sname, section in sections.items():
+			if section.read_cap and not request.has_permission(section.read_cap):
+				continue
+			for setting_name, setting in section.items():
+				if setting.read_cap and not request.has_permission(setting.read_cap):
+					continue
+				if setting.write_cap and not request.has_permission(setting.write_cap):
+					continue
+				fullname = '%s.%s.%s' % (moddef, sname, setting_name)
+				old_value = setting.default
+				if fullname in values:
+					old_value = setting.parse_param(values[fullname].value)
+				new_value = old_value
+				if fullname in param:
+					new_value = setting.parse_param(param[fullname])
+
+				# We don't delete global settings if their values are default
+				# ones because we need the values in other places: procedures,
+				# SQL events, triggers etc.
+				if new_value != old_value:
+					if fullname in values:
+						values[fullname].value = setting.format_param(new_value)
+					else:
+						values[fullname] = GlobalSetting(
+							name=fullname,
+							value=setting.format_param(new_value)
+						)
+						sess.add(values[fullname])
+
 	return { 'success' : True }
 
 @extdirect_method('UserSetting', 'client_get', request_as_last_param=True, permission='USAGE')
