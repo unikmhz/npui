@@ -97,6 +97,7 @@ from .models import (
 	UserState,
 
 	F_DEFAULT_FILES,
+	global_setting,
 	secpol_errors
 )
 
@@ -165,9 +166,13 @@ def do_login(request):
 			hash_con = reg.settings.get('netprofile.auth.hash', 'sha1')
 			salt_len = int(reg.settings.get('netprofile.auth.salt_length', 4))
 			q = sess.query(User).filter(User.state == UserState.active).filter(User.enabled == True).filter(User.login == login)
+			login_allowed = global_setting('core.admin.login_allowed')
 			for user in q:
 				if user.check_password(passwd, hash_con, salt_len):
-					return auth_add(request, login, 'core.home')
+					user_privs = user.flat_privileges
+					# XXX: maybe make override privilege set configurable?
+					if login_allowed or user_privs.get('ADMIN_DEV', False) or user_privs.get('ADMIN_SECURITY', False):
+						return auth_add(request, login, 'core.home')
 		did_fail = True
 
 	mmgr = request.registry.getUtility(IModuleManager)
