@@ -13,9 +13,9 @@ Ext.define('NetProfile.controller.SettingsForm', {
 	],
 
 	btnResetText: 'Reset',
-	btnResetTipText: 'Reset form fields to original values.',
+	btnResetTipText: 'Reset form fields to original values',
 	btnSaveText: 'Save',
-	btnSaveTipText: 'Validate and save your settings.',
+	btnSaveTipText: 'Validate and save settings',
 
 	descriptionStyle: {
 		border: 0,
