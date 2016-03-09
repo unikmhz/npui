@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_geo 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-02-27 20:53+0300\n"
-"PO-Revision-Date: 2016-02-27 20:53+0300\n"
+"POT-Creation-Date: 2016-03-09 03:15+0300\n"
+"PO-Revision-Date: 2016-03-09 03:15+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Generated-By: Babel 2.2.0\n"
 "X-Generator: Poedit 1.8.5\n"
 
-#: netprofile_geo/__init__.py:139
+#: netprofile_geo/__init__.py:142
 msgid "Geography"
 msgstr "География"
 
@@ -128,7 +128,7 @@ msgstr "Суффикс номера"
 
 #: netprofile_geo/models.py:559 netprofile_geo/models.py:726
 msgid "Entr. #"
-msgstr "Подъезд"
+msgstr "Кол-во подъездов"
 
 #: netprofile_geo/models.py:570 netprofile_geo/models.py:1099
 msgid "Postal Code"
