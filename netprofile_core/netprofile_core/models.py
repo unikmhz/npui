@@ -352,7 +352,7 @@ class NPModule(Base):
 		)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 	def get_tree_node(self, req, mod):
 		return {
@@ -444,7 +444,7 @@ class NPVariable(Base):
 			NPVariable._var_map[kwargs['name']] = self
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
@@ -1042,7 +1042,7 @@ class User(Base):
 		self.mod_pw = False
 
 	def __str__(self):
-		return '%s' % str(self.login)
+		return str(self.login)
 
 	@hybrid_property
 	def name_full(self):
@@ -1828,7 +1828,7 @@ class Group(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 	@property
 	def flat_privileges(self):
@@ -2086,7 +2086,7 @@ class Privilege(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.code)
+		return str(self.code)
 
 	def get_acls(self):
 		if (not self.has_acls) or (not self.resource_class):
@@ -2402,7 +2402,7 @@ class UserGroup(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.group)
+		return str(self.group)
 
 class SecurityPolicyOnExpire(DeclEnum):
 	"""
@@ -2861,7 +2861,7 @@ class SecurityPolicy(Base):
 		return True
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 def _sess_nextcheck(req, ts):
 	cfg = req.registry.settings
@@ -2988,7 +2988,7 @@ class CommunicationType(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 	def grid_icon(self, req):
 		icn = self.icon or 'generic'
@@ -3255,7 +3255,7 @@ class UserEmail(Base):
 	)
 
 	def __str__(self):
-		return '%s' % (self.address,)
+		return str(self.address)
 
 	def add_to_vcard(self, card):
 		obj = card.add('email')
@@ -4449,7 +4449,7 @@ class FileFolder(Base):
 		),)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 @event.listens_for(FileFolder.parent_id, 'set', active_history=True)
 def _on_set_ff_parent_id(tgt, value, oldvalue, initiator):
@@ -5402,7 +5402,7 @@ class File(Base):
 		),)
 
 	def __str__(self):
-		return '%s' % str(self.filename)
+		return str(self.filename)
 
 @event.listens_for(File.folder_id, 'set', active_history=True)
 def _on_set_file_folder_id(tgt, value, oldvalue, initiator):
@@ -5884,7 +5884,7 @@ class Tag(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class LogType(Base):
 	"""
@@ -5937,7 +5937,7 @@ class LogType(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class LogAction(Base):
 	"""
@@ -5990,7 +5990,7 @@ class LogAction(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class LogData(Base):
 	"""
@@ -6251,7 +6251,7 @@ class NPSession(Base):
 		return query
 
 	def __str__(self):
-		return '%s' % str(self.session_name)
+		return str(self.session_name)
 
 	def update_time(self, upt=None):
 		if upt is None:
@@ -6581,7 +6581,7 @@ class DataCache(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 _calendar_styles = {
 	1  : '#fa7166',
@@ -6771,7 +6771,7 @@ class Calendar(Base):
 		return (self.global_access == CalendarAccess.read_write)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
@@ -6954,7 +6954,7 @@ class CalendarImport(Base):
 		return self.calendar.name
 
 	def __str__(self):
-		return '%s' % self.real_name
+		return str(self.real_name)
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
@@ -7165,7 +7165,7 @@ class Event(Base):
 		return self.event_end - self.event_start
 
 	def __str__(self):
-		return '%s' % str(self.summary)
+		return str(self.summary)
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
@@ -7369,7 +7369,7 @@ class AddressBook(Base):
 		return (self.global_access == CalendarAccess.read_write)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
@@ -8146,7 +8146,7 @@ class AddressBookCard(Base):
 		),)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 @event.listens_for(AddressBookCard.address_book_id, 'set', active_history=True)
 def _on_set_card_address_book_id(tgt, value, oldvalue, initiator):
