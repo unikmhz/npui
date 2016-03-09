@@ -6418,7 +6418,10 @@ def _set_gs(mapper, conn, tgt):
 			path = name.split('.')
 			if len(path) != 3:
 				raise ValueError('Invalid setting name: %r' % (name,))
-			setting = inst_mm.get_settings('global')[path[0]][path[1]][path[2]]
+			try:
+				setting = inst_mm.get_settings('global')[path[0]][path[1]][path[2]]
+			except KeyError:
+				return
 			global_setting.set(setting.parse_param(tgt.value), name)
 
 def _del_gs(mapper, conn, tgt):
