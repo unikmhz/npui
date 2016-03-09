@@ -63,6 +63,7 @@ from sqlalchemy import (
 	UnicodeText,
 	event,
 	func,
+	or_,
 	text
 )
 
@@ -152,6 +153,7 @@ class City(Base):
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('cityid', 'name', 'prefix'),
 				'grid_hidden'   : ('cityid',),
+				'form_view'     : ('name', 'prefix', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -159,7 +161,6 @@ class City(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'cityid',
 		UInt32(),
@@ -191,6 +192,17 @@ class City(Base):
 			'column_flex'   : 1
 		}
 	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('City description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
 
 	districts = relationship(
 		'District',
@@ -201,7 +213,6 @@ class City(Base):
 
 	streets = relationship(
 		'Street',
-#		backref=backref('city', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
@@ -233,6 +244,7 @@ class District(Base):
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('districtid', 'city', 'name', 'prefix'),
 				'grid_hidden'   : ('districtid',),
+				'form_view'     : ('name', 'prefix', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -240,7 +252,6 @@ class District(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'districtid',
 		UInt32(),
@@ -284,11 +295,26 @@ class District(Base):
 			'column_flex'   : 1
 		}
 	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('District description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
 
 	streets = relationship(
 		'Street',
 		backref='district',
-		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	houses = relationship(
+		'House',
+		backref='district',
 		passive_deletes=True
 	)
 
@@ -320,6 +346,7 @@ class Street(Base):
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('streetid', 'city', 'district', 'name', 'prefix', 'suffix'),
 				'grid_hidden'   : ('streetid',),
+				'form_view'     : ('city', 'district', 'name', 'prefix', 'suffix', 'descr'),
 				'easy_search'   : ('name',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
@@ -327,7 +354,6 @@ class Street(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'streetid',
 		UInt32(),
@@ -354,7 +380,7 @@ class Street(Base):
 	district_id = Column(
 		'districtid',
 		UInt32(),
-		ForeignKey('addr_districts.districtid', name='addr_streets_fk_districtid', ondelete='CASCADE', onupdate='CASCADE'),
+		ForeignKey('addr_districts.districtid', name='addr_streets_fk_districtid', ondelete='SET NULL', onupdate='CASCADE'),
 		Comment('District ID'),
 		nullable=True,
 		default=None,
@@ -394,6 +420,17 @@ class Street(Base):
 			'header_string' : _('Suffix')
 		}
 	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Street description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
 
 	city = relationship(
 		'City',
@@ -424,7 +461,10 @@ class House(Base):
 	def _filter_hgroup(cls, query, value):
 		if not isinstance(value, list):
 			value = [value]
-		return query.join(HouseGroupMapping).filter(HouseGroupMapping.group_id.in_(value))
+		return query.filter(House.id.in_(
+			DBSession().query(HouseGroupMapping.house_id)\
+				.filter(HouseGroupMapping.group_id.in_(value))
+		))
 
 	@classmethod
 	def _filter_address(cls, query, value):
@@ -433,7 +473,10 @@ class House(Base):
 		if 'districtid' in value:
 			val = int(value['districtid'])
 			if val > 0:
-				query = query.filter(Street.district_id == val)
+				query = query.filter(or_(
+					Street.district_id == val,
+					House.district_id == val
+				))
 		elif 'cityid' in value:
 			val = int(value['cityid'])
 			if val > 0:
@@ -444,6 +487,7 @@ class House(Base):
 	__table_args__ = (
 		Comment('Houses'),
 		Index('addr_houses_u_house', 'streetid', 'number', 'num_slash', 'num_suffix', 'building', unique=True),
+		Index('addr_houses_i_districtid', 'districtid'),
 		{
 			'mysql_engine'  : 'InnoDB',
 			'mysql_charset' : 'utf8',
@@ -456,10 +500,23 @@ class House(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Houses'),
-				'default_sort'  : (), # FIXME: NEEDS CUSTOM SORTING
-				'grid_view'     : ('houseid', 'street', 'number', 'num_slash', 'num_suffix', 'building', 'entrnum', 'postindex'),
+				'default_sort'  : (
+					{ 'property' : 'streetid', 'direction' : 'ASC' },
+					{ 'property' : 'number', 'direction' : 'ASC' },
+					{ 'property' : 'num_slash', 'direction' : 'ASC' },
+					{ 'property' : 'num_suffix', 'direction' : 'ASC' },
+					{ 'property' : 'building', 'direction' : 'ASC' }
+				),
+				'grid_view'     : (
+					'houseid',
+					'street', 'number', 'num_slash', 'num_suffix', 'building',
+					'entrnum', 'postindex'
+				),
 				'grid_hidden'   : ('houseid',),
-				'form_view'     : ('street', 'number', 'num_slash', 'num_suffix', 'building', 'house_groups', 'entrnum', 'postindex'),
+				'form_view'     : (
+					'street', 'number', 'num_slash', 'num_suffix', 'building',
+					'district', 'house_groups', 'entrnum', 'postindex', 'descr'
+				),
 				'easy_search'   : ('number',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 				'extra_search'  : (
@@ -482,7 +539,6 @@ class House(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'houseid',
 		UInt32(),
@@ -502,6 +558,20 @@ class House(Base):
 		nullable=False,
 		info={
 			'header_string' : _('Street'),
+			'filter_type'   : 'nplist',
+			'column_flex'   : 1
+		}
+	)
+	district_id = Column(
+		'districtid',
+		UInt32(),
+		ForeignKey('addr_districts.districtid', name='addr_houses_fk_districtid', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('District ID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('District'),
 			'filter_type'   : 'nplist',
 			'column_flex'   : 1
 		}
@@ -570,6 +640,17 @@ class House(Base):
 			'header_string' : _('Postal Code')
 		}
 	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('House description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
 
 	places = relationship(
 		'Place',
@@ -610,7 +691,10 @@ class House(Base):
 			value = flt.get('value', None)
 			if prop == 'districtid':
 				if oper in ('eq', '=', '==', '==='):
-					query = query.filter(Street.district_id == int(value))
+					query = query.filter(or_(
+						House.district_id == int(value),
+						Street.district_id == int(value)
+					))
 			if prop == 'cityid':
 				if oper in ('eq', '=', '==', '==='):
 					query = query.filter(Street.city_id == int(value))
@@ -662,7 +746,7 @@ class Place(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Places'),
-				'default_sort'  : (), # FIXME: SEE HOUSES
+				'default_sort'  : ({ 'property' : 'number', 'direction' : 'ASC' },),
 				'grid_view'     : ('placeid', 'house', 'number', 'name', 'entrance', 'floor', 'descr'),
 				'grid_hidden'   : ('placeid',),
 				'easy_search'   : ('number',),

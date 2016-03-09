@@ -63,7 +63,7 @@ def _dpane_city_districts(tabs, model, req):
 @register_hook('core.dpanetabs.geo.District')
 def _dpane_district_streets(tabs, model, req):
 	loc = req.localizer
-	tabs.append({
+	tabs.extend(({
 		'title'             : loc.translate(_('Streets')),
 		'iconCls'           : 'ico-mod-street',
 		'xtype'             : 'grid_geo_Street',
@@ -72,7 +72,16 @@ def _dpane_district_streets(tabs, model, req):
 		'hideColumns'       : ('district',),
 		'extraParamProp'    : 'districtid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	})
+	}, {
+		'title'             : loc.translate(_('Houses')),
+		'iconCls'           : 'ico-mod-house',
+		'xtype'             : 'grid_geo_House',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('district',),
+		'extraParamProp'    : 'districtid',
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}))
 
 @register_hook('core.dpanetabs.geo.Street')
 def _dpane_street_houses(tabs, model, req):
