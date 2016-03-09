@@ -113,7 +113,7 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='ENTITIES_ACCOUNTSTATE_EDIT',
-				name='Entities: Edit Account State'
+				name=_('Entities: Edit account state')
 			),
 		)
 		for priv in privs:

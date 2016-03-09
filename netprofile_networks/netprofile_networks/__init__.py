@@ -77,47 +77,47 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_NETS',
-				name='Access: Networks'
+				name=_('Menu: Networks')
 			),
 			Privilege(
 				code='NETS_LIST',
-				name='Networks: List'
+				name=_('Networks: List')
 			),
 			Privilege(
 				code='NETS_CREATE',
-				name='Networks: Create'
+				name=_('Networks: Create')
 			),
 			Privilege(
 				code='NETS_EDIT',
-				name='Networks: Edit'
+				name=_('Networks: Edit')
 			),
 			Privilege(
 				code='NETS_DELETE',
-				name='Networks: Delete'
+				name=_('Networks: Delete')
 			),
 			Privilege(
 				code='NETGROUPS_CREATE',
-				name='Networks: Create groups'
+				name=_('Networks: Create groups')
 			),
 			Privilege(
 				code='NETGROUPS_EDIT',
-				name='Networks: Edit groups'
+				name=_('Networks: Edit groups')
 			),
 			Privilege(
 				code='NETGROUPS_DELETE',
-				name='Networks: Delete groups'
+				name=_('Networks: Delete groups')
 			),
 			Privilege(
 				code='NETS_SERVICETYPES_CREATE',
-				name='Networks: Create service types'
+				name=_('Networks: Create service types')
 			),
 			Privilege(
 				code='NETS_SERVICETYPES_EDIT',
-				name='Networks: Edit service types'
+				name=_('Networks: Edit service types')
 			),
 			Privilege(
 				code='NETS_SERVICETYPES_DELETE',
-				name='Networks: Delete service types'
+				name=_('Networks: Delete service types')
 			)
 		)
 		for priv in privs:
@@ -135,27 +135,27 @@ class Module(ModuleBase):
 		nstypes = (
 			models.NetworkServiceType(
 				id=1,
-				name='Name Server'
+				name=_('Name Server')
 			),
 			models.NetworkServiceType(
 				id=2,
-				name='WINS Server'
+				name=_('WINS Server')
 			),
 			models.NetworkServiceType(
 				id=3,
-				name='NTP Server'
+				name=_('NTP Server')
 			),
 			models.NetworkServiceType(
 				id=4,
-				name='Gateway'
+				name=_('Gateway')
 			),
 			models.NetworkServiceType(
 				id=5,
-				name='SLP DA Server'
+				name=_('SLP DA Server')
 			),
 			models.NetworkServiceType(
 				id=6,
-				name='DNSv6 Server'
+				name=_('DNSv6 Server')
 			)
 		)
 

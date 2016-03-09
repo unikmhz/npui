@@ -75,7 +75,7 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_XOP',
-				name='Access: External Operations'
+				name=_('Menu: External operations')
 			),
 		)
 		for priv in privs:

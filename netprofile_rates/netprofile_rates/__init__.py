@@ -99,59 +99,59 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_RATES',
-				name='Access: Rates'
+				name=_('Menu: Rates')
 			),
 			Privilege(
 				code='RATES_LIST',
-				name='Rates: List'
+				name=_('Rates: List')
 			),
 			Privilege(
 				code='RATES_CREATE',
-				name='Rates: Create'
+				name=_('Rates: Create')
 			),
 			Privilege(
 				code='RATES_EDIT',
-				name='Rates: Edit'
+				name=_('Rates: Edit')
 			),
 			Privilege(
 				code='RATES_DELETE',
-				name='Rates: Delete'
+				name=_('Rates: Delete')
 			),
 			Privilege(
 				code='RATES_CLASSES_CREATE',
-				name='Rates: Create classes'
+				name=_('Rates: Create classes')
 			),
 			Privilege(
 				code='RATES_CLASSES_EDIT',
-				name='Rates: Edit classes'
+				name=_('Rates: Edit classes')
 			),
 			Privilege(
 				code='RATES_CLASSES_DELETE',
-				name='Rates: Delete classes'
+				name=_('Rates: Delete classes')
 			),
 			Privilege(
 				code='RATES_DS_CREATE',
-				name='Rates: Create destinations'
+				name=_('Rates: Create destinations')
 			),
 			Privilege(
 				code='RATES_DS_EDIT',
-				name='Rates: Edit destinations'
+				name=_('Rates: Edit destinations')
 			),
 			Privilege(
 				code='RATES_DS_DELETE',
-				name='Rates: Delete destinations'
+				name=_('Rates: Delete destinations')
 			),
 			Privilege(
 				code='RATES_FS_CREATE',
-				name='Rates: Create filters'
+				name=_('Rates: Create filters')
 			),
 			Privilege(
 				code='RATES_FS_EDIT',
-				name='Rates: Edit filters'
+				name=_('Rates: Edit filters')
 			),
 			Privilege(
 				code='RATES_FS_DELETE',
-				name='Rates: Delete filters'
+				name=_('Rates: Delete filters')
 			)
 		)
 		for priv in privs:

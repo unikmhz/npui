@@ -92,67 +92,67 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_ENTITIES',
-				name='Access: Entities'
+				name=_('Menu: Entities')
 			),
 			Privilege(
 				code='ENTITIES_LIST',
-				name='Entities: List'
+				name=_('Entities: List')
 			),
 			Privilege(
 				code='ENTITIES_CREATE',
-				name='Entities: Create'
+				name=_('Entities: Create')
 			),
 			Privilege(
 				code='ENTITIES_EDIT',
-				name='Entities: Edit'
+				name=_('Entities: Edit')
 			),
 			Privilege(
 				code='ENTITIES_DELETE',
-				name='Entities: Delete'
+				name=_('Entities: Delete')
 			),
 			Privilege(
 				code='FILES_ATTACH_2ENTITIES',
-				name='Files: Attach to entities'
+				name=_('Files: Attach to entities')
 			),
 			Privilege(
 				code='ENTITIES_STATES_CREATE',
-				name='Entities: Create states'
+				name=_('Entities: Create states')
 			),
 			Privilege(
 				code='ENTITIES_STATES_EDIT',
-				name='Entities: Edit states'
+				name=_('Entities: Edit states')
 			),
 			Privilege(
 				code='ENTITIES_STATES_DELETE',
-				name='Entities: Delete states'
+				name=_('Entities: Delete states')
 			),
 			Privilege(
 				code='ENTITIES_FLAGTYPES_CREATE',
-				name='Entities: Create flag types'
+				name=_('Entities: Create flag types')
 			),
 			Privilege(
 				code='ENTITIES_FLAGTYPES_EDIT',
-				name='Entities: Edit flag types'
+				name=_('Entities: Edit flag types')
 			),
 			Privilege(
 				code='ENTITIES_FLAGTYPES_DELETE',
-				name='Entities: Delete flag types'
+				name=_('Entities: Delete flag types')
 			),
 			Privilege(
 				code='ENTITIES_COMMENT',
-				name='Entities: Add comments'
+				name=_('Entities: Add comments')
 			),
 			Privilege(
 				code='ENTITIES_COMMENTS_EDIT',
-				name='Entities: Edit comments'
+				name=_('Entities: Edit comments')
 			),
 			Privilege(
 				code='ENTITIES_COMMENTS_DELETE',
-				name='Entities: Delete comments'
+				name=_('Entities: Delete comments')
 			),
 			Privilege(
 				code='ENTITIES_COMMENTS_MARK',
-				name='Entities: Mark comments as obsolete'
+				name=_('Entities: Mark comments as obsolete')
 			),
 		)
 		for priv in privs:

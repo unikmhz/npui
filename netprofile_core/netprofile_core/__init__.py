@@ -168,7 +168,6 @@ class Module(ModuleBase):
 		if not vpair.is_install:
 			return
 
-		# FIXME: localization
 		log = (
 			LogAction(id=1, name='Created'),
 			LogAction(id=2, name='Edited'),
@@ -200,183 +199,183 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_ADMIN',
-				name='Access: Administrative Tasks'
+				name=_('Menu: Administrative tasks')
 			),
 			Privilege(
 				code='BASE_USERS',
-				name='Access: Users'
+				name=_('Menu: Users')
 			),
 			Privilege(
 				code='BASE_GROUPS',
-				name='Access: Groups'
+				name=_('Menu: Groups')
 			),
 			Privilege(
 				code='BASE_FILES',
-				name='Access: Files'
+				name=_('Menu: Files')
 			),
 			Privilege(
 				code='ADMIN_SETTINGS',
-				name='Administrative: Settings'
+				name=_('Administrative: Settings')
 			),
 			Privilege(
 				code='ADMIN_SECURITY',
-				name='Administrative: Security'
+				name=_('Administrative: Security')
 			),
 			Privilege(
 				code='ADMIN_MODULES',
-				name='Administrative: Modules'
+				name=_('Administrative: Modules')
 			),
 			Privilege(
 				code='ADMIN_DB',
-				name='Administrative: Database Ops'
+				name=_('Administrative: Database ops')
 			),
 			Privilege(
 				code='ADMIN_VFS',
-				name='Administrative: File System'
+				name=_('Administrative: File system')
 			),
 			Privilege(
 				code='ADMIN_DEV',
-				name='Administrative: Development'
+				name=_('Administrative: Development')
 			),
 			Privilege(
 				code='ADMIN_AUDIT',
-				name='Administrative: Audit Log'
+				name=_('Administrative: Audit log')
 			),
 			Privilege(
 				code='USERS_LIST',
-				name='Users: List'
+				name=_('Users: List')
 			),
 			Privilege(
 				code='USERS_CREATE',
-				name='Users: Create',
+				name=_('Users: Create'),
 				has_acls=True,
 				resource_class='NPGroup'
 			),
 			Privilege(
 				code='USERS_EDIT',
-				name='Users: Edit',
+				name=_('Users: Edit'),
 				has_acls=True,
 				resource_class='NPGroup'
 			),
 			Privilege(
 				code='USERS_DELETE',
-				name='Users: Delete',
+				name=_('Users: Delete'),
 				has_acls=True,
 				resource_class='NPGroup'
 			),
 			Privilege(
 				code='USERS_GETCAP',
-				name='Users: Display Capabilities'
+				name=_('Users: Display capabilities')
 			),
 			Privilege(
 				code='USERS_SETCAP',
-				name='Users: Modify Capabilities',
+				name=_('Users: Modify capabilities'),
 				has_acls=True,
 				resource_class='NPGroup'
 			),
 			Privilege(
 				code='USERS_GETACL',
-				name='Users: Display ACLs'
+				name=_('Users: Display ACLs')
 			),
 			Privilege(
 				code='USERS_SETACL',
-				name='Users: Set ACLs',
+				name=_('Users: Set ACLs'),
 				has_acls=True,
 				resource_class='NPUser'
 			),
 			Privilege(
 				code='GROUPS_LIST',
-				name='Groups: List'
+				name=_('Groups: List')
 			),
 			Privilege(
 				code='GROUPS_CREATE',
-				name='Groups: Create',
+				name=_('Groups: Create'),
 				has_acls=True,
 				resource_class='NPGroup'
 			),
 			Privilege(
 				code='GROUPS_EDIT',
-				name='Groups: Edit',
+				name=_('Groups: Edit'),
 				has_acls=True,
 				resource_class='NPGroup'
 			),
 			Privilege(
 				code='GROUPS_DELETE',
-				name='Groups: Delete',
+				name=_('Groups: Delete'),
 				has_acls=True,
 				resource_class='NPGroup'
 			),
 			Privilege(
 				code='GROUPS_GETCAP',
-				name='Groups: Display Capabilities'
+				name=_('Groups: Display capabilities')
 			),
 			Privilege(
 				code='GROUPS_SETCAP',
-				name='Groups: Modify Capabilities',
+				name=_('Groups: Modify capabilities'),
 				has_acls=True,
 				resource_class='NPGroup'
 			),
 			Privilege(
 				code='GROUPS_GETACL',
-				name='Groups: Display ACLs'
+				name=_('Groups: Display ACLs')
 			),
 			Privilege(
 				code='GROUPS_SETACL',
-				name='Groups: Set ACLs',
+				name=_('Groups: Set ACLs'),
 				has_acls=True,
 				resource_class='NPGroup'
 			),
 			Privilege(
 				code='FILES_LIST',
-				name='Files: List'
+				name=_('Files: List')
 			),
 			Privilege(
 				code='FILES_SHOWALL',
-				name='Files: Full Access'
+				name=_('Files: Full access')
 			),
 			Privilege(
 				code='FILES_UPLOAD',
-				name='Files: Upload'
+				name=_('Files: Upload')
 			),
 			Privilege(
 				code='FILES_DELETE',
-				name='Files: Delete'
+				name=_('Files: Delete')
 			),
 			Privilege(
 				code='FILES_EDIT',
-				name='Files: Edit'
+				name=_('Files: Edit')
 			),
 			Privilege(
 				code='PRIVILEGES_LIST',
-				name='Privileges: List'
+				name=_('Privileges: List')
 			),
 			Privilege(
 				code='PRIVILEGES_CREATE',
-				name='Privileges: Create'
+				name=_('Privileges: Create')
 			),
 			Privilege(
 				code='PRIVILEGES_EDIT',
-				name='Privileges: Edit'
+				name=_('Privileges: Edit')
 			),
 			Privilege(
 				code='PRIVILEGES_DELETE',
-				name='Privileges: Delete'
+				name=_('Privileges: Delete')
 			),
 			Privilege(
 				code='SECPOL_LIST',
-				name='Security Policies: List'
+				name=_('Security Policies: List')
 			),
 			Privilege(
 				code='SECPOL_CREATE',
-				name='Security Policies: Create'
+				name=_('Security Policies: Create')
 			),
 			Privilege(
 				code='SECPOL_EDIT',
-				name='Security Policies: Edit'
+				name=_('Security Policies: Edit')
 			),
 			Privilege(
 				code='SECPOL_DELETE',
-				name='Security Policies: Delete'
+				name=_('Security Policies: Delete')
 			)
 		)
 		for priv in privs:

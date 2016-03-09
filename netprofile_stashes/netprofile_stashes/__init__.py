@@ -107,75 +107,75 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_STASHES',
-				name='Access: Stashes'
+				name=_('Menu: Stashes')
 			),
 			Privilege(
 				code='STASHES_LIST',
-				name='Stashes: List'
+				name=_('Stashes: List')
 			),
 			Privilege(
 				code='STASHES_CREATE',
-				name='Stashes: Create'
+				name=_('Stashes: Create')
 			),
 			Privilege(
 				code='STASHES_EDIT',
-				name='Stashes: Edit'
+				name=_('Stashes: Edit')
 			),
 			Privilege(
 				code='STASHES_DELETE',
-				name='Stashes: Delete'
+				name=_('Stashes: Delete')
 			),
 			Privilege(
 				code='STASHES_IO',
-				name='Stashes: Operations'
+				name=_('Stashes: Operations')
 			),
 			Privilege(
 				code='STASHES_IOTYPES_CREATE',
-				name='Stashes: Create op. types'
+				name=_('Stashes: Create op. types')
 			),
 			Privilege(
 				code='STASHES_IOTYPES_EDIT',
-				name='Stashes: Edit op. types'
+				name=_('Stashes: Edit op. types')
 			),
 			Privilege(
 				code='STASHES_IOTYPES_DELETE',
-				name='Stashes: Delete op. types'
+				name=_('Stashes: Delete op. types')
 			),
 			Privilege(
 				code='STASHES_CURRENCIES_CREATE',
-				name='Stashes: Create currencies'
+				name=_('Stashes: Create currencies')
 			),
 			Privilege(
 				code='STASHES_CURRENCIES_EDIT',
-				name='Stashes: Edit currencies'
+				name=_('Stashes: Edit currencies')
 			),
 			Privilege(
 				code='STASHES_CURRENCIES_DELETE',
-				name='Stashes: Delete currencies'
+				name=_('Stashes: Delete currencies')
 			),
 			Privilege(
 				code='BASE_FUTURES',
-				name='Access: Promised payments'
+				name=_('Menu: Promised payments')
 			),
 			Privilege(
 				code='FUTURES_LIST',
-				name='Promised payments: List'
+				name=_('Promised payments: List')
 			),
 			Privilege(
 				code='FUTURES_CREATE',
-				name='Promised payments: Create'
+				name=_('Promised payments: Create')
 			),
 			Privilege(
 				code='FUTURES_EDIT',
-				name='Promised payments: Edit'
+				name=_('Promised payments: Edit')
 			),
 			Privilege(
 				code='FUTURES_APPROVE',
-				name='Promised payments: Approve'
+				name=_('Promised payments: Approve')
 			),
 			Privilege(
 				code='FUTURES_CANCEL',
-				name='Promised payments: Cancel'
+				name=_('Promised payments: Cancel')
 			)
 		)
 		for priv in privs:

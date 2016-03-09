@@ -63,39 +63,39 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_DOCUMENTS',
-				name='Access: Documents'
+				name=_('Menu: Documents')
 			),
 			Privilege(
 				code='DOCUMENTS_LIST',
-				name='Documents: List'
+				name=_('Documents: List')
 			),
 			Privilege(
 				code='DOCUMENTS_CREATE',
-				name='Documents: Create'
+				name=_('Documents: Create')
 			),
 			Privilege(
 				code='DOCUMENTS_EDIT',
-				name='Documents: Edit'
+				name=_('Documents: Edit')
 			),
 			Privilege(
 				code='DOCUMENTS_DELETE',
-				name='Documents: Delete'
+				name=_('Documents: Delete')
 			),
 			Privilege(
 				code='DOCUMENTS_GENERATE',
-				name='Documents: Generate'
+				name=_('Documents: Generate')
 			),
 			Privilege(
 				code='DOCUMENTS_BUNDLES_CREATE',
-				name='Documents: Create Bundles'
+				name=_('Documents: Create bundles')
 			),
 			Privilege(
 				code='DOCUMENTS_BUNDLES_EDIT',
-				name='Documents: Edit Bundles'
+				name=_('Documents: Edit bundles')
 			),
 			Privilege(
 				code='DOCUMENTS_BUNDLES_DELETE',
-				name='Documents: Delete Bundles'
+				name=_('Documents: Delete bundles')
 			)
 		)
 		for priv in privs:

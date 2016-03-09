@@ -96,148 +96,148 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_TICKETS',
-				name='Access: Tickets'
+				name=_('Menu: Tickets')
 			),
 			Privilege(
 				code='TICKETS_LIST',
-				name='Tickets: List'
+				name=_('Tickets: List')
 			),
 			Privilege(
 				code='TICKETS_LIST_ARCHIVED',
-				name='Tickets: List archived'
+				name=_('Tickets: List archived')
 			),
 			Privilege(
 				code='TICKETS_CREATE',
-				name='Tickets: Create'
+				name=_('Tickets: Create')
 			),
 			Privilege(
 				code='TICKETS_UPDATE',
-				name='Tickets: Update'
+				name=_('Tickets: Update')
 			),
 			Privilege(
 				code='TICKETS_COMMENT',
-				name='Tickets: Comment'
+				name=_('Tickets: Comment')
 			),
 			Privilege(
 				code='TICKETS_ARCHIVAL',
-				name='Tickets: Archival'
+				name=_('Tickets: Archival')
 			),
 			Privilege(
 				code='TICKETS_DIRECT',
-				name='Tickets: Direct access',
+				name=_('Tickets: Direct access'),
 				can_be_set=False
 			),
 			Privilege(
 				code='TICKETS_OWN_LIST',
-				name='Tickets: List assigned to user'
+				name=_('Tickets: List assigned to user')
 			),
 			Privilege(
 				code='TICKETS_OWNGROUP_LIST',
-				name='Tickets: List assigned to group'
+				name=_('Tickets: List assigned to group')
 			),
 			Privilege(
 				code='TICKETS_CHANGE_DATE',
-				name='Tickets: Change date'
+				name=_('Tickets: Change date')
 			),
 			Privilege(
 				code='TICKETS_CHANGE_UID',
-				name='Tickets: Change assigned user'
+				name=_('Tickets: Change assigned user')
 			),
 			Privilege(
 				code='TICKETS_CHANGE_GID',
-				name='Tickets: Change assigned group'
+				name=_('Tickets: Change assigned group')
 			),
 			Privilege(
 				code='TICKETS_CHANGE_STATE',
-				name='Tickets: Change state'
+				name=_('Tickets: Change state')
 			),
 			Privilege(
 				code='TICKETS_CHANGE_FLAGS',
-				name='Tickets: Change flags'
+				name=_('Tickets: Change flags')
 			),
 			Privilege(
 				code='TICKETS_CHANGE_ENTITY',
-				name='Tickets: Change entity'
+				name=_('Tickets: Change entity')
 			),
 			Privilege(
 				code='TICKETS_DEPENDENCIES',
-				name='Tickets: Edit dependencies'
+				name=_('Tickets: Edit dependencies')
 			),
 			Privilege(
 				code='FILES_ATTACH_2TICKETS',
-				name='Files: Attach to tickets'
+				name=_('Files: Attach to tickets')
 			),
 			Privilege(
 				code='TICKETS_STATES_CREATE',
-				name='Tickets: Create states'
+				name=_('Tickets: Create states')
 			),
 			Privilege(
 				code='TICKETS_STATES_EDIT',
-				name='Tickets: Edit states'
+				name=_('Tickets: Edit states')
 			),
 			Privilege(
 				code='TICKETS_STATES_DELETE',
-				name='Tickets: Delete states'
+				name=_('Tickets: Delete states')
 			),
 			Privilege(
 				code='TICKETS_FLAGTYPES_CREATE',
-				name='Tickets: Create flag types'
+				name=_('Tickets: Create flag types')
 			),
 			Privilege(
 				code='TICKETS_FLAGTYPES_EDIT',
-				name='Tickets: Edit flag types'
+				name=_('Tickets: Edit flag types')
 			),
 			Privilege(
 				code='TICKETS_FLAGTYPES_DELETE',
-				name='Tickets: Delete flag types'
+				name=_('Tickets: Delete flag types')
 			),
 			Privilege(
 				code='TICKETS_ORIGINS_CREATE',
-				name='Tickets: Create origins'
+				name=_('Tickets: Create origins')
 			),
 			Privilege(
 				code='TICKETS_ORIGINS_EDIT',
-				name='Tickets: Edit origins'
+				name=_('Tickets: Edit origins')
 			),
 			Privilege(
 				code='TICKETS_ORIGINS_DELETE',
-				name='Tickets: Delete origins'
+				name=_('Tickets: Delete origins')
 			),
 			Privilege(
 				code='TICKETS_TRANSITIONS_CREATE',
-				name='Tickets: Create transitions'
+				name=_('Tickets: Create transitions')
 			),
 			Privilege(
 				code='TICKETS_TRANSITIONS_EDIT',
-				name='Tickets: Edit transitions'
+				name=_('Tickets: Edit transitions')
 			),
 			Privilege(
 				code='TICKETS_TRANSITIONS_DELETE',
-				name='Tickets: Delete transitions'
+				name=_('Tickets: Delete transitions')
 			),
 			Privilege(
 				code='TICKETS_TEMPLATES_CREATE',
-				name='Tickets: Create templates'
+				name=_('Tickets: Create templates')
 			),
 			Privilege(
 				code='TICKETS_TEMPLATES_EDIT',
-				name='Tickets: Edit templates'
+				name=_('Tickets: Edit templates')
 			),
 			Privilege(
 				code='TICKETS_TEMPLATES_DELETE',
-				name='Tickets: Delete templates'
+				name=_('Tickets: Delete templates')
 			),
 			Privilege(
 				code='TICKETS_SCHEDULES_CREATE',
-				name='Tickets: Create schedules'
+				name=_('Tickets: Create schedules')
 			),
 			Privilege(
 				code='TICKETS_SCHEDULES_EDIT',
-				name='Tickets: Edit schedules'
+				name=_('Tickets: Edit schedules')
 			),
 			Privilege(
 				code='TICKETS_SCHEDULES_DELETE',
-				name='Tickets: Delete schedules'
+				name=_('Tickets: Delete schedules')
 			)
 		)
 		for priv in privs:
@@ -255,23 +255,23 @@ class Module(ModuleBase):
 		origins = (
 			TicketOrigin(
 				id=1,
-				name='Operator',
-				description='Added manually via an administrative UI.'
+				name=_('Operator'),
+				description=_('Added manually via an administrative UI.')
 			),
 			TicketOrigin(
 				id=2,
-				name='Via site',
-				description='Added via client portal.'
+				name=_('Via site'),
+				description=_('Added via client portal.')
 			),
 			TicketOrigin(
 				id=3,
-				name='Via e-mail',
-				description='Added via incoming e-mail message.'
+				name=_('Via e-mail'),
+				description=_('Added via incoming e-mail message.')
 			),
 			TicketOrigin(
 				id=4,
-				name='Via voicemail',
-				description='Added via incoming voicemail message.'
+				name=_('Via voicemail'),
+				description=_('Added via incoming voicemail message.')
 			)
 		)
 
@@ -281,23 +281,23 @@ class Module(ModuleBase):
 		chfields = (
 			TicketChangeField(
 				id=1,
-				name='User'
+				name=_('User')
 			),
 			TicketChangeField(
 				id=2,
-				name='Group'
+				name=_('Group')
 			),
 			TicketChangeField(
 				id=3,
-				name='Time'
+				name=_('Time')
 			),
 			TicketChangeField(
 				id=4,
-				name='Archived'
+				name=_('Archived')
 			),
 			TicketChangeField(
 				id=5,
-				name='Entity'
+				name=_('Entity')
 			)
 		)
 

@@ -89,35 +89,35 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_PAIDSERVICES',
-				name='Access: Paid Services'
+				name=_('Menu: Paid services')
 			),
 			Privilege(
 				code='PAIDSERVICES_LIST',
-				name='Paid Services: List'
+				name=_('Paid Services: List')
 			),
 			Privilege(
 				code='PAIDSERVICES_CREATE',
-				name='Paid Services: Create'
+				name=_('Paid Services: Create')
 			),
 			Privilege(
 				code='PAIDSERVICES_EDIT',
-				name='Paid Services: Edit'
+				name=_('Paid Services: Edit')
 			),
 			Privilege(
 				code='PAIDSERVICES_DELETE',
-				name='Paid Services: Delete'
+				name=_('Paid Services: Delete')
 			),
 			Privilege(
 				code='PAIDSERVICETYPES_CREATE',
-				name='Paid Services: Create types'
+				name=_('Paid Services: Create types')
 			),
 			Privilege(
 				code='PAIDSERVICETYPES_EDIT',
-				name='Paid Services: Edit types'
+				name=_('Paid Services: Edit types')
 			),
 			Privilege(
 				code='PAIDSERVICETYPES_DELETE',
-				name='Paid Services: Delete types'
+				name=_('Paid Services: Delete types')
 			)
 		)
 		for priv in privs:

@@ -91,23 +91,23 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_GEO',
-				name='Access: Addresses'
+				name=_('Menu: Addresses')
 			),
 			Privilege(
 				code='GEO_LIST',
-				name='Addresses: List'
+				name=_('Addresses: List')
 			),
 			Privilege(
 				code='GEO_CREATE',
-				name='Addresses: Create'
+				name=_('Addresses: Create')
 			),
 			Privilege(
 				code='GEO_EDIT',
-				name='Addresses: Edit'
+				name=_('Addresses: Edit')
 			),
 			Privilege(
 				code='GEO_DELETE',
-				name='Addresses: Delete'
+				name=_('Addresses: Delete')
 			)
 		)
 		for priv in privs:

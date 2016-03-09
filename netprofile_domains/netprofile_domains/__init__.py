@@ -90,35 +90,35 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_DOMAINS',
-				name='Access: Domains'
+				name=_('Menu: Domains')
 			),
 			Privilege(
 				code='DOMAINS_LIST',
-				name='Domains: List'
+				name=_('Domains: List')
 			),
 			Privilege(
 				code='DOMAINS_CREATE',
-				name='Domains: Create'
+				name=_('Domains: Create')
 			),
 			Privilege(
 				code='DOMAINS_EDIT',
-				name='Domains: Edit'
+				name=_('Domains: Edit')
 			),
 			Privilege(
 				code='DOMAINS_DELETE',
-				name='Domains: Delete'
+				name=_('Domains: Delete')
 			),
 			Privilege(
 				code='DOMAINS_SERVICETYPES_CREATE',
-				name='Domains: Create service types'
+				name=_('Domains: Create service types')
 			),
 			Privilege(
 				code='DOMAINS_SERVICETYPES_EDIT',
-				name='Domains: Edit service types'
+				name=_('Domains: Edit service types')
 			),
 			Privilege(
 				code='DOMAINS_SERVICETYPES_DELETE',
-				name='Domains: Delete service types'
+				name=_('Domains: Delete service types')
 			)
 		)
 		for priv in privs:
@@ -136,27 +136,27 @@ class Module(ModuleBase):
 		dstypes = (
 			models.DomainServiceType(
 				id=1,
-				name='Primary Name Server',
+				name=_('Primary Name Server'),
 				unique=True
 			),
 			models.DomainServiceType(
 				id=2,
-				name='Secondary Name Server',
+				name=_('Secondary Name Server'),
 				unique=False
 			),
 			models.DomainServiceType(
 				id=3,
-				name='Primary Mail Server',
+				name=_('Primary Mail Server'),
 				unique=True
 			),
 			models.DomainServiceType(
 				id=4,
-				name='Secondary Mail Server',
+				name=_('Secondary Mail Server'),
 				unique=False
 			),
 			models.DomainServiceType(
 				id=5,
-				name='Default Host',
+				name=_('Default Host'),
 				unique=False
 			)
 		)

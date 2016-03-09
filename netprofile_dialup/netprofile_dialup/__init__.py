@@ -63,35 +63,35 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='NAS_LIST',
-				name='NASes: List'
+				name=_('NASes: List')
 			),
 			Privilege(
 				code='NAS_CREATE',
-				name='NASes: Create'
+				name=_('NASes: Create')
 			),
 			Privilege(
 				code='NAS_EDIT',
-				name='NASes: Edit'
+				name=_('NASes: Edit')
 			),
 			Privilege(
 				code='NAS_DELETE',
-				name='NASes: Delete'
+				name=_('NASes: Delete')
 			),
 			Privilege(
 				code='IPPOOLS_LIST',
-				name='IP Pools: List'
+				name=_('IP Pools: List')
 			),
 			Privilege(
 				code='IPPOOLS_CREATE',
-				name='IP Pools: Create'
+				name=_('IP Pools: Create')
 			),
 			Privilege(
 				code='IPPOOLS_EDIT',
-				name='IP Pools: Edit'
+				name=_('IP Pools: Edit')
 			),
 			Privilege(
 				code='IPPOOLS_DELETE',
-				name='IP Pools: Delete'
+				name=_('IP Pools: Delete')
 			)
 		)
 		for priv in privs:

@@ -102,103 +102,103 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_DEVICES',
-				name='Access: Devices'
+				name=_('Menu: Devices')
 			),
 			Privilege(
 				code='DEVICES_LIST',
-				name='Devices: List'
+				name=_('Devices: List')
 			),
 			Privilege(
 				code='DEVICES_CREATE',
-				name='Devices: Create'
+				name=_('Devices: Create')
 			),
 			Privilege(
 				code='DEVICES_EDIT',
-				name='Devices: Edit'
+				name=_('Devices: Edit')
 			),
 			Privilege(
 				code='DEVICES_DELETE',
-				name='Devices: Delete'
+				name=_('Devices: Delete')
 			),
 			Privilege(
 				code='DEVICES_PASSWORDS',
-				name='Devices: Access to passwords'
+				name=_('Devices: Access to passwords')
 			),
 			Privilege(
 				code='FILES_ATTACH_2DEVICETYPES',
-				name='Files: Attach to devices'
+				name=_('Files: Attach to devices')
 			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_CREATE',
-				name='Devices: Create flags'
+				name=_('Devices: Create flags')
 			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_EDIT',
-				name='Devices: Edit flags'
+				name=_('Devices: Edit flags')
 			),
 			Privilege(
 				code='DEVICES_FLAGTYPES_DELETE',
-				name='Devices: Delete flags'
+				name=_('Devices: Delete flags')
 			),
 
 			Privilege(
 				code='DEVICETYPES_FLAGTYPES_CREATE',
-				name='Devices: Create device type flags'
+				name=_('Devices: Create device type flags')
 			),
 			Privilege(
 				code='DEVICETYPES_FLAGTYPES_EDIT',
-				name='Devices: Edit device type flags'
+				name=_('Devices: Edit device type flags')
 			),
 			Privilege(
 				code='DEVICETYPES_FLAGTYPES_DELETE',
-				name='Devices: Delete device type flags'
+				name=_('Devices: Delete device type flags')
 			),
 
 			Privilege(
 				code='DEVICETYPES_MANUFACTURERS_CREATE',
-				name='Devices: Create manufacturers'
+				name=_('Devices: Create manufacturers')
 			),
 			Privilege(
 				code='DEVICETYPES_MANUFACTURERS_EDIT',
-				name='Devices: Edit manufacturers'
+				name=_('Devices: Edit manufacturers')
 			),
 			Privilege(
 				code='DEVICETYPES_MANUFACTURERS_DELETE',
-				name='Devices: Delete manufacturers'
+				name=_('Devices: Delete manufacturers')
 			),
 
 			Privilege(
 				code='DEVICETYPES_LIST',
-				name='Devices: List types'
+				name=_('Devices: List types')
 			),
 			Privilege(
 				code='DEVICETYPES_CREATE',
-				name='Devices: Create types'
+				name=_('Devices: Create types')
 			),
 			Privilege(
 				code='DEVICETYPES_EDIT',
-				name='Devices: Edit types'
+				name=_('Devices: Edit types')
 			),
 			Privilege(
 				code='DEVICETYPES_DELETE',
-				name='Devices: Delete types'
+				name=_('Devices: Delete types')
 			),
 
 			Privilege(
 				code='DEVICETYPES_CATEGORIES_CREATE',
-				name='Devices: Create categories'
+				name=_('Devices: Create categories')
 			),
 			Privilege(
 				code='DEVICETYPES_CATEGORIES_EDIT',
-				name='Devices: Edit categories'
+				name=_('Devices: Edit categories')
 			),
 			Privilege(
 				code='DEVICETYPES_CATEGORIES_DELETE',
-				name='Devices: Delete categories'
+				name=_('Devices: Delete categories')
 			),
 			Privilege(
 				code='HOSTS_PROBE',
-				name='Devices: Probe hosts'
+				name=_('Devices: Probe hosts')
 			)
 		)
 		for priv in privs:

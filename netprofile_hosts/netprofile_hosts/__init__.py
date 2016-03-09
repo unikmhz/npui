@@ -99,67 +99,67 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_HOSTS',
-				name='Access: Hosts'
+				name=_('Menu: Hosts')
 			),
 			Privilege(
 				code='HOSTS_LIST',
-				name='Host: List'
+				name=_('Host: List')
 			),
 			Privilege(
 				code='HOSTS_CREATE',
-				name='Hosts: Create'
+				name=_('Hosts: Create')
 			),
 			Privilege(
 				code='HOSTS_EDIT',
-				name='Hosts: Edit'
+				name=_('Hosts: Edit')
 			),
 			Privilege(
 				code='HOSTS_DELETE',
-				name='Hosts: Delete'
+				name=_('Hosts: Delete')
 			),
 			Privilege(
 				code='HOSTS_GROUPS_CREATE',
-				name='Hosts: Create groups'
+				name=_('Hosts: Create groups')
 			),
 			Privilege(
 				code='HOSTS_GROUPS_EDIT',
-				name='Hosts: Edit groups'
+				name=_('Hosts: Edit groups')
 			),
 			Privilege(
 				code='HOSTS_GROUPS_DELETE',
-				name='Hosts: Delete groups'
+				name=_('Hosts: Delete groups')
 			),
 			Privilege(
 				code='BASE_SERVICES',
-				name='Access: Services'
+				name=_('Menu: Services')
 			),
 			Privilege(
 				code='SERVICES_LIST',
-				name='Services: List'
+				name=_('Services: List')
 			),
 			Privilege(
 				code='SERVICES_CREATE',
-				name='Services: Create'
+				name=_('Services: Create')
 			),
 			Privilege(
 				code='SERVICES_EDIT',
-				name='Services: Edit'
+				name=_('Services: Edit')
 			),
 			Privilege(
 				code='SERVICES_DELETE',
-				name='Services: Delete'
+				name=_('Services: Delete')
 			),
 			Privilege(
 				code='SERVICES_TYPES_CREATE',
-				name='Services: Create types'
+				name=_('Services: Create types')
 			),
 			Privilege(
 				code='SERVICES_TYPES_EDIT',
-				name='Services: Edit types'
+				name=_('Services: Edit types')
 			),
 			Privilege(
 				code='SERVICES_TYPES_DELETE',
-				name='Services: Delete types'
+				name=_('Services: Delete types')
 			)
 		)
 		for priv in privs:
@@ -180,23 +180,24 @@ class Module(ModuleBase):
 			('ftp', 'File Transfer Protocol', 'tcp', 21, 21, 'fsp, fspd, fxp'),
 			('ftp-data', 'File Transfer Protocol Data Stream', 'tcp', 20, 20, 'fsp-data,fspd-data,fxp-data'),
 			('imap', 'Internet Message Access Protocol', 'tcp', 143, 143, 'imap2'),
-			('imaps', 'Internet Message Access Protocol over SSL', 'tcp', 993, 993, 'imap2s,simap'),
+			('imaps', 'Internet Message Access Protocol over SSL/TLS', 'tcp', 993, 993, 'imap2s,simap'),
 			('nntp', 'Network News Transfer Protocol', 'tcp', 119, 119, 'readnews,untp'),
-			('nntps', 'Network News Transfer Protocol over SSL', 'tcp', 563, 563, 'untps,snntp'),
+			('nntps', 'Network News Transfer Protocol over SSL/TLS', 'tcp', 563, 563, 'untps,snntp'),
 			('pop3', 'Post Office Protocol version 3', 'tcp', 110, 110, 'pop-3'),
-			('pop3s', 'Post Office Protocol version 3 over SSL', 'tcp', 995, 995, 'spop3,pop-3s'),
+			('pop3s', 'Post Office Protocol version 3 over SSL/TLS', 'tcp', 995, 995, 'spop3,pop-3s'),
 			('pptp', 'Point-to-Point Tunneling Protocol', 'tcp', 1723, 1723, 'pptpd'),
 			('smtp', 'Simple Mail Transfer Protocol', 'tcp', 25, 25, 'mail'),
-			('smtps', 'Simple Mail Transfer Protocol over SSL', 'tcp', 465, 465, 'ssmtp,smail,mails'),
+			('smtps', 'Simple Mail Transfer Protocol over SSL/TLS', 'tcp', 465, 465, 'ssmtp,smail,mails'),
+			('submission', 'Message Submission Agent', 'tcp', 587, 587, None),
 			('http', 'Hypertext Transfer Protocol', 'tcp', 80, 80, 'www,www-http,http-www'),
-			('https', 'Hypertext Transfer Protocol over SSL', 'tcp', 443, 443, 'www-https,https-www'),
+			('https', 'Hypertext Transfer Protocol over SSL/TLS', 'tcp', 443, 443, 'www-https,https-www'),
 			('ircd', 'Internet Relay Chat', 'tcp', 6667, 6667, None),
 			('ssh', 'Secure Shell', 'tcp', 22, 22, None),
 			('telnet', 'Telnet Service', 'tcp', 23, 23, 'telnetd'),
 			('kerberos', 'Kerberos Auth Service', 'tcp', 88, 88, 'kerberos5,krb5'),
 			('kerberos', 'Kerberos Auth Service', 'udp', 88, 88, 'kerberos5, krb5'),
 			('ldap', 'Lightweight Directory Access Protocol', 'tcp', 389, 389, 'nds'),
-			('ldaps', 'Lightweight Directory Access Protocol over SSL', 'tcp', 636, 636, 'sldap,ndss,snds'),
+			('ldaps', 'Lightweight Directory Access Protocol over SSL/TLS', 'tcp', 636, 636, 'sldap,ndss,snds'),
 			('kerberos-master', 'Kerberos Master Auth Service', 'udp', 88, 88, 'kerberos5-master,krb5-master'),
 			('kerberos-adm', 'Kerberos Administration Service', 'tcp', 749, 749, 'kerberos5-adm,krb5-adm'),
 			('kpasswd', 'Kerberos Master Passwd Service', 'udp', 464, 464, 'kpwd'),
@@ -226,7 +227,7 @@ class Module(ModuleBase):
 			('jabber', 'Jabber IM Service', 'tcp', 5269, 5269, None),
 			('xmpp-server', 'Jabber XMPP Protocol Server', 'tcp', 5269, 5269, None),
 			('xmpp-client', 'Jabber XMPP Protocol Client', 'tcp', 5222, 5222, None),
-			('xmpp-client-ssl', 'Jabber XMPP Protocol Client over SSL', 'tcp', 5223, 5223, None),
+			('xmpp-client-ssl', 'Jabber XMPP Protocol Client over SSL/TLS', 'tcp', 5223, 5223, None),
 			('radius', 'RADIUS Service', 'tcp', 1812, 1812, None),
 			('radius', 'RADIUS Service', 'udp', 1812, 1812, None),
 			('radius-acct', 'RADIUS Accounting Service', 'tcp', 1813, 1813, 'radacct'),
@@ -266,9 +267,9 @@ class Module(ModuleBase):
 			('ipp', 'Internet Printing Protocol', 'udp', 631, 631, None),
 			('rsync', 'RSYNC Service', 'tcp', 873, 873, None),
 			('rsync', 'RSYNC Service', 'udp', 873, 873, None),
-			('ftps', 'File Transfer Protocol over SSL', 'tcp', 990, 990, None),
-			('ftps-data', 'File Transfer Protocol Data Stream over SSL', 'tcp', 989, 989, None),
-			('telnets', 'Telnet Service over SSL', 'tcp', 992, 992, 'stelnet'),
+			('ftps', 'File Transfer Protocol over SSL/TLS', 'tcp', 990, 990, None),
+			('ftps-data', 'File Transfer Protocol Data Stream over SSL/TLS', 'tcp', 989, 989, None),
+			('telnets', 'Telnet Service over SSL/TLS', 'tcp', 992, 992, 'stelnet'),
 			('socks', 'Socks Proxy Server', 'tcp', 1080, 1080, None),
 			('socks', 'Socks Proxy Server', 'udp', 1080, 1080, None),
 			('openvpn', 'OpenVPN Service', 'tcp', 1194, 1194, 'open-vpn'),
@@ -285,7 +286,29 @@ class Module(ModuleBase):
 			('xgrid', 'Mac OS X Server Xgrid', 'tcp', 4111, 4111, None),
 			('xgrid', 'Mac OS X Server Xgrid', 'udp', 4111, 4111, None),
 			('mdns', 'Multicast DNS', 'udp', 5353, 5353, None),
-			('mdnsresponder', 'Multicast DNS Responder IPC', 'udp', 5354, 5354, None)
+			('mdnsresponder', 'Multicast DNS Responder IPC', 'udp', 5354, 5354, None),
+			('sip', 'Session Initiation Protocol', 'tcp', 5060, 5060, None),
+			('sip', 'Session Initiation Protocol', 'udp', 5060, 5060, None),
+			('sip', 'Session Initiation Protocol', 'sctp', 5060, 5060, None),
+			('sip', 'Session Initiation Protocol', 'tls', 443, 443, None),
+			('sips', 'Session Initiation Protocol over SSL/TLS', 'tcp', 5061, 5061, None),
+			('sips', 'Session Initiation Protocol over SSL/TLS', 'udp', 5061, 5061, None),
+			('sips', 'Session Initiation Protocol over SSL/TLS', 'sctp', 5061, 5061, None),
+			('sipinternal', 'SIP for internal OCS clients', 'tcp', 5060, 5060, None),
+			('sipinternaltls', 'SIP for internal OCS clients over SSL/TLS', 'tcp', 5061, 5061, None),
+			('sipfederationtls', 'SIP federation for OCS', 'tcp', 5061, 5061, None),
+			('iax', 'Inter-Asterisk eXchange 2 Service', 'udp', 4569, 4569, 'iax2'),
+			('caldav', 'CalDAV Service', 'tcp', 80, 80, None),
+			('caldavs', 'CalDAV Service over SSL/TLS', 'tcp', 443, 443, None),
+			('carddav', 'CardDAV Service', 'tcp', 80, 80, None),
+			('carddavs', 'CardDAV Service over SSL/TLS', 'tcp', 443, 443, None),
+			('citrixreceiver', 'Citrix Receiver Service', 'tcp', 443, 443, None),
+			('avatars', 'Libravatar Profile Image Service', 'tcp', 80, 80, None),
+			('avatars-sec', 'Libravatar Profile Image Service over SSL/TLS', 'tcp', 443, 443, None),
+			('minecraft', 'Minecraft Service', 'tcp', 25565, 25565, None),
+			('x-puppet', 'Puppet Master', 'tcp', 8140, 8140, None),
+			('ts3', 'TeamSpeak 3 Voice Server', 'udp', 9987, 9987, None),
+			('tsdns', 'TeamSpeak 3 TSDNS Service', 'tcp', 41144, 41144, None)
 		)
 		for t in stypes:
 			st = ServiceType()

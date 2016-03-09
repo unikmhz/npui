@@ -68,35 +68,35 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='SRV_LIST',
-				name='Servers: List'
+				name=_('Servers: List')
 			),
 			Privilege(
 				code='SRV_CREATE',
-				name='Servers: Create'
+				name=_('Servers: Create')
 			),
 			Privilege(
 				code='SRV_EDIT',
-				name='Servers: Edit'
+				name=_('Servers: Edit')
 			),
 			Privilege(
 				code='SRV_DELETE',
-				name='Servers: Delete'
+				name=_('Servers: Delete')
 			),
 			Privilege(
 				code='SRV_CONFGEN',
-				name='Servers: Generate configuration'
+				name=_('Servers: Generate configuration')
 			),
 			Privilege(
 				code='SRVTYPES_CREATE',
-				name='Servers: Create types'
+				name=_('Servers: Create types')
 			),
 			Privilege(
 				code='SRVTYPES_EDIT',
-				name='Servers: Edit types'
+				name=_('Servers: Edit types')
 			),
 			Privilege(
 				code='SRVTYPES_DELETE',
-				name='Servers: Delete types'
+				name=_('Servers: Delete types')
 			)
 		)
 		for priv in privs:

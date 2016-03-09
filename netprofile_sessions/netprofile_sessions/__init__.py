@@ -93,19 +93,19 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_SESSIONS',
-				name='Access: Sessions'
+				name=_('Menu: Sessions')
 			),
 			Privilege(
 				code='SESSIONS_LIST',
-				name='Sessions: List'
+				name=_('Sessions: List')
 			),
 			Privilege(
 				code='SESSIONS_LIST_ARCHIVED',
-				name='Sessions: List archived'
+				name=_('Sessions: List archived')
 			),
 			Privilege(
 				code='SESSIONS_DISCONNECT',
-				name='Sessions: Disconnect'
+				name=_('Sessions: Disconnect')
 			)
 		)
 		for priv in privs:

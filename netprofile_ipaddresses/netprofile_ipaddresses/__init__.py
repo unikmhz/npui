@@ -89,23 +89,23 @@ class Module(ModuleBase):
 		privs = (
 			Privilege(
 				code='BASE_IPADDR',
-				name='Access: IP Addresses'
+				name=_('Menu: IP addresses')
 			),
 			Privilege(
 				code='IPADDR_LIST',
-				name='IP Addresses: List'
+				name=_('IP Addresses: List')
 			),
 			Privilege(
 				code='IPADDR_CREATE',
-				name='IP Addresses: Create'
+				name=_('IP Addresses: Create')
 			),
 			Privilege(
 				code='IPADDR_EDIT',
-				name='IP Addresses: Edit'
+				name=_('IP Addresses: Edit')
 			),
 			Privilege(
 				code='IPADDR_DELETE',
-				name='IP Addresses: Delete'
+				name=_('IP Addresses: Delete')
 			)
 		)
 		for priv in privs:
