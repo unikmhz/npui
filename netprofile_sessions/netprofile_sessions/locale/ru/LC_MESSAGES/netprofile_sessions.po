@@ -1,70 +1,118 @@
 # Russian translations for netprofile_sessions.
-# Copyright (C) 2014 ORGANIZATION
+# Copyright (C) 2016 NetProfile project contributors
 # This file is distributed under the same license as the netprofile_sessions
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_sessions 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-21 21:37+0300\n"
-"PO-Revision-Date: 2015-04-21 21:42+0300\n"
+"POT-Creation-Date: 2016-03-09 15:49+0300\n"
+"PO-Revision-Date: 2016-03-09 15:55+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0-dev\n"
-"X-Generator: Poedit 1.5.5\n"
+"Generated-By: Babel 2.2.0\n"
+"X-Generator: Poedit 1.8.5\n"
 
-#: netprofile_sessions/__init__.py:163 netprofile_sessions/models.py:112
+#: netprofile_sessions/__init__.py:96
+msgid "Menu: Sessions"
+msgstr "Меню: Сессии"
+
+#: netprofile_sessions/__init__.py:100
+msgid "Sessions: List"
+msgstr "Сессии: Просмотр"
+
+#: netprofile_sessions/__init__.py:104
+msgid "Sessions: List archived"
+msgstr "Сессии: Просмотр архивных"
+
+#: netprofile_sessions/__init__.py:108
+msgid "Sessions: Disconnect"
+msgstr "Сессии: Отключение"
+
+#: netprofile_sessions/__init__.py:142
+msgid "Default accounting interval"
+msgstr "Периодичность учёта"
+
+#: netprofile_sessions/__init__.py:143
+msgid "Interval (in seconds) between session accounting reports."
+msgstr ""
+"Интервал (в секундах) между вызовами процедур обновления учётной "
+"информации для сессий."
+
+#: netprofile_sessions/__init__.py:151
+msgid "Inactivity before close"
+msgstr "Макс. возраст сессии"
+
+#: netprofile_sessions/__init__.py:152
+msgid ""
+"Maximum session inactivity time (in seconds) before it is considered "
+"stale and closed down."
+msgstr ""
+"Максимальный срок жизни сессии (в секундах) с момента последнего "
+"обновления учётной информации. Сессии, не получающие обновлений более "
+"этого времени, будут автоматически закрыты."
+
+#: netprofile_sessions/__init__.py:158
+msgid "Accounting"
+msgstr "Учёт"
+
+#: netprofile_sessions/__init__.py:159
+msgid "Client accounting settings."
+msgstr "Настройки учётной системы."
+
+#: netprofile_sessions/__init__.py:167 netprofile_sessions/models.py:112
 msgid "Sessions"
 msgstr "Сессии"
 
-#: netprofile_sessions/models.py:146 netprofile_sessions/models.py:405
+#: netprofile_sessions/models.py:146 netprofile_sessions/models.py:420
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_sessions/models.py:154 netprofile_sessions/models.py:413
+#: netprofile_sessions/models.py:154 netprofile_sessions/models.py:428
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_sessions/models.py:167 netprofile_sessions/models.py:423
+#: netprofile_sessions/models.py:167 netprofile_sessions/models.py:438
 msgid "Station"
 msgstr "Станция"
 
-#: netprofile_sessions/models.py:179 netprofile_sessions/models.py:435
+#: netprofile_sessions/models.py:179 netprofile_sessions/models.py:450
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_sessions/models.py:193 netprofile_sessions/models.py:449
+#: netprofile_sessions/models.py:193 netprofile_sessions/models.py:464
 msgid "IPv4 Address"
 msgstr "Адрес IPv4"
 
-#: netprofile_sessions/models.py:206 netprofile_sessions/models.py:462
+#: netprofile_sessions/models.py:206 netprofile_sessions/models.py:477
 msgid "IPv6 Address"
 msgstr "Адрес IPv6"
 
-#: netprofile_sessions/models.py:219 netprofile_sessions/models.py:475
+#: netprofile_sessions/models.py:219 netprofile_sessions/models.py:490
 msgid "Destination"
 msgstr "Направление"
 
-#: netprofile_sessions/models.py:232 netprofile_sessions/models.py:488
+#: netprofile_sessions/models.py:232 netprofile_sessions/models.py:503
 msgid "NAS"
 msgstr "NAS"
 
-#: netprofile_sessions/models.py:245 netprofile_sessions/models.py:501
+#: netprofile_sessions/models.py:245 netprofile_sessions/models.py:516
 msgid "Calling Station"
 msgstr "Вызывающая сторона"
 
-#: netprofile_sessions/models.py:257 netprofile_sessions/models.py:513
+#: netprofile_sessions/models.py:257 netprofile_sessions/models.py:528
 msgid "Called Station"
 msgstr "Вызываемая сторона"
 
-#: netprofile_sessions/models.py:268 netprofile_sessions/models.py:524
+#: netprofile_sessions/models.py:268 netprofile_sessions/models.py:539
 msgid "Started"
 msgstr "Начало"
 
@@ -72,38 +120,38 @@ msgstr "Начало"
 msgid "Updated"
 msgstr "Обновление"
 
-#: netprofile_sessions/models.py:289 netprofile_sessions/models.py:545
+#: netprofile_sessions/models.py:289 netprofile_sessions/models.py:560
 msgid "Used Ingress"
 msgstr "Исп. входящего"
 
-#: netprofile_sessions/models.py:300 netprofile_sessions/models.py:556
+#: netprofile_sessions/models.py:300 netprofile_sessions/models.py:571
 msgid "Used Egress"
 msgstr "Исп. исходящего"
 
-#: netprofile_sessions/models.py:311 netprofile_sessions/models.py:567
+#: netprofile_sessions/models.py:311 netprofile_sessions/models.py:582
 msgid "Ingress Policy"
 msgstr "Входящая политика"
 
-#: netprofile_sessions/models.py:322 netprofile_sessions/models.py:578
+#: netprofile_sessions/models.py:322 netprofile_sessions/models.py:593
 msgid "Egress Policy"
 msgstr "Исходящая полоитика"
 
-#: netprofile_sessions/models.py:372
+#: netprofile_sessions/models.py:387
 msgid "History"
 msgstr "История"
 
-#: netprofile_sessions/models.py:534
+#: netprofile_sessions/models.py:549
 msgid "Ended"
 msgstr "Конец"
 
-#: netprofile_sessions/views.py:60 netprofile_sessions/views.py:95
+#: netprofile_sessions/views.py:59 netprofile_sessions/views.py:94
 #: netprofile_sessions/templates/client_block_sessions.mak:3
 #: netprofile_sessions/templates/client_sessions.mak:6
 #: netprofile_sessions/templates/client_sessions.mak:14
 msgid "Active Sessions"
 msgstr "Активные сессии"
 
-#: netprofile_sessions/views.py:68 netprofile_sessions/views.py:110
+#: netprofile_sessions/views.py:67 netprofile_sessions/views.py:109
 #: netprofile_sessions/templates/client_block_sessions.mak:4
 #: netprofile_sessions/templates/client_sessions.mak:8
 #: netprofile_sessions/templates/client_sessions.mak:16

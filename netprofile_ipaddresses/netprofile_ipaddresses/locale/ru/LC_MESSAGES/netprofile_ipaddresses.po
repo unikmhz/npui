@@ -1,112 +1,133 @@
 # Russian translations for netprofile_ipaddresses.
-# Copyright (C) 2013 ORGANIZATION
+# Copyright (C) 2016 NetProfile project contributors
 # This file is distributed under the same license as the
 # netprofile_ipaddresses
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_ipaddresses 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-21 21:32+0300\n"
-"PO-Revision-Date: 2015-04-21 21:33+0300\n"
+"POT-Creation-Date: 2016-03-09 14:06+0300\n"
+"PO-Revision-Date: 2016-03-09 15:40+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0-dev\n"
-"X-Generator: Poedit 1.5.5\n"
+"Generated-By: Babel 2.2.0\n"
+"X-Generator: Poedit 1.8.5\n"
 
-#: netprofile_ipaddresses/__init__.py:127
+#: netprofile_ipaddresses/__init__.py:92
+msgid "Menu: IP addresses"
+msgstr "Меню: IP адреса"
+
+#: netprofile_ipaddresses/__init__.py:96
+msgid "IP Addresses: List"
+msgstr "IP адреса: Просмотр"
+
+#: netprofile_ipaddresses/__init__.py:100
+msgid "IP Addresses: Create"
+msgstr "IP адреса: Создание"
+
+#: netprofile_ipaddresses/__init__.py:104
+msgid "IP Addresses: Edit"
+msgstr "IP адреса: Правка"
+
+#: netprofile_ipaddresses/__init__.py:108
+msgid "IP Addresses: Delete"
+msgstr "IP адреса: Удаление"
+
+#: netprofile_ipaddresses/__init__.py:130
 msgid "IP Addresses"
 msgstr "IP адреса"
 
-#: netprofile_ipaddresses/models.py:121
+#: netprofile_ipaddresses/models.py:111
 msgid "IPv4 Addresses"
 msgstr "Адреса IPv4"
 
-#: netprofile_ipaddresses/models.py:128 netprofile_ipaddresses/models.py:325
-#: netprofile_ipaddresses/models.py:534 netprofile_ipaddresses/models.py:625
+#: netprofile_ipaddresses/models.py:118 netprofile_ipaddresses/models.py:318
+#: netprofile_ipaddresses/models.py:530 netprofile_ipaddresses/models.py:621
 msgid "Address"
 msgstr "Адрес"
 
-#: netprofile_ipaddresses/models.py:142
+#: netprofile_ipaddresses/models.py:132
 msgid "Add new IPv4 address"
 msgstr "Добавить новый адрес IPv4"
 
-#: netprofile_ipaddresses/models.py:154 netprofile_ipaddresses/models.py:351
-#: netprofile_ipaddresses/models.py:525 netprofile_ipaddresses/models.py:616
+#: netprofile_ipaddresses/models.py:144 netprofile_ipaddresses/models.py:344
+#: netprofile_ipaddresses/models.py:521 netprofile_ipaddresses/models.py:612
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_ipaddresses/models.py:164 netprofile_ipaddresses/models.py:361
+#: netprofile_ipaddresses/models.py:154 netprofile_ipaddresses/models.py:354
 msgid "Host"
 msgstr "Хост"
 
-#: netprofile_ipaddresses/models.py:178 netprofile_ipaddresses/models.py:375
+#: netprofile_ipaddresses/models.py:168 netprofile_ipaddresses/models.py:368
 msgid "Pool"
 msgstr "Пул"
 
-#: netprofile_ipaddresses/models.py:189 netprofile_ipaddresses/models.py:386
+#: netprofile_ipaddresses/models.py:179 netprofile_ipaddresses/models.py:379
 msgid "Network"
 msgstr "Сеть"
 
-#: netprofile_ipaddresses/models.py:198 netprofile_ipaddresses/models.py:395
+#: netprofile_ipaddresses/models.py:188 netprofile_ipaddresses/models.py:388
 msgid "Offset"
 msgstr "Смещение"
 
-#: netprofile_ipaddresses/models.py:207 netprofile_ipaddresses/models.py:404
+#: netprofile_ipaddresses/models.py:197 netprofile_ipaddresses/models.py:397
 msgid "Hardware Address"
 msgstr "Аппаратный адрес"
 
-#: netprofile_ipaddresses/models.py:218 netprofile_ipaddresses/models.py:415
+#: netprofile_ipaddresses/models.py:208 netprofile_ipaddresses/models.py:408
 msgid "RR Time To Live"
 msgstr "TTL для DNS-записи"
 
-#: netprofile_ipaddresses/models.py:229 netprofile_ipaddresses/models.py:426
+#: netprofile_ipaddresses/models.py:219 netprofile_ipaddresses/models.py:419
 msgid "Visibility"
 msgstr "Видимость"
 
-#: netprofile_ipaddresses/models.py:239 netprofile_ipaddresses/models.py:436
+#: netprofile_ipaddresses/models.py:229 netprofile_ipaddresses/models.py:429
 msgid "Assigned"
 msgstr "Назначен"
 
-#: netprofile_ipaddresses/models.py:250 netprofile_ipaddresses/models.py:447
+#: netprofile_ipaddresses/models.py:240 netprofile_ipaddresses/models.py:440
 msgid "In Use"
 msgstr "Используется"
 
-#: netprofile_ipaddresses/models.py:318
+#: netprofile_ipaddresses/models.py:311
 msgid "IPv6 Addresses"
 msgstr "Адреса IPv6"
 
-#: netprofile_ipaddresses/models.py:339
+#: netprofile_ipaddresses/models.py:332
 msgid "Add new IPv6 address"
 msgstr "Добавить новый адрес IPv6"
 
-#: netprofile_ipaddresses/models.py:510
+#: netprofile_ipaddresses/models.py:506
 msgid "IPv4 Serials"
 msgstr "Серийные номера IPv4"
 
-#: netprofile_ipaddresses/models.py:542 netprofile_ipaddresses/models.py:633
+#: netprofile_ipaddresses/models.py:538 netprofile_ipaddresses/models.py:629
 msgid "Date"
 msgstr "Дата"
 
-#: netprofile_ipaddresses/models.py:553 netprofile_ipaddresses/models.py:644
+#: netprofile_ipaddresses/models.py:549 netprofile_ipaddresses/models.py:640
 msgid "Revision"
 msgstr "Версия"
 
-#: netprofile_ipaddresses/models.py:601
+#: netprofile_ipaddresses/models.py:597
 msgid "IPv6 Serials"
 msgstr "Серийные номера IPv6"
 
-#: netprofile_ipaddresses/views.py:42 netprofile_ipaddresses/views.py:65
+#: netprofile_ipaddresses/views.py:41 netprofile_ipaddresses/views.py:66
 msgid "IPv4"
 msgstr "IPv4"
 
-#: netprofile_ipaddresses/views.py:51 netprofile_ipaddresses/views.py:74
+#: netprofile_ipaddresses/views.py:50 netprofile_ipaddresses/views.py:75
 msgid "IPv6"
 msgstr "IPv6"

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_geo 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-09 03:15+0300\n"
-"PO-Revision-Date: 2016-03-09 03:15+0300\n"
+"POT-Creation-Date: 2016-03-09 13:59+0300\n"
+"PO-Revision-Date: 2016-03-09 14:00+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -20,6 +20,26 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.2.0\n"
 "X-Generator: Poedit 1.8.5\n"
+
+#: netprofile_geo/__init__.py:94
+msgid "Menu: Addresses"
+msgstr "Меню: Адреса"
+
+#: netprofile_geo/__init__.py:98
+msgid "Addresses: List"
+msgstr "Адреса: Просмотр"
+
+#: netprofile_geo/__init__.py:102
+msgid "Addresses: Create"
+msgstr "Адреса: Создание"
+
+#: netprofile_geo/__init__.py:106
+msgid "Addresses: Edit"
+msgstr "Адреса: Правка"
+
+#: netprofile_geo/__init__.py:110
+msgid "Addresses: Delete"
+msgstr "Адреса: Удаление"
 
 #: netprofile_geo/__init__.py:142
 msgid "Geography"

@@ -1,178 +1,247 @@
 # Russian translations for netprofile_networks.
-# Copyright (C) 2013 ORGANIZATION
+# Copyright (C) 2016 NetProfile project contributors
 # This file is distributed under the same license as the netprofile_networks
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_networks 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-21 21:33+0300\n"
-"PO-Revision-Date: 2015-04-21 21:33+0300\n"
+"POT-Creation-Date: 2016-03-09 15:40+0300\n"
+"PO-Revision-Date: 2016-03-09 15:44+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0-dev\n"
-"X-Generator: Poedit 1.5.5\n"
+"Generated-By: Babel 2.2.0\n"
+"X-Generator: Poedit 1.8.5\n"
 
-#: netprofile_networks/__init__.py:169 netprofile_networks/models.py:123
-#: netprofile_networks/views.py:56
+#: netprofile_networks/__init__.py:80
+msgid "Menu: Networks"
+msgstr "Меню: Сети"
+
+#: netprofile_networks/__init__.py:84
+msgid "Networks: List"
+msgstr "Сети: Просмотр"
+
+#: netprofile_networks/__init__.py:88
+msgid "Networks: Create"
+msgstr "Сети: Создание"
+
+#: netprofile_networks/__init__.py:92
+msgid "Networks: Edit"
+msgstr "Сети: Правка"
+
+#: netprofile_networks/__init__.py:96
+msgid "Networks: Delete"
+msgstr "Сети: Удаление"
+
+#: netprofile_networks/__init__.py:100
+msgid "Networks: Create groups"
+msgstr "Сети: Создание групп"
+
+#: netprofile_networks/__init__.py:104
+msgid "Networks: Edit groups"
+msgstr "Сети: Правка шрупп"
+
+#: netprofile_networks/__init__.py:108
+msgid "Networks: Delete groups"
+msgstr "Сети: Удаление групп"
+
+#: netprofile_networks/__init__.py:112
+msgid "Networks: Create service types"
+msgstr "Сети: Создание типов служб"
+
+#: netprofile_networks/__init__.py:116
+msgid "Networks: Edit service types"
+msgstr "Сети: Правка типов служб"
+
+#: netprofile_networks/__init__.py:120
+msgid "Networks: Delete service types"
+msgstr "Сети: Удаление типов служб"
+
+#: netprofile_networks/__init__.py:138
+msgid "Name Server"
+msgstr "Сервер имён DNS"
+
+#: netprofile_networks/__init__.py:142
+msgid "WINS Server"
+msgstr "Сервер имён WINS"
+
+#: netprofile_networks/__init__.py:146
+msgid "NTP Server"
+msgstr "Служба времени"
+
+#: netprofile_networks/__init__.py:150
+msgid "Gateway"
+msgstr "Шлюз"
+
+#: netprofile_networks/__init__.py:154
+msgid "SLP DA Server"
+msgstr "Сервер SLP DA"
+
+#: netprofile_networks/__init__.py:158
+msgid "DNSv6 Server"
+msgstr "Сервер имён DNSv6"
+
+#: netprofile_networks/__init__.py:172 netprofile_networks/models.py:107
+#: netprofile_networks/views.py:53
 msgid "Networks"
 msgstr "Сети"
 
-#: netprofile_networks/models.py:132
+#: netprofile_networks/models.py:116
 msgid "State"
 msgstr "Состояние"
 
-#: netprofile_networks/models.py:152
+#: netprofile_networks/models.py:136
 msgid "Add new network"
 msgstr "Добавить новую сеть"
 
-#: netprofile_networks/models.py:164 netprofile_networks/models.py:439
-#: netprofile_networks/models.py:503 netprofile_networks/models.py:569
-#: netprofile_networks/models.py:656 netprofile_networks/models.py:713
+#: netprofile_networks/models.py:148 netprofile_networks/models.py:432
+#: netprofile_networks/models.py:496 netprofile_networks/models.py:565
+#: netprofile_networks/models.py:652 netprofile_networks/models.py:709
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_networks/models.py:172 netprofile_networks/models.py:447
-#: netprofile_networks/models.py:511 netprofile_networks/models.py:664
+#: netprofile_networks/models.py:156 netprofile_networks/models.py:440
+#: netprofile_networks/models.py:504 netprofile_networks/models.py:660
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_networks/models.py:183
+#: netprofile_networks/models.py:167
 msgid "Domain"
 msgstr "Домен"
 
-#: netprofile_networks/models.py:197
+#: netprofile_networks/models.py:181
 msgid "Group"
 msgstr "Группа"
 
-#: netprofile_networks/models.py:211
+#: netprofile_networks/models.py:195
 msgid "Management Device"
 msgstr "Управляющее устройство"
 
-#: netprofile_networks/models.py:222
+#: netprofile_networks/models.py:206
 msgid "Enabled"
 msgstr "Включена"
 
-#: netprofile_networks/models.py:232
+#: netprofile_networks/models.py:216
 msgid "Public"
 msgstr "Публичная"
 
-#: netprofile_networks/models.py:243
+#: netprofile_networks/models.py:227
 msgid "IPv4 Address"
 msgstr "Адрес IPv4"
 
-#: netprofile_networks/models.py:254
+#: netprofile_networks/models.py:238
 msgid "IPv6 Address"
 msgstr "Адрес IPv6"
 
-#: netprofile_networks/models.py:265
+#: netprofile_networks/models.py:249
 msgid "IPv4 Netmask"
 msgstr "Маска IPv4"
 
-#: netprofile_networks/models.py:276
+#: netprofile_networks/models.py:260
 msgid "IPv6 Netmask"
 msgstr "Маска IPv6"
 
-#: netprofile_networks/models.py:287
+#: netprofile_networks/models.py:271
 msgid "VLAN"
 msgstr "VLAN"
 
-#: netprofile_networks/models.py:299
+#: netprofile_networks/models.py:283
 msgid "Routing Table"
 msgstr "Таблица маршрутизации"
 
-#: netprofile_networks/models.py:311
+#: netprofile_networks/models.py:295
 msgid "Start of IPv4 Guest Allocation Area"
 msgstr "Начало области выделения гостевых адресов IPv4"
 
-#: netprofile_networks/models.py:322
+#: netprofile_networks/models.py:306
 msgid "End of IPv4 Guest Allocation Area"
 msgstr "Конец области выделения гостевых адресов IPv4"
 
-#: netprofile_networks/models.py:333
+#: netprofile_networks/models.py:317
 msgid "Start of IPv6 Guest Allocation Area"
 msgstr "Начало области выделения гостевых адресов IPv6"
 
-#: netprofile_networks/models.py:344
+#: netprofile_networks/models.py:328
 msgid "End of IPv6 Guest Allocation Area"
 msgstr "Конец области выделения гостевых адресов IPv6"
 
-#: netprofile_networks/models.py:355 netprofile_networks/models.py:459
+#: netprofile_networks/models.py:339 netprofile_networks/models.py:452
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_networks/models.py:419
+#: netprofile_networks/models.py:412
 msgid "Groups"
 msgstr "Группы"
 
-#: netprofile_networks/models.py:427
+#: netprofile_networks/models.py:420
 msgid "Add new network group"
 msgstr "Добавить новую группу сетей"
 
-#: netprofile_networks/models.py:483 netprofile_networks/models.py:553
-#: netprofile_networks/views.py:42
+#: netprofile_networks/models.py:476 netprofile_networks/models.py:549
+#: netprofile_networks/views.py:39
 msgid "Services"
 msgstr "Службы"
 
-#: netprofile_networks/models.py:491
+#: netprofile_networks/models.py:484
 msgid "Add new network service type"
 msgstr "Добавить новый тип сетевых служб"
 
-#: netprofile_networks/models.py:522
+#: netprofile_networks/models.py:515
 msgid "Unique"
 msgstr "Уникальная"
 
-#: netprofile_networks/models.py:557
+#: netprofile_networks/models.py:553
 msgid "Add new network service"
 msgstr "Добавить новую сетевую службу"
 
-#: netprofile_networks/models.py:579 netprofile_networks/models.py:734
+#: netprofile_networks/models.py:575 netprofile_networks/models.py:730
 msgid "Network"
 msgstr "Сеть"
 
-#: netprofile_networks/models.py:591
+#: netprofile_networks/models.py:587
 msgid "Host"
 msgstr "Хост"
 
-#: netprofile_networks/models.py:603
+#: netprofile_networks/models.py:599
 msgid "Type"
 msgstr "Тип"
 
-#: netprofile_networks/models.py:636
+#: netprofile_networks/models.py:632
 msgid "Routing Tables"
 msgstr "Таблицы маршрутизации"
 
-#: netprofile_networks/models.py:644
+#: netprofile_networks/models.py:640
 msgid "Add new routing table"
 msgstr "Добавить новую таблицу маршрутизации"
 
-#: netprofile_networks/models.py:697
+#: netprofile_networks/models.py:693
 msgid "Routing Table Entries"
 msgstr "Элементы таблицы маршрутизации"
 
-#: netprofile_networks/models.py:701
+#: netprofile_networks/models.py:697
 msgid "Add new IPv4 routing table entry"
 msgstr "Добавить новый элемент таблицы маршрутизации IPv4"
 
-#: netprofile_networks/models.py:723
+#: netprofile_networks/models.py:719
 msgid "Table"
 msgstr "Таблица"
 
-#: netprofile_networks/models.py:745
+#: netprofile_networks/models.py:741
 msgid "Netmask"
 msgstr "Маска"
 
-#: netprofile_networks/models.py:757
+#: netprofile_networks/models.py:753
 msgid "Next Hop"
 msgstr "Направление"
 
-#: netprofile_networks/views.py:70
+#: netprofile_networks/views.py:67
 msgid "Entries"
 msgstr "Элементы"

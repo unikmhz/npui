@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_entities 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-02-27 21:07+0300\n"
-"PO-Revision-Date: 2016-02-27 21:08+0300\n"
+"POT-Creation-Date: 2016-03-09 13:53+0300\n"
+"PO-Revision-Date: 2016-03-09 13:59+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -21,59 +21,123 @@ msgstr ""
 "Generated-By: Babel 2.2.0\n"
 "X-Generator: Poedit 1.8.5\n"
 
-#: netprofile_entities/__init__.py:170 netprofile_entities/__init__.py:172
+#: netprofile_entities/__init__.py:95
+msgid "Menu: Entities"
+msgstr "Меню: Объекты"
+
+#: netprofile_entities/__init__.py:99
+msgid "Entities: List"
+msgstr "Объекты: Просмотр"
+
+#: netprofile_entities/__init__.py:103
+msgid "Entities: Create"
+msgstr "Объекты: Создание"
+
+#: netprofile_entities/__init__.py:107
+msgid "Entities: Edit"
+msgstr "Объекты: Правка"
+
+#: netprofile_entities/__init__.py:111
+msgid "Entities: Delete"
+msgstr "Объекты: Удаление"
+
+#: netprofile_entities/__init__.py:115
+msgid "Files: Attach to entities"
+msgstr "Файлы: Присоединение к объектам"
+
+#: netprofile_entities/__init__.py:119
+msgid "Entities: Create states"
+msgstr "Объекты: Создание состояний"
+
+#: netprofile_entities/__init__.py:123
+msgid "Entities: Edit states"
+msgstr "Объекты: Правка состояний"
+
+#: netprofile_entities/__init__.py:127
+msgid "Entities: Delete states"
+msgstr "Объекты: Удаление состояний"
+
+#: netprofile_entities/__init__.py:131
+msgid "Entities: Create flag types"
+msgstr "Объекты: Создание типов флагов"
+
+#: netprofile_entities/__init__.py:135
+msgid "Entities: Edit flag types"
+msgstr "Объекты: Правка типов флагов"
+
+#: netprofile_entities/__init__.py:139
+msgid "Entities: Delete flag types"
+msgstr "Объекты: Удаление типов флагов"
+
+#: netprofile_entities/__init__.py:143
+msgid "Entities: Add comments"
+msgstr "Объекты: Комментирование"
+
+#: netprofile_entities/__init__.py:147
+msgid "Entities: Edit comments"
+msgstr "Объекты: Правка комментариев"
+
+#: netprofile_entities/__init__.py:151
+msgid "Entities: Delete comments"
+msgstr "Объекты: Удаление комментариев"
+
+#: netprofile_entities/__init__.py:155
+msgid "Entities: Mark comments as obsolete"
+msgstr "Объекты: Перевод комментариев в устаревшие"
+
+#: netprofile_entities/__init__.py:173 netprofile_entities/__init__.py:175
 msgid "Individual"
 msgstr "Физ. лицо"
 
-#: netprofile_entities/__init__.py:173 netprofile_entities/models.py:1512
+#: netprofile_entities/__init__.py:176 netprofile_entities/models.py:1512
 msgid "Individuals"
 msgstr "Физ. лица"
 
-#: netprofile_entities/__init__.py:174
+#: netprofile_entities/__init__.py:177
 msgid "Definition of a single person."
 msgstr "Определение одного физического лица."
 
-#: netprofile_entities/__init__.py:178
+#: netprofile_entities/__init__.py:181
 msgid "Legal"
 msgstr "Юр. лицо"
 
-#: netprofile_entities/__init__.py:180
+#: netprofile_entities/__init__.py:183
 msgid "Legal Entity"
 msgstr "Юр. лицо"
 
-#: netprofile_entities/__init__.py:181 netprofile_entities/models.py:1785
+#: netprofile_entities/__init__.py:184 netprofile_entities/models.py:1785
 msgid "Legal Entities"
 msgstr "Юр. лица"
 
-#: netprofile_entities/__init__.py:182
+#: netprofile_entities/__init__.py:185
 msgid "Definition of a legal entity (a company, corporation etc.)."
 msgstr "Определение одного юридического лица (компании, корпорации и т.п.)."
 
-#: netprofile_entities/__init__.py:186
+#: netprofile_entities/__init__.py:189
 msgid "Structure"
 msgstr "Здание"
 
-#: netprofile_entities/__init__.py:189 netprofile_entities/models.py:2072
+#: netprofile_entities/__init__.py:192 netprofile_entities/models.py:2072
 msgid "Structures"
 msgstr "Здания"
 
-#: netprofile_entities/__init__.py:190
+#: netprofile_entities/__init__.py:193
 msgid "Definition of a building or a comparable structure."
 msgstr "Определение здания или схожего объекта."
 
-#: netprofile_entities/__init__.py:194
+#: netprofile_entities/__init__.py:197
 msgid "Misc."
 msgstr "Прочее"
 
-#: netprofile_entities/__init__.py:197 netprofile_entities/models.py:2171
+#: netprofile_entities/__init__.py:200 netprofile_entities/models.py:2170
 msgid "Miscellaneous"
 msgstr "Прочее"
 
-#: netprofile_entities/__init__.py:198
+#: netprofile_entities/__init__.py:201
 msgid "Definition of an object without well-defined metadata."
 msgstr "Определение объекта без определённого типа."
 
-#: netprofile_entities/__init__.py:227 netprofile_entities/models.py:385
+#: netprofile_entities/__init__.py:230 netprofile_entities/models.py:385
 msgid "Entities"
 msgstr "Объекты"
 
@@ -90,14 +154,14 @@ msgstr "Добавить новый тип объектов"
 #: netprofile_entities/models.py:970 netprofile_entities/models.py:1038
 #: netprofile_entities/models.py:1231 netprofile_entities/models.py:1344
 #: netprofile_entities/models.py:1415 netprofile_entities/models.py:1581
-#: netprofile_entities/models.py:1860 netprofile_entities/models.py:2127
-#: netprofile_entities/models.py:2221
+#: netprofile_entities/models.py:1860 netprofile_entities/models.py:2126
+#: netprofile_entities/models.py:2220
 msgid "ID"
 msgstr "ID"
 
 #: netprofile_entities/models.py:179 netprofile_entities/models.py:844
 #: netprofile_entities/models.py:907 netprofile_entities/models.py:1878
-#: netprofile_entities/models.py:2229
+#: netprofile_entities/models.py:2228
 msgid "Name"
 msgstr "Название"
 
@@ -137,7 +201,7 @@ msgstr "Иконка объекта"
 
 #: netprofile_entities/models.py:394 netprofile_entities/models.py:1519
 #: netprofile_entities/models.py:1792 netprofile_entities/models.py:2079
-#: netprofile_entities/models.py:2178
+#: netprofile_entities/models.py:2177
 msgid "Icon"
 msgstr "Иконка"
 
@@ -151,18 +215,21 @@ msgstr "Информация"
 
 #: netprofile_entities/models.py:421 netprofile_entities/models.py:1541
 #: netprofile_entities/models.py:1814 netprofile_entities/models.py:2094
+#: netprofile_entities/templates/entity_data.mak:21
 msgid "Phone"
 msgstr "Телефон"
 
 #: netprofile_entities/models.py:424 netprofile_entities/models.py:1544
 #: netprofile_entities/models.py:1817 netprofile_entities/models.py:2097
-#: netprofile_entities/models.py:2240
+#: netprofile_entities/models.py:2239
+#: netprofile_entities/templates/entity_data.mak:6
+#: netprofile_entities/templates/entity_data.mak:13
 msgid "Address"
 msgstr "Адрес"
 
 #: netprofile_entities/models.py:432 netprofile_entities/models.py:1552
 #: netprofile_entities/models.py:1825 netprofile_entities/models.py:2105
-#: netprofile_entities/models.py:2199
+#: netprofile_entities/models.py:2198
 msgid "Generic entity properties"
 msgstr "Общие свойства объекта"
 
@@ -186,11 +253,11 @@ msgstr "Контакное лицо"
 msgid "Legal entity details"
 msgstr "Реквизиты юр. лиц"
 
-#: netprofile_entities/models.py:485 netprofile_entities/models.py:2109
+#: netprofile_entities/models.py:485 netprofile_entities/models.py:2108
 msgid "Structure properties"
 msgstr "Свойства здания"
 
-#: netprofile_entities/models.py:492 netprofile_entities/models.py:2203
+#: netprofile_entities/models.py:492 netprofile_entities/models.py:2202
 msgid "Misc. entity properties"
 msgstr "Свойства объекта"
 
@@ -449,11 +516,11 @@ msgstr "Корр. счёт"
 msgid "Bank"
 msgstr "Банк"
 
-#: netprofile_entities/models.py:2111
+#: netprofile_entities/models.py:2110
 msgid "Add new structure"
 msgstr "Добавить новое здание"
 
-#: netprofile_entities/models.py:2205
+#: netprofile_entities/models.py:2204
 msgid "Add new miscellaneous entity"
 msgstr "Добавить новый объект"
 

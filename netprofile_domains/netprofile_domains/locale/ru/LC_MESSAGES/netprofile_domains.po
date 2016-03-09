@@ -1,196 +1,249 @@
 # Russian translations for netprofile_domains.
-# Copyright (C) 2013 ORGANIZATION
+# Copyright (C) 2016 NetProfile project contributors
 # This file is distributed under the same license as the netprofile_domains
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_domains 0.3\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2015-04-21 21:29+0300\n"
-"PO-Revision-Date: 2015-04-21 21:29+0300\n"
+"POT-Creation-Date: 2016-03-09 13:48+0300\n"
+"PO-Revision-Date: 2016-03-09 13:51+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.0-dev\n"
-"X-Generator: Poedit 1.5.5\n"
+"Generated-By: Babel 2.2.0\n"
+"X-Generator: Poedit 1.8.5\n"
 
-#: netprofile_domains/__init__.py:171 netprofile_domains/models.py:126
+#: netprofile_domains/__init__.py:93
+msgid "Menu: Domains"
+msgstr "Меню: Домены"
+
+#: netprofile_domains/__init__.py:97
+msgid "Domains: List"
+msgstr "Домены: Просмотр"
+
+#: netprofile_domains/__init__.py:101
+msgid "Domains: Create"
+msgstr "Домены: Создание"
+
+#: netprofile_domains/__init__.py:105
+msgid "Domains: Edit"
+msgstr "Домены: Правка"
+
+#: netprofile_domains/__init__.py:109
+msgid "Domains: Delete"
+msgstr "Домены: Удаление"
+
+#: netprofile_domains/__init__.py:113
+msgid "Domains: Create service types"
+msgstr "Домены: Создание типов служб"
+
+#: netprofile_domains/__init__.py:117
+msgid "Domains: Edit service types"
+msgstr "Домены: Правка типов служб"
+
+#: netprofile_domains/__init__.py:121
+msgid "Domains: Delete service types"
+msgstr "Домены: Удаление типов служб"
+
+#: netprofile_domains/__init__.py:139
+msgid "Primary Name Server"
+msgstr "Первичный сервер имён"
+
+#: netprofile_domains/__init__.py:144
+msgid "Secondary Name Server"
+msgstr "Вторичный сервер имён"
+
+#: netprofile_domains/__init__.py:149
+msgid "Primary Mail Server"
+msgstr "Первичный обработчик почты"
+
+#: netprofile_domains/__init__.py:154
+msgid "Secondary Mail Server"
+msgstr "Вторичный обработчик почты"
+
+#: netprofile_domains/__init__.py:159
+msgid "Default Host"
+msgstr "Узел по умолчанию"
+
+#: netprofile_domains/__init__.py:174 netprofile_domains/models.py:119
 msgid "Domains"
 msgstr "Домены"
 
-#: netprofile_domains/models.py:133 netprofile_domains/models.py:199
-#: netprofile_domains/models.py:439 netprofile_domains/models.py:497
-#: netprofile_domains/models.py:588 netprofile_domains/models.py:684
+#: netprofile_domains/models.py:126 netprofile_domains/models.py:192
+#: netprofile_domains/models.py:432 netprofile_domains/models.py:490
+#: netprofile_domains/models.py:581 netprofile_domains/models.py:677
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_domains/models.py:141
+#: netprofile_domains/models.py:134
 msgid "State"
 msgstr "Состояние"
 
-#: netprofile_domains/models.py:162
+#: netprofile_domains/models.py:155
 msgid "Domain info"
 msgstr "Информация о домене"
 
-#: netprofile_domains/models.py:163
+#: netprofile_domains/models.py:156
 msgid "DNS options"
 msgstr "Настройки DNS"
 
-#: netprofile_domains/models.py:164
+#: netprofile_domains/models.py:157
 msgid "Add new domain"
 msgstr "Добавить новый домен"
 
-#: netprofile_domains/models.py:178 netprofile_domains/models.py:464
-#: netprofile_domains/models.py:567 netprofile_domains/models.py:676
+#: netprofile_domains/models.py:171 netprofile_domains/models.py:457
+#: netprofile_domains/models.py:560 netprofile_domains/models.py:669
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_domains/models.py:190 netprofile_domains/models.py:476
+#: netprofile_domains/models.py:183 netprofile_domains/models.py:469
 msgid "Parent"
 msgstr "Родитель"
 
-#: netprofile_domains/models.py:209
+#: netprofile_domains/models.py:202
 msgid "Enabled"
 msgstr "Включен"
 
-#: netprofile_domains/models.py:219
+#: netprofile_domains/models.py:212
 msgid "Public"
 msgstr "Публичный"
 
-#: netprofile_domains/models.py:229
+#: netprofile_domains/models.py:222
 msgid "Signed"
 msgstr "Подписан"
 
-#: netprofile_domains/models.py:238
+#: netprofile_domains/models.py:231
 msgid "SOA Refresh"
 msgstr "SOA Refresh"
 
-#: netprofile_domains/models.py:247
+#: netprofile_domains/models.py:240
 msgid "SOA Retry"
 msgstr "SOA Retry"
 
-#: netprofile_domains/models.py:256
+#: netprofile_domains/models.py:249
 msgid "SOA Expire"
 msgstr "SOA Expire"
 
-#: netprofile_domains/models.py:265
+#: netprofile_domains/models.py:258
 msgid "SOA Minimum"
 msgstr "SOA Minimum"
 
-#: netprofile_domains/models.py:273
+#: netprofile_domains/models.py:266
 msgid "Serial Date"
 msgstr "Дата с/н"
 
-#: netprofile_domains/models.py:284
+#: netprofile_domains/models.py:277
 msgid "Serial Revision"
 msgstr "Ревизия с/н"
 
-#: netprofile_domains/models.py:295
+#: netprofile_domains/models.py:288
 msgid "DKIM Name"
 msgstr "Название DKIM"
 
-#: netprofile_domains/models.py:305
+#: netprofile_domains/models.py:298
 msgid "DKIM Key"
 msgstr "Ключ DKIM"
 
-#: netprofile_domains/models.py:315
+#: netprofile_domains/models.py:308
 msgid "DKIM Test"
 msgstr "Тестовый режим DKIM"
 
-#: netprofile_domains/models.py:325
+#: netprofile_domains/models.py:318
 msgid "DKIM in Subdomains"
 msgstr "DKIM действует для поддоменов"
 
-#: netprofile_domains/models.py:335
+#: netprofile_domains/models.py:328
 msgid "DKIM Strict"
 msgstr "Строгий режим DKIM"
 
-#: netprofile_domains/models.py:346
+#: netprofile_domains/models.py:339
 msgid "Use SPF"
 msgstr "Использовать SPF"
 
-#: netprofile_domains/models.py:356
+#: netprofile_domains/models.py:349
 msgid "Custom SPF Rule"
 msgstr "Нестандартное правило SPF"
 
-#: netprofile_domains/models.py:367
+#: netprofile_domains/models.py:360
 msgid "SPF Error"
 msgstr "Макрос ошибки SPF"
 
-#: netprofile_domains/models.py:377
+#: netprofile_domains/models.py:370
 msgid "DMARC Trailer"
 msgstr "Хвост правила DMARC"
 
-#: netprofile_domains/models.py:388
+#: netprofile_domains/models.py:381
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_domains/models.py:433 netprofile_domains/views.py:53
+#: netprofile_domains/models.py:426 netprofile_domains/views.py:50
 msgid "Aliases"
 msgstr "Псевдонимы"
 
-#: netprofile_domains/models.py:451
+#: netprofile_domains/models.py:444
 msgid "Add new domain alias"
 msgstr "Добавить новый псевдоним домена"
 
-#: netprofile_domains/models.py:489
+#: netprofile_domains/models.py:482
 msgid "Origin"
 msgstr "Оригинал"
 
-#: netprofile_domains/models.py:522
+#: netprofile_domains/models.py:515
 msgid "Both"
 msgstr "Отовсюду"
 
-#: netprofile_domains/models.py:523
+#: netprofile_domains/models.py:516
 msgid "Internal"
 msgstr "Изнутри"
 
-#: netprofile_domains/models.py:524
+#: netprofile_domains/models.py:517
 msgid "External"
 msgstr "Снаружи"
 
-#: netprofile_domains/models.py:546 netprofile_domains/views.py:62
+#: netprofile_domains/models.py:539 netprofile_domains/views.py:59
 msgid "TXT Records"
 msgstr "TXT записи"
 
-#: netprofile_domains/models.py:554
+#: netprofile_domains/models.py:547
 msgid "Add new TXT record"
 msgstr "Добавить новую TXT запись"
 
-#: netprofile_domains/models.py:579
+#: netprofile_domains/models.py:572
 msgid "Domain"
 msgstr "Домен"
 
-#: netprofile_domains/models.py:599
+#: netprofile_domains/models.py:592
 msgid "TTL"
 msgstr "TTL"
 
-#: netprofile_domains/models.py:610
+#: netprofile_domains/models.py:603
 msgid "Visibility"
 msgstr "Видимость"
 
-#: netprofile_domains/models.py:618
+#: netprofile_domains/models.py:611
 msgid "Value"
 msgstr "Значение"
 
-#: netprofile_domains/models.py:657
+#: netprofile_domains/models.py:650
 msgid "Domain Service Types"
 msgstr "Типы доменных служб"
 
-#: netprofile_domains/models.py:663
+#: netprofile_domains/models.py:656
 msgid "Add new type"
 msgstr "Добавить новый тип"
 
-#: netprofile_domains/models.py:695
+#: netprofile_domains/models.py:688
 msgid "Unique"
 msgstr "Уникальный"
 
-#: netprofile_domains/views.py:43
+#: netprofile_domains/views.py:40
 msgid "Subdomains"
 msgstr "Поддомены"

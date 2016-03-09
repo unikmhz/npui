@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-02-27 17:41+0300\n"
-"PO-Revision-Date: 2016-02-27 17:42+0300\n"
+"POT-Creation-Date: 2016-03-09 13:37+0300\n"
+"PO-Revision-Date: 2016-03-09 13:43+0300\n"
 "Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -21,101 +21,197 @@ msgstr ""
 "Generated-By: Babel 2.2.0\n"
 "X-Generator: Poedit 1.8.5\n"
 
-#: netprofile_devices/__init__.py:216
+#: netprofile_devices/__init__.py:105
+msgid "Menu: Devices"
+msgstr "Меню: Устройства"
+
+#: netprofile_devices/__init__.py:109
+msgid "Devices: List"
+msgstr "Устройства: Просмотр"
+
+#: netprofile_devices/__init__.py:113
+msgid "Devices: Create"
+msgstr "Устройства: Создание"
+
+#: netprofile_devices/__init__.py:117
+msgid "Devices: Edit"
+msgstr "Устройства: Правка"
+
+#: netprofile_devices/__init__.py:121
+msgid "Devices: Delete"
+msgstr "Устройства: Удаление"
+
+#: netprofile_devices/__init__.py:125
+msgid "Devices: Access to passwords"
+msgstr "Устройства: Доступ к паролям"
+
+#: netprofile_devices/__init__.py:129
+msgid "Files: Attach to devices"
+msgstr "Файлы: Присоединение к устройствам"
+
+#: netprofile_devices/__init__.py:133
+msgid "Devices: Create flags"
+msgstr "Устройства: Создание флагов устройств"
+
+#: netprofile_devices/__init__.py:137
+msgid "Devices: Edit flags"
+msgstr "Устройства: Правка флагов устройств"
+
+#: netprofile_devices/__init__.py:141
+msgid "Devices: Delete flags"
+msgstr "Устройства: Удаление флагов устройств"
+
+#: netprofile_devices/__init__.py:146
+msgid "Devices: Create device type flags"
+msgstr "Устройства: Создание флагов типов"
+
+#: netprofile_devices/__init__.py:150
+msgid "Devices: Edit device type flags"
+msgstr "Устройства: Правка флагов типов"
+
+#: netprofile_devices/__init__.py:154
+msgid "Devices: Delete device type flags"
+msgstr "Устройства: Удаление флагов типов"
+
+#: netprofile_devices/__init__.py:159
+msgid "Devices: Create manufacturers"
+msgstr "Устройства: Создание производителей"
+
+#: netprofile_devices/__init__.py:163
+msgid "Devices: Edit manufacturers"
+msgstr "Устройства: Правка производителей"
+
+#: netprofile_devices/__init__.py:167
+msgid "Devices: Delete manufacturers"
+msgstr "Устройства: Удаление производителей"
+
+#: netprofile_devices/__init__.py:172
+msgid "Devices: List types"
+msgstr "Устройства: Просмотр типов"
+
+#: netprofile_devices/__init__.py:176
+msgid "Devices: Create types"
+msgstr "Устройства: Создание типов"
+
+#: netprofile_devices/__init__.py:180
+msgid "Devices: Edit types"
+msgstr "Устройства: Правка типов"
+
+#: netprofile_devices/__init__.py:184
+msgid "Devices: Delete types"
+msgstr "Устройства: Удаление типов"
+
+#: netprofile_devices/__init__.py:189
+msgid "Devices: Create categories"
+msgstr "Устройства: Создание категорий"
+
+#: netprofile_devices/__init__.py:193
+msgid "Devices: Edit categories"
+msgstr "Устройства: Правка категорий"
+
+#: netprofile_devices/__init__.py:197
+msgid "Devices: Delete categories"
+msgstr "Устройства: Удаление категорий"
+
+#: netprofile_devices/__init__.py:201
+msgid "Devices: Probe hosts"
+msgstr "Устройства: Зондирование узлов"
+
+#: netprofile_devices/__init__.py:219
 msgid "Simple"
 msgstr "Простое"
 
-#: netprofile_devices/__init__.py:218
+#: netprofile_devices/__init__.py:221
 msgid "Simple Device"
 msgstr "Простое устройство"
 
-#: netprofile_devices/__init__.py:219 netprofile_devices/models.py:757
+#: netprofile_devices/__init__.py:222 netprofile_devices/models.py:756
 #: netprofile_devices/models.py:1264
 msgid "Simple Devices"
 msgstr "Простые устройства"
 
-#: netprofile_devices/__init__.py:220
+#: netprofile_devices/__init__.py:223
 msgid "Non-networking equipment."
 msgstr "Оборудование без подключения к сети."
 
-#: netprofile_devices/__init__.py:224
+#: netprofile_devices/__init__.py:227
 msgid "Network"
 msgstr "Сетевое"
 
-#: netprofile_devices/__init__.py:226
+#: netprofile_devices/__init__.py:229
 msgid "Network Device"
 msgstr "Сетевое устройство"
 
-#: netprofile_devices/__init__.py:227 netprofile_devices/models.py:804
+#: netprofile_devices/__init__.py:230 netprofile_devices/models.py:803
 #: netprofile_devices/models.py:1375
 msgid "Network Devices"
 msgstr "Сетевые устройства"
 
-#: netprofile_devices/__init__.py:228
+#: netprofile_devices/__init__.py:231
 msgid "Networking equipment."
 msgstr "Сетевое оборудование."
 
-#: netprofile_devices/__init__.py:237
+#: netprofile_devices/__init__.py:240
 msgid "Other"
 msgstr "Прочее"
 
-#: netprofile_devices/__init__.py:287
+#: netprofile_devices/__init__.py:290
 msgid "P2P Serial"
 msgstr "Серийный P2P"
 
-#: netprofile_devices/__init__.py:289
+#: netprofile_devices/__init__.py:292
 msgid "Loopback"
 msgstr "Кольцевой интерфейс"
 
-#: netprofile_devices/__init__.py:318
+#: netprofile_devices/__init__.py:321
 msgid "Generic modem"
 msgstr "Обычный модем"
 
-#: netprofile_devices/__init__.py:320
+#: netprofile_devices/__init__.py:323
 msgid "Proprietary virtual/internal"
 msgstr "Частный виртуальный/внутренний"
 
-#: netprofile_devices/__init__.py:321
+#: netprofile_devices/__init__.py:324
 msgid "Proprietary multiplexing"
 msgstr "Частный мультиплексор"
 
-#: netprofile_devices/__init__.py:337
+#: netprofile_devices/__init__.py:340
 msgid "Tunnel"
 msgstr "Туннель"
 
-#: netprofile_devices/__init__.py:339
+#: netprofile_devices/__init__.py:342
 msgid "ATM Sub Interface"
 msgstr "Субинтерфейс ATM"
 
-#: netprofile_devices/__init__.py:343
+#: netprofile_devices/__init__.py:346
 msgid "IP over Power Line"
 msgstr "IP поверх линий электропередачи"
 
-#: netprofile_devices/__init__.py:345
+#: netprofile_devices/__init__.py:348
 msgid "IP Forward"
 msgstr "Переадресация IP"
 
-#: netprofile_devices/__init__.py:349
+#: netprofile_devices/__init__.py:352
 msgid "ATM Virtual"
 msgstr "Виртуальный ATM"
 
-#: netprofile_devices/__init__.py:350
+#: netprofile_devices/__init__.py:353
 msgid "MPLS Tunnel"
 msgstr "Туннель MPLS"
 
-#: netprofile_devices/__init__.py:356
+#: netprofile_devices/__init__.py:359
 msgid "SS7 Signaling"
 msgstr "Сигнализация SS7"
 
-#: netprofile_devices/__init__.py:357
+#: netprofile_devices/__init__.py:360
 msgid "Proprietary P2P wireless"
 msgstr "Частный беспроводной P2P"
 
-#: netprofile_devices/__init__.py:376
+#: netprofile_devices/__init__.py:379
 msgid "Bridge"
 msgstr "Мост"
 
-#: netprofile_devices/__init__.py:432 netprofile_devices/models.py:907
+#: netprofile_devices/__init__.py:435 netprofile_devices/models.py:906
 msgid "Devices"
 msgstr "Устройства"
 
@@ -130,8 +226,8 @@ msgstr "Добавить новый класс устройств"
 #: netprofile_devices/models.py:153 netprofile_devices/models.py:287
 #: netprofile_devices/models.py:360 netprofile_devices/models.py:437
 #: netprofile_devices/models.py:508 netprofile_devices/models.py:571
-#: netprofile_devices/models.py:628 netprofile_devices/models.py:781
-#: netprofile_devices/models.py:833 netprofile_devices/models.py:947
+#: netprofile_devices/models.py:628 netprofile_devices/models.py:780
+#: netprofile_devices/models.py:832 netprofile_devices/models.py:946
 #: netprofile_devices/models.py:1219 netprofile_devices/models.py:1306
 #: netprofile_devices/models.py:1423 netprofile_devices/models.py:1763
 #: netprofile_devices/models.py:1843 netprofile_devices/models.py:1954
@@ -141,7 +237,7 @@ msgstr "ID"
 
 #: netprofile_devices/models.py:161 netprofile_devices/models.py:305
 #: netprofile_devices/models.py:368 netprofile_devices/models.py:445
-#: netprofile_devices/models.py:579 netprofile_devices/models.py:671
+#: netprofile_devices/models.py:579 netprofile_devices/models.py:670
 #: netprofile_devices/models.py:1851 netprofile_devices/models.py:1986
 msgid "Name"
 msgstr "Название"
@@ -163,7 +259,7 @@ msgid "Plural"
 msgstr "Множественное"
 
 #: netprofile_devices/models.py:217 netprofile_devices/models.py:380
-#: netprofile_devices/models.py:457 netprofile_devices/models.py:683
+#: netprofile_devices/models.py:457 netprofile_devices/models.py:682
 #: netprofile_devices/models.py:1103 netprofile_devices/models.py:1905
 #: netprofile_devices/models.py:2008 netprofile_devices/models.py:2197
 msgid "Description"
@@ -226,44 +322,44 @@ msgstr "Добавить новую категорию устройств"
 msgid "Types"
 msgstr "Типы"
 
-#: netprofile_devices/models.py:638 netprofile_devices/models.py:957
+#: netprofile_devices/models.py:638 netprofile_devices/models.py:956
 msgid "Class"
 msgstr "Класс"
 
-#: netprofile_devices/models.py:649
+#: netprofile_devices/models.py:648
 msgid "Manufacturer"
 msgstr "Производитель"
 
-#: netprofile_devices/models.py:661
+#: netprofile_devices/models.py:660
 msgid "Category"
 msgstr "Категория"
 
-#: netprofile_devices/models.py:766
+#: netprofile_devices/models.py:765
 msgid "Add new simple device type"
 msgstr "Добавить новый тип простых устройств"
 
-#: netprofile_devices/models.py:818
+#: netprofile_devices/models.py:817
 msgid "Add new network device type"
 msgstr "Добавить новый тип сетевых устройств"
 
-#: netprofile_devices/models.py:843
+#: netprofile_devices/models.py:842
 msgid "Manageable"
 msgstr "Управляемое"
 
-#: netprofile_devices/models.py:853
+#: netprofile_devices/models.py:852
 msgid "Modular"
 msgstr "Модульное"
 
-#: netprofile_devices/models.py:863 netprofile_devices/models.py:916
+#: netprofile_devices/models.py:862 netprofile_devices/models.py:915
 #: netprofile_devices/models.py:1272 netprofile_devices/models.py:1383
 msgid "Icon"
 msgstr "Иконка"
 
-#: netprofile_devices/models.py:873
+#: netprofile_devices/models.py:872
 msgid "Handler"
 msgstr "Обработчик"
 
-#: netprofile_devices/models.py:914 netprofile_devices/models.py:1270
+#: netprofile_devices/models.py:913 netprofile_devices/models.py:1270
 #: netprofile_devices/models.py:1381
 msgid "Device icon"
 msgstr "Иконка устройства"

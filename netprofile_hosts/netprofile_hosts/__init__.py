@@ -103,7 +103,7 @@ class Module(ModuleBase):
 			),
 			Privilege(
 				code='HOSTS_LIST',
-				name=_('Host: List')
+				name=_('Hosts: List')
 			),
 			Privilege(
 				code='HOSTS_CREATE',
