@@ -402,7 +402,7 @@ class Domain(Base):
 				str(self.name),
 				str(self.parent)
 			)
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class DomainAlias(Base):
 	"""
@@ -508,7 +508,7 @@ class DomainAlias(Base):
 				str(self.name),
 				str(self.parent)
 			)
-		return '%s' % str(self.name)
+		return str(self.name)
 
 
 class ObjectVisibility(DeclEnum):
@@ -625,7 +625,7 @@ class DomainTXTRecord(Base):
 				str(self.name),
 				str(self.domain)
 			)
-		return '%s' % str(self.name)
+		return str(self.name)
 
 
 class DomainServiceType(Base):
@@ -690,7 +690,10 @@ class DomainServiceType(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		req = getattr(self, '__req__', None)
+		if req:
+			return req.localizer.translate(_(self.name))
+		return str(self.name)
 
 DomainGetFullFunction = SQLFunction(
 	'domain_get_full',

@@ -522,6 +522,9 @@ class NetworkServiceType(Base):
 	)
 
 	def __str__(self):
+		req = getattr(self, '__req__', None)
+		if req:
+			return req.localizer.translate(_(self.name))
 		return str(self.name)
 
 class NetworkService(Base):

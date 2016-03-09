@@ -370,7 +370,7 @@ class Host(Base):
 				str(self.name),
 				str(self.domain)
 			)
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class HostGroup(Base):
 	"""
@@ -512,7 +512,7 @@ class HostGroup(Base):
 	)
 
 	def __str__(self):
-		return '%s' % self.name
+		return str(self.name)
 
 class ServiceProtocol(DeclEnum):
 	"""
@@ -523,6 +523,7 @@ class ServiceProtocol(DeclEnum):
 	udp    = 'udp',    _('UDP'),     30
 	sctp   = 'sctp',   _('SCTP'),    40
 	dccp   = 'dccp',   _('DCCP'),    50
+	tls    = 'tls',    _('TLS'),     60
 
 class ServiceType(Base):
 	"""
