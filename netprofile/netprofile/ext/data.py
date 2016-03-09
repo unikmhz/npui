@@ -2590,8 +2590,9 @@ class ExtBrowser(object):
 			for model in extmodule:
 				em = extmodule[model]
 
-				cap = em.cap_menu
-				if cap and not req.has_permission(cap):
+				if em.cap_menu and not req.has_permission(em.cap_menu):
+					continue
+				if em.cap_read and not req.has_permission(em.cap_read):
 					continue
 
 				item = em.get_menu_tree(req, name)

@@ -263,7 +263,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 			xtype: 'pagingtoolbar',
 			dock: 'bottom',
 			store: this.store,
-			displayInfo: NetProfile.userSettings.datagrid_showrange
+			displayInfo: NetProfile.userSettings['core.ui.datagrid_showrange']
 		});
 
 		this._scrollDelta = 0;

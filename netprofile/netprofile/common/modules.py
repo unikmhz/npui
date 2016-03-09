@@ -32,11 +32,17 @@ import pkg_resources
 import logging
 import transaction
 
+try:
+	from functools import lru_cache
+except ImportError:
+	from functools32 import lru_cache
+
 from zope.interface import (
 	implementer,
 	Interface
 )
 
+from collections import defaultdict
 from packaging.requirements import Requirement
 from packaging.version import parse
 from sqlalchemy.exc import ProgrammingError
@@ -140,6 +146,9 @@ class ModuleBase(object):
 
 	def unload(self):
 		pass
+
+	def get_settings(self, vhost='MAIN', scope='global'):
+		return ()
 
 	@property
 	def name(self):
@@ -831,6 +840,22 @@ class ModuleManager(object):
 			ret.extend(mod.get_task_imports())
 		return ret
 
+	@lru_cache(maxsize=8)
+	def get_settings(self, scope='global'):
+		"""
+		Get a dict of settings for all modules.
+		"""
+		ret = defaultdict(dict)
+		vhost = 'MAIN' if self.vhost is None else self.vhost
+		for moddef, mod in self.loaded.items():
+			for section in mod.get_settings(vhost, scope):
+				if section.vhost != vhost:
+					continue
+				if section.scope != scope:
+					continue
+				ret[moddef][section.name] = section
+		return ret
+
 	def menu_generator(self, request):
 		"""
 		Generate all registered UI menu objects.
@@ -845,10 +870,14 @@ def includeme(config):
 	For inclusion by Pyramid.
 	"""
 
+	import netprofile
+
 	config.add_translation_dirs('netprofile:locale/')
 
 	mmgr = ModuleManager(config)
 	mmgr.scan()
 
 	config.registry.registerUtility(mmgr, IModuleManager)
+	if netprofile.inst_mm is None:
+		netprofile.inst_mm = mmgr
 

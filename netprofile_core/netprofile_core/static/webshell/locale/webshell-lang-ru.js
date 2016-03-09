@@ -182,14 +182,12 @@ Ext.onReady(function()
 		}
 	});
 
-	Ext.define('Ext.locale.ru.NetProfile.controller.UserSettingsForm', {
-		override: 'NetProfile.controller.UserSettingsForm',
+	Ext.define('Ext.locale.ru.NetProfile.controller.SettingsForm', {
+		override: 'NetProfile.controller.SettingsForm',
 		btnResetText: 'Сбросить',
-		btnResetTipTitleText: 'Сбросить настройки',
-		btnResetTipText: 'Вернуть значения полей в этой форме к исходным.',
+		btnResetTipText: 'Вернуть значения полей в этой форме к исходным',
 		btnSaveText: 'Сохранить',
-		btnSaveTipTitleText: 'Сохранить настройки',
-		btnSaveTipText: 'Проверить и сохранить ваши настройки'
+		btnSaveTipText: 'Проверить и сохранить настройки'
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.menu.FileFolder', {

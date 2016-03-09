@@ -5,7 +5,8 @@ Ext.define('NetProfile.tab.PropBar', {
 		'Ext.tab.Panel',
 		'Ext.util.KeyMap',
 		'Ext.form.field.Text',
-		'Ext.button.Button'
+		'Ext.button.Button',
+		'NetProfile.form.Panel'
 	],
 	id: 'npws_propbar',
 	stateId: 'npws_propbar',

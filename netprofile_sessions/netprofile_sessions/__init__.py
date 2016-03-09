@@ -28,6 +28,10 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
+from netprofile.common.settings import (
+	Setting,
+	SettingSection
+)
 from netprofile.tpl import TemplateObject
 
 from sqlalchemy.orm.exc import NoResultFound
@@ -78,7 +82,6 @@ class Module(ModuleBase):
 	def get_sql_data(cls, modobj, vpair, sess):
 		from netprofile_core.models import (
 			GlobalSetting,
-			GlobalSettingSection,
 			Group,
 			GroupCapability,
 			Privilege
@@ -117,49 +120,47 @@ class Module(ModuleBase):
 		except NoResultFound:
 			pass
 
-		gss_acct = GlobalSettingSection( # no old id
-			module=modobj,
-			name='Accounting',
-			description='Client accounting settings.'
+		global_settings = (
+			GlobalSetting(name='sessions.acct.interval', value='60'),
+			GlobalSetting(name='sessions.acct.stale_cutoff', value='130')
 		)
-
-		sess.add(gss_acct)
-
-		sess.add(GlobalSetting(
-			section=gss_acct,
-			module=modobj,
-			name='acct_interval',
-			title='Default accounting interval',
-			type='text',
-			value='60',
-			default='60',
-			constraints={
-				'cast'   : 'int',
-				'nullok' : False,
-				'minval' : 20
-			},
-			description='Interval (in seconds) between session accounting reports.'
-		))
-		sess.add(GlobalSetting(
-			section=gss_acct,
-			module=modobj,
-			name='acct_stale_cutoff',
-			title='Inactivity before close',
-			type='text',
-			value='130',
-			default='130',
-			constraints={
-				'cast'   : 'int',
-				'nullok' : False,
-				'minval' : 45
-			},
-			description='Maximum session inactivity time (in seconds) before it is considered stale and closed down.'
-		))
+		for gs in global_settings:
+			sess.add(gs)
 
 	def get_css(self, request):
 		return (
 			'netprofile_sessions:static/css/main.css',
 		)
+
+	def get_settings(self, vhost='MAIN', scope='global'):
+		if vhost == 'MAIN' and scope == 'global':
+			return (
+				SettingSection(
+					'acct',
+					Setting(
+						'interval',
+						title=_('Default accounting interval'),
+						help_text=_('Interval (in seconds) between session accounting reports.'),
+						type='int',
+						default=60,
+						write_cap='ADMIN_DB',
+						field_extra={ 'minValue' : 20 }
+					),
+					Setting(
+						'stale_cutoff',
+						title=_('Inactivity before close'),
+						help_text=_('Maximum session inactivity time (in seconds) before it is considered stale and closed down.'),
+						type='int',
+						default=130,
+						write_cap='ADMIN_DB',
+						field_extra={ 'minValue' : 45 }
+					),
+					title=_('Accounting'),
+					help_text=_('Client accounting settings.'),
+					read_cap='BASE_ADMIN'
+				),
+			)
+		return ()
 
 	@property
 	def name(self):

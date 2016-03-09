@@ -155,7 +155,7 @@ class DAVPluginVFS(dav.DAVPlugin):
 		if root:
 			return root.user
 		else:
-			return DBSession().query(User).get(global_setting('vfs_root_uid'))
+			return DBSession().query(User).get(global_setting('core.vfs.root_uid'))
 
 	@property
 	def dav_group(self):
@@ -166,7 +166,7 @@ class DAVPluginVFS(dav.DAVPlugin):
 		if root:
 			return root.group
 		else:
-			return DBSession().query(Group).get(global_setting('vfs_root_gid'))
+			return DBSession().query(Group).get(global_setting('core.vfs.root_gid'))
 
 	@property
 	def __acl__(self):
@@ -179,13 +179,13 @@ class DAVPluginVFS(dav.DAVPlugin):
 		else:
 			sess = DBSession()
 			try:
-				root_user = sess.query(User).get(global_setting('vfs_root_uid'))
-				root_group = sess.query(Group).get(global_setting('vfs_root_gid'))
+				root_user = sess.query(User).get(global_setting('core.vfs.root_uid'))
+				root_group = sess.query(Group).get(global_setting('core.vfs.root_gid'))
 			except NoResultFound:
 				return (DENY_ALL,)
 			ff_user = 'u:%s' % root_user.login
 			ff_group = 'g:%s' % root_group.name
-			rights = global_setting('vfs_root_rights')
+			rights = global_setting('core.vfs.root_rights')
 		return (
 			(Allow if (rights & F_OWNER_EXEC) else Deny, ff_user, 'access'),
 			(Allow if (rights & F_OWNER_READ) else Deny, ff_user, 'read'),
@@ -221,13 +221,13 @@ class DAVPluginVFS(dav.DAVPlugin):
 		else:
 			sess = DBSession()
 			try:
-				root_user = sess.query(User).get(global_setting('vfs_root_uid'))
-				root_group = sess.query(Group).get(global_setting('vfs_root_gid'))
+				root_user = sess.query(User).get(global_setting('core.vfs.root_uid'))
+				root_group = sess.query(Group).get(global_setting('core.vfs.root_gid'))
 			except NoResultFound:
 				return None
 			ff_user = 'u:%s' % root_user.login
 			ff_group = 'g:%s' % root_group.name
-			rights = global_setting('vfs_root_rights')
+			rights = global_setting('core.vfs.root_rights')
 		owner_y = []
 		group_y = []
 		other_y = []

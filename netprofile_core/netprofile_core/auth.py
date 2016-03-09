@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Custom authentication plugin for Pyramid
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -59,6 +59,7 @@ from netprofile.common.auth import (
 	PluginPolicySelected,
 	auth_remove
 )
+from netprofile.common.modules import IModuleManager
 from netprofile.db.connection import DBSession
 from netprofile.db.clauses import (
 	SetVariable,
@@ -69,7 +70,6 @@ from .models import (
 	Privilege,
 	User,
 	UserSetting,
-	UserSettingType,
 	UserState
 )
 
@@ -118,23 +118,33 @@ def get_settings(request):
 	# FIXME: implement settings cache invalidation
 	if 'auth.settings' in request.session:
 		return request.session['auth.settings']
-	sess = DBSession()
+	mmgr = request.registry.getUtility(IModuleManager)
+	all_settings = mmgr.get_settings('user')
 	user = request.user
-	ret = {}
+
 	if user is None:
-		for ust in sess.query(UserSettingType):
-			ret[ust.name] = ust.parse_param(ust.default)
+		ret = {}
+		for moddef, sections in all_settings.items():
+			for sname, section in sections.items():
+				for setting_name, setting in section.items():
+					if setting.default is None:
+						continue
+					ret['%s.%s.%s' % (moddef, sname, setting_name)] = setting.default
 	else:
-		for (ust, us) in sess \
-			.query(UserSettingType, UserSetting) \
-			.outerjoin(UserSetting, and_(
-				UserSettingType.id == UserSetting.type_id,
-				UserSetting.user == request.user
-		)):
-			if us and (us.value is not None):
-				ret[ust.name] = ust.parse_param(us.value)
-			else:
-				ret[ust.name] = ust.parse_param(ust.default)
+		sess = DBSession()
+		ret = dict(
+			(s.name, s.value)
+			for s
+			in sess.query(UserSetting).filter(UserSetting.user == user)
+		)
+		for moddef, sections in all_settings.items():
+			for sname, section in sections.items():
+				for setting_name, setting in section.items():
+					fullname = '%s.%s.%s' % (moddef, sname, setting.name)
+					if fullname in ret:
+						ret[fullname] = setting.parse_param(ret[fullname])
+					elif setting.default is not None:
+						ret[fullname] = setting.default
 	request.session['auth.settings'] = ret
 	return ret
 

@@ -483,6 +483,9 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-status-offline { background-image: url(../img/status_offline.png) !important; }
 .ico-status-online  { background-image: url(../img/status_online.png) !important; }
 
+.ico-lang-en    { background-image: url(../img/flags/en.png) !important; }
+.ico-lang-ru    { background-image: url(../img/flags/ru.png) !important; }
+
 .ico-mod-acl                  { background-image: url(../img/key_plus.png) !important; }
 .ico-mod-addressbook          { background-image: url(../img/address_book.png) !important; }
 .ico-mod-calendar             { background-image: url(../img/calendar.png) !important; }
@@ -491,7 +494,6 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-mod-communicationtype    { background-image: url(../img/comm.png) !important; }
 .ico-mod-datacache            { background-image: url(../img/db.png) !important; }
 .ico-mod-globalsetting        { background-image: url(../img/item.png) !important; }
-.ico-mod-globalsettingsection { background-image: url(../img/item_group.png) !important; }
 .ico-mod-file                 { background-image: url(../img/file.png) !important; }
 .ico-mod-filefolder           { background-image: url(../img/folder.png) !important; }
 .ico-mod-folder               { background-image: url(../img/folder.png) !important; }
@@ -509,6 +511,4 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 .ico-mod-useremail            { background-image: url(../img/mail.png) !important; }
 .ico-mod-userphone            { background-image: url(../img/phone/phone.png) !important; }
 .ico-mod-usersetting          { background-image: url(../img/item.png) !important; }
-.ico-mod-usersettingsection   { background-image: url(../img/item_group.png) !important; }
-.ico-mod-usersettingtype      { background-image: url(../img/item_sel.png) !important; }
 

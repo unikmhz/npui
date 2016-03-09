@@ -39,7 +39,6 @@ import decimal
 from dateutil.tz import tzlocal
 
 from pyramid.view import render_view_to_response
-from pyramid.threadlocal import get_current_request
 from webob import Response
 from zope.interface import implementer
 from zope.interface import Interface
