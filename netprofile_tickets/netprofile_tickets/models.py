@@ -185,7 +185,10 @@ class TicketOrigin(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		req = getattr(self, '__req__', None)
+		if req:
+			return req.localizer.translate(_(self.name))
+		return str(self.name)
 
 class TicketState(Base):
 	"""
@@ -478,7 +481,7 @@ class TicketStateTransition(Base):
 	reassign_to = relationship('Group')
 
 	def __str__(self):
-		return '%s' % self.name
+		return str(self.name)
 
 	def apply(self, ticket):
 		if ticket.state != self.from_state:
@@ -567,7 +570,7 @@ class TicketFlagType(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.name)
+		return str(self.name)
 
 class TicketFlag(Base):
 	"""
@@ -699,7 +702,7 @@ class TicketFile(Base):
 	)
 
 	def __str__(self):
-		return '%s' % str(self.file)
+		return str(self.file)
 
 def _wizfld_ticket_state(fld, model, req, **kwargs):
 	sess = DBSession()
@@ -1211,7 +1214,7 @@ class Ticket(Base):
 	)
 
 	def __str__(self):
-		return '%s' % self.name
+		return str(self.name)
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
@@ -1460,7 +1463,7 @@ class TicketTemplate(Base):
 	scheduler = relationship('TicketScheduler')
 
 	def __str__(self):
-		return '%s' % self.name
+		return str(self.name)
 
 	def create_ticket(self, req, entity, args=None, values=None):
 		tpl_param = {
@@ -1547,7 +1550,7 @@ class TicketChangeField(Base):
 	id = Column(
 		'tcfid',
 		UInt32(),
-		Sequence('tickets_changes_fields_tcfid_seq'),
+		Sequence('tickets_changes_fields_tcfid_seq', start=101, increment=1),
 		Comment('Ticket change field ID'),
 		primary_key=True,
 		nullable=False,
@@ -1571,6 +1574,12 @@ class TicketChangeField(Base):
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
+
+	def __str__(self):
+		req = getattr(self, '__req__', None)
+		if req:
+			return req.localizer.translate(_(self.name))
+		return str(self.name)
 
 class TicketChange(Base):
 	"""
@@ -1996,7 +2005,7 @@ class TicketScheduler(Base):
 	)
 
 	def __str__(self):
-		return '%s' % self.name
+		return str(self.name)
 
 	def test_time(self, d):
 		if (self.start_hour is not None) and (d.hour < self.start_hour):
@@ -2200,7 +2209,7 @@ class TicketSchedulerUserAssignment(Base):
 	)
 
 	def __str__(self):
-		return '%s' % self.scheduler
+		return str(self.scheduler)
 
 class TicketSchedulerGroupAssignment(Base):
 	"""
@@ -2274,7 +2283,7 @@ class TicketSchedulerGroupAssignment(Base):
 	)
 
 	def __str__(self):
-		return '%s' % self.scheduler
+		return str(self.scheduler)
 
 class TicketChangeFlagMod(Base):
 	"""
