@@ -246,6 +246,8 @@ class Module(ModuleBase):
 		try:
 			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
 			for priv in privs:
+				if priv.code in {'TICKETS_OWN_LIST', 'TICKETS_OWNGROUP_LIST', 'TICKETS_DIRECT'}:
+					continue
 				cap = GroupCapability()
 				cap.group = grp_admins
 				cap.privilege = priv
