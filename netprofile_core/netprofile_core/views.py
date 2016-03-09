@@ -58,7 +58,10 @@ from sqlalchemy import (
 	or_,
 	func
 )
-from sqlalchemy.orm import undefer
+from sqlalchemy.orm import (
+	contains_eager,
+	undefer
+)
 
 from netprofile import locale_neg
 from netprofile import PY3
@@ -101,7 +104,10 @@ from .models import (
 	secpol_errors
 )
 
-from pyramid.i18n import TranslationStringFactory
+from pyramid.i18n import (
+	TranslationString,
+	TranslationStringFactory
+)
 
 _ = TranslationStringFactory('netprofile_core')
 
@@ -1048,19 +1054,21 @@ def dyn_priv_group_get(params, request):
 		raise KeyError('Invalid group ID')
 	recs = []
 	sess = DBSession()
+	loc = request.localizer
 	group = sess.query(Group).get(gid)
 	if group is None:
 		raise KeyError('Invalid group ID')
 
 	for priv in sess.query(Privilege)\
-			.join(NPModule)\
+			.join(Privilege.module)\
+			.options(contains_eager(Privilege.module))\
 			.filter(NPModule.enabled == True, Privilege.can_be_set == True)\
 			.order_by(Privilege.name):
 		prx = {
 			'privid'  : priv.id,
 			'owner'   : group.id,
 			'code'    : priv.code,
-			'name'    : priv.name,
+			'name'    : loc.translate(TranslationString(priv.name, 'netprofile_' + priv.module.name)),
 			'hasacls' : priv.has_acls,
 			'value'   : None
 		}
@@ -1120,11 +1128,13 @@ def dyn_acl_group_get(params, request):
 	code = params.get('code')
 	recs = []
 	sess = DBSession()
+	loc = request.localizer
 	group = sess.query(Group).get(gid)
 	if group is None:
 		raise KeyError('Invalid group ID')
 	priv = sess.query(Privilege)\
-		.join(NPModule)\
+		.join(Privilege.module)\
+		.options(contains_eager(Privilege.module))\
 		.filter(Privilege.code == code, NPModule.enabled == True, Privilege.can_be_set == True)\
 		.one()
 	acls = priv.get_acls()
@@ -1196,19 +1206,21 @@ def dyn_priv_user_get(params, request):
 		raise KeyError('Invalid user ID')
 	recs = []
 	sess = DBSession()
+	loc = request.localizer
 	user = sess.query(User).get(uid)
 	if user is None:
 		raise KeyError('Invalid user ID')
 
 	for priv in sess.query(Privilege)\
-			.join(NPModule)\
+			.join(Privilege.module)\
+			.options(contains_eager(Privilege.module))\
 			.filter(NPModule.enabled == True, Privilege.can_be_set == True)\
 			.order_by(Privilege.name):
 		prx = {
 			'privid'  : priv.id,
 			'owner'   : user.id,
 			'code'    : priv.code,
-			'name'    : priv.name,
+			'name'    : loc.translate(TranslationString(priv.name, 'netprofile_' + priv.module.name)),
 			'hasacls' : priv.has_acls,
 			'value'   : None
 		}
@@ -1268,11 +1280,13 @@ def dyn_acl_user_get(params, request):
 	code = params.get('code')
 	recs = []
 	sess = DBSession()
+	loc = request.localizer
 	user = sess.query(User).get(uid)
 	if user is None:
 		raise KeyError('Invalid user ID')
 	priv = sess.query(Privilege)\
-		.join(NPModule)\
+		.join(Privilege.module)\
+		.options(contains_eager(Privilege.module))\
 		.filter(Privilege.code == code, NPModule.enabled == True, Privilege.can_be_set == True)\
 		.one()
 	acls = priv.get_acls()
