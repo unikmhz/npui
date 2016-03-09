@@ -305,12 +305,15 @@ Ext.onReady(function()
 	Ext.define('Ext.locale.ru.NetProfile.grid.CapabilityGrid', {
 		override: 'NetProfile.grid.CapabilityGrid',
 
+		textCategory: 'Категория',
 		textName: 'Название',
 		textValue: 'Значение',
 		textAllowed: 'Разрешено',
 		textDenied: 'Запрещено',
 		textNotDefined: 'Не определено',
-		textTipACL: 'Редактирование ACL'
+		textTipACL: 'Редактирование ACL',
+
+		groupHeaderTpl: '{columnName}: {name} (всего {rows.length})'
 	});
 
 	Ext.define('Ext.locale.ru.NetProfile.window.ReportsWindow', {

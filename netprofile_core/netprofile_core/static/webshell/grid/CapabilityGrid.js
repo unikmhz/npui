@@ -27,6 +27,7 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 	border: 0,
 	invalidateScrollerOnRefresh: false,
 
+	textCatagory: 'Category',
 	textName: 'Name',
 	textValue: 'Value',
 	textAllowed: 'Allowed',
@@ -34,8 +35,11 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 	textNotDefined: 'Not Defined',
 	textTipACL: 'Edit ACLs',
 
+	groupHeaderTpl: '{columnName}: {name} ({rows.length} total)',
+
 	dockedItems: [],
 	plugins: [],
+	features: [],
 	viewConfig: {
 		stripeRows: true,
 		plugins: []
@@ -43,35 +47,57 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 
 	initComponent: function()
 	{
-		this.columns = [{
-			header: this.textName,
-			dataIndex: 'name',
-			name: 'name',
-			flex: 2
-		}, {
-			header: this.textValue,
+		var me = this;
+
+		me.columns = [];
+		if(me.showACL)
+		{
+			me.columns.push({
+				header: me.textCategory,
+				dataIndex: 'prefix',
+				name: 'prefix',
+				flex: 1
+			}, {
+				header: me.textName,
+				dataIndex: 'suffix',
+				name: 'name',
+				flex: 4,
+				groupable: false
+			});
+		}
+		else
+		{
+			me.columns.push({
+				header: me.textName,
+				dataIndex: 'name',
+				name: 'name',
+				flex: 1,
+				groupable: false
+			});
+		}
+		me.columns.push({
+			header: me.textValue,
 			dataIndex: 'value',
 			name: 'value',
 			sortable: false,
+			groupable: false,
 			width: 120,
 		    renderer: function(value, meta, record, rowidx, colidx, store)
 			{
-				var col = this.columns[colidx];
-
 				if(value === true)
 					return Ext.String.format(
 						'<img class="np-cap-icon" src="{0}/static/core/img/priv_allowed.png" alt="{1}" title="{1}" />{1}',
-						NetProfile.staticURL, this.textAllowed
+						NetProfile.staticURL, me.textAllowed
 					);
 				if(value === false)
 					return Ext.String.format(
 						'<img class="np-cap-icon" src="{0}/static/core/img/priv_denied.png" alt="{1}" title="{1}" />{1}',
-						NetProfile.staticURL, this.textDenied
+						NetProfile.staticURL, me.textDenied
 					);
 				if(value === null)
 					return Ext.String.format(
 						'<img class="np-cap-icon" src="{0}/static/core/img/priv_undef.png" alt="{1}" title="{1}" />{1}',
-						NetProfile.staticURL, this.textNotDefined
+						NetProfile.staticURL, me.textNotDefined
 					);
 		        return value;
 		    },
@@ -84,7 +110,7 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 				forceSelection: false,
 				allowBlank: true,
 				queryMode: 'local',
-				emptyText: this.textNotDefined,
+				emptyText: me.textNotDefined,
 				store: {
 					xtype: 'simplestore',
 					fields: [{
@@ -98,30 +124,31 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 					}],
 					data: [{
 						xid: null,
-						value: this.textNotDefined
+						value: me.textNotDefined
 					}, {
 						xid: true,
-						value: this.textAllowed
+						value: me.textAllowed
 					}, {
 						xid: false,
-						value: this.textDenied
+						value: me.textDenied
 					}]
 				}
 			}
-		}];
-		if(this.showACL)
-			this.columns.push({
+		});
+		if(me.showACL)
+			me.columns.push({
 				xtype: 'actioncolumn',
 				width: 20,
+				groupable: false,
 				items: [{
 					iconCls: 'ico-mod-acl',
-					tooltip: this.textTipACL,
+					tooltip: me.textTipACL,
 					handler: function(grid, rowi, coli, item, e, rec)
 					{
 						var acl_win, grid_cfg;
 
 						acl_win = Ext.create('NetProfile.window.CenterWindow', {
-							title: this.textTipACL + ': ' + rec.get('name'),
+							title: me.textTipACL + ': ' + rec.get('name'),
 							modal: true
 						});
 						grid_cfg = {
@@ -129,17 +156,16 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 							stateId: null,
 							stateful: false,
 							showACL: false,
-							ownerId: this.ownerId,
+							ownerId: me.ownerId,
 							code: rec.get('code')
 						};
-						if(this.apiGet)
-							grid_cfg.apiGet = this.apiGet.replace('Privilege', 'ACL');
-						if(this.apiSet)
-							grid_cfg.apiSet = this.apiSet.replace('Privilege', 'ACL');
+						if(me.apiGet)
+							grid_cfg.apiGet = me.apiGet.replace('Privilege', 'ACL');
+						if(me.apiSet)
+							grid_cfg.apiSet = me.apiSet.replace('Privilege', 'ACL');
 						acl_win.add(Ext.create('NetProfile.grid.CapabilityGrid', grid_cfg));
 						acl_win.show();
-					},
-					scope: this
+					}
 				}],
 				sortable: false,
 				resizable: false,
@@ -151,21 +177,29 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 				}
 			});
 
-		this.plugins.push({
+		me.plugins.push({
 			ptype: 'cellediting',
 			pluginId: 'editcell',
 			triggerEvent: 'cellclick'
 		});
+		if(me.showACL)
+			me.features = [{
+				ftype: 'grouping',
+				groupHeaderTpl: me.groupHeaderTpl,
+				hideGroupedHeader: true,
+				startCollapsed: true,
+				id: 'privGroup'
+			}];
 
-		if(!this.store)
+		if(!me.store)
 		{
-			this.store = Ext.create('NetProfile.data.PrivCapStore', {
+			me.store = Ext.create('NetProfile.data.PrivCapStore', {
 				proxy: {
 					type: 'direct',
 					api: {
 						create: Ext.emptyFn,
-						read: this.apiGet,
-						update: this.apiSet,
+						read: me.apiGet,
+						update: me.apiSet,
 						destroy: Ext.emptyFn
 					},
 					reader: {
@@ -182,31 +216,30 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 						writeAllFields: true,
 						allowSingle: false
 					},
-					extraParams: { owner: this.ownerId, code: this.code }
+					extraParams: { owner: me.ownerId, code: me.code }
 				},
 				listeners: {
 					beforeload: {
 						fn: function(st, op)
 						{
-							if(!this.ownerId)
+							if(!me.ownerId)
 							{
-								var rec = this.up('panel[cls~=record-tab]');
+								var rec = me.up('panel[cls~=record-tab]');
 
 								if(rec && rec.record)
 								{
-									this.ownerId = rec.record.getId();
-									st.proxy.extraParams = { owner: this.ownerId };
+									me.ownerId = rec.record.getId();
+									st.proxy.extraParams = { owner: me.ownerId };
 								}
 							}
 						},
-						scope: this,
 						single: true
 					}
 				}
 			});
 		}
 
-		this.callParent();
+		me.callParent();
 	}
 });
 

@@ -22,6 +22,29 @@ Ext.define('NetProfile.data.PrivCapModel', {
 		allowBlank: false,
 		persist: false
 	}, {
+		name: 'prefix',
+		type: 'string',
+		allowNull: false,
+		allowBlank: false,
+		persist: false,
+		calculate: function(data)
+		{
+			return data.name.split(':')[0];
+		}
+	}, {
+		name: 'suffix',
+		type: 'string',
+		allowNull: false,
+		allowBlank: false,
+		persist: false,
+		calculate: function(data)
+		{
+			var nparts = data.name.split(':', 2);
+			if(nparts && (nparts.length === 2))
+				return Ext.String.trim(nparts[1]);
+			return data.name;
+		}
+	}, {
 		name: 'hasacls',
 		type: 'boolean',
 		allowNull: false,
