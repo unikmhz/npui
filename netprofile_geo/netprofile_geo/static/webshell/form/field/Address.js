@@ -192,6 +192,8 @@ Ext.define('NetProfile.geo.form.field.Address', {
 
 		Ext.Object.each(this._getSubValuesBefore(stype), function(k, v)
 		{
+			if((stype === 'House') && (k === 'districtid'))
+				k = 'xdistrictid';
 			ret.push({
 				property: k,
 				operator: 'eq',

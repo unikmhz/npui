@@ -470,17 +470,21 @@ class House(Base):
 	def _filter_address(cls, query, value):
 		if not isinstance(value, dict):
 			return query
-		if 'districtid' in value:
+		if 'streetid' in value:
+			val = int(value['streetid'])
+			if val > 0:
+				query = query.filter(House.street_id == val)
+		elif 'districtid' in value:
 			val = int(value['districtid'])
 			if val > 0:
-				query = query.filter(or_(
+				query = query.join(House.street).filter(or_(
 					Street.district_id == val,
 					House.district_id == val
 				))
 		elif 'cityid' in value:
 			val = int(value['cityid'])
 			if val > 0:
-				query = query.filter(Street.city_id == val)
+				query = query.join(House.street).filter(Street.city_id == val)
 		return query
 
 	__tablename__ = 'addr_houses'
@@ -527,7 +531,8 @@ class House(Base):
 						display_field='name'
 					),
 					AddressFilter('address', _filter_address,
-						title=_('Address')
+						title=_('Address'),
+						show_houses=False
 					)
 				),
 
@@ -679,7 +684,6 @@ class House(Base):
 
 	@classmethod
 	def __augment_query__(cls, sess, query, params, req):
-		query = query.join(House.street).options(contains_eager(House.street))
 		flist = []
 		if '__filter' in params:
 			flist.extend(params['__filter'])
@@ -689,14 +693,16 @@ class House(Base):
 			prop = flt.get('property', None)
 			oper = flt.get('operator', None)
 			value = flt.get('value', None)
-			if prop == 'districtid':
+			if prop == 'xdistrictid':
 				if oper in ('eq', '=', '==', '==='):
+					query = query.join(House.street).options(contains_eager(House.street))
 					query = query.filter(or_(
 						House.district_id == int(value),
 						Street.district_id == int(value)
 					))
 			if prop == 'cityid':
 				if oper in ('eq', '=', '==', '==='):
+					query = query.join(House.street).options(contains_eager(House.street))
 					query = query.filter(Street.city_id == int(value))
 		return query
 
@@ -729,6 +735,41 @@ class Place(Base):
 	"""
 	Place object. Used for any container, shelf or storage space.
 	"""
+
+	@classmethod
+	def _filter_hgroup(cls, query, value):
+		if not isinstance(value, list):
+			value = [value]
+		return query.filter(Place.house_id.in_(
+			DBSession().query(HouseGroupMapping.house_id)\
+				.filter(HouseGroupMapping.group_id.in_(value))
+		))
+
+	@classmethod
+	def _filter_address(cls, query, value):
+		if not isinstance(value, dict):
+			return query
+		if 'houseid' in value:
+			val = int(value['houseid'])
+			if val > 0:
+				query = query.filter(Place.house_id == val)
+		elif 'streetid' in value:
+			val = int(value['streetid'])
+			if val > 0:
+				query = query.join(Place.house).filter(House.street_id == val)
+		elif 'districtid' in value:
+			val = int(value['districtid'])
+			if val > 0:
+				query = query.join(Place.house).join(House.street).filter(or_(
+					Street.district_id == val,
+					House.district_id == val
+				))
+		elif 'cityid' in value:
+			val = int(value['cityid'])
+			if val > 0:
+				query = query.join(Place.house).join(House.street).filter(Street.city_id == val)
+		return query
+
 	__tablename__ = 'addr_places'
 	__table_args__ = (
 		Comment('Places'),
@@ -751,6 +792,17 @@ class Place(Base):
 				'grid_hidden'   : ('placeid',),
 				'easy_search'   : ('number',),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'extra_search'  : (
+					CheckboxGroupFilter('hg', _filter_hgroup,
+						title=_('House Group'),
+						data='NetProfile.store.geo.HouseGroup',
+						value_field='ahgid',
+						display_field='name'
+					),
+					AddressFilter('address', _filter_address,
+						title=_('Address')
+					)
+				),
 
 				'create_wizard' : SimpleWizard(title=_('Add new place'))
 			}

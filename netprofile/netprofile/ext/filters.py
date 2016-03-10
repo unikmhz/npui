@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Custom ExtJS data filters
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -26,8 +26,6 @@ from __future__ import (
 	absolute_import,
 	division
 )
-
-from pyramid.i18n import get_localizer
 
 class Filter(object):
 	def __init__(self, name, hdl, **kwargs):
@@ -53,11 +51,10 @@ class TextFilter(Filter):
 		self.regex_text = kwargs.get('regex_err')
 
 	def get_cfg(self, req):
-		loc = get_localizer(req)
 		cfg = {
 			'xtype'      : 'textfield',
 			'name'       : self.name,
-			'fieldLabel' : loc.translate(self.title),
+			'fieldLabel' : req.localizer.translate(self.title),
 		}
 		# TODO: add config
 		return cfg
@@ -73,11 +70,10 @@ class SelectFilter(Filter):
 		self.display_field = kwargs.get('display_field')
 
 	def get_cfg(self, req):
-		loc = get_localizer(req)
 		cfg = {
 			'xtype'      : 'combo',
 			'name'       : self.name,
-			'fieldLabel' : loc.translate(self.title),
+			'fieldLabel' : req.localizer.translate(self.title),
 			'editable'   : False,
 			'autoSelect' : False
 		}
@@ -105,11 +101,10 @@ class CheckboxGroupFilter(GroupFilter):
 		self.vertical = kwargs.get('vertical', True)
 
 	def get_cfg(self, req):
-		loc = get_localizer(req)
 		cfg = {
 			'xtype'      : 'dyncheckboxgroup',
 			'name'       : self.name,
-			'fieldLabel' : loc.translate(self.title),
+			'fieldLabel' : req.localizer.translate(self.title),
 			'columns'    : self.columns,
 			'vertical'   : self.vertical
 		}
