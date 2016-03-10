@@ -59,31 +59,35 @@ Ext.define('NetProfile.form.field.FileSelect', {
 	onTriggerSelect: function()
 	{
 		var me = this,
-			picker = Ext.create('NetProfile.window.FileSelectWindow', {
-				title: me.chooseText,
-				onFileOpen: function(rec, ev)
+			picker;
+
+		if(me.readOnly)
+			return;
+		picker = Ext.create('NetProfile.window.FileSelectWindow', {
+			title: me.chooseText,
+			onFileOpen: function(rec, ev)
+			{
+				if(!rec.get('allow_read'))
+					return false;
+
+				var form = me.up('form'),
+					hf, xrec;
+
+				if(form)
 				{
-					if(!rec.get('allow_read'))
-						return false;
-
-					var form = me.up('form'),
-						hf, xrec;
-
-					if(form)
-					{
-						xrec = form.getRecord();
-						if(me.hiddenField)
-							hf = form.down('field[name=' + me.hiddenField + ']');
-					}
-					if(hf)
-						hf.setValue(rec.getId());
-					else if(xrec)
-						xrec.set(me.hiddenField, rec.getId());
-
-					me.setValue(rec.get('__str__'));
-					this.up('window').close();
+					xrec = form.getRecord();
+					if(me.hiddenField)
+						hf = form.down('field[name=' + me.hiddenField + ']');
 				}
-			});
+				if(hf)
+					hf.setValue(rec.getId());
+				else if(xrec)
+					xrec.set(me.hiddenField, rec.getId());
+
+				me.setValue(rec.get('__str__'));
+				this.up('window').close();
+			}
+		});
 
 		picker.down('filebrowser').setFolder(null); // FIXME: select proper root folder
 		picker.show();
