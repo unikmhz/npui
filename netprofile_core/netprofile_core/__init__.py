@@ -687,7 +687,7 @@ class Module(ModuleBase):
 					Setting(
 						'datagrid_showrange',
 						title=_('Show result range'),
-						help_text=_('Maximum number of rows to display on a single page of a table or grid.'),
+						help_text=_('Show current range of displayed entries in grid footer.'),
 						type='bool',
 						default=True
 					),
