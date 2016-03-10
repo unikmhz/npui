@@ -1351,13 +1351,16 @@ def dyn_acl_user_set(px, request):
 def _dpane_group_caps(tabs, model, req):
 	if req.has_permission('GROUPS_GETCAP'):
 		tabs.append({
-			'title'             : req.localizer.translate(_('Privileges')),
-			'iconCls'           : 'ico-mod-privilege',
-			'xtype'             : 'capgrid',
-			'stateId'           : None,
-			'stateful'          : False,
-			'apiGet'            : 'NetProfile.api.Privilege.group_get',
-			'apiSet'            : 'NetProfile.api.Privilege.group_set'
+			'title'     : req.localizer.translate(_('Privileges')),
+			'iconCls'   : 'ico-mod-privilege',
+			'xtype'     : 'capgrid',
+			'stateId'   : None,
+			'stateful'  : False,
+			'apiGet'    : 'NetProfile.api.Privilege.group_get',
+			'apiSet'    : 'NetProfile.api.Privilege.group_set',
+			'canSet'    : req.has_permission('GROUPS_SETCAP'),
+			'showACL'   : req.has_permission('GROUPS_GETACL'),
+			'canSetACL' : req.has_permission('GROUPS_SETACL')
 		})
 
 @register_hook('core.dpanetabs.core.User')
@@ -1393,13 +1396,16 @@ def _dpane_user_caps(tabs, model, req):
 	}))
 	if req.has_permission('USERS_GETCAP'):
 		tabs.append({
-			'title'             : loc.translate(_('Privileges')),
-			'iconCls'           : 'ico-mod-privilege',
-			'xtype'             : 'capgrid',
-			'stateId'           : None,
-			'stateful'          : False,
-			'apiGet'            : 'NetProfile.api.Privilege.user_get',
-			'apiSet'            : 'NetProfile.api.Privilege.user_set'
+			'title'     : loc.translate(_('Privileges')),
+			'iconCls'   : 'ico-mod-privilege',
+			'xtype'     : 'capgrid',
+			'stateId'   : None,
+			'stateful'  : False,
+			'apiGet'    : 'NetProfile.api.Privilege.user_get',
+			'apiSet'    : 'NetProfile.api.Privilege.user_set',
+			'canSet'    : req.has_permission('USERS_SETCAP'),
+			'showACL'   : req.has_permission('USERS_GETACL'),
+			'canSetACL' : req.has_permission('USERS_SETACL')
 		})
 
 _cal_serial = 1

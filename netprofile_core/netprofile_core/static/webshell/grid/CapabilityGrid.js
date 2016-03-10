@@ -24,6 +24,7 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 	apiSet: null,
 	canSet: false,
 	showACL: true,
+	canSetACL: false,
 	border: 0,
 	invalidateScrollerOnRefresh: false,
 
@@ -155,6 +156,7 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 							xtype: 'capgrid',
 							stateId: null,
 							stateful: false,
+							canSet: me.canSetACL,
 							showACL: false,
 							ownerId: me.ownerId,
 							code: rec.get('code')
@@ -240,6 +242,13 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 		}
 
 		me.callParent();
+
+		me.on('beforeedit', function(editor, ctx)
+		{
+			if(me.canSet)
+				return true;
+			return false;
+		});
 	}
 });
 
