@@ -52,11 +52,11 @@ from sqlalchemy import (
 	literal_column,
 	text
 )
-
 from sqlalchemy.orm import (
 	backref,
 	relationship
 )
+from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.db.connection import (
 	Base,
@@ -89,7 +89,10 @@ from netprofile.ext.wizards import (
 
 from pyramid.i18n import TranslationStringFactory
 
-from netprofile_domains.models import ObjectVisibility
+from netprofile_domains.models import (
+	Domain,
+	ObjectVisibility
+)
 
 _ = TranslationStringFactory('netprofile_hosts')
 
@@ -371,6 +374,27 @@ class Host(Base):
 				str(self.domain)
 			)
 		return str(self.name)
+
+	@classmethod
+	def resolve(cls, name, domain_aliases=True):
+		parts = name.strip('.').split('.')
+		num_parts = len(parts)
+		if num_parts == 1:
+			# TODO: support specifying default domain
+			raise ValueError('Hostname must be fully qualified')
+		variants = list(('.'.join(parts[:i]), '.'.join(parts[i:])) for i in range(1, num_parts))
+		sess = DBSession()
+		for host_part, domain_part in variants:
+			domain = Domain.resolve(domain_part, domain_aliases=domain_aliases)
+			if domain is None:
+				continue
+			try:
+				return sess.query(Host).filter(
+					Host.domain == domain,
+					Host.name == host_part
+				).one()
+			except NoResultFound:
+				pass
 
 class HostGroup(Base):
 	"""

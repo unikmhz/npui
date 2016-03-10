@@ -50,7 +50,9 @@ from sqlalchemy import (
 	Sequence,
 	Unicode,
 	UnicodeText,
+	and_,
 	literal_column,
+	or_,
 	text
 )
 
@@ -92,7 +94,11 @@ from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_domains')
 
-#TODO: fix one of the model privileges
+def domain_candidates(name, strip=0):
+	path = name.strip('.').split('.')
+	if strip > 0:
+		path = path[strip:]
+	return list('.'.join(path[i:]) for i in range(len(path)))
 
 class Domain(Base):
 	"""
@@ -159,7 +165,6 @@ class Domain(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'domainid',
 		UInt32(),
@@ -404,6 +409,59 @@ class Domain(Base):
 			)
 		return str(self.name)
 
+	@classmethod
+	def resolve(cls, name, domain_aliases=True):
+		name = name.strip('.')
+		sess = DBSession()
+		candidates = [(None, domain_candidates(name), None)]
+
+		while len(candidates) > 0:
+			old_candidates = candidates
+			candidates = []
+			domain_cond = []
+			da_cond = []
+			for domain, names, suffix in old_candidates:
+				if domain is None or isinstance(domain, Domain):
+					domain_cond.append(and_(
+						Domain.parent_id == (domain.id if domain else None),
+						Domain.name.in_(names)
+					))
+				if not domain_aliases:
+					continue
+				if domain is None or isinstance(domain, DomainAlias):
+					da_cond.append(and_(
+						DomainAlias.parent_id == (domain.id if domain else None),
+						DomainAlias.name.in_(names)
+					))
+			if len(domain_cond) > 0:
+				for domain in sess.query(Domain).filter(or_(*domain_cond)):
+					if suffix is None:
+						domain_name = str(domain)
+					else:
+						domain_name = '.'.join((domain.name, suffix))
+					if name == domain_name:
+						return domain
+					offset = name.find('.' + domain_name)
+					if offset > 0:
+						left_part = name[:offset]
+						candidates.append((domain, domain_candidates(left_part), domain_name))
+			if domain_aliases and len(da_cond) > 0:
+				for da in sess.query(DomainAlias).filter(or_(*da_cond)):
+					if suffix is None:
+						domain_name = str(da)
+					else:
+						domain_name = '.'.join((da.name, suffix))
+					if name == domain_name:
+						return da.domain
+					offset = name.find('.' + domain_name)
+					if offset > 0:
+						left_part = name[:offset]
+						dc = domain_candidates(left_part)
+						candidates.extend((
+							(da, dc, domain_name),
+							(da.domain, dc, domain_name)
+						))
+
 class DomainAlias(Base):
 	"""
 	Domain alias object. Same contents, different name.
@@ -445,7 +503,6 @@ class DomainAlias(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'daid',
 		UInt32(),
@@ -548,7 +605,6 @@ class DomainTXTRecord(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'txtrrid',
 		UInt32(),
@@ -657,7 +713,6 @@ class DomainServiceType(Base):
 			}
 		}
 	)
-
 	id = Column(
 		'hltypeid',
 		UInt32(),
