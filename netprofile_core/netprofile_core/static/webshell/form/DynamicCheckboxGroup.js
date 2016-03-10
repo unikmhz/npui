@@ -12,6 +12,23 @@ Ext.define('NetProfile.form.DynamicCheckboxGroup', {
 	initComponent: function()
 	{
 		this.storedValues = null;
+		if(!this.displayField)
+			this.displayField = '__str__';
+
+		if(Ext.isString(this.store))
+		{
+			this.store = Ext.create(this.store, {
+				buffered: false,
+				autoLoad: false,
+				pageSize: -1,
+				listeners: {
+					load: this.onLoad,
+					prefetch: this.onLoad,
+					scope: this
+				}
+			});
+		}
+		this.store.load();
 		this.callParent();
 	},
 	onRender: function(p, idx)
@@ -19,22 +36,7 @@ Ext.define('NetProfile.form.DynamicCheckboxGroup', {
 		this.callParent();
 		if(this.store && this.valueField)
 		{
-			if(!this.displayField)
-				this.displayField = '__str__';
-			if(Ext.isString(this.store))
-			{
-				this.store = Ext.create(this.store, {
-					buffered: false,
-					autoLoad: true,
-					pageSize: -1,
-					listeners: {
-						load: this.onLoad,
-						prefetch: this.onLoad,
-						scope: this
-					}
-				});
-			}
-			else if(!this.store.isLoading())
+			if(!this.store.isLoading())
 			{
 				this.suspendLayouts();
 				if(this.store.getCount() > 0)

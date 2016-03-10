@@ -829,7 +829,7 @@ class Place(Base):
 		info={
 			'header_string' : _('House'),
 			'filter_type'   : 'none',
-			'column_flex'   : 1
+			'column_flex'   : 2
 		}
 	)
 	number = Column(
@@ -849,7 +849,8 @@ class Place(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Name')
+			'header_string' : _('Name'),
+			'column_flex'   : 2
 		}
 	)
 	entrance = Column(
@@ -880,7 +881,8 @@ class Place(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Description')
+			'header_string' : _('Description'),
+			'column_flex'   : 1
 		}
 	)
 

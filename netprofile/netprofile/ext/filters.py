@@ -105,8 +105,15 @@ class CheckboxGroupFilter(GroupFilter):
 			'xtype'      : 'dyncheckboxgroup',
 			'name'       : self.name,
 			'fieldLabel' : req.localizer.translate(self.title),
-			'columns'    : self.columns,
-			'vertical'   : self.vertical
+			'vertical'   : self.vertical,
+			'layout'     : {
+				'type'    : 'table',
+				'columns' : self.columns
+			},
+			'defaults'   : {
+				'margin'     : 3,
+				'labelAlign' : 'left'
+			}
 		}
 		if isinstance(self.data, str):
 			cfg['store'] = self.data
