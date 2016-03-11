@@ -157,6 +157,7 @@ from netprofile.db.fields import (
 	Int64,
 	IPv4Address,
 	IPv6Address,
+	JSONData,
 	LargeBLOB,
 	NPBoolean,
 	UInt8,

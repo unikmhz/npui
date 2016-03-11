@@ -27,6 +27,11 @@ from __future__ import (
 	division
 )
 
+import binascii
+import json
+import re
+import sys
+
 from sqlalchemy import (
 	and_,
 	schema,
@@ -34,14 +39,12 @@ from sqlalchemy import (
 	types,
 	util
 )
-
 from sqlalchemy.dialects import (
 	mssql,
 	mysql,
 	oracle,
 	postgresql
 )
-
 from sqlalchemy.sql import (
 	expression,
 	sqltypes
@@ -50,10 +53,6 @@ from sqlalchemy.ext.compiler import compiles
 
 from netprofile.db import processors
 from netprofile.common import ipaddr
-
-import sys
-import binascii
-
 
 if sys.version < '3':
 	from netprofile.db.enum2 import (
@@ -67,8 +66,6 @@ else:
 		EnumMeta,
 		DeclEnum
 	)
-
-import re
 
 _D_MYSQL = frozenset([
 	mysql.mysqlconnector.dialect,
@@ -448,6 +445,36 @@ class ExactUnicode(types.TypeDecorator):
 		if isinstance(value, (bytes, bytearray)):
 			value = value.decode()
 		return value
+
+class JSONData(types.TypeDecorator):
+	"""
+	Arbitrary data structures, JSON-encoded.
+	"""
+	impl = types.UnicodeText
+
+	def load_dialect_impl(self, dialect):
+		if _is_pgsql(dialect):
+			return postgresql.JSONB()
+		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_pgsql(dialect):
+			return isinstance(conn_type, postgresql.JSONB)
+		return isinstance(conn_type, types.UnicodeText)
+
+	def process_bind_param(self, value, dialect):
+		if value is None:
+			return None
+		if _is_pgsql(dialect):
+			return value
+		return str(json.dumps(value))
+
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		if _is_pgsql(dialect):
+			return value
+		return json.loads(value)
 
 class Int8(types.TypeDecorator):
 	"""

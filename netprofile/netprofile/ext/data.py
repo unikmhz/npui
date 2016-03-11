@@ -76,6 +76,10 @@ from sqlalchemy.orm.interfaces import (
 )
 from sqlalchemy.sql.functions import Function
 from sqlalchemy.orm.attributes import QueryableAttribute
+from pyramid.i18n import (
+	TranslationString,
+	TranslationStringFactory
+)
 
 from netprofile.db.fields import (
 	ASCIIFixedString,
@@ -93,6 +97,7 @@ from netprofile.db.fields import (
 	IPv4Address,
 	IPv6Address,
 	IPv6Offset,
+	JSONData,
 	MACAddress,
 	Money,
 	NPBoolean,
@@ -102,28 +107,16 @@ from netprofile.db.fields import (
 	UInt32,
 	UInt64
 )
-
-# USE ME!
-#from sqlalchemy.orm import (
-#	class_mapper
-#)
-
 from netprofile.db.connection import (
 	Base,
 	DBSession
 )
-
 from netprofile.ext.columns import (
 	HybridColumn,
 	PseudoColumn
 )
 from netprofile.common import ipaddr
 from netprofile.tpl import TemplateObject
-from pyramid.i18n import (
-	TranslationString,
-	TranslationStringFactory,
-	get_localizer
-)
 
 _ = TranslationStringFactory('netprofile')
 
@@ -742,7 +735,7 @@ class ExtColumn(object):
 		return mcfg
 
 	def get_editor_cfg(self, req, initval=None, in_form=False):
-		loc = get_localizer(req)
+		loc = req.localizer
 		ed_xtype = self.editor_xtype
 		if ed_xtype is None:
 			return None
@@ -966,7 +959,7 @@ class ExtColumn(object):
 	def get_column_cfg(self, req):
 		if self.get_secret_value(req):
 			return None
-		loc = get_localizer(req)
+		loc = req.localizer
 		conf = {
 			'header'     : loc.translate(self.header_string),
 			'tooltip'    : loc.translate(self.column_name),
@@ -1174,7 +1167,7 @@ class ExtPseudoColumn(ExtColumn):
 	def get_column_cfg(self, req):
 		if self.get_secret_value(req):
 			return None
-		loc = get_localizer(req)
+		loc = req.localizer
 		conf = {
 			'header'     : loc.translate(self.column.header_string),
 			'tooltip'    : loc.translate(self.column.column_name),
@@ -1319,7 +1312,7 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 					'readOnly' : True
 				})
 			if in_form:
-				loc = get_localizer(req)
+				loc = req.localizer
 				conf['fieldLabel'] = loc.translate(self.header_string)
 				val = self.pixels
 				conf['width'] = self.MAX_PIXELS + 125
@@ -1379,7 +1372,7 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 				cont.remove(relobj)
 
 	def get_editor_cfg(self, req, initval=None, in_form=False):
-		loc = get_localizer(req)
+		loc = req.localizer
 		relcls = _table_to_class(self.prop.target.name)
 		if self.value_attr:
 			relcls = getattr(relcls, self.value_attr).property.mapper.class_
@@ -2280,7 +2273,7 @@ class ExtModel(object):
 
 	def validate_fields(self, values, request):
 		logger.debug('Running ExtDirect class:%s method:validate_fields values:%r', self.name, values)
-		loc = get_localizer(request)
+		loc = request.localizer
 		cols = self.get_columns()
 		trans = self._get_trans(cols)
 		sess = DBSession()
@@ -2348,7 +2341,7 @@ class ExtModel(object):
 				wiz.init_done = True
 			title = wiz.title
 			if title:
-				loc = get_localizer(request)
+				loc = request.localizer
 				title = loc.translate(title)
 			ret = {
 				'success' : True,
@@ -2377,7 +2370,7 @@ class ExtModel(object):
 				wiz.init_done = True
 			title = wiz.title
 			if title:
-				loc = get_localizer(request)
+				loc = request.localizer
 				title = loc.translate(title)
 			ret = {
 				'success' : True,
@@ -2434,7 +2427,7 @@ class ExtModel(object):
 
 	def get_menu_tree(self, req, name):
 		if self.show_in_menu == name:
-			loc = get_localizer(req)
+			loc = req.localizer
 			xname = self.name.lower()
 			ret = {
 				'id'      : xname,
@@ -2577,7 +2570,7 @@ class ExtBrowser(object):
 		return sorted(ret, key=lambda m: m.order)
 
 	def get_menu_tree(self, req, name):
-		loc = get_localizer(req)
+		loc = req.localizer
 		menu = []
 		id_cache = {}
 		module_mains = {}
