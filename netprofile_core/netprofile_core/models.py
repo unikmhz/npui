@@ -30,6 +30,9 @@ from __future__ import (
 __all__ = [
 	'NPModule',
 	'NPVariable',
+	'TaskSchedule',
+	'IntervalTaskSchedule',
+	'CrontabTaskSchedule',
 	'AddressType',
 	'PhoneType',
 	'ContactInfoType',
@@ -80,16 +83,18 @@ __all__ = [
 	'global_setting'
 ]
 
-import io
+import base64
+import celery.schedules
+import celery.states
+import datetime as dt
 import errno
+import hashlib
+import io
+import itertools
 import string
 import random
 import re
-import hashlib
-import datetime as dt
 import urllib
-import itertools
-import base64
 
 from collections import defaultdict
 from dateutil.tz import tzutc
@@ -114,7 +119,6 @@ from sqlalchemy import (
 	or_,
 	and_
 )
-
 from sqlalchemy.orm import (
 	backref,
 	deferred,
@@ -122,7 +126,6 @@ from sqlalchemy.orm import (
 	relationship,
 	validates
 )
-
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -468,6 +471,233 @@ class NPVariable(Base):
 		if (var is None) or (var not in sess):
 			cls._var_map[name] = sess.query(cls).filter(cls.name == name).with_for_update(read=True).one()
 		return cls._var_map[name]
+
+class TaskScheduleType(DeclEnum):
+	"""
+	Celery beat task schedule type.
+	"""
+	interval = 'int',  _('Interval'), 10
+	crontab  = 'cron', _('Crontab'),  20
+
+class TaskIntervalUnit(DeclEnum):
+	"""
+	Interval unit used by Celery beat schedules.
+	"""
+	days         = 'day', _('Days'),         10
+	hours        = 'hr',  _('Hours'),        20
+	minutes      = 'min', _('Minutes'),      30
+	seconds      = 'sec', _('Seconds'),      40
+	microseconds = 'mcs', _('Microseconds'), 50
+
+class TaskSchedule(Base):
+	"""
+	Base class for Celery beat task schedules.
+	"""
+	__tablename__ = 'tasks_schedules'
+	__table_args__ = (
+		Comment('Task schedules for Celery beat'),
+		Index('tasks_schedules_u_name', 'name', unique=True),
+		Index('tasks_schedules_i_type', 'type'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_TASKS',
+				'cap_read'      : 'TASKS_LIST',
+				'cap_create'    : 'TASKS_CREATE',
+				'cap_edit'      : 'TASKS_EDIT',
+				'cap_delete'    : 'TASKS_DELETE',
+
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Task Schedules'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('beatschid', 'name', 'type'),
+				'grid_hidden'   : ('beatschid',),
+				'form_view'     : (
+					'name', 'type',
+					'int_period', 'int_unit',
+					'cron_min', 'cron_hour', 'cron_wday',
+					'cron_mday', 'cron_month',
+					'descr'
+				),
+				'easy_search'   : ('name', 'descr'),
+				'create_wizard' : SimpleWizard(title=_('Add new task schedule')),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+			}
+		}
+	)
+	id = Column(
+		'beatschid',
+		UInt32(),
+		Sequence('tasks_schedules_beatschid_seq'),
+		Comment('Task schedule ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Task schedule name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	type = Column(
+		TaskScheduleType.db_type(),
+		Comment('Task schedule type'),
+		nullable=False,
+		default=TaskScheduleType.interval,
+		server_default=TaskScheduleType.interval,
+		info={
+			'header_string' : _('Type'),
+			'column_flex'   : 2
+		}
+	)
+	interval = Column(
+		'int_period',
+		UInt32(),
+		Comment('Interval amount for interval-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Interval Amount')
+		}
+	)
+	interval_unit = Column(
+		'int_unit',
+		TaskIntervalUnit.db_type(),
+		Comment('Interval unit for interval-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Interval Unit')
+		}
+	)
+	crontab_minute = Column(
+		'cron_min',
+		ASCIIString(64),
+		Comment('Minute specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Minutes')
+		}
+	)
+	crontab_hour = Column(
+		'cron_hour',
+		ASCIIString(64),
+		Comment('Hour specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Hours')
+		}
+	)
+	crontab_day_of_week = Column(
+		'cron_wday',
+		ASCIIString(64),
+		Comment('Day of the week specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Days of Week')
+		}
+	)
+	crontab_day_of_month = Column(
+		'cron_mday',
+		ASCIIString(64),
+		Comment('Day of the month specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Days of Month')
+		}
+	)
+	crontab_month = Column(
+		'cron_month',
+		ASCIIString(64),
+		Comment('Month specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Months')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Task schedule description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+	__mapper_args__ = {
+		'polymorphic_on'       : type,
+		'polymorphic_identity' : 'sched',
+		'with_polymorphic'     : '*'
+	}
+
+	def __str__(self):
+		return str(self.name)
+
+class IntervalTaskSchedule(TaskSchedule):
+	"""
+	Simple interval-based Celery beat task schedule.
+	"""
+	__mapper_args__ = {
+		'polymorphic_identity' : TaskScheduleType.interval
+	}
+
+	@property
+	def schedule(self):
+		if self.interval is None or self.interval_unit is None:
+			return None
+		return celery.schedules.schedule(
+			dt.timedelta(**{self.interval_unit.name : self.interval})
+		)
+
+class CrontabTaskSchedule(TaskSchedule):
+	"""
+	Cron-like Celery beat task schedule.
+	"""
+	__mapper_args__ = {
+		'polymorphic_identity' : TaskScheduleType.crontab
+	}
+
+	@property
+	def schedule(self):
+		kw = dict(
+			minute='*',
+			hour='*',
+			day_of_week='*',
+			day_of_month='*',
+			month_of_year='*'
+		)
+		if self.crontab_minute is not None:
+			kw['minute'] = self.crontab_minute
+		if self.crontab_hour is not None:
+			kw['hour'] = self.crontab_hour
+		if self.crontab_day_of_week is not None:
+			kw['day_of_week'] = self.crontab_day_of_week
+		if self.crontab_day_of_month is not None:
+			kw['day_of_month'] = self.crontab_day_of_month
+		if self.crontab_month is not None:
+			kw['month_of_year'] = self.crontab_month
+		return celery.schedules.crontab(**kw)
 
 class AddressType(DeclEnum):
 	"""
@@ -2174,10 +2404,8 @@ class GroupCapability(Capability,Base):
 				'cap_edit'     : 'GROUPS_SETCAP',
 				'cap_delete'   : 'GROUPS_SETCAP',
 
-#				'show_in_menu' : 'admin',
 				'menu_name'    : _('Group Capabilities'),
-				'default_sort' : (),
-#				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
+				'default_sort' : ()
 			}
 		}
 	)
@@ -2210,10 +2438,8 @@ class UserCapability(Capability,Base):
 				'cap_edit'     : 'USERS_SETCAP',
 				'cap_delete'   : 'USERS_SETCAP',
 
-#				'show_in_menu' : 'admin',
 				'menu_name'    : _('User Capabilities'),
-				'default_sort' : (),
-#				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
+				'default_sort' : ()
 			}
 		}
 	)
@@ -3483,7 +3709,6 @@ class DAVLock(Base):
 		Comment('Lock timeout'),
 		nullable=True,
 		default=None,
-#		server_default=text('NULL'),
 		info={
 			'header_string' : _('Timeout')
 		}
@@ -6187,7 +6412,6 @@ class NPSession(Base):
 		info={
 			'header_string' : _('Start')
 		}
-#		server_default=text('NULL')
 	)
 	last_time = Column(
 		'lastts',
@@ -6195,7 +6419,6 @@ class NPSession(Base):
 		Comment('Last seen time'),
 		CurrentTimestampDefault(on_update=True),
 		nullable=True,
-#		default=None,
 		info={
 			'header_string' : _('Last Update')
 		}

@@ -118,6 +118,9 @@ class Module(ModuleBase):
 		return (
 			NPModule,
 			NPVariable,
+			TaskSchedule,
+			IntervalTaskSchedule,
+			CrontabTaskSchedule,
 			User,
 			Group,
 			Privilege,
@@ -212,6 +215,10 @@ class Module(ModuleBase):
 			Privilege(
 				code='BASE_FILES',
 				name=_('Menu: Files')
+			),
+			Privilege(
+				code='BASE_TASKS',
+				name=_('Menu: Periodic Tasks')
 			),
 			Privilege(
 				code='ADMIN_SETTINGS',
@@ -344,6 +351,22 @@ class Module(ModuleBase):
 			Privilege(
 				code='FILES_EDIT',
 				name=_('Files: Edit')
+			),
+			Privilege(
+				code='TASKS_LIST',
+				name=_('Tasks: List')
+			),
+			Privilege(
+				code='TASKS_CREATE',
+				name=_('Tasks: Create')
+			),
+			Privilege(
+				code='TASKS_EDIT',
+				name=_('Tasks: Edit')
+			),
+			Privilege(
+				code='TASKS_DELETE',
+				name=_('Tasks: Delete')
 			),
 			Privilege(
 				code='PRIVILEGES_LIST',
