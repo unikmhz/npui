@@ -253,6 +253,7 @@ _JS_TYPE_MAP = {
 	IPv4Address  : 'ipv4',
 	IPv6Address  : 'ipv6',
 	IPv6Offset   : 'int', # ?
+	JSONData     : 'auto',
 	PickleType   : 'auto',
 	SmallInteger : 'int',
 	TIMESTAMP    : 'date',
@@ -283,6 +284,7 @@ _FILTER_TYPE_MAP = {
 	IPv4Address  : 'ipv4',
 	IPv6Address  : 'ipv6',
 	IPv6Offset   : 'npnumber', # ?
+	JSONData     : 'none',
 	PickleType   : 'none',
 	SmallInteger : 'npnumber',
 #	Time         : FIXME,

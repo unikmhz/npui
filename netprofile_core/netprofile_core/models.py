@@ -30,9 +30,12 @@ from __future__ import (
 __all__ = [
 	'NPModule',
 	'NPVariable',
+	'TaskScheduleType',
+	'TaskIntervalUnit',
 	'TaskSchedule',
 	'IntervalTaskSchedule',
 	'CrontabTaskSchedule',
+	'Task',
 	'AddressType',
 	'PhoneType',
 	'ContactInfoType',
@@ -652,6 +655,13 @@ class TaskSchedule(Base):
 		'with_polymorphic'     : '*'
 	}
 
+	tasks = relationship(
+		'Task',
+		backref=backref('schedule', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
 	def __str__(self):
 		return str(self.name)
 
@@ -699,6 +709,235 @@ class CrontabTaskSchedule(TaskSchedule):
 		if self.crontab_month is not None:
 			kw['month_of_year'] = self.crontab_month
 		return celery.schedules.crontab(**kw)
+
+class Task(Base):
+	"""
+	Scheduled periodic task.
+
+	Used by Celery beat system.
+	"""
+	__tablename__ = 'tasks_def'
+	__table_args__ = (
+		Comment('Tasks for Celery beat'),
+		Index('tasks_def_u_name', 'name', unique=True),
+		Index('tasks_def_i_cby', 'cby'),
+		Index('tasks_def_i_mby', 'mby'),
+		Index('tasks_def_i_beatschid', 'beatschid'),
+		Trigger('before', 'insert', 't_tasks_def_bi'),
+		Trigger('before', 'update', 't_tasks_def_bu'),
+		Trigger('after', 'insert', 't_tasks_def_ai'),
+		Trigger('after', 'update', 't_tasks_def_au'),
+		Trigger('after', 'delete', 't_tasks_def_ad'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_TASKS',
+				'cap_read'      : 'TASKS_LIST',
+				'cap_create'    : 'TASKS_CREATE',
+				'cap_edit'      : 'TASKS_EDIT',
+				'cap_delete'    : 'TASKS_DELETE',
+
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Tasks'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('taskid', 'name', 'schedule', 'enabled'),
+				'grid_hidden'   : ('taskid',),
+				'form_view'     : (
+					'name', 'schedule', 'enabled',
+					'proc', 'args', 'kwargs',
+					'queue', 'exchange', 'rkey',
+					'descr',
+					'rtime',
+					'ctime', 'created_by',
+					'mtime', 'modified_by'
+				),
+				'easy_search'   : ('name', 'descr'),
+				'create_wizard' : SimpleWizard(title=_('Add new task')),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+			}
+		}
+	)
+	id = Column(
+		'taskid',
+		UInt32(),
+		Sequence('tasks_def_taskid_seq'),
+		Comment('Task ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Task name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	schedule_id = Column(
+		'beatschid',
+		UInt32(),
+		ForeignKey('tasks_schedules.beatschid', name='tasks_def_fk_beatschid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Task schedule ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Schedule'),
+			'filter_type'   : 'nplist',
+			'column_flex'   : 2
+		}
+	)
+	enabled = Column(
+		NPBoolean(),
+		Comment('Is task enabled'),
+		nullable=False,
+		default=True,
+		server_default=npbool(True),
+		info={
+			'header_string' : _('Enabled')
+		}
+	)
+	procedure = Column(
+		'proc',
+		ASCIIString(255),
+		Comment('Registered Celery task procedure name'),
+		nullable=False,
+		info={
+			'header_string' : _('Function')
+			# TODO: select from registered tasks
+		}
+	),
+	arguments = Column(
+		'args',
+		JSONData(),
+		Comment('Arguments to pass to task procedure'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Arguments')
+		}
+	),
+	keyword_arguments = Column(
+		'kwargs',
+		JSONData(),
+		Comment('Keyword arguments to pass to task procedure'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Keyword Args')
+		}
+	),
+	queue = Column(
+		ASCIIString(255),
+		Comment('Celery message queue'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Queue')
+		}
+	)
+	exchange = Column(
+		ASCIIString(255),
+		Comment('Celery message exchange'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Exchange')
+		}
+	)
+	routing_key = Column(
+		'rkey',
+		ASCIIString(255),
+		Comment('Celery message routing key'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Routing Key')
+		}
+	)
+	last_run_time = Column(
+		'rtime',
+		TIMESTAMP(),
+		Comment('Last run timestamp'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Last Run Time'),
+			'read_only'     : True
+		}
+	)
+	creation_time = Column(
+		'ctime',
+		TIMESTAMP(),
+		Comment('Creation timestamp'),
+		nullable=True,
+		default=None,
+		server_default=FetchedValue(),
+		info={
+			'header_string' : _('Created'),
+			'read_only'     : True
+		}
+	)
+	modification_time = Column(
+		'mtime',
+		TIMESTAMP(),
+		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
+		nullable=False,
+		info={
+			'header_string' : _('Modified'),
+			'read_only'     : True
+		}
+	)
+	created_by_id = Column(
+		'cby',
+		UInt32(),
+		ForeignKey('users.uid', name='tasks_def_fk_cby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Created by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Created'),
+			'read_only'     : True
+		}
+	)
+	modified_by_id = Column(
+		'mby',
+		UInt32(),
+		ForeignKey('users.uid', name='tasks_def_fk_mby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Modified by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Modified'),
+			'read_only'     : True
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Task description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	def __str__(self):
+		return str(self.name)
 
 class AddressType(DeclEnum):
 	"""

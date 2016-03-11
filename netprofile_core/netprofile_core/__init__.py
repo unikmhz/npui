@@ -119,8 +119,7 @@ class Module(ModuleBase):
 			NPModule,
 			NPVariable,
 			TaskSchedule,
-			IntervalTaskSchedule,
-			CrontabTaskSchedule,
+			Task,
 			User,
 			Group,
 			Privilege,
@@ -191,6 +190,7 @@ class Module(ModuleBase):
 			LogType(id=17, name='Files'),
 			LogType(id=20, name='Folders'),
 			LogType(id=21, name='Global Settings'),
+			LogType(id=22, name='Tasks')
 		)
 		for obj in log:
 			sess.add(obj)
