@@ -211,7 +211,7 @@ class UUID(types.TypeDecorator):
 	impl = types.BINARY(16)
 
 	def load_dialect_impl(self, dialect):
-		if is_pgsql(dialect):
+		if _is_pgsql(dialect):
 			return postgresql.UUID(as_uuid=True)
 		return self.impl
 
