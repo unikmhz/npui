@@ -120,6 +120,7 @@ class Module(ModuleBase):
 			NPVariable,
 			TaskSchedule,
 			Task,
+			TaskLog,
 			User,
 			Group,
 			Privilege,

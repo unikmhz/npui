@@ -36,6 +36,7 @@ __all__ = [
 	'IntervalTaskSchedule',
 	'CrontabTaskSchedule',
 	'Task',
+	'TaskLog',
 	'AddressType',
 	'PhoneType',
 	'ContactInfoType',
@@ -167,6 +168,7 @@ from netprofile.db.fields import (
 	UInt16,
 	UInt32,
 	UInt64,
+	UUID,
 	npbool
 )
 from netprofile.ext.wizards import (
@@ -522,6 +524,7 @@ class TaskSchedule(Base):
 					'int_period', 'int_unit',
 					'cron_min', 'cron_hour', 'cron_wday',
 					'cron_mday', 'cron_month',
+					'not_before', 'not_after',
 					'descr'
 				),
 				'easy_search'   : ('name', 'descr'),
@@ -636,6 +639,26 @@ class TaskSchedule(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Months')
+		}
+	)
+	not_before = Column(
+		TIMESTAMP(),
+		Comment('Do not execute before this time'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Not Before')
+		}
+	)
+	not_after = Column(
+		TIMESTAMP(),
+		Comment('Do not execute after this time'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Not After')
 		}
 	)
 	description = Column(
@@ -809,7 +832,7 @@ class Task(Base):
 			'header_string' : _('Function')
 			# TODO: select from registered tasks
 		}
-	),
+	)
 	arguments = Column(
 		'args',
 		JSONData(),
@@ -818,9 +841,10 @@ class Task(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Arguments')
+			'header_string' : _('Arguments'),
+			'read_cap'      : 'ADMIN_DEV'
 		}
-	),
+	)
 	keyword_arguments = Column(
 		'kwargs',
 		JSONData(),
@@ -829,9 +853,10 @@ class Task(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Keyword Args')
+			'header_string' : _('Keyword Args'),
+			'read_cap'      : 'ADMIN_DEV'
 		}
-	),
+	)
 	queue = Column(
 		ASCIIString(255),
 		Comment('Celery message queue'),
@@ -938,6 +963,153 @@ class Task(Base):
 
 	def __str__(self):
 		return str(self.name)
+
+class TaskLog(Base):
+	"""
+	Result of single execution of a scheduled periodic task.
+
+	Used by Celery beat system.
+	"""
+	__tablename__ = 'tasks_log'
+	__table_args__ = (
+		Comment('Task results for Celery beat'),
+		Index('tasks_log_i_ts', 'startts'),
+		Index('tasks_log_i_uuid', 'uuid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_TASKS',
+				'cap_read'      : 'TASKS_LIST',
+				'cap_create'    : '__NOPRIV__',
+				'cap_edit'      : '__NOPRIV__',
+				'cap_delete'    : '__NOPRIV__',
+
+				'show_in_menu'  : 'admin',
+				'menu_name'     : _('Results'),
+				'default_sort'  : ({ 'property': 'startts' ,'direction': 'DESC' },),
+				'grid_view'     : ('tasklogid', 'uuid', 'proc', 'startts', 'state'),
+				'grid_hidden'   : ('tasklogid', 'uuid'),
+				'form_view'     : (
+					'uuid', 'state',
+					'proc', 'args', 'kwargs',
+					'startts', 'finishts',
+					'result', 'traceback'
+				),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+			}
+		}
+	)
+	id = Column(
+		'tasklogid',
+		UInt32(),
+		Sequence('tasks_log_tasklogid_seq'),
+		Comment('Task result ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	celery_id = Column(
+		'uuid',
+		UUID(),
+		Comment('Celery task UUID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Task ID')
+		}
+	)
+	state = Column(
+		ASCIIString(32),
+		Comment('Current Celery task state'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('State')
+		}
+	)
+	procedure = Column(
+		'proc',
+		ASCIIString(255),
+		Comment('Registered Celery task procedure name'),
+		nullable=False,
+		info={
+			'header_string' : _('Function')
+		}
+	)
+	arguments = Column(
+		'args',
+		JSONData(),
+		Comment('Arguments passed to task procedure'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Arguments'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+	keyword_arguments = Column(
+		'kwargs',
+		JSONData(),
+		Comment('Keyword arguments passed to task procedure'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Keyword Args'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+	start_timestamp = Column(
+		'startts',
+		TIMESTAMP(),
+		Comment('Task execution start time'),
+		CurrentTimestampDefault(),
+		nullable=False,
+		info={
+			'header_string' : _('Started')
+		}
+	)
+	finish_timestamp = Column(
+		'finishts',
+		TIMESTAMP(),
+		Comment('Task result return time'),
+		nullable=True,
+		default=None,
+		info={
+			'header_string' : _('Finished')
+		}
+	)
+	result = Column(
+		JSONData(),
+		Comment('Value returned by a task'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Result'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+	traceback = Column(
+		UnicodeText(),
+		Comment('Traceback if exception was encountered'),
+		info={
+			'header_string' : _('Traceback'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+
+	def __str__(self):
+		return '%s: %s' % (
+			str(self.procedure),
+			str(self.celery_id)
+		)
 
 class AddressType(DeclEnum):
 	"""
