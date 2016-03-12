@@ -255,6 +255,9 @@ def _parse_ini_settings(reg, celery):
 
 	if 'scheduler' in cfg:
 		newconf['CELERYBEAT_SCHEDULER'] = cfg['scheduler']
+	else:
+		# FIXME: strip scheduler parts out of 'core' module
+		newconf['CELERYBEAT_SCHEDULER'] = 'netprofile_core.celery:Scheduler'
 	if 'schedule_filename' in cfg:
 		newconf['CELERYBEAT_SCHEDULE_FILENAME'] = cfg['schedule_filename']
 	if 'sync_every' in cfg:

@@ -680,7 +680,7 @@ class TaskSchedule(Base):
 
 	tasks = relationship(
 		'Task',
-		backref=backref('schedule', innerjoin=True),
+		backref=backref('schedule', innerjoin=True, lazy='joined'),
 		cascade='all, delete-orphan',
 		passive_deletes=True
 	)
@@ -888,6 +888,18 @@ class Task(Base):
 			'header_string' : _('Routing Key')
 		}
 	)
+	run_count = Column(
+		'rcount',
+		UInt32(),
+		Comment('Total run count'),
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('Total Runs'),
+			'read_only'     : True
+		}
+	)
 	last_run_time = Column(
 		'rtime',
 		TIMESTAMP(),
@@ -960,6 +972,16 @@ class Task(Base):
 			'header_string' : _('Description')
 		}
 	)
+
+	@property
+	def options(self):
+		return {
+			'queue'       : self.queue,
+			'exchange'    : self.exchange,
+			'routing_key' : self.routing_key,
+			'eta'         : self.schedule.not_before,
+			'expires'     : self.schedule.not_after
+		}
 
 	def __str__(self):
 		return str(self.name)
