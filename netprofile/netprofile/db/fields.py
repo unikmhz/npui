@@ -31,6 +31,7 @@ import binascii
 import json
 import re
 import sys
+import uuid
 
 from sqlalchemy import (
 	and_,
@@ -202,6 +203,40 @@ class IPv6Offset(types.TypeDecorator):
 	@property
 	def python_type(self):
 		return int
+
+class UUID(types.TypeDecorator):
+	"""
+	UUID type.
+	"""
+	impl = types.BINARY(16)
+
+	def load_dialect_impl(self, dialect):
+		if is_pgsql(dialect):
+			return postgresql.UUID(as_uuid=True)
+		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_pgsql(dialect):
+			return isinstance(conn_type, postgresql.UUID)
+		return isinstance(conn_type, types.BINARY) and conn_type.length == 16
+
+	@property
+	def python_type(self):
+		return uuid.UUID
+
+	def process_bind_param(self, value, dialect):
+		if value is None:
+			return None
+		if _is_pgsql(dialect):
+			return value
+		return value.bytes
+
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		if _is_pgsql(dialect):
+			return value
+		return uuid.UUID(bytes=value)
 
 class Money(types.TypeDecorator):
 	"""
