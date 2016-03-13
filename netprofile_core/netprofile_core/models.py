@@ -743,9 +743,10 @@ class Task(Base):
 	__table_args__ = (
 		Comment('Tasks for Celery beat'),
 		Index('tasks_def_u_name', 'name', unique=True),
+		Index('tasks_def_i_beatschid', 'beatschid'),
+		Index('tasks_def_i_mtime', 'mtime'),
 		Index('tasks_def_i_cby', 'cby'),
 		Index('tasks_def_i_mby', 'mby'),
-		Index('tasks_def_i_beatschid', 'beatschid'),
 		Trigger('before', 'insert', 't_tasks_def_bi'),
 		Trigger('before', 'update', 't_tasks_def_bu'),
 		Trigger('after', 'insert', 't_tasks_def_ai'),
@@ -971,6 +972,23 @@ class Task(Base):
 		info={
 			'header_string' : _('Description')
 		}
+	)
+
+	created_by = relationship(
+		'User',
+		foreign_keys=created_by_id,
+		backref=backref(
+			'created_tasks',
+			passive_deletes=True
+		)
+	)
+	modified_by = relationship(
+		'User',
+		foreign_keys=modified_by_id,
+		backref=backref(
+			'modified_tasks',
+			passive_deletes=True
+		)
 	)
 
 	@property
