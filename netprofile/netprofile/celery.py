@@ -29,20 +29,29 @@ from __future__ import (
 
 import os
 import pkg_resources
+import transaction
 
 from pyramid.config import aslist
 from pyramid.paster import (
 	get_appsettings,
 	setup_logging
 )
-
 from celery import Celery
-from celery.signals import celeryd_init
+from celery.signals import (
+	beat_init,
+	celeryd_init,
+	worker_process_init
+)
 from kombu import (
 	Exchange,
 	Queue
 )
 from kombu.common import Broadcast
+from sqlalchemy import (
+	engine_from_config,
+	event,
+	pool
+)
 
 from netprofile import setup_config
 from netprofile.common.modules import IModuleManager
@@ -50,6 +59,8 @@ from netprofile.common.util import (
 	as_dict,
 	make_config_dict
 )
+from netprofile.db.clauses import SetVariable
+from netprofile.db.connection import DBSession
 
 _default_queues = (
 	Queue('celery', Exchange('celery'), routing_key='celery'),
@@ -379,6 +390,27 @@ def _setup(conf=None, **kwargs):
 	app.config = cfg
 	app.settings = settings
 	app.mmgr = mmgr
+
+	transaction.abort()
+	DBSession.remove()
+
+def _worker_setup(*args, **kwargs):
+	engine = engine_from_config(
+		app.settings,
+		prefix='sqlalchemy.',
+		poolclass=pool.NullPool
+	)
+	DBSession.configure(bind=engine)
+
+	def _after_begin(sess, trans, conn):
+		sess.execute(SetVariable('accessuid', 0))
+		sess.execute(SetVariable('accessgid', 0))
+		sess.execute(SetVariable('accesslogin', '[TASK]'))
+
+	event.listen(DBSession, 'after_begin', _after_begin)
+
+worker_process_init.connect(_worker_setup)
+beat_init.connect(_worker_setup)
 
 def setup_celery(reg):
 	_parse_ini_settings(reg, app)
