@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 import binascii
+import collections
 import json
 import re
 import sys
@@ -748,22 +749,41 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	def process_bind_param(self, value, dialect):
 		if value is None:
 			return None
-		return value.value
+		if isinstance(value, EnumSymbol):
+			return value.value
+		return value
 
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
 		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
-		value = value.strip()
-		if self.enum:
-			return self.enum.from_string(value)
+		if isinstance(value, str):
+			value = value.strip()
+			if self.enum:
+				return self.enum.from_string(value)
 		return value
 
 	def coerce_compared_value(self, op, value):
 		if isinstance(value, str):
 			return ASCIIString()
 		return self
+
+	class comparator_factory(types.Enum.Comparator):
+		def in_(self, other):
+			if isinstance(other, collections.Iterable):
+				ret = []
+				for elem in other:
+					if isinstance(elem, EnumSymbol):
+						elem = type_coerce(elem, DeclEnum)
+					ret.append(elem)
+				other = ret
+			return types.Enum.Comparator.in_(self, other)
+
+	def process_literal_param(self, value, dialect):
+		if isinstance(value, EnumSymbol):
+			return value.value
+		return value
 
 def render_variants(query):
 	ret = {}
