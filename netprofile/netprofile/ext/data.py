@@ -313,6 +313,9 @@ def _name_to_class(xcname):
 def _table_to_class(tname):
 	for cname, cls in Base._decl_class_registry.items():
 		if getattr(cls, '__tablename__', None) == tname:
+			mapper = getattr(cls, '__mapper__', None)
+			if mapper and mapper.single:
+				return mapper.base_mapper.class_
 			return cls
 	raise KeyError(tname)
 
@@ -1472,7 +1475,13 @@ class ExtModel(object):
 
 	@property
 	def is_polymorphic(self):
-		return (self.model.__mapper__.polymorphic_on is not None)
+		root_mapper = self.model.__mapper__
+		if root_mapper.polymorphic_on is None:
+			return False
+		for submap in root_mapper.polymorphic_map.values():
+			if submap.tables != root_mapper.tables:
+				return True
+		return False
 
 	@property
 	def easy_search(self):
