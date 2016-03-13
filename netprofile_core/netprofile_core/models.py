@@ -519,7 +519,16 @@ class TaskSchedule(Base):
 				'menu_section'  : _('Tasks'),
 				'menu_name'     : _('Task Schedules'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
-				'grid_view'     : ('beatschid', 'name', 'type'),
+				'grid_view'     : (
+					'beatschid',
+					'name', 'type',
+					MarkupColumn(
+						name='describe',
+						header_string=_('Details'),
+						column_flex=3,
+						template='{describe}'
+					)
+				),
 				'grid_hidden'   : ('beatschid',),
 				'form_view'     : (
 					'name', 'type',
@@ -530,8 +539,9 @@ class TaskSchedule(Base):
 					'descr'
 				),
 				'easy_search'   : ('name', 'descr'),
-				'create_wizard' : SimpleWizard(title=_('Add new task schedule')),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+				'extra_data'    : ('describe',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new task schedule'))
 			}
 		}
 	)
@@ -706,6 +716,41 @@ class IntervalTaskSchedule(TaskSchedule):
 			dt.timedelta(**{self.interval_unit.name : self.interval})
 		)
 
+	def describe(self, req):
+		loc = req.localizer
+
+		if self.interval_unit == TaskIntervalUnit.days:
+			return loc.pluralize(
+				'Every day', 'Every ${num} days', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		if self.interval_unit == TaskIntervalUnit.hours:
+			return loc.pluralize(
+				'Every hour', 'Every ${num} hours', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		if self.interval_unit == TaskIntervalUnit.minutes:
+			return loc.pluralize(
+				'Every minute', 'Every ${num} minutes', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		if self.interval_unit == TaskIntervalUnit.seconds:
+			return loc.pluralize(
+				'Every second', 'Every ${num} seconds', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		if self.interval_unit == TaskIntervalUnit.microseconds:
+			return loc.pluralize(
+				'Every microsecond', 'Every ${num} microseconds', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		return '-'
+
 class CrontabTaskSchedule(TaskSchedule):
 	"""
 	Cron-like Celery beat task schedule.
@@ -713,6 +758,16 @@ class CrontabTaskSchedule(TaskSchedule):
 	__mapper_args__ = {
 		'polymorphic_identity' : TaskScheduleType.crontab
 	}
+
+	def describe(self, req):
+		cron_bits = (
+			'*' if self.crontab_minute is None else self.crontab_minute,
+			'*' if self.crontab_hour is None else self.crontab_hour,
+			'*' if self.crontab_day_of_month is None else self.crontab_day_of_month,
+			'*' if self.crontab_month is None else self.crontab_month,
+			'*' if self.crontab_day_of_week is None else self.crontab_day_of_week
+		)
+		return 'cron: %s' % (' '.join(cron_bits),)
 
 	@property
 	def schedule(self):
@@ -792,8 +847,8 @@ class Task(Base):
 					'mtime', 'modified_by'
 				),
 				'easy_search'   : ('name', 'descr'),
-				'create_wizard' : SimpleWizard(title=_('Add new task')),
-				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new task'))
 			}
 		}
 	)
