@@ -1,5 +1,7 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="netprofile:templates/ddl_trigger.mak"/>\
 <%block name="sql">\
-	SET NEW.mby := @accessuid;
+	IF @accessuid > 0 THEN
+		SET NEW.mby := @accessuid;
+	END IF;
 </%block>
