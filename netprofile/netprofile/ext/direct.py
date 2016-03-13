@@ -36,6 +36,7 @@ import json
 import traceback
 import datetime as dt
 import decimal
+import uuid
 from dateutil.tz import tzlocal
 
 from pyramid.view import render_view_to_response
@@ -101,6 +102,8 @@ class JsonReprEncoder(json.JSONEncoder):
 			return str(obj)
 		if isinstance(obj, bytes):
 			return binascii.hexlify(obj).decode()
+		if isinstance(obj, uuid.UUID):
+			return str(obj)
 
 		return super(JsonReprEncoder, self).default(obj)
 
