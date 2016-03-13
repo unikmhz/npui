@@ -204,6 +204,7 @@ from netprofile.db.ddl import (
 	SQLFunctionArgument,
 	Trigger
 )
+from netprofile.celery import app as celery_app
 
 from pyramid.response import (
 	FileIter,
@@ -515,6 +516,7 @@ class TaskSchedule(Base):
 				'cap_delete'    : 'TASKS_DELETE',
 
 				'show_in_menu'  : 'admin',
+				'menu_section'  : _('Tasks'),
 				'menu_name'     : _('Task Schedules'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('beatschid', 'name', 'type'),
@@ -733,6 +735,18 @@ class CrontabTaskSchedule(TaskSchedule):
 			kw['month_of_year'] = self.crontab_month
 		return celery.schedules.crontab(**kw)
 
+def _task_choices(col, req):
+	ret = {}
+	for name, task in celery_app.tasks.items():
+		if name.startswith('celery.'):
+			continue
+		cap = getattr(task, '__cap__', None)
+		if cap and not req.has_permission(cap):
+			continue
+		# TODO: Provide a way to specify descriptive names for tasks
+		ret[name] = name
+	return ret
+
 class Task(Base):
 	"""
 	Scheduled periodic task.
@@ -763,6 +777,7 @@ class Task(Base):
 				'cap_delete'    : 'TASKS_DELETE',
 
 				'show_in_menu'  : 'admin',
+				'menu_section'  : _('Tasks'),
 				'menu_name'     : _('Tasks'),
 				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
 				'grid_view'     : ('taskid', 'name', 'schedule', 'enabled'),
@@ -811,6 +826,7 @@ class Task(Base):
 		info={
 			'header_string' : _('Schedule'),
 			'filter_type'   : 'nplist',
+			'editor_xtype'  : 'simplemodelselect',
 			'column_flex'   : 2
 		}
 	)
@@ -830,8 +846,13 @@ class Task(Base):
 		Comment('Registered Celery task procedure name'),
 		nullable=False,
 		info={
-			'header_string' : _('Function')
-			# TODO: select from registered tasks
+			'header_string' : _('Function'),
+			'choices'       : _task_choices,
+			'editor_config' : {
+				'editable'       : False,
+				'forceSelection' : True,
+				'width' : None
+			}
 		}
 	)
 	arguments = Column(
@@ -946,6 +967,7 @@ class Task(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Created'),
+			'filter_type'   : 'nplist',
 			'read_only'     : True
 		}
 	)
@@ -959,6 +981,7 @@ class Task(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Modified'),
+			'filter_type'   : 'nplist',
 			'read_only'     : True
 		}
 	)
@@ -1026,6 +1049,7 @@ class TaskLog(Base):
 				'cap_delete'    : '__NOPRIV__',
 
 				'show_in_menu'  : 'admin',
+				'menu_section'  : _('Tasks'),
 				'menu_name'     : _('Results'),
 				'default_sort'  : ({ 'property': 'startts' ,'direction': 'DESC' },),
 				'grid_view'     : ('tasklogid', 'uuid', 'proc', 'startts', 'state'),
@@ -1059,7 +1083,8 @@ class TaskLog(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Task ID')
+			'header_string' : _('Task ID'),
+			'column_flex'   : 2
 		}
 	)
 	state = Column(
@@ -1069,7 +1094,8 @@ class TaskLog(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('State')
+			'header_string' : _('State'),
+			'column_flex'   : 1
 		}
 	)
 	procedure = Column(
@@ -1078,7 +1104,8 @@ class TaskLog(Base):
 		Comment('Registered Celery task procedure name'),
 		nullable=False,
 		info={
-			'header_string' : _('Function')
+			'header_string' : _('Function'),
+			'column_flex'   : 3
 		}
 	)
 	arguments = Column(
@@ -1112,7 +1139,8 @@ class TaskLog(Base):
 		CurrentTimestampDefault(),
 		nullable=False,
 		info={
-			'header_string' : _('Started')
+			'header_string' : _('Started'),
+			'column_flex'   : 2
 		}
 	)
 	finish_timestamp = Column(
