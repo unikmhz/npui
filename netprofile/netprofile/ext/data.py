@@ -2034,6 +2034,11 @@ class ExtModel(object):
 					continue
 			if cols[p].get_read_only(request):
 				continue
+			choices = cols[p].get_choices(request)
+			if choices:
+				chosen_val = cols[p].parse_param(val)
+				if chosen_val not in choices:
+					continue
 			writer = cols[p].writer
 			if writer:
 				writer = getattr(obj, writer, None)
@@ -2089,6 +2094,11 @@ class ExtModel(object):
 						continue
 				if cols[p].get_read_only(request):
 					continue
+				choices = cols[p].get_choices(request)
+				if choices:
+					chosen_val = cols[p].parse_param(pt[p])
+					if chosen_val not in choices:
+						continue
 				writer = cols[p].writer
 				if writer:
 					writer = getattr(obj, writer, None)
@@ -2194,6 +2204,11 @@ class ExtModel(object):
 						continue
 				if cols[p].get_read_only(request):
 					continue
+				choices = cols[p].get_choices(request)
+				if choices:
+					chosen_val = cols[p].parse_param(pt[p])
+					if chosen_val not in choices:
+						continue
 				writer = cols[p].writer
 				if writer:
 					writer = getattr(obj, writer, None)
@@ -2618,7 +2633,7 @@ class ExtBrowser(object):
 							'text'     : loc.translate(sect_name),
 							'expanded' : True,
 							'children' : [],
-							'iconCls'  : 'ico-module' # TODO: make this customizable
+							'iconCls'  : 'ico-node' # TODO: make this customizable
 						}
 					sections[sect_name]['children'].append(item)
 				elif 'parent' in item:
