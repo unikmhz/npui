@@ -366,6 +366,8 @@ class Entity(Base):
 		Index('entities_def_i_esid', 'esid'),
 		Index('entities_def_i_nick', 'nick'),
 		Index('entities_def_u_nt', 'etypeid', 'nick', unique=True),
+		Trigger('before', 'insert', 't_entities_def_bi'),
+		Trigger('before', 'update', 't_entities_def_bu'),
 		Trigger('after', 'insert', 't_entities_def_ai'),
 		Trigger('after', 'update', 't_entities_def_au'),
 		Trigger('after', 'delete', 't_entities_def_ad'),
