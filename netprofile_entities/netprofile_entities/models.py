@@ -1499,6 +1499,7 @@ class PhysicalEntity(Entity):
 		Index('entities_physical_i_name_family', 'name_family'),
 		Index('entities_physical_i_name_given', 'name_given'),
 		Trigger('before', 'insert', 't_entities_physical_bi'),
+		Trigger('after', 'update', 't_entities_physical_au'),
 		Trigger('after', 'delete', 't_entities_physical_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
@@ -1772,6 +1773,7 @@ class LegalEntity(Entity):
 		Index('entities_legal_u_name', 'name', unique=True),
 		Index('entities_legal_u_contractid', 'contractid', unique=True),
 		Trigger('before', 'insert', 't_entities_legal_bi'),
+		Trigger('after', 'update', 't_entities_legal_au'),
 		Trigger('after', 'delete', 't_entities_legal_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
@@ -2059,6 +2061,7 @@ class StructuralEntity(Entity):
 	__tablename__ = 'entities_structural'
 	__table_args__ = (
 		Comment('Structural entities'),
+		Trigger('after', 'update', 't_entities_structural_au'),
 		Trigger('after', 'delete', 't_entities_structural_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
@@ -2145,10 +2148,6 @@ class StructuralEntity(Entity):
 	def grid_icon(self, req):
 		return req.static_url('netprofile_entities:static/img/structural.png')
 
-#	def __str__(self):
-#		return ''
-#		return str(self.house)
-
 class ExternalEntity(Entity):
 	"""
 	External entity. Describes an object outside of geo database.
@@ -2157,6 +2156,7 @@ class ExternalEntity(Entity):
 	__tablename__ = 'entities_external'
 	__table_args__ = (
 		Comment('External entities'),
+		Trigger('after', 'update', 't_entities_external_au'),
 		Trigger('after', 'delete', 't_entities_external_ad'),
 		{
 			'mysql_engine'  : 'InnoDB',
