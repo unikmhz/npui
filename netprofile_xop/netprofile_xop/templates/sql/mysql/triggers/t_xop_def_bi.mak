@@ -54,7 +54,7 @@
 
 			IF sio > 0 THEN
 				INSERT INTO `stashes_io_def` (`siotypeid`, `stashid`, `currid`, `uid`, `entityid`, `ts`, `diff`)
-				VALUES (sio, NEW.stashid, stash_currid, @accessuid, NEW.entityid, NEW.ts, conv_sum);
+				VALUES (sio, NEW.stashid, stash_currid, IF(@accessuid > 0, @accessuid, NULL), NEW.entityid, NEW.ts, conv_sum);
 				SET NEW.sioid := LAST_INSERT_ID();
 
 				UPDATE `stashes_def`

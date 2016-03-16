@@ -4,7 +4,7 @@
 	IF @ticketid IS NOT NULL THEN
 		IF @tcid IS NULL THEN
 			INSERT INTO `tickets_changes_def` (`ticketid`, `uid`, `ts`, `comments`)
-			VALUES (@ticketid, @accessuid, NOW(), @comments);
+			VALUES (@ticketid, IF(@accessuid > 0, @accessuid, NULL), NOW(), @comments);
 			SET @tcid := LAST_INSERT_ID();
 		END IF;
 		INSERT INTO `tickets_changes_flagmod` (`tcid`, `tftid`, `newstate`)
