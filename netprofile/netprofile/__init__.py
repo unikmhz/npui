@@ -41,7 +41,9 @@ if sys.version < '3':
 	reload(sys)
 	sys.setdefaultencoding('utf-8')
 
-BASE_VERSION = '0.3'
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
 
 from babel import Locale
 from pyramid.config import Configurator
