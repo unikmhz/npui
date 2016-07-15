@@ -1,20 +1,25 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
-
 from setuptools import setup, find_packages
+import versioneer
 
+commands = versioneer.get_cmdclass().copy()
 here = os.path.abspath(os.path.dirname(__file__))
 README_LOCAL = open(os.path.join(here, 'README.rst')).read()
 README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
 	'setuptools',
-	'netprofile_networks >= 0.3',
-	'netprofile_dialup >= 0.3'
+	'netprofile_networks >= 0',
+	'netprofile_dialup >= 0'
 ]
 
 setup(
 	name='netprofile_ipaddresses',
-	version='0.3',
+	version=versioneer.get_version(),
+	cmdclass=commands,
 	description='NetProfile Administrative UI - IPaddresses Module',
 	license='GNU Affero General Public License v3 or later (AGPLv3+)',
 	long_description=README_LOCAL + '\n\n' +  README_GLOBAL,
@@ -48,10 +53,11 @@ setup(
 	zip_safe=False,
 	test_suite='netprofile_ipaddresses',
 	install_requires=requires,
-	entry_points="""\
-		[netprofile.modules]
-		ipaddresses = netprofile_ipaddresses:Module
-	""",
+	entry_points={
+		'netprofile.modules' : [
+			'ipaddresses = netprofile_ipaddresses:Module'
+		]
+	},
 	message_extractors={'.' : [
 		('**.py', 'python', None),
 		('**.pt', 'xml', None),

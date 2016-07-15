@@ -1,2 +1,4 @@
 include *.txt *.ini *.cfg *.rst
 recursive-include netprofile_dialup *.ico *.png *.css *.gif *.jpg *.pt *.txt *.mak *.mako *.js *.html *.xml
+include versioneer.py
+include netprofile_dialup/_version.py
