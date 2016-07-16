@@ -198,14 +198,14 @@ class VersionPair(object):
 			return False
 		if isinstance(version, str):
 			version = parse(version)
-		return version >= self.old
+		return version >= self.old and version <= self.new
 
 	def is_downgrade_to(self, version):
 		if not self.is_downgrade:
 			return False
 		if isinstance(version, str):
 			version = parse(version)
-		return version >= self.new
+		return version >= self.new and version <= self.old
 
 class ModuleError(RuntimeError):
 	pass
