@@ -1,4 +1,6 @@
 include *.txt *.ini *.cfg *.wsgi *.rst
 recursive-include netprofile *.ico *.png *.css *.gif *.jpg *.pt *.txt *.mak *.mako *.js *.html *.xml
+recursive-include tests test_*.py
 include versioneer.py
 include netprofile/_version.py
+exclude *-local.ini

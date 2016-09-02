@@ -49,6 +49,15 @@ extras_require = {
 	':python_version<"3"' : [ 'functools32' ]
 }
 
+setup_requires = [
+	'pytest-runner'
+]
+
+tests_require = [
+	'pytest',
+	'netprofile_core'
+]
+
 setup(
 	name='netprofile',
 	version=versioneer.get_version(),
@@ -81,10 +90,12 @@ setup(
 	author_email='unik@compot.ru',
 	url='https://github.com/unikmhz/npui',
 	keywords='web wsgi pyramid np netprofile crm billing accounting network isp',
-	packages=find_packages(),
+	packages=find_packages(exclude=['tests', 'htmlcov']),
 	include_package_data=True,
 	zip_safe=False,
-	test_suite='netprofile',
+	test_suite='tests',
+	tests_require=tests_require,
+	setup_requires=setup_requires,
 	install_requires=requires,
 	extras_require=extras_require,
 	entry_points={
