@@ -34,7 +34,7 @@ import transaction
 
 try:
 	from functools import lru_cache
-except ImportError:
+except ImportError: # pragma: no cover
 	from functools32 import lru_cache
 
 from zope.interface import (
@@ -267,14 +267,6 @@ class ModuleManager(object):
 
 		return new_mods
 
-	def _get_dist(self, moddef=None):
-		"""
-		Get distribution object for a module.
-		"""
-		if moddef is None:
-			return pkg_resources.get_distribution('netprofile')
-		return pkg_resources.get_distribution('netprofile_' + moddef)
-
 	def _load(self, req, mstack, activate=True):
 		"""
 		Private method which actually loads a module.
@@ -391,7 +383,7 @@ class ModuleManager(object):
 		"""
 		Unload currently active module.
 		"""
-		raise NotImplementedError
+		raise NotImplementedError # pragma: no cover
 
 	def enable(self, moddef):
 		"""
@@ -423,7 +415,7 @@ class ModuleManager(object):
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
 		if moddef in self.loaded:
-			if not self.unload(moddef):
+			if not self.unload(moddef): # pragma: no cover
 				logger.error('Can\'t unload module \'%s\'.', moddef)
 				return False
 		sess = DBSession()
@@ -444,7 +436,7 @@ class ModuleManager(object):
 		"""
 		try:
 			from netprofile_core.models import NPModule
-		except ImportError:
+		except ImportError: # pragma: no cover
 			return False
 
 		sess = DBSession()
@@ -463,7 +455,7 @@ class ModuleManager(object):
 		"""
 		try:
 			from netprofile_core.models import NPModule
-		except ImportError:
+		except ImportError: # pragma: no cover
 			return False
 
 		sess = DBSession()
@@ -491,7 +483,7 @@ class ModuleManager(object):
 		if self.installed is None:
 			try:
 				from netprofile_core.models import NPModule
-			except ImportError:
+			except ImportError: # pragma: no cover
 				return False
 			self.installed = dict()
 
