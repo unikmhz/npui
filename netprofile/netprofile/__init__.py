@@ -36,7 +36,7 @@ except ImportError:
 	pass
 
 PY3 = True
-if sys.version < '3':
+if sys.version < '3': # pragma: no cover
 	PY3 = False
 	reload(sys)
 	sys.setdefaultencoding('utf-8')

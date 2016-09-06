@@ -239,6 +239,10 @@ class ModuleManager(object):
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
 			if ep.name in self.modules:
 				continue
+			if ep.dist.project_name[:11] != 'netprofile-':
+				continue
+			if ep.dist.project_name[11:] != ep.name:
+				continue
 			self.modules[ep.name] = ep
 			mods.append(ep.name)
 
@@ -264,8 +268,9 @@ class ModuleManager(object):
 
 		if len(new_mods) > 0:
 			self.scan()
+			return list(set(new_mods).intersection(self.modules))
 
-		return new_mods
+		return []
 
 	def _load(self, req, mstack, activate=True):
 		"""
@@ -335,8 +340,11 @@ class ModuleManager(object):
 			self.models[moddef] = {}
 		mb = self.get_module_browser()
 		hm = self.cfg.registry.getUtility(IHookManager)
-		for model in mod.get_models():
-			self._import_model(moddef, model, mb, hm, activate=activate)
+
+		get_models = getattr(modcls, 'get_models', None)
+		if callable(get_models):
+			for model in mod.get_models():
+				self._import_model(moddef, model, mb, hm, activate=activate)
 
 		get_sql_functions = getattr(modcls, 'get_sql_functions', None)
 		if callable(get_sql_functions):
@@ -735,7 +743,7 @@ class ModuleManager(object):
 				cls = ep.load()
 				ret[ep.name] = cls()
 			except ImportError:
-				logger.error('Can\'t load export formatter \'%s\'.', moddef)
+				logger.error('Can\'t load export formatter \'%s\'.', ep.name)
 		return ret
 
 	def get_export_format(self, name):
@@ -802,7 +810,7 @@ class ModuleManager(object):
 		"""
 		ret = {}
 		for moddef, mod in self.loaded.items():
-			ret.update(mod.get_rt_handlers())
+			ret.update(mod.get_rt_handlers(request))
 		return ret
 
 	def get_rt_routes(self):

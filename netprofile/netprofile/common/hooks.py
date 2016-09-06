@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Runtime hooks support
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -56,6 +56,8 @@ class HookManager(object):
 			self.blocks[name].append(cb)
 
 	def reg_hook(self, name, cb):
+		if not callable(cb):
+			raise ValueError('Callback is not callable')
 		if name not in self.hooks:
 			self.hooks[name] = []
 		if cb not in self.hooks[name]:
@@ -73,6 +75,8 @@ class HookManager(object):
 					sio.write(cb.render(request, argv=args, **kwargs))
 				elif callable(cb):
 					sio.write(cb(*args, **kwargs))
+				else:
+					sio.write(cb)
 			retv = sio.getvalue()
 		return retv
 
@@ -81,8 +85,7 @@ class HookManager(object):
 			return False
 		retv = []
 		for cb in self.hooks[name]:
-			if callable(cb):
-				retv.append(cb(*args, **kwargs))
+			retv.append(cb(*args, **kwargs))
 		return retv
 
 class register_block(object):

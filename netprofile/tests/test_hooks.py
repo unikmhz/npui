@@ -86,6 +86,9 @@ class TestHooksAPI(unittest.TestCase):
 		self.hm.reg_hook('h2', _noop1)
 		self.hm.reg_hook('h2', _noop2)
 
+		with self.assertRaises(ValueError):
+			self.hm.reg_hook('h1', 'wrong')
+
 		self.assertEqual(self.hm.hooks, {
 			'h1' : [_noop1],
 			'h2' : [_noop1, _noop2]
@@ -97,8 +100,10 @@ class TestHooksAPI(unittest.TestCase):
 		self.hm.reg_block('b1', _str_a)
 		self.hm.reg_block('b1', _str_a)
 		self.hm.reg_block('b1', _str_b)
+		self.hm.reg_block('b1', 'C')
+		self.hm.reg_block('b1', 'C')
 
-		self.assertEqual(self.hm.run_block('b1'), 'AB')
+		self.assertEqual(self.hm.run_block('b1'), 'ABC')
 
 	@mock.patch('netprofile.tpl.TemplateObject.render')
 	def test_run_block_tpl(self, render):
