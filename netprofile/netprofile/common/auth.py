@@ -123,8 +123,8 @@ class PluginAuthenticationPolicy(object):
 		return self.match(request).forget(request)
 
 _TOKEN_FILTER_MAP = (
-	[chr(n) for n in range(32)] +
-	[chr(127), '\\', '"']
+	[n for n in range(32)] +
+	[127, ord('\\'), ord('"')]
 )
 _TOKEN_FILTER_MAP = dict.fromkeys(_TOKEN_FILTER_MAP, None)
 
@@ -139,7 +139,7 @@ def _generate_nonce(ts, secret, salt=None, chars=string.hexdigits.upper()):
 	if not salt:
 		try:
 			rng = random.SystemRandom()
-		except NotImplementedError:
+		except NotImplementedError: # pragma: no cover
 			rng = random
 		salt = ''.join(rng.choice(chars) for i in range(16))
 	ctx = hashlib.md5(('%s:%s:%s' % (ts, salt, secret)).encode())
