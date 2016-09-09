@@ -55,6 +55,10 @@ from pyramid.i18n import (
 	get_localizer
 )
 
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+
 _ = TranslationStringFactory('netprofile_core')
 
 def _synctoken_cb(node):

@@ -141,3 +141,7 @@ class Module(ModuleBase):
 	def name(self):
 		return _('Geography')
 
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions

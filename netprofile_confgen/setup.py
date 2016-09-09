@@ -2,21 +2,23 @@
 # -*- coding: utf-8 -*-
 
 import os
-
 from setuptools import setup, find_packages
+import versioneer
 
+commands = versioneer.get_cmdclass().copy()
 here = os.path.abspath(os.path.dirname(__file__))
 README_LOCAL = open(os.path.join(here, 'README.rst')).read()
 README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
 	'setuptools',
-	'netprofile_hosts >= 0.3'
+	'netprofile_hosts >= 0'
 ]
 
 setup(
 	name='netprofile_confgen',
-	version='0.3',
+	version=versioneer.get_version(),
+	cmdclass=commands,
 	description='NetProfile Administrative UI - Config Generation Module',
 	license='GNU Affero General Public License v3 or later (AGPLv3+)',
 	long_description=README_LOCAL + '\n\n' +  README_GLOBAL,

@@ -51,7 +51,10 @@ pip install \
 	sockjs-tornado \
 	tornado-celery \
 	tornado-redis \
-	cracklib
+	cracklib \
+	coverage \
+	pytest \
+	pytest-cov
 
 # FIXME: maybe remove this, or let the user choose a driver?
 pip install \

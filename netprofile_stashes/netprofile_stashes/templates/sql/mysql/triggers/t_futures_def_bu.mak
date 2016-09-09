@@ -3,9 +3,7 @@
 <%block name="sql">\
 	SET NEW.diff := OLD.diff;
 	SET NEW.stashid := OLD.stashid;
-	IF @accessuid > 0 THEN
-		SET NEW.mby := @accessuid;
-	END IF;
+	SET NEW.mby := IF(@accessuid > 0, @accessuid, NULL);
 	IF OLD.state = 'P' THEN
 		SET NEW.state := 'P';
 		SET NEW.ptime := OLD.ptime;

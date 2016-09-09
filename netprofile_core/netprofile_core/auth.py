@@ -36,6 +36,7 @@ if PY3:
 else:
 	from urllib import unquote
 
+from pyramid.settings import asbool
 from pyramid.security import (
 	Allow,
 	Deny,
@@ -324,7 +325,10 @@ def includeme(config):
 			'/dav' : DigestAuthenticationPolicy(
 				settings.get('netprofile.auth.secret'),
 				find_princs_digest,
-				settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
+				realm=settings.get('netprofile.auth.digest.realm', 'NetProfile UI'),
+				check_timestamp=asbool(settings.get('netprofile.auth.digest.check_timestamp', 'true')),
+				timestamp_max_ahead=int(settings.get('netprofile.auth.digest.timestamp_max_ahead', 5)),
+				timestamp_max_behind=int(settings.get('netprofile.auth.digest.timestamp_max_behind', 120))
 			),
 			'/api' : BasicAuthAuthenticationPolicy(
 				find_princs_basic,

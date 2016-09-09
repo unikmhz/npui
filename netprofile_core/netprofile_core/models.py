@@ -138,7 +138,7 @@ from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile import (
-	BASE_VERSION,
+	__version__,
 	PY3,
 	inst_id,
 	inst_mm,
@@ -2234,7 +2234,7 @@ class User(Base):
 	def _get_vcard(self):
 		card = vobject.vCard()
 		card.add('version').value = '3.0'
-		card.add('prodid').value = '-//NetProfile//NetProfile DAV %s//EN' % (BASE_VERSION,)
+		card.add('prodid').value = '-//NetProfile//NetProfile DAV %s//EN' % (__version__,)
 		# FIXME: track proper mtime
 		card.add('rev').value = dt.datetime.now(tz=tzutc()).replace(microsecond=0).isoformat()
 

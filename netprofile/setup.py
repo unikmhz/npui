@@ -3,7 +3,9 @@
 
 import os
 from setuptools import setup, find_packages
+import versioneer
 
+commands = versioneer.get_cmdclass().copy()
 here = os.path.abspath(os.path.dirname(__file__))
 README_LOCAL = open(os.path.join(here, 'README.rst')).read()
 README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
@@ -48,9 +50,19 @@ extras_require = {
 	':python_version<"3"' : [ 'functools32' ]
 }
 
+setup_requires = [
+	'pytest-runner'
+]
+
+tests_require = [
+	'pytest',
+	'netprofile_core'
+]
+
 setup(
 	name='netprofile',
-	version='0.3',
+	version=versioneer.get_version(),
+	cmdclass=commands,
 	description='NetProfile Administrative UI',
 	license='GNU Affero General Public License v3 or later (AGPLv3+)',
 	long_description=README_LOCAL + '\n\n' +  README_GLOBAL,
@@ -79,10 +91,12 @@ setup(
 	author_email='unik@compot.ru',
 	url='https://github.com/unikmhz/npui',
 	keywords='web wsgi pyramid np netprofile crm billing accounting network isp',
-	packages=find_packages(),
+	packages=find_packages(exclude=['tests', 'htmlcov']),
 	include_package_data=True,
 	zip_safe=False,
-	test_suite='netprofile',
+	test_suite='tests',
+	tests_require=tests_require,
+	setup_requires=setup_requires,
 	install_requires=requires,
 	extras_require=extras_require,
 	entry_points={

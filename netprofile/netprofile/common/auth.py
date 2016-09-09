@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Authentication routines
-# © Copyright 2013-2014 Alex 'Unik' Unigovsky
+# © Copyright 2013-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -123,8 +123,8 @@ class PluginAuthenticationPolicy(object):
 		return self.match(request).forget(request)
 
 _TOKEN_FILTER_MAP = (
-	[chr(n) for n in range(32)] +
-	[chr(127), '\\', '"']
+	[n for n in range(32)] +
+	[127, ord('\\'), ord('"')]
 )
 _TOKEN_FILTER_MAP = dict.fromkeys(_TOKEN_FILTER_MAP, None)
 
@@ -135,11 +135,11 @@ def _format_kvpairs(**kwargs):
 	return ', '.join('{0!s}="{1}"'.format(k, _filter_token(v)) for (k, v) in kwargs.items())
 
 def _generate_nonce(ts, secret, salt=None, chars=string.hexdigits.upper()):
-	# TODO: Add IP-address to nonce
+	# TODO: Add optional IP-address/subnet to nonce
 	if not salt:
 		try:
 			rng = random.SystemRandom()
-		except NotImplementedError:
+		except NotImplementedError: # pragma: no cover
 			rng = random
 		salt = ''.join(rng.choice(chars) for i in range(16))
 	ctx = hashlib.md5(('%s:%s:%s' % (ts, salt, secret)).encode())
@@ -154,6 +154,20 @@ def _is_valid_nonce(nonce, secret):
 		return True
 	return False
 
+def _is_valid_nonce_timestamp(nonce, max_ahead_sec=5, max_behind_sec=120):
+	# Allow nonces to be max_ahead_sec into the future, to account for server
+	# farms with unsynchronized clocks.
+	cur_ts = round(time.time())
+	nonce_ts = nonce.split(':', 1)[0]
+	try:
+		nonce_ts = int(nonce_ts)
+	except (TypeError, ValueError):
+		return False
+	diff_ts = cur_ts - nonce_ts
+	if -max_ahead_sec <= diff_ts <= max_behind_sec:
+		return True
+	return False
+
 def _generate_digest_challenge(ts, secret, realm, opaque, stale=False):
 	nonce = _generate_nonce(ts, secret)
 	return 'Digest %s' % (_format_kvpairs(
@@ -165,12 +179,12 @@ def _generate_digest_challenge(ts, secret, realm, opaque, stale=False):
 		stale='true' if stale else 'false'
 	),)
 
-def _add_www_authenticate(request, secret, realm):
+def _add_www_authenticate(request, secret, realm, stale=False):
 	resp = request.response
 	if not resp.www_authenticate:
 		resp.www_authenticate = _generate_digest_challenge(
 			round(time.time()),
-			secret, realm, 'NPDIGEST'
+			secret, realm, 'NPDIGEST', stale
 		)
 
 def _parse_authorization(request, secret, realm):
@@ -189,17 +203,24 @@ def _parse_authorization(request, secret, realm):
 
 @implementer(IAuthenticationPolicy)
 class DigestAuthenticationPolicy(object):
-	def __init__(self, secret, callback, realm='Realm'):
+	def __init__(self, secret, callback, **kwargs):
 		self.secret = secret
 		self.callback = callback
-		self.realm = realm
+		self.realm = kwargs.get('realm', 'Realm')
+		self.check_ts = kwargs.get('check_timestamp', True)
+		self.ts_max_ahead = kwargs.get('timestamp_max_ahead', 5)
+		self.ts_max_behind = kwargs.get('timestamp_max_behind', 120)
 
 	def authenticated_userid(self, request):
 		params = _parse_authorization(request, self.secret, self.realm)
 		if params is None:
 			return None
-		if not _is_valid_nonce(params['nonce'], self.secret):
+		nonce = params['nonce']
+		if not _is_valid_nonce(nonce, self.secret):
 			_add_www_authenticate(request, self.secret, self.realm)
+			return None
+		if self.check_ts and not _is_valid_nonce_timestamp(nonce, self.ts_max_ahead, self.ts_max_behind):
+			_add_www_authenticate(request, self.secret, self.realm, True)
 			return None
 		userid = params['username']
 		if self.callback(params, request) is not None:
@@ -210,8 +231,12 @@ class DigestAuthenticationPolicy(object):
 		params = _parse_authorization(request, self.secret, self.realm)
 		if params is None:
 			return None
-		if not _is_valid_nonce(params['nonce'], self.secret):
+		nonce = params['nonce']
+		if not _is_valid_nonce(nonce, self.secret):
 			_add_www_authenticate(request, self.secret, self.realm)
+			return None
+		if self.check_ts and not _is_valid_nonce_timestamp(nonce, self.ts_max_ahead, self.ts_max_behind):
+			_add_www_authenticate(request, self.secret, self.realm, True)
 			return None
 		return 'u:%s' % params['username']
 
@@ -220,11 +245,16 @@ class DigestAuthenticationPolicy(object):
 		params = _parse_authorization(request, self.secret, self.realm)
 		if params is None:
 			return creds
-		if not _is_valid_nonce(params['nonce'], self.secret):
+		nonce = params['nonce']
+		if not _is_valid_nonce(nonce, self.secret):
 			_add_www_authenticate(request, self.secret, self.realm)
+			return creds
+		if self.check_ts and not _is_valid_nonce_timestamp(nonce, self.ts_max_ahead, self.ts_max_behind):
+			_add_www_authenticate(request, self.secret, self.realm, True)
 			return creds
 		groups = self.callback(params, request)
 		if groups is None:
+			_add_www_authenticate(request, self.secret, self.realm)
 			return creds
 		creds.append(Authenticated)
 		creds.append('u:%s' % params['username'])
