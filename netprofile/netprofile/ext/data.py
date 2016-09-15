@@ -323,6 +323,9 @@ def _recursive_update(dest, src):
 	for k, v in src.items():
 		if isinstance(v, Mapping):
 			dest[k] = _recursive_update(dest.get(k, {}), v)
+		elif v is None:
+			if k in dest:
+				del dest[k]
 		else:
 			dest[k] = v
 	return dest
@@ -921,10 +924,11 @@ class ExtColumn(object):
 		if in_form:
 			conf['fieldLabel'] = loc.translate(self.header_string)
 			val = self.pixels
-			if (val is not None) and not choices:
+			if val is not None:
 				conf['width'] = val + 125
 				if ('xtype' in conf) and (conf['xtype'] in ('numberfield', 'combobox', 'nullablecombobox')):
-					conf['width'] += 30
+					if not choices:
+						conf['width'] += 30
 		val = self.editor_config
 		if val:
 			_recursive_update(conf, val)
@@ -1325,7 +1329,7 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 				conf['value'] = str(initval)
 		val = self.editor_config
 		if val:
-			conf.update(val)
+			_recursive_update(conf, val)
 		return conf
 
 	def get_reader_cfg(self, req):
