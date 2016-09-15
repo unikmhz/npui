@@ -38,6 +38,10 @@ from sqlalchemy.orm.exc import NoResultFound
 from pyramid.config import aslist
 from pyramid.i18n import TranslationStringFactory
 
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+
 _ = TranslationStringFactory('netprofile_devices')
 
 class Module(ModuleBase):

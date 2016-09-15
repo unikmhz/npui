@@ -34,7 +34,7 @@ import transaction
 
 try:
 	from functools import lru_cache
-except ImportError:
+except ImportError: # pragma: no cover
 	from functools32 import lru_cache
 
 from zope.interface import (
@@ -198,14 +198,14 @@ class VersionPair(object):
 			return False
 		if isinstance(version, str):
 			version = parse(version)
-		return version >= self.old
+		return version >= self.old and version <= self.new
 
 	def is_downgrade_to(self, version):
 		if not self.is_downgrade:
 			return False
 		if isinstance(version, str):
 			version = parse(version)
-		return version >= self.new
+		return version >= self.new and version <= self.old
 
 class ModuleError(RuntimeError):
 	pass
@@ -239,6 +239,10 @@ class ModuleManager(object):
 		for ep in pkg_resources.iter_entry_points('netprofile.modules'):
 			if ep.name in self.modules:
 				continue
+			if ep.dist.project_name[:11] != 'netprofile-':
+				continue
+			if ep.dist.project_name[11:] != ep.name:
+				continue
 			self.modules[ep.name] = ep
 			mods.append(ep.name)
 
@@ -264,16 +268,9 @@ class ModuleManager(object):
 
 		if len(new_mods) > 0:
 			self.scan()
+			return list(set(new_mods).intersection(self.modules))
 
-		return new_mods
-
-	def _get_dist(self, moddef=None):
-		"""
-		Get distribution object for a module.
-		"""
-		if moddef is None:
-			return pkg_resources.get_distribution('netprofile')
-		return pkg_resources.get_distribution('netprofile_' + moddef)
+		return []
 
 	def _load(self, req, mstack, activate=True):
 		"""
@@ -343,8 +340,11 @@ class ModuleManager(object):
 			self.models[moddef] = {}
 		mb = self.get_module_browser()
 		hm = self.cfg.registry.getUtility(IHookManager)
-		for model in mod.get_models():
-			self._import_model(moddef, model, mb, hm, activate=activate)
+
+		get_models = getattr(modcls, 'get_models', None)
+		if callable(get_models):
+			for model in mod.get_models():
+				self._import_model(moddef, model, mb, hm, activate=activate)
 
 		get_sql_functions = getattr(modcls, 'get_sql_functions', None)
 		if callable(get_sql_functions):
@@ -391,7 +391,7 @@ class ModuleManager(object):
 		"""
 		Unload currently active module.
 		"""
-		raise NotImplementedError
+		raise NotImplementedError # pragma: no cover
 
 	def enable(self, moddef):
 		"""
@@ -423,7 +423,7 @@ class ModuleManager(object):
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
 		if moddef in self.loaded:
-			if not self.unload(moddef):
+			if not self.unload(moddef): # pragma: no cover
 				logger.error('Can\'t unload module \'%s\'.', moddef)
 				return False
 		sess = DBSession()
@@ -444,7 +444,7 @@ class ModuleManager(object):
 		"""
 		try:
 			from netprofile_core.models import NPModule
-		except ImportError:
+		except ImportError: # pragma: no cover
 			return False
 
 		sess = DBSession()
@@ -463,7 +463,7 @@ class ModuleManager(object):
 		"""
 		try:
 			from netprofile_core.models import NPModule
-		except ImportError:
+		except ImportError: # pragma: no cover
 			return False
 
 		sess = DBSession()
@@ -491,7 +491,7 @@ class ModuleManager(object):
 		if self.installed is None:
 			try:
 				from netprofile_core.models import NPModule
-			except ImportError:
+			except ImportError: # pragma: no cover
 				return False
 			self.installed = dict()
 
@@ -743,7 +743,7 @@ class ModuleManager(object):
 				cls = ep.load()
 				ret[ep.name] = cls()
 			except ImportError:
-				logger.error('Can\'t load export formatter \'%s\'.', moddef)
+				logger.error('Can\'t load export formatter \'%s\'.', ep.name)
 		return ret
 
 	def get_export_format(self, name):
@@ -810,7 +810,7 @@ class ModuleManager(object):
 		"""
 		ret = {}
 		for moddef, mod in self.loaded.items():
-			ret.update(mod.get_rt_handlers())
+			ret.update(mod.get_rt_handlers(request))
 		return ret
 
 	def get_rt_routes(self):

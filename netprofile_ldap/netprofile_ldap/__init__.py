@@ -29,6 +29,10 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+
 class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr

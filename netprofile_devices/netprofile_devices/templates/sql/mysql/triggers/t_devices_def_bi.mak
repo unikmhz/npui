@@ -3,9 +3,7 @@
 <%block name="sql">\
 	SET NEW.ctime := NOW();
 	SET NEW.itime := NULL;
-	IF @accessuid > 0 THEN
-		SET NEW.cby := @accessuid;
-		SET NEW.mby := @accessuid;
-	END IF;
+	SET NEW.cby := IF(@accessuid > 0, @accessuid, NULL);
+	SET NEW.mby := NEW.cby;
 	SET NEW.iby := NULL;
 </%block>

@@ -1,3 +1,6 @@
+# Support Python Versioneer auto-tagging
+**/_version.py export-subst
+
 # Vendor code marking for GitHub
 netprofile_core/netprofile_core/static/extern/** linguist-vendored
 netprofile_access/netprofile_access/static/css/bootstrap* linguist-vendored
