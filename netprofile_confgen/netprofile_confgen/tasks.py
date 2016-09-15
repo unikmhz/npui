@@ -34,7 +34,7 @@ from pyramid.i18n import TranslationStringFactory
 
 from netprofile.celery import (
 	app,
-	task_cap
+	task_meta
 )
 from netprofile.db.connection import DBSession
 from netprofile.common.util import make_config_dict
@@ -47,7 +47,10 @@ logger = logging.getLogger(__name__)
 
 _ = TranslationStringFactory('netprofile_confgen')
 
-@task_cap('SRV_CONFGEN')
+@task_meta(
+	cap='SRV_CONFGEN',
+	title=_('Generate server configuration')
+)
 @app.task
 def task_generate(srv_ids=(), station_ids=()):
 	cfg = app.settings

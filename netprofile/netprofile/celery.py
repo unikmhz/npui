@@ -356,12 +356,15 @@ def _parse_ini_settings(reg, celery):
 
 app = Celery('netprofile')
 
-def task_cap(cap):
-	def _app_cap_wrapper(wrapped):
-		wrapped.__cap__ = cap
+def task_meta(**kwargs):
+	def _app_task_wrapper(wrapped):
+		if 'title' in kwargs:
+			wrapped.__title__ = kwargs['title']
+		if 'cap' in kwargs:
+			wrapped.__cap__ = kwargs['cap']
 		return wrapped
 
-	return _app_cap_wrapper
+	return _app_task_wrapper
 
 @celeryd_init.connect
 def _setup(conf=None, **kwargs):

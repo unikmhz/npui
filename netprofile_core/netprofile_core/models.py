@@ -792,14 +792,19 @@ class CrontabTaskSchedule(TaskSchedule):
 
 def _task_choices(col, req):
 	ret = {}
+	loc = req.localizer
 	for name, task in celery_app.tasks.items():
 		if name.startswith('celery.'):
 			continue
 		cap = getattr(task, '__cap__', None)
 		if cap and not req.has_permission(cap):
 			continue
-		# TODO: Provide a way to specify descriptive names for tasks
-		ret[name] = name
+		title = getattr(task, '__title__', None)
+		if title:
+			title = loc.translate(title)
+		else:
+			title = name
+		ret[name] = title
 	return ret
 
 class Task(Base):
@@ -895,6 +900,17 @@ class Task(Base):
 			'header_string' : _('Enabled')
 		}
 	)
+	log_executions = Column(
+		'log',
+		NPBoolean(),
+		Comment('Is result logging enabled'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Logged')
+		}
+	)
 	procedure = Column(
 		'proc',
 		ASCIIString(255),
@@ -905,8 +921,7 @@ class Task(Base):
 			'choices'       : _task_choices,
 			'editor_config' : {
 				'editable'       : False,
-				'forceSelection' : True,
-				'width' : None
+				'forceSelection' : True
 			}
 		}
 	)
