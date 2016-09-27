@@ -41,6 +41,7 @@ requires = [
 	'tornado-celery',
 
 	'celery >= 3.1',
+	'kombu != 3.0.34',
 	'msgpack-python >= 0.4',
 
 	'reportlab >= 3.1'

@@ -27,6 +27,13 @@ from __future__ import (
 	division
 )
 
+import binascii
+import collections
+import json
+import re
+import sys
+import uuid
+
 from sqlalchemy import (
 	and_,
 	schema,
@@ -34,14 +41,12 @@ from sqlalchemy import (
 	types,
 	util
 )
-
 from sqlalchemy.dialects import (
 	mssql,
 	mysql,
 	oracle,
 	postgresql
 )
-
 from sqlalchemy.sql import (
 	expression,
 	sqltypes
@@ -50,10 +55,6 @@ from sqlalchemy.ext.compiler import compiles
 
 from netprofile.db import processors
 from netprofile.common import ipaddr
-
-import sys
-import binascii
-
 
 if sys.version < '3':
 	from netprofile.db.enum2 import (
@@ -67,8 +68,6 @@ else:
 		EnumMeta,
 		DeclEnum
 	)
-
-import re
 
 _D_MYSQL = frozenset([
 	mysql.mysqlconnector.dialect,
@@ -205,6 +204,40 @@ class IPv6Offset(types.TypeDecorator):
 	@property
 	def python_type(self):
 		return int
+
+class UUID(types.TypeDecorator):
+	"""
+	UUID type.
+	"""
+	impl = types.BINARY(16)
+
+	def load_dialect_impl(self, dialect):
+		if _is_pgsql(dialect):
+			return postgresql.UUID(as_uuid=True)
+		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_pgsql(dialect):
+			return isinstance(conn_type, postgresql.UUID)
+		return isinstance(conn_type, types.BINARY) and conn_type.length == 16
+
+	@property
+	def python_type(self):
+		return uuid.UUID
+
+	def process_bind_param(self, value, dialect):
+		if value is None:
+			return None
+		if _is_pgsql(dialect):
+			return value
+		return value.bytes
+
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		if _is_pgsql(dialect):
+			return value
+		return uuid.UUID(bytes=value)
 
 class Money(types.TypeDecorator):
 	"""
@@ -449,6 +482,36 @@ class ExactUnicode(types.TypeDecorator):
 			value = value.decode()
 		return value
 
+class JSONData(types.TypeDecorator):
+	"""
+	Arbitrary data structures, JSON-encoded.
+	"""
+	impl = types.UnicodeText
+
+	def load_dialect_impl(self, dialect):
+		if _is_pgsql(dialect):
+			return postgresql.JSONB()
+		return self.impl
+
+	def compare_against_backend(self, dialect, conn_type):
+		if _is_pgsql(dialect):
+			return isinstance(conn_type, postgresql.JSONB)
+		return isinstance(conn_type, types.UnicodeText)
+
+	def process_bind_param(self, value, dialect):
+		if value is None:
+			return None
+		if _is_pgsql(dialect):
+			return value
+		return str(json.dumps(value))
+
+	def process_result_value(self, value, dialect):
+		if value is None:
+			return None
+		if _is_pgsql(dialect):
+			return value
+		return json.loads(value)
+
 class Int8(types.TypeDecorator):
 	"""
 	8-bit signed integer field.
@@ -686,22 +749,41 @@ class DeclEnumType(types.SchemaType, types.TypeDecorator):
 	def process_bind_param(self, value, dialect):
 		if value is None:
 			return None
-		return value.value
+		if isinstance(value, EnumSymbol):
+			return value.value
+		return value
 
 	def process_result_value(self, value, dialect):
 		if value is None:
 			return None
 		if isinstance(value, (bytes, bytearray)):
 			value = value.decode('ascii')
-		value = value.strip()
-		if self.enum:
-			return self.enum.from_string(value)
+		if isinstance(value, str):
+			value = value.strip()
+			if self.enum:
+				return self.enum.from_string(value)
 		return value
 
 	def coerce_compared_value(self, op, value):
 		if isinstance(value, str):
 			return ASCIIString()
 		return self
+
+	class comparator_factory(types.Enum.Comparator):
+		def in_(self, other):
+			if isinstance(other, collections.Iterable):
+				ret = []
+				for elem in other:
+					if isinstance(elem, EnumSymbol):
+						elem = type_coerce(elem, DeclEnum)
+					ret.append(elem)
+				other = ret
+			return types.Enum.Comparator.in_(self, other)
+
+	def process_literal_param(self, value, dialect):
+		if isinstance(value, EnumSymbol):
+			return value.value
+		return value
 
 def render_variants(query):
 	ret = {}

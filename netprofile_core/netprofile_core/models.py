@@ -30,6 +30,13 @@ from __future__ import (
 __all__ = [
 	'NPModule',
 	'NPVariable',
+	'TaskScheduleType',
+	'TaskIntervalUnit',
+	'TaskSchedule',
+	'IntervalTaskSchedule',
+	'CrontabTaskSchedule',
+	'Task',
+	'TaskLog',
 	'AddressType',
 	'PhoneType',
 	'ContactInfoType',
@@ -80,16 +87,18 @@ __all__ = [
 	'global_setting'
 ]
 
-import io
+import base64
+import celery.schedules
+import celery.states
+import datetime as dt
 import errno
+import hashlib
+import io
+import itertools
 import string
 import random
 import re
-import hashlib
-import datetime as dt
 import urllib
-import itertools
-import base64
 
 from collections import defaultdict
 from dateutil.tz import tzutc
@@ -114,7 +123,6 @@ from sqlalchemy import (
 	or_,
 	and_
 )
-
 from sqlalchemy.orm import (
 	backref,
 	deferred,
@@ -122,7 +130,6 @@ from sqlalchemy.orm import (
 	relationship,
 	validates
 )
-
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -154,12 +161,14 @@ from netprofile.db.fields import (
 	Int64,
 	IPv4Address,
 	IPv6Address,
+	JSONData,
 	LargeBLOB,
 	NPBoolean,
 	UInt8,
 	UInt16,
 	UInt32,
 	UInt64,
+	UUID,
 	npbool
 )
 from netprofile.ext.wizards import (
@@ -195,6 +204,7 @@ from netprofile.db.ddl import (
 	SQLFunctionArgument,
 	Trigger
 )
+from netprofile.celery import app as celery_app
 
 from pyramid.response import (
 	FileIter,
@@ -468,6 +478,776 @@ class NPVariable(Base):
 		if (var is None) or (var not in sess):
 			cls._var_map[name] = sess.query(cls).filter(cls.name == name).with_for_update(read=True).one()
 		return cls._var_map[name]
+
+class TaskScheduleType(DeclEnum):
+	"""
+	Celery beat task schedule type.
+	"""
+	interval = 'int',  _('Interval'), 10
+	crontab  = 'cron', _('Crontab'),  20
+
+class TaskIntervalUnit(DeclEnum):
+	"""
+	Interval unit used by Celery beat schedules.
+	"""
+	days         = 'day', _('Days'),         10
+	hours        = 'hr',  _('Hours'),        20
+	minutes      = 'min', _('Minutes'),      30
+	seconds      = 'sec', _('Seconds'),      40
+	microseconds = 'mcs', _('Microseconds'), 50
+
+class TaskSchedule(Base):
+	"""
+	Base class for Celery beat task schedules.
+	"""
+	__tablename__ = 'tasks_schedules'
+	__table_args__ = (
+		Comment('Task schedules for Celery beat'),
+		Index('tasks_schedules_u_name', 'name', unique=True),
+		Index('tasks_schedules_i_type', 'type'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_TASKS',
+				'cap_read'      : 'TASKS_LIST',
+				'cap_create'    : 'TASKS_CREATE',
+				'cap_edit'      : 'TASKS_EDIT',
+				'cap_delete'    : 'TASKS_DELETE',
+
+				'show_in_menu'  : 'admin',
+				'menu_section'  : _('Tasks'),
+				'menu_name'     : _('Task Schedules'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : (
+					'beatschid',
+					'name', 'type',
+					MarkupColumn(
+						name='describe',
+						header_string=_('Details'),
+						column_flex=3,
+						template='{describe}'
+					)
+				),
+				'grid_hidden'   : ('beatschid',),
+				'form_view'     : (
+					'name', 'type',
+					'int_period', 'int_unit',
+					'cron_min', 'cron_hour', 'cron_wday',
+					'cron_mday', 'cron_month',
+					'not_before', 'not_after',
+					'descr'
+				),
+				'easy_search'   : ('name', 'descr'),
+				'extra_data'    : ('describe',),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new task schedule'))
+			}
+		}
+	)
+	id = Column(
+		'beatschid',
+		UInt32(),
+		Sequence('tasks_schedules_beatschid_seq'),
+		Comment('Task schedule ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Task schedule name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	type = Column(
+		TaskScheduleType.db_type(),
+		Comment('Task schedule type'),
+		nullable=False,
+		default=TaskScheduleType.interval,
+		server_default=TaskScheduleType.interval,
+		info={
+			'header_string' : _('Type'),
+			'column_flex'   : 2
+		}
+	)
+	interval = Column(
+		'int_period',
+		UInt32(),
+		Comment('Interval amount for interval-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Interval Amount')
+		}
+	)
+	interval_unit = Column(
+		'int_unit',
+		TaskIntervalUnit.db_type(),
+		Comment('Interval unit for interval-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Interval Unit')
+		}
+	)
+	crontab_minute = Column(
+		'cron_min',
+		ASCIIString(64),
+		Comment('Minute specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Minutes')
+		}
+	)
+	crontab_hour = Column(
+		'cron_hour',
+		ASCIIString(64),
+		Comment('Hour specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Hours')
+		}
+	)
+	crontab_day_of_week = Column(
+		'cron_wday',
+		ASCIIString(64),
+		Comment('Day of the week specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Days of Week')
+		}
+	)
+	crontab_day_of_month = Column(
+		'cron_mday',
+		ASCIIString(64),
+		Comment('Day of the month specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Days of Month')
+		}
+	)
+	crontab_month = Column(
+		'cron_month',
+		ASCIIString(64),
+		Comment('Month specification for crontab-based schedules'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Months')
+		}
+	)
+	not_before = Column(
+		TIMESTAMP(),
+		Comment('Do not execute before this time'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Not Before')
+		}
+	)
+	not_after = Column(
+		TIMESTAMP(),
+		Comment('Do not execute after this time'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Not After')
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Task schedule description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+	__mapper_args__ = {
+		'polymorphic_on'       : type,
+		'polymorphic_identity' : 'sched',
+		'with_polymorphic'     : '*'
+	}
+
+	tasks = relationship(
+		'Task',
+		backref=backref('schedule', innerjoin=True, lazy='joined'),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+
+	def __str__(self):
+		return str(self.name)
+
+class IntervalTaskSchedule(TaskSchedule):
+	"""
+	Simple interval-based Celery beat task schedule.
+	"""
+	__mapper_args__ = {
+		'polymorphic_identity' : TaskScheduleType.interval
+	}
+
+	@property
+	def schedule(self):
+		if self.interval is None or self.interval_unit is None:
+			return None
+		return celery.schedules.schedule(
+			dt.timedelta(**{self.interval_unit.name : self.interval})
+		)
+
+	def describe(self, req):
+		loc = req.localizer
+
+		if self.interval_unit == TaskIntervalUnit.days:
+			return loc.pluralize(
+				'Every day', 'Every ${num} days', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		if self.interval_unit == TaskIntervalUnit.hours:
+			return loc.pluralize(
+				'Every hour', 'Every ${num} hours', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		if self.interval_unit == TaskIntervalUnit.minutes:
+			return loc.pluralize(
+				'Every minute', 'Every ${num} minutes', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		if self.interval_unit == TaskIntervalUnit.seconds:
+			return loc.pluralize(
+				'Every second', 'Every ${num} seconds', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		if self.interval_unit == TaskIntervalUnit.microseconds:
+			return loc.pluralize(
+				'Every microsecond', 'Every ${num} microseconds', self.interval,
+				domain='netprofile_core',
+				mapping={ 'num' : self.interval }
+			)
+		return '-'
+
+class CrontabTaskSchedule(TaskSchedule):
+	"""
+	Cron-like Celery beat task schedule.
+	"""
+	__mapper_args__ = {
+		'polymorphic_identity' : TaskScheduleType.crontab
+	}
+
+	def describe(self, req):
+		cron_bits = (
+			'*' if self.crontab_minute is None else self.crontab_minute,
+			'*' if self.crontab_hour is None else self.crontab_hour,
+			'*' if self.crontab_day_of_month is None else self.crontab_day_of_month,
+			'*' if self.crontab_month is None else self.crontab_month,
+			'*' if self.crontab_day_of_week is None else self.crontab_day_of_week
+		)
+		return 'cron: %s' % (' '.join(cron_bits),)
+
+	@property
+	def schedule(self):
+		kw = dict(
+			minute='*',
+			hour='*',
+			day_of_week='*',
+			day_of_month='*',
+			month_of_year='*'
+		)
+		if self.crontab_minute is not None:
+			kw['minute'] = self.crontab_minute
+		if self.crontab_hour is not None:
+			kw['hour'] = self.crontab_hour
+		if self.crontab_day_of_week is not None:
+			kw['day_of_week'] = self.crontab_day_of_week
+		if self.crontab_day_of_month is not None:
+			kw['day_of_month'] = self.crontab_day_of_month
+		if self.crontab_month is not None:
+			kw['month_of_year'] = self.crontab_month
+		return celery.schedules.crontab(**kw)
+
+def _task_choices(col, req):
+	ret = {}
+	loc = req.localizer
+	for name, task in celery_app.tasks.items():
+		if name.startswith('celery.'):
+			continue
+		cap = getattr(task, '__cap__', None)
+		if cap and not req.has_permission(cap):
+			continue
+		title = getattr(task, '__title__', None)
+		if title:
+			title = loc.translate(title)
+		else:
+			title = name
+		ret[name] = title
+	return ret
+
+class Task(Base):
+	"""
+	Scheduled periodic task.
+
+	Used by Celery beat system.
+	"""
+	__tablename__ = 'tasks_def'
+	__table_args__ = (
+		Comment('Tasks for Celery beat'),
+		Index('tasks_def_u_name', 'name', unique=True),
+		Index('tasks_def_i_beatschid', 'beatschid'),
+		Index('tasks_def_i_mtime', 'mtime'),
+		Index('tasks_def_i_cby', 'cby'),
+		Index('tasks_def_i_mby', 'mby'),
+		Trigger('before', 'insert', 't_tasks_def_bi'),
+		Trigger('before', 'update', 't_tasks_def_bu'),
+		Trigger('after', 'insert', 't_tasks_def_ai'),
+		Trigger('after', 'update', 't_tasks_def_au'),
+		Trigger('after', 'delete', 't_tasks_def_ad'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_TASKS',
+				'cap_read'      : 'TASKS_LIST',
+				'cap_create'    : 'TASKS_CREATE',
+				'cap_edit'      : 'TASKS_EDIT',
+				'cap_delete'    : 'TASKS_DELETE',
+
+				'show_in_menu'  : 'admin',
+				'menu_section'  : _('Tasks'),
+				'menu_name'     : _('Tasks'),
+				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'grid_view'     : ('taskid', 'name', 'schedule', 'enabled'),
+				'grid_hidden'   : ('taskid',),
+				'form_view'     : (
+					'name', 'schedule', 'enabled',
+					'proc', 'args', 'kwargs',
+					'queue', 'exchange', 'rkey',
+					'descr',
+					'rtime',
+					'ctime', 'created_by',
+					'mtime', 'modified_by'
+				),
+				'easy_search'   : ('name', 'descr'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new task'))
+			}
+		}
+	)
+	id = Column(
+		'taskid',
+		UInt32(),
+		Sequence('tasks_def_taskid_seq'),
+		Comment('Task ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	name = Column(
+		Unicode(255),
+		Comment('Task name'),
+		nullable=False,
+		info={
+			'header_string' : _('Name'),
+			'column_flex'   : 3
+		}
+	)
+	schedule_id = Column(
+		'beatschid',
+		UInt32(),
+		ForeignKey('tasks_schedules.beatschid', name='tasks_def_fk_beatschid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Task schedule ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Schedule'),
+			'filter_type'   : 'nplist',
+			'editor_xtype'  : 'simplemodelselect',
+			'column_flex'   : 2
+		}
+	)
+	enabled = Column(
+		NPBoolean(),
+		Comment('Is task enabled'),
+		nullable=False,
+		default=True,
+		server_default=npbool(True),
+		info={
+			'header_string' : _('Enabled')
+		}
+	)
+	log_executions = Column(
+		'log',
+		NPBoolean(),
+		Comment('Is result logging enabled'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Logged')
+		}
+	)
+	procedure = Column(
+		'proc',
+		ASCIIString(255),
+		Comment('Registered Celery task procedure name'),
+		nullable=False,
+		info={
+			'header_string' : _('Function'),
+			'choices'       : _task_choices,
+			'editor_config' : {
+				'editable'       : False,
+				'forceSelection' : True
+			}
+		}
+	)
+	arguments = Column(
+		'args',
+		JSONData(),
+		Comment('Arguments to pass to task procedure'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Arguments'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+	keyword_arguments = Column(
+		'kwargs',
+		JSONData(),
+		Comment('Keyword arguments to pass to task procedure'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Keyword Args'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+	queue = Column(
+		ASCIIString(255),
+		Comment('Celery message queue'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Queue')
+		}
+	)
+	exchange = Column(
+		ASCIIString(255),
+		Comment('Celery message exchange'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Exchange')
+		}
+	)
+	routing_key = Column(
+		'rkey',
+		ASCIIString(255),
+		Comment('Celery message routing key'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Routing Key')
+		}
+	)
+	run_count = Column(
+		'rcount',
+		UInt32(),
+		Comment('Total run count'),
+		nullable=False,
+		default=0,
+		server_default=text('0'),
+		info={
+			'header_string' : _('Total Runs'),
+			'read_only'     : True
+		}
+	)
+	last_run_time = Column(
+		'rtime',
+		TIMESTAMP(),
+		Comment('Last run timestamp'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Last Run Time'),
+			'read_only'     : True
+		}
+	)
+	creation_time = Column(
+		'ctime',
+		TIMESTAMP(),
+		Comment('Creation timestamp'),
+		nullable=True,
+		default=None,
+		server_default=FetchedValue(),
+		info={
+			'header_string' : _('Created'),
+			'read_only'     : True
+		}
+	)
+	modification_time = Column(
+		'mtime',
+		TIMESTAMP(),
+		Comment('Last modification timestamp'),
+		CurrentTimestampDefault(on_update=True),
+		nullable=False,
+		info={
+			'header_string' : _('Modified'),
+			'read_only'     : True
+		}
+	)
+	created_by_id = Column(
+		'cby',
+		UInt32(),
+		ForeignKey('users.uid', name='tasks_def_fk_cby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Created by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Created'),
+			'filter_type'   : 'nplist',
+			'read_only'     : True
+		}
+	)
+	modified_by_id = Column(
+		'mby',
+		UInt32(),
+		ForeignKey('users.uid', name='tasks_def_fk_mby', ondelete='SET NULL', onupdate='CASCADE'),
+		Comment('Modified by'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Modified'),
+			'filter_type'   : 'nplist',
+			'read_only'     : True
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Task description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	created_by = relationship(
+		'User',
+		foreign_keys=created_by_id,
+		backref=backref(
+			'created_tasks',
+			passive_deletes=True
+		)
+	)
+	modified_by = relationship(
+		'User',
+		foreign_keys=modified_by_id,
+		backref=backref(
+			'modified_tasks',
+			passive_deletes=True
+		)
+	)
+
+	@property
+	def options(self):
+		return {
+			'queue'       : self.queue,
+			'exchange'    : self.exchange,
+			'routing_key' : self.routing_key,
+			'eta'         : self.schedule.not_before,
+			'expires'     : self.schedule.not_after
+		}
+
+	def __str__(self):
+		return str(self.name)
+
+class TaskLog(Base):
+	"""
+	Result of single execution of a scheduled periodic task.
+
+	Used by Celery beat system.
+	"""
+	__tablename__ = 'tasks_log'
+	__table_args__ = (
+		Comment('Task results for Celery beat'),
+		Index('tasks_log_i_ts', 'startts'),
+		Index('tasks_log_i_uuid', 'uuid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_menu'      : 'BASE_TASKS',
+				'cap_read'      : 'TASKS_LIST',
+				'cap_create'    : '__NOPRIV__',
+				'cap_edit'      : '__NOPRIV__',
+				'cap_delete'    : '__NOPRIV__',
+
+				'show_in_menu'  : 'admin',
+				'menu_section'  : _('Tasks'),
+				'menu_name'     : _('Results'),
+				'default_sort'  : ({ 'property': 'startts' ,'direction': 'DESC' },),
+				'grid_view'     : ('tasklogid', 'uuid', 'proc', 'startts', 'state'),
+				'grid_hidden'   : ('tasklogid', 'uuid'),
+				'form_view'     : (
+					'uuid', 'state',
+					'proc', 'args', 'kwargs',
+					'startts', 'finishts',
+					'result', 'traceback'
+				),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple')
+			}
+		}
+	)
+	id = Column(
+		'tasklogid',
+		UInt32(),
+		Sequence('tasks_log_tasklogid_seq'),
+		Comment('Task result ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	celery_id = Column(
+		'uuid',
+		UUID(),
+		Comment('Celery task UUID'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Task ID'),
+			'column_flex'   : 2
+		}
+	)
+	state = Column(
+		ASCIIString(32),
+		Comment('Current Celery task state'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('State'),
+			'column_flex'   : 1
+		}
+	)
+	procedure = Column(
+		'proc',
+		ASCIIString(255),
+		Comment('Registered Celery task procedure name'),
+		nullable=False,
+		info={
+			'header_string' : _('Function'),
+			'column_flex'   : 3
+		}
+	)
+	arguments = Column(
+		'args',
+		JSONData(),
+		Comment('Arguments passed to task procedure'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Arguments'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+	keyword_arguments = Column(
+		'kwargs',
+		JSONData(),
+		Comment('Keyword arguments passed to task procedure'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Keyword Args'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+	start_timestamp = Column(
+		'startts',
+		TIMESTAMP(),
+		Comment('Task execution start time'),
+		CurrentTimestampDefault(),
+		nullable=False,
+		info={
+			'header_string' : _('Started'),
+			'column_flex'   : 2
+		}
+	)
+	finish_timestamp = Column(
+		'finishts',
+		TIMESTAMP(),
+		Comment('Task result return time'),
+		nullable=True,
+		default=None,
+		info={
+			'header_string' : _('Finished')
+		}
+	)
+	result = Column(
+		JSONData(),
+		Comment('Value returned by a task'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Result'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+	traceback = Column(
+		UnicodeText(),
+		Comment('Traceback if exception was encountered'),
+		info={
+			'header_string' : _('Traceback'),
+			'read_cap'      : 'ADMIN_DEV'
+		}
+	)
+
+	def __str__(self):
+		return '%s: %s' % (
+			str(self.procedure),
+			str(self.celery_id)
+		)
 
 class AddressType(DeclEnum):
 	"""
@@ -2174,10 +2954,8 @@ class GroupCapability(Capability,Base):
 				'cap_edit'     : 'GROUPS_SETCAP',
 				'cap_delete'   : 'GROUPS_SETCAP',
 
-#				'show_in_menu' : 'admin',
 				'menu_name'    : _('Group Capabilities'),
-				'default_sort' : (),
-#				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
+				'default_sort' : ()
 			}
 		}
 	)
@@ -2210,10 +2988,8 @@ class UserCapability(Capability,Base):
 				'cap_edit'     : 'USERS_SETCAP',
 				'cap_delete'   : 'USERS_SETCAP',
 
-#				'show_in_menu' : 'admin',
 				'menu_name'    : _('User Capabilities'),
-				'default_sort' : (),
-#				'grid_view'    : ('code', 'name', 'guestvalue', 'hasacls')
+				'default_sort' : ()
 			}
 		}
 	)
@@ -3483,7 +4259,6 @@ class DAVLock(Base):
 		Comment('Lock timeout'),
 		nullable=True,
 		default=None,
-#		server_default=text('NULL'),
 		info={
 			'header_string' : _('Timeout')
 		}
@@ -6187,7 +6962,6 @@ class NPSession(Base):
 		info={
 			'header_string' : _('Start')
 		}
-#		server_default=text('NULL')
 	)
 	last_time = Column(
 		'lastts',
@@ -6195,7 +6969,6 @@ class NPSession(Base):
 		Comment('Last seen time'),
 		CurrentTimestampDefault(on_update=True),
 		nullable=True,
-#		default=None,
 		info={
 			'header_string' : _('Last Update')
 		}

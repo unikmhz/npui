@@ -32,16 +32,23 @@ import pkg_resources
 import transaction
 from collections import defaultdict
 
+from pyramid.i18n import TranslationStringFactory
+
 from netprofile.celery import (
 	app,
-	task_cap
+	task_meta
 )
 from netprofile.common import ipaddr
 from netprofile.common.hooks import IHookManager
 
 logger = logging.getLogger(__name__)
 
-@task_cap('HOSTS_PROBE')
+_ = TranslationStringFactory('netprofile_devices')
+
+@task_meta(
+	cap='HOSTS_PROBE',
+	title=_('Probe hosts')
+)
 @app.task
 def task_probe_hosts(probe_type='hosts', probe_ids=()):
 	app.mmgr.assert_loaded('ipaddresses')

@@ -257,9 +257,9 @@ Ext.require([
 			var view = tab.getView(),
 				node = view.getNode(recs[0]);
 
-			node.scrollIntoView();
+			if(node)
+				view.focusNode(node);
 		});
-		tab.down('toolbar')
 		pbar.show();
 	};
 

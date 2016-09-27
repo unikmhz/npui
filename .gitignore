@@ -99,7 +99,7 @@ sftp-config.json
 # Test deployments
 *-local.ini
 debug-shell.py
-run-celery-worker.sh
+run-celery-*
 /netprofile/data/
 /find.sh
 

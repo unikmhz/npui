@@ -144,7 +144,8 @@ Ext.define('NetProfile.panel.SideBar', {
 	},
 	onMenuBeforeSelect: function(row, record, idx, opts)
 	{
-		if(Ext.Array.contains(['ico-module', 'ico-tool'], record.get('iconCls')))
+		// TODO: add model field to toggle "selectability"
+		if(Ext.Array.contains(['ico-module', 'ico-tool', 'ico-node'], record.get('iconCls')))
 			return false;
 		return true;
 	},

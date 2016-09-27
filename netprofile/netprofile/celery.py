@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Celery application setup
-# © Copyright 2014-2015 Alex 'Unik' Unigovsky
+# © Copyright 2014-2016 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,20 +29,29 @@ from __future__ import (
 
 import os
 import pkg_resources
+import transaction
 
 from pyramid.config import aslist
 from pyramid.paster import (
 	get_appsettings,
 	setup_logging
 )
-
 from celery import Celery
-from celery.signals import celeryd_init
+from celery.signals import (
+	beat_init,
+	celeryd_init,
+	worker_process_init
+)
 from kombu import (
 	Exchange,
 	Queue
 )
 from kombu.common import Broadcast
+from sqlalchemy import (
+	engine_from_config,
+	event,
+	pool
+)
 
 from netprofile import setup_config
 from netprofile.common.modules import IModuleManager
@@ -50,6 +59,8 @@ from netprofile.common.util import (
 	as_dict,
 	make_config_dict
 )
+from netprofile.db.clauses import SetVariable
+from netprofile.db.connection import DBSession
 
 _default_queues = (
 	Queue('celery', Exchange('celery'), routing_key='celery'),
@@ -255,6 +266,9 @@ def _parse_ini_settings(reg, celery):
 
 	if 'scheduler' in cfg:
 		newconf['CELERYBEAT_SCHEDULER'] = cfg['scheduler']
+	else:
+		# FIXME: strip scheduler parts out of 'core' module
+		newconf['CELERYBEAT_SCHEDULER'] = 'netprofile_core.celery:Scheduler'
 	if 'schedule_filename' in cfg:
 		newconf['CELERYBEAT_SCHEDULE_FILENAME'] = cfg['schedule_filename']
 	if 'sync_every' in cfg:
@@ -342,12 +356,15 @@ def _parse_ini_settings(reg, celery):
 
 app = Celery('netprofile')
 
-def task_cap(cap):
-	def _app_cap_wrapper(wrapped):
-		wrapped.__cap__ = cap
+def task_meta(**kwargs):
+	def _app_task_wrapper(wrapped):
+		if 'title' in kwargs:
+			wrapped.__title__ = kwargs['title']
+		if 'cap' in kwargs:
+			wrapped.__cap__ = kwargs['cap']
 		return wrapped
 
-	return _app_cap_wrapper
+	return _app_task_wrapper
 
 @celeryd_init.connect
 def _setup(conf=None, **kwargs):
@@ -376,6 +393,27 @@ def _setup(conf=None, **kwargs):
 	app.config = cfg
 	app.settings = settings
 	app.mmgr = mmgr
+
+	transaction.abort()
+	DBSession.remove()
+
+def _worker_setup(*args, **kwargs):
+	engine = engine_from_config(
+		app.settings,
+		prefix='sqlalchemy.',
+		poolclass=pool.NullPool
+	)
+	DBSession.configure(bind=engine)
+
+	def _after_begin(sess, trans, conn):
+		sess.execute(SetVariable('accessuid', 0))
+		sess.execute(SetVariable('accessgid', 0))
+		sess.execute(SetVariable('accesslogin', '[TASK]'))
+
+	event.listen(DBSession, 'after_begin', _after_begin)
+
+worker_process_init.connect(_worker_setup)
+beat_init.connect(_worker_setup)
 
 def setup_celery(reg):
 	_parse_ini_settings(reg, app)
