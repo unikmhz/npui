@@ -12,6 +12,7 @@ Ext.define('NetProfile.panel.Wizard', {
 		'NetProfile.form.field.IPv6',
 		'NetProfile.form.field.Money',
 		'NetProfile.form.field.Password',
+		'NetProfile.form.field.PropertyTree',
 		'NetProfile.form.WizardPane'
 	],
 
@@ -364,7 +365,7 @@ Ext.define('NetProfile.panel.Wizard', {
 	{
 		var me = this,
 			layout = me.getLayout(),
-			tbar = me.down('toolbar'),
+			tbar = me.getDockedComponent(0),
 			curpane = layout.getActiveItem();
 
 		if(dir !== 'init')

@@ -9,6 +9,7 @@ Ext.define('NetProfile.controller.SettingsForm', {
 		'NetProfile.form.field.IPv6',
 		'NetProfile.form.field.Money',
 		'NetProfile.form.field.Password',
+		'NetProfile.form.field.PropertyTree',
 		'Ext.panel.Panel'
 	],
 

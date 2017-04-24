@@ -219,6 +219,7 @@ _EDITOR_XTYPE_MAP = {
 	IPv4Address   : 'ipv4field',
 	IPv6Address   : 'ipv6field',
 	IPv6Offset    : 'numberfield',
+	JSONData      : 'proptreefield',
 	LargeBinary   : 'textareafield',
 	MACAddress    : 'hwaddrfield',
 	Money         : 'moneyfield',
@@ -433,6 +434,8 @@ class ExtColumn(object):
 		typecls = self.column.type.__class__
 		if typecls is MACAddress:
 			return 17
+		if typecls is JSONData:
+			return self.MAX_PIXELS
 		try:
 			if typecls is DeclEnumType:
 				xlen = 0
