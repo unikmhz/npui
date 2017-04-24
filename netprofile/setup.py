@@ -40,7 +40,7 @@ requires = [
 	'tornado-redis',
 	'tornado-celery',
 
-	'celery >= 3.1',
+	'celery >= 4.0',
 	'kombu != 3.0.34',
 	'msgpack-python >= 0.4',
 
@@ -126,7 +126,9 @@ setup(
 			'alembic = netprofile.cli:Alembic',
 			'db revision = netprofile.cli:DBRevision',
 
-			'deploy = netprofile.cli:Deploy'
+			'deploy = netprofile.cli:Deploy',
+
+			'rt = netprofile.cli:RTServer'
 		],
 		'netprofile.export.formats' : [
 			'csv = netprofile.export.csv:CSVExportFormat',

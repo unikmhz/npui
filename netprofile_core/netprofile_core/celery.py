@@ -33,7 +33,7 @@ from celery import (
 	beat,
 	current_app
 )
-from celery.utils.timeutils import is_naive
+from celery.utils.time import is_naive
 
 from netprofile.db.connection import DBSession
 from .models import Task
