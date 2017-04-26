@@ -137,10 +137,13 @@ Ext.define('NetProfile.tree.Property', {
 	{
 		return this.store.getRoot().getJSValue();
 	},
-	setValue: function(val)
+	setJSValue: function(val)
 	{
 		var me = this,
-			rtype = me.getRootType();
+			root = me.store.getRoot();
+
+		root.setJSValue(val);
+		me.setRootType(root.get('type'));
 	},
 	onSelectionChange: function(tree, rec, idx)
 	{

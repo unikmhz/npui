@@ -43,6 +43,9 @@ Ext.define('NetProfile.form.field.PropertyTree', {
 	},
 	setValue: function(val)
 	{
-		var me = this;
+		var me = this,
+			tree = me.getComponent('tree');
+
+		return tree.setJSValue(val);
 	}
 });

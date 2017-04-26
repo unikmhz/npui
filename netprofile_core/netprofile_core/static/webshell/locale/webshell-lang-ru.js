@@ -346,5 +346,27 @@ Ext.onReady(function()
 			'minute' : 'по минутам'
 		}
 	});
+
+	Ext.define('Ext.locale.ru.NetProfile.tree.Property', {
+		override: 'NetProfile.tree.Property',
+
+		propText: 'Свойство',
+		typeText: 'Тип',
+		valueText: 'Значение',
+		addText: 'Добавить узел',
+		addTipText: 'Добавить новый узел к выделенному.',
+		deleteText: 'Удалить узел',
+		deleteTipText: 'Удалить выделенный узел.',
+
+		propMap: {
+			'object': 'Объект',
+			'array':  'Список',
+			'string': 'Строка',
+			'int':    'Целое',
+			'float':  'С запятой',
+			'bool':   'Булево',
+			'null':   'Ноль'
+		}
+	});
 });
 
