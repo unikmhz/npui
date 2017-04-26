@@ -172,12 +172,15 @@ class CLIApplication(App):
 		return sess
 
 	@reify
-	def app_config(self):
-		config_uri = '#'.join((
+	def config_uri(self):
+		return '#'.join((
 			self.options.ini_file,
 			self.options.application
 		))
-		settings = get_appsettings(config_uri)
+
+	@reify
+	def app_config(self):
+		settings = get_appsettings(self.config_uri)
 
 		cfg = setup_config(settings)
 		cfg.commit()
