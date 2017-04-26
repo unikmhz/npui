@@ -750,6 +750,8 @@ class ExtColumn(object):
 		ed_xtype = self.editor_xtype
 		if ed_xtype is None:
 			return None
+		if self.get_secret_value(req):
+			return None
 		choices = self.get_choices(req)
 		if choices:
 			ed_xtype = 'combobox'
@@ -1384,6 +1386,8 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 				cont.remove(relobj)
 
 	def get_editor_cfg(self, req, initval=None, in_form=False):
+		if self.get_secret_value(req):
+			return None
 		loc = req.localizer
 		relcls = _table_to_class(self.prop.target.name)
 		if self.value_attr:
