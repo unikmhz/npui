@@ -37,7 +37,6 @@ from sqlalchemy import (
 	Column,
 	ForeignKey,
 	Index,
-	PickleType,
 	Sequence,
 	Unicode,
 	UnicodeText,
@@ -56,6 +55,7 @@ from netprofile.db.connection import (
 )
 from netprofile.db.fields import (
 	ASCIIString,
+	JSONData,
 	UInt32
 )
 from netprofile.tpl import TemplateObject
@@ -129,7 +129,7 @@ class ServerType(Base):
 	)
 	parameter_defaults = Column(
 		'paramdef',
-		PickleType(),
+		JSONData(),
 		Comment('Dictionary of parameter defaults'),
 		nullable=True,
 		default=None,

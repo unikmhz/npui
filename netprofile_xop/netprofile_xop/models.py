@@ -38,7 +38,6 @@ from sqlalchemy import (
 	Column,
 	ForeignKey,
 	Index,
-	PickleType,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -61,6 +60,7 @@ from netprofile.db.connection import Base
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	JSONData,
 	Money,
 	NPBoolean,
 	UInt32,
@@ -505,7 +505,7 @@ class ExternalOperationProvider(Base):
 	)
 	authentication_options = Column(
 		'authopts',
-		PickleType(),
+		JSONData(),
 		Comment('Authentication options'),
 		nullable=True,
 		default=None,

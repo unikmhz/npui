@@ -37,7 +37,6 @@ from sqlalchemy import (
 	Column,
 	ForeignKey,
 	Index,
-	PickleType,
 	Sequence,
 	Unicode,
 	UnicodeText,
@@ -55,6 +54,7 @@ from netprofile.db.connection import Base
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	JSONData,
 	NPBoolean,
 	UInt8,
 	UInt32,
@@ -172,7 +172,7 @@ class Document(Base):
 	)
 	variables = Column(
 		'vars',
-		PickleType(),
+		JSONData(),
 		Comment('List of variable templates'),
 		nullable=True,
 		default=None,

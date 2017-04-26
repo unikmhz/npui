@@ -111,7 +111,6 @@ from sqlalchemy import (
 	ForeignKey,
 	Index,
 	LargeBinary,
-	PickleType,
 	Sequence,
 	TIMESTAMP,
 	Unicode,
@@ -4688,7 +4687,7 @@ class FileFolder(Base):
 		}
 	)
 	meta = Column(
-		FileMeta.as_mutable(PickleType),
+		FileMeta.as_mutable(JSONData),
 		Comment('Serialized meta-data'),
 		nullable=True,
 		default=None,
@@ -5601,7 +5600,7 @@ class File(Base):
 		}
 	)
 	meta = Column(
-		FileMeta.as_mutable(PickleType),
+		FileMeta.as_mutable(JSONData),
 		Comment('Serialized meta-data'),
 		nullable=True,
 		default=None,
@@ -7346,7 +7345,7 @@ class DataCache(Base):
 	)
 	value = Column(
 		'dcvalue',
-		PickleType(),
+		JSONData(),
 		Comment('Data cache value'),
 		nullable=True,
 		default=None,
@@ -8094,7 +8093,7 @@ class AddressBook(Base):
 		}
 	)
 	meta = Column(
-		FileMeta.as_mutable(PickleType),
+		FileMeta.as_mutable(JSONData),
 		Comment('Serialized meta-data'),
 		nullable=True,
 		default=None,
@@ -8575,7 +8574,7 @@ class AddressBookCard(Base):
 		}
 	)
 	meta = Column(
-		FileMeta.as_mutable(PickleType),
+		FileMeta.as_mutable(JSONData),
 		Comment('Serialized meta-data'),
 		nullable=True,
 		default=None,
