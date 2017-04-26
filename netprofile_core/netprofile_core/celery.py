@@ -97,11 +97,9 @@ class Scheduler(beat.Scheduler):
 	Custom scheduler that uses ORM objects for persistence.
 	"""
 	Entry = ScheduleEntry
-	UPDATE_INTERVAL = datetime.timedelta(seconds=15)
 
 	def __init__(self, *args, **kwargs):
-		self._schedule = {}
-		self._last_updated = None
+		self._schedule = None
 		beat.Scheduler.__init__(self, *args, **kwargs)
 		self.max_interval = (kwargs.get('max_interval') or
 				self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 15)
@@ -109,13 +107,7 @@ class Scheduler(beat.Scheduler):
 	def setup_schedule(self):
 		pass
 
-	def requires_update(self):
-		if self._last_updated is None:
-			return True
-		return self._last_updated + self.UPDATE_INTERVAL < self.app.now()
-
 	def get_from_db(self):
-		self.sync()
 		ret = {}
 		sess = DBSession()
 		for task in sess.query(Task).filter(Task.enabled == True):
@@ -125,11 +117,11 @@ class Scheduler(beat.Scheduler):
 
 	def sync(self):
 		transaction.commit()
+		self._schedule = self.get_from_db()
 
 	@property
 	def schedule(self):
-		if self.requires_update():
-			self._schedule = self.get_from_db()
-			self._last_updated = self.app.now()
+		if self._schedule is None:
+			self.sync()
 		return self._schedule
 
