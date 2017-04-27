@@ -69,7 +69,10 @@ Ext.define('NetProfile.data.PropertyTreeModel', {
 
 		me.removeAll(true);
 		if((val === null) || (type === 'undefined'))
+		{
+			val = null;
 			type = 'null';
+		}
 		else if(type === 'object')
 		{
 			if(Ext.isArray(val))

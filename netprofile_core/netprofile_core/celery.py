@@ -27,16 +27,15 @@ from __future__ import (
 	division
 )
 
-import datetime
 import transaction
-from celery import (
-	beat,
-	current_app
-)
+from celery import beat
 from celery.utils.time import is_naive
 
 from netprofile.db.connection import DBSession
-from .models import Task
+from .models import (
+	Task,
+	TaskLog
+)
 
 _DEFAULT_MAX_INTERVAL = 5 # seconds
 _DEFAULT_SYNC_EVERY = 15 # seconds
@@ -45,9 +44,9 @@ class ScheduleEntry(beat.ScheduleEntry):
 	"""
 	Custom schedule entry that uses ORM objects for persistence.
 	"""
-	def __init__(self, task):
+	def __init__(self, app, task):
 		self.model = task
-		self.app = current_app._get_current_object()
+		self.app = app
 
 		self.name = task.name
 		self.task = task.procedure
@@ -76,7 +75,7 @@ class ScheduleEntry(beat.ScheduleEntry):
 		model = self.model
 		model.last_run_time = self._default_now()
 		model.run_count += 1
-		new = self.__class__(model)
+		new = self.__class__(self.app, model)
 		return new
 
 	next = __next__
@@ -89,6 +88,7 @@ class Scheduler(beat.Scheduler):
 
 	def __init__(self, *args, **kwargs):
 		self._schedule = None
+		self._pending_results = {}
 		self._sync_needed = {}
 		beat.Scheduler.__init__(self, *args, **kwargs)
 		self.sync_every = (
@@ -107,12 +107,13 @@ class Scheduler(beat.Scheduler):
 		for task in sess.query(Task).filter(Task.enabled == True):
 			sess.expunge(task.schedule)
 			sess.expunge(task)
-			ret[task.name] = self.Entry(task)
+			ret[task.name] = self.Entry(self.app, task)
 		transaction.commit()
 		return ret
 
 	def setup_schedule(self):
 		self._schedule = self.get_from_db()
+		self.install_default_entries(self._schedule)
 
 	def reserve(self, entry):
 		model = entry.model
@@ -123,6 +124,12 @@ class Scheduler(beat.Scheduler):
 	def sync(self):
 		to_update = []
 		sess = DBSession()
+		if len(self._pending_results) > 0:
+			task_uuids = [k for k, v in self._pending_results.items() if v.ready()]
+			for log in sess.query(TaskLog).filter(TaskLog.celery_id.in_(task_uuids)):
+				log.update(self._pending_results[log.celery_id])
+				to_update.append(log)
+				del self._pending_results[log.celery_id]
 		if len(self._sync_needed) > 0:
 			sn = self._sync_needed
 			for task in sess.query(Task).filter(Task.id.in_(sn.keys())):
@@ -132,6 +139,7 @@ class Scheduler(beat.Scheduler):
 			self._sync_needed = {}
 
 		self._schedule = self.get_from_db()
+		self.install_default_entries(self._schedule)
 		self._heap = None
 
 	@property
@@ -139,4 +147,17 @@ class Scheduler(beat.Scheduler):
 		if self._schedule is None:
 			self.sync()
 		return self._schedule
+
+	def apply_async(self, entry, producer=None, advance=True, **kwargs):
+		res = super(Scheduler, self).apply_async(entry, producer, advance, **kwargs)
+		model = entry.model
+
+		if model.log_executions:
+			sess = DBSession()
+			log = model.new_result(res)
+			sess.add(log)
+			self._pending_results[log.celery_id] = res
+			transaction.commit()
+
+		return res
 

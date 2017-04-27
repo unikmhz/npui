@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module - Models
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -99,6 +99,7 @@ import string
 import random
 import re
 import urllib
+import uuid
 
 from collections import defaultdict
 from dateutil.tz import tzutc
@@ -842,9 +843,9 @@ class Task(Base):
 				'grid_view'     : ('taskid', 'name', 'schedule', 'enabled'),
 				'grid_hidden'   : ('taskid',),
 				'form_view'     : (
-					'name', 'schedule', 'enabled',
+					'name', 'schedule', 'enabled', 'log',
 					'proc', 'args', 'kwargs',
-					'queue', 'exchange', 'rkey',
+					'queue', 'exchange', 'rkey', 'expires',
 					'descr',
 					'rtime',
 					'ctime', 'created_by',
@@ -979,6 +980,16 @@ class Task(Base):
 			'header_string' : _('Routing Key')
 		}
 	)
+	expires = Column(
+		UInt32(),
+		Comment('Task expiration time in seconds'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string': _('Expiration')
+		}
+	)
 	run_count = Column(
 		'rcount',
 		UInt32(),
@@ -1085,13 +1096,28 @@ class Task(Base):
 
 	@property
 	def options(self):
-		return {
+		ret = {
 			'queue'       : self.queue,
 			'exchange'    : self.exchange,
-			'routing_key' : self.routing_key,
-			'eta'         : self.schedule.not_before,
-			'expires'     : self.schedule.not_after
+			'routing_key' : self.routing_key
 		}
+		if self.expires:
+			ret['expires'] = self.expires
+		return ret
+
+	def new_result(self, celery_result=None):
+		log = TaskLog(
+			procedure=self.procedure,
+			arguments=self.arguments,
+			keyword_arguments=self.keyword_arguments,
+			start_timestamp=self.last_run_time
+		)
+
+		if celery_result:
+			log.celery_id = uuid.UUID(celery_result.id)
+			log.state = celery_result.state
+
+		return log
 
 	def __str__(self):
 		return str(self.name)
@@ -1241,6 +1267,15 @@ class TaskLog(Base):
 			'read_cap'      : 'ADMIN_DEV'
 		}
 	)
+
+	def update(self, celery_result):
+		self.state = celery_result.state
+		if self.state == 'SUCCESS':
+			self.result = celery_result.result
+		elif isinstance(celery_result.result, Exception):
+			self.traceback = str(celery_result.result)
+		if self.state in ('SUCCESS', 'FAILURE', 'REVOKED'):
+			self.finish_timestamp = dt.datetime.now()
 
 	def __str__(self):
 		return '%s: %s' % (
