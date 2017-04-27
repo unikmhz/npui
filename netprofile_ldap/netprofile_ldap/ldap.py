@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: LDAP module
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -266,6 +266,7 @@ def includeme(config):
 	conn_cfg = make_config_dict(settings, 'netprofile.ldap.connection.')
 	ssl_cfg = make_config_dict(conn_cfg, 'ssl.')
 	auth_cfg = make_config_dict(conn_cfg, 'auth.')
+	pool_cfg = make_config_dict(conn_cfg, 'pool.')
 
 	ldap_host = None
 	server_opts = {}
@@ -285,11 +286,11 @@ def includeme(config):
 		value = auth_cfg['type']
 		proc = None
 		if value in ('anon', 'anonymous'):
-			proc = ldap3.AUTH_ANONYMOUS
+			proc = ldap3.ANONYMOUS
 		elif value == 'simple':
-			proc = ldap3.AUTH_SIMPLE
+			proc = ldap3.SIMPLE
 		elif value == 'sasl':
-			proc = ldap3.AUTH_SASL
+			proc = ldap3.SASL
 		elif value == 'ntlm':
 			proc = ldap3.NTLM
 		if proc:
@@ -298,9 +299,9 @@ def includeme(config):
 		conn_opts['user'] = auth_cfg['user']
 		conn_opts['password'] = auth_cfg['password']
 		if 'authentication' not in conn_opts:
-			conn_opts['authentication'] = ldap3.AUTH_SIMPLE
+			conn_opts['authentication'] = ldap3.SIMPLE
 		bind = None
-		bind_cfg = auth_cfg.get('bind')
+		bind_cfg = auth_cfg.get('bind', 'none')
 		if bind_cfg == 'none':
 			bind = ldap3.AUTO_BIND_NONE
 		elif bind_cfg == 'no-tls':
@@ -315,7 +316,19 @@ def includeme(config):
 	if ('key.file' in ssl_cfg) and ('cert.file' in ssl_cfg):
 		tls_opts['local_private_key_file'] = ssl_cfg['key.file']
 		tls_opts['local_certificate_file'] = ssl_cfg['cert.file']
-	# TODO: version= in tls_opts
+		if 'validate' not in ssl_cfg:
+			tls_opts['validate'] = ssl.CERT_REQUIRED
+	value = ssl_cfg.get('version', 'tls1.2')
+	if hasattr(ssl, 'PROTOCOL_TLSv1') and value == 'tls1':
+		value = ssl.PROTOCOL_TLSv1
+	elif hasattr(ssl, 'PROTOCOL_TLSv1_1') and value == 'tls1.1':
+		value = ssl.PROTOCOL_TLSv1_1
+	elif hasattr(ssl, 'PROTOCOL_TLSv1_2'):
+		value = ssl.PROTOCOL_TLSv1_2
+	else:
+		value = None
+	if value is not None:
+		tls_opts['version'] = value
 	if 'validate' in ssl_cfg:
 		value = ssl_cfg['validate']
 		if value == 'none':
@@ -336,9 +349,20 @@ def includeme(config):
 		tls_opts['local_private_key_password'] = ssl_cfg['key.password']
 
 	tls = None
-	if len(tls_opts):
+	if tls_opts:
 		tls = ldap3.Tls(**tls_opts)
 		server_opts['use_ssl'] = True
+
+	if 'name' in pool_cfg:
+		conn_opts['pool_name'] = pool_cfg['name']
+	if 'size' in pool_cfg:
+		conn_opts['pool_size'] = int(pool_cfg['size'])
+	else:
+		conn_opts['pool_size'] = 4
+	if 'lifetime' in pool_cfg:
+		conn_opts['pool_lifetime'] = int(pool_cfg['lifetime'])
+	else:
+		conn_opts['pool_lifetime'] = 300
 
 	server = ldap3.Server(ldap_host, tls=tls, **server_opts)
 	LDAPConn = ldap3.Connection(server, client_strategy=ldap3.REUSABLE, **conn_opts)
