@@ -38,6 +38,7 @@ Ext.define('NetProfile.tree.Property', {
 
 	config: {
 		viewConfig: {
+			markDirty: false,
 			selectionModel: {
 				type: 'rowmodel',
 				mode: 'SINGLE',
