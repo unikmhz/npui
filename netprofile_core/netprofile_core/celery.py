@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module - Celery scheduler
-# © Copyright 2016 Alex 'Unik' Unigovsky
+# © Copyright 2016-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -38,6 +38,9 @@ from celery.utils.time import is_naive
 from netprofile.db.connection import DBSession
 from .models import Task
 
+_DEFAULT_MAX_INTERVAL = 5 # seconds
+_DEFAULT_SYNC_EVERY = 15 # seconds
+
 class ScheduleEntry(beat.ScheduleEntry):
 	"""
 	Custom schedule entry that uses ORM objects for persistence.
@@ -69,25 +72,11 @@ class ScheduleEntry(beat.ScheduleEntry):
 	def _default_now(self):
 		return self.app.now()
 
-	def is_due(self):
-		sess = DBSession()
-		if self.model not in sess:
-			self.model = sess.merge(self.model, load=True)
-		if not self.model.enabled:
-			return False, 15.0
-		return self.schedule.is_due(self.last_run_at)
-
 	def __next__(self):
-		sess = DBSession()
 		model = self.model
-
-		if model not in sess:
-			model = sess.merge(model, load=False)
-
 		model.last_run_time = self._default_now()
 		model.run_count += 1
 		new = self.__class__(model)
-		transaction.commit()
 		return new
 
 	next = __next__
@@ -100,24 +89,50 @@ class Scheduler(beat.Scheduler):
 
 	def __init__(self, *args, **kwargs):
 		self._schedule = None
+		self._sync_needed = {}
 		beat.Scheduler.__init__(self, *args, **kwargs)
-		self.max_interval = (kwargs.get('max_interval') or
-				self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or 15)
-
-	def setup_schedule(self):
-		pass
+		self.sync_every = (
+			kwargs.get('sync_every') or
+			_DEFAULT_SYNC_EVERY
+		)
+		self.max_interval = (
+			kwargs.get('max_interval') or
+			self.app.conf.beat_max_loop_interval or
+			_DEFAULT_MAX_INTERVAL
+		)
 
 	def get_from_db(self):
 		ret = {}
 		sess = DBSession()
 		for task in sess.query(Task).filter(Task.enabled == True):
+			sess.expunge(task.schedule)
+			sess.expunge(task)
 			ret[task.name] = self.Entry(task)
 		transaction.commit()
 		return ret
 
-	def sync(self):
-		transaction.commit()
+	def setup_schedule(self):
 		self._schedule = self.get_from_db()
+
+	def reserve(self, entry):
+		model = entry.model
+		new = next(entry)
+		self._sync_needed[model.id] = model
+		return new
+
+	def sync(self):
+		to_update = []
+		sess = DBSession()
+		if len(self._sync_needed) > 0:
+			sn = self._sync_needed
+			for task in sess.query(Task).filter(Task.id.in_(sn.keys())):
+				task.last_run_time = sn[task.id].last_run_time
+				task.run_count = sn[task.id].run_count
+				to_update.append(task)
+			self._sync_needed = {}
+
+		self._schedule = self.get_from_db()
+		self._heap = None
 
 	@property
 	def schedule(self):
