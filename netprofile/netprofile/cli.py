@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: CLI commands
-# © Copyright 2014-2016 Alex 'Unik' Unigovsky
+# © Copyright 2014-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -38,10 +38,15 @@ from cliff.show import ShowOne
 from cliff.command import Command
 
 from pyramid.i18n import TranslationStringFactory
+from pyramid.paster import setup_logging
 from sqlalchemy.exc import ProgrammingError
 from alembic import command as alembic_cmd
 
-from netprofile.common.modules import ModuleError
+from netprofile.common.modules import (
+	IModuleManager,
+	ModuleError
+)
+from netprofile.common import rt
 
 _ = TranslationStringFactory('netprofile')
 
@@ -872,4 +877,23 @@ class Deploy(Command):
 
 		os.umask(self.old_mask)
 		self.log.info('Created NetProfile deployment: %s', deploy_dir)
+
+class RTServer(Command):
+	"""
+	Run real-time server.
+	"""
+
+	log = logging.getLogger(__name__)
+
+	def take_action(self, args):
+		setup_logging(self.app.config_uri)
+
+		cfg = self.app.app_config
+		mm = cfg.registry.getUtility(IModuleManager)
+
+		mm.load('core')
+		mm.load_enabled()
+
+		rts = rt.configure(mm, cfg.registry)
+		rt.run(rts)
 
