@@ -126,10 +126,11 @@ class Scheduler(beat.Scheduler):
 		sess = DBSession()
 		if len(self._pending_results) > 0:
 			task_uuids = [k for k, v in self._pending_results.items() if v.ready()]
-			for log in sess.query(TaskLog).filter(TaskLog.celery_id.in_(task_uuids)):
-				log.update(self._pending_results[log.celery_id])
-				to_update.append(log)
-				del self._pending_results[log.celery_id]
+			if len(task_uuids) > 0:
+				for log in sess.query(TaskLog).filter(TaskLog.celery_id.in_(task_uuids)):
+					log.update(self._pending_results[log.celery_id])
+					to_update.append(log)
+					del self._pending_results[log.celery_id]
 		if len(self._sync_needed) > 0:
 			sn = self._sync_needed
 			for task in sess.query(Task).filter(Task.id.in_(sn.keys())):
