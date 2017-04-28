@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module - Models
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -37,6 +37,7 @@ __all__ = [
 	'Phone',
 	'EntityState',
 	'EntityFile',
+	'EntityCommunicationChannel',
 	'PhysicalEntity',
 	'LegalEntity',
 	'StructuralEntity',
@@ -105,6 +106,7 @@ from netprofile.ext.columns import (
 from netprofile.ext.filters import TextFilter
 from netprofile_core.models import (
 	AddressType,
+	ContactInfoType,
 	PhoneType
 )
 from netprofile_geo.models import (
@@ -449,7 +451,6 @@ class Entity(Base):
 						ExternalWizardField('PhysicalEntity', 'pass_issuedby'),
 						ExternalWizardField('PhysicalEntity', 'pass_issuedate'),
 						ExternalWizardField('PhysicalEntity', 'email'),
-						ExternalWizardField('PhysicalEntity', 'icq'),
 						ExternalWizardField('PhysicalEntity', 'homepage'),
 						ExternalWizardField('PhysicalEntity', 'birthdate'),
 						id='ent_physicalentity2', title=_('Personal details'),
@@ -468,7 +469,6 @@ class Entity(Base):
 						ExternalWizardField('LegalEntity', 'cp_name_middle'),
 						ExternalWizardField('LegalEntity', 'cp_title'),
 						ExternalWizardField('LegalEntity', 'cp_email'),
-						ExternalWizardField('LegalEntity', 'cp_icq'),
 						id='ent_legalentity2', title=_('Legal entity contact person')
 					),
 					Step(
@@ -689,6 +689,12 @@ class Entity(Base):
 	)
 	phones = relationship(
 		'Phone',
+		backref=backref('entity', innerjoin=True),
+		cascade='all, delete-orphan',
+		passive_deletes=True
+	)
+	comm_channels = relationship(
+		'EntityCommunicationChannel',
 		backref=backref('entity', innerjoin=True),
 		cascade='all, delete-orphan',
 		passive_deletes=True
@@ -1478,6 +1484,153 @@ class EntityComment(Base):
 		)
 	)
 
+class EntityCommunicationChannel(Base):
+	"""
+	Entities' communication channel links.
+	"""
+	__tablename__ = 'entities_comms'
+	__table_args__ = (
+		Comment('Entity communication channels'),
+		Index('entities_comms_i_commtid', 'commtid'),
+		Index('entities_comms_i_entityid', 'entityid'),
+		{
+			'mysql_engine'  : 'InnoDB',
+			'mysql_charset' : 'utf8',
+			'info'          : {
+				'cap_read'      : 'ENTITIES_LIST',
+				'cap_create'    : 'ENTITIES_EDIT',
+				'cap_edit'      : 'ENTITIES_EDIT',
+				'cap_delete'    : 'ENTITIES_EDIT',
+
+				'menu_name'     : _('Entity Communications'),
+				'default_sort'  : ({ 'property': 'commtid' ,'direction': 'ASC' },),
+				'grid_view'     : {
+					'ecommid',
+					MarkupColumn(
+						header_string='&nbsp;',
+						column_width=22,
+						column_name=_('Icon'),
+						column_resizable=False,
+						cell_class='np-nopad',
+						template='<img class="np-block-img" src="{grid_icon}" />'
+					),
+					'type', 'entity', 'primary', 'scope',
+					MarkupColumn(
+						name='value',
+						header_string=_('Address'),
+						column_flex=3,
+						template='<a href="{uri}">{value}</a>'
+					)
+				},
+				'grid_hidden'   : ('ecommid',),
+				'form_view'     : ('type', 'entity', 'primary', 'scope', 'value', 'descr'),
+				'extra_data'    : ('grid_icon', 'uri'),
+				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
+				'create_wizard' : SimpleWizard(title=_('Add new communication channel'))
+			}
+		}
+	)
+	id = Column(
+		'ecommid',
+		UInt32(),
+		Sequence('entities_comms_ecommid_seq'),
+		Comment('Entity communication channel ID'),
+		primary_key=True,
+		nullable=False,
+		info={
+			'header_string' : _('ID')
+		}
+	)
+	type_id = Column(
+		'commtid',
+		UInt32(),
+		ForeignKey('comms_types.commtid', name='entities_comms_fk_commtid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Communication channel type ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Type'),
+			'column_flex'   : 2,
+			'filter_type'   : 'nplist',
+			'editor_xtype'  : 'simplemodelselect'
+		}
+	)
+	entity_id = Column(
+		'entityid',
+		UInt32(),
+		ForeignKey('entities_def.entityid', name='entities_comms_fk_entityid', ondelete='CASCADE', onupdate='CASCADE'),
+		Comment('Entity ID'),
+		nullable=False,
+		info={
+			'header_string' : _('Entity'),
+			'column_flex'   : 2,
+			'filter_type'   : 'none'
+		}
+	)
+	primary = Column(
+		NPBoolean(),
+		Comment('Primary flag'),
+		nullable=False,
+		default=False,
+		server_default=npbool(False),
+		info={
+			'header_string' : _('Primary')
+		}
+	)
+	scope = Column(
+		ContactInfoType.db_type(),
+		Comment('Channel scope'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Type')
+		}
+	)
+	value = Column(
+		Unicode(255),
+		Comment('Channel address value'),
+		nullable=False,
+		info={
+			'header_string' : _('Address'),
+			'column_flex'   : 3
+		}
+	)
+	description = Column(
+		'descr',
+		UnicodeText(),
+		Comment('Communication channel description'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Description')
+		}
+	)
+
+	type = relationship(
+		'CommunicationType',
+		innerjoin=True,
+		backref=backref(
+			'entity_channels',
+			cascade='all, delete-orphan',
+			passive_deletes=True
+		)
+	)
+
+	def __str__(self):
+		return '%s: %s' % (
+			str(self.type),
+			str(self.entity)
+		)
+
+	def uri(self, req):
+		if self.type and self.value:
+			return self.type.format_uri(self.value)
+
+	def grid_icon(self, req):
+		if self.type:
+			return self.type.grid_icon(req)
+
 class Gender(DeclEnum):
 	"""
 	Basic gender ENUM.
@@ -1532,7 +1685,7 @@ class PhysicalEntity(Entity):
 					'nick', 'parent', 'state', 'flags', 'contractid',
 					'name_family', 'name_given', 'name_middle',
 					'gender',
-					'email', 'icq', 'homepage', 'birthdate',
+					'email', 'homepage', 'birthdate',
 					'pass_series', 'pass_num', 'pass_issuedate', 'pass_issuedby',
 					'descr'
 				),
@@ -1562,7 +1715,7 @@ class PhysicalEntity(Entity):
 					),
 					Step(
 						'pass_series', 'pass_num', 'pass_issuedby', 'pass_issuedate',
-						'email', 'icq', 'homepage', 'birthdate',
+						'email', 'homepage', 'birthdate',
 						id='ent_physical3', title=_('Personal details')
 					),
 					title=_('Add new individual')
@@ -1641,16 +1794,6 @@ class PhysicalEntity(Entity):
 		info={
 			'header_string' : _('E-mail'),
 			'vtype'         : 'email'
-		}
-	)
-	icq = Column(
-		Unicode(64),
-		Comment('ICQ UIN'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('ICQ')
 		}
 	)
 	homepage = Column(
@@ -1740,7 +1883,6 @@ class PhysicalEntity(Entity):
 			'name_given'         : self.name_given,
 			'name_middle'        : self.name_middle,
 			'email'              : self.email,
-			'icq'                : self.icq,
 			'homepage'           : self.homepage,
 			'passport_series'    : self.passport_series,
 			'passport_number'    : self.passport_number,
@@ -1806,7 +1948,7 @@ class LegalEntity(Entity):
 					'nick', 'parent', 'state', 'flags', 'contractid',
 					'name',
 					'cp_name_family', 'cp_name_given', 'cp_name_middle', 'cp_title',
-					'cp_email', 'cp_icq', 'homepage', 'address_legal',
+					'cp_email', 'homepage', 'address_legal',
 					'props_inn', 'props_kpp', 'props_bic', 'props_rs', 'props_cs', 'props_bank',
 					'descr'
 				),
@@ -1836,7 +1978,7 @@ class LegalEntity(Entity):
 					Step(
 						'cp_name_family', 'cp_name_given', 'cp_name_middle',
 						'cp_title',
-						'cp_email', 'cp_icq',
+						'cp_email',
 						id='ent_legal2', title=_('Legal entity contact person')
 					),
 					Step(
@@ -1939,17 +2081,6 @@ class LegalEntity(Entity):
 		info={
 			'header_string' : _('E-mail'),
 			'vtype'         : 'email'
-		}
-	)
-	contact_icq = Column(
-		'cp_icq',
-		Unicode(64),
-		Comment('Contact person - ICQ UIN'),
-		nullable=True,
-		default=None,
-		server_default=text('NULL'),
-		info={
-			'header_string' : _('ICQ')
 		}
 	)
 	homepage = Column(

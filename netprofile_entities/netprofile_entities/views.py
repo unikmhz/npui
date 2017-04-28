@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Entities module - Views
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -96,6 +96,15 @@ def _dpane_entities(tabs, model, req):
 				'containerScroll' : True
 			},)
 		},
+		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
+	}, {
+		'title'             : loc.translate(_('Communications')),
+		'iconCls'           : 'ico-mod-entitycommunicationchannel',
+		'xtype'             : 'grid_entities_EntityCommunicationChannel',
+		'stateId'           : None,
+		'stateful'          : False,
+		'hideColumns'       : ('entity',),
+		'extraParamProp'    : 'entityid',
 		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 	}, {
 		'title'             : loc.translate(_('History')),
