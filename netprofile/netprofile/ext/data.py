@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: ExtJS schema and data generation
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -1430,6 +1430,8 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 	def get_related_by_value(self, value):
 		if not isinstance(value, list):
 			return None
+		if len(value) == 0:
+			return []
 		relcls = _table_to_class(self.prop.target.name)
 		if self.value_attr:
 			relcls = getattr(relcls, self.value_attr).property.mapper.class_
