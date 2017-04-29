@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Custom clauses for SQLAlchemy
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,15 +29,14 @@ from __future__ import (
 
 from sqlalchemy import (
 	DateTime,
-	Numeric,
-	func
+	Numeric
 )
 from sqlalchemy.sql.expression import (
 	ClauseElement,
 	Executable,
 	FunctionElement
 )
-from sqlalchemy.sql import sqltypes
+from sqlalchemy.sql.elements import literal
 from sqlalchemy.ext.compiler import compiles
 
 class SetVariable(Executable, ClauseElement):
@@ -47,26 +46,26 @@ class SetVariable(Executable, ClauseElement):
 
 @compiles(SetVariable, 'mysql')
 def visit_set_variable_mysql(element, compiler, **kw):
-	if isinstance(element.value, ClauseElement):
-		rvalue = compiler.process(element.value)
-	else:
-		rvalue = compiler.render_literal_value(str(element.value), sqltypes.STRINGTYPE)
+	val = element.value
+	if not isinstance(val, ClauseElement):
+		val = literal(val)
+	rvalue = compiler.process(val)
 	return 'SET @%s := %s' % (element.name, rvalue)
 
 @compiles(SetVariable, 'postgresql')
 def visit_set_variable_pgsql(element, compiler, **kw):
-	if isinstance(element.value, ClauseElement):
-		rvalue = compiler.process(element.value)
-	else:
-		rvalue = compiler.render_literal_value(str(element.value), sqltypes.STRINGTYPE)
+	val = element.value
+	if not isinstance(val, ClauseElement):
+		val = literal(val)
+	rvalue = compiler.process(val)
 	return 'SET npvar.%s = %s' % (element.name, rvalue)
 
 @compiles(SetVariable)
 def visit_set_variable(element, compiler, **kw):
-	if isinstance(element.value, ClauseElement):
-		rvalue = compiler.process(element.value)
-	else:
-		rvalue = compiler.render_literal_value(str(element.value), sqltypes.STRINGTYPE)
+	val = element.value
+	if not isinstance(val, ClauseElement):
+		val = literal(val)
+	rvalue = compiler.process(val)
 	return 'SET %s = %s' % (element.name, rvalue)
 
 class SetVariables(Executable, ClauseElement):
@@ -77,10 +76,9 @@ class SetVariables(Executable, ClauseElement):
 def visit_set_variables_mysql(element, compiler, **kw):
 	clauses = []
 	for name, rvalue in element.values.items():
-		if isinstance(rvalue, ClauseElement):
-			rvalue = compiler.process(rvalue)
-		else:
-			rvalue = compiler.render_literal_value(str(rvalue), sqltypes.STRINGTYPE)
+		if not isinstance(rvalue, ClauseElement):
+			rvalue = literal(rvalue)
+		rvalue = compiler.process(rvalue)
 		clauses.append('@%s := %s' % (name, rvalue))
 	return 'SET ' + ', '.join(clauses)
 
