@@ -2,7 +2,7 @@
 <%inherit file="netprofile:templates/ddl_trigger.mak"/>\
 <%block name="sql">\
 	INSERT INTO `tickets_changes_def` (`ticketid`, `ttrid`, `uid`, `ts`, `show_client`, `comments`)
-	VALUES (NEW.ticketid, @ttrid, IF(@accessuid > 0, @accessuid, NULL), NOW(), IF(@show_client, 'Y', 'N'), @comments);
+	VALUES (NEW.ticketid, @ttrid, IF(@accessuid > 0, @accessuid, NULL), NOW(), IF(@show_client = 'Y', 'Y', 'N'), @comments);
 	SET @tcid := LAST_INSERT_ID();
 	IF OLD.entityid <> NEW.entityid THEN
 		INSERT INTO `tickets_changes_bits` (`tcid`, `tcfid`, `old`, `new`)
