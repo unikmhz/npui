@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module - Views
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -88,6 +88,14 @@ _a = TranslationStringFactory('netprofile_access')
 def dpane_tickets(model, request):
 	loc = request.localizer
 	tabs = [{
+		'title'          : loc.translate(_('History')),
+		'iconCls'        : 'ico-ticket-history',
+		'xtype'          : 'grid_tickets_TicketChange',
+		'stateId'        : None,
+		'stateful'       : False,
+		'hideColumns'    : ('ticket',),
+		'extraParamProp' : 'ticketid'
+	}, {
 		'title'          : loc.translate(_('Update')),
 		'iconCls'        : 'ico-ticket-update',
 		'xtype'          : 'npwizard',
@@ -374,21 +382,28 @@ def dyn_ticket_uwiz_update(params, request):
 				trans.apply(ticket)
 		del params['ttrid']
 	if 'show_client' in params:
-		show_cl = params['show_client'].lower()
-		if show_cl in {'true', '1', 'on'}:
-			show_cl = True
-		else:
+		show_cl = params['show_client']
+		if isinstance(show_cl, str):
+			show_cl = show_cl.lower() in {'true', '1', 'on', 'yes'}
+		if not isinstance(show_cl, bool):
 			show_cl = False
 		del params['show_client']
 	else:
 		show_cl = False
 	sess.execute(SetVariable('show_client', npbool(show_cl)))
-	if ('comments' in params) and request.has_permission('TICKETS_COMMENT', request.context, request):
+	if ('comments' in params) and request.has_permission('TICKETS_COMMENT'):
 		sess.execute(SetVariable('comments', params['comments']))
 		del params['comments']
 	else:
 		sess.execute(SetVariable('comments', None))
-	model.set_values(ticket, params, request)
+
+	with sess.no_autoflush:
+		# We set mtime to force running of after-update triggers in SQL
+		# even when all fields within tickets_def are unchanged.
+		ticket.modification_time = dt.datetime.now()
+
+		model.set_values(ticket, params, request)
+
 	sess.flush()
 	sess.execute(SetVariable('tcid', None))
 	return {

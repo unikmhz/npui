@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Tickets module - Models
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -97,10 +97,12 @@ from netprofile.ext.wizards import (
 	Wizard,
 	ExtJSWizardField
 )
+from netprofile.ext.columns import MarkupColumn
 from netprofile_core.models import (
 	Group,
 	User
 )
+from netprofile.tpl import TemplateObject
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -1605,8 +1607,26 @@ class TicketChange(Base):
 
 				'menu_name'     : _('Changes'),
 				'default_sort'  : ({ 'property': 'ts' ,'direction': 'DESC' },),
-				'grid_view'     : (),
-				'easy_search'   : ()
+				'grid_view'     : (
+					'tcid',
+					'ticket', 'ts',
+					MarkupColumn(
+						name='data',
+						header_string=_('Information'),
+						column_flex=3,
+						template=TemplateObject('netprofile_tickets:templates/tc_data.mak')
+					),
+					MarkupColumn(
+						name='changes',
+						header_string=_('Changes'),
+						column_flex=3,
+						template=TemplateObject('netprofile_tickets:templates/tc_changes.mak')
+					),
+					'transition', 'user', 'comments'
+				),
+				'grid_hidden'   : ('tcid', 'transition', 'user'),
+				'easy_search'   : ('comments',),
+				'extra_data'    : ('data',)
 			}
 		}
 	)
@@ -1696,7 +1716,8 @@ class TicketChange(Base):
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Comments')
+			'header_string' : _('Comments'),
+			'column_flex'   : 5
 		}
 	)
 
@@ -1727,6 +1748,12 @@ class TicketChange(Base):
 		passive_deletes=True
 	)
 
+	@property
+	def data(self):
+		return {
+			'bits' : self.bits
+		}
+
 	def get_entity_history(self, req):
 		eh = EntityHistory(
 			self.ticket.entity,
@@ -1746,6 +1773,13 @@ class TicketChange(Base):
 		if self.comments:
 			eh.parts.append(EntityHistoryPart('tickets:comment', self.comments))
 		return eh
+
+	def __str__(self):
+		req = getattr(self, '__req__', None)
+		tpl = _('Ticket #%d: change #%d')
+		if req:
+			tpl = req.localizer.translate(tpl)
+		return tpl % (self.ticket_id, self.id)
 
 class TicketChangeBit(Base):
 	"""
@@ -1854,7 +1888,7 @@ class TicketChangeBit(Base):
 			return None
 		if self.field_id == 4:
 			return None
-		name = '%s_old' % _HIST_MAP[self.field_id]
+		name = '%s_old' % (_HIST_MAP[self.field_id],)
 		obj = self.get_object(self.old)
 		if obj is None:
 			return None
@@ -1863,11 +1897,30 @@ class TicketChangeBit(Base):
 	def get_new(self):
 		if self.field_id not in _HIST_MAP:
 			return None
-		name = '%s_new' % _HIST_MAP[self.field_id]
+		name = '%s_new' % (_HIST_MAP[self.field_id],)
 		obj = self.get_object(self.new)
 		if obj is None:
 			return None
 		return EntityHistoryPart(name, self.get_text(obj))
+
+	def __json__(self, req=None):
+		ret = []
+		if self.field_id not in _HIST_MAP:
+			return ret
+		name = _HIST_MAP[self.field_id]
+		old = None
+		new = None
+		if self.field_id != 4 and self.old is not None:
+			ret.append({
+				'icon' : name[8:] + '_old',
+				'text' : self.get_text(self.get_object(self.old))
+			})
+		if self.new is not None:
+			ret.append({
+				'icon' : name[8:] + '_new',
+				'text' : self.get_text(self.get_object(self.new))
+			})
+		return ret
 
 class TicketScheduler(Base):
 	"""
