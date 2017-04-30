@@ -325,6 +325,10 @@ Ext.require([
 				Ext.callback(me.handler, me.scope, [field, me, e], 0, field);
 		}
 	});
+	Ext.define('Ext.overrides.mod.ExtraFormatters', {
+		override: 'Ext.util.Format',
+		encodeURI: encodeURI
+	});
 	Ext.define('Ext.overrides.bugfix.EXTJS16183.menu', {
 		override: 'Ext.menu.Menu',
 		compatibility: '5.1.0.107',

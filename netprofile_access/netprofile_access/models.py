@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module - Models
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -198,7 +198,7 @@ class AccessEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'entityid',
 					'nick', 'stash', 'rate'

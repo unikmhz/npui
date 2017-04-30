@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: IP addresses module - Models
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -116,7 +116,7 @@ class IPv4Address(Base):
 					MarkupColumn(
 						name='offset',
 						header_string=_('Address'),
-						template='{__str__}',
+						template='{__str__:htmlEncode}',
 						column_flex=1,
 						sortable=True
 					),
@@ -316,7 +316,7 @@ class IPv6Address(Base):
 					MarkupColumn(
 						name='offset',
 						header_string=_('Address'),
-						template='{__str__}',
+						template='{__str__:htmlEncode}',
 						column_flex=1,
 						sortable=True
 					),

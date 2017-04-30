@@ -398,7 +398,7 @@ class Entity(Base):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'entityid',
 					'nick',
@@ -1512,14 +1512,14 @@ class EntityCommunicationChannel(Base):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'type', 'entity', 'primary', 'scope',
 					MarkupColumn(
 						name='value',
 						header_string=_('Address'),
 						column_flex=3,
-						template='<a href="{uri}">{value}</a>'
+						template='<a href="{uri:encodeURI}">{value:htmlEncode}</a>'
 					)
 				},
 				'grid_hidden'   : ('ecommid',),
@@ -1675,7 +1675,7 @@ class PhysicalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'entityid',
 					'nick', 'name_family', 'name_given'
@@ -1938,7 +1938,7 @@ class LegalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'entityid',
 					'nick', 'name', 'cp_name_family', 'cp_name_given'
@@ -2215,7 +2215,7 @@ class StructuralEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'entityid',
 					'nick'
@@ -2310,7 +2310,7 @@ class ExternalEntity(Entity):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'entityid',
 					'nick', 'name', 'address'

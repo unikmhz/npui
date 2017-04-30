@@ -4,22 +4,22 @@
 <tpl for="data.addrs">
 	<div>
 		<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/house_small.png')}" alt="${_('Address', domain='netprofile_entities') | h}" />
-		{.}
+		{.:htmlEncode}
 	</div>
 </tpl>
 </tpl>
 <tpl if="data.address">
 	<div>
 		<img class="np-inline-img" src="${req.static_url('netprofile_entities:static/img/house_small.png')}" alt="${_('Address', domain='netprofile_entities') | h}" />
-		{data.address}
+		{data.address:htmlEncode}
 	</div>
 </tpl>
 <tpl if="data.phones && data.phones.length">
 	<div>
 <tpl for="data.phones">
 	<span>
-		<img class="np-inline-img" src="${req.static_url('netprofile_core:static/img/phone')}/{img}.png" alt="${_('Phone', domain='netprofile_entities') | h}" />
-		{str}
+		<img class="np-inline-img" src="${req.static_url('netprofile_core:static/img/phone')}/{img:encodeURI}.png" alt="${_('Phone', domain='netprofile_entities') | h}" />
+		{str:htmlEncode}
 	</span>
 </tpl>
 	</div>

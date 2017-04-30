@@ -4,7 +4,7 @@
 <tpl for="data.bits">
 <tpl for=".">
 	<div class="change_bit">
-		<div class="change_icon"><img class="np-block-img" src="{[NetProfile.staticURL]}/static/tickets/img/history/{icon:htmlEncode}.png" /></div>
+		<div class="change_icon"><img class="np-block-img" src="{[NetProfile.staticURL]}/static/tickets/img/history/{icon:encodeURI}.png" /></div>
 		<div class="change_text">{text:htmlEncode}</div>
 	</div>
 </tpl>

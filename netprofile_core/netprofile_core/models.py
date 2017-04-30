@@ -526,7 +526,7 @@ class TaskSchedule(Base):
 						name='describe',
 						header_string=_('Details'),
 						column_flex=3,
-						template='{describe}'
+						template='{describe:htmlEncode}'
 					)
 				),
 				'grid_hidden'   : ('beatschid',),
@@ -3713,7 +3713,7 @@ class CommunicationType(Base):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'name', 'impp'
 				),
@@ -4123,14 +4123,14 @@ class UserCommunicationChannel(Base):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'type', 'user', 'primary', 'scope',
 					MarkupColumn(
 						name='value',
 						header_string=_('Address'),
 						column_flex=3,
-						template='<a href="{uri}">{value}</a>'
+						template='<a href="{uri:encodeURI}">{value:htmlEncode}</a>'
 					)
 				),
 				'grid_hidden'   : ('ucommid',),
@@ -7675,7 +7675,7 @@ class CalendarImport(Base):
 						name='real_name',
 						header_string=_('Name'),
 						column_flex=3,
-						template='{real_name}'
+						template='{real_name:htmlEncode}'
 					)
 				),
 				'grid_hidden'   : ('calimpid',),

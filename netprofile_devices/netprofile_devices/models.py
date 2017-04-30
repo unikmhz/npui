@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Devices module - Models
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 # © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -915,7 +915,7 @@ class Device(Base):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'did', 'device_type', 'serial', 'place', 'entity', 'oper'
 				),
@@ -1272,7 +1272,7 @@ class SimpleDevice(Device):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'did', 'device_type', 'serial', 'place', 'entity', 'oper'
 				),
@@ -1383,7 +1383,7 @@ class NetworkDevice(Device):
 						column_name=_('Icon'),
 						column_resizable=False,
 						cell_class='np-nopad',
-						template='<img class="np-block-img" src="{grid_icon}" />'
+						template='<tpl if="grid_icon"><img class="np-block-img" src="{grid_icon:encodeURI}" /></tpl>'
 					),
 					'did', 'device_type', 'serial', 'place', 'entity', 'host', 'oper'
 				),

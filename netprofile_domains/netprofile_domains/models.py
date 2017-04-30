@@ -3,7 +3,7 @@
 #
 # NetProfile: Domains module - Models
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -130,7 +130,7 @@ class Domain(Base):
 					MarkupColumn(
 						name='name',
 						header_string=_('Name'),
-						template='{__str__}',
+						template='{__str__:htmlEncode}',
 						column_flex=1,
 						sortable=True
 					),
@@ -488,7 +488,7 @@ class DomainAlias(Base):
 					MarkupColumn(
 						name='name',
 						header_string=_('Name'),
-						template='{__str__}',
+						template='{__str__:htmlEncode}',
 						column_flex=1,
 						sortable=True
 					),
