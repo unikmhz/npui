@@ -39,7 +39,7 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 	licenseText: 'License',
 	modulesText: 'Modules',
 	currentModulesText: 'Currently loaded modules:',
-	modLineTpl: '<li><strong>{0}</strong>, version {1}</li>',
+	modLineTpl: '<li><strong>{0:htmlEncode}</strong>, version {1:htmlEncode}</li>',
 	downloadTpl: 'NetProfile source code can be <a href="{0}">downloaded here</a>.',
 
 	initComponent: function()
@@ -133,12 +133,11 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 
 				if(!data)
 					return false;
-				infohtml = '<div><strong>NetProfile CRM/NMS</strong><br />Copyright © 2010-2016 Alex Unigovsky<br />Copyright © 2010-2016 NetProfile project contributors</div><div>ASD</div>';
 				infohtml = new Ext.XTemplate(
 					'<div>',
 						'<strong>NetProfile CRM/NMS</strong>',
-						'<br />Copyright © 2010-2016 Alex Unigovsky',
-						'<br />Copyright © 2010-2016 {contrib}',
+						'<br />Copyright © 2010-2017 Alex Unigovsky',
+						'<br />Copyright © 2010-2017 {contrib}',
 					'</div>',
 					'<div style="padding-top: 1em;">{gpl1}</div>',
 					'<div style="padding-top: 1em;">{gpl2}</div>',
@@ -149,6 +148,7 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 					title: me.infoText,
 					border: 0,
 					bodyPadding: 8,
+					allowMarkup: true,
 					html: infohtml.apply({
 						contrib: me.contributorsText,
 						gpl1: Ext.String.htmlEncode(me.gplPart1Text),
@@ -179,6 +179,7 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 							title: me.modulesText,
 							border: 0,
 							bodyPadding: 8,
+							allowMarkup: true,
 							html: modhtml,
 							scrollable: 'vertical'
 						});
@@ -190,6 +191,7 @@ Ext.define('NetProfile.toolbar.MainToolbar', {
 						title: me.licenseText,
 						border: 0,
 						bodyPadding: 8,
+						allowMarkup: true,
 						html: '<pre>' + Ext.String.htmlEncode(data.license) + '</pre>',
 						scrollable: 'vertical'
 					});
