@@ -59,7 +59,7 @@ Ext.define('NetProfile.grid.filters.filter.List', {
 				// Note that the menu items will be set checked in filter#activate() if the value of the menu
 				// item is in the cfg.value array.
 				item = menu.add(Ext.apply({
-					text: labelValue,
+					text: Ext.String.htmlEncode(labelValue),
 					group: gid,
 					value: idValue,
 					listeners: listeners

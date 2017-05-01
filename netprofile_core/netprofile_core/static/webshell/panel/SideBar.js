@@ -56,8 +56,17 @@ Ext.define('NetProfile.panel.SideBar', {
 		me.store = Ext.create('NetProfile.store.Menu');
 		me.store.each(function(menu)
 		{
-			var mname, tree, cfg;
+			var mname, tree, cfg, custom_cfg;
 
+			custom_cfg = menu.get('options') || {};
+			if(custom_cfg && custom_cfg.columns && custom_cfg.columns.length)
+				for(var idx = 0; idx < custom_cfg.columns.length; idx++)
+				{
+					var col = custom_cfg.columns[idx];
+
+					if(typeof(col.renderer) === 'undefined')
+						col.renderer = Ext.util.Format.htmlEncode;
+				}
 			mname = menu.get('name');
 			if(!token)
 				token = mname;
@@ -79,7 +88,7 @@ Ext.define('NetProfile.panel.SideBar', {
 				header: false,
 				border: false,
 				bodyBorder: false
-			}, menu.get('options') || {});
+			}, custom_cfg);
 			tree = Ext.create('Ext.tree.Panel', cfg);
 
 			if(NetProfile.model.customMenu && (mname in NetProfile.model.customMenu))

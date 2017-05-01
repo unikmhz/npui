@@ -66,7 +66,7 @@ Ext.define('NetProfile.form.DynamicCheckboxGroup', {
 	{
 		this.add({
 			name: this.name,
-			boxLabel: v,
+			boxLabel: Ext.String.htmlEncode(v),
 			inputValue: k,
 			submitValue: this.formCheckboxes,
 			isFormField: this.formCheckboxes,

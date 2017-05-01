@@ -230,6 +230,7 @@ Ext.require([
 				sortable: false,
 				filterable: false,
 				menuDisabled: true,
+				allowMarkup: true,
 				editor: null,
 				renderer: function(val, meta, rec)
 				{
@@ -396,7 +397,7 @@ Ext.require([
 			}
 		}
 	});
-	Ext.define('Ext.overrides.xss.Column', {
+	Ext.define('Ext.overrides.xss.TreeColumn', {
 		override: 'Ext.tree.Column',
 		setupRenderer: function(type)
 		{

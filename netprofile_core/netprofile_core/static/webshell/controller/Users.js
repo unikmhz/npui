@@ -71,6 +71,7 @@ Ext.define('NetProfile.controller.Users', {
 				sortable: false,
 				filterable: false,
 				menuDisabled: true,
+				allowMarkup: true,
 				editor: null,
 				renderer: function(val, meta, rec)
 				{
