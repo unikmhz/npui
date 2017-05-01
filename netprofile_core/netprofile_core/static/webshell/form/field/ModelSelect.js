@@ -47,6 +47,10 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 			this.getTrigger('clear').show();
 		if(this.showLink)
 			this.getTrigger('link').show();
+
+		this.currentApiModule = null;
+		this.currentApiClass = null;
+
 		this.callParent(arguments);
 	},
 	onTriggerClear: function()
@@ -59,11 +63,13 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 			form.getRecord().set(this.hiddenField, '');
 
 		this.setValue('');
+
+		this.currentApiModule = null;
+		this.currentApiClass = null;
 	},
 	onTriggerSelect: function()
 	{
 		var sel_win = Ext.create('NetProfile.window.CenterWindow', {
-//			animateTarget: this,
 			title: this.chooseText
 		});
 
@@ -76,7 +82,6 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 		if(!hf)
 			hf = this.hiddenField;
 		var sel_grid_cfg = Ext.apply({
-//		var sel_grid = Ext.create(sel_grid_class, {
 			rowEditing: false,
 			actionCol: false,
 			selectRow: true,
@@ -94,8 +99,8 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 	{
 		var ff,
 			store = NetProfile.StoreManager.getStore(
-				this.apiModule,
-				this.apiClass,
+				this.currentApiModule || this.apiModule,
+				this.currentApiClass || this.apiClass,
 				null, true
 			),
 			hf = this.up('form').down('field[name=' + this.hiddenField + ']');
@@ -118,23 +123,30 @@ Ext.define('NetProfile.form.field.ModelSelect', {
 			params: ff,
 			callback: function(recs, op, success)
 			{
-				var dp, pb, poly, apim, apic;
-				poly = recs[0].get('__poly');
-				if(poly)
+				var rec = recs[0],
+					apim = this.currentApiModule,
+					apic = this.currentApiClass,
+					poly = rec.get('__poly'),
+					pb, dp;
+
+				if(poly && (!apim || !apic))
 				{
-					apim = poly[0];
-					apic = poly[1];
+					this.currentApiModule = poly[0];
+					this.currentApiClass = poly[1];
+					this.onTriggerLink();
 				}
 				else
 				{
-					apim = this.apiModule;
-					apic = this.apiClass;
+					if(!poly)
+					{
+						apim = this.apiModule;
+						apic = this.apiClass;
+					}
+					pb = this.up('propbar');
+					dp = NetProfile.view.grid[apim][apic].prototype.detailPane;
+					if(success && pb && dp)
+						pb.addRecordTab(apim, apic, dp, recs[0]);
 				}
-
-				pb = this.up('propbar');
-				dp = NetProfile.view.grid[apim][apic].prototype.detailPane;
-				if(success && pb && dp)
-					pb.addRecordTab(apim, apic, dp, recs[0]);
 			},
 			scope: this,
 			synchronous: false

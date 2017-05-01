@@ -348,7 +348,17 @@ Ext.define('NetProfile.grid.ModelGrid', {
 							this.selectIdField.setValue(record.getId());
 					}
 					if(this.selectField)
+					{
+						var poly = record.get('__poly');
+						if(poly)
+						{
+							this.selectField.currentApiModule = poly[0];
+							this.selectField.currentApiClass = poly[1];
+						}
+
 						this.selectField.setValue(record.get('__str__'));
+					}
+
 					this.up('window').close();
 				}
 				else

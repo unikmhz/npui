@@ -295,6 +295,7 @@ Ext.define('NetProfile.panel.Calendar', {
 							{
 								var dp, pb, poly, apim, apic;
 
+								// FIXME: proper handling of polymorphic objects
 								poly = recs[0].get('__poly');
 								if(poly)
 								{
