@@ -170,7 +170,7 @@ Ext.define('NetProfile.tree.Property', {
 		var me = this;
 
 		if(!Ext.Array.contains(me.typesWithChildren, rec.get('type')))
-			rec.removeAll(true);
+			rec.removeAll();
 		if(me.selection === rec)
 			me.onSelectionChange(me, [rec], -1);
 	},

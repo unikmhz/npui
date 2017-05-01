@@ -67,7 +67,8 @@ Ext.define('NetProfile.data.PropertyTreeModel', {
 			type = typeof val,
 			child, idx;
 
-		me.removeAll(true);
+		if(me.isRoot() && me.childNodes && me.childNodes.length)
+			me.removeAll();
 		if((val === null) || (type === 'undefined'))
 		{
 			val = null;
