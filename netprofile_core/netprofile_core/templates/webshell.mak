@@ -41,6 +41,7 @@ Ext.require([
 	'NetProfile.panel.Calendar'
 ], function()
 {
+	Ext.BLANK_IMAGE_URL = ${req.static_url('netprofile_core:static/img/blank.gif') | jsone};
 % if req.debug_enabled:
 	NetProfile.debugEnabled = true;
 % else:

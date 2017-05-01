@@ -73,7 +73,7 @@ def on_response(event):
 			style_src = ["'self'", "'unsafe-inline'"]
 			connect_src = ["'self'"]
 			font_src = ["'self'"]
-			img_src = ["'self'", 'data:']
+			img_src = ["'self'"]
 			frame_src = ["'self'"]
 
 			if rt_host:
