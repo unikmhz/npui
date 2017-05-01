@@ -211,6 +211,10 @@ Ext.define('NetProfile.menu.FileFolder', {
 	setFolder: function(rec)
 	{
 		var me = this,
+			cap_list = NetProfile.cap('FILES_LIST'),
+			cap_edit = NetProfile.cap('FILES_EDIT'),
+			cap_create = NetProfile.cap('FILES_UPLOAD'),
+			cap_delete = NetProfile.cap('FILES_DELETE'),
 			is_root = (rec.getId() === 'root'),
 			allow_read = rec.get('allow_read'),
 			allow_write = rec.get('allow_write'),
@@ -225,11 +229,11 @@ Ext.define('NetProfile.menu.FileFolder', {
 
 		me.folder = rec;
 
-		item_create.setDisabled(!allow_traverse || !allow_write);
-		item_rename.setDisabled(!parent_write || is_root);
-		item_props.setDisabled(!allow_read || is_root);
-		item_mount.setDisabled(!allow_read);
-		item_delete.setDisabled(!parent_write || is_root);
+		item_create.setDisabled(!allow_traverse || !allow_write || !cap_create);
+		item_rename.setDisabled(!parent_write || is_root || !cap_edit);
+		item_props.setDisabled(!allow_read || is_root || !cap_list);
+		item_mount.setDisabled(!allow_read || !cap_list);
+		item_delete.setDisabled(!parent_write || is_root || !cap_delete);
 	}
 });
 

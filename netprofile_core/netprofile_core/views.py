@@ -688,7 +688,7 @@ def ff_tree_update(params, request):
 		'success' : True
 	}
 
-@extdirect_method('MenuTree', 'folders_create', request_as_last_param=True, permission='FILES_CREATE')
+@extdirect_method('MenuTree', 'folders_create', request_as_last_param=True, permission='FILES_UPLOAD')
 def ff_tree_create(params, request):
 	recs = []
 	sess = DBSession()
