@@ -329,6 +329,180 @@ Ext.require([
 		override: 'Ext.util.Format',
 		encodeURI: encodeURI
 	});
+
+	Ext.define('Ext.overrides.xss.Component', {
+		override: 'Ext.Component',
+		config: {
+			allowMarkup: false
+		},
+		privates: {
+			doRenderContent: function(out, renderData)
+			{
+				var me = renderData.$comp,
+					html = me.html;
+
+				if(html && !me.getAllowMarkup())
+					me.html = Ext.String.htmlEncode(html);
+
+				me.callParent([out, renderData]);
+			}
+		},
+		update: function(htmlOrData, loadScripts, callback)
+		{
+			if(htmlOrData && Ext.isString(htmlOrData) && !this.getAllowMarkup())
+				htmlOrData = Ext.String.htmlEncode(htmlOrData);
+			this.callParent([htmlOrData, loadScripts, callback]);
+		}
+	});
+	Ext.define('Ext.overrides.xss.Button', {
+		override: 'Ext.button.Button',
+		applyText: function(text, oldText)
+		{
+			if(text && !this.getAllowMarkup())
+				text = Ext.String.htmlEncode(text);
+			return this.callParent([text, oldText]);
+		}
+	});
+	Ext.define('Ext.overrides.xss.Display', {
+		override: 'Ext.form.field.Display',
+		htmlEncode: true,
+		updateAllowMarkup: function(allow)
+		{
+			this.htmlEncode = !allow;
+		}
+	});
+	Ext.define('Ext.overrides.xss.Column', {
+		override: 'Ext.grid.column.Column',
+		allowMarkup: false,
+		setupRenderer: function(type)
+		{
+			var me = this;
+
+			me.callParent([type]);
+
+			if(!type && !me.allowMarkup)
+			{
+				var oldRenderer = me.renderer;
+
+				me.renderer = function(value)
+				{
+					if(oldRenderer)
+						value = oldRenderer.apply(this, arguments);
+					if(value)
+						value = Ext.String.htmlEncode(value);
+
+					return value;
+				};
+			}
+		}
+	});
+	Ext.define('Ext.overrides.xss.Column', {
+		override: 'Ext.tree.Column',
+		setupRenderer: function(type)
+		{
+			var me = this,
+				origAllowMarkup = me.allowMarkup;
+
+			me.allowMarkup = true;
+			me.callParent([type]);
+			me.allowMarkup = origAllowMarkup;
+		},
+		initComponent: function()
+		{
+			var me = this;
+
+			me.callParent();
+			me.setupXssProtectorRenderer();
+		},
+		setupXssProtectorRenderer: function()
+		{
+			var me = this;
+
+			if(!me.allowMarkup)
+			{
+				var oldRenderer = me.innerRenderer;
+
+				me.innerRenderer = function(value)
+				{
+					if(oldRenderer)
+						value = oldRenderer.apply(this, arguments);
+					if(value)
+						value = Ext.String.htmlEncode(value);
+					return value;
+				};
+			}
+		}
+	});
+	Ext.define('Ext.overrides.xss.Title', {
+		override: 'Ext.panel.Title',
+		applyText: function(text, oldText)
+		{
+			text = this.callParent([text, oldText]);
+			if(!this.getAllowMarkup())
+				text = Ext.String.htmlEncode(text);
+			return text;
+		}
+	});
+	Ext.define('Ext.overrides.xss.MessageBox', {
+		override: 'Ext.window.MessageBox',
+		initComponent: function(cfg)
+		{
+			this.callParent([cfg]);
+			this.updateAllowMarkup(this.allowMarkup);
+		},
+		updateAllowMarkup: function(allow)
+		{
+			if(this.msg)
+				this.msg.allowMarkup = allow;
+		},
+		reconfigure: function(cfg)
+		{
+			this.updateAllowMarkup(cfg.allowMarkup);
+			this.callParent([cfg]);
+		}
+	});
+	Ext.define('Ext.overrides.xss.BoundList', {
+		override: 'Ext.view.BoundList',
+		initComponent: function()
+		{
+			var me = this;
+
+			me.origInnerTpl = me.getInnerTpl;
+			me.getInnerTpl = function(displayField)
+			{
+				var tpl = me.origInnerTpl(displayField);
+
+				if(tpl)
+					tpl = tpl.replace(/\{(.*?)\}/g, '{$1:htmlEncode}');
+				return tpl;
+			};
+			me.callParent();
+		}
+	});
+	Ext.define('Ext.overrides.xss.Check', {
+		override: 'Ext.grid.column.Check',
+		allowMarkup: true
+	});
+	Ext.define('Ext.overrides.xss.QuickTip', {
+		override: 'Ext.tip.QuickTip',
+		update: function(htmlOrData, loadScripts, callback)
+		{
+			if(this.activeTarget && (el = Ext.fly(this.activeTarget.el)))
+			{
+				if(el && el.component && el.component.errorEl)
+				{
+					var origAllowMarkup = this.getAllowMarkup();
+
+					this.setAllowMarkup(el.component.errorEl.allowMarkup);
+					this.callParent([htmlOrData, loadScripts, callback]);
+					this.setAllowMarkup(origAllowMarkup);
+					return;
+				}
+			}
+			this.callParent([htmlOrData, loadScripts, callback]);
+		}
+	});
+
 	Ext.define('Ext.overrides.bugfix.EXTJS16183.menu', {
 		override: 'Ext.menu.Menu',
 		compatibility: '5.1.0.107',

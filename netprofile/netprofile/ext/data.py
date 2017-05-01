@@ -1679,10 +1679,13 @@ class ExtModel(object):
 		except KeyError:
 			cols = self.model.__table__.columns.keys()
 		for col in cols:
-			cdef = self.get_column(col).get_column_cfg(req)
+			column = self.get_column(col)
+			cdef = column.get_column_cfg(req)
 			if cdef is not None:
 				if col in hidden:
 					cdef['hidden'] = True
+				if isinstance(column, ExtPseudoColumn):
+					cdef['allowMarkup'] = True
 				ret.append(cdef)
 		return ret
 
