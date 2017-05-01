@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Pyramid event subscribers
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -34,6 +34,8 @@ from pyramid.i18n import (
 
 from pyramid.settings import asbool
 
+_CACHED_CSP_HEADER = None
+
 def add_renderer_globals(event):
 	request = event['request']
 	if hasattr(request, 'translate'):
@@ -55,10 +57,57 @@ def on_new_request(event):
 	request.translate = auto_translate
 
 def on_response(event):
+	global _CACHED_CSP_HEADER
+
 	settings = event.request.registry.settings
+	vhost = settings.get('netprofile.vhost')
 	res = event.response
-	# FIXME: add CSP
-	res.headerlist.append(('X-Content-Type-Options', 'nosniff'))
+
+	if vhost is None:
+		if _CACHED_CSP_HEADER is None:
+			rt_ssl = asbool(settings.get('netprofile.rt.ssl', False))
+			rt_host = settings.get('netprofile.rt.host')
+			rt_port = int(settings.get('netprofile.rt.port', 443 if rt_ssl else 80))
+
+			script_src = ["'self'", "'unsafe-eval'"]
+			style_src = ["'self'", "'unsafe-inline'"]
+			connect_src = ["'self'"]
+			font_src = ["'self'"]
+			img_src = ["'self'", 'data:']
+			frame_src = ["'self'"]
+
+			if rt_host:
+				rt_url = '%s://%s:%d' % ('https' if rt_ssl else 'http', rt_host, rt_port)
+				rt_ws_url = '%s://%s:%d' % ('wss' if rt_ssl else 'ws', rt_host, rt_port)
+				connect_src.extend((rt_url, rt_ws_url))
+
+			# TODO: add staticURL to CSP
+
+			_CACHED_CSP_HEADER = \
+					'default-src \'none\'; ' \
+					'script-src %s; ' \
+					'style-src %s; ' \
+					'connect-src %s; ' \
+					'font-src %s; ' \
+					'img-src %s; ' \
+					'frame-src %s;' % (
+				' '.join(script_src),
+				' '.join(style_src),
+				' '.join(connect_src),
+				' '.join(font_src),
+				' '.join(img_src),
+				' '.join(frame_src)
+			)
+
+		res.headerlist.append((
+			'Content-Security-Policy',
+			_CACHED_CSP_HEADER
+		))
+
+	res.headerlist.append((
+		'X-Content-Type-Options',
+		'nosniff'
+	))
 	if 'X-Frame-Options' not in res.headers:
 		res.headerlist.append(('X-Frame-Options', 'DENY'))
 	if asbool(settings.get('netprofile.http.sts.enabled', False)):
