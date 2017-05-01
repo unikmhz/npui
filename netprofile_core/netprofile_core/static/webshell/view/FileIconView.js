@@ -36,18 +36,18 @@ Ext.define('NetProfile.view.FileIconView', {
 
 	iconTpl: [
 		'<tpl for=".">',
-			'<div class="np-file-wrap" data-qtitle="{fname}" data-qtip="{qtip}" id="file_{fileid}">',
+			'<div class="np-file-wrap" data-qtitle="{fname:htmlEncode}" data-qtip="{qtip}" id="file_{fileid}">',
 				'<div class="np-file-icon"><img src="{staticURL}/static/core/img/mime/{iconSz}/{mime_img}.png" onerror=\'this.onerror = null; this.src="{staticURL}/static/core/img/mime/{iconSz}/default.png"\' /></div>',
-				'<span class="x-editable">{fname}</span>',
+				'<span class="x-editable">{fname:htmlEncode}</span>',
 			'</div>',
 		'</tpl>',
 		'<div class="x-clear"></div>'
 	],
 	columnTpl: [
 		'<tpl for=".">',
-			'<div class="np-file-wrap" data-qtitle="{fname}" data-qtip="{qtip}" id="file_{fileid}" style="left: {[ Math.floor((xindex - 1) / values.maxItems) * 202 ]}px; top: {[ ((xindex - 1) % values.maxItems) * 21 ]}px;">',
+			'<div class="np-file-wrap" data-qtitle="{fname:htmlEncode}" data-qtip="{qtip}" id="file_{fileid}" style="left: {[ Math.floor((xindex - 1) / values.maxItems) * 202 ]}px; top: {[ ((xindex - 1) % values.maxItems) * 21 ]}px;">',
 				'<div class="np-file-icon"><img src="{staticURL}/static/core/img/mime/{iconSz}/{mime_img}.png" onerror=\'this.onerror = null; this.src="{staticURL}/static/core/img/mime/{iconSz}/default.png"\' /></div>',
-				'<span class="x-editable">{fname}</span>',
+				'<span class="x-editable">{fname:htmlEncode}</span>',
 			'</div>',
 		'</tpl>'
 	],
@@ -171,7 +171,6 @@ Ext.define('NetProfile.view.FileIconView', {
 		data.iconSz = me.iconSize;
 		data.baseURL = NetProfile.baseURL;
 		data.staticURL = NetProfile.staticURL;
-		data.fname = Ext.String.htmlEncode(data.fname);
 
 		qtip_cont.push(Ext.String.htmlEncode(data.descr ? data.descr : data.fname));
 		if(data.size && me.getFileSize)

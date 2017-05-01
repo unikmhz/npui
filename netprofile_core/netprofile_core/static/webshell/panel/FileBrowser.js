@@ -670,8 +670,9 @@ Ext.define('NetProfile.panel.FileBrowser', {
 					},
 					columns: [{
 						xtype: 'templatecolumn',
+						allowMarkup: true,
 						tpl: new Ext.XTemplate(
-							'<img class="np-block-img" src="{staticURL}/static/core/img/mime/16/{[ this.getMIME(values.mime) ]}.png" onerror=\'this.onerror = null; this.src="{staticURL}/static/core/img/mime/16/default.png"\' />',
+							'<img class="np-block-img" src="{staticURL}/static/core/img/mime/16/{[ encodeURI(this.getMIME(values.mime)) ]}.png" onerror=\'this.onerror = null; this.src="{staticURL}/static/core/img/mime/16/default.png"\' />',
 							{
 								getMIME: function(mime)
 								{
