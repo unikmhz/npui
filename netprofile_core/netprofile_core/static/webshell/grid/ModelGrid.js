@@ -233,6 +233,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 				if(i.length > 0)
 					this.columns.push({
 						xtype: 'actioncolumn',
+						allowMarkup: true,
 						width: i.length * 20,
 						items: i,
 						sortable: false,

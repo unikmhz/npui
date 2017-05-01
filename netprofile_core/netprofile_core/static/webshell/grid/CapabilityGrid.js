@@ -83,25 +83,26 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 			sortable: false,
 			groupable: false,
 			width: 120,
-		    renderer: function(value, meta, record, rowidx, colidx, store)
+			allowMarkup: true,
+			renderer: function(value, meta, record, rowidx, colidx, store)
 			{
 				if(value === true)
 					return Ext.String.format(
 						'<img class="np-cap-icon" src="{0}/static/core/img/priv_allowed.png" alt="{1}" title="{1}" />{1}',
-						NetProfile.staticURL, me.textAllowed
+						NetProfile.staticURL, Ext.String.htmlEncode(me.textAllowed)
 					);
 				if(value === false)
 					return Ext.String.format(
 						'<img class="np-cap-icon" src="{0}/static/core/img/priv_denied.png" alt="{1}" title="{1}" />{1}',
-						NetProfile.staticURL, me.textDenied
+						NetProfile.staticURL, Ext.String.htmlEncode(me.textDenied)
 					);
 				if(value === null)
 					return Ext.String.format(
 						'<img class="np-cap-icon" src="{0}/static/core/img/priv_undef.png" alt="{1}" title="{1}" />{1}',
-						NetProfile.staticURL, me.textNotDefined
+						NetProfile.staticURL, Ext.String.htmlEncode(me.textNotDefined)
 					);
-		        return value;
-		    },
+				return value;
+			},
 			editor: {
 				xtype: 'combobox',
 				format: 'string',
@@ -141,6 +142,7 @@ Ext.define('NetProfile.grid.CapabilityGrid', {
 				xtype: 'actioncolumn',
 				width: 20,
 				groupable: false,
+				allowMarkup: true,
 				items: [{
 					iconCls: 'ico-mod-acl',
 					tooltip: me.textTipACL,
