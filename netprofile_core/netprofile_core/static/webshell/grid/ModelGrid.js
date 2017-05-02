@@ -205,10 +205,17 @@ Ext.define('NetProfile.grid.ModelGrid', {
 						handler: function(grid, rowidx, colidx, item, e, record)
 						{
 							if(this.store)
-								Ext.MessageBox.confirm(
-									this.deleteTipText,
-									Ext.String.format('{0}<div class="np-object-frame">{1}</div>', this.deleteMsgText, record.get('__str__')),
-									function(btn)
+								Ext.MessageBox.show({
+									title: this.deleteTipText,
+									icon: Ext.MessageBox.QUESTION,
+									message: Ext.String.format(
+										'{0}<div class="np-object-frame">{1}</div>',
+										Ext.String.htmlEncode(this.deleteMsgText),
+										Ext.String.htmlEncode(record.get('__str__'))
+									),
+									allowMarkup: true,
+									buttons: Ext.MessageBox.YESNO,
+									callback: function(btn)
 									{
 										if(btn === 'yes')
 										{
@@ -224,8 +231,8 @@ Ext.define('NetProfile.grid.ModelGrid', {
 										}
 										return true;
 									},
-									this
-								);
+									scope: this
+								});
 							return true;
 						},
 						scope: this
