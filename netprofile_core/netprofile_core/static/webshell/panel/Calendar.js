@@ -269,18 +269,9 @@ Ext.define('NetProfile.panel.Calendar', {
 		me.on({
 			dayclick: function(cal, dt, allday, el)
 			{
-				var num_cals = 0,
-					store = cal.calendarStore;
+				var store = cal.calendarStore;
 
-				if(!store)
-					return true;
-				store.filter({ filterFn: function(rec)
-				{
-					if(rec.get('AllowCreation'))
-						num_cals ++;
-				}});
-				store.clearFilter();
-				if(num_cals > 0)
+				if(store && store.getCount())
 					return true;
 				return false;
 			},
