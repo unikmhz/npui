@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Stashes module - Models
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -69,6 +69,7 @@ from netprofile.db.connection import (
 from netprofile.db.fields import (
 	ASCIIString,
 	DeclEnum,
+	JSONData,
 	Money,
 	NPBoolean,
 	Traffic,
@@ -890,6 +891,17 @@ class StashIO(Base):
 			'header_string' : _('Change'),
 			'column_xtype'  : 'templatecolumn',
 			'template'      : '{formatted_difference}'
+		}
+	)
+	data = Column(
+		JSONData(),
+		Comment('Extra data for use by extensions'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Extra Data'),
+			'read_cap'      : 'ADMIN_DEV'
 		}
 	)
 	description = Column(

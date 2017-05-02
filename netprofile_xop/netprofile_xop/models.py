@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: XOP module - Models
-# © Copyright 2014-2016 Alex 'Unik' Unigovsky
+# © Copyright 2014-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -268,6 +268,17 @@ class ExternalOperation(Base):
 		server_default=ExternalOperationState.new,
 		info={
 			'header_string': _('State')
+		}
+	)
+	data = Column(
+		JSONData(),
+		Comment('Extra data for use by extensions'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Extra Data'),
+			'read_cap'      : 'ADMIN_DEV'
 		}
 	)
 
