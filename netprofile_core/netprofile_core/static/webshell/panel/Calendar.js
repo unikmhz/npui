@@ -267,6 +267,23 @@ Ext.define('NetProfile.panel.Calendar', {
 
 		me.mon(me.store, 'beforeload', me.onBeforeLoad, me);
 		me.on({
+			dayclick: function(cal, dt, allday, el)
+			{
+				var num_cals = 0,
+					store = cal.calendarStore;
+
+				if(!store)
+					return true;
+				store.filter({ filterFn: function(rec)
+				{
+					if(rec.get('AllowCreation'))
+						num_cals ++;
+				}});
+				store.clearFilter();
+				if(num_cals > 0)
+					return true;
+				return false;
+			},
 			eventclick: function(cal, rec, el)
 			{
 				if(rec instanceof Extensible.calendar.data.EventModel)
@@ -329,7 +346,7 @@ Ext.define('NetProfile.panel.Calendar', {
 				var jump_id = cal.id + '-tb-jump-dt',
 					jump = Ext.getCmp(jump_id);
 
-				if(cal.showNavJump && jump && info.activeDate)
+				if(cal.showNavJump && jump && info && info.activeDate)
 					jump.setValue(info.activeDate);
 			},
 			scope: me

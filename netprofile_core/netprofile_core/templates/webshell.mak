@@ -485,6 +485,14 @@ Ext.require([
 		override: 'Ext.grid.column.Check',
 		allowMarkup: true
 	});
+	Ext.define('Ext.overrides.xss.ToolbarText', {
+		override: 'Ext.toolbar.TextItem',
+		allowMarkup: true
+	});
+	Ext.define('Ext.overrides.xss.ToolTip', {
+		override: 'Ext.tip.ToolTip',
+		allowMarkup: true
+	});
 	Ext.define('Ext.overrides.xss.QuickTip', {
 		override: 'Ext.tip.QuickTip',
 		update: function(htmlOrData, loadScripts, callback)

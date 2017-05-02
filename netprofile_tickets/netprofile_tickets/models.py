@@ -59,6 +59,7 @@ from sqlalchemy import (
 	TIMESTAMP,
 	Unicode,
 	UnicodeText,
+	event,
 	text,
 	or_
 )
@@ -66,7 +67,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
 	backref,
 	lazyload,
-	relationship
+	relationship,
+	validates
 )
 
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -1253,6 +1255,12 @@ class Ticket(Base):
 			return self.assigned_time + dt.timedelta(seconds=self.duration)
 		return self.assigned_time
 
+	@validates('state')
+	def _set_state(self, key, new_state):
+		if not self.duration and new_state.duration:
+			self.duration = new_state.duration
+		return new_state
+
 	def test_time(self, d):
 		if self.assigned_user and self.assigned_user.schedule_map:
 			if not self.assigned_user.schedule_map.scheduler.test_time(d):
@@ -1272,6 +1280,14 @@ class Ticket(Base):
 		if self.description:
 			eh.parts.append(EntityHistoryPart('tickets:comment', self.description))
 		return eh
+
+@event.listens_for(Ticket.state_id, 'set', active_history=True)
+def _on_set_ticket_state_id(tgt, value, oldvalue, initiator):
+	if value is None:
+		tgt.state = None
+	elif value != oldvalue:
+		tgt.state = DBSession().query(TicketState).get(value)
+	return value
 
 class TicketTemplate(Base):
 	"""
@@ -1488,6 +1504,7 @@ class TicketTemplate(Base):
 			tpl_param['origin'] = self.origin
 		if args is not None:
 			tpl_param.update(args)
+
 		t = Ticket()
 		t.entity = entity
 		if self.state:
