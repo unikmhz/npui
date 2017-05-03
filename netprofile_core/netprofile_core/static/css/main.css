@@ -415,6 +415,46 @@ div#npws_propbar div.np-subtab div.x-tab-bar-body
 	height: initial;
 }
 
+.red         .x-grid-cell { background-color: #ffcdd2; }
+.pink        .x-grid-cell { background-color: #f8bbd0; }
+.purple      .x-grid-cell { background-color: #e1bee7; }
+.deep-purple .x-grid-cell { background-color: #d1c4e9; }
+.indigo      .x-grid-cell { background-color: #c5cae9; }
+.blue        .x-grid-cell { background-color: #bbdefb; }
+.light-blue  .x-grid-cell { background-color: #b3e5fc; }
+.cyan        .x-grid-cell { background-color: #b2ebf2; }
+.teal        .x-grid-cell { background-color: #b2dfdb; }
+.green       .x-grid-cell { background-color: #c8e6c9; }
+.light-green .x-grid-cell { background-color: #dcedc8; }
+.lime        .x-grid-cell { background-color: #f0f4c3; }
+.yellow      .x-grid-cell { background-color: #fff9c4; }
+.amber       .x-grid-cell { background-color: #ffecb3; }
+.orange      .x-grid-cell { background-color: #ffe0b2; }
+.deep-orange .x-grid-cell { background-color: #ffccbc; }
+.brown       .x-grid-cell { background-color: #d7ccc8; }
+.grey        .x-grid-cell { background-color: #f5f5f5; }
+.blue-grey   .x-grid-cell { background-color: #cfd8dc; }
+
+.x-grid-item-alt .red         .x-grid-cell { background-color: #ef9a9a; }
+.x-grid-item-alt .pink        .x-grid-cell { background-color: #f48fb1; }
+.x-grid-item-alt .purple      .x-grid-cell { background-color: #ce93d8; }
+.x-grid-item-alt .deep-purple .x-grid-cell { background-color: #b39ddb; }
+.x-grid-item-alt .indigo      .x-grid-cell { background-color: #9fa8da; }
+.x-grid-item-alt .blue        .x-grid-cell { background-color: #90caf9; }
+.x-grid-item-alt .light-blue  .x-grid-cell { background-color: #81d4fa; }
+.x-grid-item-alt .cyan        .x-grid-cell { background-color: #80deea; }
+.x-grid-item-alt .teal        .x-grid-cell { background-color: #80cbc4; }
+.x-grid-item-alt .green       .x-grid-cell { background-color: #a5d6a7; }
+.x-grid-item-alt .light-green .x-grid-cell { background-color: #c5e1a5; }
+.x-grid-item-alt .lime        .x-grid-cell { background-color: #e6ee9c; }
+.x-grid-item-alt .yellow      .x-grid-cell { background-color: #fff59d; }
+.x-grid-item-alt .amber       .x-grid-cell { background-color: #ffe082; }
+.x-grid-item-alt .orange      .x-grid-cell { background-color: #ffcc80; }
+.x-grid-item-alt .deep-orange .x-grid-cell { background-color: #ffab91; }
+.x-grid-item-alt .brown       .x-grid-cell { background-color: #bcaaa4; }
+.x-grid-item-alt .grey        .x-grid-cell { background-color: #eeeeee; }
+.x-grid-item-alt .blue-grey   .x-grid-cell { background-color: #b0bec5; }
+
 .ico-accept       { background-image: url(../img/accept.png) !important; }
 .ico-arrow-down   { background-image: url(../img/arrow_down.png) !important; }
 .ico-arrow-up     { background-image: url(../img/arrow_up.png) !important; }
