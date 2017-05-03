@@ -62,6 +62,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 	canDelete: false,
 	canShowReports: true,
 	canExport: true,
+	rowClassField: null,
 	border: 0,
 	scrollable: 'vertical',
 	extraActions: [],
@@ -82,7 +83,20 @@ Ext.define('NetProfile.grid.ModelGrid', {
 	exportText: 'Export',
 
 	viewConfig: {
-		stripeRows: true
+		stripeRows: true,
+		rowClassField: null,
+		getRowClass: function(rec, idx, params, store)
+		{
+			var cls;
+
+			if(this.rowClassField)
+			{
+				cls = rec.get(this.rowClassField);
+				if(cls)
+					return cls;
+			}
+			return '';
+		}
 	},
 	initComponent: function()
 	{
@@ -90,6 +104,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 			kmap_binds, plugins;
 
 		this._create_ctl = {};
+		this.viewConfig.rowClassField = this.rowClassField;
 		this.tabConfig = { cls: 'record-tab-hdl' };
 		if(this.selectRow)
 		{

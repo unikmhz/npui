@@ -1586,6 +1586,10 @@ class ExtModel(object):
 	def extra_data(self):
 		return self.model.__table__.info.get('extra_data', ())
 
+	@property
+	def row_class_field(self):
+		return self.model.__table__.info.get('row_class_field')
+
 	def get_extra_actions(self, req):
 		extra = list(self.model.__table__.info.get('extra_actions', []))
 		req.run_hook('np.model.actions', extra, req, self)

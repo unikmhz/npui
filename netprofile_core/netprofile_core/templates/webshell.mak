@@ -1133,6 +1133,9 @@ Ext.require([
 		extraSearch: ${mod.get_extra_search_cfg(req) | n,jsone},
 		extraActions: ${mod.get_extra_actions(req) | n,jsone},
 		detailPane: ${mod.get_detail_pane(req) | n,jsone},
+% if mod.row_class_field:
+		rowClassField: ${mod.row_class_field | n,jsone},
+% endif
 % if mod.create_wizard:
 		canCreate: <%np:jscap code="${mod.cap_create}" />,
 % else:
