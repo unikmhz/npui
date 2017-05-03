@@ -864,7 +864,7 @@ class Ticket(Base):
 							'assigned_time',
 							ExtJSWizardField({
 								'xtype'   : 'button',
-								'text'    : 'Schedule',
+								'text'    : _('Schedule'),
 								'iconCls' : 'ico-schedule',
 								'margin'  : '0 0 0 2',
 								'itemId'  : 'btn_sched'
@@ -884,7 +884,7 @@ class Ticket(Base):
 								'assigned_time',
 								ExtJSWizardField({
 									'xtype'   : 'button',
-									'text'    : 'Schedule',
+									'text'    : _('Schedule'),
 									'iconCls' : 'ico-schedule',
 									'margin'  : '0 0 0 2',
 									'itemId'  : 'btn_sched'

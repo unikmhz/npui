@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Classes used to produce UI wizards
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,7 +27,7 @@ from __future__ import (
 	division
 )
 
-from pyramid.i18n import get_localizer
+from pyramid.i18n import TranslationString
 
 from netprofile.db.fields import EnumMeta
 from netprofile.ext.data import (
@@ -35,6 +35,12 @@ from netprofile.ext.data import (
 	ExtModel,
 	ExtRelationshipColumn
 )
+
+def _trans_dict(in_dict, loc):
+	for key, val in in_dict.items():
+		if isinstance(val, TranslationString):
+			val = loc.translate(val)
+		yield (key, val)
 
 def _add_field(step, model, req, field, **kwargs):
 	if isinstance(field, CustomWizardField):
@@ -83,7 +89,7 @@ class ExtJSWizardField(CustomWizardField):
 	def get_cfg(self, model, req, **kwargs):
 		if callable(self.cfg):
 			return self.cfg(self, model, req, **kwargs)
-		return self.cfg
+		return dict(_trans_dict(self.cfg, req.localizer))
 
 class DeclEnumWizardField(CustomWizardField):
 	"""
@@ -97,7 +103,7 @@ class DeclEnumWizardField(CustomWizardField):
 		self.kw = kwargs
 
 	def get_cfg(self, model, req, **kwargs):
-		loc = get_localizer(req)
+		loc = req.localizer
 		store = []
 		maxlen = 0
 		for sym in self.enum:
@@ -197,7 +203,7 @@ class Step(object):
 
 	def get_cfg(self, model, req, **kwargs):
 		step = []
-		loc = get_localizer(req)
+		loc = req.localizer
 		for field in self.fields:
 			if isinstance(field, CustomWizardField):
 				fcfg = field.get_cfg(model, req, **kwargs)
