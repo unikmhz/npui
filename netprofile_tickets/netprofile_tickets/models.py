@@ -325,16 +325,22 @@ class TicketState(Base):
 	style = Column(
 		ASCIIString(16),
 		Comment('Ticket state style'),
-		nullable=False,
-		default='grey',
-		server_default='grey'
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('CSS class')
+		}
 	)
 	image = Column(
 		ASCIIString(16),
 		Comment('Ticket state image'),
-		nullable=False,
-		default='gears',
-		server_default='gears'
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Icon URL')
+		}
 	)
 	description = Column(
 		'descr',
@@ -837,9 +843,10 @@ class Ticket(Base):
 				'default_sort'  : ({ 'property': 'ctime' ,'direction': 'DESC' },),
 				'grid_view'     : (
 					'ticketid', 'entity', 'state',
-					'assigned_time', 'assigned_group', 'name'
+					'ctime', 'mtime', 'assigned_time',
+					'assigned_group', 'name'
 				),
-				'grid_hidden'   : ('ticketid',),
+				'grid_hidden'   : ('ticketid', 'ctime', 'mtime'),
 				'form_view'     : (
 					'entity', 'name', 'state', 'flags', 'origin',
 					'assigned_user', 'assigned_group', 'assigned_time', 'dur',
@@ -847,7 +854,9 @@ class Ticket(Base):
 					'mtime', 'modified_by', 'ttime', 'transition_by'
 				),
 				'easy_search'   : ('name',),
+				'extra_data'    : ('row_class',),
 				'detail_pane'   : ('netprofile_tickets.views', 'dpane_tickets'),
+				'row_class_field' : 'row_class',
 
 				'create_wizard' : Wizard(
 					Step(
@@ -1254,6 +1263,11 @@ class Ticket(Base):
 		if self.assigned_time and self.duration:
 			return self.assigned_time + dt.timedelta(seconds=self.duration)
 		return self.assigned_time
+
+	@property
+	def row_class(self):
+		if self.state:
+			return self.state.style
 
 	@validates('state')
 	def _set_state(self, key, new_state):
