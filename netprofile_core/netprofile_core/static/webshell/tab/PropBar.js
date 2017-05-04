@@ -64,6 +64,19 @@ Ext.define('NetProfile.tab.PropBar', {
 					}
 				},
 				scope: this
+			}, {
+				key: 'x',
+				fn: function(kc, ev)
+				{
+					var at = this.getActiveTab();
+
+					if(at && ev.altKey)
+					{
+						ev.stopEvent();
+						this.clearExcept(at);
+					}
+				},
+				scope: this
 			}]
 		});
 	},
@@ -82,6 +95,17 @@ Ext.define('NetProfile.tab.PropBar', {
 		Ext.Object.each(this.tabCache, function(tci, tc)
 		{
 			if(at === tc)
+			{
+				delete this.tabCache[tci];
+				this.remove(tc, true);
+			}
+		}, this);
+	},
+	clearExcept: function(at)
+	{
+		Ext.Object.each(this.tabCache, function(tci, tc)
+		{
+			if(at !== tc)
 			{
 				delete this.tabCache[tci];
 				this.remove(tc, true);
