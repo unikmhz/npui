@@ -7,14 +7,27 @@ Ext.define('NetProfile.form.field.SimpleModelSelect', {
 	alias: 'widget.simplemodelselect',
 	requires: [
 	],
-	apiModule: null,
-	apiClass: null,
-	hiddenField: null,
-	extraParams: null,
 
-	editable: false,
-	valueField: '__str__',
-	displayField: '__str__',
+	config: {
+		apiModule: null,
+		apiClass: null,
+		hiddenField: null,
+		extraParams: null,
+
+		editable: false,
+		valueField: '__str__',
+		displayField: '__str__',
+
+		showLink: false,
+		triggers: {
+			clear: {
+				cls: Ext.baseCSSPrefix + 'form-clear-trigger',
+				weight: -1,
+				hidden: true,
+				handler: 'onTriggerClear'
+			}
+		}
+	},
 
 	initComponent: function()
 	{
@@ -27,6 +40,8 @@ Ext.define('NetProfile.form.field.SimpleModelSelect', {
 				this.extraParams
 			);
 		}
+		if(this.allowBlank && !this.readOnly)
+			this.getTrigger('clear').show();
 		this.callParent(arguments);
 
 		this.on('select', function(cbox, recs, opt)
@@ -45,6 +60,18 @@ Ext.define('NetProfile.form.field.SimpleModelSelect', {
 				hf.setValue(recs.getId());
 			}
 		}, this);
+	},
+	onTriggerClear: function()
+	{
+		if(this.hiddenField)
+		{
+			var form = this.up('form'),
+				hf = form.down('field[name=' + this.hiddenField + ']');
+
+			if(hf)
+				hf.setValue(null);
+		}
+		this.setValue('');
 	}
 });
 
