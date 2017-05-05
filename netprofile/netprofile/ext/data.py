@@ -320,15 +320,30 @@ def _table_to_class(tname):
 			return cls
 	raise KeyError(tname)
 
-def _recursive_update(dest, src):
+def _recursive_update(dest, src, loc=None):
 	for k, v in src.items():
 		if isinstance(v, Mapping):
-			dest[k] = _recursive_update(dest.get(k, {}), v)
+			dest[k] = _recursive_update(dest.get(k, {}), v, loc)
+		elif isinstance(v, list):
+			dest[k] = _recursive_update_list(dest.get(k, []), v, loc)
 		elif v is None:
 			if k in dest:
 				del dest[k]
+		elif loc and isinstance(v, TranslationString):
+			dest[k] = loc.translate(v)
 		else:
 			dest[k] = v
+	return dest
+
+def _recursive_update_list(dest, src, loc=None):
+	for val in src:
+		if isinstance(val, Mapping):
+			val = _recursive_update({}, val, loc)
+		elif isinstance(val, list):
+			val = _recursive_update_list([], val, loc)
+		elif loc and isinstance(val, TranslationString):
+			val = loc.translate(val)
+		dest.append(val)
 	return dest
 
 def _get_aggregate_column(dialect, func_name, field, colname):
@@ -936,7 +951,7 @@ class ExtColumn(object):
 						conf['width'] += 30
 		val = self.editor_config
 		if val:
-			_recursive_update(conf, val)
+			_recursive_update(conf, val, req.localizer)
 		return conf
 
 	def get_reader_cfg(self, req):
@@ -1334,7 +1349,7 @@ class ExtManyToOneRelationshipColumn(ExtRelationshipColumn):
 				conf['value'] = str(initval)
 		val = self.editor_config
 		if val:
-			_recursive_update(conf, val)
+			_recursive_update(conf, val, req.localizer)
 		return conf
 
 	def get_reader_cfg(self, req):
