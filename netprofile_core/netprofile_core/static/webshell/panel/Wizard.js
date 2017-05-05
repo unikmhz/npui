@@ -13,6 +13,7 @@ Ext.define('NetProfile.panel.Wizard', {
 		'NetProfile.form.field.Money',
 		'NetProfile.form.field.Password',
 		'NetProfile.form.field.PropertyTree',
+		'NetProfile.form.field.Grid',
 		'NetProfile.form.WizardPane'
 	],
 

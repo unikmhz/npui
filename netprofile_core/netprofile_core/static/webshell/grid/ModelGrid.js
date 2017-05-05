@@ -32,6 +32,7 @@ Ext.define('NetProfile.grid.ModelGrid', {
 		'NetProfile.form.field.SimpleModelSelect',
 		'NetProfile.form.field.FileSelect',
 		'NetProfile.form.field.NullableComboBox',
+		'NetProfile.form.field.Grid',
 		'NetProfile.panel.Wizard',
 		'NetProfile.grid.filters.filter.Date',
 		'NetProfile.grid.filters.filter.Number',

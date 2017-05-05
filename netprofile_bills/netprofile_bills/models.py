@@ -45,10 +45,13 @@ from sqlalchemy import (
 	UnicodeText,
 	text
 )
-
 from sqlalchemy.orm import (
 	backref,
 	relationship
+)
+from sqlalchemy.ext.mutable import (
+	MutableDict,
+	MutableList
 )
 
 from netprofile.common.locale import money_format
@@ -138,6 +141,27 @@ class BillSerial(Base):
 
 	def __str__(self):
 		return str(self.name)
+
+class BillPart(MutableDict):
+	pass
+
+class BillPartList(MutableList):
+	def __getitem__(self, idx):
+		val = super(BillPartList, self).__getitem__(idx)
+		if isinstance(val, dict):
+			if not isinstance(val, BillPart):
+				val = BillPart.coerce(idx, val)
+				val._parents = self._parents
+				list.__setitem__(self, idx, val)
+		return val
+
+	def __setitem__(self, idx, val):
+		if isinstance(val, dict):
+			if not isinstance(val, BillPart):
+				val = BillPart.coerce(idx, val)
+				val._parents = self._parents
+		list.__setitem__(self, idx, val)
+		self.changed()
 
 class BillType(Base):
 	"""
@@ -281,13 +305,76 @@ class BillType(Base):
 		}
 	)
 	template = Column(
-		JSONData(),
+		BillPartList.as_mutable(JSONData),
 		Comment('Bill parts template'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
 		info={
-			'header_string' : _('Parts')
+			'header_string' : _('Parts'),
+			'editor_xtype'  : 'gridfield',
+			'editor_config' : {
+				'gridCfg' : {
+					'store' : {
+						'xtype'  : 'array',
+						'autoLoad' : False,
+						'fields' : [{
+							'name'         : 'name',
+							'type'         : 'string'
+						}, {
+							'name'         : 'sum',
+							'type'         : 'float',
+							'defaultValue' : 0.0
+						}, {
+							'name'         : 'quantity',
+							'type'         : 'int',
+							'defaultValue' : 1
+						}, {
+							'name'         : 'taxmult',
+							'type'         : 'float',
+							'defaultValue' : 1.0
+						}, {
+							'name'         : 'counts',
+							'type'         : 'boolean',
+							'defaultValue' : True
+						}]
+					},
+					'columns' : [{
+						'text'      : _('Name'),
+						'dataIndex' : 'name',
+						'flex'      : 3,
+						'editor'    : {
+							'xtype'  : 'textfield'
+						}
+					}, {
+						'text'      : _('Sum'),
+						'dataIndex' : 'sum',
+						'xtype'     : 'numbercolumn',
+						'align'     : 'right',
+						'format'    : '0.00',
+						'flex'      : 2
+					}, {
+						'text'      : _('Quantity'),
+						'dataIndex' : 'quantity',
+						'xtype'     : 'numbercolumn',
+						'align'     : 'right',
+						'format'    : '0',
+						'flex'      : 2
+					}, {
+						'text'      : _('Tax Multiplier'),
+						'dataIndex' : 'taxmult',
+						'xtype'     : 'numbercolumn',
+						'align'     : 'right',
+						'format'    : '0.00',
+						'flex'      : 2
+					}, {
+						'text'      : _('Counts'),
+						'dataIndex' : 'counts',
+						'xtype'     : 'checkcolumn',
+						'flex'      : 2
+					}]
+				}
+			}
 		}
 	)
 	mutable = Column(
@@ -602,7 +689,7 @@ class Bill(Base):
 		}
 	)
 	parts = Column(
-		JSONData(),
+		BillPartList.as_mutable(JSONData),
 		Comment('Bill parts'),
 		nullable=True,
 		default=None,

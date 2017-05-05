@@ -12,7 +12,8 @@ Ext.define('NetProfile.form.Panel', {
 		'NetProfile.form.field.IPv6',
 		'NetProfile.form.field.Money',
 		'NetProfile.form.field.Password',
-		'NetProfile.form.field.PropertyTree'
+		'NetProfile.form.field.PropertyTree',
+		'NetProfile.form.field.Grid'
 	],
 	statics: {
 		formdef: {}
