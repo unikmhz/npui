@@ -362,7 +362,8 @@ def about(request):
 			license = license_file.read()
 
 	if mmgr:
-		for name, mod in mmgr.loaded.items():
+		for name in sorted(mmgr.loaded):
+			mod = mmgr.loaded[name]
 			modules.append((name, str(mod.version())))
 
 	return {
