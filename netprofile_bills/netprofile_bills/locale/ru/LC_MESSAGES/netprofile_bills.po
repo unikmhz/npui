@@ -1,0 +1,205 @@
+# Russian translations for netprofile_bills.
+# Copyright (C) 2017 NetProfile project contributors
+# This file is distributed under the same license as the netprofile_bills
+# project.
+# Alex Unigovsky <unik@itws.ru>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_bills 0+untagged.1194.gf0e86ba.dirty\n"
+"Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
+"POT-Creation-Date: 2017-05-05 06:52+0300\n"
+"PO-Revision-Date: 2017-05-05 07:01+0300\n"
+"Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
+"Language: ru\n"
+"Language-Team: ru <netprofile-users@googlegroups.com>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+"X-Generator: Poedit 1.8.7\n"
+
+#: netprofile_bills/__init__.py:82
+msgid "Menu: Bills"
+msgstr "Меню: Платёжные документы"
+
+#: netprofile_bills/__init__.py:86
+msgid "Bills: List"
+msgstr "Платёжные документы: Просмотр"
+
+#: netprofile_bills/__init__.py:90
+msgid "Bills: Create"
+msgstr "Платёжные документы: Создание"
+
+#: netprofile_bills/__init__.py:94
+msgid "Bills: Edit"
+msgstr "Платёжные документы: Правка"
+
+#: netprofile_bills/__init__.py:98
+msgid "Bills: Delete"
+msgstr "Платёжные документы: Удаление"
+
+#: netprofile_bills/__init__.py:102
+msgid "Bills: Operations"
+msgstr "Платёжные документы: Операции"
+
+#: netprofile_bills/__init__.py:106
+msgid "Bills: Create types"
+msgstr "Платёжные документы: Создание типов"
+
+#: netprofile_bills/__init__.py:110
+msgid "Bills: Edit types"
+msgstr "Платёжные документы: Правка типов"
+
+#: netprofile_bills/__init__.py:114
+msgid "Bills: Delete types"
+msgstr "Платёжные документы: Удаление типов"
+
+#: netprofile_bills/__init__.py:136 netprofile_bills/models.py:474
+msgid "Bills"
+msgstr "Платёжные документы"
+
+#: netprofile_bills/models.py:100
+msgid "Serial Numbers"
+msgstr "Серийные номера"
+
+#: netprofile_bills/models.py:108
+msgid "Add new serial counter"
+msgstr "Добавить новый счётчик серийных номеров"
+
+#: netprofile_bills/models.py:120 netprofile_bills/models.py:214
+#: netprofile_bills/models.py:500
+msgid "ID"
+msgstr "ID"
+
+#: netprofile_bills/models.py:128 netprofile_bills/models.py:237
+#: netprofile_bills/models.py:339
+msgid "Name"
+msgstr "Название"
+
+#: netprofile_bills/models.py:137
+msgid "Value"
+msgstr "Значение"
+
+#: netprofile_bills/models.py:190
+msgid "Bill Types"
+msgstr "Типы платёжных документов"
+
+#: netprofile_bills/models.py:202
+msgid "Add new bill type"
+msgstr "Добавить новый тип платёжных документов"
+
+#: netprofile_bills/models.py:226
+msgid "Serial Counter"
+msgstr "Счётчик серийных номеров"
+
+#: netprofile_bills/models.py:248
+msgid "Prefix"
+msgstr "Префикс"
+
+#: netprofile_bills/models.py:261
+msgid "Privilege"
+msgstr "Привилегия"
+
+#: netprofile_bills/models.py:273
+msgid "Issuer"
+msgstr "Отправитель"
+
+#: netprofile_bills/models.py:287 netprofile_bills/models.py:510
+msgid "Type"
+msgstr "Тип"
+
+#: netprofile_bills/models.py:302
+msgid "Document"
+msgstr "Документ"
+
+#: netprofile_bills/models.py:314
+msgid "Parts"
+msgstr "Состав"
+
+#: netprofile_bills/models.py:346 netprofile_bills/models.py:576
+msgid "Sum"
+msgstr "Сумма"
+
+#: netprofile_bills/models.py:353
+msgid "Quantity"
+msgstr "Количество"
+
+#: netprofile_bills/models.py:360
+msgid "Tax Multiplier"
+msgstr "Налог. множитель"
+
+#: netprofile_bills/models.py:367
+msgid "Counts"
+msgstr "Учитывается"
+
+#: netprofile_bills/models.py:383
+msgid "Mutable"
+msgstr "Модифицируемый"
+
+#: netprofile_bills/models.py:394 netprofile_bills/models.py:705
+msgid "Description"
+msgstr "Описание"
+
+#: netprofile_bills/models.py:439 netprofile_bills/models.py:621
+#: netprofile_bills/models.py:657
+msgid "Created"
+msgstr "Создан"
+
+#: netprofile_bills/models.py:440
+msgid "Sent"
+msgstr "Отправлен"
+
+#: netprofile_bills/models.py:441
+msgid "Paid"
+msgstr "Оплачен"
+
+#: netprofile_bills/models.py:442
+msgid "Recalled"
+msgstr "Отозван"
+
+#: netprofile_bills/models.py:488
+msgid "Add new bill"
+msgstr "Добавить новый платёжный документ"
+
+#: netprofile_bills/models.py:523
+msgid "Serial #"
+msgstr "Серийный №"
+
+#: netprofile_bills/models.py:533
+msgid "Entity"
+msgstr "Объект"
+
+#: netprofile_bills/models.py:544
+msgid "Stash"
+msgstr "Счёт"
+
+#: netprofile_bills/models.py:557
+msgid "Currency"
+msgstr "Валюта"
+
+#: netprofile_bills/models.py:588
+msgid "State"
+msgstr "Состояние"
+
+#: netprofile_bills/models.py:598
+msgid "Title"
+msgstr "Заголовок"
+
+#: netprofile_bills/models.py:610
+msgid "Accounting Date"
+msgstr "Учётная дата"
+
+#: netprofile_bills/models.py:632 netprofile_bills/models.py:670
+msgid "Modified"
+msgstr "Изменён"
+
+#: netprofile_bills/models.py:644 netprofile_bills/models.py:683
+msgid "Marked as Paid"
+msgstr "Оплачен"
+
+#: netprofile_bills/models.py:694
+msgid "Contents"
+msgstr "Содержимое"
