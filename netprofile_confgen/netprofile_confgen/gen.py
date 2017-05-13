@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Config Generation module - Generator classes
-# © Copyright 2014-2015 Alex 'Unik' Unigovsky
+# © Copyright 2014-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -60,7 +60,9 @@ from netprofile_confgen.models import (
 logger = logging.getLogger(__name__)
 
 class DeploymentTemplateLanguage(object):
-	pass
+	@property
+	def file_suffix(self):
+		return ''
 
 class ERBTemplateLanguage(DeploymentTemplateLanguage):
 	def var(self, tname):
@@ -86,6 +88,27 @@ class ERBTemplateLanguage(DeploymentTemplateLanguage):
 	@property
 	def file_suffix(self):
 		return '.erb'
+
+class Jinja2TemplateLanguage(DeploymentTemplateLanguage):
+	def var(self, tname):
+		return '{{ %s }}' % (tname,)
+
+	def loop_var(self, lname):
+		return '{{ %s }}' % (lname,)
+
+	def if_var(self, tname):
+		return '{%- if %s %}' % (tname,)
+
+	def for_in(self, iname, tname):
+		return '{%- for %s in %s %}' % (iname, tname)
+
+	@property
+	def endif(self):
+		return '{%- endif %}'
+
+	@property
+	def endfor(self):
+		return '{%- endfor %}'
 
 class ConfigGeneratorFactory(object):
 	def __init__(self, cfg, mmgr):
@@ -122,20 +145,26 @@ class ConfigGeneratorFactory(object):
 
 	@reify
 	def depdir_files(self):
-		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'puppet')
+		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'salt')
 		if deptype == 'puppet':
 			return self.cfg.get('netprofile.confgen.puppet.files_dir', '/etc/puppet/modules/npconfgen/files/generated')
+		if deptype == 'salt':
+			raise NotImplementedError()
 
 	@reify
 	def depdir_templates(self):
-		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'puppet')
+		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'salt')
 		if deptype == 'puppet':
 			return self.cfg.get('netprofile.confgen.puppet.templates_dir', '/etc/puppet/modules/npconfgen/templates/generated')
+		if deptype == 'salt':
+			raise NotImplementedError()
 
 	def deptpl(self):
-		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'puppet')
+		deptype = self.cfg.get('netprofile.confgen.deployment_type', 'salt')
 		if deptype == 'puppet':
 			return ERBTemplateLanguage()
+		if deptype == 'salt':
+			return Jinja2TemplateLanguage()
 
 	@reify
 	def mako_lookup(self):
@@ -417,7 +446,7 @@ class BIND9Generator(ConfigGenerator):
 			'now'     : datetime.datetime.now().replace(microsecond=0),
 			'gen'     : self,
 			'srv'     : srv,
-			'deptype' : self.confgen.cfg.get('netprofile.confgen.deployment_type', 'puppet'),
+			'deptype' : self.confgen.cfg.get('netprofile.confgen.deployment_type', 'salt'),
 			'dtpl'    : deptpl
 		}
 		conf_tpl = self.confgen.mako_lookup.get_template('netprofile_confgen:templates/confgen/named.conf.mak')
