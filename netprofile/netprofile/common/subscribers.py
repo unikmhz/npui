@@ -59,11 +59,12 @@ def on_new_request(event):
 def on_response(event):
 	global _CACHED_CSP_HEADER
 
-	settings = event.request.registry.settings
-	vhost = settings.get('netprofile.vhost')
+	req = event.request
 	res = event.response
+	settings = req.registry.settings
+	vhost = settings.get('netprofile.vhost')
 
-	if vhost is None:
+	if vhost is None and not req.path_info.startswith('/_debug_toolbar'):
 		if _CACHED_CSP_HEADER is None:
 			rt_ssl = asbool(settings.get('netprofile.rt.ssl', False))
 			rt_host = settings.get('netprofile.rt.host')
