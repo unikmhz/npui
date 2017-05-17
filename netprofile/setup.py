@@ -47,9 +47,12 @@ requires = [
 	'reportlab >= 3.1'
 ]
 extras_require = {
-	':python_version<"3"' : [
-		'functools32',
-		'backports.ssl_match_hostname'
+	':python_version<"3.2"' : [
+		'backports.ssl_match_hostname',
+		'functools32'
+	],
+	':python_version<"3.3"' : [
+		'ipaddress'
 	]
 }
 
