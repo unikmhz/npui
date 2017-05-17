@@ -70,7 +70,7 @@ class DocumentType(DeclEnum):
 	"""
 	Document type ENUM.
 	"""
-	lxdoc      = 'lxdoc',      _('lxDoc'),          10
+	npdml      = 'npdml',      _('NPDML'),          10
 	html_plain = 'html-plain', _('Plain HTML'),     20
 	html_ext   = 'html-ext',   _('XTemplate HTML'), 30
 
@@ -136,8 +136,8 @@ class Document(Base):
 		DocumentType.db_type(),
 		Comment('Template type'),
 		nullable=False,
-		default=DocumentType.html_ext,
-		server_default=DocumentType.html_ext,
+		default=DocumentType.npdml,
+		server_default=DocumentType.npdml,
 		info={
 			'header_string' : _('Type')
 		}
