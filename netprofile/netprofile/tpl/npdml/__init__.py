@@ -93,6 +93,7 @@ class NPDMLParagraphContext(NPDMLContext, NPDMLBlock):
 class NPDMLTableContext(NPDMLContext, NPDMLBlock):
 	def __init__(self, *args, **kwargs):
 		NPDMLContext.__init__(self, *args, **kwargs)
+		self.has_header = False
 		self.rows = []
 		self.widths = None
 		self.caption = None

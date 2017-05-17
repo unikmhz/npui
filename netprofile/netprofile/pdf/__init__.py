@@ -45,6 +45,11 @@ from reportlab.lib.units import (
 	cm,
 	inch
 )
+from reportlab.lib.enums import (
+	TA_LEFT,
+	TA_CENTER,
+	TA_RIGHT
+)
 from reportlab.pdfbase import (
 	pdfmetrics,
 	ttfonts
@@ -166,14 +171,14 @@ class DefaultTableStyle(tables.TableStyle):
 
 		super(DefaultTableStyle, self).__init__(cmds, parent, **kw)
 
-		self._cmds.extend((
+		self._cmds = [
 			('GRID',           (0, 0), (-1, -1), grid_width, grid_color),
 			('FONT',           (0, 0), (-1, -1), font),
 			('TEXTCOLOR',      (0, 0), (-1, 0),  header_fg),
 			('BACKGROUND',     (0, 0), (-1, 0),  header_bg),
 			('ROWBACKGROUNDS', (0, 1), (-1, -1), row_bg),
 			('VALIGN',         (0, 1), (-1, -1), 'TOP')
-		))
+		] + self._cmds
 
 class DefaultDocTemplate(doctemplate.BaseDocTemplate):
 	def __init__(self, filename, **kwargs):
@@ -321,6 +326,21 @@ def _pdf_style_sheet(cfg):
 		parent=ss['body'],
 		fontName=fonts[2],
 		alias='em'
+	))
+	ss.add(styles.ParagraphStyle(
+		name='left',
+		parent=ss['body'],
+		alignment=TA_LEFT
+	))
+	ss.add(styles.ParagraphStyle(
+		name='center',
+		parent=ss['body'],
+		alignment=TA_CENTER
+	))
+	ss.add(styles.ParagraphStyle(
+		name='right',
+		parent=ss['body'],
+		alignment=TA_RIGHT
 	))
 	ss.add(styles.ParagraphStyle(
 		name='title',

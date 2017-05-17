@@ -45,6 +45,7 @@ from reportlab.platypus import (
 	Table,
 	TableStyle
 )
+from reportlab.lib import colors
 from reportlab.lib.units import (
 	cm, mm,
 	inch, pica
@@ -130,7 +131,7 @@ class PDFParseTarget(NPDMLParseTarget):
 		ss = self.req.pdf_styles
 
 		if isinstance(curctx, NPDMLBlock) and isinstance(parent, NPDMLBlock) and parent.data:
-			para = Paragraph(parent.get_data(), ss['body'])
+			para = Paragraph(parent.get_data(), ss[parent.get('style', 'body')])
 			self.story.append(para)
 			parent.data = []
 
@@ -154,7 +155,7 @@ class PDFParseTarget(NPDMLParseTarget):
 		ss = self.req.pdf_styles
 
 		if isinstance(curctx, NPDMLParagraphContext):
-			para = Paragraph(curctx.get_data(), ss['body'])
+			para = Paragraph(curctx.get_data(), ss[curctx.get('style', 'body')])
 			self.story.append(para)
 		elif isinstance(curctx, NPDMLTableCellContext):
 			para_style = 'body'
@@ -164,11 +165,29 @@ class PDFParseTarget(NPDMLParseTarget):
 					parent.widths.append(_conv_length(curctx['width']))
 				else:
 					parent.widths.append(None)
-			para = Paragraph(curctx.get_data(), ss[para_style])
+			para = Paragraph(curctx.get_data(), ss[curctx.get('style', para_style)])
+
+			colspan = 1
+			rowspan = 1
+			if 'colspan' in curctx:
+				try:
+					colspan = int(curctx['colspan'])
+				except (TypeError, ValueError):
+					pass
+			if 'rowspan' in curctx:
+				try:
+					rowspan = int(curctx['rowspan'])
+				except (TypeError, ValueError):
+					pass
+			para.colspan = colspan
+			para.rowspan = rowspan
 			parent.cells.append(para)
+			if colspan > 1:
+				parent.cells.extend([''] * (colspan - 1))
 		elif isinstance(curctx, NPDMLTableRowContext):
 			parent.rows.append(curctx.cells)
 			if isinstance(curctx, NPDMLTableHeaderContext) and curctx.widths:
+				parent.has_header = True
 				parent.widths = curctx.widths
 		elif isinstance(curctx, NPDMLTableContext):
 			# FIXME: unhardcode spacing
@@ -185,9 +204,38 @@ class PDFParseTarget(NPDMLParseTarget):
 				value = curctx['align'].upper()
 				if value in ('LEFT', 'RIGHT', 'CENTER'):
 					kwargs['hAlign'] = value
+
+			extra_style = []
+			rowspans = {}
+
+			for rowidx, row in enumerate(curctx.rows):
+				for colidx in list(rowspans):
+					rowspans[colidx] -= 1
+					if rowspans[colidx] == 0:
+						del rowspans[colidx]
+					row.insert(colidx, '')
+				for colidx, col in enumerate(row):
+					if not isinstance(col, Paragraph):
+						continue
+					if col.colspan > 1 or col.rowspan > 1:
+						extra_style.append((
+							'SPAN',
+							(colidx, rowidx),
+							(colidx + col.colspan - 1, rowidx + col.rowspan - 1)
+						))
+						if col.rowspan > 1:
+							# FIXME: proper backgrounds of spanned cells
+							extra_style.append((
+								'ROWBACKGROUNDS',
+								(colidx, rowidx),
+								(colidx + col.colspan - 1, rowidx + col.rowspan - 1),
+								(colors.white,)
+							))
+							for idx in range(colidx, colidx + col.colspan):
+								rowspans[idx] = col.rowspan - 1
+
 			table = Table(curctx.rows, **kwargs)
-			# FIXME: create table style instead of using default one
-			table.setStyle(DefaultTableStyle())
+			table.setStyle(DefaultTableStyle(extra_style))
 			self.story.append(table)
 		elif isinstance(curctx, NPDMLAnchorContext):
 			markup = '<a %s>%s</a>' % (_attr_str(curctx), curctx.get_data())
