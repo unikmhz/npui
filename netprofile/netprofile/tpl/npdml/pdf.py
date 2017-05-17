@@ -161,10 +161,10 @@ class PDFParseTarget(NPDMLParseTarget):
 			para_style = 'body'
 			if isinstance(parent, NPDMLTableHeaderContext):
 				para_style = 'table_header'
-				if 'width' in curctx:
-					parent.widths.append(_conv_length(curctx['width']))
-				else:
-					parent.widths.append(None)
+			if 'width' in curctx:
+				parent.widths.append(_conv_length(curctx['width']))
+			else:
+				parent.widths.append(None)
 			para = Paragraph(curctx.get_data(), ss[curctx.get('style', para_style)])
 
 			colspan = 1
@@ -186,8 +186,9 @@ class PDFParseTarget(NPDMLParseTarget):
 				parent.cells.extend([''] * (colspan - 1))
 		elif isinstance(curctx, NPDMLTableRowContext):
 			parent.rows.append(curctx.cells)
-			if isinstance(curctx, NPDMLTableHeaderContext) and curctx.widths:
+			if isinstance(curctx, NPDMLTableHeaderContext):
 				parent.has_header = True
+			if len(parent.widths) < len(curctx.widths):
 				parent.widths = curctx.widths
 		elif isinstance(curctx, NPDMLTableContext):
 			# FIXME: unhardcode spacing
@@ -235,7 +236,7 @@ class PDFParseTarget(NPDMLParseTarget):
 								rowspans[idx] = col.rowspan - 1
 
 			table = Table(curctx.rows, **kwargs)
-			table.setStyle(DefaultTableStyle(extra_style))
+			table.setStyle(DefaultTableStyle(extra_style, has_header=curctx.has_header))
 			self.story.append(table)
 		elif isinstance(curctx, NPDMLAnchorContext):
 			markup = '<a %s>%s</a>' % (_attr_str(curctx), curctx.get_data())
@@ -270,7 +271,8 @@ class PDFParseTarget(NPDMLParseTarget):
 				parent.data.append(curctx.get_data())
 		elif isinstance(curctx, NPDMLTitleContext):
 			# FIXME: draw actual title
-			self._title = curctx.get_data()
+			if isinstance(curctx, NPDMLMetadataContext):
+				self._title = curctx.get_data()
 
 	def data(self, data):
 		self.parent.data.append(html_escape(data))

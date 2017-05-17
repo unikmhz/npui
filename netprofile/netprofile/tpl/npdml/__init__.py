@@ -31,6 +31,7 @@ __all__ = (
 	'NPDMLContext',
 	'NPDMLBlock',
 	'NPDMLDocumentContext',
+	'NPDMLMetadataContext',
 	'NPDMLPageContext',
 	'NPDMLTitleContext',
 	'NPDMLHeadingContext',
@@ -75,6 +76,9 @@ class NPDMLBlock(object):
 class NPDMLDocumentContext(NPDMLContext):
 	pass
 
+class NPDMLMetadataContext(NPDMLContext):
+	pass
+
 class NPDMLPageContext(NPDMLContext):
 	pass
 
@@ -95,7 +99,7 @@ class NPDMLTableContext(NPDMLContext, NPDMLBlock):
 		NPDMLContext.__init__(self, *args, **kwargs)
 		self.has_header = False
 		self.rows = []
-		self.widths = None
+		self.widths = []
 		self.caption = None
 
 class NPDMLTableCaptionContext(NPDMLContext):
@@ -139,6 +143,7 @@ class NPDMLFontContext(NPDMLContext):
 
 _NPDML_CLASS_MAP = {
 	'{http://netprofile.ru/schemas/npdml/1.0}document' : NPDMLDocumentContext,
+	'{http://netprofile.ru/schemas/npdml/1.0}meta'     : NPDMLMetadataContext,
 	'{http://netprofile.ru/schemas/npdml/1.0}page'     : NPDMLPageContext,
 	'{http://netprofile.ru/schemas/npdml/1.0}title'    : NPDMLTitleContext,
 	'{http://netprofile.ru/schemas/npdml/1.0}heading'  : NPDMLHeadingContext,

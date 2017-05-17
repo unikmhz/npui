@@ -162,6 +162,7 @@ DEFAULT_FONT = None
 
 class DefaultTableStyle(tables.TableStyle):
 	def __init__(self, cmds=None, parent=None, **kw):
+		has_header = kw.pop('has_header', True)
 		font = kw.pop('font', DEFAULT_FONT)
 		grid_width = kw.pop('grid_width', 0.2)
 		grid_color = kw.pop('grid_color', colors.dimgrey)
@@ -171,14 +172,20 @@ class DefaultTableStyle(tables.TableStyle):
 
 		super(DefaultTableStyle, self).__init__(cmds, parent, **kw)
 
-		self._cmds = [
-			('GRID',           (0, 0), (-1, -1), grid_width, grid_color),
-			('FONT',           (0, 0), (-1, -1), font),
-			('TEXTCOLOR',      (0, 0), (-1, 0),  header_fg),
-			('BACKGROUND',     (0, 0), (-1, 0),  header_bg),
-			('ROWBACKGROUNDS', (0, 1), (-1, -1), row_bg),
-			('VALIGN',         (0, 1), (-1, -1), 'TOP')
-		] + self._cmds
+		first_data = 1 if has_header else 0
+		new_cmds = [
+			('GRID',   (0, 0),          (-1, -1), grid_width, grid_color),
+			('FONT',   (0, 0),          (-1, -1), font),
+			('VALIGN', (0, first_data), (-1, -1), 'TOP')
+		]
+		if has_header:
+			new_cmds.extend((
+				('TEXTCOLOR',  (0, 0), (-1, 0), header_fg),
+				('BACKGROUND', (0, 0), (-1, 0), header_bg)
+			))
+		if row_bg:
+			new_cmds.append(('ROWBACKGROUNDS', (0, first_data), (-1, -1), row_bg))
+		self._cmds = new_cmds + self._cmds
 
 class DefaultDocTemplate(doctemplate.BaseDocTemplate):
 	def __init__(self, filename, **kwargs):
