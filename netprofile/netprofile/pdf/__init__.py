@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: PDF-related tables, utility functions etc.
-# © Copyright 2015 Alex 'Unik' Unigovsky
+# © Copyright 2015-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,8 +29,7 @@ from __future__ import (
 
 __all__ = (
 	'PAGE_ORIENTATIONS',
-	'PAGE_SIZES',
-	'TABLE_STYLE_DEFAULT'
+	'PAGE_SIZES'
 )
 
 import logging
@@ -154,12 +153,27 @@ PAGE_ORIENTATIONS = {
 	'landscape' : (_('Landscape'), pagesizes.landscape)
 }
 
-TABLE_STYLE_DEFAULT = tables.TableStyle((
-	('GRID',           (0, 0),  (-1, -1), 0.2, colors.dimgrey),
-	('TEXTCOLOR',      (0, 0),  (-1, 0),  colors.black),
-	('BACKGROUND',     (0, 0),  (-1, 0),  colors.HexColor(0xe6e6e6)),
-	('ROWBACKGROUNDS', (0, 1),  (-1, -1), (colors.white, colors.HexColor(0xf5f5f5)))
-))
+DEFAULT_FONT = None
+
+class DefaultTableStyle(tables.TableStyle):
+	def __init__(self, cmds=None, parent=None, **kw):
+		font = kw.pop('font', DEFAULT_FONT)
+		grid_width = kw.pop('grid_width', 0.2)
+		grid_color = kw.pop('grid_color', colors.dimgrey)
+		header_fg = kw.pop('header_fg', colors.black)
+		header_bg = kw.pop('header_bg', colors.HexColor(0xe6e6e6))
+		row_bg = kw.pop('row_bg', (colors.white, colors.HexColor(0xf5f5f5)))
+
+		super(DefaultTableStyle, self).__init__(cmds, parent, **kw)
+
+		self._cmds.extend((
+			('GRID',           (0, 0), (-1, -1), grid_width, grid_color),
+			('FONT',           (0, 0), (-1, -1), font),
+			('TEXTCOLOR',      (0, 0), (-1, 0),  header_fg),
+			('BACKGROUND',     (0, 0), (-1, 0),  header_bg),
+			('ROWBACKGROUNDS', (0, 1), (-1, -1), row_bg),
+			('VALIGN',         (0, 1), (-1, -1), 'TOP')
+		))
 
 class DefaultDocTemplate(doctemplate.BaseDocTemplate):
 	def __init__(self, filename, **kwargs):
@@ -173,6 +187,7 @@ class DefaultDocTemplate(doctemplate.BaseDocTemplate):
 			pgsz = PAGE_ORIENTATIONS[orient][1](pgsz)
 		kwargs['pagesize'] = pgsz
 		kwargs['creator'] = 'NetProfile'
+		kwargs['initialFontName'] = DEFAULT_FONT
 		req = kwargs.pop('request', None)
 		if req:
 			u = req.user
@@ -211,6 +226,9 @@ class DefaultDocTemplate(doctemplate.BaseDocTemplate):
 		))
 
 def _register_fonts(settings):
+	global DEFAULT_FONT
+
+	first_fname = None
 	default_fontdir = settings.get('netprofile.fonts.directory', '')
 	default_family = settings.get('netprofile.fonts.default_family', 'tinos')
 	fontcfg = make_config_dict(settings, 'netprofile.fonts.family.')
@@ -219,6 +237,8 @@ def _register_fonts(settings):
 		if 'normal' not in cfg:
 			continue
 		fname = cfg.get('name', fname)
+		if first_fname is None:
+			first_fname = fname
 		fontdir = cfg.get('directory', default_fontdir)
 		pdfmetrics.registerFont(ttfonts.TTFont(
 			fname,
@@ -255,9 +275,12 @@ def _register_fonts(settings):
 
 		pdfmetrics.registerFontFamily(fname, **reg)
 
+	DEFAULT_FONT = 'Times-Roman'
 	if default_family in fontcfg:
-		return default_family
-	return 'Times-Roman'
+		DEFAULT_FONT = fontcfg[default_family].get('name', default_family)
+	elif first_fname:
+		DEFAULT_FONT = first_fname
+	return DEFAULT_FONT
 
 def _add_custom_ss(ss, custom_cfg, name):
 	pass

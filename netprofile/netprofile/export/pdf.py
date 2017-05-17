@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Data export support for PDF files
-# © Copyright 2015 Alex 'Unik' Unigovsky
+# © Copyright 2015-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -36,9 +36,9 @@ from netprofile.ext.columns import PseudoColumn
 from netprofile.export import ExportFormat
 from netprofile.pdf import (
 	DefaultDocTemplate,
+	DefaultTableStyle,
 	PAGE_ORIENTATIONS,
-	PAGE_SIZES,
-	TABLE_STYLE_DEFAULT
+	PAGE_SIZES
 )
 from pyramid.i18n import (
 	TranslationStringFactory,
@@ -250,7 +250,7 @@ class PDFExportFormat(ExportFormat):
 			colWidths=table_widths,
 			repeatRows=1
 		)
-		table.setStyle(TABLE_STYLE_DEFAULT)
+		table.setStyle(DefaultTableStyle())
 		story = [table]
 
 		doc.build(story)
