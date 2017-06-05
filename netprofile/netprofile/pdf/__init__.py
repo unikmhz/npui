@@ -37,7 +37,6 @@ import os
 
 from reportlab.lib import (
 	colors,
-	enums,
 	pagesizes,
 	styles
 )
@@ -48,7 +47,8 @@ from reportlab.lib.units import (
 from reportlab.lib.enums import (
 	TA_LEFT,
 	TA_CENTER,
-	TA_RIGHT
+	TA_RIGHT,
+	TA_JUSTIFY
 )
 from reportlab.pdfbase import (
 	pdfmetrics,
@@ -233,7 +233,7 @@ class DefaultDocTemplate(doctemplate.BaseDocTemplate):
 		)
 
 		self.addPageTemplates((
-			doctemplate.PageTemplate(id='default', pagesize=pgsz, frames=(fr_body,)), # onPage=callback
+			doctemplate.PageTemplate(id='default', pagesize=pgsz, frames=(fr_body,)),  # onPage=callback
 			doctemplate.PageTemplate(id='2columns', pagesize=pgsz, frames=(fr_left, fr_right))
 		))
 
@@ -256,7 +256,7 @@ def _register_fonts(settings):
 			fname,
 			os.path.join(fontdir, cfg['normal'])
 		))
-		reg = { 'normal' : fname }
+		reg = {'normal' : fname}
 
 		if 'bold' in cfg:
 			reg['bold'] = fname + '_b'
@@ -315,7 +315,11 @@ def _pdf_style_sheet(cfg):
 		name='default',
 		fontName=fonts[0],
 		fontSize=10,
-		leading=12
+		leading=12,
+		bulletFontName=fonts[0],
+		bulletFontSize=10,
+		bulletAnchor='start',
+		bulletIndent=-1 * cm
 	))
 	ss.add(styles.ParagraphStyle(
 		name='body',
@@ -326,12 +330,14 @@ def _pdf_style_sheet(cfg):
 		name='bold',
 		parent=ss['body'],
 		fontName=fonts[1],
+		bulletFontName=fonts[1],
 		alias='strong'
 	))
 	ss.add(styles.ParagraphStyle(
 		name='italic',
 		parent=ss['body'],
 		fontName=fonts[2],
+		bulletFontName=fonts[2],
 		alias='em'
 	))
 	ss.add(styles.ParagraphStyle(
@@ -350,15 +356,70 @@ def _pdf_style_sheet(cfg):
 		alignment=TA_RIGHT
 	))
 	ss.add(styles.ParagraphStyle(
+		name='justify',
+		parent=ss['body'],
+		alignment=TA_JUSTIFY
+	))
+	ss.add(styles.ParagraphStyle(
 		name='title',
 		parent=ss['body'],
 		fontName=fonts[1],
-		fontSize=14
+		bulletFontName=fonts[1],
+		fontSize=16,
+		bulletFontSize=16
+	))
+	ss.add(styles.ParagraphStyle(
+		name='heading1',
+		parent=ss['body'],
+		fontName=fonts[1],
+		bulletFontName=fonts[1],
+		fontSize=14,
+		bulletFontSize=14,
+		alias='h1'
+	))
+	ss.add(styles.ParagraphStyle(
+		name='heading2',
+		parent=ss['body'],
+		fontName=fonts[1],
+		bulletFontName=fonts[1],
+		fontSize=12,
+		bulletFontSize=12,
+		alias='h2'
+	))
+	ss.add(styles.ParagraphStyle(
+		name='heading3',
+		parent=ss['body'],
+		fontName=fonts[1],
+		bulletFontName=fonts[1],
+		fontSize=11,
+		bulletFontSize=11,
+		alias='h3'
+	))
+	ss.add(styles.ParagraphStyle(
+		name='heading4',
+		parent=ss['body'],
+		fontName=fonts[1],
+		bulletFontName=fonts[1],
+		alias='h4'
+	))
+	ss.add(styles.ParagraphStyle(
+		name='heading5',
+		parent=ss['body'],
+		fontName=fonts[2],
+		bulletFontName=fonts[2],
+		alias='h5'
+	))
+	ss.add(styles.ParagraphStyle(
+		name='caption',
+		parent=ss['body'],
+		fontName=fonts[2],
+		bulletFontName=fonts[2]
 	))
 	ss.add(styles.ParagraphStyle(
 		name='table_header',
 		parent=ss['body'],
 		fontName=fonts[1],
+		bulletFontName=fonts[1],
 		alias='th'
 	))
 

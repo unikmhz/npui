@@ -90,32 +90,32 @@ class NPDMLDocTemplate(DefaultDocTemplate):
 	pass
 
 class PDFParseTarget(NPDMLParseTarget):
-	def __init__(self, req, buf=None, pagesize='a4', orientation='portrait'):
+	def __init__(self, req, buf=None, **kwargs):
 		super(PDFParseTarget, self).__init__()
 		self.req = req
 		if buf is None:
 			buf = io.BytesIO()
 		self.buf = buf
 		self.story = []
-		self._pagesz = pagesize
-		self._orient = orientation
+		self._indent_step = kwargs.pop('indent_step', 1 * cm)
+		self._opts = kwargs
 		self._doc = None
 		self._title = None
 		self._first_page_tpl = None
+		self._pageTemplates = []
 
 	@property
 	def doc(self):
 		if self._doc is None:
-			# FIXME: unhardcode margins
 			self._doc = NPDMLDocTemplate(
 				self.buf,
 				request=self.req,
-				pagesize=self._pagesz,
-				orientation=self._orient,
-				topMargin=2.0 * cm,
-				leftMargin=1.8 * cm,
-				rightMargin=1.8 * cm,
-				bottomMargin=2.0 * cm,
+				pagesize=self._opts.get('pagesize', 'a4'),
+				orientation=self._opts.get('orientation', 'portrait'),
+				topMargin=self._opts.get('topMargin', 2.0 * cm),
+				leftMargin=self._opts.get('leftMargin', 1.8 * cm),
+				rightMargin=self._opts.get('rightMargin', 1.8 * cm),
+				bottomMargin=self._opts.get('bottomMargin', 2.0 * cm),
 				title=self._title
 			)
 			if self._first_page_tpl:
@@ -131,8 +131,10 @@ class PDFParseTarget(NPDMLParseTarget):
 		ss = self.req.pdf_styles
 
 		if isinstance(curctx, NPDMLBlock) and isinstance(parent, NPDMLBlock) and parent.data:
-			para = Paragraph(parent.get_data(), ss[parent.get('style', 'body')])
-			self.story.append(para)
+			para = parent.get_data()
+			if para:
+				para = Paragraph(para, ss[parent.get('style', 'body')])
+				self.story.append(para)
 			parent.data = []
 
 		if isinstance(curctx, NPDMLPageContext):
@@ -148,6 +150,16 @@ class PDFParseTarget(NPDMLParseTarget):
 				self._first_page_tpl = tpl[0]
 			else:
 				self.story.append(PageBreak())
+		elif isinstance(curctx, NPDMLSectionContext):
+			parent_block = self.get_parent_block(curctx)
+			if parent_block is not None:
+				curctx['counter'] = parent_block.get_counter()
+
+		if isinstance(curctx, NPDMLBlock):
+			indents = curctx._indent
+			if indents > 0:
+				curctx._indenter = Indenter(indents * self._indent_step)
+				self.story.append(curctx._indenter)
 
 	def end(self, tag):
 		curctx = super(PDFParseTarget, self).end(tag)
@@ -157,6 +169,8 @@ class PDFParseTarget(NPDMLParseTarget):
 		if isinstance(curctx, NPDMLParagraphContext):
 			para = Paragraph(curctx.get_data(), ss[curctx.get('style', 'body')])
 			self.story.append(para)
+		elif isinstance(curctx, NPDMLSectionContext):
+			pass
 		elif isinstance(curctx, NPDMLTableCellContext):
 			para_style = 'body'
 			if isinstance(parent, NPDMLTableHeaderContext):
@@ -271,11 +285,29 @@ class PDFParseTarget(NPDMLParseTarget):
 				parent.data.append(curctx.get_data())
 		elif isinstance(curctx, NPDMLTitleContext):
 			# FIXME: draw actual title
-			if isinstance(curctx, NPDMLMetadataContext):
+			if isinstance(parent, NPDMLMetadataContext):
 				self._title = curctx.get_data()
+			elif isinstance(parent, NPDMLSectionContext):
+				ilevel = self.indent_level
+				btext = None
+				if ilevel > 0:
+					btext = curctx.get('prefixFormat', '{}.').format(
+						curctx.get('prefixJoin', '.').join(
+							str(x) for x in self.get_counters()
+						)
+					)
+				para = Paragraph(
+					curctx.get_data(),
+					ss[curctx.get('style', 'heading' + str(ilevel))],
+					bulletText=btext
+				)
+				self.story.append(para)
+
+		if isinstance(curctx, NPDMLBlock) and curctx._indenter:
+			self.story.append(Indenter(-curctx._indenter.left, -curctx._indenter.right))
 
 	def data(self, data):
-		self.parent.data.append(html_escape(data))
+		self.parent.data.append(html_escape(data.strip()))
 
 	def close(self):
 		self.doc.build(self.story)

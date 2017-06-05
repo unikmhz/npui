@@ -34,7 +34,6 @@ __all__ = (
 	'NPDMLMetadataContext',
 	'NPDMLPageContext',
 	'NPDMLTitleContext',
-	'NPDMLHeadingContext',
 	'NPDMLSectionContext',
 	'NPDMLParagraphContext',
 	'NPDMLTableContext',
@@ -53,28 +52,25 @@ __all__ = (
 	'NPDMLParseTarget'
 )
 
-from lxml import etree
-
-from netprofile.tpl import TemplateObject
-
 class NPDMLContext(dict):
 	def __init__(self, *args, **kwargs):
 		dict.__init__(self, *args, **kwargs)
 		self.data = []
-		self.counter = 0
 
 	def get_data(self):
-		return ''.join(self.data)
-
-	def get_counter(self):
-		self.counter += 1
-		return self.counter
+		return ' '.join(self.data)
 
 class NPDMLBlock(object):
-	pass
+	_counter = 0
+	_indent = 1
+	_indenter = None
 
-class NPDMLDocumentContext(NPDMLContext):
-	pass
+	def get_counter(self):
+		self._counter += 1
+		return self._counter
+
+class NPDMLDocumentContext(NPDMLContext, NPDMLBlock):
+	_indent = 0
 
 class NPDMLMetadataContext(NPDMLContext):
 	pass
@@ -85,14 +81,15 @@ class NPDMLPageContext(NPDMLContext):
 class NPDMLTitleContext(NPDMLContext):
 	pass
 
-class NPDMLHeadingContext(NPDMLContext):
-	pass
-
 class NPDMLSectionContext(NPDMLContext, NPDMLBlock):
 	pass
 
 class NPDMLParagraphContext(NPDMLContext, NPDMLBlock):
-	pass
+	@property
+	def _indent(self):
+		if 'prefix' in self:
+			return 1
+		return 0
 
 class NPDMLTableContext(NPDMLContext, NPDMLBlock):
 	def __init__(self, *args, **kwargs):
@@ -146,7 +143,6 @@ _NPDML_CLASS_MAP = {
 	'{http://netprofile.ru/schemas/npdml/1.0}meta'     : NPDMLMetadataContext,
 	'{http://netprofile.ru/schemas/npdml/1.0}page'     : NPDMLPageContext,
 	'{http://netprofile.ru/schemas/npdml/1.0}title'    : NPDMLTitleContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}heading'  : NPDMLHeadingContext,
 	'{http://netprofile.ru/schemas/npdml/1.0}section'  : NPDMLSectionContext,
 	'{http://netprofile.ru/schemas/npdml/1.0}para'     : NPDMLParagraphContext,
 	'{http://netprofile.ru/schemas/npdml/1.0}table'    : NPDMLTableContext,
@@ -177,7 +173,7 @@ class NPDMLParseTarget(object):
 		return self.ctx.pop()
 
 	def data(self, data):
-		self.parent.data.append(data)
+		self.parent.data.append(data.strip())
 
 	def comment(self, text):
 		pass
@@ -191,4 +187,24 @@ class NPDMLParseTarget(object):
 			return self.ctx[-1]
 		except IndexError:
 			return None
+
+	@property
+	def indent_level(self):
+		ret = 0
+		for ctx in self.ctx:
+			if isinstance(ctx, NPDMLBlock):
+				ret += ctx._indent
+		return ret
+
+	def get_counters(self):
+		for ctx in self.ctx:
+			if isinstance(ctx, NPDMLBlock) and 'counter' in ctx:
+				yield ctx['counter']
+
+	def get_parent_block(self, ignore=None):
+		for ctx in reversed(self.ctx):
+			if ctx is ignore:
+				continue
+			if isinstance(ctx, NPDMLBlock):
+				return ctx
 
