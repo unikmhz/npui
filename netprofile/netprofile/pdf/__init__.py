@@ -187,6 +187,20 @@ class DefaultTableStyle(tables.TableStyle):
 			new_cmds.append(('ROWBACKGROUNDS', (0, first_data), (-1, -1), row_bg))
 		self._cmds = new_cmds + self._cmds
 
+class OutlineEntryFlowable(doctemplate.ActionFlowable):
+	def __init__(self, title, key, level=0, closed=None, bookmark=False):
+		self.title = title
+		self.key = key
+		self.level = level
+		self.closed = closed
+		self.bookmark = bookmark
+
+	def apply(self, doc):
+		canvas = doc.canv
+		if self.bookmark:
+			canvas.bookmarkPage(self.key, fit='FitH')
+		canvas.addOutlineEntry(self.title, self.key, self.level, self.closed)
+
 class DefaultDocTemplate(doctemplate.BaseDocTemplate):
 	def __init__(self, filename, **kwargs):
 		pgsz = kwargs.pop('pagesize', 'a4')

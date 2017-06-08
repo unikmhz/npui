@@ -53,7 +53,8 @@ from reportlab.lib.units import (
 
 from netprofile.pdf import (
 	DefaultDocTemplate,
-	DefaultTableStyle
+	DefaultTableStyle,
+	OutlineEntryFlowable
 )
 from netprofile.tpl.npdml import *
 
@@ -82,9 +83,6 @@ def _conv_length(length_str):
 
 def _attr_str(attrs):
 	return ' '.join(('%s="%s"' % (k, html_escape(v))) for k, v in attrs.items())
-
-class NPDMLTableStyle(TableStyle):
-	pass
 
 class NPDMLDocTemplate(DefaultDocTemplate):
 	pass
@@ -150,15 +148,10 @@ class PDFParseTarget(NPDMLParseTarget):
 				self._first_page_tpl = tpl[0]
 			else:
 				self.story.append(PageBreak())
-		elif isinstance(curctx, NPDMLSectionContext):
-			parent_block = self.get_parent_block(curctx)
-			if parent_block is not None:
-				curctx['counter'] = parent_block.get_counter()
 
 		if isinstance(curctx, NPDMLBlock):
-			indents = curctx._indent
-			if indents > 0:
-				curctx._indenter = Indenter(indents * self._indent_step)
+			if curctx.is_numbered:
+				curctx._indenter = Indenter(self._indent_step)
 				self.story.append(curctx._indenter)
 
 	def end(self, tag):
@@ -167,10 +160,15 @@ class PDFParseTarget(NPDMLParseTarget):
 		ss = self.req.pdf_styles
 
 		if isinstance(curctx, NPDMLParagraphContext):
-			para = Paragraph(curctx.get_data(), ss[curctx.get('style', 'body')])
+			btext = None
+			if curctx.is_numbered:
+				btext = self.get_bullet(curctx)
+			para = Paragraph(
+				curctx.get_data(),
+				ss[curctx.get('style', 'body')],
+				bulletText=btext
+			)
 			self.story.append(para)
-		elif isinstance(curctx, NPDMLSectionContext):
-			pass
 		elif isinstance(curctx, NPDMLTableCellContext):
 			para_style = 'body'
 			if isinstance(parent, NPDMLTableHeaderContext):
@@ -253,6 +251,7 @@ class PDFParseTarget(NPDMLParseTarget):
 			table.setStyle(DefaultTableStyle(extra_style, has_header=curctx.has_header))
 			self.story.append(table)
 		elif isinstance(curctx, NPDMLAnchorContext):
+			curctx.setdefault('color', 'blue')
 			markup = '<a %s>%s</a>' % (_attr_str(curctx), curctx.get_data())
 			parent.data.append(markup)
 		elif isinstance(curctx, NPDMLBoldContext):
@@ -288,17 +287,32 @@ class PDFParseTarget(NPDMLParseTarget):
 			if isinstance(parent, NPDMLMetadataContext):
 				self._title = curctx.get_data()
 			elif isinstance(parent, NPDMLSectionContext):
-				ilevel = self.indent_level
+				text = curctx.get_data()
+				para_text = text
+				sect_id = self.get_section_id()
+				dlevel = parent.depth
 				btext = None
-				if ilevel > 0:
-					btext = curctx.get('prefixFormat', '{}.').format(
-						curctx.get('prefixJoin', '.').join(
-							str(x) for x in self.get_counters()
+				if parent.is_numbered:
+					btext = self.get_bullet(curctx)
+
+					if parent.in_toc and dlevel > 0:
+						para_text = '<a name="%s"/>%s' % (
+							sect_id,
+							text
 						)
-					)
+						outline = '%s%s' % (
+							'' if btext is None else btext + ' ',
+							text
+						)
+						self.story.append(OutlineEntryFlowable(
+							outline,
+							sect_id,
+							dlevel - 1
+						))
+
 				para = Paragraph(
-					curctx.get_data(),
-					ss[curctx.get('style', 'heading' + str(ilevel))],
+					para_text,
+					ss[curctx.get('style', 'heading' + str(dlevel))],
 					bulletText=btext
 				)
 				self.story.append(para)
@@ -310,7 +324,32 @@ class PDFParseTarget(NPDMLParseTarget):
 		self.parent.data.append(html_escape(data.strip()))
 
 	def close(self):
-		self.doc.build(self.story)
+		self.doc.multiBuild(self.story)
 		self.buf.seek(0)
 		return self.buf
+
+	def get_bullet(self, ctx):
+		prefix = ctx.get('prefix')
+		def_fmt = '{}.'
+		def_join = '.'
+		counters = self.get_counters(last=ctx)
+		if counters is None:
+			return None
+		if prefix == 'indent':
+			return ''
+		elif prefix == 'roman':
+			pass
+		elif prefix == 'uc-roman':
+			pass
+		elif prefix == 'latin':
+			pass
+		elif prefix == 'uc-latin':
+			pass
+		else:
+			counters = (str(x) for x in counters)
+
+		prefix_fmt = ctx.get('prefixFormat', def_fmt)
+		prefix_join = ctx.get('prefixJoin', def_join)
+
+		return prefix_fmt.format(prefix_join.join(counters))
 

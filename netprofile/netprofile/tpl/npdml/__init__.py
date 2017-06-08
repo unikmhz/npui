@@ -61,16 +61,28 @@ class NPDMLContext(dict):
 		return ' '.join(self.data)
 
 class NPDMLBlock(object):
+	in_toc = False
+	_depth = 0
+	_own_counter = 0
 	_counter = 0
-	_indent = 1
 	_indenter = None
+
+	@property
+	def is_numbered(self):
+		if 'prefix' in self:
+			return 1
+		return 0
+
+	@property
+	def depth(self):
+		return self._depth
 
 	def get_counter(self):
 		self._counter += 1
 		return self._counter
 
 class NPDMLDocumentContext(NPDMLContext, NPDMLBlock):
-	_indent = 0
+	is_numbered = False
 
 class NPDMLMetadataContext(NPDMLContext):
 	pass
@@ -82,14 +94,12 @@ class NPDMLTitleContext(NPDMLContext):
 	pass
 
 class NPDMLSectionContext(NPDMLContext, NPDMLBlock):
-	pass
+	@property
+	def in_toc(self):
+		return self.get('toc') != 'ignore'
 
 class NPDMLParagraphContext(NPDMLContext, NPDMLBlock):
-	@property
-	def _indent(self):
-		if 'prefix' in self:
-			return 1
-		return 0
+	pass
 
 class NPDMLTableContext(NPDMLContext, NPDMLBlock):
 	def __init__(self, *args, **kwargs):
@@ -166,6 +176,14 @@ class NPDMLParseTarget(object):
 
 	def start(self, tag, attrs):
 		newctx = _NPDML_CLASS_MAP[tag](attrs)
+
+		if isinstance(newctx, NPDMLBlock):
+			parent = self.get_parent_block()
+			if parent is not None:
+				newctx._depth = parent._depth + 1
+				if newctx.is_numbered:
+					newctx._own_counter = parent.get_counter()
+
 		self.ctx.append(newctx)
 		return newctx
 
@@ -188,18 +206,15 @@ class NPDMLParseTarget(object):
 		except IndexError:
 			return None
 
-	@property
-	def indent_level(self):
-		ret = 0
+	def get_counters(self, last=None):
 		for ctx in self.ctx:
-			if isinstance(ctx, NPDMLBlock):
-				ret += ctx._indent
-		return ret
+			if isinstance(ctx, NPDMLBlock) and ctx._own_counter > 0:
+				yield ctx._own_counter
+		if isinstance(last, NPDMLBlock) and last._own_counter > 0:
+			yield last._own_counter
 
-	def get_counters(self):
-		for ctx in self.ctx:
-			if isinstance(ctx, NPDMLBlock) and 'counter' in ctx:
-				yield ctx['counter']
+	def get_section_id(self):
+		return 'sect-%s' % ('-'.join(str(x) for x in self.get_counters()),)
 
 	def get_parent_block(self, ignore=None):
 		for ctx in reversed(self.ctx):
