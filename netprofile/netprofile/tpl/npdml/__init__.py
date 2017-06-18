@@ -32,7 +32,9 @@ __all__ = (
 	'NPDMLBlock',
 	'NPDMLDocumentContext',
 	'NPDMLMetadataContext',
+	'NPDMLPageTemplateContext',
 	'NPDMLPageContext',
+	'NPDMLFrameContext',
 	'NPDMLTitleContext',
 	'NPDMLSectionContext',
 	'NPDMLParagraphContext',
@@ -85,6 +87,12 @@ class NPDMLDocumentContext(NPDMLContext, NPDMLBlock):
 	is_numbered = False
 
 class NPDMLMetadataContext(NPDMLContext):
+	pass
+
+class NPDMLPageTemplateContext(NPDMLContext):
+	pass
+
+class NPDMLFrameContext(NPDMLContext):
 	pass
 
 class NPDMLPageContext(NPDMLContext):
@@ -148,26 +156,31 @@ class NPDMLSubscriptContext(NPDMLContext):
 class NPDMLFontContext(NPDMLContext):
 	pass
 
+def _tag(name):
+	return '{http://netprofile.ru/schemas/npdml/1.0}' + name
+
 _NPDML_CLASS_MAP = {
-	'{http://netprofile.ru/schemas/npdml/1.0}document' : NPDMLDocumentContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}meta'     : NPDMLMetadataContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}page'     : NPDMLPageContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}title'    : NPDMLTitleContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}section'  : NPDMLSectionContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}para'     : NPDMLParagraphContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}table'    : NPDMLTableContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}caption'  : NPDMLTableCaptionContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}hrow'     : NPDMLTableHeaderContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}row'      : NPDMLTableRowContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}cell'     : NPDMLTableCellContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}a'        : NPDMLAnchorContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}b'        : NPDMLBoldContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}i'        : NPDMLItalicContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}u'        : NPDMLUnderlineContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}strike'   : NPDMLStrikethroughContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}super'    : NPDMLSuperscriptContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}sub'      : NPDMLSubscriptContext,
-	'{http://netprofile.ru/schemas/npdml/1.0}font'     : NPDMLFontContext
+	_tag('document'): NPDMLDocumentContext,
+	_tag('meta'): NPDMLMetadataContext,
+	_tag('pageTemplates'): NPDMLPageTemplateContext,
+	_tag('page'): NPDMLPageContext,
+	_tag('frame'): NPDMLFrameContext,
+	_tag('title'): NPDMLTitleContext,
+	_tag('section'): NPDMLSectionContext,
+	_tag('para'): NPDMLParagraphContext,
+	_tag('table'): NPDMLTableContext,
+	_tag('caption'): NPDMLTableCaptionContext,
+	_tag('hrow'): NPDMLTableHeaderContext,
+	_tag('row'): NPDMLTableRowContext,
+	_tag('cell'): NPDMLTableCellContext,
+	_tag('a'): NPDMLAnchorContext,
+	_tag('b'): NPDMLBoldContext,
+	_tag('i'): NPDMLItalicContext,
+	_tag('u'): NPDMLUnderlineContext,
+	_tag('strike'): NPDMLStrikethroughContext,
+	_tag('super'): NPDMLSuperscriptContext,
+	_tag('sub'): NPDMLSubscriptContext,
+	_tag('font'): NPDMLFontContext
 }
 
 class NPDMLParseTarget(object):

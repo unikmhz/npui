@@ -16,6 +16,7 @@ requires = [
 	'python-dateutil',
 	'dogpile.cache >= 0.4.1',
 	'repoze.tm2',
+	'pyparsing >= 2.2',
 
 	'SQLAlchemy >= 1.2',
 	'zope.sqlalchemy',
@@ -71,7 +72,7 @@ setup(
 	cmdclass=commands,
 	description='NetProfile Administrative UI',
 	license='GNU Affero General Public License v3 or later (AGPLv3+)',
-	long_description=README_LOCAL + '\n\n' +  README_GLOBAL,
+	long_description=README_LOCAL + '\n\n' + README_GLOBAL,
 	classifiers=[
 		'Programming Language :: Python',
 		'Programming Language :: Python :: 2',

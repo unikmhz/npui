@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 import datetime
-import io
 import urllib
 
 from netprofile import PY3
@@ -46,6 +45,8 @@ from pyramid.i18n import (
 )
 from pyramid.response import Response
 from reportlab.platypus import (
+	Frame,
+	PageTemplate,
 	Paragraph,
 	LongTable
 )
@@ -92,9 +93,9 @@ class PDFExportFormat(ExportFormat):
 			'editable'       : False,
 			'store'          : {
 				'xtype'   : 'simplestore',
-				'sorters' : [{ 'property' : 'value', 'direction' : 'ASC' }],
+				'sorters' : [{'property' : 'value', 'direction' : 'ASC'}],
 				'fields'  : ('id', 'value'),
-				'data'    : tuple({ 'id' : k, 'value' : v[0] } for k, v in PAGE_SIZES.items())
+				'data'    : tuple({'id' : k, 'value' : v[0]} for k, v in PAGE_SIZES.items())
 			}
 		}, {
 			'name'           : 'pdf_orient',
@@ -112,9 +113,9 @@ class PDFExportFormat(ExportFormat):
 			'editable'       : False,
 			'store'          : {
 				'xtype'   : 'simplestore',
-				'sorters' : [{ 'property' : 'value', 'direction' : 'ASC' }],
+				'sorters' : [{'property' : 'value', 'direction' : 'ASC'}],
 				'fields'  : ('id', 'value'),
-				'data'    : tuple({ 'id' : k, 'value' : loc.translate(v[0]) } for k, v in PAGE_ORIENTATIONS.items())
+				'data'    : tuple({'id' : k, 'value' : loc.translate(v[0])} for k, v in PAGE_ORIENTATIONS.items())
 			}
 		}, {
 			'name'           : 'pdf_hmargins',
@@ -225,6 +226,15 @@ class PDFExportFormat(ExportFormat):
 				format_datetime(now, locale=req.current_locale)
 			)
 		)
+
+		frame = Frame(
+			doc.leftMargin,
+			doc.bottomMargin,
+			doc.width,
+			doc.height,
+			id='body'
+		)
+		doc.addPageTemplates(PageTemplate(id='default', pagesize=doc.pagesize, frames=(frame,)))
 
 		total_width = doc.width - total_width - 12
 		if total_flex > 0:

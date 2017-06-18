@@ -27,13 +27,9 @@ from __future__ import (
 	division
 )
 
-__all__ = (
-	'PAGE_ORIENTATIONS',
-	'PAGE_SIZES'
-)
-
 import logging
 import os
+import re
 
 from reportlab.lib import (
 	colors,
@@ -42,7 +38,9 @@ from reportlab.lib import (
 )
 from reportlab.lib.units import (
 	cm,
-	inch
+	inch,
+	mm,
+	pica
 )
 from reportlab.lib.enums import (
 	TA_LEFT,
@@ -55,15 +53,21 @@ from reportlab.pdfbase import (
 	ttfonts
 )
 from reportlab.platypus import (
-	doctemplate,
-	frames,
-	tables
+	ActionFlowable,
+	BaseDocTemplate,
+	TableStyle
 )
 from pyramid.i18n import TranslationStringFactory
 
 from netprofile.common.util import (
 	as_dict,
 	make_config_dict
+)
+
+__all__ = (
+	'PAGE_ORIENTATIONS',
+	'PAGE_SIZES',
+	'eval_length'
 )
 
 logger = logging.getLogger(__name__)
@@ -160,7 +164,32 @@ PAGE_ORIENTATIONS = {
 
 DEFAULT_FONT = None
 
-class DefaultTableStyle(tables.TableStyle):
+_re_units = re.compile(r'^(\d*(?:\.\d+)?)\s*(pt|in|inch|mm|cm|pc|pica|px)?$', re.IGNORECASE)
+
+def eval_length(length_str):
+	if length_str is None:
+		return None
+	m = _re_units.match(length_str)
+	if m is None:
+		return None
+	amount = float(m.group(1))
+	unit = m.group(2)
+	if unit is not None:
+		unit = unit.lower()
+	if unit in ('in', 'inch'):
+		amount *= inch
+	elif unit == 'mm':
+		amount *= mm
+	elif unit == 'cm':
+		amount *= cm
+	elif unit in ('pc', 'pica'):
+		amount *= pica
+	elif unit == 'px':
+		# We use conventional DPI of 96
+		amount *= 0.75
+	return amount
+
+class DefaultTableStyle(TableStyle):
 	def __init__(self, cmds=None, parent=None, **kw):
 		has_header = kw.pop('has_header', True)
 		font = kw.pop('font', DEFAULT_FONT)
@@ -187,7 +216,7 @@ class DefaultTableStyle(tables.TableStyle):
 			new_cmds.append(('ROWBACKGROUNDS', (0, first_data), (-1, -1), row_bg))
 		self._cmds = new_cmds + self._cmds
 
-class OutlineEntryFlowable(doctemplate.ActionFlowable):
+class OutlineEntryFlowable(ActionFlowable):
 	def __init__(self, title, key, level=0, closed=None, bookmark=False):
 		self.title = title
 		self.key = key
@@ -201,7 +230,7 @@ class OutlineEntryFlowable(doctemplate.ActionFlowable):
 			canvas.bookmarkPage(self.key, fit='FitH')
 		canvas.addOutlineEntry(self.title, self.key, self.level, self.closed)
 
-class DefaultDocTemplate(doctemplate.BaseDocTemplate):
+class DefaultDocTemplate(BaseDocTemplate):
 	def __init__(self, filename, **kwargs):
 		pgsz = kwargs.pop('pagesize', 'a4')
 		if pgsz in PAGE_SIZES:
@@ -221,35 +250,6 @@ class DefaultDocTemplate(doctemplate.BaseDocTemplate):
 				kwargs['author'] = (u.name_full + ' (' + u.login + ')').strip()
 
 		super(DefaultDocTemplate, self).__init__(filename, **kwargs)
-
-		fr_body = frames.Frame(
-			self.leftMargin,
-			self.bottomMargin,
-			self.width,
-			self.height,
-			id='body'
-		)
-		fr_left = frames.Frame(
-			self.leftMargin,
-			self.bottomMargin,
-			self.width / 2,
-			self.height,
-			rightPadding=12,
-			id='left'
-		)
-		fr_right = frames.Frame(
-			self.leftMargin + self.width / 2,
-			self.bottomMargin,
-			self.width / 2,
-			self.height,
-			leftPadding=12,
-			id='right'
-		)
-
-		self.addPageTemplates((
-			doctemplate.PageTemplate(id='default', pagesize=pgsz, frames=(fr_body,)),  # onPage=callback
-			doctemplate.PageTemplate(id='2columns', pagesize=pgsz, frames=(fr_left, fr_right))
-		))
 
 def _register_fonts(settings):
 	global DEFAULT_FONT
@@ -380,7 +380,8 @@ def _pdf_style_sheet(cfg):
 		fontName=fonts[1],
 		bulletFontName=fonts[1],
 		fontSize=16,
-		bulletFontSize=16
+		bulletFontSize=16,
+		alignment=TA_CENTER
 	))
 	ss.add(styles.ParagraphStyle(
 		name='heading1',
@@ -441,7 +442,7 @@ def _pdf_style_sheet(cfg):
 	if len(custom_ss) > 0:
 		custom_ss = as_dict(custom_ss)
 		for name in custom_ss:
-			pass # FIXME: write this
+			pass  # FIXME: write this
 
 	logger.debug('Loaded preconfigured PDF fonts and styles.')
 	return ss

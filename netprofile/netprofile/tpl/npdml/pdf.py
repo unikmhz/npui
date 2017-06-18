@@ -28,58 +28,133 @@ from __future__ import (
 )
 
 import io
-import re
+import math
+import operator
+import pyparsing as pp
+
+from reportlab.platypus import (
+	Frame,
+	Indenter,
+	PageBreakIfNotEmpty,
+	PageTemplate,
+	Paragraph,
+	Table
+)
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from pyramid.decorator import reify
 
 from netprofile import PY3
+from netprofile.pdf import (
+	DefaultDocTemplate,
+	DefaultTableStyle,
+	OutlineEntryFlowable,
+	PAGE_SIZES,
+	PAGE_ORIENTATIONS,
+	eval_length
+)
+from netprofile.tpl.npdml import *
 if PY3:
 	from html import escape as html_escape
 else:
 	from cgi import escape as html_escape
 
-from reportlab.platypus import (
-	Indenter,
-	NextPageTemplate,
-	PageBreak,
-	Paragraph,
-	Spacer,
-	Table,
-	TableStyle
-)
-from reportlab.lib import colors
-from reportlab.lib.units import (
-	cm, mm,
-	inch, pica
-)
+class NPDMLExpressionParser(object):
+	_op = {
+		'+': operator.add,
+		'-': operator.sub,
+		'*': operator.mul,
+		'/': operator.truediv,
+		'^': operator.pow
+	}
+	_fn = {
+		'sin': math.sin,
+		'cos': math.cos,
+		'tan': math.tan,
+		'atan': math.atan,
+		'abs': abs,
+		'trunc': lambda x: int(x),
+		'floor': math.floor,
+		'ceil': math.ceil
+	}
 
-from netprofile.pdf import (
-	DefaultDocTemplate,
-	DefaultTableStyle,
-	OutlineEntryFlowable
-)
-from netprofile.tpl.npdml import *
+	def __init__(self, **kwargs):
+		self.stack = []
+		self.vars = kwargs
 
-_re_units = re.compile(r'^(\d*(?:\.\d+)?)\s*(pt|in|inch|mm|cm|pc|pica|px)?$')
+	def _push_first(self, strg, loc, toks):
+		self.stack.append(toks[0])
 
-def _conv_length(length_str):
-	if length_str is None:
-		return None
-	m = _re_units.match(length_str)
-	if m is None:
-		return None
-	amount = float(m.group(1))
-	unit = m.group(2)
-	if unit in ('in', 'inch'):
-		amount *= inch
-	elif unit == 'mm':
-		amount *= mm
-	elif unit == 'cm':
-		amount *= cm
-	elif unit in ('pc', 'pica'):
-		amount *= pica
-	elif unit == 'px':
-		# We use conventional DPI of 96
-		amount *= 0.75
-	return amount
+	def _push_uminus(self, strg, loc, toks):
+		if toks and toks[0] == '-':
+			self.stack.append('U-')
+
+	def _eval(self):
+		op = self.stack.pop()
+		if op == 'U-':
+			return -self._eval()
+		if op in self._op:
+			arg2 = self._eval()
+			arg1 = self._eval()
+			return self._op[op](arg1, arg2)
+		if op in self._fn:
+			return self._fn[op](self._eval())
+		if op == 'PI':
+			return math.pi
+		if op == 'E':
+			return math.e
+		if op in self.vars:
+			return self.vars[op]
+
+		return eval_length(op)
+
+	@reify
+	def _expr_parser(self):
+		point = pp.Literal('.')
+		e = pp.CaselessLiteral('E')
+		pi = pp.CaselessLiteral('PI')
+
+		lengths = pp.oneOf(('pt', 'in', 'inch', 'mm', 'cm', 'pc', 'pica', 'px'), caseless=True)
+
+		fp_number = pp.Combine(
+			pp.Word('+-' + pp.nums, pp.nums) +
+			pp.Optional(point + pp.Optional(pp.Word(pp.nums))) +
+			pp.Optional(e + pp.Word('+-' + pp.nums, pp.nums)) +
+			pp.Optional(lengths)
+		)
+		ident = pp.Word(pp.alphas, pp.alphas + pp.nums + '_')
+
+		plus = pp.Literal('+')
+		minus = pp.Literal('-')
+		mult = pp.Literal('*')
+		div = pp.Literal('/')
+		lpar = pp.Literal('(').suppress()
+		rpar = pp.Literal(')').suppress()
+
+		addop = plus | minus
+		multop = mult | div
+		expop = pp.Literal('^')
+
+		expr = pp.Forward()
+
+		atom = (
+			pp.Optional('-') +
+			(pi | e | fp_number | ident + lpar + expr + rpar | ident).setParseAction(self._push_first) |
+			(lpar + expr.suppress() + rpar)
+		).setParseAction(self._push_uminus)
+
+		factor = pp.Forward()
+		factor << atom + pp.ZeroOrMore((expop + factor).setParseAction(self._push_first))
+
+		term = factor + pp.ZeroOrMore((multop + factor).setParseAction(self._push_first))
+		expr << term + pp.ZeroOrMore((addop + term).setParseAction(self._push_first))
+
+		return expr
+
+	def parse(self, expr):
+		self.stack = []
+		self._expr_parser.parseString(expr)
+		return self._eval()
 
 def _attr_str(attrs):
 	return ' '.join(('%s="%s"' % (k, html_escape(v))) for k, v in attrs.items())
@@ -99,13 +174,13 @@ class PDFParseTarget(NPDMLParseTarget):
 		self._opts = kwargs
 		self._doc = None
 		self._title = None
-		self._first_page_tpl = None
-		self._pageTemplates = []
+		self._page_tpls = {}
+		self._cur_page_tpl = None
 
 	@property
 	def doc(self):
 		if self._doc is None:
-			self._doc = NPDMLDocTemplate(
+			doc = self._doc = NPDMLDocTemplate(
 				self.buf,
 				request=self.req,
 				pagesize=self._opts.get('pagesize', 'a4'),
@@ -116,10 +191,59 @@ class PDFParseTarget(NPDMLParseTarget):
 				bottomMargin=self._opts.get('bottomMargin', 2.0 * cm),
 				title=self._title
 			)
-			if self._first_page_tpl:
-				for idx, ptpl in enumerate(self._doc.pageTemplates):
-					if ptpl.id == self._first_page_tpl:
-						self._doc._firstPageTemplateIndex = idx
+			parser = NPDMLExpressionParser(
+				width=doc.width,
+				height=doc.height,
+				topMargin=doc.topMargin,
+				leftMargin=doc.leftMargin,
+				rightMargin=doc.rightMargin,
+				bottomMargin=doc.bottomMargin
+			)
+			pages = []
+			for tplid, tpl in self._page_tpls.items():
+				page_size = tpl.get('size')
+				if page_size in PAGE_SIZES:
+					page_size = PAGE_SIZES[page_size][1]
+				else:
+					page_size = doc.pagesize
+
+				orient = tpl.get('orientation')
+				if orient in PAGE_ORIENTATIONS:
+					page_size = PAGE_ORIENTATIONS[orient][1](page_size)
+
+				parser.vars['width'] = page_size[0] - doc.leftMargin - doc.rightMargin
+				parser.vars['height'] = page_size[1] - doc.topMargin - doc.bottomMargin
+
+				frames = []
+				framedef = tpl['frames']
+				if len(framedef) == 0:
+					framedef.append({})
+				for frame in framedef:
+					kwargs = dict((k, parser.parse(v)) for k, v in frame.items() if k in {
+						'topPadding',
+						'leftPadding',
+						'rightPadding',
+						'bottomPadding'
+					})
+					frames.append(Frame(
+						parser.parse(frame['x']) if 'x' in frame else doc.leftMargin,
+						parser.parse(frame['y']) if 'y' in frame else doc.bottomMargin,
+						parser.parse(frame['width']) if 'width' in frame else parser.vars['width'],
+						parser.parse(frame['height']) if 'height' in frame else parser.vars['height'],
+						id=frame.get('id', 'body'),
+						**kwargs
+					))
+
+				next_page = tpl.get('next')
+				if next_page is not None:
+					next_page = next_page.split(',')
+				pages.append(PageTemplate(
+					id=tplid,
+					pagesize=page_size,
+					autoNextPageTemplate=next_page,
+					frames=frames
+				))
+			doc.addPageTemplates(pages)
 		return self._doc
 
 	def start(self, tag, attrs):
@@ -136,18 +260,24 @@ class PDFParseTarget(NPDMLParseTarget):
 			parent.data = []
 
 		if isinstance(curctx, NPDMLPageContext):
-			tpl = ['default']
-			if 'template' in curctx:
-				tpl = curctx['template']
-				if ',' in tpl:
-					tpl = tpl.split(',')
+			if isinstance(parent, NPDMLPageTemplateContext):
+				curctx.setdefault('id', 'default')
+				curctx['frames'] = []
+			elif isinstance(parent, NPDMLDocumentContext):
+				tpl = ['default']
+				if 'template' in curctx:
+					tpl = curctx['template']
+					if ',' in tpl:
+						tpl = tpl.split(',')
+					else:
+						tpl = [tpl]
+				elif self._cur_page_tpl is not None:
+					tpl = [self._cur_page_tpl.get('next', 'default')]
+				if len(tpl) == 1:
+					self._cur_page_tpl = self._page_tpls[tpl[0]]
 				else:
-					tpl = [tpl]
-			self.story.append(NextPageTemplate(*tpl))
-			if self._first_page_tpl is None:
-				self._first_page_tpl = tpl[0]
-			else:
-				self.story.append(PageBreak())
+					self._cur_page_tpl = None
+				self.story.append(PageBreakIfNotEmpty(*tpl))
 
 		if isinstance(curctx, NPDMLBlock):
 			if curctx.is_numbered:
@@ -159,7 +289,11 @@ class PDFParseTarget(NPDMLParseTarget):
 		parent = self.parent
 		ss = self.req.pdf_styles
 
-		if isinstance(curctx, NPDMLParagraphContext):
+		if isinstance(curctx, NPDMLPageContext) and isinstance(parent, NPDMLPageTemplateContext):
+			self._page_tpls[curctx['id']] = curctx
+		elif isinstance(curctx, NPDMLFrameContext) and isinstance(parent, NPDMLPageContext):
+			parent['frames'].append(curctx)
+		elif isinstance(curctx, NPDMLParagraphContext):
 			btext = None
 			if curctx.is_numbered:
 				btext = self.get_bullet(curctx)
@@ -174,7 +308,7 @@ class PDFParseTarget(NPDMLParseTarget):
 			if isinstance(parent, NPDMLTableHeaderContext):
 				para_style = 'table_header'
 			if 'width' in curctx:
-				parent.widths.append(_conv_length(curctx['width']))
+				parent.widths.append(eval_length(curctx['width']))
 			else:
 				parent.widths.append(None)
 			para = Paragraph(curctx.get_data(), ss[curctx.get('style', para_style)])
@@ -283,8 +417,13 @@ class PDFParseTarget(NPDMLParseTarget):
 			else:
 				parent.data.append(curctx.get_data())
 		elif isinstance(curctx, NPDMLTitleContext):
-			# FIXME: draw actual title
-			if isinstance(parent, NPDMLMetadataContext):
+			if isinstance(parent, NPDMLPageContext):
+				para = Paragraph(
+					curctx.get_data(),
+					ss[curctx.get('style', 'title')]
+				)
+				self.story.append(para)
+			elif isinstance(parent, NPDMLMetadataContext):
 				self._title = curctx.get_data()
 			elif isinstance(parent, NPDMLSectionContext):
 				text = curctx.get_data()
