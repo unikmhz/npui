@@ -40,12 +40,14 @@ from reportlab.platypus import (
 	Paragraph,
 	Table
 )
+from reportlab.graphics import shapes
 from reportlab.lib import colors
 from reportlab.lib.units import cm
 from pyramid.decorator import reify
 
 from netprofile import PY3
 from netprofile.pdf import (
+	CanvasFlowable,
 	DefaultDocTemplate,
 	DefaultTableStyle,
 	OutlineEntryFlowable,
@@ -278,8 +280,16 @@ class PDFParseTarget(NPDMLParseTarget):
 				else:
 					self._cur_page_tpl = None
 				self.story.append(PageBreakIfNotEmpty(*tpl))
+		elif isinstance(curctx, NPDMLCanvasContext):
+			curctx.canvas = CanvasFlowable(
+				eval_length(curctx['x']),
+				eval_length(curctx['y']),
+				width=eval_length(curctx.get('width', 0)),
+				height=eval_length(curctx.get('height', 0)),
+				position=curctx.get('position', 'absolute')
+			)
 
-		if isinstance(curctx, NPDMLBlock):
+		if isinstance(curctx, NPDMLBlock) and not isinstance(parent, NPDMLCanvasContext):
 			if curctx.is_numbered:
 				curctx._indenter = Indenter(self._indent_step)
 				self.story.append(curctx._indenter)
@@ -302,7 +312,10 @@ class PDFParseTarget(NPDMLParseTarget):
 				ss[curctx.get('style', 'body')],
 				bulletText=btext
 			)
-			self.story.append(para)
+			if isinstance(parent, NPDMLCanvasContext):
+				parent.canvas.add((curctx, para))
+			else:
+				self.story.append(para)
 		elif isinstance(curctx, NPDMLTableCellContext):
 			para_style = 'body'
 			if isinstance(parent, NPDMLTableHeaderContext):
@@ -455,6 +468,31 @@ class PDFParseTarget(NPDMLParseTarget):
 					bulletText=btext
 				)
 				self.story.append(para)
+		elif isinstance(curctx, NPDMLCanvasContext):
+			self.story.append(curctx.canvas)
+
+		# Process canvas-only elements
+		if isinstance(parent, NPDMLCanvasContext):
+			canvas = parent.canvas
+			if isinstance(curctx, NPDMLLineContext):
+				x1 = eval_length(curctx.pop('x1', 0))
+				y1 = eval_length(curctx.pop('y1', 0))
+				x2 = eval_length(curctx.pop('x2'))
+				y2 = eval_length(curctx.pop('y2'))
+				canvas.add(shapes.Line(x1, -y1, x2, -y2, **curctx))
+			elif isinstance(curctx, NPDMLRectangleContext):
+				x = eval_length(curctx.pop('x', 0))
+				y = eval_length(curctx.pop('y', 0))
+				width = eval_length(curctx.pop('width'))
+				height = eval_length(curctx.pop('height', width))
+				rx = eval_length(curctx.pop('rx', 0))
+				ry = eval_length(curctx.pop('ry', 0))
+				curctx.setdefault('fillColor', None)
+				canvas.add(shapes.Rect(x, - y - height, width, height, rx, ry, **curctx))
+			elif isinstance(curctx, NPDMLLabelContext):
+				x = eval_length(curctx.pop('x', 0))
+				y = eval_length(curctx.pop('y', 0))
+				canvas.add(shapes.String(x, -y, curctx.get_data()), **curctx)
 
 		if isinstance(curctx, NPDMLBlock) and curctx._indenter:
 			self.story.append(Indenter(-curctx._indenter.left, -curctx._indenter.right))

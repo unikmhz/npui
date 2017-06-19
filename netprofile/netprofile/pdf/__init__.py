@@ -55,8 +55,10 @@ from reportlab.pdfbase import (
 from reportlab.platypus import (
 	ActionFlowable,
 	BaseDocTemplate,
+	Flowable,
 	TableStyle
 )
+from reportlab.graphics import shapes
 from pyramid.i18n import TranslationStringFactory
 
 from netprofile.common.util import (
@@ -169,6 +171,8 @@ _re_units = re.compile(r'^(\d*(?:\.\d+)?)\s*(pt|in|inch|mm|cm|pc|pica|px)?$', re
 def eval_length(length_str):
 	if length_str is None:
 		return None
+	if isinstance(length_str, (int, float)):
+		return length_str
 	m = _re_units.match(length_str)
 	if m is None:
 		return None
@@ -229,6 +233,70 @@ class OutlineEntryFlowable(ActionFlowable):
 		if self.bookmark:
 			canvas.bookmarkPage(self.key, fit='FitH')
 		canvas.addOutlineEntry(self.title, self.key, self.level, self.closed)
+
+CANVAS_ABSOLUTE = 0
+CANVAS_RELATIVE = 1
+
+_CANVAS_POS = {
+	CANVAS_RELATIVE: CANVAS_RELATIVE,
+	CANVAS_ABSOLUTE: CANVAS_ABSOLUTE,
+	'relative': CANVAS_RELATIVE,
+	'absolute': CANVAS_ABSOLUTE
+}
+
+class CanvasFlowable(Flowable):
+	def __init__(self, x=0, y=0, width=0, height=0, position=CANVAS_ABSOLUTE):
+		self.contents = []
+		self.offset_x = x
+		self.offset_y = y
+		self.width = width
+		self.height = height
+		self.position = _CANVAS_POS[position]
+		self._drawing = None
+
+	@property
+	def drawing(self):
+		if self._drawing is None:
+			self._drawing = shapes.Drawing(self.width, self.height)
+		return self._drawing
+
+	def add(self, obj):
+		if isinstance(obj, shapes.Shape):
+			self.drawing.add(obj)
+		else:
+			self.contents.append(obj)
+
+	def coord(self, pgsz, x, y):
+		return (self.offset_x + x, pgsz[1] - self.offset_y - y)
+
+	def drawOn(self, canvas, x, y, _sW=0):
+		pgsz = canvas._doctemplate.pageTemplate.pagesize
+
+		pos_x = self.offset_x
+		pos_y = pgsz[1] - self.offset_y
+		max_width = pgsz[0] - self.offset_x
+		max_height = pgsz[1] - self.offset_y
+		if self.position == CANVAS_RELATIVE:
+			pos_x = x + self.offset_x
+			pos_y = y - self.offset_y
+			max_width -= x
+			max_height -= (pgsz[1] - y)
+		if self.width > 0 and self.height > 0:
+			max_width = self.width
+			max_height = self.height
+
+		for cont in self.contents:
+			ctx, obj = cont
+			ox = eval_length(ctx.get('x', 0))
+			oy = eval_length(ctx.get('y', 0))
+			owidth = min(eval_length(ctx.get('width', max_width)), max_width)
+			oheight = min(eval_length(ctx.get('height', max_height)), max_height)
+			wwidth, wheight = obj.wrapOn(canvas, owidth, oheight)
+			obj.drawOn(canvas, pos_x + ox, pos_y - oy - wheight)
+
+		if self._drawing is not None:
+			self._drawing.wrapOn(canvas, max_width, max_height)
+			self._drawing.drawOn(canvas, pos_x, pos_y)
 
 class DefaultDocTemplate(BaseDocTemplate):
 	def __init__(self, filename, **kwargs):

@@ -51,6 +51,10 @@ __all__ = (
 	'NPDMLSuperscriptContext',
 	'NPDMLSubscriptContext',
 	'NPDMLFontContext',
+	'NPDMLCanvasContext',
+	'NPDMLLabelContext',
+	'NPDMLLineContext',
+	'NPDMLRectangleContext',
 	'NPDMLParseTarget'
 )
 
@@ -156,6 +160,18 @@ class NPDMLSubscriptContext(NPDMLContext):
 class NPDMLFontContext(NPDMLContext):
 	pass
 
+class NPDMLCanvasContext(NPDMLContext):
+	pass
+
+class NPDMLLabelContext(NPDMLContext):
+	pass
+
+class NPDMLLineContext(NPDMLContext):
+	pass
+
+class NPDMLRectangleContext(NPDMLContext):
+	pass
+
 def _tag(name):
 	return '{http://netprofile.ru/schemas/npdml/1.0}' + name
 
@@ -180,7 +196,11 @@ _NPDML_CLASS_MAP = {
 	_tag('strike'): NPDMLStrikethroughContext,
 	_tag('super'): NPDMLSuperscriptContext,
 	_tag('sub'): NPDMLSubscriptContext,
-	_tag('font'): NPDMLFontContext
+	_tag('font'): NPDMLFontContext,
+	_tag('canvas'): NPDMLCanvasContext,
+	_tag('label'): NPDMLLabelContext,
+	_tag('line'): NPDMLLineContext,
+	_tag('rect'): NPDMLRectangleContext
 }
 
 class NPDMLParseTarget(object):
