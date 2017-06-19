@@ -412,16 +412,14 @@ def _pdf_style_sheet(cfg):
 		name='bold',
 		parent=ss['body'],
 		fontName=fonts[1],
-		bulletFontName=fonts[1],
-		alias='strong'
-	))
+		bulletFontName=fonts[1]
+	), alias='strong')
 	ss.add(styles.ParagraphStyle(
 		name='italic',
 		parent=ss['body'],
 		fontName=fonts[2],
-		bulletFontName=fonts[2],
-		alias='em'
-	))
+		bulletFontName=fonts[2]
+	), alias='em')
 	ss.add(styles.ParagraphStyle(
 		name='left',
 		parent=ss['body'],
@@ -443,8 +441,13 @@ def _pdf_style_sheet(cfg):
 		alignment=TA_JUSTIFY
 	))
 	ss.add(styles.ParagraphStyle(
+		name='heading',
+		parent=ss['default'],
+		spaceBefore=14
+	))
+	ss.add(styles.ParagraphStyle(
 		name='title',
-		parent=ss['body'],
+		parent=ss['heading'],
 		fontName=fonts[1],
 		bulletFontName=fonts[1],
 		fontSize=16,
@@ -453,45 +456,40 @@ def _pdf_style_sheet(cfg):
 	))
 	ss.add(styles.ParagraphStyle(
 		name='heading1',
-		parent=ss['body'],
+		parent=ss['heading'],
 		fontName=fonts[1],
 		bulletFontName=fonts[1],
 		fontSize=14,
-		bulletFontSize=14,
-		alias='h1'
-	))
+		bulletFontSize=14
+	), alias='h1')
 	ss.add(styles.ParagraphStyle(
 		name='heading2',
-		parent=ss['body'],
+		parent=ss['heading'],
 		fontName=fonts[1],
 		bulletFontName=fonts[1],
 		fontSize=12,
-		bulletFontSize=12,
-		alias='h2'
-	))
+		bulletFontSize=12
+	), alias='h2')
 	ss.add(styles.ParagraphStyle(
 		name='heading3',
-		parent=ss['body'],
+		parent=ss['heading'],
 		fontName=fonts[1],
 		bulletFontName=fonts[1],
 		fontSize=11,
-		bulletFontSize=11,
-		alias='h3'
-	))
+		bulletFontSize=11
+	), alias='h3')
 	ss.add(styles.ParagraphStyle(
 		name='heading4',
-		parent=ss['body'],
+		parent=ss['heading'],
 		fontName=fonts[1],
-		bulletFontName=fonts[1],
-		alias='h4'
-	))
+		bulletFontName=fonts[1]
+	), alias='h4')
 	ss.add(styles.ParagraphStyle(
 		name='heading5',
-		parent=ss['body'],
+		parent=ss['heading'],
 		fontName=fonts[2],
-		bulletFontName=fonts[2],
-		alias='h5'
-	))
+		bulletFontName=fonts[2]
+	), alias='h5')
 	ss.add(styles.ParagraphStyle(
 		name='caption',
 		parent=ss['body'],
@@ -502,9 +500,8 @@ def _pdf_style_sheet(cfg):
 		name='table_header',
 		parent=ss['body'],
 		fontName=fonts[1],
-		bulletFontName=fonts[1],
-		alias='th'
-	))
+		bulletFontName=fonts[1]
+	), alias='th')
 
 	custom_ss = make_config_dict(settings, 'netprofile.pdf_styles.')
 	if len(custom_ss) > 0:
