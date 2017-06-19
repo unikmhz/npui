@@ -493,6 +493,19 @@ class PDFParseTarget(NPDMLParseTarget):
 				x = eval_length(curctx.pop('x', 0))
 				y = eval_length(curctx.pop('y', 0))
 				canvas.add(shapes.String(x, -y, curctx.get_data()), **curctx)
+			elif isinstance(curctx, NPDMLCircleContext):
+				cx = eval_length(curctx.pop('cx'))
+				cy = eval_length(curctx.pop('cy'))
+				radius = eval_length(curctx.pop('radius'))
+				curctx.setdefault('fillColor', None)
+				canvas.add(shapes.Circle(cx, -cy, radius, **curctx))
+			elif isinstance(curctx, NPDMLEllipseContext):
+				cx = eval_length(curctx.pop('cx'))
+				cy = eval_length(curctx.pop('cy'))
+				rx = eval_length(curctx.pop('rx'))
+				ry = eval_length(curctx.pop('ry'))
+				curctx.setdefault('fillColor', None)
+				canvas.add(shapes.Ellipse(cx, -cy, rx, ry, **curctx))
 
 		if isinstance(curctx, NPDMLBlock) and curctx._indenter:
 			self.story.append(Indenter(-curctx._indenter.left, -curctx._indenter.right))

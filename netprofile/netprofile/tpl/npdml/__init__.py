@@ -55,6 +55,8 @@ __all__ = (
 	'NPDMLLabelContext',
 	'NPDMLLineContext',
 	'NPDMLRectangleContext',
+	'NPDMLCircleContext',
+	'NPDMLEllipseContext',
 	'NPDMLParseTarget'
 )
 
@@ -172,6 +174,12 @@ class NPDMLLineContext(NPDMLContext):
 class NPDMLRectangleContext(NPDMLContext):
 	pass
 
+class NPDMLCircleContext(NPDMLContext):
+	pass
+
+class NPDMLEllipseContext(NPDMLContext):
+	pass
+
 def _tag(name):
 	return '{http://netprofile.ru/schemas/npdml/1.0}' + name
 
@@ -200,7 +208,9 @@ _NPDML_CLASS_MAP = {
 	_tag('canvas'): NPDMLCanvasContext,
 	_tag('label'): NPDMLLabelContext,
 	_tag('line'): NPDMLLineContext,
-	_tag('rect'): NPDMLRectangleContext
+	_tag('rect'): NPDMLRectangleContext,
+	_tag('circle'): NPDMLCircleContext,
+	_tag('ellipse'): NPDMLEllipseContext
 }
 
 class NPDMLParseTarget(object):
