@@ -45,7 +45,8 @@ requires = [
 	'kombu != 3.0.34',
 	'msgpack-python >= 0.4',
 
-	'reportlab >= 3.1'
+	'reportlab >= 3.1',
+	'svglib >= 0.8.1'
 ]
 extras_require = {
 	':python_version<"3.2"' : [

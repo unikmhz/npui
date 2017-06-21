@@ -257,7 +257,11 @@ class CanvasFlowable(Flowable):
 	@property
 	def drawing(self):
 		if self._drawing is None:
-			self._drawing = shapes.Drawing(self.width, self.height)
+			self._drawing = shapes.Drawing(
+				self.width,
+				self.height,
+				initialFontName=DEFAULT_FONT
+			)
 		return self._drawing
 
 	def add(self, obj):

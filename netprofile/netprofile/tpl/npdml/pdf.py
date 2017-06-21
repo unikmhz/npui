@@ -34,6 +34,7 @@ import pyparsing as pp
 
 from reportlab.platypus import (
 	Frame,
+	Image,
 	Indenter,
 	PageBreakIfNotEmpty,
 	PageTemplate,
@@ -43,6 +44,7 @@ from reportlab.platypus import (
 from reportlab.graphics import shapes
 from reportlab.lib import colors
 from reportlab.lib.units import cm
+from svglib import svglib
 from pyramid.decorator import reify
 
 from netprofile import PY3
@@ -53,12 +55,15 @@ from netprofile.pdf import (
 	OutlineEntryFlowable,
 	PAGE_SIZES,
 	PAGE_ORIENTATIONS,
+	DEFAULT_FONT,
 	eval_length
 )
 from netprofile.tpl.npdml import *
 if PY3:
+	from urllib import parse as urlparse
 	from html import escape as html_escape
 else:
+	import urlparse
 	from cgi import escape as html_escape
 
 class NPDMLExpressionParser(object):
@@ -429,6 +434,44 @@ class PDFParseTarget(NPDMLParseTarget):
 				parent.data.append(markup)
 			else:
 				parent.data.append(curctx.get_data())
+		elif isinstance(curctx, NPDMLImageContext):
+			kwargs = {}
+			src = urlparse.urlparse(curctx['src'])
+			# TODO: Support http, https, and vfs URLs
+			if src.scheme != 'file':
+				raise NotImplementedError('Only "file://" URLs are implemented.')
+			image = src.path
+			if image.endswith('.svg') or image.endswith('.svgz'):
+				image = svglib.svg2rlg(image)
+			if isinstance(parent, NPDMLCanvasContext):
+				if isinstance(image, shapes.Drawing):
+					parent.canvas.add((curctx, image))
+				else:
+					x = eval_length(curctx.get('x', 0))
+					y = eval_length(curctx.get('y', 0))
+					# FIXME: we fail to position image properly when
+					#        width/height are not given.
+					width = eval_length(curctx.get('width', 0))
+					height = eval_length(curctx.get('height', 0))
+					image = shapes.Image(x, - y - height, width, height, image)
+					parent.canvas.add(image)
+			else:
+				# TODO: support different scaling modes (kind=)
+				if 'width' in curctx:
+					kwargs['width'] = eval_length(curctx['width'])
+				if 'height' in curctx:
+					kwargs['height'] = eval_length(curctx['height'])
+				if 'align' in curctx:
+					value = curctx['align'].upper()
+					if value in ('LEFT', 'RIGHT', 'CENTER'):
+						kwargs['hAlign'] = value
+				# TODO: vAlign
+				if isinstance(image, shapes.Drawing):
+					for k, v in kwargs.items():
+						setattr(image, k, v)
+					self.story.append(image)
+				else:
+					self.story.append(Image(image, **kwargs))
 		elif isinstance(curctx, NPDMLTitleContext):
 			if isinstance(parent, NPDMLPageContext):
 				para = Paragraph(
@@ -492,7 +535,8 @@ class PDFParseTarget(NPDMLParseTarget):
 			elif isinstance(curctx, NPDMLLabelContext):
 				x = eval_length(curctx.pop('x', 0))
 				y = eval_length(curctx.pop('y', 0))
-				canvas.add(shapes.String(x, -y, curctx.get_data()), **curctx)
+				curctx.setdefault('fontName', DEFAULT_FONT)
+				canvas.add(shapes.String(x, -y, curctx.get_data(), **curctx))
 			elif isinstance(curctx, NPDMLCircleContext):
 				cx = eval_length(curctx.pop('cx'))
 				cy = eval_length(curctx.pop('cy'))

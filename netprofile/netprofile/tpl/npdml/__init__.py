@@ -51,6 +51,7 @@ __all__ = (
 	'NPDMLSuperscriptContext',
 	'NPDMLSubscriptContext',
 	'NPDMLFontContext',
+	'NPDMLImageContext',
 	'NPDMLCanvasContext',
 	'NPDMLLabelContext',
 	'NPDMLLineContext',
@@ -162,6 +163,9 @@ class NPDMLSubscriptContext(NPDMLContext):
 class NPDMLFontContext(NPDMLContext):
 	pass
 
+class NPDMLImageContext(NPDMLContext):
+	pass
+
 class NPDMLCanvasContext(NPDMLContext):
 	pass
 
@@ -205,6 +209,7 @@ _NPDML_CLASS_MAP = {
 	_tag('super'): NPDMLSuperscriptContext,
 	_tag('sub'): NPDMLSubscriptContext,
 	_tag('font'): NPDMLFontContext,
+	_tag('image'): NPDMLImageContext,
 	_tag('canvas'): NPDMLCanvasContext,
 	_tag('label'): NPDMLLabelContext,
 	_tag('line'): NPDMLLineContext,
