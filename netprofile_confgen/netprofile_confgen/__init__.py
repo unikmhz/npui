@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Config Generation module
-# © Copyright 2014-2016 Alex 'Unik' Unigovsky
+# © Copyright 2014-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -42,7 +42,6 @@ class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_confgen:locale/')
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):
@@ -119,10 +118,11 @@ class Module(ModuleBase):
 			'key_name_gen'           : 'nslink.',
 			'key_name_int'           : 'nsexternal.',
 			'key_name_ext'           : 'nsinternal.',
-# TODO: generate these at install time to be somewhat secure even w/o configuration
-#			'key_value_gen'          : None,
-#			'key_value_int'          : None,
-#			'key_value_ext'          : None,
+			# TODO: generate these at install time to be somewhat secure even
+			#       w/o configuration.
+			# 'key_value_gen'          : None,
+			# 'key_value_int'          : None,
+			# 'key_value_ext'          : None,
 			'key_algo_gen'           : 'hmac-md5',
 			'key_algo_int'           : 'hmac-md5',
 			'key_algo_ext'           : 'hmac-md5',
@@ -130,8 +130,8 @@ class Module(ModuleBase):
 			'revzone_retry'          : 300,
 			'revzone_expire'         : 1814400,
 			'revzone_minimum'        : 3600,
-#			'default_domain'         : None,
-#			'hostmaster'             : None,
+			# 'default_domain'         : None,
+			# 'hostmaster'             : None,
 			'dnssec'                 : 'true',
 			'dnssec_accept_expired'  : 'false',
 			'split_dns'              : 'false',
@@ -139,7 +139,7 @@ class Module(ModuleBase):
 			'gen_spf'                : 'true',
 			'gen_dkim'               : 'false',
 			'gen_dmarc'              : 'false'
-		};
+		}
 
 		stypes = (
 			ServerType(

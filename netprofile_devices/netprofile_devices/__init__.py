@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Devices module
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 # © Copyright 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -48,7 +48,6 @@ class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_devices:locale/')
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):

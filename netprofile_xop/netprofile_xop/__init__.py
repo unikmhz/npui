@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: XOP module
-# © Copyright 2014-2016 Alex 'Unik' Unigovsky
+# © Copyright 2014-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -51,7 +51,6 @@ class Module(ModuleBase):
 			factory='netprofile_xop.views.ClientRootFactory',
 			vhost='xop'
 		)
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):

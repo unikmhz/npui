@@ -42,7 +42,6 @@ class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_bills:locale/')
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):
@@ -59,7 +58,6 @@ class Module(ModuleBase):
 
 	@classmethod
 	def get_sql_data(cls, modobj, vpair, sess):
-		from netprofile_bills import models
 		from netprofile_core.models import (
 			Group,
 			GroupCapability,

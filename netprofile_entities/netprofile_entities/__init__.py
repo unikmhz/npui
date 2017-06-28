@@ -42,7 +42,6 @@ class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_entities:locale/')
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):

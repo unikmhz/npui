@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: IP addresses module
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -42,7 +42,6 @@ class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_ipaddresses:locale/')
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):

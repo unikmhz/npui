@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Module detection and loading
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -34,7 +34,7 @@ import transaction
 
 try:
 	from functools import lru_cache
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
 	from functools32 import lru_cache
 
 from zope.interface import (
@@ -62,6 +62,8 @@ class ModuleBase(object):
 	"""
 	Base class for NetProfile modules.
 	"""
+
+	enable_scan = True
 
 	@classmethod
 	def version(cls):
@@ -336,6 +338,9 @@ class ModuleManager(object):
 			self.modules[moddef].module_name + ':static',
 			cache_max_age=3600
 		)
+		self.cfg.commit()
+		if modcls.enable_scan:
+			self.cfg.scan(self.modules[moddef].module_name)
 		if activate:
 			self.models[moddef] = {}
 		mb = self.get_module_browser()
@@ -391,7 +396,7 @@ class ModuleManager(object):
 		"""
 		Unload currently active module.
 		"""
-		raise NotImplementedError # pragma: no cover
+		raise NotImplementedError  # pragma: no cover
 
 	def enable(self, moddef):
 		"""
@@ -407,7 +412,7 @@ class ModuleManager(object):
 			mod = sess.query(NPModule).filter(NPModule.name == moddef).one()
 		except NoResultFound:
 			return False
-		if mod.enabled == True:
+		if mod.enabled:
 			return True
 		mod.enabled = True
 		transaction.commit()
@@ -423,7 +428,7 @@ class ModuleManager(object):
 			logger.error('Can\'t find module \'%s\'. Verify installation and try again.', moddef)
 			return False
 		if moddef in self.loaded:
-			if not self.unload(moddef): # pragma: no cover
+			if not self.unload(moddef):  # pragma: no cover
 				logger.error('Can\'t unload module \'%s\'.', moddef)
 				return False
 		sess = DBSession()
@@ -431,7 +436,7 @@ class ModuleManager(object):
 			mod = sess.query(NPModule).filter(NPModule.name == moddef).one()
 		except NoResultFound:
 			return False
-		if mod.enabled == False:
+		if not mod.enabled:
 			return True
 		mod.enabled = False
 		transaction.commit()
@@ -444,7 +449,7 @@ class ModuleManager(object):
 		"""
 		try:
 			from netprofile_core.models import NPModule
-		except ImportError: # pragma: no cover
+		except ImportError:  # pragma: no cover
 			return False
 
 		sess = DBSession()
@@ -463,12 +468,12 @@ class ModuleManager(object):
 		"""
 		try:
 			from netprofile_core.models import NPModule
-		except ImportError: # pragma: no cover
+		except ImportError:  # pragma: no cover
 			return False
 
 		sess = DBSession()
 		try:
-			for mod in sess.query(NPModule).filter(NPModule.enabled == True):
+			for mod in sess.query(NPModule).filter(NPModule.enabled == True):  # noqa: E712
 				if mod.name != 'core':
 					self.load(mod.name)
 		except ProgrammingError:
@@ -491,7 +496,7 @@ class ModuleManager(object):
 		if self.installed is None:
 			try:
 				from netprofile_core.models import NPModule
-			except ImportError: # pragma: no cover
+			except ImportError:  # pragma: no cover
 				return False
 			self.installed = dict()
 
@@ -672,21 +677,27 @@ class ModuleManager(object):
 		"""
 		Unregister the module from DB and run module's uninstallation hooks.
 		"""
-		from netprofile_core.models import NPModule
+		# FIXME: write this
+		# from netprofile_core.models import NPModule
 
 		if not isinstance(req, Requirement):
 			req = Requirement(req)
 		moddef = req.name
-		modspec = req.specifier
+		# modspec = req.specifier
 		if ('core' not in self.loaded) and (moddef != 'core'):
 			raise ModuleError('Unable to uninstall anything prior to loading core module.')
 		if not self.is_installed(req, sess):
 			return False
 
+		ep = self._find_ep(moddef)
+		try:
+			modcls = ep.load()
+		except ImportError as e:
+			raise ModuleError('Can\'t locate ModuleBase class for module \'%s\'.' % (moddef,)) from e
+
 		mod_uninstall = getattr(modcls, 'uninstall', None)
 		if callable(mod_uninstall):
 			mod_uninstall(sess)
-		# FIXME: write this
 		transaction.commit()
 
 		return True

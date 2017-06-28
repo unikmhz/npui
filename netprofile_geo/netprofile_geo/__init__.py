@@ -3,7 +3,7 @@
 #
 # NetProfile: Geo module
 # © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -39,7 +39,6 @@ class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_geo:locale/')
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_models(cls):

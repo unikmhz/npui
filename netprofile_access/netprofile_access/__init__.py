@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,7 +29,6 @@ from __future__ import (
 
 from netprofile.common.modules import ModuleBase
 from netprofile.tpl import TemplateObject
-from netprofile.db.ddl import AlterTableAlterColumn
 
 from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
@@ -60,7 +59,6 @@ class Module(ModuleBase):
 		mmgr.cfg.add_route('access.cl.favicon', '/favicon.ico', vhost='client')
 		mmgr.cfg.register_block('entities.block.data', TemplateObject('netprofile_access:templates/entity_data.mak'))
 		mmgr.cfg.register_block('stashes.cl.block.info', TemplateObject('netprofile_access:templates/client_block_chrate.mak'))
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):

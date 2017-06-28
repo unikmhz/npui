@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Sessions module
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Affero General
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
- 
+
 from __future__ import (
 	unicode_literals,
 	print_function,
@@ -48,7 +48,6 @@ class Module(ModuleBase):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_sessions:locale/')
 		mmgr.cfg.register_block('stashes.cl.block.entity_menu', TemplateObject('netprofile_sessions:templates/client_block_sessions.mak'))
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):
@@ -148,7 +147,7 @@ class Module(ModuleBase):
 						type='int',
 						default=60,
 						write_cap='ADMIN_DB',
-						field_extra={ 'minValue' : 20 }
+						field_extra={'minValue': 20}
 					),
 					Setting(
 						'stale_cutoff',
@@ -157,7 +156,7 @@ class Module(ModuleBase):
 						type='int',
 						default=130,
 						write_cap='ADMIN_DB',
-						field_extra={ 'minValue' : 45 }
+						field_extra={'minValue': 45}
 					),
 					title=_('Accounting'),
 					help_text=_('Client accounting settings.'),

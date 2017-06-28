@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Networks module
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -42,7 +42,6 @@ class Module(ModuleBase):
 	def __init__(self, mmgr):
 		self.mmgr = mmgr
 		mmgr.cfg.add_translation_dirs('netprofile_networks:locale/')
-		mmgr.cfg.scan()
 
 	@classmethod
 	def get_deps(cls):
@@ -137,27 +136,27 @@ class Module(ModuleBase):
 			pass
 
 		nstypes = (
-			models.NetworkServiceType(
+			NetworkServiceType(
 				id=1,
 				name=_('Name Server')
 			),
-			models.NetworkServiceType(
+			NetworkServiceType(
 				id=2,
 				name=_('WINS Server')
 			),
-			models.NetworkServiceType(
+			NetworkServiceType(
 				id=3,
 				name=_('NTP Server')
 			),
-			models.NetworkServiceType(
+			NetworkServiceType(
 				id=4,
 				name=_('Gateway')
 			),
-			models.NetworkServiceType(
+			NetworkServiceType(
 				id=5,
 				name=_('SLP DA Server')
 			),
-			models.NetworkServiceType(
+			NetworkServiceType(
 				id=6,
 				name=_('DNSv6 Server')
 			)
@@ -165,7 +164,7 @@ class Module(ModuleBase):
 
 		for nst in nstypes:
 			sess.add(nst)
-	
+
 	def get_css(self, request):
 		return (
 			'netprofile_networks:static/css/main.css',
