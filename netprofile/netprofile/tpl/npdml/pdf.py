@@ -559,8 +559,9 @@ class PDFParseTarget(NPDMLParseTarget):
 
 	def close(self):
 		self.doc.multiBuild(self.story)
+		buf_len = self.buf.tell()
 		self.buf.seek(0)
-		return self.buf
+		return (self.buf, buf_len)
 
 	def get_bullet(self, ctx):
 		prefix = ctx.get('prefix')

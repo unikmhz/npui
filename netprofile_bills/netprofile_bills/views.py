@@ -28,7 +28,11 @@ from __future__ import (
 )
 
 from pyramid.i18n import TranslationStringFactory
+
 from netprofile.common.hooks import register_hook
+from netprofile.db.connection import DBSession
+
+from .models import Bill
 
 _ = TranslationStringFactory('netprofile_bills')
 
@@ -65,4 +69,19 @@ def _dpane_entity_bills(tabs, model, req):
 			'extraParamProp'    : 'entityid',
 			'createControllers' : 'NetProfile.core.controller.RelatedWizard'
 		})
+
+@register_hook('documents.gen.object')
+def _doc_gen_obj(tpl_vars, objid, objtype, req):
+	if objtype != 'bill':
+		return
+	obj = DBSession().query(Bill).get(objid)
+	if not obj:
+		return
+	mr = req.matched_route
+	if mr and mr.name and mr.name.startswith('documents.generate'):
+		tpl_vars.update({'bill': obj})
+	else:
+		v = obj.template_vars(req)
+		if v:
+			tpl_vars.update({'bill': v})
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Documents module - Views
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,9 +27,7 @@ from __future__ import (
 	division
 )
 
-from pyramid.view import (
-	view_config
-)
+from pyramid.view import view_config
 from pyramid.i18n import TranslationStringFactory
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
@@ -78,7 +76,7 @@ def _dpane_make_doc(cont, model, req):
 				'valueField'     : 'docid',
 				'editable'       : False,
 				'forceSelection' : False,
-				'store'          : { 'type' : 'documents_Document' },
+				'store'          : {'type' : 'documents_Document'},
 				'margin'         : 2,
 				'emptyText'      : loc.translate(_('Choose document template…'))
 			}, {
@@ -130,4 +128,35 @@ def _dyn_prep_tpl(params, req):
 		'vars'    : tpl_vars,
 		'form'    : form_fields
 	}
+
+@view_config(route_name='documents.generate.single', permission='DOCUMENTS_GENERATE')
+def doc_gen(request):
+	docfmt = request.POST.get('fmt', 'pdf')
+	try:
+		objid = request.POST['objid']
+		objtype = request.POST['objtype']
+	except KeyError:
+		raise ValueError('No object specified')
+
+	try:
+		docid = request.POST['docid']
+	except KeyError:
+		raise ValueError('No document specified')
+
+	try:
+		objid = int(objid)
+		docid = int(docid)
+	except (TypeError, ValueError):
+		raise ValueError('Invalid object or document ID')
+
+	sess = DBSession()
+	doc = sess.query(Document).get(docid)
+	if not doc:
+		raise KeyError('No such document')
+
+	tpl_vars = {}
+	request.run_hook('documents.gen.object', tpl_vars, objid, objtype, request)
+	request.run_hook('documents.gen.variables', tpl_vars, doc.variables, request)
+
+	return doc.get_response(request, docfmt, tpl_vars)
 

@@ -148,9 +148,13 @@ def _doc_gen_obj(tpl_vars, objid, objtype, req):
 	obj = DBSession().query(Entity).get(objid)
 	if not obj:
 		return
-	v = obj.template_vars(req)
-	if v:
-		tpl_vars.update({ 'entity' : v })
+	mr = req.matched_route
+	if mr and mr.name and mr.name.startswith('documents.generate'):
+		tpl_vars.update({'entity': obj})
+	else:
+		v = obj.template_vars(req)
+		if v:
+			tpl_vars.update({'entity' : v})
 
 @extdirect_method('Entity', 'get_history', request_as_last_param=True, permission='ENTITIES_LIST')
 def dyn_entity_history(params, request):
