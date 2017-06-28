@@ -131,15 +131,15 @@ def _dyn_prep_tpl(params, req):
 
 @view_config(route_name='documents.generate.single', permission='DOCUMENTS_GENERATE')
 def doc_gen(request):
-	docfmt = request.POST.get('fmt', 'pdf')
+	docfmt = request.params.get('fmt', 'pdf')
 	try:
-		objid = request.POST['objid']
-		objtype = request.POST['objtype']
+		objid = request.params['objid']
+		objtype = request.params['objtype']
 	except KeyError:
 		raise ValueError('No object specified')
 
 	try:
-		docid = request.POST['docid']
+		docid = request.params['docid']
 	except KeyError:
 		raise ValueError('No document specified')
 

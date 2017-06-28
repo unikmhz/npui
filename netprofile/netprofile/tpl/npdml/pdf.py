@@ -207,6 +207,10 @@ class PDFParseTarget(NPDMLParseTarget):
 				bottomMargin=doc.bottomMargin
 			)
 			pages = []
+			if len(self._page_tpls) == 0:
+				self._page_tpls = {
+					'default' : {'frames': []}
+				}
 			for tplid, tpl in self._page_tpls.items():
 				page_size = tpl.get('size')
 				if page_size in PAGE_SIZES:
@@ -281,7 +285,10 @@ class PDFParseTarget(NPDMLParseTarget):
 				elif self._cur_page_tpl is not None:
 					tpl = [self._cur_page_tpl.get('next', 'default')]
 				if len(tpl) == 1:
-					self._cur_page_tpl = self._page_tpls[tpl[0]]
+					try:
+						self._cur_page_tpl = self._page_tpls[tpl[0]]
+					except KeyError:
+						self._cur_page_tpl = None
 				else:
 					self._cur_page_tpl = None
 				self.story.append(PageBreakIfNotEmpty(*tpl))

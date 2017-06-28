@@ -16,20 +16,39 @@ Ext.define('NetProfile.documents.button.DocumentButton', {
 		var me = this,
 			gen_panel = me.up('menu'),
 			rec_panel = gen_panel.up('panel[cls~=record-tab]'),
-			doc_box, obj_id, doc_id;
+			doc_box, obj_id, doc, dl;
 
 		if(rec_panel && rec_panel.record)
 			obj_id = rec_panel.record.getId();
 		doc_box = gen_panel.getComponent('docid');
 		if(doc_box)
-			doc_id = parseInt(doc_box.getValue());
-		if(!obj_id || !doc_id)
+			doc = doc_box.getSelection();
+		if(!obj_id || !doc)
 			return;
-		NetProfile.api.Document.prepare_template({
-			'objid'   : obj_id,
-			'objtype' : me.objectType,
-			'docid'   : doc_id
-		}, me.onPrepareTemplate, me);
+
+		if(doc.get('type') === 'npdml')
+		{
+			dl = Ext.getCmp('npws_filedl');
+			if(!dl)
+				return;
+			dl.load({
+				url: Ext.String.format(
+					'{0}/documents/gen/single',
+					NetProfile.baseURL
+				),
+				params: {
+					'objid'   : obj_id,
+					'objtype' : me.objectType,
+					'docid'   : doc.getId()
+				}
+			});
+		}
+		else
+			NetProfile.api.Document.prepare_template({
+				'objid'   : obj_id,
+				'objtype' : me.objectType,
+				'docid'   : doc.getId()
+			}, me.onPrepareTemplate, me);
 	},
 
 	onPrepareTemplate: function(data, res)

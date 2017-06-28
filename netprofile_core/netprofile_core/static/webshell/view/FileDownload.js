@@ -43,7 +43,7 @@ Ext.define('NetProfile.view.FileDownload', {
 		if(!el)
 			return false;
 		if(params.params)
-			url += ('?' + Ext.Object.toQueryString(config.params));
+			url += ('?' + Ext.Object.toQueryString(params.params));
 		el.dom.contentWindow.location.href = url;
 		return true;
 	},
