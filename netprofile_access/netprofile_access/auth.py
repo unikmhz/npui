@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module - Models
-# © Copyright 2013-2015 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -29,8 +29,6 @@ from __future__ import (
 
 from pyramid.security import (
 	Allow,
-	Deny,
-	Everyone,
 	Authenticated,
 	unauthenticated_userid
 )
@@ -98,7 +96,9 @@ def _new_response(event):
 		csp += '; script-src \'self\' www.google.com \'unsafe-inline\''
 	response.headerlist.extend((
 		('Content-Security-Policy', csp),
-		('X-Content-Type-Options', 'nosniff')
+		('X-Content-Type-Options', 'nosniff'),
+		('X-XSS-Protection', '1; mode=block'),
+		('Referrer-Policy', 'no-referrer')
 	))
 	if 'X-Frame-Options' not in response.headers:
 		response.headerlist.append(('X-Frame-Options', 'DENY'))
@@ -107,7 +107,7 @@ def _new_response(event):
 			max_age = int(settings.get('netprofile.http.sts.max_age', 604800))
 		except (TypeError, ValueError):
 			max_age = 604800
-		sts_chunks = [ 'max-age=' + str(max_age) ]
+		sts_chunks = ['max-age=' + str(max_age)]
 		if asbool(settings.get('netprofile.http.sts.include_subdomains', False)):
 			sts_chunks.append('includeSubDomains')
 		if asbool(settings.get('netprofile.http.sts.preload', False)):
@@ -120,8 +120,6 @@ def includeme(config):
 	"""
 	config.add_request_method(get_user, str('user'), reify=True)
 	config.add_request_method(get_acls, str('acls'), reify=True)
-
-	settings = config.registry.settings
 
 	authn_policy = SessionAuthenticationPolicy()
 	authz_policy = ACLAuthorizationPolicy()

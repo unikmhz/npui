@@ -85,30 +85,36 @@ def on_response(event):
 			# TODO: add staticURL to CSP
 
 			_CACHED_CSP_HEADER = \
-					'default-src \'none\'; ' \
-					'script-src %s; ' \
-					'style-src %s; ' \
-					'connect-src %s; ' \
-					'font-src %s; ' \
-					'img-src %s; ' \
-					'frame-src %s;' % (
-				' '.join(script_src),
-				' '.join(style_src),
-				' '.join(connect_src),
-				' '.join(font_src),
-				' '.join(img_src),
-				' '.join(frame_src)
-			)
+				'default-src \'none\'; ' \
+				'script-src %s; ' \
+				'style-src %s; ' \
+				'connect-src %s; ' \
+				'font-src %s; ' \
+				'img-src %s; ' \
+				'frame-src %s;' % (
+					' '.join(script_src),
+					' '.join(style_src),
+					' '.join(connect_src),
+					' '.join(font_src),
+					' '.join(img_src),
+					' '.join(frame_src)
+				)
 
 		res.headerlist.append((
 			'Content-Security-Policy',
 			_CACHED_CSP_HEADER
 		))
 
-	res.headerlist.append((
+	res.headerlist.extend(((
 		'X-Content-Type-Options',
 		'nosniff'
-	))
+	), (
+		'X-XSS-Protection',
+		'1; mode=block'
+	), (
+		'Referrer-Policy',
+		'no-referrer'
+	)))
 	if 'X-Frame-Options' not in res.headers:
 		res.headerlist.append(('X-Frame-Options', 'DENY'))
 	if asbool(settings.get('netprofile.http.sts.enabled', False)):
@@ -116,7 +122,7 @@ def on_response(event):
 			max_age = int(settings.get('netprofile.http.sts.max_age', 604800))
 		except (TypeError, ValueError):
 			max_age = 604800
-		sts_chunks = [ 'max-age=' + str(max_age) ]
+		sts_chunks = ['max-age=' + str(max_age)]
 		if asbool(settings.get('netprofile.http.sts.include_subdomains', False)):
 			sts_chunks.append('includeSubDomains')
 		if asbool(settings.get('netprofile.http.sts.preload', False)):
