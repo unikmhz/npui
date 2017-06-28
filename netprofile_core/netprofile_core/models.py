@@ -192,7 +192,6 @@ from netprofile.dav import (
 	DAVHrefListValue,
 	DAVHrefValue,
 	DAVPrincipalValue,
-	DAVResourceTypeValue,
 	DAVSupportedAddressDataValue,
 
 	dprops
@@ -213,7 +212,7 @@ from pyramid.response import (
 from pyramid.i18n import TranslationStringFactory
 from pyramid.security import (
 	Allow, Deny,
-	Everyone, Authenticated,
+	Everyone,
 	DENY_ALL
 )
 from zope.interface import implementer
@@ -284,7 +283,7 @@ class NPModule(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Modules'),
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'    : ('npmodid', 'name', 'curversion', 'enabled'),
 				'grid_hidden'  : ('npmodid',),
 				'easy_search'  : ('name',)
@@ -393,7 +392,7 @@ class NPVariable(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('System Variables'),
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'    : ('varid', 'name', 'value_str', 'value_int'),
 				'grid_hidden'  : ('varid',),
 				'easy_search'  : ('name',)
@@ -518,7 +517,7 @@ class TaskSchedule(Base):
 				'show_in_menu'  : 'admin',
 				'menu_section'  : _('Tasks'),
 				'menu_name'     : _('Task Schedules'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : (
 					'beatschid',
 					'name', 'type',
@@ -723,31 +722,31 @@ class IntervalTaskSchedule(TaskSchedule):
 			return loc.pluralize(
 				'Every day', 'Every ${num} days', self.interval,
 				domain='netprofile_core',
-				mapping={ 'num' : self.interval }
+				mapping={'num': self.interval}
 			)
 		if self.interval_unit == TaskIntervalUnit.hours:
 			return loc.pluralize(
 				'Every hour', 'Every ${num} hours', self.interval,
 				domain='netprofile_core',
-				mapping={ 'num' : self.interval }
+				mapping={'num': self.interval}
 			)
 		if self.interval_unit == TaskIntervalUnit.minutes:
 			return loc.pluralize(
 				'Every minute', 'Every ${num} minutes', self.interval,
 				domain='netprofile_core',
-				mapping={ 'num' : self.interval }
+				mapping={'num': self.interval}
 			)
 		if self.interval_unit == TaskIntervalUnit.seconds:
 			return loc.pluralize(
 				'Every second', 'Every ${num} seconds', self.interval,
 				domain='netprofile_core',
-				mapping={ 'num' : self.interval }
+				mapping={'num': self.interval}
 			)
 		if self.interval_unit == TaskIntervalUnit.microseconds:
 			return loc.pluralize(
 				'Every microsecond', 'Every ${num} microseconds', self.interval,
 				domain='netprofile_core',
-				mapping={ 'num' : self.interval }
+				mapping={'num': self.interval}
 			)
 		return '-'
 
@@ -839,7 +838,7 @@ class Task(Base):
 				'show_in_menu'  : 'admin',
 				'menu_section'  : _('Tasks'),
 				'menu_name'     : _('Tasks'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : ('taskid', 'name', 'schedule', 'enabled'),
 				'grid_hidden'   : ('taskid',),
 				'form_view'     : (
@@ -1146,7 +1145,7 @@ class TaskLog(Base):
 				'show_in_menu'  : 'admin',
 				'menu_section'  : _('Tasks'),
 				'menu_name'     : _('Results'),
-				'default_sort'  : ({ 'property': 'startts' ,'direction': 'DESC' },),
+				'default_sort'  : ({'property': 'startts', 'direction': 'DESC'},),
 				'grid_view'     : ('tasklogid', 'uuid', 'proc', 'startts', 'state'),
 				'grid_hidden'   : ('tasklogid', 'uuid'),
 				'form_view'     : (
@@ -1467,7 +1466,7 @@ class User(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Users'),
-				'default_sort' : ({ 'property': 'login' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'login', 'direction': 'ASC'},),
 				'grid_view'    : ('uid', 'login', 'name_family', 'name_given', 'name_middle', 'manager', 'group', 'enabled', 'state', 'security_policy'),
 				'grid_hidden'  : ('uid', 'name_middle', 'manager', 'security_policy'),
 				'form_view'    : (
@@ -1478,12 +1477,11 @@ class User(Base):
 					'manager', 'photo', 'descr'
 				),
 				'easy_search'  : ('login', 'name_family'),
-				'create_wizard' : 
-					Wizard(
-						Step('login', 'pass', 'group', title=_('New user')),
-						Step('name_family', 'name_given', 'name_middle', 'enabled', 'state', title=_('New user details')),
-						title=_('Add new user')
-					),
+				'create_wizard': Wizard(
+					Step('login', 'pass', 'group', title=_('New user')),
+					Step('name_family', 'name_given', 'name_middle', 'enabled', 'state', title=_('New user details')),
+					title=_('Add new user')
+				),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 				'ldap_classes' : ('npUser', 'posixAccount', 'shadowAccount'),
 				'ldap_rdn'     : 'login'
@@ -1564,7 +1562,7 @@ class User(Base):
 			'writer'        : 'change_password',
 			'validator'     : _validate_user_password,
 			'pass_request'  : True,
-			'ldap_attr'     : 'userPassword', # FIXME!
+			'ldap_attr'     : 'userPassword',  # FIXME!
 			'ldap_value'    : 'ldap_password'
 		}
 	)
@@ -1600,7 +1598,7 @@ class User(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Family Name'),
-			'ldap_attr'     : ('sn', 'cn'), # FIXME: move 'cn' to dynamic attr
+			'ldap_attr'     : ('sn', 'cn'),  # FIXME: move 'cn' to dynamic attr
 			'column_flex'   : 3
 		}
 	)
@@ -1831,12 +1829,12 @@ class User(Base):
 	privileges = association_proxy(
 		'caps',
 		'value',
-		creator=lambda k,v: _gen_xcap(UserCapability, k, v)
+		creator=lambda k, v: _gen_xcap(UserCapability, k, v)
 	)
 	acls = association_proxy(
 		'aclmap',
 		'value',
-		creator=lambda k,v: _gen_xacl(UserACL, k, v)
+		creator=lambda k, v: _gen_xacl(UserACL, k, v)
 	)
 	settings = association_proxy(
 		'setting_map',
@@ -1846,7 +1844,7 @@ class User(Base):
 	data_cache = association_proxy(
 		'data_cache_map',
 		'value',
-		creator=lambda k,v: DataCache(name=k, value=v)
+		creator=lambda k, v: DataCache(name=k, value=v)
 	)
 
 	def __init__(self, **kwargs):
@@ -2053,7 +2051,7 @@ class User(Base):
 		return npsess
 
 	def group_vector(self):
-		vec = [ self.group_id ]
+		vec = [self.group_id]
 		for sg in self.secondary_groups:
 			vec.append(sg.id)
 		return vec
@@ -2187,7 +2185,7 @@ class User(Base):
 		return ret
 
 	def get_uri(self):
-		return [ '', 'users', self.login ]
+		return ['', 'users', self.login]
 
 	def dav_props(self, pset):
 		ret = {}
@@ -2386,8 +2384,7 @@ def _del_user(mapper, conn, tgt):
 	sess.query(UserACL)\
 		.filter(
 			UserACL.privilege_id.in_(sess.query(Privilege.id).filter(Privilege.resource_class == 'NPUser')),
-			UserACL.resource == tgt.id
-		)\
+			UserACL.resource == tgt.id)\
 		.delete(synchronize_session=False)
 
 event.listen(User, 'after_delete', _del_user)
@@ -2409,7 +2406,7 @@ class UserCard(object):
 		return self.__name__
 
 	def get_uri(self):
-		return [ '', 'addressbooks', 'system', self.user.login ]
+		return ['', 'addressbooks', 'system', self.user.login]
 
 	def dav_props(self, pset):
 		user = self.user
@@ -2471,19 +2468,18 @@ class Group(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Groups'),
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'    : ('gid', 'name', 'parent', 'security_policy', 'root_folder'),
 				'grid_hidden'  : ('gid',),
 				'form_view'    : ('name', 'parent', 'security_policy', 'visible', 'assignable', 'root_folder'),
 				'easy_search'  : ('name',),
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 
-				'create_wizard' :
-					Wizard(
-						Step('name', 'parent', 'security_policy', title=_('New group data')),
-						Step('visible', 'assignable', 'root_folder', title=_('New group details')),
-						title=_('Add new group')
-					),
+				'create_wizard': Wizard(
+					Step('name', 'parent', 'security_policy', title=_('New group data')),
+					Step('visible', 'assignable', 'root_folder', title=_('New group details')),
+					title=_('Add new group')
+				),
 
 				'ldap_classes' : ('npGroup',),
 				'ldap_rdn'     : 'name'
@@ -2633,12 +2629,12 @@ class Group(Base):
 	privileges = association_proxy(
 		'caps',
 		'value',
-		creator=lambda k,v: _gen_xcap(GroupCapability, k, v)
+		creator=lambda k, v: _gen_xcap(GroupCapability, k, v)
 	)
 	acls = association_proxy(
 		'aclmap',
 		'value',
-		creator=lambda k,v: _gen_xacl(GroupACL, k, v)
+		creator=lambda k, v: _gen_xacl(GroupACL, k, v)
 	)
 
 	def __str__(self):
@@ -2695,7 +2691,7 @@ class Group(Base):
 		return ret
 
 	def get_uri(self):
-		return [ '', 'groups', self.name ]
+		return ['', 'groups', self.name]
 
 	def dav_props(self, pset):
 		ret = {}
@@ -2746,8 +2742,7 @@ def _del_group(mapper, conn, tgt):
 	sess.query(GroupACL)\
 		.filter(
 			GroupACL.privilege_id.in_(sess.query(Privilege.id).filter(Privilege.resource_class == 'NPGroup')),
-			GroupACL.resource == tgt.id
-		)\
+			GroupACL.resource == tgt.id)\
 		.delete(synchronize_session=False)
 
 event.listen(Group, 'after_delete', _del_group)
@@ -2775,7 +2770,7 @@ class Privilege(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Privileges'),
-				'default_sort' : ({ 'property': 'code' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'code', 'direction': 'ASC'},),
 				'grid_view'    : ('privid', 'module', 'code', 'name', 'guestvalue', 'hasacls', 'canbeset'),
 				'grid_hidden'  : ('privid', 'canbeset'),
 				'form_view'    : ('module', 'code', 'name', 'guestvalue', 'hasacls', 'resclass'),
@@ -2924,7 +2919,7 @@ class Capability(object):
 		return Column(
 			'capid',
 			UInt32(),
-			Sequence('capid_seq'), # FIXME: needs different names
+			Sequence('capid_seq'),  # FIXME: needs different names
 			Comment('Capability ID'),
 			primary_key=True,
 			nullable=False,
@@ -2970,7 +2965,7 @@ class Capability(object):
 	def code(self):
 		return self.privilege.code
 
-class GroupCapability(Capability,Base):
+class GroupCapability(Capability, Base):
 	"""
 	Group privilege assignment object.
 	"""
@@ -3004,7 +2999,7 @@ class GroupCapability(Capability,Base):
 		}
 	)
 
-class UserCapability(Capability,Base):
+class UserCapability(Capability, Base):
 	"""
 	User privilege assignment object.
 	"""
@@ -3047,7 +3042,7 @@ class ACL(object):
 		return Column(
 			'aclid',
 			UInt32(),
-			Sequence('aclid_seq'), # FIXME: needs different names
+			Sequence('aclid_seq'),  # FIXME: needs different names
 			Comment('ACL ID'),
 			primary_key=True,
 			nullable=False,
@@ -3109,7 +3104,7 @@ class ACL(object):
 	def code_res(self):
 		return self.code, self.resource
 
-class GroupACL(ACL,Base):
+class GroupACL(ACL, Base):
 	"""
 	Group resource-specific privilege assignment object.
 	"""
@@ -3136,7 +3131,7 @@ class GroupACL(ACL,Base):
 		}
 	)
 
-class UserACL(ACL,Base):
+class UserACL(ACL, Base):
 	"""
 	User resource-specific privilege assignment object.
 	"""
@@ -3242,7 +3237,7 @@ class SecurityPolicy(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('Security Policies'),
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'    : ('secpolid', 'name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size', 'sess_timeout'),
 				'grid_hidden'  : ('secpolid', 'sess_timeout'),
 				'form_view'    : (
@@ -3703,7 +3698,7 @@ class CommunicationType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Communication Types'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : (
 					'commtid',
 					MarkupColumn(
@@ -3831,8 +3826,8 @@ class UserPhone(Base):
 
 				'menu_name'     : _('Phones'),
 				'default_sort'  : (
-					{ 'property': 'ptype' ,'direction': 'ASC' },
-					{ 'property': 'num' ,'direction': 'ASC' }
+					{'property': 'ptype', 'direction': 'ASC'},
+					{'property': 'num', 'direction': 'ASC'}
 				),
 				'grid_view'     : ('uphoneid', 'user', 'primary', 'ptype', 'num', 'descr'),
 				'grid_hidden'   : ('uphoneid',),
@@ -3968,8 +3963,8 @@ class UserEmail(Base):
 
 				'menu_name'     : _('E-mail'),
 				'default_sort'  : (
-					{ 'property': 'scope' ,'direction': 'ASC' },
-					{ 'property': 'addr' ,'direction': 'ASC' },
+					{'property': 'scope', 'direction': 'ASC'},
+					{'property': 'addr', 'direction': 'ASC'},
 				),
 				'grid_view'     : ('uemailid', 'user', 'primary', 'scope', 'addr', 'original'),
 				'grid_hidden'   : ('uemailid',),
@@ -4114,7 +4109,7 @@ class UserCommunicationChannel(Base):
 				'cap_delete'    : 'USERS_EDIT',
 
 				'menu_name'     : _('User Communications'),
-				'default_sort'  : ({ 'property': 'commtid' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'commtid', 'direction': 'ASC'},),
 				'grid_view'     : (
 					'ucommid',
 					MarkupColumn(
@@ -4360,7 +4355,7 @@ class DAVLock(Base):
 		sess = DBSession()
 		full_path = '/'.join(path)
 		q = sess.query(DAVLock).filter(or_(
-			DAVLock.timeout == None,
+			DAVLock.timeout.is_(None),
 			DAVLock.timeout > func.now()
 		))
 		alter = [DAVLock.uri == full_path]
@@ -4589,7 +4584,7 @@ class FileFolder(Base):
 				'cap_delete'   : 'FILES_DELETE',
 
 				'menu_name'    : _('Folders'),
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'    : ('ffid', 'name', 'parent', 'ctime', 'mtime'),
 				'grid_hidden'  : ('ffid', 'parent'),
 				'form_view'    : ('name', 'user', 'group', 'rights', 'ctime', 'mtime', 'descr'),
@@ -4632,7 +4627,7 @@ class FileFolder(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('User'),
-			'editor_config' : { 'allowBlank' : False }
+			'editor_config' : {'allowBlank': False}
 		}
 	)
 	group_id = Column(
@@ -4645,7 +4640,7 @@ class FileFolder(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Group'),
-			'editor_config' : { 'allowBlank' : False }
+			'editor_config' : {'allowBlank': False}
 		}
 	)
 	sync_token = Column(
@@ -4668,7 +4663,7 @@ class FileFolder(Base):
 		info={
 			'header_string' : _('Rights'),
 			'editor_xtype'  : 'filerights',
-			'editor_config' : { 'isDirectory' : True }
+			'editor_config' : {'isDirectory': True}
 		}
 	)
 	access = Column(
@@ -4977,7 +4972,7 @@ class FileFolder(Base):
 		if p is None:
 			p = self.parent
 		if p is None:
-			return [ '', 'fs', self.name ]
+			return ['', 'fs', self.name]
 		uri = p.get_uri()
 		uri.append(self.name)
 		return uri
@@ -5285,8 +5280,8 @@ def _on_set_ff_synctoken(tgt, value, oldvalue, initiator):
 			var_vfs.integer_value = value
 	return value
 
-_BLOCK_SIZE = 4096 * 64 # 256K
-_CHUNK_SIZE = 1024 * 1024 * 2 # 2M
+_BLOCK_SIZE = 4096 * 64  # 256K
+_CHUNK_SIZE = 1024 * 1024 * 2  # 2M
 
 class WindowFileIter(FileIter):
 	def __init__(self, f, block_size=_BLOCK_SIZE, window=None):
@@ -5467,7 +5462,7 @@ class File(Base):
 				'cap_delete'   : 'FILES_DELETE',
 
 				'menu_name'    : _('Files'),
-				'default_sort' : ({ 'property': 'fname' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'fname', 'direction': 'ASC'},),
 				'grid_view'    : ('fileid', 'folder', 'fname', 'size', 'ctime', 'mtime'),
 				'grid_hidden'  : ('fileid',),
 				'form_view'    : ('fname', 'folder', 'size', 'user', 'group', 'rights', 'ctime', 'mtime', 'name', 'descr'),
@@ -5531,7 +5526,7 @@ class File(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('User'),
-			'editor_config' : { 'allowBlank' : False }
+			'editor_config' : {'allowBlank': False}
 		}
 	)
 	group_id = Column(
@@ -5544,7 +5539,7 @@ class File(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Group'),
-			'editor_config' : { 'allowBlank' : False }
+			'editor_config' : {'allowBlank': False}
 		}
 	)
 	rights = Column(
@@ -5815,7 +5810,7 @@ class File(Base):
 		if p is None:
 			p = self.folder
 		if p is None:
-			return [ self.filename ]
+			return [self.filename]
 		uri = p.get_uri()
 		uri.append(self.filename)
 		return uri
@@ -6029,17 +6024,17 @@ class File(Base):
 	def open(self, mode='r', user_perm=None, sess=None):
 		xm = 0
 		if 'r+' in mode:
-			xm |= _VFS_READ|_VFS_WRITE
+			xm |= _VFS_READ | _VFS_WRITE
 		elif 'w+' in mode:
-			xm |= _VFS_READ|_VFS_WRITE|_VFS_TRUNCATE
+			xm |= _VFS_READ | _VFS_WRITE | _VFS_TRUNCATE
 		elif 'a+' in mode:
-			xm |= _VFS_READ|_VFS_WRITE|_VFS_APPEND
+			xm |= _VFS_READ | _VFS_WRITE | _VFS_APPEND
 		elif 'r' in mode:
 			xm |= _VFS_READ
 		elif 'w' in mode:
 			xm |= _VFS_WRITE
 		elif 'a' in mode:
-			xm |= _VFS_WRITE|_VFS_APPEND
+			xm |= _VFS_WRITE | _VFS_APPEND
 		if user_perm:
 			if (xm & _VFS_READ) and not self.can_read(user_perm):
 				raise IOError(errno.EACCES, 'Read access denied', self)
@@ -6587,7 +6582,6 @@ class VFSFileIO(io.BufferedIOBase):
 			return 0
 		srcmv = memoryview(b)
 		orig_write_sz = write_sz
-		cur_pos = self.c_offset * _CHUNK_SIZE + self.b_offset
 		cursor = 0
 		while write_sz > 0:
 			self._update_chunk()
@@ -6645,17 +6639,16 @@ class Tag(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Tags'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : ('tagid', 'name', 'descr'),
 				'grid_hidden'   : ('tagid',),
 				'easy_search'   : ('name', 'descr'),
 				'detail_pane'   : ('netprofile_core.views', 'dpane_simple'),
 
-				'create_wizard' :
-					Wizard(
-						Step('name', 'descr', title=_('Tag info')),
-						title=_('Add new tag')
-					)
+				'create_wizard' : Wizard(
+					Step('name', 'descr', title=_('Tag info')),
+					title=_('Add new tag')
+				)
 			}
 		}
 	)
@@ -6704,7 +6697,7 @@ class LogType(Base):
 		Comment('Log entry types'),
 		Index('logs_types_u_name', 'name', unique=True),
 		{
-			'mysql_engine'  : 'InnoDB', # or leave MyISAM?
+			'mysql_engine'  : 'InnoDB',  # or leave MyISAM?
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'      : 'BASE_ADMIN',
@@ -6716,7 +6709,7 @@ class LogType(Base):
 				'show_in_menu'  : 'admin',
 				'menu_section'  : _('Logging'),
 				'menu_name'     : _('Log Types'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : ('ltid', 'name'),
 				'grid_hidden'   : ('ltid',),
 				'easy_search'   : ('name',),
@@ -6757,7 +6750,7 @@ class LogAction(Base):
 		Comment('Log actions'),
 		Index('logs_actions_u_name', 'name', unique=True),
 		{
-			'mysql_engine'  : 'InnoDB', # or leave MyISAM?
+			'mysql_engine'  : 'InnoDB',  # or leave MyISAM?
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'cap_menu'     : 'BASE_ADMIN',
@@ -6769,7 +6762,7 @@ class LogAction(Base):
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Logging'),
 				'menu_name'    : _('Log Actions'),
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'    : ('laid', 'name'),
 				'grid_hidden'  : ('laid',),
 				'easy_search'  : ('name',),
@@ -6821,7 +6814,7 @@ class LogData(Base):
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Logging'),
 				'menu_name'    : _('Log Data'),
-				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' },),
+				'default_sort' : ({'property': 'ts', 'direction': 'DESC'},),
 				'grid_view'    : ('logid', 'ts', 'login', 'xtype', 'xaction', 'data'),
 				'grid_hidden'  : ('logid',),
 				'easy_search'  : ('login', 'data'),
@@ -6933,7 +6926,7 @@ class NPSession(Base):
 
 				'show_in_menu' : 'admin',
 				'menu_name'    : _('UI Sessions'),
-				'default_sort' : ({ 'property': 'lastts' ,'direction': 'DESC' },),
+				'default_sort' : ({'property': 'lastts', 'direction': 'DESC'},),
 				'grid_view'    : ('npsid', 'sname', 'user', 'login', 'startts', 'lastts', 'ipaddr', 'ip6addr'),
 				'grid_hidden'  : ('npsid', 'sname'),
 				'easy_search'  : ('sname', 'login'),
@@ -7159,7 +7152,7 @@ class GlobalSetting(Base):
 				'show_in_menu' : 'admin',
 				'menu_section' : _('Settings'),
 				'menu_name'    : _('Global Settings'),
-				'default_sort' : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'    : ('npglobid', 'name', 'value'),
 				'grid_hidden'  : ('npglobid',),
 				'easy_search'  : ('name',)
@@ -7450,7 +7443,7 @@ class Calendar(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'menu_name'     : _('My Calendars'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : ('calid', 'name', 'user', 'group', 'group_access', 'global_access'),
 				'grid_hidden'   : ('calid', 'user'),
 				'form_view'     : ('name', 'group', 'group_access', 'global_access', 'style', 'descr'),
@@ -7667,7 +7660,7 @@ class CalendarImport(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'menu_name'     : _('Other Calendars'),
-				'default_sort'  : ({ 'property': 'calid' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'calid', 'direction': 'ASC'},),
 				'grid_view'     : (
 					'calimpid',
 					'calendar',
@@ -7796,7 +7789,7 @@ class Event(Base):
 	__table_args__ = (
 		Comment('User calendar events'),
 		Index('calendars_events_i_calid', 'calid'),
-		Index('calendars_events_i_uid', 'uid'), # XXX: add gid?
+		Index('calendars_events_i_uid', 'uid'),  # XXX: add gid?
 		Index('calendars_events_i_icaluid', 'icaluid'),
 		Index('calendars_events_i_dtstart', 'dtstart'),
 		Trigger('before', 'insert', 't_calendars_events_bi'),
@@ -7806,7 +7799,7 @@ class Event(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'menu_name'     : _('Events'),
-				'default_sort'  : ({ 'property': 'dtstart' ,'direction': 'DESC' },),
+				'default_sort'  : ({'property': 'dtstart', 'direction': 'DESC'},),
 				'grid_view'     : ('evid', 'user', 'calendar', 'summary', 'ctime', 'mtime', 'dtstart', 'dtend'),
 				'grid_hidden'   : ('evid', 'ctime', 'mtime'),
 				'form_view'     : (
@@ -8024,7 +8017,7 @@ class AddressBook(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'menu_name'     : _('Address Books'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : ('abookid', 'name', 'user', 'group', 'group_access', 'global_access'),
 				'grid_hidden'   : ('abookid', 'user'),
 				'form_view'     : ('name', 'group', 'group_access', 'global_access', 'descr'),
@@ -8212,7 +8205,7 @@ class AddressBook(Base):
 		return self.group
 
 	def get_uri(self):
-		return [ '', 'addressbooks', 'users', self.user.login, self.name ]
+		return ['', 'addressbooks', 'users', self.user.login, self.name]
 
 	def dav_props(self, pset):
 		ret = {}
@@ -8366,7 +8359,6 @@ class AddressBook(Base):
 		return DAVACLValue(aces)
 
 	def dav_create(self, req, name, rtype=None, props=None, data=None):
-		user = req.user
 		sess = DBSession()
 		if rtype and (dprops.COLLECTION in rtype):
 			raise ValueError('Can\'t create collections inside address books.')
@@ -8526,7 +8518,7 @@ class AddressBookCard(Base):
 			'mysql_charset' : 'utf8',
 			'info'          : {
 				'menu_name'     : _('Address Cards'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : ('abookid', 'address_book', 'name', 'ctime', 'mtime'),
 				'grid_hidden'   : ('abookid',),
 				'form_view'     : ('address_book', 'name', 'size', 'etag'),
@@ -8793,7 +8785,7 @@ class AddressBookCard(Base):
 		if p is None:
 			p = self.address_book
 		if p is None:
-			return [ self.name ]
+			return [self.name]
 		uri = p.get_uri()
 		uri.append(self.name)
 		return uri
