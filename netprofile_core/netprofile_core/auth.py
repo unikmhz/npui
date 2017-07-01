@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Custom authentication plugin for Pyramid
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 import hashlib
+import hmac
 import datetime as dt
 
 from netprofile import PY3
@@ -51,7 +52,6 @@ from pyramid.authentication import (
 )
 from pyramid.authorization import ACLAuthorizationPolicy
 
-from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.common.auth import (
@@ -208,8 +208,8 @@ def find_princs_digest(param, request):
 		param['cnonce'], 'auth', ha2
 	)
 	resp = hashlib.md5(('%s:%s' % (user.a1_hash, data)).encode()).hexdigest()
-	if resp == param['response']:
-		groups = [ 'g:%s' % user.group.name ]
+	if hmac.compare_digest(resp, param['response']):
+		groups = ['g:%s' % user.group.name]
 		for sgr in user.secondary_groups:
 			if sgr == user.group:
 				continue

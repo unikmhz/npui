@@ -45,6 +45,8 @@ requires = [
 	'kombu != 3.0.34',
 	'msgpack-python >= 0.4',
 
+	'scrypt >= 0.8',
+
 	'reportlab >= 3.1',
 	'svglib >= 0.8.1'
 ]

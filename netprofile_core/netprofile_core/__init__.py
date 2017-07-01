@@ -27,8 +27,15 @@ from __future__ import (
 	division
 )
 
+import logging
+
 from zope.interface.interfaces import ComponentLookupError
 from sqlalchemy.orm.exc import NoResultFound
+
+from pyramid.i18n import (
+	TranslationStringFactory,
+	get_localizer
+)
 
 from netprofile.common.modules import ModuleBase
 from netprofile.common.menus import Menu
@@ -42,6 +49,11 @@ from netprofile.dav import (
 	DAVTraverser
 )
 from netprofile.export.csv import csv_encodings
+from netprofile.common.crypto import (
+	get_salt_string,
+	hash_password
+)
+
 from .models import *
 from .dav import (
 	DAVPluginAddressBooks,
@@ -49,15 +61,12 @@ from .dav import (
 	DAVPluginUsers,
 	DAVPluginVFS
 )
-
-from pyramid.i18n import (
-	TranslationStringFactory,
-	get_localizer
-)
-
 from ._version import get_versions
+
 __version__ = get_versions()['version']
 del get_versions
+
+logger = logging.getLogger(__name__)
 
 _ = TranslationStringFactory('netprofile_core')
 
@@ -426,12 +435,13 @@ class Module(ModuleBase):
 		for gs in global_settings:
 			sess.add(gs)
 
+		pwd = get_salt_string(16)
 		admin = User(
 			group=grp_admins,
 			state=UserState.active,
 			login='admin',
-			password='16lG71d3e58569b3e8730ad79ae7bd12a277defbc158',
-			a1_hash='50c87497ceb6224572e2bce64611fcbc',
+			password=hash_password('admin', pwd),
+			a1_hash=hash_password('admin', pwd, scheme='digest-ha1'),
 			enabled=True,
 			name_given='Admin',
 			name_family='User',
@@ -439,6 +449,7 @@ class Module(ModuleBase):
 		)
 
 		sess.add(admin)
+		logger.critical('Generated initial administrative credentials: admin / %s', pwd)
 
 		commtypes = (
 			CommunicationType(

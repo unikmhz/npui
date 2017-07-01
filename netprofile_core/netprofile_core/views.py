@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Core module - Views
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -168,13 +168,10 @@ def do_login(request):
 
 		if csrf == request.get_csrf():
 			sess = DBSession()
-			reg = request.registry
-			hash_con = reg.settings.get('netprofile.auth.hash', 'sha1')
-			salt_len = int(reg.settings.get('netprofile.auth.salt_length', 4))
-			q = sess.query(User).filter(User.state == UserState.active).filter(User.enabled == True).filter(User.login == login)
+			q = sess.query(User).filter(User.state == UserState.active).filter(User.enabled.is_(True)).filter(User.login == login)
 			login_allowed = global_setting('core.admin.login_allowed')
 			for user in q:
-				if user.check_password(passwd, hash_con, salt_len):
+				if user.check_password(passwd):
 					user_privs = user.flat_privileges
 					# XXX: maybe make override privilege set configurable?
 					if login_allowed or user_privs.get('ADMIN_DEV', False) or user_privs.get('ADMIN_SECURITY', False):
@@ -421,13 +418,10 @@ def dyn_user_chpass_wizard(request):
 @extdirect_method('User', 'change_password', request_as_last_param=True, permission='USAGE', session_checks=False)
 def dyn_user_chpass_submit(values, request):
 	user = request.user
-	cfg = request.registry.settings
-	hash_con = cfg.get('netprofile.auth.hash', 'sha1')
-	salt_len = int(cfg.get('netprofile.auth.salt_length', 4))
 	old_pass = values.get('oldpass')
 	new_pass1 = values.get('newpass1')
 	new_pass2 = values.get('newpass2')
-	if (not old_pass) or (not user.check_password(old_pass, hash_con, salt_len)):
+	if (not old_pass) or (not user.check_password(old_pass)):
 		raise ValueError('Old password is invalid')
 	if (not new_pass1) or (not new_pass2) or (new_pass1 != new_pass2):
 		raise ValueError('New password is invalid')
@@ -447,13 +441,10 @@ def dyn_user_chpass_validate(ret, values, request):
 	loc = request.localizer
 	errors = defaultdict(list)
 	user = request.user
-	cfg = request.registry.settings
-	hash_con = cfg.get('netprofile.auth.hash', 'sha1')
-	salt_len = int(cfg.get('netprofile.auth.salt_length', 4))
 	old_pass = values.get('oldpass')
 	new_pass1 = values.get('newpass1')
 	new_pass2 = values.get('newpass2')
-	if (not old_pass) or (not user.check_password(old_pass, hash_con, salt_len)):
+	if (not old_pass) or (not user.check_password(old_pass)):
 		errors['oldpass'].append(loc.translate(_('Old password is invalid.')))
 	if not new_pass1:
 		errors['newpass1'].append(loc.translate(_('New password can\'t be empty.')))

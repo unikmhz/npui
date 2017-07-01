@@ -95,8 +95,6 @@ import errno
 import hashlib
 import io
 import itertools
-import string
-import random
 import re
 import urllib
 import uuid
@@ -202,6 +200,11 @@ from netprofile.db.ddl import (
 	SQLFunction,
 	SQLFunctionArgument,
 	Trigger
+)
+from netprofile.common.crypto import (
+	get_salt_bytes,
+	hash_password,
+	verify_password
 )
 from netprofile.celery import app as celery_app
 
@@ -1860,16 +1863,6 @@ class User(Base):
 	def name_full(self):
 		return self.name_family + ' ' + self.name_given
 
-	def generate_salt(self, salt_len=4, system_rng=True, chars=(string.ascii_lowercase + string.ascii_uppercase + string.digits)):
-		if system_rng:
-			try:
-				rng = random.SystemRandom()
-			except NotImplementedError:
-				rng = random
-		else:
-			rng = random
-		return ''.join(rng.choice(chars) for i in range(salt_len))
-
 	def ldap_status(self, settings):
 		if self.state == UserState.pending:
 			return 'noaccess'
@@ -1885,7 +1878,7 @@ class User(Base):
 		pw = getattr(self, 'mod_pw', False)
 		if not pw:
 			raise ValueError('Temporary plaintext password was not found')
-		salt = self.generate_salt(4).encode()
+		salt = get_salt_bytes(4)
 		ctx = hashlib.sha1()
 		ctx.update(pw.encode())
 		ctx.update(salt)
@@ -1901,27 +1894,13 @@ class User(Base):
 			return
 		return ph.get_data(sess=DBSession())
 
-	def generate_a1hash(self, realm):
-		ctx = hashlib.md5()
-		ctx.update(('%s:%s:%s' % (self.login, realm, self.mod_pw)).encode())
-		return ctx.hexdigest()
-
-	def check_password(self, pwd, hash_con='sha1', salt_len=4):
-		if isinstance(pwd, str):
-			pwd = pwd.encode()
-		salt = self.password[:salt_len].encode()
-		orig = self.password[salt_len:]
-		ctx = hashlib.new(hash_con)
-		ctx.update(salt)
-		ctx.update(pwd)
-		return ctx.hexdigest() == orig
+	def check_password(self, pwd):
+		return verify_password(self.login, pwd, self.password)
 
 	def change_login(self, newlogin, opts, request):
-		reg = request.registry
 		self.login = newlogin
 		if getattr(self, 'mod_pw', False):
-			realm = reg.settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
-			self.a1_hash = self.generate_a1hash(realm)
+			self.a1_hash = hash_password(self.login, self.mod_pw, scheme='digest-ha1')
 
 	def change_password(self, newpwd, opts, request):
 		self.mod_pw = newpwd
@@ -1932,18 +1911,9 @@ class User(Base):
 			if checkpw is not True:
 				# FIXME: error reporting
 				raise ValueError(checkpw)
-		reg = request.registry
-		hash_con = reg.settings.get('netprofile.auth.hash', 'sha1')
-		salt_len = int(reg.settings.get('netprofile.auth.salt_length', 4))
-		salt = self.generate_salt(salt_len)
-		ctx = hashlib.new(hash_con)
-		ctx.update(salt.encode())
-		ctx.update(newpwd.encode())
-		newhash = ctx.hexdigest()
-		self.password = salt + newhash
+		self.password = hash_password(self.login, newpwd)
 		if self.login:
-			realm = reg.settings.get('netprofile.auth.digest_realm', 'NetProfile UI')
-			self.a1_hash = self.generate_a1hash(realm)
+			self.a1_hash = hash_password(self.login, self.mod_pw, scheme='digest-ha1')
 		if secpol:
 			secpol.after_new_password(request, self, newpwd, ts)
 		if request.user == self:
@@ -3524,13 +3494,8 @@ class SecurityPolicy(Base):
 					err.append('pw_dict_check')
 		if user and user.id:
 			if req and self.pw_hist_check:
-				hist_salt = req.registry.settings.get('netprofile.pwhistory_salt', 'nppwdhist_')
-				ctx = hashlib.sha1()
-				ctx.update(hist_salt.encode())
-				ctx.update(pwd.encode())
-				hist_hash = ctx.hexdigest()
 				for pwh in user.password_history:
-					if pwh.password == hist_hash:
+					if verify_password(user.login, pwd, pwh.password):
 						err.append('pw_hist_check')
 			if self.pw_age_min:
 				delta = dt.timedelta(self.pw_age_min)
@@ -3546,11 +3511,6 @@ class SecurityPolicy(Base):
 
 	def after_new_password(self, req, user, pwd, ts):
 		if self.pw_hist_check:
-			hist_salt = req.registry.settings.get('netprofile.pwhistory_salt', 'nppwdhist_')
-			ctx = hashlib.sha1()
-			ctx.update(hist_salt.encode())
-			ctx.update(pwd.encode())
-			hist_hash = ctx.hexdigest()
 			hist_sz = self.pw_hist_size
 			if not hist_sz:
 				hist_sz = 3
@@ -3566,7 +3526,7 @@ class SecurityPolicy(Base):
 				if oldest_idx is not None:
 					del user.password_history[oldest_idx]
 			user.password_history.append(PasswordHistory(
-				password=hist_hash,
+				password=hash_password(user.login, pwd),
 				timestamp=ts
 			))
 

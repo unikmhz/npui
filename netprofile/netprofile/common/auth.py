@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Authentication routines
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,7 +28,6 @@ from __future__ import (
 )
 
 import hashlib
-import random
 import string
 import time
 
@@ -41,6 +40,8 @@ from pyramid.security import (
 	forget,
 	remember
 )
+
+from netprofile.common.crypto import get_salt_string
 
 def auth_add(request, login, route_name):
 	sess = request.session
@@ -137,11 +138,7 @@ def _format_kvpairs(**kwargs):
 def _generate_nonce(ts, secret, salt=None, chars=string.hexdigits.upper()):
 	# TODO: Add optional IP-address/subnet to nonce
 	if not salt:
-		try:
-			rng = random.SystemRandom()
-		except NotImplementedError: # pragma: no cover
-			rng = random
-		salt = ''.join(rng.choice(chars) for i in range(16))
+		salt = get_salt_string(16, chars)
 	ctx = hashlib.md5(('%s:%s:%s' % (ts, salt, secret)).encode())
 	return ('%s:%s:%s' % (ts, salt, ctx.hexdigest()))
 

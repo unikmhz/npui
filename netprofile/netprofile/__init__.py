@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Setup and entry points
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -128,6 +128,7 @@ def setup_config(settings):
 	)
 	config.add_route_predicate('vhost', VHostPredicate)
 	config.add_view_predicate('vhost', VHostPredicate)
+	config.include('netprofile.common.crypto')
 	return config
 
 def main(global_config, **settings):
