@@ -34,7 +34,9 @@ import random
 import scrypt
 import string
 
-from pyramid.config import aslist
+from pyramid.settings import aslist
+
+from netprofile.common.util import make_config_dict
 
 __all__ = (
 	'get_random',
@@ -44,7 +46,9 @@ __all__ = (
 	'verify_password',
 	'PasswordHandler',
 	'ScryptPasswordHandler',
-	'DigestHA1PasswordHandler'
+	'DigestHA1PasswordHandler',
+	'NTLMPasswordHandler',
+	'PlainTextPasswordHandler'
 )
 
 def get_random(system_rng=True):
@@ -84,25 +88,27 @@ class PasswordHandler(object):
 			raise ValueError('Invalid hash format')
 		return unpacked
 
-	def __init__(self, settings):
-		raise NotImplementedError
+	def __init__(self, cfg):
+		pass
 
 	def hash(self, user, password):
 		raise NotImplementedError
 
 	def verify(self, user, password, hashed):
-		raise NotImplementedError
+		new_hashed = self.hash(user, password)
+		return hmac.compare_digest(hashed, new_hashed)
 
 class ScryptPasswordHandler(PasswordHandler):
 	scheme = 'scrypt'
 	elements = 6
 
-	def __init__(self, settings):
-		self.salt_len = int(settings.get('netprofile.crypto.scrypt.salt_length', 20))
-		self.n_exp = int(settings.get('netprofile.crypto.scrypt.n_exponent', 14))
-		self.r = int(settings.get('netprofile.crypto.scrypt.r_value', 8))
-		self.p = int(settings.get('netprofile.crypto.scrypt.p_value', 1))
-		self.buflen = int(settings.get('netprofile.crypto.scrypt.buffer_length', 64))
+	def __init__(self, cfg):
+		PasswordHandler.__init__(self, cfg)
+		self.salt_len = int(cfg.get('netprofile.crypto.scrypt.salt_length', 20))
+		self.n_exp = int(cfg.get('netprofile.crypto.scrypt.n_exponent', 14))
+		self.r = int(cfg.get('netprofile.crypto.scrypt.r_value', 8))
+		self.p = int(cfg.get('netprofile.crypto.scrypt.p_value', 1))
+		self.buflen = int(cfg.get('netprofile.crypto.scrypt.buffer_length', 64))
 
 	def hash(self, user, password):
 		if not isinstance(password, bytes):
@@ -140,47 +146,85 @@ class DigestHA1PasswordHandler(PasswordHandler):
 	scheme = 'digest-ha1'
 	elements = 1
 
-	def __init__(self, settings):
-		enabled = aslist(settings.get('netprofile.auth.enabled_hashes', ''))
-		self.enabled = 'digest-ha1' in enabled
-		self.realm = settings.get('netprofile.auth.digest.realm', 'NetProfile UI')
+	def __init__(self, cfg):
+		PasswordHandler.__init__(self, cfg)
+		self.realm = cfg.get('netprofile.auth.digest.realm', 'NetProfile UI')
 
 	def hash(self, user, password):
-		if not self.enabled:
-			return None
 		ctx = hashlib.md5()
 		ctx.update(('%s:%s:%s' % (user, self.realm, password)).encode())
 		return ctx.hexdigest()
 
+class NTLMPasswordHandler(PasswordHandler):
+	scheme = 'ntlm'
+	elements = 1
+
+	def hash(self, user, password):
+		ctx = hashlib.new('md4')
+		ctx.update(password.encode('utf-16le'))
+		return ctx.hexdigest()
+
+class PlainTextPasswordHandler(PasswordHandler):
+	scheme = 'plain'
+	elements = 1
+
+	def hash(self, user, password):
+		if isinstance(password, bytes):
+			return password.decode()
+		return password
+
 	def verify(self, user, password, hashed):
-		if not self.enabled:
-			return False
-		new_hashed = self.hash(user, password)
-		return hmac.compare_digest(hashed.encode(), new_hashed.encode())
+		if isinstance(password, bytes):
+			password = password.decode()
+		if isinstance(hashed, bytes):
+			hashed = hashed.decode()
+		return hmac.compare_digest(password, hashed)
 
-_HASH_HANDLERS = {
+_HANDLERS = {
 	'scrypt': ScryptPasswordHandler,
-	'digest-ha1': DigestHA1PasswordHandler
+	'digest-ha1': DigestHA1PasswordHandler,
+	'ntlm': NTLMPasswordHandler,
+	'plain': PlainTextPasswordHandler
 }
+_ENABLED_HANDLERS = {}
+_DEFAULT_HANDLERS = {}
 
-def hash_password(user, password, scheme='scrypt'):
-	if scheme not in _HASH_HANDLERS:
+def hash_password(user, password, scheme=None, subject='users'):
+	if scheme is None:
+		scheme = _DEFAULT_HANDLERS[subject]
+	if scheme not in _ENABLED_HANDLERS[subject]:
+		return None
+	if scheme not in _HANDLERS:
 		raise ValueError('Unknown hash scheme: %r' % (scheme,))
-	return _HASH_HANDLERS[scheme].hash(user, password)
+	return _HANDLERS[scheme].hash(user, password)
 
-def verify_password(user, password, hashed, scheme=None):
+def verify_password(user, password, hashed, scheme=None, subject='users'):
 	if scheme is None:
 		spl = hashed.split('$', 1)
-		if len(spl) != 2:
-			raise ValueError('No hash scheme found')
-		scheme = spl[0]
-	if scheme not in _HASH_HANDLERS:
+		if len(spl) == 2:
+			scheme = spl[0]
+		else:
+			scheme = _DEFAULT_HANDLERS[subject]
+	if scheme not in _ENABLED_HANDLERS[subject]:
+		return False
+	if scheme not in _HANDLERS:
 		raise ValueError('Unknown hash scheme: %r' % (scheme,))
-	return _HASH_HANDLERS[scheme].verify(user, password, hashed)
+	return _HANDLERS[scheme].verify(user, password, hashed)
 
 def includeme(config):
-	settings = config.registry.settings
+	cfg = config.registry.settings
+	enabled_for = make_config_dict(cfg, 'netprofile.auth.enabled_for.')
+	default_hash = make_config_dict(cfg, 'netprofile.auth.default_hash.')
 
-	for scheme in _HASH_HANDLERS:
-		_HASH_HANDLERS[scheme] = _HASH_HANDLERS[scheme](settings)
+	_DEFAULT_HANDLERS.update(default_hash)
+
+	for subject, methods in enabled_for.items():
+		methods = aslist(methods)
+		default = _DEFAULT_HANDLERS.setdefault(subject, 'scrypt')
+		if default not in methods:
+			methods.append(default)
+		_ENABLED_HANDLERS[subject] = methods
+
+	for scheme in _HANDLERS:
+		_HANDLERS[scheme] = _HANDLERS[scheme](cfg)
 
