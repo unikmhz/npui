@@ -1526,7 +1526,9 @@ class User(Base):
 		server_default=text('NULL'),
 		info={
 			'header_string' : _('Security Policy'),
-			'column_flex'   : 2
+			'filter_type'   : 'nplist',
+			'column_flex'   : 2,
+			'editor_xtype'  : 'simplemodelselect'
 		}
 	)
 	state = Column(
@@ -2493,7 +2495,8 @@ class Group(Base):
 		info={
 			'header_string' : _('Security Policy'),
 			'filter_type'   : 'nplist',
-			'column_flex'   : 2
+			'column_flex'   : 2,
+			'editor_xtype'  : 'simplemodelselect'
 		}
 	)
 	name = Column(
@@ -3209,7 +3212,7 @@ class SecurityPolicy(Base):
 				'menu_name'    : _('Security Policies'),
 				'default_sort' : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'    : ('secpolid', 'name', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size', 'sess_timeout'),
-				'grid_hidden'  : ('secpolid', 'sess_timeout'),
+				'grid_hidden'  : ('secpolid', 'pw_length_min', 'pw_length_max', 'pw_ctype_min', 'pw_ctype_max', 'pw_dict_check', 'pw_hist_check', 'pw_hist_size', 'sess_timeout'),
 				'form_view'    : (
 					'name', 'descr',
 					'pw_length_min', 'pw_length_max',
@@ -3221,7 +3224,30 @@ class SecurityPolicy(Base):
 					'sess_window_ipv4', 'sess_window_ipv6'
 				),
 				'easy_search'  : ('name',),
-				'detail_pane'  : ('netprofile_core.views', 'dpane_simple')
+				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
+
+				'create_wizard': Wizard(
+					Step('name', 'descr', title=_('Policy name')),
+					Step(
+						'pw_length_min', 'pw_length_max',
+						'pw_ctype_min', 'pw_ctype_max',
+						'pw_dict_check', 'pw_dict_name',
+						'pw_hist_check', 'pw_hist_size',
+						title=_('Password complexity checks')
+					),
+					Step(
+						'pw_age_min', 'pw_age_max',
+						'pw_age_warndays', 'pw_age_warnmail',
+						'pw_age_action',
+						title=_('Password age checks')
+					),
+					Step(
+						'net_whitelist', 'sess_timeout',
+						'sess_window_ipv4', 'sess_window_ipv6',
+						title=_('Network address checks')
+					),
+					title=_('Add new security policy')
+				)
 			}
 		}
 	)

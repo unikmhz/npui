@@ -366,7 +366,7 @@ Ext.define('NetProfile.panel.Wizard', {
 	{
 		var me = this,
 			layout = me.getLayout(),
-			tbar = me.getDockedComponent(0),
+			tbar = me.getDockedItems('toolbar[dock="bottom"]')[0],
 			curpane = layout.getActiveItem();
 
 		if(dir !== 'init')
