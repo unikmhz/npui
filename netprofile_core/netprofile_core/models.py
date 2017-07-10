@@ -1476,12 +1476,12 @@ class User(Base):
 					'login', 'name_family', 'name_given', 'name_middle',
 					'org', 'orgunit', 'title',
 					'group', 'secondary_groups', 'enabled',
-					'pass', 'security_policy', 'state',
+					'pwd_hashed', 'security_policy', 'state',
 					'manager', 'photo', 'descr'
 				),
 				'easy_search'  : ('login', 'name_family'),
 				'create_wizard': Wizard(
-					Step('login', 'pass', 'group', title=_('New user')),
+					Step('login', 'pwd_hashed', 'group', title=_('New user')),
 					Step('name_family', 'name_given', 'name_middle', 'enabled', 'state', title=_('New user details')),
 					title=_('Add new user')
 				),
@@ -1555,10 +1555,10 @@ class User(Base):
 			'column_flex'   : 2
 		}
 	)
-	password = Column(
-		'pass',
+	password_hashed = Column(
+		'pwd_hashed',
 		ASCIIString(255),
-		Comment('Some form of password'),
+		Comment('Primary storage for hashed password'),
 		nullable=False,
 		info={
 			'header_string' : _('Password'),
@@ -1571,10 +1571,10 @@ class User(Base):
 			'ldap_value'    : 'ldap_password'
 		}
 	)
-	a1_hash = Column(
-		'a1hash',
+	password_ha1 = Column(
+		'pwd_digestha1',
 		ASCIIFixedString(32),
-		Comment('DIGEST-MD5 A1 hash'),
+		Comment('DIGEST-MD5 A1 hash of user password'),
 		nullable=True,
 		default=None,
 		server_default=text('NULL'),
@@ -1583,6 +1583,32 @@ class User(Base):
 			'secret_value'  : True,
 			'editor_xtype'  : None,
 			'ldap_attr'     : 'npDigestHA1'
+		}
+	)
+	password_ntlm = Column(
+		'pwd_ntlm',
+		ASCIIFixedString(32),
+		Comment('NTLM hash of user password'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('NTLM Hash'),
+			'secret_value'  : True,
+			'editor_xtype'  : None
+		}
+	)
+	password_plaintext = Column(
+		'pwd_plain',
+		ExactUnicode(255),
+		Comment('Plaintext user password'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Plaintext Password'),
+			'secret_value'  : True,
+			'editor_xtype'  : None
 		}
 	)
 	enabled = Column(
@@ -1897,12 +1923,12 @@ class User(Base):
 		return ph.get_data(sess=DBSession())
 
 	def check_password(self, pwd):
-		return verify_password(self.login, pwd, self.password)
+		return verify_password(self.login, pwd, self.password_hashed)
 
 	def change_login(self, newlogin, opts, request):
 		self.login = newlogin
 		if getattr(self, 'mod_pw', False):
-			self.a1_hash = hash_password(self.login, self.mod_pw, scheme='digest-ha1')
+			self.password_ha1 = hash_password(self.login, self.mod_pw, scheme='digest-ha1')
 
 	def change_password(self, newpwd, opts, request):
 		self.mod_pw = newpwd
@@ -1913,9 +1939,11 @@ class User(Base):
 			if checkpw is not True:
 				# FIXME: error reporting
 				raise ValueError(checkpw)
-		self.password = hash_password(self.login, newpwd)
+		self.password_hashed = hash_password(self.login, newpwd)
+		self.password_ntlm = hash_password(self.login, newpwd, scheme='ntlm')
+		self.password_plaintext = hash_password(self.login, newpwd, scheme='plain')
 		if self.login:
-			self.a1_hash = hash_password(self.login, self.mod_pw, scheme='digest-ha1')
+			self.password_ha1 = hash_password(self.login, self.mod_pw, scheme='digest-ha1')
 		if secpol:
 			secpol.after_new_password(request, self, newpwd, ts)
 		if request.user == self:

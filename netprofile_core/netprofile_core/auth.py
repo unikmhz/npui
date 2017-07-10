@@ -196,7 +196,7 @@ def find_princs_digest(param, request):
 		).one()
 	except NoResultFound:
 		return None
-	if not user.a1_hash:
+	if not user.password_ha1:
 		return None
 	req_path = unquote(request.path.lower())
 	uri_path = unquote(param['uri'].lower())
@@ -207,7 +207,7 @@ def find_princs_digest(param, request):
 		param['nonce'], param['nc'],
 		param['cnonce'], 'auth', ha2
 	)
-	resp = hashlib.md5(('%s:%s' % (user.a1_hash, data)).encode()).hexdigest()
+	resp = hashlib.md5(('%s:%s' % (user.password_ha1, data)).encode()).hexdigest()
 	if hmac.compare_digest(resp, param['response']):
 		groups = ['g:%s' % user.group.name]
 		for sgr in user.secondary_groups:
