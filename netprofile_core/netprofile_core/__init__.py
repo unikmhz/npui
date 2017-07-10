@@ -443,6 +443,7 @@ class Module(ModuleBase):
 			password_hashed=hash_password('admin', pwd),
 			password_ha1=hash_password('admin', pwd, scheme='digest-ha1'),
 			password_ntlm=hash_password('admin', pwd, scheme='ntlm'),
+			password_crypt=hash_password('admin', pwd, scheme='crypt'),
 			password_plaintext=hash_password('admin', pwd, scheme='plain'),
 			enabled=True,
 			name_given='Admin',

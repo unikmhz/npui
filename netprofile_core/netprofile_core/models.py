@@ -202,7 +202,6 @@ from netprofile.db.ddl import (
 	Trigger
 )
 from netprofile.common.crypto import (
-	get_salt_bytes,
 	hash_password,
 	verify_password
 )
@@ -1566,9 +1565,7 @@ class User(Base):
 			'editor_xtype'  : 'passwordfield',
 			'writer'        : 'change_password',
 			'validator'     : _validate_user_password,
-			'pass_request'  : True,
-			'ldap_attr'     : 'userPassword',  # FIXME!
-			'ldap_value'    : 'ldap_password'
+			'pass_request'  : True
 		}
 	)
 	password_ha1 = Column(
@@ -1596,6 +1593,21 @@ class User(Base):
 			'header_string' : _('NTLM Hash'),
 			'secret_value'  : True,
 			'editor_xtype'  : None
+		}
+	)
+	password_crypt = Column(
+		'pwd_crypt',
+		ExactUnicode(255),
+		Comment('POSIX crypt hash of user password'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('crypt(3) Hash'),
+			'secret_value'  : True,
+			'editor_xtype'  : None,
+			'ldap_attr'     : 'userPassword',
+			'ldap_value'    : 'ldap_password'
 		}
 	)
 	password_plaintext = Column(
@@ -1903,14 +1915,9 @@ class User(Base):
 			return 'deleted'
 
 	def ldap_password(self, settings):
-		pw = getattr(self, 'mod_pw', False)
-		if not pw:
-			raise ValueError('Temporary plaintext password was not found')
-		salt = get_salt_bytes(4)
-		ctx = hashlib.sha1()
-		ctx.update(pw.encode())
-		ctx.update(salt)
-		return '{SSHA}' + base64.b64encode(ctx.digest() + salt).decode()
+		if self.password_crypt is None:
+			return None
+		return '{CRYPT}' + self.password_crypt
 
 	def ldap_photo(self, settings):
 		if not self.photo:
@@ -1941,6 +1948,7 @@ class User(Base):
 				raise ValueError(checkpw)
 		self.password_hashed = hash_password(self.login, newpwd)
 		self.password_ntlm = hash_password(self.login, newpwd, scheme='ntlm')
+		self.password_crypt = hash_password(self.login, newpwd, scheme='crypt')
 		self.password_plaintext = hash_password(self.login, newpwd, scheme='plain')
 		if self.login:
 			self.password_ha1 = hash_password(self.login, self.mod_pw, scheme='digest-ha1')

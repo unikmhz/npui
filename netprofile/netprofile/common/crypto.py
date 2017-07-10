@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 import base64
+import crypt
 import hashlib
 import hmac
 import random
@@ -48,6 +49,7 @@ __all__ = (
 	'ScryptPasswordHandler',
 	'DigestHA1PasswordHandler',
 	'NTLMPasswordHandler',
+	'CryptPasswordHandler',
 	'PlainTextPasswordHandler'
 )
 
@@ -70,21 +72,18 @@ def get_salt_string(length, chars=string.ascii_letters + string.digits):
 	return ''.join(rnd.choice(chars) for _ in range(length))
 
 class PasswordHandler(object):
-	scheme = 'undef'
 	elements = 1
 
 	def _pack(self, *args):
 		if len(args) != self.elements:
 			raise ValueError('Invalid hash format')
-		return '$'.join((self.scheme,) + args)
+		return '$'.join(args)
 
 	def _unpack(self, packed):
 		if isinstance(packed, bytes):
 			packed = packed.decode()
 		unpacked = packed.split('$')
-		if len(unpacked) != self.elements + 1:
-			raise ValueError('Invalid hash format')
-		if unpacked.pop(0) != self.scheme:
+		if len(unpacked) != self.elements:
 			raise ValueError('Invalid hash format')
 		return unpacked
 
@@ -99,7 +98,6 @@ class PasswordHandler(object):
 		return hmac.compare_digest(hashed, new_hashed)
 
 class ScryptPasswordHandler(PasswordHandler):
-	scheme = 'scrypt'
 	elements = 6
 
 	def __init__(self, cfg):
@@ -143,9 +141,6 @@ class ScryptPasswordHandler(PasswordHandler):
 		return hmac.compare_digest(hashed, new_hashed)
 
 class DigestHA1PasswordHandler(PasswordHandler):
-	scheme = 'digest-ha1'
-	elements = 1
-
 	def __init__(self, cfg):
 		PasswordHandler.__init__(self, cfg)
 		self.realm = cfg.get('netprofile.auth.digest.realm', 'NetProfile UI')
@@ -153,29 +148,69 @@ class DigestHA1PasswordHandler(PasswordHandler):
 	def hash(self, user, password):
 		ctx = hashlib.md5()
 		ctx.update(('%s:%s:%s' % (user, self.realm, password)).encode())
-		return ctx.hexdigest()
+		digest = ctx.hexdigest()
+		if isinstance(digest, bytes):
+			digest = digest.decode()
+		return digest
 
 class NTLMPasswordHandler(PasswordHandler):
-	scheme = 'ntlm'
-	elements = 1
-
 	def hash(self, user, password):
 		ctx = hashlib.new('md4')
 		ctx.update(password.encode('utf-16le'))
-		return ctx.hexdigest()
+		digest = ctx.hexdigest()
+		if isinstance(digest, bytes):
+			digest = digest.decode()
+		return digest
 
-class PlainTextPasswordHandler(PasswordHandler):
-	scheme = 'plain'
-	elements = 1
+class CryptPasswordHandler(PasswordHandler):
+	elements = 3
+
+	def __init__(self, cfg):
+		# TODO: use passlib module if native crypt doesn't know about
+		#       selected method.
+		PasswordHandler.__init__(self, cfg)
+		self.method = cfg.get('netprofile.crypto.crypt.method', 'sha512')
+		if self.method not in ('sha256', 'sha512'):
+			self.method = 'sha512'
+
+	def _mksalt(self):
+		if hasattr(crypt, 'mksalt'):
+			mname = 'METHOD_' + self.method.upper()
+			method = getattr(crypt, mname, None)
+			if method is None:
+				raise ValueError('Unsupported crypt(3) method: %s' % (self.method,))
+			return crypt.mksalt(method)
+
+		salt_chars = string.ascii_letters + string.digits + './'
+
+		if self.method == 'sha256':
+			return '$5$%s' % (get_salt_string(16, salt_chars),)
+		if self.method == 'sha512':
+			return '$6$%s' % (get_salt_string(16, salt_chars),)
+
+		raise ValueError('Unsupported crypt(3) method: %s' % (self.method,))
 
 	def hash(self, user, password):
 		if isinstance(password, bytes):
+			password = password.decode()
+		hashed = crypt.crypt(password, self._mksalt())
+		if isinstance(hashed, bytes):
+			hashed = hashed.decode()
+		return hashed
+
+class PlainTextPasswordHandler(PasswordHandler):
+	def hash(self, user, password):
+		if isinstance(password, bytes):
 			return password.decode()
+		if '$' in password:
+			raise ValueError('Invalid password')
 		return password
 
 	def verify(self, user, password, hashed):
 		if isinstance(password, bytes):
 			password = password.decode()
+		if '$' in password:
+			raise ValueError('Invalid password')
 		if isinstance(hashed, bytes):
 			hashed = hashed.decode()
 		return hmac.compare_digest(password, hashed)
@@ -184,27 +219,31 @@ _HANDLERS = {
 	'scrypt': ScryptPasswordHandler,
 	'digest-ha1': DigestHA1PasswordHandler,
 	'ntlm': NTLMPasswordHandler,
+	'crypt': CryptPasswordHandler,
 	'plain': PlainTextPasswordHandler
 }
 _ENABLED_HANDLERS = {}
 _DEFAULT_HANDLERS = {}
 
-def hash_password(user, password, scheme=None, subject='users'):
+def hash_password(user, password, scheme=None, subject='users', prepend_scheme=False):
 	if scheme is None:
+		prepend_scheme = True
 		scheme = _DEFAULT_HANDLERS[subject]
 	if scheme not in _ENABLED_HANDLERS[subject]:
 		return None
 	if scheme not in _HANDLERS:
 		raise ValueError('Unknown hash scheme: %r' % (scheme,))
-	return _HANDLERS[scheme].hash(user, password)
+	return ((scheme + '$') if prepend_scheme else '') + _HANDLERS[scheme].hash(user, password)
 
 def verify_password(user, password, hashed, scheme=None, subject='users'):
+	spl = hashed.split('$', 1)
 	if scheme is None:
-		spl = hashed.split('$', 1)
 		if len(spl) == 2:
-			scheme = spl[0]
+			scheme, hashed = spl
 		else:
 			scheme = _DEFAULT_HANDLERS[subject]
+	elif len(spl) == 2 and scheme == spl[0]:
+		hashed = spl[1]
 	if scheme not in _ENABLED_HANDLERS[subject]:
 		return False
 	if scheme not in _HANDLERS:
