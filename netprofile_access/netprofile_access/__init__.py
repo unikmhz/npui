@@ -108,6 +108,7 @@ class Module(ModuleBase):
 			Privilege
 		)
 		from netprofile_entities.models import EntityType
+		from netprofile_access import models
 
 		if not vpair.is_install:
 			return
@@ -140,6 +141,12 @@ class Module(ModuleBase):
 			root=False,
 			leaf=True,
 			description=_('Account details for network admission and client UI access.')
+		))
+
+		sess.add(models.AccessEntityLinkType(
+			id=1,
+			name=_('Verification Code'),
+			description=_('Randomly generated sequence used to verify customer email address.')
 		))
 
 	def get_css(self, request):
