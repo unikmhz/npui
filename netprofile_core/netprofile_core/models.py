@@ -3559,7 +3559,7 @@ class SecurityPolicy(Base):
 				for pwh in user.password_history:
 					if verify_password(user.login, pwd, pwh.password):
 						err.append('pw_hist_check')
-			if self.pw_age_min:
+			if self.pw_age_min and self.pw_hist_check:
 				delta = dt.timedelta(self.pw_age_min)
 				minage_fail = False
 				for pwh in user.password_history:
