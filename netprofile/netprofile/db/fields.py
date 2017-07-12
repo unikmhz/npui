@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Custom database fields
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -35,7 +35,6 @@ import sys
 import uuid
 
 from sqlalchemy import (
-	and_,
 	schema,
 	type_coerce,
 	types,
@@ -57,13 +56,13 @@ from netprofile.db import processors
 from netprofile.common import ipaddr
 
 if sys.version < '3':
-	from netprofile.db.enum2 import (
+	from netprofile.db.enum2 import (  # noqa: F401
 		EnumSymbol,
 		EnumMeta,
 		DeclEnum
 	)
 else:
-	from netprofile.db.enum3 import (
+	from netprofile.db.enum3 import (  # noqa: F401
 		EnumSymbol,
 		EnumMeta,
 		DeclEnum
@@ -292,7 +291,7 @@ class MACAddress(types.TypeDecorator):
 		if _is_pgsql(dialect):
 			return isinstance(conn_type, postgresql.MACADDR)
 		return isinstance(conn_type, types.BINARY) and conn_type.length == 6
-	
+
 	@property
 	def python_type(self):
 		return str
@@ -310,8 +309,6 @@ class MACAddress(types.TypeDecorator):
 		if _is_pgsql(dialect):
 			return value
 		return ':'.join('%02x' % x for x in value)
-
-
 
 class NPBoolean(types.TypeDecorator, types.SchemaType):
 	"""
@@ -339,7 +336,7 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
 
 	def _should_create_constraint(self, compiler):
 		return (not compiler.dialect.supports_native_boolean) \
-				and (not _is_mysql(compiler.dialect))
+			and (not _is_mysql(compiler.dialect))
 
 	def _set_table(self, column, table):
 		e = schema.CheckConstraint(
@@ -347,7 +344,7 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
 			name=self.name,
 			_create_rule=util.portable_instancemethod(
 				self._should_create_constraint)
-			)
+		)
 		table.append_constraint(e)
 
 	@property
@@ -373,6 +370,20 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
 			return types.Boolean.Comparator.__eq__(self, other)
 
 		def __ne__(self, other):
+			if isinstance(other, bool):
+				other = type_coerce(other, NPBoolean)
+			return types.Boolean.Comparator.__ne__(self, other)
+
+		def is_(self, other):
+			if other is None:
+				return types.Boolean.Comparator.is_(self, other)
+			if isinstance(other, bool):
+				other = type_coerce(other, NPBoolean)
+			return types.Boolean.Comparator.__eq__(self, other)
+
+		def isnot(self, other):
+			if other is None:
+				return types.Boolean.Comparator.isnot(self, other)
 			if isinstance(other, bool):
 				other = type_coerce(other, NPBoolean)
 			return types.Boolean.Comparator.__ne__(self, other)
@@ -527,7 +538,7 @@ class Int8(types.TypeDecorator):
 
 	def compare_against_backend(self, dialect, conn_type):
 		if _is_mysql(dialect):
-			return isinstance(conn_type, mysql.TINYINT) and conn_type.unsigned == False
+			return isinstance(conn_type, mysql.TINYINT) and conn_type.unsigned is False
 		return isinstance(conn_type, types.SmallInteger)
 
 class Int16(types.TypeDecorator):
@@ -545,7 +556,7 @@ class Int16(types.TypeDecorator):
 
 	def compare_against_backend(self, dialect, conn_type):
 		if _is_mysql(dialect):
-			return isinstance(conn_type, mysql.SMALLINT) and conn_type.unsigned == False
+			return isinstance(conn_type, mysql.SMALLINT) and conn_type.unsigned is False
 		return isinstance(conn_type, types.SmallInteger)
 
 class Int32(types.TypeDecorator):
@@ -563,7 +574,7 @@ class Int32(types.TypeDecorator):
 
 	def compare_against_backend(self, dialect, conn_type):
 		if _is_mysql(dialect):
-			return isinstance(conn_type, mysql.INTEGER) and conn_type.unsigned == False
+			return isinstance(conn_type, mysql.INTEGER) and conn_type.unsigned is False
 		return isinstance(conn_type, types.Integer)
 
 class Int64(types.TypeDecorator):
@@ -581,7 +592,7 @@ class Int64(types.TypeDecorator):
 
 	def compare_against_backend(self, dialect, conn_type):
 		if _is_mysql(dialect):
-			return isinstance(conn_type, mysql.BIGINT) and conn_type.unsigned == False
+			return isinstance(conn_type, mysql.BIGINT) and conn_type.unsigned is False
 		return isinstance(conn_type, types.BigInteger)
 
 class UInt8(types.TypeDecorator):
@@ -599,7 +610,7 @@ class UInt8(types.TypeDecorator):
 
 	def compare_against_backend(self, dialect, conn_type):
 		if _is_mysql(dialect):
-			return isinstance(conn_type, mysql.TINYINT) and conn_type.unsigned == True
+			return isinstance(conn_type, mysql.TINYINT) and conn_type.unsigned is True
 		return isinstance(conn_type, types.SmallInteger)
 
 class UInt16(types.TypeDecorator):
@@ -617,7 +628,7 @@ class UInt16(types.TypeDecorator):
 
 	def compare_against_backend(self, dialect, conn_type):
 		if _is_mysql(dialect):
-			return isinstance(conn_type, mysql.SMALLINT) and conn_type.unsigned == True
+			return isinstance(conn_type, mysql.SMALLINT) and conn_type.unsigned is True
 		return isinstance(conn_type, types.SmallInteger)
 
 class UInt32(types.TypeDecorator):
@@ -635,7 +646,7 @@ class UInt32(types.TypeDecorator):
 
 	def compare_against_backend(self, dialect, conn_type):
 		if _is_mysql(dialect):
-			return isinstance(conn_type, mysql.INTEGER) and conn_type.unsigned == True
+			return isinstance(conn_type, mysql.INTEGER) and conn_type.unsigned is True
 		return isinstance(conn_type, types.Integer)
 
 class UInt64(types.TypeDecorator):
@@ -653,7 +664,7 @@ class UInt64(types.TypeDecorator):
 
 	def compare_against_backend(self, dialect, conn_type):
 		if _is_mysql(dialect):
-			return isinstance(conn_type, mysql.BIGINT) and conn_type.unsigned == True
+			return isinstance(conn_type, mysql.BIGINT) and conn_type.unsigned is True
 		return isinstance(conn_type, types.BigInteger)
 
 class ASCIITinyText(types.TypeDecorator):
@@ -790,7 +801,7 @@ def render_variants(query):
 	for dcls in _D_STD:
 		dialect = dcls()
 		ret[dialect.name] = str(query.statement.compile(
-			compile_kwargs={ 'literal_binds' : True },
+			compile_kwargs={'literal_binds' : True},
 			dialect=dialect
 		))
 	return ret
