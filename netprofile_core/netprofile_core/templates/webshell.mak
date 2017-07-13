@@ -512,6 +512,15 @@ Ext.require([
 			this.callParent([htmlOrData, loadScripts, callback]);
 		}
 	});
+	Ext.define('Ext.overrides.xss.RowExpander', {
+		override: 'Ext.grid.plugin.RowExpander',
+		getHeaderConfig: function()
+		{
+			var cfg = this.callParent(arguments);
+			cfg.allowMarkup = true;
+			return cfg;
+		}
+	});
 
 	Ext.define('Ext.overrides.bugfix.EXTJS16183.menu', {
 		override: 'Ext.menu.Menu',
