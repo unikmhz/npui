@@ -37,6 +37,7 @@ import string
 
 from pyramid.settings import aslist
 
+from netprofile import PY3
 from netprofile.common.util import make_config_dict
 
 __all__ = (
@@ -61,11 +62,22 @@ def get_random(system_rng=True):
 			pass
 	return random.Random()
 
-def get_salt_bytes(length, chars=bytes(string.ascii_letters + string.digits, 'utf8')):
-	if not isinstance(chars, bytes):
-		chars = chars.encode('ascii')
-	rnd = get_random()
-	return bytes(rnd.choice(chars) for _ in range(length))
+if PY3:
+	def get_salt_bytes(length, chars=bytes(string.ascii_letters + string.digits, 'ascii')):
+		rnd = get_random()
+		if chars is None:
+			return bytes(rnd.randint(0, 255) for _ in range(length))
+		if not isinstance(chars, bytes):
+			chars = chars.encode('ascii')
+		return bytes(rnd.choice(chars) for _ in range(length))
+else:  # pragma: no cover
+	def get_salt_bytes(length, chars=bytes(string.ascii_letters + string.digits)):
+		rnd = get_random()
+		if chars is None:
+			return b''.join(chr(rnd.randint(0, 255)) for _ in range(length))
+		if not isinstance(chars, bytes):
+			chars = chars.encode('ascii')
+		return b''.join(rnd.choice(chars) for _ in range(length))
 
 def get_salt_string(length, chars=string.ascii_letters + string.digits):
 	rnd = get_random()

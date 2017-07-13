@@ -27,7 +27,10 @@ from __future__ import (
 	division
 )
 
+import base64
+
 from netprofile.common.modules import ModuleBase
+from netprofile.common.crypto import get_salt_bytes
 
 from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
@@ -37,6 +40,9 @@ __version__ = get_versions()['version']
 del get_versions
 
 _ = TranslationStringFactory('netprofile_confgen')
+
+def _gen_tsig(length):
+	return base64.b64encode(get_salt_bytes(length, None)).decode('ascii')
 
 class Module(ModuleBase):
 	def __init__(self, mmgr):
@@ -118,14 +124,12 @@ class Module(ModuleBase):
 			'key_name_gen'           : 'nslink.',
 			'key_name_int'           : 'nsexternal.',
 			'key_name_ext'           : 'nsinternal.',
-			# TODO: generate these at install time to be somewhat secure even
-			#       w/o configuration.
-			# 'key_value_gen'          : None,
-			# 'key_value_int'          : None,
-			# 'key_value_ext'          : None,
-			'key_algo_gen'           : 'hmac-md5',
-			'key_algo_int'           : 'hmac-md5',
-			'key_algo_ext'           : 'hmac-md5',
+			'key_value_gen'          : _gen_tsig(32),
+			'key_value_int'          : _gen_tsig(32),
+			'key_value_ext'          : _gen_tsig(32),
+			'key_algo_gen'           : 'hmac-sha256',
+			'key_algo_int'           : 'hmac-sha256',
+			'key_algo_ext'           : 'hmac-sha256',
 			'revzone_refresh'        : 3600,
 			'revzone_retry'          : 300,
 			'revzone_expire'         : 1814400,
