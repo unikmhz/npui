@@ -16,7 +16,7 @@ requires = [
 	'netprofile_hosts >= 0',
 	'netprofile_rates >= 0',
 
-	'snimpy >= 0.8.10'
+	'snimpy >= 0.8.11'
 ]
 
 setup(
@@ -25,7 +25,7 @@ setup(
 	cmdclass=commands,
 	description='NetProfile Administrative UI - Devices Module',
 	license='GNU Affero General Public License v3 or later (AGPLv3+)',
-	long_description=README_LOCAL + '\n\n' +  README_GLOBAL,
+	long_description=README_LOCAL + '\n\n' + README_GLOBAL,
 	classifiers=[
 		'Programming Language :: Python',
 		'Programming Language :: Python :: 2',

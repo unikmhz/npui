@@ -11,43 +11,42 @@ README_LOCAL = open(os.path.join(here, 'README.rst')).read()
 README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
-	'setuptools >= 17.1',
-	'packaging >= 16.1',
-	'python-dateutil',
-	'dogpile.cache >= 0.4.1',
-	'repoze.tm2',
+	'setuptools >= 36.0',
+	'packaging >= 16.8',
+	'python-dateutil >= 2.6',
+	'dogpile.cache >= 0.6',
+	'repoze.tm2 >= 2.1',
 	'pyparsing >= 2.2',
 
-	'SQLAlchemy >= 1.2',
-	'zope.sqlalchemy',
-	'transaction',
-	'alembic >= 0.8.3',
+	'SQLAlchemy >= 1.1.11',
+	'zope.sqlalchemy >= 0.7.7',
+	'transaction >= 2.1',
+	'alembic >= 0.9',
 
-	'waitress >= 0.7',
-	'pyramid >= 1.5',
-	'pyramid_mako >= 0.3',
-	'pyramid_rpc >= 0.5.2',
-	'pyramid_debugtoolbar >= 1.0',
-	'pyramid_redis_sessions >= 0.9b5',
-	'pyramid_mailer >= 0.13',
-	'Babel',
-	'lingua',
-	'lxml',
+	'waitress >= 1.0.2',
+	'pyramid >= 1.9',
+	'pyramid_mako >= 1.0.2',
+	'pyramid_rpc >= 0.8',
+	'pyramid_debugtoolbar >= 4.2.1',
+	'pyramid_redis_sessions >= 1.0',
+	'pyramid_mailer >= 0.15',
+	'Babel >= 2.3.4',
+	'lingua >= 4.13',
+	'lxml >= 3.8',
 
-	'cliff >= 1.7.0',
+	'cliff >= 2.8',
 
-	'tornado',
-	'sockjs-tornado',
-	'tornado-redis',
-	'tornado-celery',
+	'tornado >= 4.5.1',
+	'sockjs-tornado >= 1.0.3',
+	'tornado-redis >= 2.4.18',
+	'tornado-celery >= 0.3.5',
 
 	'celery >= 4.0',
-	'kombu != 3.0.34',
 	'msgpack-python >= 0.4',
 
 	'scrypt >= 0.8',
 
-	'reportlab >= 3.1',
+	'reportlab >= 3.4',
 	'svglib >= 0.8.1'
 ]
 extras_require = {

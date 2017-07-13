@@ -12,8 +12,9 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
 	'setuptools',
-	'cracklib',
-	'netprofile >= 0'
+	'netprofile >= 0',
+
+	'cracklib >= 2.9.3'
 ]
 
 setup(
@@ -22,7 +23,7 @@ setup(
 	cmdclass=commands,
 	description='NetProfile Administrative UI - Core Module',
 	license='GNU Affero General Public License v3 or later (AGPLv3+)',
-	long_description=README_LOCAL + '\n\n' +  README_GLOBAL,
+	long_description=README_LOCAL + '\n\n' + README_GLOBAL,
 	classifiers=[
 		'Programming Language :: Python',
 		'Programming Language :: Python :: 2',

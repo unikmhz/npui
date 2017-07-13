@@ -13,7 +13,8 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 requires = [
 	'setuptools',
 	'netprofile >= 0',
-	'ldap3'
+
+	'ldap3 >= 2.2.4'
 ]
 
 setup(
@@ -22,7 +23,7 @@ setup(
 	cmdclass=commands,
 	description='NetProfile Administrative UI - LDAP Integration Module',
 	license='GNU Affero General Public License v3 or later (AGPLv3+)',
-	long_description=README_LOCAL + '\n\n' +  README_GLOBAL,
+	long_description=README_LOCAL + '\n\n' + README_GLOBAL,
 	classifiers=[
 		'Programming Language :: Python',
 		'Programming Language :: Python :: 2',
