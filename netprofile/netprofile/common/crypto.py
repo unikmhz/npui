@@ -228,8 +228,8 @@ _DEFAULT_HANDLERS = {}
 def hash_password(user, password, scheme=None, subject='users', prepend_scheme=False):
 	if scheme is None:
 		prepend_scheme = True
-		scheme = _DEFAULT_HANDLERS[subject]
-	if scheme not in _ENABLED_HANDLERS[subject]:
+		scheme = _DEFAULT_HANDLERS.get(subject, 'scrypt')
+	if scheme not in _ENABLED_HANDLERS.get(subject, ('scrypt',)):
 		return None
 	if scheme not in _HANDLERS:
 		raise ValueError('Unknown hash scheme: %r' % (scheme,))
@@ -241,10 +241,10 @@ def verify_password(user, password, hashed, scheme=None, subject='users'):
 		if len(spl) == 2:
 			scheme, hashed = spl
 		else:
-			scheme = _DEFAULT_HANDLERS[subject]
+			scheme = _DEFAULT_HANDLERS.get(subject, 'scrypt')
 	elif len(spl) == 2 and scheme == spl[0]:
 		hashed = spl[1]
-	if scheme not in _ENABLED_HANDLERS[subject]:
+	if scheme not in _ENABLED_HANDLERS.get(subject, ('scrypt',)):
 		return False
 	if scheme not in _HANDLERS:
 		raise ValueError('Unknown hash scheme: %r' % (scheme,))
