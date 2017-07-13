@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Access module - Views
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -27,7 +27,10 @@ from __future__ import (
 	division
 )
 
-import datetime, os, random, re, string
+import datetime
+import os
+import re
+import string
 
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -63,6 +66,10 @@ from pyramid_mailer.message import (
 from babel.core import Locale
 from netprofile import locale_neg
 from netprofile.common.hooks import register_hook
+from netprofile.common.crypto import (
+	get_salt_string,
+	verify_password
+)
 from netprofile.db.connection import DBSession
 
 from netprofile_core.models import File
@@ -128,6 +135,7 @@ def client_chpass(request):
 	min_pwd_len = int(cfg.get('netprofile.client.registration.min_password_length', 8))
 	errors = {}
 	if 'submit' in request.POST:
+		user = request.user
 		csrf = request.POST.get('csrf', '')
 		oldpass = request.POST.get('oldpass', '')
 		passwd = request.POST.get('pass', '')
@@ -142,10 +150,10 @@ def client_chpass(request):
 				errors['pass'] = _('Password is too long')
 			if passwd != passwd2:
 				errors['pass2'] = _('Passwords do not match')
-			if request.user.password != oldpass:
+			if not verify_password(user.nick, oldpass, user.password_hashed, subject='accounts'):
 				errors['oldpass'] = _('Wrong password')
 		if len(errors) == 0:
-			request.user.password = passwd
+			user.change_password(passwd, request.POST, request)
 			request.session.flash({
 				'text' : loc.translate(_('Password successfully changed'))
 			})
@@ -258,7 +266,7 @@ def client_login(request):
 			sess = DBSession()
 			q = sess.query(AccessEntity).filter(AccessEntity.nick == login, AccessEntity.access_state != AccessState.block_inactive.value)
 			for user in q:
-				if user.password == passwd:
+				if verify_password(user.nick, passwd, user.password_hashed, subject='accounts'):
 					headers = remember(request, login)
 					return HTTPSeeOther(location=nxt, headers=headers)
 		did_fail = True
@@ -373,7 +381,7 @@ def client_register(request):
 
 			acc = AccessEntity()
 			acc.nick = login
-			acc.password = passwd
+			acc.change_password(passwd, request.POST, request)
 			acc.stash = stash
 			acc.rate_id = rate_id
 			acc.state_id = state_id
@@ -395,11 +403,7 @@ def client_register(request):
 				link.type_id = link_id
 
 				chars = string.ascii_uppercase + string.digits
-				try:
-					rng = random.SystemRandom()
-				except NotImplementedError:
-					rng = random
-				link.value = ''.join(rng.choice(chars) for i in range(rand_len))
+				link.value = get_salt_string(rand_len, chars)
 				link.timestamp = datetime.datetime.now()
 				sess.add(link)
 
@@ -534,7 +538,6 @@ def client_activate(request):
 def client_restorepass(request):
 	if authenticated_userid(request):
 		return HTTPSeeOther(location=request.route_url('access.cl.home'))
-	did_fail = True
 	cur_locale = locale_neg(request)
 	loc = request.localizer
 	cfg = request.registry.settings
@@ -583,8 +586,11 @@ def client_restorepass(request):
 					errors['user'] = _('Invalid character used in username')
 		if len(errors) == 0:
 			sess = DBSession()
-			for acc in sess.query(AccessEntity)\
-					.filter(AccessEntity.nick == login, AccessEntity.access_state != AccessState.block_inactive.value):
+			new_password = None
+			for acc in sess.query(AccessEntity).filter(
+				AccessEntity.nick == login,
+				AccessEntity.access_state != AccessState.block_inactive.value
+			):
 				ent = acc.parent
 				ent_email = None
 				while ent:
@@ -601,12 +607,8 @@ def client_restorepass(request):
 
 					if change_pass:
 						pwd_len = int(cfg.get('netprofile.client.password_recovery.password_length', 12))
-						chars = string.ascii_lowercase + string.ascii_uppercase + string.digits
-						try:
-							rng = random.SystemRandom()
-						except NotImplementedError:
-							rng = random
-						acc.password = ''.join(rng.choice(chars) for i in range(pwd_len))
+						new_password = get_salt_string(pwd_len)
+						acc.change_password(new_password, request.POST, request)
 
 					mailer = get_mailer(request)
 					tpldef = {
@@ -614,7 +616,8 @@ def client_restorepass(request):
 						'entity'      : ent,
 						'email'       : ent_email,
 						'access'      : acc,
-						'change_pass' : change_pass
+						'change_pass' : change_pass,
+						'new_pass'    : new_password
 					}
 					request.run_hook('access.cl.tpldef.password_recovery.mail', tpldef, request)
 					msg_text = Attachment(

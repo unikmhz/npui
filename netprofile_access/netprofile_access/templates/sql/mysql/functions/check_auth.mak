@@ -9,7 +9,7 @@
 	FROM `entities_access`
 	LEFT JOIN `entities_def`
 	USING(`entityid`)
-	WHERE `nick` = name AND `password` = pass AND `state` = 0;
+	WHERE `nick` = name AND `pwd_plain` = pass AND `state` = 0;
 	IF ealiasid IS NOT NULL THEN
 		REPEAT
 			SELECT `entityid`, `aliasid`

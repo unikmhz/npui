@@ -4,13 +4,14 @@
 	DECLARE nf BOOLEAN DEFAULT FALSE;
 	DECLARE entid, user_rateid, user_nextrateid INT UNSIGNED DEFAULT 0;
 	DECLARE ealiasid INT UNSIGNED DEFAULT NULL;
-	DECLARE user_password, userpol_in, userpol_eg VARCHAR(255) DEFAULT NULL;
+	DECLARE userpass_crypt, userpass_plain, userpol_in, userpol_eg VARCHAR(255) DEFAULT NULL;
+	DECLARE userpass_ntlm CHAR(32) CHARACTER SET ascii DEFAULT NULL;
 	DECLARE user_state TINYINT UNSIGNED DEFAULT 0;
 	DECLARE ts, user_qpend DATETIME DEFAULT NULL;
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET nf := TRUE;
 
-	SELECT `entityid`, `aliasid`, `password`, `rateid`, `nextrateid`, `state`, `qpend`
-	INTO entid, ealiasid, user_password, user_rateid, user_nextrateid, user_state, user_qpend
+	SELECT `entityid`, `aliasid`, `pwd_ntlm`, `pwd_crypt`, `pwd_plain`, `rateid`, `nextrateid`, `state`, `qpend`
+	INTO entid, ealiasid, userpass_ntlm, userpass_crypt, userpass_plain, user_rateid, user_nextrateid, user_state, user_qpend
 	FROM `entities_access`
 	LEFT JOIN `entities_def`
 	USING(`entityid`)
@@ -19,7 +20,9 @@
 		SELECT
 			NULL AS `entityid`,
 			NULL AS `username`,
-			NULL AS `password`,
+			NULL AS `pwd_ntlm`,
+			NULL AS `pwd_crypt`,
+			NULL AS `pwd_plain`,
 			NULL AS `policy_in`,
 			NULL AS `policy_eg`,
 			99 AS `state`;
@@ -37,7 +40,9 @@
 			SELECT
 				NULL AS `entityid`,
 				NULL AS `username`,
-				NULL AS `password`,
+				NULL AS `pwd_ntlm`,
+				NULL AS `pwd_crypt`,
+				NULL AS `pwd_plain`,
 				NULL AS `policy_in`,
 				NULL AS `policy_eg`,
 				99 AS `state`;
@@ -57,7 +62,9 @@
 	SELECT
 		entid AS `entityid`,
 		name AS `username`,
-		user_password AS `password`,
+		userpass_ntlm AS `pwd_ntlm`,
+		userpass_crypt AS `pwd_crypt`,
+		userpass_plain AS `pwd_plain`,
 		userpol_in AS `policy_in`,
 		userpol_eg AS `policy_eg`,
 		user_state AS `state`;

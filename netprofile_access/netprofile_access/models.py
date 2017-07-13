@@ -67,14 +67,17 @@ from sqlalchemy.orm import (
 	backref,
 	relationship
 )
+from pyramid.i18n import TranslationStringFactory
 
 from netprofile.db.connection import (
 	Base,
 	DBSession
 )
 from netprofile.db.fields import (
+	ASCIIFixedString,
 	ASCIIString,
 	DeclEnum,
+	ExactUnicode,
 	Money,
 	NPBoolean,
 	Traffic,
@@ -97,16 +100,15 @@ from netprofile.db.ddl import (
 )
 from netprofile.ext.columns import MarkupColumn
 from netprofile.ext.wizards import (
-	SimpleWizard, 
-	Wizard, 
-	Step, 
+	SimpleWizard,
+	Wizard,
+	Step,
 	ExternalWizardField
 )
 
 from netprofile.ext.data import ExtModel
 from netprofile.common.hooks import register_hook
-from pyramid.i18n import TranslationStringFactory
-
+from netprofile.common.crypto import hash_password
 from netprofile_entities.models import (
 	Entity,
 	EntityHistory,
@@ -132,7 +134,7 @@ def _wizcb_aent_init(wizard, model, req):
 		}
 
 	wizard.steps.append(Step(
-		ExternalWizardField('AccessEntity', 'password'),
+		ExternalWizardField('AccessEntity', 'pwd_hashed'),
 		ExternalWizardField('AccessEntity', 'stash'),
 		ExternalWizardField('AccessEntity', 'rate'),
 		id='ent_accessentity1', title=_('Access entity properties'),
@@ -188,7 +190,7 @@ class AccessEntity(Entity):
 				'show_in_menu' : 'modules',
 				'menu_name'    : _('Access Entities'),
 				'menu_parent'  : 'entities',
-				'default_sort' : ({ 'property': 'nick' ,'direction': 'ASC' },),
+				'default_sort' : ({'property': 'nick', 'direction': 'ASC'},),
 				'grid_view'    : (
 					MarkupColumn(
 						name='icon',
@@ -206,7 +208,7 @@ class AccessEntity(Entity):
 				'grid_hidden'  : ('entityid',),
 				'form_view'    : (
 					'nick', 'parent', 'state', 'flags',
-					'password', 'stash', 'rate', 'next_rate', #'alias_of',
+					'pwd_hashed', 'stash', 'rate', 'next_rate',  # 'alias_of',
 					'ipv4_address', 'ipv6_address',
 					'ut_ingress', 'ut_egress', 'u_sec',
 					'qpend', 'access_state',
@@ -219,12 +221,12 @@ class AccessEntity(Entity):
 				'detail_pane'  : ('netprofile_core.views', 'dpane_simple'),
 				'create_wizard' : Wizard(
 					Step(
-						'nick', 'parent', 'state', 
+						'nick', 'parent', 'state',
 						'flags', 'descr',
 						id='generic', title=_('Generic entity properties'),
 					),
 					Step(
-						'password', 'stash', 'rate',
+						'pwd_hashed', 'stash', 'rate',
 						id='ent_access1', title=_('Access entity properties'),
 					),
 					title=_('Add new access entity'), validator='CreateAccessEntity'
@@ -246,14 +248,74 @@ class AccessEntity(Entity):
 			'header_string' : _('ID')
 		}
 	)
-	password = Column(
-		Unicode(255),
-		Comment('Cleartext password'),
-		nullable=False,
+	password_hashed = Column(
+		'pwd_hashed',
+		ASCIIString(255),
+		Comment('Primary storage for hashed password'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('Password'),
 			'secret_value'  : True,
-			'editor_xtype'  : 'passwordfield'
+			'editor_xtype'  : 'passwordfield',
+			'writer'        : 'change_password',
+			'pass_request'  : True
+		}
+	)
+	password_ha1 = Column(
+		'pwd_digestha1',
+		ASCIIFixedString(32),
+		Comment('DIGEST-MD5 A1 hash of access entity password'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('A1 Hash'),
+			'secret_value'  : True,
+			'editor_xtype'  : None,
+			'ldap_attr'     : 'npDigestHA1'
+		}
+	)
+	password_ntlm = Column(
+		'pwd_ntlm',
+		ASCIIFixedString(32),
+		Comment('NTLM hash of access entity password'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('NTLM Hash'),
+			'secret_value'  : True,
+			'editor_xtype'  : None
+		}
+	)
+	password_crypt = Column(
+		'pwd_crypt',
+		ExactUnicode(255),
+		Comment('POSIX crypt hash of access entity password'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('crypt(3) Hash'),
+			'secret_value'  : True,
+			'editor_xtype'  : None,
+			'ldap_attr'     : 'userPassword',
+			'ldap_value'    : 'ldap_password'
+		}
+	)
+	password_plaintext = Column(
+		'pwd_plain',
+		ExactUnicode(255),
+		Comment('Plaintext access entity password'),
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
+		info={
+			'header_string' : _('Plaintext Password'),
+			'secret_value'  : True,
+			'editor_xtype'  : None
 		}
 	)
 	stash_id = Column(
@@ -511,6 +573,19 @@ class AccessEntity(Entity):
 	def grid_icon(self, req):
 		return req.static_url('netprofile_access:static/img/access.png')
 
+	def ldap_password(self, settings):
+		if self.password_crypt is None:
+			return None
+		return '{CRYPT}' + self.password_crypt
+
+	def change_password(self, newpwd, opts, request):
+		self.password_hashed = hash_password(self.nick, newpwd, subject='accounts')
+		self.password_ntlm = hash_password(self.nick, newpwd, scheme='ntlm', subject='accounts')
+		self.password_crypt = hash_password(self.nick, newpwd, scheme='crypt', subject='accounts')
+		self.password_plaintext = hash_password(self.nick, newpwd, scheme='plain', subject='accounts')
+		if self.nick:
+			self.password_ha1 = hash_password(self.nick, newpwd, scheme='digest-ha1', subject='accounts')
+
 class PerUserRateModifier(Base):
 	"""
 	Per-user rate modifier definition
@@ -533,7 +608,7 @@ class PerUserRateModifier(Base):
 				'cap_edit'      : 'ENTITIES_EDIT', # FIXME
 				'cap_delete'    : 'ENTITIES_EDIT', # FIXME
 				'menu_name'     : _('Rate Modifiers'),
-				'default_sort'  : ({ 'property': 'l_ord', 'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'l_ord', 'direction': 'ASC'},),
 				'grid_view'     : ('rmid', 'entity', 'rate', 'type', 'enabled', 'l_ord'),
 				'grid_hidden'   : ('rmid',),
 				'create_wizard' : SimpleWizard(title=_('Add new rate modifier'))
@@ -675,7 +750,7 @@ class AccessBlock(Base):
 				'cap_delete'    : 'ENTITIES_EDIT', # FIXME
 
 				'menu_name'     : _('Access Blocks'),
-				'default_sort'  : ({ 'property': 'startts' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'startts', 'direction': 'ASC'},),
 				'grid_view'     : ('abid', 'entity', 'startts', 'endts', 'bstate'),
 				'grid_hidden'   : ('abid',),
 				'form_view'     : ('entity', 'startts', 'endts', 'bstate', 'oldstate'),
@@ -775,7 +850,7 @@ class AccessEntityLinkType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Link Types'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : ('ltid', 'name'),
 				'grid_hidden'   : ('ltid',),
 				'form_view'     : ('name', 'descr'),
@@ -788,7 +863,7 @@ class AccessEntityLinkType(Base):
 	id = Column(
 		'ltid',
 		UInt32(),
-		Sequence('entities_access_linktypes_ltid_seq'),
+		Sequence('entities_access_linktypes_ltid_seq', start=101, increment=1),
 		Comment('Link type ID'),
 		primary_key=True,
 		nullable=False,
@@ -841,7 +916,7 @@ class AccessEntityLink(Base):
 				'cap_delete'    : 'ENTITIES_EDIT', # FIXME
 
 				'menu_name'     : _('Links'),
-				'default_sort'  : ({ 'property': 'ltid' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'ltid', 'direction': 'ASC'},),
 				'grid_view'     : ('lid', 'entity', 'type', 'ts', 'value'),
 				'grid_hidden'   : ('lid',),
 				'easy_search'   : ('value',),
@@ -946,7 +1021,7 @@ class AccessEntityChange(Base):
 				'cap_delete'   : '__NOPRIV__',
 
 				'menu_name'    : _('Access Entity Changes'),
-				'default_sort' : ({ 'property': 'ts' ,'direction': 'DESC' },),
+				'default_sort' : ({'property': 'ts', 'direction': 'DESC'},),
 				'grid_view'    : ('aecid', 'entity', 'user', 'ts'),
 				'grid_hidden'  : ('aecid',),
 				'form_view'    : (

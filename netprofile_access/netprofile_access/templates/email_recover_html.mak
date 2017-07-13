@@ -15,9 +15,9 @@
 		<p>${_('You have recently requested a password recovery.')}</p>
 % if change_pass:
 		<p>${_('Your password was automatically changed.')}</p>
-		<p>${_('Here is your new password:')} <strong>${access.password}</strong></p>
-% else:
-		<p>${_('Here is your password:')} <strong>${access.password}</strong></p>
+		<p>${_('Here is your new password:')} <strong>${new_pass}</strong></p>
+% elif access.password_plain:
+		<p>${_('Here is your password:')} <strong>${access.password_plain}</strong></p>
 % endif
 
 		<p>${_('If you didn\'t request a password recovery please contact support immediately.')}</p>
