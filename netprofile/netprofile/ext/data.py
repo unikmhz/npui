@@ -765,8 +765,6 @@ class ExtColumn(object):
 		ed_xtype = self.editor_xtype
 		if ed_xtype is None:
 			return None
-		if self.get_secret_value(req):
-			return None
 		choices = self.get_choices(req)
 		if choices:
 			ed_xtype = 'combobox'
@@ -986,8 +984,6 @@ class ExtColumn(object):
 		return conf
 
 	def get_column_cfg(self, req):
-		if self.get_secret_value(req):
-			return None
 		loc = req.localizer
 		conf = {
 			'header'     : loc.translate(self.header_string),
@@ -1194,8 +1190,6 @@ class ExtPseudoColumn(ExtColumn):
 		return None
 
 	def get_column_cfg(self, req):
-		if self.get_secret_value(req):
-			return None
 		loc = req.localizer
 		conf = {
 			'header'     : loc.translate(self.column.header_string),
@@ -1401,8 +1395,6 @@ class ExtOneToManyRelationshipColumn(ExtRelationshipColumn):
 				cont.remove(relobj)
 
 	def get_editor_cfg(self, req, initval=None, in_form=False):
-		if self.get_secret_value(req):
-			return None
 		loc = req.localizer
 		relcls = _table_to_class(self.prop.target.name)
 		if self.value_attr:
@@ -2047,7 +2039,7 @@ class ExtModel(object):
 
 	def read_one(self, params, request):
 		logger.debug('Running ExtDirect class:%s method:read_one params:%r', self.name, params)
-		raise RuntimeError('read_one() not implemented')
+		raise NotImplementedError('read_one() not implemented')
 
 	def set_values(self, obj, values, request, is_create=False):
 		obj.__req__ = request
@@ -2059,7 +2051,7 @@ class ExtModel(object):
 			helper = getattr(self.model, '__augment_create__', None)
 		else:
 			helper = getattr(self.model, '__augment_update__', None)
-		if callable(helper) and not helper(sess, obj, values, request):
+		if callable(helper) and not helper(DBSession(), obj, values, request):
 			return
 		for p, val in values.items():
 			if p not in cols:
