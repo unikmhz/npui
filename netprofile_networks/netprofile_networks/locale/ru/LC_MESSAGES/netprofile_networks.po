@@ -1,95 +1,95 @@
 # Russian translations for netprofile_networks.
-# Copyright (C) 2016 NetProfile project contributors
+# Copyright (C) 2017 NetProfile project contributors
 # This file is distributed under the same license as the netprofile_networks
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+# Alex Unigovsky <unik@itws.ru>, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_networks 0.3\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-09 15:40+0300\n"
-"PO-Revision-Date: 2016-03-09 15:44+0300\n"
-"Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
+"POT-Creation-Date: 2017-07-13 11:58+0300\n"
+"PO-Revision-Date: 2017-07-13 11:59+0300\n"
+"Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
 "Language: ru\n"
-"Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Language-Team: ru <netprofile-users@googlegroups.com>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.2.0\n"
-"X-Generator: Poedit 1.8.5\n"
+"Generated-By: Babel 2.3.4\n"
+"X-Generator: Poedit 1.8.7\n"
 
-#: netprofile_networks/__init__.py:80
+#: netprofile_networks/__init__.py:83
 msgid "Menu: Networks"
 msgstr "Меню: Сети"
 
-#: netprofile_networks/__init__.py:84
+#: netprofile_networks/__init__.py:87
 msgid "Networks: List"
 msgstr "Сети: Просмотр"
 
-#: netprofile_networks/__init__.py:88
+#: netprofile_networks/__init__.py:91
 msgid "Networks: Create"
 msgstr "Сети: Создание"
 
-#: netprofile_networks/__init__.py:92
+#: netprofile_networks/__init__.py:95
 msgid "Networks: Edit"
 msgstr "Сети: Правка"
 
-#: netprofile_networks/__init__.py:96
+#: netprofile_networks/__init__.py:99
 msgid "Networks: Delete"
 msgstr "Сети: Удаление"
 
-#: netprofile_networks/__init__.py:100
+#: netprofile_networks/__init__.py:103
 msgid "Networks: Create groups"
 msgstr "Сети: Создание групп"
 
-#: netprofile_networks/__init__.py:104
+#: netprofile_networks/__init__.py:107
 msgid "Networks: Edit groups"
 msgstr "Сети: Правка шрупп"
 
-#: netprofile_networks/__init__.py:108
+#: netprofile_networks/__init__.py:111
 msgid "Networks: Delete groups"
 msgstr "Сети: Удаление групп"
 
-#: netprofile_networks/__init__.py:112
+#: netprofile_networks/__init__.py:115
 msgid "Networks: Create service types"
 msgstr "Сети: Создание типов служб"
 
-#: netprofile_networks/__init__.py:116
+#: netprofile_networks/__init__.py:119
 msgid "Networks: Edit service types"
 msgstr "Сети: Правка типов служб"
 
-#: netprofile_networks/__init__.py:120
+#: netprofile_networks/__init__.py:123
 msgid "Networks: Delete service types"
 msgstr "Сети: Удаление типов служб"
 
-#: netprofile_networks/__init__.py:138
+#: netprofile_networks/__init__.py:141
 msgid "Name Server"
 msgstr "Сервер имён DNS"
 
-#: netprofile_networks/__init__.py:142
+#: netprofile_networks/__init__.py:145
 msgid "WINS Server"
 msgstr "Сервер имён WINS"
 
-#: netprofile_networks/__init__.py:146
+#: netprofile_networks/__init__.py:149
 msgid "NTP Server"
 msgstr "Служба времени"
 
-#: netprofile_networks/__init__.py:150
+#: netprofile_networks/__init__.py:153
 msgid "Gateway"
 msgstr "Шлюз"
 
-#: netprofile_networks/__init__.py:154
+#: netprofile_networks/__init__.py:157
 msgid "SLP DA Server"
 msgstr "Сервер SLP DA"
 
-#: netprofile_networks/__init__.py:158
+#: netprofile_networks/__init__.py:161
 msgid "DNSv6 Server"
 msgstr "Сервер имён DNSv6"
 
-#: netprofile_networks/__init__.py:172 netprofile_networks/models.py:107
+#: netprofile_networks/__init__.py:175 netprofile_networks/models.py:107
 #: netprofile_networks/views.py:53
 msgid "Networks"
 msgstr "Сети"

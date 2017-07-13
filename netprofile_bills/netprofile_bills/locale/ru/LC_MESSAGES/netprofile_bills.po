@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_bills 0+untagged.1194.gf0e86ba.dirty\n"
 "Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
-"POT-Creation-Date: 2017-05-05 06:52+0300\n"
-"PO-Revision-Date: 2017-05-05 07:01+0300\n"
+"POT-Creation-Date: 2017-07-13 11:33+0300\n"
+"PO-Revision-Date: 2017-07-13 11:34+0300\n"
 "Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <netprofile-users@googlegroups.com>\n"
@@ -21,43 +21,44 @@ msgstr ""
 "Generated-By: Babel 2.3.4\n"
 "X-Generator: Poedit 1.8.7\n"
 
-#: netprofile_bills/__init__.py:82
+#: netprofile_bills/__init__.py:80
 msgid "Menu: Bills"
 msgstr "Меню: Платёжные документы"
 
-#: netprofile_bills/__init__.py:86
+#: netprofile_bills/__init__.py:84
 msgid "Bills: List"
 msgstr "Платёжные документы: Просмотр"
 
-#: netprofile_bills/__init__.py:90
+#: netprofile_bills/__init__.py:88
 msgid "Bills: Create"
 msgstr "Платёжные документы: Создание"
 
-#: netprofile_bills/__init__.py:94
+#: netprofile_bills/__init__.py:92
 msgid "Bills: Edit"
 msgstr "Платёжные документы: Правка"
 
-#: netprofile_bills/__init__.py:98
+#: netprofile_bills/__init__.py:96
 msgid "Bills: Delete"
 msgstr "Платёжные документы: Удаление"
 
-#: netprofile_bills/__init__.py:102
+#: netprofile_bills/__init__.py:100
 msgid "Bills: Operations"
 msgstr "Платёжные документы: Операции"
 
-#: netprofile_bills/__init__.py:106
+#: netprofile_bills/__init__.py:104
 msgid "Bills: Create types"
 msgstr "Платёжные документы: Создание типов"
 
-#: netprofile_bills/__init__.py:110
+#: netprofile_bills/__init__.py:108
 msgid "Bills: Edit types"
 msgstr "Платёжные документы: Правка типов"
 
-#: netprofile_bills/__init__.py:114
+#: netprofile_bills/__init__.py:112
 msgid "Bills: Delete types"
 msgstr "Платёжные документы: Удаление типов"
 
-#: netprofile_bills/__init__.py:136 netprofile_bills/models.py:474
+#: netprofile_bills/__init__.py:134 netprofile_bills/models.py:478
+#: netprofile_bills/views.py:44 netprofile_bills/views.py:63
 msgid "Bills"
 msgstr "Платёжные документы"
 
@@ -70,12 +71,12 @@ msgid "Add new serial counter"
 msgstr "Добавить новый счётчик серийных номеров"
 
 #: netprofile_bills/models.py:120 netprofile_bills/models.py:214
-#: netprofile_bills/models.py:500
+#: netprofile_bills/models.py:504
 msgid "ID"
 msgstr "ID"
 
 #: netprofile_bills/models.py:128 netprofile_bills/models.py:237
-#: netprofile_bills/models.py:339
+#: netprofile_bills/models.py:343
 msgid "Name"
 msgstr "Название"
 
@@ -107,7 +108,7 @@ msgstr "Привилегия"
 msgid "Issuer"
 msgstr "Отправитель"
 
-#: netprofile_bills/models.py:287 netprofile_bills/models.py:510
+#: netprofile_bills/models.py:287 netprofile_bills/models.py:514
 msgid "Type"
 msgstr "Тип"
 
@@ -119,87 +120,87 @@ msgstr "Документ"
 msgid "Parts"
 msgstr "Состав"
 
-#: netprofile_bills/models.py:346 netprofile_bills/models.py:576
+#: netprofile_bills/models.py:350 netprofile_bills/models.py:580
 msgid "Sum"
 msgstr "Сумма"
 
-#: netprofile_bills/models.py:353
+#: netprofile_bills/models.py:357
 msgid "Quantity"
 msgstr "Количество"
 
-#: netprofile_bills/models.py:360
+#: netprofile_bills/models.py:364
 msgid "Tax Multiplier"
 msgstr "Налог. множитель"
 
-#: netprofile_bills/models.py:367
+#: netprofile_bills/models.py:371
 msgid "Counts"
 msgstr "Учитывается"
 
-#: netprofile_bills/models.py:383
+#: netprofile_bills/models.py:387
 msgid "Mutable"
 msgstr "Модифицируемый"
 
-#: netprofile_bills/models.py:394 netprofile_bills/models.py:705
+#: netprofile_bills/models.py:398 netprofile_bills/models.py:709
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_bills/models.py:439 netprofile_bills/models.py:621
-#: netprofile_bills/models.py:657
+#: netprofile_bills/models.py:443 netprofile_bills/models.py:625
+#: netprofile_bills/models.py:661
 msgid "Created"
 msgstr "Создан"
 
-#: netprofile_bills/models.py:440
+#: netprofile_bills/models.py:444
 msgid "Sent"
 msgstr "Отправлен"
 
-#: netprofile_bills/models.py:441
+#: netprofile_bills/models.py:445
 msgid "Paid"
 msgstr "Оплачен"
 
-#: netprofile_bills/models.py:442
+#: netprofile_bills/models.py:446
 msgid "Recalled"
 msgstr "Отозван"
 
-#: netprofile_bills/models.py:488
+#: netprofile_bills/models.py:492
 msgid "Add new bill"
 msgstr "Добавить новый платёжный документ"
 
-#: netprofile_bills/models.py:523
+#: netprofile_bills/models.py:527
 msgid "Serial #"
 msgstr "Серийный №"
 
-#: netprofile_bills/models.py:533
+#: netprofile_bills/models.py:537
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_bills/models.py:544
+#: netprofile_bills/models.py:548
 msgid "Stash"
 msgstr "Счёт"
 
-#: netprofile_bills/models.py:557
+#: netprofile_bills/models.py:561
 msgid "Currency"
 msgstr "Валюта"
 
-#: netprofile_bills/models.py:588
+#: netprofile_bills/models.py:592
 msgid "State"
 msgstr "Состояние"
 
-#: netprofile_bills/models.py:598
+#: netprofile_bills/models.py:602
 msgid "Title"
 msgstr "Заголовок"
 
-#: netprofile_bills/models.py:610
+#: netprofile_bills/models.py:614
 msgid "Accounting Date"
 msgstr "Учётная дата"
 
-#: netprofile_bills/models.py:632 netprofile_bills/models.py:670
+#: netprofile_bills/models.py:636 netprofile_bills/models.py:674
 msgid "Modified"
 msgstr "Изменён"
 
-#: netprofile_bills/models.py:644 netprofile_bills/models.py:683
+#: netprofile_bills/models.py:648 netprofile_bills/models.py:687
 msgid "Marked as Paid"
 msgstr "Оплачен"
 
-#: netprofile_bills/models.py:694
+#: netprofile_bills/models.py:698
 msgid "Contents"
 msgstr "Содержимое"

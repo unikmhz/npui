@@ -1,59 +1,59 @@
 # Russian translations for netprofile_confgen.
-# Copyright (C) 2016 NetProfile project contributors
+# Copyright (C) 2017 NetProfile project contributors
 # This file is distributed under the same license as the netprofile_confgen
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+# Alex Unigovsky <unik@itws.ru>, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_confgen 0.3\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-09 13:13+0300\n"
-"PO-Revision-Date: 2016-03-09 13:16+0300\n"
-"Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
+"POT-Creation-Date: 2017-07-13 11:34+0300\n"
+"PO-Revision-Date: 2017-07-13 11:36+0300\n"
+"Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
 "Language: ru\n"
-"Language-Team: ru <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Language-Team: ru <netprofile-users@googlegroups.com>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.2.0\n"
-"X-Generator: Poedit 1.8.5\n"
+"Generated-By: Babel 2.3.4\n"
+"X-Generator: Poedit 1.8.7\n"
 
-#: netprofile_confgen/__init__.py:71
+#: netprofile_confgen/__init__.py:80
 msgid "Servers: List"
 msgstr "Серверы: Просмотр"
 
-#: netprofile_confgen/__init__.py:75
+#: netprofile_confgen/__init__.py:84
 msgid "Servers: Create"
 msgstr "Серверы: Создание"
 
-#: netprofile_confgen/__init__.py:79
+#: netprofile_confgen/__init__.py:88
 msgid "Servers: Edit"
 msgstr "Серверы: Правка"
 
-#: netprofile_confgen/__init__.py:83
+#: netprofile_confgen/__init__.py:92
 msgid "Servers: Delete"
 msgstr "Серверы: Удаление"
 
-#: netprofile_confgen/__init__.py:87
+#: netprofile_confgen/__init__.py:96
 msgid "Servers: Generate configuration"
 msgstr "Серверы: Запись конфигурации"
 
-#: netprofile_confgen/__init__.py:91
+#: netprofile_confgen/__init__.py:100
 msgid "Servers: Create types"
 msgstr "Серверы: Создание типов"
 
-#: netprofile_confgen/__init__.py:95
+#: netprofile_confgen/__init__.py:104
 msgid "Servers: Edit types"
 msgstr "Серверы: Правка типов"
 
-#: netprofile_confgen/__init__.py:99
+#: netprofile_confgen/__init__.py:108
 msgid "Servers: Delete types"
 msgstr "Серверы: Удаление типов"
 
-#: netprofile_confgen/__init__.py:217
+#: netprofile_confgen/__init__.py:225
 msgid "Config Generation"
 msgstr "Создание настроек"
 
@@ -95,7 +95,7 @@ msgstr "Серверы"
 msgid "Add new server"
 msgstr "Добавить новый сервер"
 
-#: netprofile_confgen/models.py:196
+#: netprofile_confgen/models.py:196 netprofile_confgen/tasks.py:52
 msgid "Generate server configuration"
 msgstr "Сгенерировать конфигурацию серверов"
 
@@ -123,12 +123,12 @@ msgstr "Сервер"
 msgid "Value"
 msgstr "Значение"
 
-#: netprofile_confgen/tasks.py:69
+#: netprofile_confgen/tasks.py:72
 #, python-format
 msgid "Successfully generated %s configuration for host %s."
 msgstr "Успешно сгененрирована конфигурация %s для хоста %s."
 
-#: netprofile_confgen/tasks.py:75
+#: netprofile_confgen/tasks.py:78
 #, python-format
 msgid "Successfully deployed configuration for hosts: %s."
 msgstr "Успешно развёрнута конфигурация для хостов: %s."

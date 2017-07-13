@@ -1,81 +1,82 @@
 # Russian translations for netprofile.
-# Copyright (C) 2016 NetProfile project contributors
+# Copyright (C) 2017 NetProfile project contributors
 # This file is distributed under the same license as the netprofile project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+# Alex Unigovsky <unik@itws.ru>, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile 0.3\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-09 13:08+0300\n"
-"PO-Revision-Date: 2015-07-16 09:58+0300\n"
-"Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
+"POT-Creation-Date: 2017-07-13 11:15+0300\n"
+"PO-Revision-Date: 2017-07-13 11:16+0300\n"
+"Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
 "Language: ru\n"
-"Language-Team: ru <LL@li.org>\n"
+"Language-Team: ru <netprofile-users@googlegroups.com>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.2.0\n"
+"Generated-By: Babel 2.3.4\n"
+"X-Generator: Poedit 1.8.7\n"
 
-#: netprofile/cli.py:75
+#: netprofile/cli.py:80
 msgid "Name"
 msgstr "Название"
 
-#: netprofile/cli.py:76
+#: netprofile/cli.py:81
 msgid "Available"
 msgstr "Доступен"
 
-#: netprofile/cli.py:77
+#: netprofile/cli.py:82
 msgid "Installed"
 msgstr "Установлен"
 
-#: netprofile/cli.py:78
+#: netprofile/cli.py:83
 msgid "Enabled"
 msgstr "Включен"
 
-#: netprofile/cli.py:94 netprofile/cli.py:95
+#: netprofile/cli.py:99 netprofile/cli.py:100
 msgid "- N/A -"
 msgstr "- Н/Д -"
 
-#: netprofile/cli.py:102
+#: netprofile/cli.py:107
 msgid "YES"
 msgstr "ДА"
 
-#: netprofile/cli.py:102
+#: netprofile/cli.py:107
 msgid "NO"
 msgstr "НЕТ"
 
-#: netprofile/cli.py:129
+#: netprofile/cli.py:134
 msgid "Module"
 msgstr "Модуль"
 
-#: netprofile/cli.py:130
+#: netprofile/cli.py:135
 msgid "Summary"
 msgstr "Сводка"
 
-#: netprofile/cli.py:131
+#: netprofile/cli.py:136
 msgid "Homepage"
 msgstr "Сайт"
 
-#: netprofile/cli.py:132
+#: netprofile/cli.py:137
 msgid "Author"
 msgstr "Автор"
 
-#: netprofile/cli.py:133
+#: netprofile/cli.py:138
 msgid "E-Mail"
 msgstr "E-mail"
 
-#: netprofile/cli.py:134
+#: netprofile/cli.py:139
 msgid "License"
 msgstr "Лицензия"
 
-#: netprofile/cli.py:135
+#: netprofile/cli.py:140
 msgid "Location"
 msgstr "Размещение"
 
-#: netprofile/cli.py:136
+#: netprofile/cli.py:141
 msgid "Version"
 msgstr "Версия"
 
@@ -107,51 +108,51 @@ msgstr "UNIX"
 msgid "Encoding"
 msgstr "Кодировка"
 
-#: netprofile/export/pdf.py:66
+#: netprofile/export/pdf.py:67
 msgid "PDF"
 msgstr "PDF"
 
-#: netprofile/export/pdf.py:81
+#: netprofile/export/pdf.py:82
 msgid "Page size"
 msgstr "Размер страницы"
 
-#: netprofile/export/pdf.py:101
+#: netprofile/export/pdf.py:102
 msgid "Orientation"
 msgstr "Ориентация"
 
-#: netprofile/export/pdf.py:121
+#: netprofile/export/pdf.py:122
 msgid "Horizontal Margins"
 msgstr "Горизонтальные поля"
 
-#: netprofile/export/pdf.py:130
+#: netprofile/export/pdf.py:131
 msgid "Vertical Margins"
 msgstr "Вертикальные поля"
 
-#: netprofile/export/pdf.py:223
+#: netprofile/export/pdf.py:224
 msgid "{0}, exported at {1}"
 msgstr "{0}, экспортировано {1}"
 
-#: netprofile/ext/data.py:1034
+#: netprofile/ext/data.py:1052
 msgid "Y-m-d H:i:s"
 msgstr "d.m.Y H:i:s"
 
-#: netprofile/ext/data.py:1037
+#: netprofile/ext/data.py:1055
 msgid "Y-m-d"
 msgstr "d.m.Y"
 
-#: netprofile/ext/data.py:1039
+#: netprofile/ext/data.py:1057
 msgid "H:i:s"
 msgstr "H:i:s"
 
-#: netprofile/ext/data.py:2332
+#: netprofile/ext/data.py:2378
 msgid "This field must be unique."
 msgstr "Это поле должно быть уникальным."
 
-#: netprofile/pdf/__init__.py:153
+#: netprofile/pdf/__init__.py:163
 msgid "Portrait"
 msgstr "Портрет"
 
-#: netprofile/pdf/__init__.py:154
+#: netprofile/pdf/__init__.py:164
 msgid "Landscape"
 msgstr "Пейзаж"
 
@@ -170,4 +171,3 @@ msgstr "Мбайт"
 #: netprofile/tpl/filters.py:106
 msgid "KiB"
 msgstr "Кбайт"
-

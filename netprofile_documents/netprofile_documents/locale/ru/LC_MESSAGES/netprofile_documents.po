@@ -1,5 +1,5 @@
 # Russian translations for netprofile_documents.
-# Copyright (C) 2016 NetProfile project contributors
+# Copyright (C) 2017 NetProfile project contributors
 # This file is distributed under the same license as the
 # netprofile_documents
 # project.
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_documents 0.3\n"
 "Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
-"POT-Creation-Date: 2017-05-17 16:40+0300\n"
-"PO-Revision-Date: 2017-05-17 16:42+0300\n"
+"POT-Creation-Date: 2017-07-13 11:42+0300\n"
+"PO-Revision-Date: 2017-07-13 11:43+0300\n"
 "Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <netprofile-users@googlegroups.com>\n"
@@ -22,137 +22,137 @@ msgstr ""
 "Generated-By: Babel 2.3.4\n"
 "X-Generator: Poedit 1.8.7\n"
 
-#: netprofile_documents/__init__.py:70
+#: netprofile_documents/__init__.py:73
 msgid "Menu: Documents"
 msgstr "Меню: Документы"
 
-#: netprofile_documents/__init__.py:74
+#: netprofile_documents/__init__.py:77
 msgid "Documents: List"
 msgstr "Документы: Просмотр"
 
-#: netprofile_documents/__init__.py:78
+#: netprofile_documents/__init__.py:81
 msgid "Documents: Create"
 msgstr "Документы: Создание"
 
-#: netprofile_documents/__init__.py:82
+#: netprofile_documents/__init__.py:85
 msgid "Documents: Edit"
 msgstr "Документы: Правка"
 
-#: netprofile_documents/__init__.py:86
+#: netprofile_documents/__init__.py:89
 msgid "Documents: Delete"
 msgstr "Документы: Удаление"
 
-#: netprofile_documents/__init__.py:90
+#: netprofile_documents/__init__.py:93
 msgid "Documents: Generate"
 msgstr "Документы: Воспроизведение"
 
-#: netprofile_documents/__init__.py:94
+#: netprofile_documents/__init__.py:97
 msgid "Documents: Create bundles"
 msgstr "Документы: Создание наборов"
 
-#: netprofile_documents/__init__.py:98
+#: netprofile_documents/__init__.py:101
 msgid "Documents: Edit bundles"
 msgstr "Документы: Правка наборов"
 
-#: netprofile_documents/__init__.py:102
+#: netprofile_documents/__init__.py:105
 msgid "Documents: Delete bundles"
 msgstr "Документы: Удаление наборов"
 
-#: netprofile_documents/__init__.py:129 netprofile_documents/models.py:95
-#: netprofile_documents/views.py:66
+#: netprofile_documents/__init__.py:132 netprofile_documents/models.py:153
+#: netprofile_documents/views.py:64
 msgid "Documents"
 msgstr "Документы"
 
-#: netprofile_documents/models.py:73
+#: netprofile_documents/models.py:90
 msgid "NPDML"
 msgstr "NPDML"
 
-#: netprofile_documents/models.py:74
+#: netprofile_documents/models.py:91
 msgid "Plain HTML"
 msgstr "Обычный HTML"
 
-#: netprofile_documents/models.py:75
+#: netprofile_documents/models.py:92
 msgid "XTemplate HTML"
 msgstr "XTemplate HTML"
 
-#: netprofile_documents/models.py:103
+#: netprofile_documents/models.py:161
 msgid "Add new document"
 msgstr "Добавить новый документ"
 
-#: netprofile_documents/models.py:115 netprofile_documents/models.py:252
-#: netprofile_documents/models.py:317
+#: netprofile_documents/models.py:173 netprofile_documents/models.py:331
+#: netprofile_documents/models.py:396
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_documents/models.py:123
+#: netprofile_documents/models.py:181
 msgid "Code"
 msgstr "Код"
 
-#: netprofile_documents/models.py:131 netprofile_documents/models.py:260
+#: netprofile_documents/models.py:189 netprofile_documents/models.py:339
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_documents/models.py:142
+#: netprofile_documents/models.py:200
 msgid "Type"
 msgstr "Тип"
 
-#: netprofile_documents/models.py:152
+#: netprofile_documents/models.py:210
 msgid "External"
 msgstr "Внешний"
 
-#: netprofile_documents/models.py:162
+#: netprofile_documents/models.py:220
 msgid "Body"
 msgstr "Текст"
 
-#: netprofile_documents/models.py:181
+#: netprofile_documents/models.py:239
 msgid "Variables"
 msgstr "Переменные"
 
-#: netprofile_documents/models.py:192
+#: netprofile_documents/models.py:250
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_documents/models.py:232
+#: netprofile_documents/models.py:311
 msgid "Bundles"
 msgstr "Пакеты"
 
-#: netprofile_documents/models.py:240
+#: netprofile_documents/models.py:319
 msgid "Add new bundle"
 msgstr "Добавить новый пакет документов"
 
-#: netprofile_documents/models.py:299
+#: netprofile_documents/models.py:378
 msgid "Bundle Contents"
 msgstr "Содержимое пакета"
 
-#: netprofile_documents/models.py:305
+#: netprofile_documents/models.py:384
 msgid "Add new document to the bundle"
 msgstr "Добавить документ в пакет"
 
-#: netprofile_documents/models.py:327
+#: netprofile_documents/models.py:406
 msgid "Bundle"
 msgstr "Пакет"
 
-#: netprofile_documents/models.py:339
+#: netprofile_documents/models.py:418
 msgid "Document"
 msgstr "Документ"
 
-#: netprofile_documents/models.py:351
+#: netprofile_documents/models.py:430
 msgid "Order"
 msgstr "Порядок"
 
-#: netprofile_documents/models.py:361
+#: netprofile_documents/models.py:440
 msgid "Copies"
 msgstr "Копии"
 
-#: netprofile_documents/views.py:45
+#: netprofile_documents/views.py:43
 msgid "Contents"
 msgstr "Содержимое"
 
-#: netprofile_documents/views.py:83
+#: netprofile_documents/views.py:81
 msgid "Choose document template…"
 msgstr "Выберите шаблон документа…"
 
-#: netprofile_documents/views.py:86
+#: netprofile_documents/views.py:84
 msgid "Generate"
 msgstr "Печать"
 

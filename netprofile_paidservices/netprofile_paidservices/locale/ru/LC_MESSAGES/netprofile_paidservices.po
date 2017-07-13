@@ -1,60 +1,60 @@
 # Russian translations for netprofile_paidservices.
-# Copyright (C) 2016 NetProfile project contributors
+# Copyright (C) 2017 NetProfile project contributors
 # This file is distributed under the same license as the
 # netprofile_paidservices
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+# Alex Unigovsky <unik@itws.ru>, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_paidservices 0.3\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-03-09 15:45+0300\n"
-"PO-Revision-Date: 2016-03-09 15:46+0300\n"
-"Last-Translator: Alex Unigovsky <unik@compot.ru>\n"
+"Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
+"POT-Creation-Date: 2017-07-13 12:00+0300\n"
+"PO-Revision-Date: 2017-07-13 12:02+0300\n"
+"Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
 "Language: ru\n"
-"Language-Team: ru <LL@li.org>\n"
+"Language-Team: ru <netprofile-users@googlegroups.com>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.2.0\n"
-"X-Generator: Poedit 1.8.5\n"
+"Generated-By: Babel 2.3.4\n"
+"X-Generator: Poedit 1.8.7\n"
 
-#: netprofile_paidservices/__init__.py:92
+#: netprofile_paidservices/__init__.py:95
 msgid "Menu: Paid services"
 msgstr "Меню: Платные услуги"
 
-#: netprofile_paidservices/__init__.py:96
+#: netprofile_paidservices/__init__.py:99
 msgid "Paid Services: List"
 msgstr "Платные услуги: Просмотр"
 
-#: netprofile_paidservices/__init__.py:100
+#: netprofile_paidservices/__init__.py:103
 msgid "Paid Services: Create"
 msgstr "Платные услуги: Создание"
 
-#: netprofile_paidservices/__init__.py:104
+#: netprofile_paidservices/__init__.py:107
 msgid "Paid Services: Edit"
 msgstr "Платные услуги: Правка"
 
-#: netprofile_paidservices/__init__.py:108
+#: netprofile_paidservices/__init__.py:111
 msgid "Paid Services: Delete"
 msgstr "Платные услуги: Удаление"
 
-#: netprofile_paidservices/__init__.py:112
+#: netprofile_paidservices/__init__.py:115
 msgid "Paid Services: Create types"
 msgstr "Платные услуги: Создание типов"
 
-#: netprofile_paidservices/__init__.py:116
+#: netprofile_paidservices/__init__.py:119
 msgid "Paid Services: Edit types"
 msgstr "Платные услуги: Правка типов"
 
-#: netprofile_paidservices/__init__.py:120
+#: netprofile_paidservices/__init__.py:123
 msgid "Paid Services: Delete types"
 msgstr "Платные услуги: Удаление типов"
 
-#: netprofile_paidservices/__init__.py:142
+#: netprofile_paidservices/__init__.py:145
 #: netprofile_paidservices/models.py:118 netprofile_paidservices/views.py:44
 #: netprofile_paidservices/views.py:59
 msgid "Paid Services"
