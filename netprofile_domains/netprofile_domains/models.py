@@ -42,6 +42,8 @@ __all__ = [
 	'DomainsSignedView'
 ]
 
+import datetime as dt
+
 from sqlalchemy import (
 	Column,
 	Date,
@@ -55,11 +57,11 @@ from sqlalchemy import (
 	or_,
 	text
 )
-
 from sqlalchemy.orm import (
 	backref,
 	relationship
 )
+from pyramid.i18n import TranslationStringFactory
 
 from netprofile.db.connection import (
 	Base,
@@ -89,8 +91,6 @@ from netprofile.ext.wizards import (
 	Step,
 	Wizard
 )
-
-from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('netprofile_domains')
 
@@ -124,7 +124,7 @@ class Domain(Base):
 				'show_in_menu'  : 'modules',
 				'menu_name'     : _('Domains'),
 				'menu_main'     : True,
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : (
 					'domainid',
 					MarkupColumn(
@@ -266,10 +266,13 @@ class Domain(Base):
 	serial_date = Column(
 		Date(),
 		Comment('Domain serial date'),
-		nullable=False,
+		nullable=True,
+		default=None,
+		server_default=text('NULL'),
 		info={
 			'header_string' : _('Serial Date'),
-			'secret_value'  : True
+			'secret_value'  : True,
+			'editor_xtype'  : None
 		}
 	)
 	serial_revision = Column(
@@ -278,9 +281,11 @@ class Domain(Base):
 		Comment('Domain serial revision'),
 		nullable=False,
 		default=1,
+		server_default=text('1'),
 		info={
 			'header_string' : _('Serial Revision'),
-			'secret_value'  : True
+			'secret_value'  : True,
+			'editor_xtype'  : None
 		}
 	)
 	dkim_name = Column(
@@ -395,7 +400,7 @@ class Domain(Base):
 	@property
 	def serial(self):
 		if not self.serial_date:
-			return str(self.serial_revision % 100)
+			self.serial_date = dt.date.today()
 		return '%s%02d' % (
 			self.serial_date.strftime('%Y%m%d'),
 			(self.serial_revision % 100)
@@ -482,7 +487,7 @@ class DomainAlias(Base):
 				'cap_delete'    : 'DOMAINS_DELETE',
 
 				'menu_name'     : _('Aliases'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : (
 					'daid',
 					MarkupColumn(
@@ -594,7 +599,7 @@ class DomainTXTRecord(Base):
 				'cap_edit'      : 'DOMAINS_EDIT',
 				'cap_delete'    : 'DOMAINS_EDIT',
 				'menu_name'     : _('TXT Records'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : ('txtrrid', 'name', 'domain', 'value'),
 				'grid_hidden'   : ('txtrrid',),
 				'form_view'		: ('name', 'domain', 'ttl', 'vis', 'value'),
@@ -704,7 +709,7 @@ class DomainServiceType(Base):
 
 				'show_in_menu'  : 'admin',
 				'menu_name'     : _('Domain Service Types'),
-				'default_sort'  : ({ 'property': 'name' ,'direction': 'ASC' },),
+				'default_sort'  : ({'property': 'name', 'direction': 'ASC'},),
 				'grid_view'     : ('hltypeid', 'name', 'unique'),
 				'grid_hidden'   : ('hltypeid',),
 				'easy_search'   : ('name',),
@@ -776,7 +781,7 @@ DomainsBaseView = View(
 		Domain.dkim_name.label('dkim_name'),
 		Domain.dkim_data.label('dkim_data'),
 		Domain.description.label('descr')
-	).select_from(Domain).filter(Domain.parent_id == None),
+	).select_from(Domain).filter(Domain.parent_id.is_(None)),
 	check_option='CASCADED'
 )
 
@@ -798,7 +803,7 @@ DomainsEnabledView = View(
 		Domain.dkim_name.label('dkim_name'),
 		Domain.dkim_data.label('dkim_data'),
 		Domain.description.label('descr')
-	).select_from(Domain).filter(Domain.enabled == True),
+	).select_from(Domain).filter(Domain.enabled.is_(True)),
 	check_option='CASCADED'
 )
 
@@ -820,7 +825,7 @@ DomainsPublicView = View(
 		Domain.dkim_name.label('dkim_name'),
 		Domain.dkim_data.label('dkim_data'),
 		Domain.description.label('descr')
-	).select_from(Domain).filter(Domain.public == True),
+	).select_from(Domain).filter(Domain.public.is_(True)),
 	check_option='CASCADED'
 )
 
@@ -842,7 +847,7 @@ DomainsSignedView = View(
 		Domain.dkim_name.label('dkim_name'),
 		Domain.dkim_data.label('dkim_data'),
 		Domain.description.label('descr')
-	).select_from(Domain).filter(Domain.signed == True),
+	).select_from(Domain).filter(Domain.signed.is_(True)),
 	check_option='CASCADED'
 )
 
