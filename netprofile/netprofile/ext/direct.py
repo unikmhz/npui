@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: ExtDirect server
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# © Copyright 2013-2017 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -36,6 +36,7 @@ import json
 import traceback
 import datetime as dt
 import decimal
+import sys
 import uuid
 from dateutil.tz import tzlocal
 
@@ -411,6 +412,14 @@ class ExtDirectRouter(object):
 					'exception_class' : str(e.__class__),
 					'stacktrace'      : traceback.format_exc()
 				}
+				if self.debug_mode and hasattr(request, 'pdtb_id'):
+					# if pyramid_debugtoolbar is enabled, generate an interactive page
+					# and include the url to access it in the ext direct Exception response text
+					request.exc_info = sys.exc_info()
+					ret['message'] = 'Exception: traceback URL: %s' % (request.route_url(
+						'debugtoolbar',
+						subpath=(request.pdtb_id, 'exception')
+					),)
 			else:
 				message = 'Error executing %s.%s' % (action_name, method_name)
 				ret['result'] = {
@@ -418,29 +427,6 @@ class ExtDirectRouter(object):
 					'message' : message
 				}
 
-			if self.debug_mode:
-				# if pyramid_debugtoolbar is enabled, generate an interactive page
-				# and include the url to access it in the ext direct Exception response text
-				from pyramid_debugtoolbar.tbtools import get_traceback
-				import sys
-				exc_history = request.exc_history
-				if exc_history is not None:
-					tb = get_traceback(info=sys.exc_info(),
-							skip=1,
-							show_hidden_frames=False,
-							ignore_system_exceptions=True)
-					for frame in tb.frames:
-						exc_history.frames[frame.id] = frame
-					exc_history.tracebacks[tb.id] = tb
-
-					qs = {
-						'tb'    : str(tb.id),
-						'token' : request.registry.pdtb_token
-					}
-					msg = 'Exception: traceback URL: %s'
-					exc_url = request.route_url('debugtoolbar', subpath=('exception',), _query=qs)
-					exc_msg = msg % (exc_url)
-					ret['message'] = exc_msg
 		return ret
 
 	def route(self, request):
