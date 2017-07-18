@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: Templates
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# Copyright © 2013-2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -20,22 +20,18 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 from pyramid.renderers import render
 
+
 class TemplateObject(object):
-	def __init__(self, path, **kwargs):
-		self.path = path
-		self.args = kwargs
+    def __init__(self, path, **kwargs):
+        self.path = path
+        self.args = kwargs
 
-	def render(self, req, **kwargs):
-		args = self.args.copy()
-		args.update(kwargs)
-		return render(self.path, args, request=req)
-
+    def render(self, req, **kwargs):
+        args = self.args.copy()
+        args.update(kwargs)
+        return render(self.path, args, request=req)

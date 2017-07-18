@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: DB-centric validators
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# Copyright © 2013-2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -20,28 +20,24 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 from sqlalchemy.orm import (
-	EXT_PASS,
-	MapperExtension
+    EXT_PASS,
+    MapperExtension
 )
 
+
 class Validator(MapperExtension):
-	def __init__(self, *args):
-		MapperExtension.__init__(self)
+    def __init__(self, *args):
+        MapperExtension.__init__(self)
 
-	def before_insert(self, mapper, connection, instance):
-		self.validate(instance)
-		return EXT_PASS
+    def before_insert(self, mapper, connection, instance):
+        self.validate(instance)
+        return EXT_PASS
 
-	def validate(self, instance):
-		pass
+    def validate(self, instance):
+        pass
 
-	before_update = before_insert
-
+    before_update = before_insert

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: NPDML parser
-# © Copyright 2017 Alex 'Unik' Unigovsky
+# Copyright © 2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -20,254 +20,282 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 __all__ = (
-	'NPDMLContext',
-	'NPDMLBlock',
-	'NPDMLDocumentContext',
-	'NPDMLMetadataContext',
-	'NPDMLPageTemplateContext',
-	'NPDMLPageContext',
-	'NPDMLFrameContext',
-	'NPDMLTitleContext',
-	'NPDMLSectionContext',
-	'NPDMLParagraphContext',
-	'NPDMLTableContext',
-	'NPDMLTableCaptionContext',
-	'NPDMLTableHeaderContext',
-	'NPDMLTableRowContext',
-	'NPDMLTableCellContext',
-	'NPDMLAnchorContext',
-	'NPDMLBoldContext',
-	'NPDMLItalicContext',
-	'NPDMLUnderlineContext',
-	'NPDMLStrikethroughContext',
-	'NPDMLSuperscriptContext',
-	'NPDMLSubscriptContext',
-	'NPDMLFontContext',
-	'NPDMLImageContext',
-	'NPDMLCanvasContext',
-	'NPDMLLabelContext',
-	'NPDMLLineContext',
-	'NPDMLRectangleContext',
-	'NPDMLCircleContext',
-	'NPDMLEllipseContext',
-	'NPDMLParseTarget'
+    'NPDMLContext',
+    'NPDMLBlock',
+    'NPDMLDocumentContext',
+    'NPDMLMetadataContext',
+    'NPDMLPageTemplateContext',
+    'NPDMLPageContext',
+    'NPDMLFrameContext',
+    'NPDMLTitleContext',
+    'NPDMLSectionContext',
+    'NPDMLParagraphContext',
+    'NPDMLTableContext',
+    'NPDMLTableCaptionContext',
+    'NPDMLTableHeaderContext',
+    'NPDMLTableRowContext',
+    'NPDMLTableCellContext',
+    'NPDMLAnchorContext',
+    'NPDMLBoldContext',
+    'NPDMLItalicContext',
+    'NPDMLUnderlineContext',
+    'NPDMLStrikethroughContext',
+    'NPDMLSuperscriptContext',
+    'NPDMLSubscriptContext',
+    'NPDMLFontContext',
+    'NPDMLImageContext',
+    'NPDMLCanvasContext',
+    'NPDMLLabelContext',
+    'NPDMLLineContext',
+    'NPDMLRectangleContext',
+    'NPDMLCircleContext',
+    'NPDMLEllipseContext',
+    'NPDMLParseTarget'
 )
 
-class NPDMLContext(dict):
-	def __init__(self, *args, **kwargs):
-		dict.__init__(self, *args, **kwargs)
-		self.data = []
 
-	def get_data(self):
-		return ' '.join(self.data)
+class NPDMLContext(dict):
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+        self.data = []
+
+    def get_data(self):
+        return ' '.join(self.data)
+
 
 class NPDMLBlock(object):
-	in_toc = False
-	_depth = 0
-	_own_counter = 0
-	_counter = 0
-	_indenter = None
+    in_toc = False
+    _depth = 0
+    _own_counter = 0
+    _counter = 0
+    _indenter = None
 
-	@property
-	def is_numbered(self):
-		if 'prefix' in self:
-			return 1
-		return 0
+    @property
+    def is_numbered(self):
+        if 'prefix' in self:
+            return 1
+        return 0
 
-	@property
-	def depth(self):
-		return self._depth
+    @property
+    def depth(self):
+        return self._depth
 
-	def get_counter(self):
-		self._counter += 1
-		return self._counter
+    def get_counter(self):
+        self._counter += 1
+        return self._counter
+
 
 class NPDMLDocumentContext(NPDMLContext, NPDMLBlock):
-	is_numbered = False
+    is_numbered = False
+
 
 class NPDMLMetadataContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLPageTemplateContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLFrameContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLPageContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLTitleContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLSectionContext(NPDMLContext, NPDMLBlock):
-	@property
-	def in_toc(self):
-		return self.get('toc') != 'ignore'
+    @property
+    def in_toc(self):
+        return self.get('toc') != 'ignore'
+
 
 class NPDMLParagraphContext(NPDMLContext, NPDMLBlock):
-	pass
+    pass
+
 
 class NPDMLTableContext(NPDMLContext, NPDMLBlock):
-	def __init__(self, *args, **kwargs):
-		NPDMLContext.__init__(self, *args, **kwargs)
-		self.has_header = False
-		self.rows = []
-		self.widths = []
-		self.caption = None
+    def __init__(self, *args, **kwargs):
+        NPDMLContext.__init__(self, *args, **kwargs)
+        self.has_header = False
+        self.rows = []
+        self.widths = []
+        self.caption = None
+
 
 class NPDMLTableCaptionContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLTableRowContext(NPDMLContext):
-	def __init__(self, *args, **kwargs):
-		NPDMLContext.__init__(self, *args, **kwargs)
-		self.cells = []
-		self.widths = []
+    def __init__(self, *args, **kwargs):
+        NPDMLContext.__init__(self, *args, **kwargs)
+        self.cells = []
+        self.widths = []
+
 
 class NPDMLTableHeaderContext(NPDMLTableRowContext):
-	pass
+    pass
+
 
 class NPDMLTableCellContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLAnchorContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLBoldContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLItalicContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLUnderlineContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLStrikethroughContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLSuperscriptContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLSubscriptContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLFontContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLImageContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLCanvasContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLLabelContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLLineContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLRectangleContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLCircleContext(NPDMLContext):
-	pass
+    pass
+
 
 class NPDMLEllipseContext(NPDMLContext):
-	pass
+    pass
+
 
 def _tag(name):
-	return '{http://netprofile.ru/schemas/npdml/1.0}' + name
+    return '{http://netprofile.ru/schemas/npdml/1.0}' + name
+
 
 _NPDML_CLASS_MAP = {
-	_tag('document'): NPDMLDocumentContext,
-	_tag('meta'): NPDMLMetadataContext,
-	_tag('pageTemplates'): NPDMLPageTemplateContext,
-	_tag('page'): NPDMLPageContext,
-	_tag('frame'): NPDMLFrameContext,
-	_tag('title'): NPDMLTitleContext,
-	_tag('section'): NPDMLSectionContext,
-	_tag('para'): NPDMLParagraphContext,
-	_tag('table'): NPDMLTableContext,
-	_tag('caption'): NPDMLTableCaptionContext,
-	_tag('hrow'): NPDMLTableHeaderContext,
-	_tag('row'): NPDMLTableRowContext,
-	_tag('cell'): NPDMLTableCellContext,
-	_tag('a'): NPDMLAnchorContext,
-	_tag('b'): NPDMLBoldContext,
-	_tag('i'): NPDMLItalicContext,
-	_tag('u'): NPDMLUnderlineContext,
-	_tag('strike'): NPDMLStrikethroughContext,
-	_tag('super'): NPDMLSuperscriptContext,
-	_tag('sub'): NPDMLSubscriptContext,
-	_tag('font'): NPDMLFontContext,
-	_tag('image'): NPDMLImageContext,
-	_tag('canvas'): NPDMLCanvasContext,
-	_tag('label'): NPDMLLabelContext,
-	_tag('line'): NPDMLLineContext,
-	_tag('rect'): NPDMLRectangleContext,
-	_tag('circle'): NPDMLCircleContext,
-	_tag('ellipse'): NPDMLEllipseContext
+    _tag('document'): NPDMLDocumentContext,
+    _tag('meta'): NPDMLMetadataContext,
+    _tag('pageTemplates'): NPDMLPageTemplateContext,
+    _tag('page'): NPDMLPageContext,
+    _tag('frame'): NPDMLFrameContext,
+    _tag('title'): NPDMLTitleContext,
+    _tag('section'): NPDMLSectionContext,
+    _tag('para'): NPDMLParagraphContext,
+    _tag('table'): NPDMLTableContext,
+    _tag('caption'): NPDMLTableCaptionContext,
+    _tag('hrow'): NPDMLTableHeaderContext,
+    _tag('row'): NPDMLTableRowContext,
+    _tag('cell'): NPDMLTableCellContext,
+    _tag('a'): NPDMLAnchorContext,
+    _tag('b'): NPDMLBoldContext,
+    _tag('i'): NPDMLItalicContext,
+    _tag('u'): NPDMLUnderlineContext,
+    _tag('strike'): NPDMLStrikethroughContext,
+    _tag('super'): NPDMLSuperscriptContext,
+    _tag('sub'): NPDMLSubscriptContext,
+    _tag('font'): NPDMLFontContext,
+    _tag('image'): NPDMLImageContext,
+    _tag('canvas'): NPDMLCanvasContext,
+    _tag('label'): NPDMLLabelContext,
+    _tag('line'): NPDMLLineContext,
+    _tag('rect'): NPDMLRectangleContext,
+    _tag('circle'): NPDMLCircleContext,
+    _tag('ellipse'): NPDMLEllipseContext
 }
 
+
 class NPDMLParseTarget(object):
-	def __init__(self):
-		self.ctx = []
+    def __init__(self):
+        self.ctx = []
 
-	def start(self, tag, attrs):
-		newctx = _NPDML_CLASS_MAP[tag](attrs)
+    def start(self, tag, attrs):
+        newctx = _NPDML_CLASS_MAP[tag](attrs)
 
-		if isinstance(newctx, NPDMLBlock):
-			parent = self.get_parent_block()
-			if parent is not None:
-				newctx._depth = parent._depth + 1
-				if newctx.is_numbered:
-					newctx._own_counter = parent.get_counter()
+        if isinstance(newctx, NPDMLBlock):
+            parent = self.get_parent_block()
+            if parent is not None:
+                newctx._depth = parent._depth + 1
+                if newctx.is_numbered:
+                    newctx._own_counter = parent.get_counter()
 
-		self.ctx.append(newctx)
-		return newctx
+        self.ctx.append(newctx)
+        return newctx
 
-	def end(self, tag):
-		return self.ctx.pop()
+    def end(self, tag):
+        return self.ctx.pop()
 
-	def data(self, data):
-		self.parent.data.append(data.strip())
+    def data(self, data):
+        self.parent.data.append(data.strip())
 
-	def comment(self, text):
-		pass
+    def comment(self, text):
+        pass
 
-	def close(self):
-		pass
+    def close(self):
+        pass
 
-	@property
-	def parent(self):
-		try:
-			return self.ctx[-1]
-		except IndexError:
-			return None
+    @property
+    def parent(self):
+        try:
+            return self.ctx[-1]
+        except IndexError:
+            return None
 
-	def get_counters(self, last=None):
-		for ctx in self.ctx:
-			if isinstance(ctx, NPDMLBlock) and ctx._own_counter > 0:
-				yield ctx._own_counter
-		if isinstance(last, NPDMLBlock) and last._own_counter > 0:
-			yield last._own_counter
+    def get_counters(self, last=None):
+        for ctx in self.ctx:
+            if isinstance(ctx, NPDMLBlock) and ctx._own_counter > 0:
+                yield ctx._own_counter
+        if isinstance(last, NPDMLBlock) and last._own_counter > 0:
+            yield last._own_counter
 
-	def get_section_id(self):
-		return 'sect-%s' % ('-'.join(str(x) for x in self.get_counters()),)
+    def get_section_id(self):
+        return 'sect-%s' % ('-'.join(str(x) for x in self.get_counters()),)
 
-	def get_parent_block(self, ignore=None):
-		for ctx in reversed(self.ctx):
-			if ctx is ignore:
-				continue
-			if isinstance(ctx, NPDMLBlock):
-				return ctx
-
+    def get_parent_block(self, ignore=None):
+        for ctx in reversed(self.ctx):
+            if ctx is ignore:
+                continue
+            if isinstance(ctx, NPDMLBlock):
+                return ctx

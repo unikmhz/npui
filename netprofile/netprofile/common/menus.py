@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: UI menu setup and handling
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# Copyright © 2013-2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -20,43 +20,39 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
+
 
 class Menu(object):
-	"""
-	Defines a single menu pane on the left side of the UI.
-	"""
-	def __init__(self, name, **kwargs):
-		self.name = name
-		self.title = kwargs.get('title', name)
-		self.order = kwargs.get('order', 10)
-		self.perm = kwargs.get('permission')
-		self.direct = kwargs.get('direct')
-		self.url = kwargs.get('url')
-		self.options = kwargs.get('options')
-		self.extra_fields = kwargs.get('extra_fields', ())
-		self.custom_root = kwargs.get('custom_root')
+    """
+    Defines a single menu pane on the left side of the UI.
+    """
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.title = kwargs.get('title', name)
+        self.order = kwargs.get('order', 10)
+        self.perm = kwargs.get('permission')
+        self.direct = kwargs.get('direct')
+        self.url = kwargs.get('url')
+        self.options = kwargs.get('options')
+        self.extra_fields = kwargs.get('extra_fields', ())
+        self.custom_root = kwargs.get('custom_root')
 
-	def get_data(self):
-		ttl = self.title
-		opt = self.options
-		ret = {
-			'name'    : self.name,
-			'title'   : ttl,
-			'order'   : self.order,
-			'direct'  : self.direct,
-			'url'     : self.url,
-			'options' : opt
-		}
-		if self.perm is not None:
-			ret['perm'] = self.perm
-		return ret
+    def get_data(self):
+        ttl = self.title
+        opt = self.options
+        ret = {
+            'name': self.name,
+            'title': ttl,
+            'order': self.order,
+            'direct': self.direct,
+            'url': self.url,
+            'options': opt
+        }
+        if self.perm is not None:
+            ret['perm'] = self.perm
+        return ret
 
-	def __json__(self, req=None):
-		return self.get_data()
-
+    def __json__(self, req=None):
+        return self.get_data()

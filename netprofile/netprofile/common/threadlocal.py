@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: Thread-local storage objects
-# © Copyright 2013 Alex 'Unik' Unigovsky
+# Copyright © 2013-2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -24,17 +24,18 @@ import threading
 
 from netprofile.common import magic as _magic
 
-class TLSMagic(threading.local):
-	def __init__(self):
-		self.magic = None
 
-	def get(self):
-		if self.magic is None:
-			m = _magic.open(_magic.MIME | _magic.ERROR)
-			if m.load() < 0:
-				raise RuntimeError('libMagic load failed')
-			self.magic = m
-		return self.magic
+class TLSMagic(threading.local):
+    def __init__(self):
+        self.magic = None
+
+    def get(self):
+        if self.magic is None:
+            m = _magic.open(_magic.MIME | _magic.ERROR)
+            if m.load() < 0:
+                raise RuntimeError('libMagic load failed')
+            self.magic = m
+        return self.magic
+
 
 magic = TLSMagic()
-
