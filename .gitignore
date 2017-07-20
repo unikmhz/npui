@@ -96,12 +96,33 @@ sftp-config.json
 .LSOverride
 ._*
 
+# Ignore tags created by etags, ctags, gtags (GNU global) and cscope
+TAGS
+.TAGS
+!TAGS/
+tags
+.tags
+!tags/
+gtags.files
+GTAGS
+GRTAGS
+GPATH
+GSYMS
+cscope.files
+cscope.out
+cscope.in.out
+cscope.po.out
+
 # Test deployments
 *-local.ini
 debug-shell.py
 run-celery-*
+celerybeat.pid
 /netprofile/data/
+/netprofile/test-*
+/netprofile/test.*
 /find.sh
+carddavmate/
 
 # NetProfile-specific
 README-NP.rst
