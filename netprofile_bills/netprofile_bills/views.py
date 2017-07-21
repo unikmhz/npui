@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: Bills module - Views
-# © Copyright 2017 Alex 'Unik' Unigovsky
+# Copyright © 2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -20,12 +20,8 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -36,20 +32,22 @@ from .models import Bill
 
 _ = TranslationStringFactory('netprofile_bills')
 
+
 @register_hook('core.dpanetabs.bills.BillType')
 def _dpane_billtype_bills(tabs, model, req):
-	loc = req.localizer
-	if req.has_permission('BILLS_LIST'):
-		tabs.append({
-			'title'             : loc.translate(_('Bills')),
-			'iconCls'           : 'ico-mod-bill',
-			'xtype'             : 'grid_bills_Bill',
-			'stateId'           : None,
-			'stateful'          : False,
-			'hideColumns'       : ('type',),
-			'extraParamProp'    : 'btypeid',
-			'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-		})
+    loc = req.localizer
+    if req.has_permission('BILLS_LIST'):
+        tabs.append({
+            'title':             loc.translate(_('Bills')),
+            'iconCls':           'ico-mod-bill',
+            'xtype':             'grid_bills_Bill',
+            'stateId':           None,
+            'stateful':          False,
+            'hideColumns':       ('type',),
+            'extraParamProp':    'btypeid',
+            'createControllers': 'NetProfile.core.controller.RelatedWizard'
+        })
+
 
 @register_hook('core.dpanetabs.entities.Entity')
 @register_hook('core.dpanetabs.entities.PhysicalEntity')
@@ -57,31 +55,31 @@ def _dpane_billtype_bills(tabs, model, req):
 @register_hook('core.dpanetabs.entities.StructuralEntity')
 @register_hook('core.dpanetabs.entities.ExternalEntity')
 def _dpane_entity_bills(tabs, model, req):
-	loc = req.localizer
-	if req.has_permission('BILLS_LIST'):
-		tabs.append({
-			'title'             : loc.translate(_('Bills')),
-			'iconCls'           : 'ico-mod-bill',
-			'xtype'             : 'grid_bills_Bill',
-			'stateId'           : None,
-			'stateful'          : False,
-			'hideColumns'       : ('entity',),
-			'extraParamProp'    : 'entityid',
-			'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-		})
+    loc = req.localizer
+    if req.has_permission('BILLS_LIST'):
+        tabs.append({
+            'title':             loc.translate(_('Bills')),
+            'iconCls':           'ico-mod-bill',
+            'xtype':             'grid_bills_Bill',
+            'stateId':           None,
+            'stateful':          False,
+            'hideColumns':       ('entity',),
+            'extraParamProp':    'entityid',
+            'createControllers': 'NetProfile.core.controller.RelatedWizard'
+        })
+
 
 @register_hook('documents.gen.object')
 def _doc_gen_obj(tpl_vars, objid, objtype, req):
-	if objtype != 'bill':
-		return
-	obj = DBSession().query(Bill).get(objid)
-	if not obj:
-		return
-	mr = req.matched_route
-	if mr and mr.name and mr.name.startswith('documents.generate'):
-		tpl_vars.update({'bill': obj})
-	else:
-		v = obj.template_vars(req)
-		if v:
-			tpl_vars.update({'bill': v})
-
+    if objtype != 'bill':
+        return
+    obj = DBSession().query(Bill).get(objid)
+    if not obj:
+        return
+    mr = req.matched_route
+    if mr and mr.name and mr.name.startswith('documents.generate'):
+        tpl_vars.update({'bill': obj})
+    else:
+        v = obj.template_vars(req)
+        if v:
+            tpl_vars.update({'bill': v})
