@@ -66,7 +66,7 @@ setup(
         'Operating System :: OS Independent'
     ],
     author='Alex Unigovsky',
-    author_email='unik@compot.ru',
+    author_email='unik@itws.ru',
     url='https://github.com/unikmhz/npui',
     keywords='web wsgi pyramid np netprofile'
              ' crm billing accounting network isp',
