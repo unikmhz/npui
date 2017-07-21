@@ -120,7 +120,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
         sess.r.publish('bcast', json.dumps(msg))
 
     def _get_db_session(self, uid, login, sname):
-        from netprofile_core import NPSession
+        from netprofile_core.models import NPSession
         db = DBSession()
         try:
             npsess = db.query(NPSession).filter(
