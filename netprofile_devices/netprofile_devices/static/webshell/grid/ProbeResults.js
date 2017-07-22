@@ -50,7 +50,8 @@ Ext.define('NetProfile.devices.grid.ProbeResults', {
 			header: me.stateText,
 			renderer: 'renderState',
 			scope: me,
-			flex: 2
+			flex: 2,
+			allowMarkup: true
 		}, {
 			name: 'details',
 			header: me.detailsText,
@@ -99,8 +100,8 @@ Ext.define('NetProfile.devices.grid.ProbeResults', {
 	{
 		var me = this,
 			detected = rec.get('detected'),
-			sent = rec.get('sent'),
-			returned = rec.get('returned'),
+			sent = parseInt(rec.get('sent')),
+			returned = parseInt(rec.get('returned')),
 			min = rec.get('min'),
 			max = rec.get('max'),
 			avg = rec.get('avg');

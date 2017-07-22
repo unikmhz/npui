@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: Devices module - Tasks
-# © Copyright 2016 Alex 'Unik' Unigovsky
+# Copyright © 2016-2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -20,23 +20,17 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 import logging
 import pkg_resources
 import transaction
-from collections import defaultdict
-
 from pyramid.i18n import TranslationStringFactory
 
 from netprofile.celery import (
-	app,
-	task_meta
+    app,
+    task_meta
 )
 from netprofile.common import ipaddr
 from netprofile.common.hooks import IHookManager
@@ -45,62 +39,63 @@ logger = logging.getLogger(__name__)
 
 _ = TranslationStringFactory('netprofile_devices')
 
-@task_meta(
-	cap='HOSTS_PROBE',
-	title=_('Probe hosts')
-)
+
+@task_meta(cap='HOSTS_PROBE',
+           title=_('Probe hosts'))
 @app.task
 def task_probe_hosts(probe_type='hosts', probe_ids=()):
-	app.mmgr.assert_loaded('ipaddresses')
+    app.mmgr.assert_loaded('ipaddresses')
 
-	cfg = app.settings
-	hm = app.config.registry.getUtility(IHookManager)
-	default_prober = cfg.get('netprofile.devices.host_probers.default', 'fping')
+    cfg = app.settings
+    hm = app.config.registry.getUtility(IHookManager)
+    default_prober = cfg.get('netprofile.devices.host_probers.default',
+                             'fping')
 
-	# TODO: support non-default probers
-	prober = tuple(pkg_resources.iter_entry_points('netprofile.devices.host_probers', default_prober))
-	if len(prober) == 0:
-		transaction.abort()
-		raise RuntimeError('Misconfigured default prober type.')
-	cls = prober[0].load()
-	prober = cls(cfg)
+    # TODO: support non-default probers
+    prober = tuple(pkg_resources.iter_entry_points(
+            'netprofile.devices.host_probers',
+            default_prober))
+    if len(prober) == 0:
+        transaction.abort()
+        raise RuntimeError('Misconfigured default prober type.')
+    cls = prober[0].load()
+    prober = cls(cfg)
 
-	queries = []
-	ret = []
+    queries = []
+    ret = []
 
-	hm.run_hook('devices.probe_hosts', probe_type, probe_ids, cfg, hm, queries)
+    hm.run_hook('devices.probe_hosts', probe_type, probe_ids, cfg, hm, queries)
 
-	if len(queries) == 0:
-		transaction.abort()
-		raise ValueError('Invalid probe parameters specified.')
-	try:
-		for q in queries:
-			for host, addrs in prober.probe(q).items():
-				for addr, result in addrs.items():
-					ipa = addr.address
-					if isinstance(ipa, ipaddr.IPv4Address):
-						addrtype = 'v4'
-					elif isinstance(ipa, ipaddr.IPv6Address):
-						addrtype = 'v6'
-					else:
-						continue
-					ret.append({
-						'hostid'   : host.id,
-						'host'     : str(host),
-						'addrid'   : addr.id,
-						'addrtype' : addrtype,
-						'addr'     : str(ipa),
-						'sent'     : result.sent,
-						'returned' : result.returned,
-						'min'      : result.min,
-						'max'      : result.max,
-						'avg'      : result.avg,
-						'detected' : result.detected
-					})
-	except:
-		transaction.abort()
-		raise
+    if len(queries) == 0:
+        transaction.abort()
+        raise ValueError('Invalid probe parameters specified.')
+    try:
+        for q in queries:
+            for host, addrs in prober.probe(q).items():
+                for addr, result in addrs.items():
+                    ipa = addr.address
+                    if isinstance(ipa, ipaddr.IPv4Address):
+                        addrtype = 'v4'
+                    elif isinstance(ipa, ipaddr.IPv6Address):
+                        addrtype = 'v6'
+                    else:
+                        continue
+                    ret.append({
+                        'hostid':   host.id,
+                        'host':     str(host),
+                        'addrid':   addr.id,
+                        'addrtype': addrtype,
+                        'addr':     str(ipa),
+                        'sent':     result.sent,
+                        'returned': result.returned,
+                        'min':      result.min,
+                        'max':      result.max,
+                        'avg':      result.avg,
+                        'detected': result.detected
+                    })
+    except Exception:
+        transaction.abort()
+        raise
 
-	transaction.abort()
-	return ret
-
+    transaction.abort()
+    return ret
