@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: Geo module
-# © Copyright 2013 Nikita Andriyanov
-# © Copyright 2013-2017 Alex 'Unik' Unigovsky
+# Copyright © 2013 Nikita Andriyanov
+# Copyright © 2013-2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -21,126 +21,100 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
-
-from netprofile.common.modules import ModuleBase
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
-_ = TranslationStringFactory('netprofile_geo')
-
-class Module(ModuleBase):
-	def __init__(self, mmgr):
-		self.mmgr = mmgr
-		mmgr.cfg.add_translation_dirs('netprofile_geo:locale/')
-
-	@classmethod
-	def get_models(cls):
-		from netprofile_geo import models
-		return (
-			models.City,
-			models.District,
-			models.Street,
-			models.House,
-			models.Place,
-			models.HouseGroup,
-			models.HouseGroupMapping,
-			models.UserLocation
-		)
-
-	@classmethod
-	def get_sql_functions(cls):
-		from netprofile_geo import models
-		return (
-			models.AddrFormatCompactFunction,
-			models.AddrFormatFunction,
-			models.AddrGetFullFunction,
-			models.AddrListDistrictProcedure,
-			models.AddrListEntrProcedure,
-			models.AddrListStreetProcedure
-		)
-
-	@classmethod
-	def get_sql_views(cls):
-		from netprofile_geo import models
-		return (
-			models.AddrCompactView,
-			models.AddrExtraView,
-			models.AddrFullView,
-			models.AddrStreetNamesView
-		)
-
-	@classmethod
-	def get_sql_data(cls, modobj, vpair, sess):
-		from netprofile_core.models import (
-			Group,
-			GroupCapability,
-			Privilege
-		)
-
-		if not vpair.is_install:
-			return
-
-		privs = (
-			Privilege(
-				code='BASE_GEO',
-				name=_('Menu: Addresses')
-			),
-			Privilege(
-				code='GEO_LIST',
-				name=_('Addresses: List')
-			),
-			Privilege(
-				code='GEO_CREATE',
-				name=_('Addresses: Create')
-			),
-			Privilege(
-				code='GEO_EDIT',
-				name=_('Addresses: Edit')
-			),
-			Privilege(
-				code='GEO_DELETE',
-				name=_('Addresses: Delete')
-			)
-		)
-		for priv in privs:
-			priv.module = modobj
-			sess.add(priv)
-		try:
-			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
-			for priv in privs:
-				cap = GroupCapability()
-				cap.group = grp_admins
-				cap.privilege = priv
-		except NoResultFound:
-			pass
-
-	def get_local_js(self, request, lang):
-		return (
-			'netprofile_geo:static/webshell/locale/webshell-lang-' + lang + '.js',
-		)
-
-	def get_autoload_js(self, request):
-		return (
-			'NetProfile.geo.form.field.Address',
-		)
-
-	def get_css(self, request):
-		return (
-			'netprofile_geo:static/css/main.css',
-		)
-
-	@property
-	def name(self):
-		return _('Geography')
-
+from netprofile.common.modules import ModuleBase
 
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
+
+_ = TranslationStringFactory('netprofile_geo')
+
+
+class Module(ModuleBase):
+    def __init__(self, mmgr):
+        self.mmgr = mmgr
+        mmgr.cfg.add_translation_dirs('netprofile_geo:locale/')
+
+    @classmethod
+    def get_models(cls):
+        from netprofile_geo import models
+        return (models.City,
+                models.District,
+                models.Street,
+                models.House,
+                models.Place,
+                models.HouseGroup,
+                models.HouseGroupMapping,
+                models.UserLocation)
+
+    @classmethod
+    def get_sql_functions(cls):
+        from netprofile_geo import models
+        return (models.AddrFormatCompactFunction,
+                models.AddrFormatFunction,
+                models.AddrGetFullFunction,
+                models.AddrListDistrictProcedure,
+                models.AddrListEntrProcedure,
+                models.AddrListStreetProcedure)
+
+    @classmethod
+    def get_sql_views(cls):
+        from netprofile_geo import models
+        return (models.AddrCompactView,
+                models.AddrExtraView,
+                models.AddrFullView,
+                models.AddrStreetNamesView)
+
+    @classmethod
+    def get_sql_data(cls, modobj, vpair, sess):
+        from netprofile_core.models import (
+            Group,
+            GroupCapability,
+            Privilege
+        )
+
+        if not vpair.is_install:
+            return
+
+        privs = (Privilege(code='BASE_GEO',
+                           name=_('Menu: Addresses')),
+                 Privilege(code='GEO_LIST',
+                           name=_('Addresses: List')),
+                 Privilege(code='GEO_CREATE',
+                           name=_('Addresses: Create')),
+                 Privilege(code='GEO_EDIT',
+                           name=_('Addresses: Edit')),
+                 Privilege(code='GEO_DELETE',
+                           name=_('Addresses: Delete')))
+        for priv in privs:
+            priv.module = modobj
+            sess.add(priv)
+        try:
+            grp_admins = sess.query(Group).filter(
+                    Group.name == 'Administrators').one()
+            for priv in privs:
+                cap = GroupCapability()
+                cap.group = grp_admins
+                cap.privilege = priv
+        except NoResultFound:
+            pass
+
+    def get_local_js(self, request, lang):
+        return ('netprofile_geo:static/webshell/locale/webshell-lang-'
+                + lang + '.js',)
+
+    def get_autoload_js(self, request):
+        return ('NetProfile.geo.form.field.Address',)
+
+    def get_css(self, request):
+        return ('netprofile_geo:static/css/main.css',)
+
+    @property
+    def name(self):
+        return _('Geography')
