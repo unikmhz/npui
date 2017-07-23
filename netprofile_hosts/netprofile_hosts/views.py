@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: Hosts module - Views
-# © Copyright 2013-2016 Alex 'Unik' Unigovsky
+# Copyright © 2013-2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -20,42 +20,41 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 from pyramid.i18n import TranslationStringFactory
+
 from netprofile.common.hooks import register_hook
 
 _ = TranslationStringFactory('netprofile_hosts')
 
+
 @register_hook('core.dpanetabs.hosts.Host')
 def _dpane_host_services(tabs, model, req):
-	loc = req.localizer
-	if req.has_permission('SERVICES_LIST'):
-		tabs.append({
-			'title'             : loc.translate(_('Services')),
-			'iconCls'           : 'ico-mod-service',
-			'xtype'             : 'grid_hosts_Service',
-			'stateId'           : None,
-			'stateful'          : False,
-			'hideColumns'       : ('host',),
-			'extraParamProp'    : 'hostid',
-			'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-		})
-	tabs.append({
-		'title'             : loc.translate(_('Aliases')),
-		'iconCls'           : 'ico-mod-hostalias',
-		'xtype'             : 'grid_hosts_Host',
-		'stateId'           : None,
-		'stateful'          : False,
-		'extraParamProp'    : 'aliasid',
-		'extraParamRelProp' : 'hostid',
-		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	})
+    loc = req.localizer
+    if req.has_permission('SERVICES_LIST'):
+        tabs.append({
+            'title':             loc.translate(_('Services')),
+            'iconCls':           'ico-mod-service',
+            'xtype':             'grid_hosts_Service',
+            'stateId':           None,
+            'stateful':          False,
+            'hideColumns':       ('host',),
+            'extraParamProp':    'hostid',
+            'createControllers': 'NetProfile.core.controller.RelatedWizard'
+        })
+    tabs.append({
+        'title':             loc.translate(_('Aliases')),
+        'iconCls':           'ico-mod-hostalias',
+        'xtype':             'grid_hosts_Host',
+        'stateId':           None,
+        'stateful':          False,
+        'extraParamProp':    'aliasid',
+        'extraParamRelProp': 'hostid',
+        'createControllers': 'NetProfile.core.controller.RelatedWizard'
+    })
+
 
 @register_hook('core.dpanetabs.entities.Entity')
 @register_hook('core.dpanetabs.entities.PhysicalEntity')
@@ -63,29 +62,29 @@ def _dpane_host_services(tabs, model, req):
 @register_hook('core.dpanetabs.entities.StructuralEntity')
 @register_hook('core.dpanetabs.entities.ExternalEntity')
 def _dpane_entity_hosts(tabs, model, req):
-	if not req.has_permission('HOSTS_LIST'):
-		return
-	tabs.append({
-		'title'             : req.localizer.translate(_('Hosts')),
-		'iconCls'           : 'ico-mod-host',
-		'xtype'             : 'grid_hosts_Host',
-		'stateId'           : None,
-		'stateful'          : False,
-		'hideColumns'       : ('entity',),
-		'extraParamProp'    : 'entityid',
-		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	})
+    if not req.has_permission('HOSTS_LIST'):
+        return
+    tabs.append({
+        'title':             req.localizer.translate(_('Hosts')),
+        'iconCls':           'ico-mod-host',
+        'xtype':             'grid_hosts_Host',
+        'stateId':           None,
+        'stateful':          False,
+        'hideColumns':       ('entity',),
+        'extraParamProp':    'entityid',
+        'createControllers': 'NetProfile.core.controller.RelatedWizard'
+    })
+
 
 @register_hook('core.dpanetabs.domains.Domain')
 def _dpane_domain_services(tabs, model, req):
-	tabs.append({
-		'title'             : req.localizer.translate(_('Services')),
-		'iconCls'           : 'ico-mod-domainservice',
-		'xtype'             : 'grid_hosts_DomainService',
-		'stateId'           : None,
-		'stateful'          : False,
-		'hideColumns'       : ('domain',),
-		'extraParamProp'    : 'domainid',
-		'createControllers' : 'NetProfile.core.controller.RelatedWizard'
-	})
-
+    tabs.append({
+        'title':             req.localizer.translate(_('Services')),
+        'iconCls':           'ico-mod-domainservice',
+        'xtype':             'grid_hosts_DomainService',
+        'stateId':           None,
+        'stateful':          False,
+        'hideColumns':       ('domain',),
+        'extraParamProp':    'domainid',
+        'createControllers': 'NetProfile.core.controller.RelatedWizard'
+    })
