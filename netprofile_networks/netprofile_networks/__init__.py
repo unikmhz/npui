@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: Networks module
-# © Copyright 2013-2017 Alex 'Unik' Unigovsky
+# Copyright © 2013-2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -20,17 +20,13 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
-
-from netprofile.common.modules import ModuleBase
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
+
+from netprofile.common.modules import ModuleBase
 
 from ._version import get_versions
 __version__ = get_versions()['version']
@@ -38,139 +34,90 @@ del get_versions
 
 _ = TranslationStringFactory('netprofile_networks')
 
+
 class Module(ModuleBase):
-	def __init__(self, mmgr):
-		self.mmgr = mmgr
-		mmgr.cfg.add_translation_dirs('netprofile_networks:locale/')
+    def __init__(self, mmgr):
+        self.mmgr = mmgr
+        mmgr.cfg.add_translation_dirs('netprofile_networks:locale/')
 
-	@classmethod
-	def get_deps(cls):
-		return ('devices',)
+    @classmethod
+    def get_deps(cls):
+        return ('devices',)
 
-	@classmethod
-	def get_models(cls):
-		from netprofile_networks import models
-		return (
-			models.Network,
-			models.NetworkGroup,
-			models.NetworkService,
-			models.NetworkServiceType,
-			models.RoutingTable,
-			models.RoutingTableEntry
-		)
+    @classmethod
+    def get_models(cls):
+        from netprofile_networks import models
+        return (models.Network,
+                models.NetworkGroup,
+                models.NetworkService,
+                models.NetworkServiceType,
+                models.RoutingTable,
+                models.RoutingTableEntry)
 
-	@classmethod
-	def get_sql_data(cls, modobj, vpair, sess):
-		from netprofile_networks.models import NetworkServiceType
-		from netprofile_core.models import (
-			Group,
-			GroupCapability,
-			LogType,
-			Privilege
-		)
+    @classmethod
+    def get_sql_data(cls, modobj, vpair, sess):
+        from netprofile_networks.models import NetworkServiceType
+        from netprofile_core.models import (
+            Group,
+            GroupCapability,
+            LogType,
+            Privilege
+        )
 
-		if not vpair.is_install:
-			return
+        if not vpair.is_install:
+            return
 
-		sess.add(LogType(
-			id=6,
-			name='Networks'
-		))
+        sess.add(LogType(id=6,
+                         name='Networks'))
 
-		privs = (
-			Privilege(
-				code='BASE_NETS',
-				name=_('Menu: Networks')
-			),
-			Privilege(
-				code='NETS_LIST',
-				name=_('Networks: List')
-			),
-			Privilege(
-				code='NETS_CREATE',
-				name=_('Networks: Create')
-			),
-			Privilege(
-				code='NETS_EDIT',
-				name=_('Networks: Edit')
-			),
-			Privilege(
-				code='NETS_DELETE',
-				name=_('Networks: Delete')
-			),
-			Privilege(
-				code='NETGROUPS_CREATE',
-				name=_('Networks: Create groups')
-			),
-			Privilege(
-				code='NETGROUPS_EDIT',
-				name=_('Networks: Edit groups')
-			),
-			Privilege(
-				code='NETGROUPS_DELETE',
-				name=_('Networks: Delete groups')
-			),
-			Privilege(
-				code='NETS_SERVICETYPES_CREATE',
-				name=_('Networks: Create service types')
-			),
-			Privilege(
-				code='NETS_SERVICETYPES_EDIT',
-				name=_('Networks: Edit service types')
-			),
-			Privilege(
-				code='NETS_SERVICETYPES_DELETE',
-				name=_('Networks: Delete service types')
-			)
-		)
-		for priv in privs:
-			priv.module = modobj
-			sess.add(priv)
-		try:
-			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
-			for priv in privs:
-				cap = GroupCapability()
-				cap.group = grp_admins
-				cap.privilege = priv
-		except NoResultFound:
-			pass
+        privs = (Privilege(code='BASE_NETS',
+                           name=_('Menu: Networks')),
+                 Privilege(code='NETS_LIST',
+                           name=_('Networks: List')),
+                 Privilege(code='NETS_CREATE',
+                           name=_('Networks: Create')),
+                 Privilege(code='NETS_EDIT',
+                           name=_('Networks: Edit')),
+                 Privilege(code='NETS_DELETE',
+                           name=_('Networks: Delete')),
+                 Privilege(code='NETGROUPS_CREATE',
+                           name=_('Networks: Create groups')),
+                 Privilege(code='NETGROUPS_EDIT',
+                           name=_('Networks: Edit groups')),
+                 Privilege(code='NETGROUPS_DELETE',
+                           name=_('Networks: Delete groups')),
+                 Privilege(code='NETS_SERVICETYPES_CREATE',
+                           name=_('Networks: Create service types')),
+                 Privilege(code='NETS_SERVICETYPES_EDIT',
+                           name=_('Networks: Edit service types')),
+                 Privilege(code='NETS_SERVICETYPES_DELETE',
+                           name=_('Networks: Delete service types')))
+        for priv in privs:
+            priv.module = modobj
+            sess.add(priv)
+        try:
+            grp_admins = sess.query(Group).filter(
+                    Group.name == 'Administrators').one()
+            for priv in privs:
+                cap = GroupCapability()
+                cap.group = grp_admins
+                cap.privilege = priv
+        except NoResultFound:
+            pass
 
-		nstypes = (
-			NetworkServiceType(
-				id=1,
-				name=_('Name Server')
-			),
-			NetworkServiceType(
-				id=2,
-				name=_('WINS Server')
-			),
-			NetworkServiceType(
-				id=3,
-				name=_('NTP Server')
-			),
-			NetworkServiceType(
-				id=4,
-				name=_('Gateway')
-			),
-			NetworkServiceType(
-				id=5,
-				name=_('SLP DA Server')
-			),
-			NetworkServiceType(
-				id=6,
-				name=_('DNSv6 Server')
-			)
-		)
+        nstypes = (NetworkServiceType(id=1, name=_('Name Server')),
+                   NetworkServiceType(id=2, name=_('WINS Server')),
+                   NetworkServiceType(id=3, name=_('NTP Server')),
+                   NetworkServiceType(id=4, name=_('Gateway')),
+                   NetworkServiceType(id=5, name=_('SLP DA Server')),
+                   NetworkServiceType(id=6, name=_('DNSv6 Server')))
 
-		for nst in nstypes:
-			sess.add(nst)
+        for nst in nstypes:
+            sess.add(nst)
 
-	def get_css(self, request):
-		return (
-			'netprofile_networks:static/css/main.css',
-		)
+    def get_css(self, request):
+        return ('netprofile_networks:static/css/main.css',)
 
-	@property
-	def name(self):
-		return _('Networks')
-
+    @property
+    def name(self):
+        return _('Networks')
