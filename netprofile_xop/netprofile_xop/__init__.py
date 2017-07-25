@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
+# -*- coding: utf-8 -*-
 #
 # NetProfile: XOP module
-# © Copyright 2014-2017 Alex 'Unik' Unigovsky
+# Copyright © 2014-2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -20,20 +20,16 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
-
-from netprofile.common.modules import (
-	IModuleManager,
-	ModuleBase
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
+
+from netprofile.common.modules import (
+    IModuleManager,
+    ModuleBase
+)
 
 from ._version import get_versions
 __version__ = get_versions()['version']
@@ -41,70 +37,63 @@ del get_versions
 
 _ = TranslationStringFactory('netprofile_xop')
 
+
 class Module(ModuleBase):
-	def __init__(self, mmgr):
-		self.mmgr = mmgr
-		mmgr.cfg.add_translation_dirs('netprofile_xop:locale/')
-		mmgr.cfg.add_route(
-			'xop.cl.home',
-			'/*traverse',
-			factory='netprofile_xop.views.ClientRootFactory',
-			vhost='xop'
-		)
+    def __init__(self, mmgr):
+        self.mmgr = mmgr
+        mmgr.cfg.add_translation_dirs('netprofile_xop:locale/')
+        mmgr.cfg.add_route('xop.cl.home',
+                           '/*traverse',
+                           factory='netprofile_xop.views.ClientRootFactory',
+                           vhost='xop')
 
-	@classmethod
-	def get_deps(cls):
-		return ('stashes',)
+    @classmethod
+    def get_deps(cls):
+        return ('stashes',)
 
-	@classmethod
-	def get_models(cls):
-		from netprofile_xop import models
-		return (
-			models.ExternalOperation,
-			models.ExternalOperationProvider
-		)
+    @classmethod
+    def get_models(cls):
+        from netprofile_xop import models
+        return (models.ExternalOperation,
+                models.ExternalOperationProvider)
 
-	@classmethod
-	def get_sql_data(cls, modobj, vpair, sess):
-		from netprofile_core.models import (
-			Group,
-			GroupCapability,
-			Privilege
-		)
+    @classmethod
+    def get_sql_data(cls, modobj, vpair, sess):
+        from netprofile_core.models import (
+            Group,
+            GroupCapability,
+            Privilege
+        )
 
-		if not vpair.is_install:
-			return
+        if not vpair.is_install:
+            return
 
-		privs = (
-			Privilege(
-				code='BASE_XOP',
-				name=_('Menu: External operations')
-			),
-		)
-		for priv in privs:
-			priv.module = modobj
-			sess.add(priv)
-		try:
-			grp_admins = sess.query(Group).filter(Group.name == 'Administrators').one()
-			for priv in privs:
-				cap = GroupCapability()
-				cap.group = grp_admins
-				cap.privilege = priv
-		except NoResultFound:
-			pass
+        privs = (Privilege(code='BASE_XOP',
+                           name=_('Menu: External operations')),)
+        for priv in privs:
+            priv.module = modobj
+            sess.add(priv)
+        try:
+            grp_admins = sess.query(Group).filter(
+                    Group.name == 'Administrators').one()
+            for priv in privs:
+                cap = GroupCapability()
+                cap.group = grp_admins
+                cap.privilege = priv
+        except NoResultFound:
+            pass
 
-	def get_css(self, request):
-		return (
-			'netprofile_xop:static/css/main.css',
-		)
+    def get_css(self, request):
+        return ('netprofile_xop:static/css/main.css',)
 
-	@property
-	def name(self):
-		return _('External Operations')
+    @property
+    def name(self):
+        return _('External Operations')
+
 
 def includeme(config):
-	mmgr = config.registry.getUtility(IModuleManager)
-	mmgr.load('core')
-	for mod in ('stashes', 'entities', 'access', 'rates', 'networks', 'hosts', 'ipaddresses'):
-		mmgr.load(mod)
-
+    mmgr = config.registry.getUtility(IModuleManager)
+    mmgr.load('core')
+    for mod in ('stashes', 'entities', 'access', 'rates', 'networks',
+                'hosts', 'ipaddresses'):
+        mmgr.load(mod)
