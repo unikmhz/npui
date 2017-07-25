@@ -33,7 +33,6 @@ import os
 import json
 import transaction
 import redis
-import tcelery
 import tornadoredis
 import tornadoredis.pubsub
 import sockjs.tornado
@@ -126,8 +125,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
             npsess = db.query(NPSession).filter(
                 NPSession.session_name == sname,
                 NPSession.user_id == uid,
-                NPSession.login == login
-            ).one()
+                NPSession.login == login).one()
         except NoResultFound:
             transaction.abort()
             return None
@@ -138,6 +136,15 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
         # TODO: compute next session timeout check
         transaction.abort()
         return (npsess, npuser, privs)
+
+    def _wait_on_task(self, task, callback):
+        if task.ready():
+            callback(task.result)
+        else:
+            # TODO: configurable result polling interval
+            tornado.ioloop.IOLoop.current().add_timeout(
+                    datetime.timedelta(0, 0, 400000),
+                    partial(self._wait_on_task, task, callback))
 
     def on_open(self, req):
         self.user = None
@@ -157,7 +164,7 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
         self.np_session = None
         self.privileges = ()
 
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def on_message(self, msg):
         data = json.loads(msg)
         if not isinstance(data, dict):
@@ -244,24 +251,21 @@ class RTMessageHandler(sockjs.tornado.SockJSConnection):
                     }))
                     return
 
-            resp = yield tornado.gen.Task(
-                task.apply_async,
-                args=task_args,
-                kwargs=task_kwargs
-            )
+            task_ctx = task.apply_async(args=task_args, kwargs=task_kwargs)
+            resp = yield tornado.gen.Task(self._wait_on_task, task_ctx)
 
             # TODO: proper error handling w/ passing debug stacktraces
             #       to client.
-            if resp.traceback:
-                print(resp.traceback)
+            if task_ctx.traceback:
+                print(task_ctx.traceback)
 
             rdata = {
                 'ts': datetime.datetime.now().replace(
-                    tzinfo=tzlocal()).isoformat(),
+                          tzinfo=tzlocal()).isoformat(),
                 'type': 'task_result',
                 'tname': task_name,
-                'tid': resp.task_id,
-                'value': resp.result
+                'tid': task_ctx.task_id,
+                'value': resp
             }
             self.send(json.dumps(rdata))
         else:
@@ -325,7 +329,6 @@ def run(sess):
     sess.add_sockjs_routes(app)
     iol = tornado.ioloop.IOLoop.current()
     setup_celery(sess.reg)
-    tcelery.setup_nonblocking_producer(celery_app, io_loop=iol)
     iol.start()
 
     return 0

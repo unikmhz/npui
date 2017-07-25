@@ -59,7 +59,6 @@ requires = [
     'tornado >= 4.5.1',
     'sockjs-tornado >= 1.0.3',
     'tornado-redis >= 2.4.18',
-    'tornado-celery >= 0.3.5',
 
     'celery >= 4.0',
     'msgpack-python >= 0.4',
