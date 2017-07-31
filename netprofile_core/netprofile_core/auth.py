@@ -318,7 +318,7 @@ def includeme(config):
         SessionAuthenticationPolicy(callback=find_princs),
         {
             '/dav': DigestAuthenticationPolicy(
-                settings.get('netprofile.auth.secret'),
+                settings.get('netprofile.auth.digest.secret'),
                 find_princs_digest,
                 realm=settings.get('netprofile.auth.digest.realm',
                                    'NetProfile UI'),
