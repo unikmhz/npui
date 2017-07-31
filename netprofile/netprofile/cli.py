@@ -43,6 +43,7 @@ from netprofile.common.modules import (
     ModuleError
 )
 from netprofile.common import rt
+from netprofile.common.crypto import get_salt_string
 
 _ = TranslationStringFactory('netprofile')
 
@@ -60,8 +61,7 @@ class ListModules(Lister):
             '-F', '--filter',
             choices=('all', 'installed', 'uninstalled', 'enabled', 'disabled'),
             default='all',
-            help='Show only modules in this state.'
-        )
+            help='Show only modules in this state.')
         return parser
 
     def take_action(self, args):
@@ -73,12 +73,10 @@ class ListModules(Lister):
         except ImportError:
             has_core = False
 
-        columns = (
-            loc.translate(_('Name')),
-            loc.translate(_('Available')),
-            loc.translate(_('Installed')),
-            loc.translate(_('Enabled'))
-        )
+        columns = (loc.translate(_('Name')),
+                   loc.translate(_('Available')),
+                   loc.translate(_('Installed')),
+                   loc.translate(_('Enabled')))
         data = []
 
         installed = {}
@@ -102,7 +100,7 @@ class ListModules(Lister):
                     continue
                 curversion = installed[moddef][0]
                 enabled = _('YES') if installed[moddef][1] else _('NO')
-            elif flt in ('installed', 'enabled', 'disabled'):
+            elif flt in {'installed', 'enabled', 'disabled'}:
                 continue
             data.append((moddef, ep.dist.version,
                          loc.translate(curversion),
@@ -123,23 +121,20 @@ class ShowModule(ShowOne):
         parser = super(ShowModule, self).get_parser(prog_name)
         parser.add_argument(
             'name',
-            help='Name of the module to inspect.'
-        )
+            help='Name of the module to inspect.')
         return parser
 
     def take_action(self, args):
         loc = self.app.locale
 
-        columns = (
-            loc.translate(_('Module')),
-            loc.translate(_('Summary')),
-            loc.translate(_('Homepage')),
-            loc.translate(_('Author')),
-            loc.translate(_('E-Mail')),
-            loc.translate(_('License')),
-            loc.translate(_('Location')),
-            loc.translate(_('Version'))
-        )
+        columns = (loc.translate(_('Module')),
+                   loc.translate(_('Summary')),
+                   loc.translate(_('Homepage')),
+                   loc.translate(_('Author')),
+                   loc.translate(_('E-Mail')),
+                   loc.translate(_('License')),
+                   loc.translate(_('Location')),
+                   loc.translate(_('Version')))
         data = [None] * len(columns)
 
         mm = self.app.mm
@@ -198,12 +193,10 @@ class InstallModule(Command):
         parser.add_argument(
             '-U', '--upgrade',
             action='store_true',
-            help='Allow upgrading obsolete installed modules.'
-        )
+            help='Allow upgrading obsolete installed modules.')
         parser.add_argument(
             'name',
-            help='Name of the module to install or a special value "all".'
-        )
+            help='Name of the module to install or a special value "all".')
         return parser
 
     def take_action(self, args):
@@ -271,8 +264,7 @@ class UpgradeModule(Command):
         parser = super(UpgradeModule, self).get_parser(prog_name)
         parser.add_argument(
             'name',
-            help='Name of the module to upgrade or a special value "all".'
-        )
+            help='Name of the module to upgrade or a special value "all".')
         return parser
 
     def take_action(self, args):
@@ -338,8 +330,7 @@ class UninstallModule(Command):
         parser = super(UninstallModule, self).get_parser(prog_name)
         parser.add_argument(
             'name',
-            help='Name of the module to uninstall or a special value "all".'
-        )
+            help='Name of the module to uninstall or a special value "all".')
         return parser
 
     def take_action(self, args):
@@ -357,8 +348,7 @@ class EnableModule(Command):
         parser = super(EnableModule, self).get_parser(prog_name)
         parser.add_argument(
             'name',
-            help='Name of the module to enable or a special value "all".'
-        )
+            help='Name of the module to enable or a special value "all".')
         return parser
 
     def take_action(self, args):
@@ -426,8 +416,7 @@ class DisableModule(Command):
         parser = super(DisableModule, self).get_parser(prog_name)
         parser.add_argument(
             'name',
-            help='Name of the module to disable or a special value "all".'
-        )
+            help='Name of the module to disable or a special value "all".')
         return parser
 
     def take_action(self, args):
@@ -619,8 +608,7 @@ class Alembic(Command):
         parser.add_argument(
             '-x', action='append',
             help='Additional arguments consumed by custom env.py scripts, '
-                 'e.g. -x setting1=somesetting -x setting2=somesetting.'
-        )
+                 'e.g. -x setting1=somesetting -x setting2=somesetting.')
         subparsers = parser.add_subparsers(help='Help for Alembic commands.')
 
         for fn in [getattr(alembic_cmd, n) for n in dir(alembic_cmd)]:
@@ -679,11 +667,9 @@ class Alembic(Command):
         fn, positional, kwargs = args.cmd
 
         cfg = self.app.alembic_config
-        fn(
-            cfg,
-            *[getattr(args, k) for k in positional],
-            **dict((k, getattr(args, k)) for k in kwargs)
-        )
+        fn(cfg,
+           *[getattr(args, k) for k in positional],
+           **dict((k, getattr(args, k)) for k in kwargs))
 
 
 class DBRevision(Command):
@@ -697,40 +683,33 @@ class DBRevision(Command):
         parser = super(DBRevision, self).get_parser(prog_name)
         parser.add_argument(
             '-m', '--message',
-            help='Message string to use.'
-        )
+            help='Message string to use.')
         parser.add_argument(
             '-A', '--autogenerate',
             action='store_true',
             help='Populate revision script with candidate migration '
-                 'operations, based on comparison of database to model.'
-        )
+                 'operations, based on comparison of database to model.')
         parser.add_argument(
             '-S', '--sql',
             action='store_true',
             help='Don\'t emit SQL to database - '
-                 'dump to standard output/file instead.'
-        )
+                 'dump to standard output/file instead.')
         parser.add_argument(
             '-R', '--rev-id',
-            help='Specify a hardcoded revision id instead of generating one.'
-        )
+            help='Specify a hardcoded revision id instead of generating one.')
         parser.add_argument(
             '-D', '--depends-on',
             action='append',
             help='Specify one or more revision identifiers which '
-                 'this revision should depend on.'
-        )
+                 'this revision should depend on.')
         # this is equivalent to alembic's --branch-label=moddef
         parser.add_argument(
             '-I', '--initial',
             action='store_true',
-            help='This revision is an initial one for a module.'
-        )
+            help='This revision is an initial one for a module.')
         parser.add_argument(
             'name',
-            help='Name of the module to create DB revision for.'
-        )
+            help='Name of the module to create DB revision for.')
         return parser
 
     def take_action(self, args):
@@ -798,8 +777,7 @@ class Deploy(Command):
         parser = super(Deploy, self).get_parser(prog_name)
         parser.add_argument(
             'path',
-            help='Directory to create.'
-        )
+            help='Directory to create.')
         return parser
 
     def _assert_dir(self, deploy_dir, name):
@@ -878,15 +856,19 @@ class Deploy(Command):
             'app:netprofile': {
                 'mail.queue_path': mail_dir,
                 'mako.module_directory': admin_tplc_dir,
-                'netprofile.fonts.directory': fonts_dir
+                'netprofile.auth.digest.secret': get_salt_string(20),
+                'netprofile.fonts.directory': fonts_dir,
+                'redis.sessions.secret': get_salt_string(20)
             },
             'app:app_npclient': {
                 'mail.queue_path': mail_dir,
-                'mako.module_directory': client_tplc_dir
+                'mako.module_directory': client_tplc_dir,
+                'redis.sessions.secret': get_salt_string(20)
             },
             'app:app_xop': {
                 'mail.queue_path': mail_dir,
-                'mako.module_directory': xop_tplc_dir
+                'mako.module_directory': xop_tplc_dir,
+                'redis.sessions.secret': get_salt_string(20)
             }
         }
 
@@ -895,46 +877,36 @@ class Deploy(Command):
 
         self._write_ini(
             os.path.join(np_dir, 'production.ini'),
-            ini_prod, replace
-        )
+            ini_prod, replace)
         self._write_ini(
             os.path.join(np_dir, 'development.ini'),
-            ini_dev, replace
-        )
+            ini_dev, replace)
 
         self._write_wsgi(
             os.path.join(deploy_dir, 'netprofile-admin-prod.wsgi'),
-            ini_prod, 'main'
-        )
+            ini_prod, 'main')
         self._write_wsgi(
             os.path.join(deploy_dir, 'netprofile-client-prod.wsgi'),
-            ini_prod, 'npclient'
-        )
+            ini_prod, 'npclient')
         self._write_wsgi(
             os.path.join(deploy_dir, 'netprofile-xop-prod.wsgi'),
-            ini_prod, 'xop'
-        )
+            ini_prod, 'xop')
         self._write_wsgi(
             os.path.join(deploy_dir, 'netprofile-admin-devel.wsgi'),
-            ini_dev, 'main'
-        )
+            ini_dev, 'main')
         self._write_wsgi(
             os.path.join(deploy_dir, 'netprofile-client-devel.wsgi'),
-            ini_dev, 'npclient'
-        )
+            ini_dev, 'npclient')
         self._write_wsgi(
             os.path.join(deploy_dir, 'netprofile-xop-devel.wsgi'),
-            ini_dev, 'xop'
-        )
+            ini_dev, 'xop')
 
         self._write_activate(
             os.path.join(deploy_dir, 'activate-production'),
-            ini_prod
-        )
+            ini_prod)
         self._write_activate(
             os.path.join(deploy_dir, 'activate-development'),
-            ini_dev
-        )
+            ini_dev)
 
         os.umask(self.old_mask)
         self.log.info('Created NetProfile deployment: %s', deploy_dir)
