@@ -39,7 +39,9 @@ __all__ = [
     'TicketTemplate',
     'TicketScheduler',
     'TicketSchedulerUserAssignment',
-    'TicketSchedulerGroupAssignment'
+    'TicketSchedulerGroupAssignment',
+    'TicketSubscription',
+    'TicketSubscriptionType'
 ]
 
 import importlib
@@ -73,6 +75,7 @@ from netprofile.db.connection import (
 )
 from netprofile.db.fields import (
     ASCIIString,
+    DeclEnum,
     NPBoolean,
     UInt8,
     UInt32,
@@ -1108,6 +1111,11 @@ class Ticket(Base):
         passive_deletes=True)
     changes = relationship(
         'TicketChange',
+        backref=backref('ticket', innerjoin=True),
+        cascade='all, delete-orphan',
+        passive_deletes=True)
+    subscriptions = relationship(
+        'TicketSubscription',
         backref=backref('ticket', innerjoin=True),
         cascade='all, delete-orphan',
         passive_deletes=True)
@@ -2374,3 +2382,152 @@ class TicketDependency(Base):
         backref=backref('parent_map',
                         cascade='all, delete-orphan',
                         passive_deletes=True))
+
+
+class TicketSubscriptionType(DeclEnum):
+    """
+    Type of subscribed entity.
+    """
+    user = 'U', _('User'), 10
+    group = 'G', _('Group'), 20
+    address = 'A', _('Address'), 30
+
+
+class TicketSubscription(Base):
+    """
+    Describes one link between a ticket and a user, a group or
+    an external address.
+    """
+    __tablename__ = 'tickets_subscriptions'
+    __table_args__ = (
+        Comment('Ticket resolution dependencies'),
+        Index('tickets_subscriptions_i_ticketid', 'ticketid'),
+        Index('tickets_subscriptions_i_uid', 'uid'),
+        Index('tickets_subscriptions_i_gid', 'gid'),
+        Index('tickets_subscriptions_u_sub',
+              'ticketid', 'uid', 'gid', 'addr',
+              unique=True),
+        {
+            'mysql_engine':  'InnoDB',
+            'mysql_charset': 'utf8',
+            'info':          {
+                'cap_menu':      'BASE_TICKETS',
+                'cap_read':      'TICKETS_LIST',
+                'cap_create':    '__NOPRIV__',
+                'cap_edit':      '__NOPRIV__',
+                'cap_delete':    '__NOPRIV__',
+
+                'menu_name':     _('Subscriptions')
+            }
+        })
+    id = Column(
+        'tsubid',
+        UInt32(),
+        Sequence('tickets_subscriptions_tsubid_seq'),
+        Comment('Ticket subscription ID'),
+        primary_key=True,
+        nullable=False,
+        info={
+            'header_string': _('ID')
+        })
+    type = Column(
+        TicketSubscriptionType.db_type(),
+        Comment('Ticket subscription type'),
+        nullable=False,
+        default=TicketSubscriptionType.user,
+        server_default=TicketSubscriptionType.user,
+        info={
+            'header_string': _('Type'),
+            'column_flex': 2
+        })
+    ticket_id = Column(
+        'ticketid',
+        UInt32(),
+        ForeignKey('tickets_def.ticketid',
+                   name='tickets_subscriptions_fk_ticketid',
+                   ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('Ticket ID'),
+        nullable=False,
+        info={
+            'header_string': _('Ticket'),
+            'filter_type': 'none'
+        })
+    user_id = Column(
+        'uid',
+        UInt32(),
+        ForeignKey('users.uid', name='tickets_subscriptions_fk_uid',
+                   ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('User ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('User'),
+            'column_flex': 1
+        })
+    group_id = Column(
+        'gid',
+        UInt32(),
+        ForeignKey('groups.gid', name='tickets_subscriptions_fk_gid',
+                   ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('Group ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Group'),
+            'column_flex': 1
+        })
+    address = Column(
+        'addr',
+        Unicode(255),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Address'),
+            'column_flex': 3
+        })
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'X',
+        'with_polymorphic': '*'
+    }
+
+    user = relationship(
+        'User',
+        backref=backref('ticket_subscriptions',
+                        cascade='all, delete-orphan',
+                        passive_deletes=True))
+    group = relationship(
+        'Group',
+        backref=backref('ticket_subscriptions',
+                        cascade='all, delete-orphan',
+                        passive_deletes=True))
+
+
+class UserTicketSubscription(TicketSubscription):
+    """
+    Describes one link between a ticket and a user.
+    """
+    __mapper_args__ = {
+        'polymorphic_identity': TicketSubscriptionType.user
+    }
+
+
+class GroupTicketSubscription(TicketSubscription):
+    """
+    Describes one link between a ticket and a group.
+    """
+    __mapper_args__ = {
+        'polymorphic_identity': TicketSubscriptionType.group
+    }
+
+
+class AddressTicketSubscription(TicketSubscription):
+    """
+    Describes one link between a ticket and an external address.
+    """
+    __mapper_args__ = {
+        'polymorphic_identity': TicketSubscriptionType.address
+    }
