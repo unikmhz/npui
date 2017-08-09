@@ -161,7 +161,15 @@ class Module(ModuleBase):
                  Privilege(code='TICKETS_SCHEDULES_EDIT',
                            name=_('Tickets: Edit schedules')),
                  Privilege(code='TICKETS_SCHEDULES_DELETE',
-                           name=_('Tickets: Delete schedules')))
+                           name=_('Tickets: Delete schedules')),
+                 Privilege(code='TICKETS_SUBSCRIPTIONS_LIST',
+                           name=_('Tickets: List subscriptions')),
+                 Privilege(code='TICKETS_SUBSCRIPTIONS_CREATE',
+                           name=_('Tickets: Create subscriptions')),
+                 Privilege(code='TICKETS_SUBSCRIPTIONS_EDIT',
+                           name=_('Tickets: Edit subscriptions')),
+                 Privilege(code='TICKETS_SUBSCRIPTIONS_DELETE',
+                           name=_('Tickets: Delete subscriptions')))
         for priv in privs:
             priv.module = modobj
             sess.add(priv)

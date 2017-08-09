@@ -2412,10 +2412,10 @@ class TicketSubscription(Base):
             'mysql_charset': 'utf8',
             'info':          {
                 'cap_menu':      'BASE_TICKETS',
-                'cap_read':      'TICKETS_LIST',
-                'cap_create':    '__NOPRIV__',
-                'cap_edit':      '__NOPRIV__',
-                'cap_delete':    '__NOPRIV__',
+                'cap_read':      'TICKETS_SUBSCRIPTIONS_LIST',
+                'cap_create':    'TICKETS_SUBSCRIPTIONS_CREATE',
+                'cap_edit':      'TICKETS_SUBSCRIPTIONS_EDIT',
+                'cap_delete':    'TICKETS_SUBSCRIPTIONS_DELETE',
 
                 'menu_name':     _('Subscriptions')
             }
@@ -2487,6 +2487,33 @@ class TicketSubscription(Base):
         info={
             'header_string': _('Address'),
             'column_flex': 3
+        })
+    notify_change = Column(
+        NPBoolean(),
+        Comment('Notify on any ticket change'),
+        nullable=False,
+        default=False,
+        server_default=npbool(False),
+        info={
+            'header_string': _('On Change')
+        })
+    notify_transition = Column(
+        NPBoolean(),
+        Comment('Notify on ticket state transition'),
+        nullable=False,
+        default=False,
+        server_default=npbool(False),
+        info={
+            'header_string': _('On Transition')
+        })
+    notify_close = Column(
+        NPBoolean(),
+        Comment('Notify when ticket is closed (reaches end state)'),
+        nullable=False,
+        default=False,
+        server_default=npbool(False),
+        info={
+            'header_string': _('On Close')
         })
     __mapper_args__ = {
         'polymorphic_on': type,
