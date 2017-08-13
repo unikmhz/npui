@@ -34,13 +34,9 @@ from future.utils import (
 from pyramid.decorator import reify
 import socket
 import struct
+from Cryptodome.Hash import MD2
 
 from netprofile.common.crypto import get_salt_bytes
-
-try:
-    from Cryptodome.Hash import MD2
-except ImportError:
-    from Crypto.Hash import MD2
 
 MAGIC_SYNC = 0xe25aa5e4
 REQUEST_DATA_OFFSET = 12
