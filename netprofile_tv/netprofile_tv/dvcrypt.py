@@ -34,7 +34,7 @@ from future.utils import (
 from pyramid.decorator import reify
 import socket
 import struct
-from Crypto.Hash import MD2
+from Cryptodome.Hash import MD2
 
 from netprofile.common.crypto import get_salt_bytes
 

@@ -31,7 +31,7 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
     'setuptools >= 36.0',
-    'pycrypto >= 2.6.1',
+    'pycryptodome >= 3.4.6',
     'bitarray >= 0.8.1',
 
     'netprofile_paidservices >= 0',
