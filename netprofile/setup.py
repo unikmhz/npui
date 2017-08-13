@@ -31,6 +31,7 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
     'setuptools >= 36.0',
+    'future >= 0.16',
     'six >= 1.10',
     'packaging >= 16.8',
     'python-dateutil >= 2.6',
