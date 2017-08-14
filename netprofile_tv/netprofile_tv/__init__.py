@@ -59,11 +59,16 @@ class Module(ModuleBase):
         from netprofile_core.models import (
             Group,
             GroupCapability,
+            LogType,
             Privilege
         )
 
         if not vpair.is_install:
             return
+
+        sess.add(LogType(id=23,
+                         name='TV subscriptions'))
+        sess.flush()
 
         privs = (Privilege(code='BASE_TV_SOURCES',
                            name=_('Menu: TV sources')),

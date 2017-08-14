@@ -61,7 +61,10 @@ from netprofile.db.fields import (
     UInt32,
     npbool
 )
-from netprofile.db.ddl import Comment
+from netprofile.db.ddl import (
+    Comment,
+    Trigger
+)
 from netprofile.ext.wizards import SimpleWizard
 from netprofile_entities.models import Entity
 from netprofile_access.models import AccessEntity
@@ -626,6 +629,11 @@ class TVSubscription(Base):
         Index('tv_subscriptions_def_i_tvsubtid', 'tvsubtid'),
         Index('tv_subscriptions_def_i_entityid', 'entityid'),
         Index('tv_subscriptions_def_u_epid', 'epid', unique=True),
+        Trigger('before', 'insert', 't_tv_subscriptions_def_bi'),
+        Trigger('before', 'update', 't_tv_subscriptions_def_bu'),
+        Trigger('after', 'insert', 't_tv_subscriptions_def_ai'),
+        Trigger('after', 'update', 't_tv_subscriptions_def_au'),
+        Trigger('after', 'delete', 't_tv_subscriptions_def_ad'),
         {
             'mysql_engine':  'InnoDB',
             'mysql_charset': 'utf8',
