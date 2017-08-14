@@ -24,7 +24,6 @@ from __future__ import (unicode_literals, print_function,
                         absolute_import, division)
 
 __all__ = [
-    'TVSourceType',
     'TVSource',
     'TVChannel',
     'TVSubscriptionType',
@@ -71,14 +70,15 @@ def _tv_handler_choices(col, req):
     return ret
 
 
-class TVSourceType(Base):
+class TVSource(Base):
     """
-    TV broadcasting source types.
+    TV broadcasting sources.
     """
-    __tablename__ = 'tv_sources_types'
+    __tablename__ = 'tv_sources_def'
     __table_args__ = (
-        Comment('Types of TV broadcast sources'),
-        Index('tv_sources_types_u_name', 'name', unique=True),
+        Comment('Defined TV broadcast sources'),
+        Index('tv_sources_def_i_hostid', 'hostid'),
+        Index('tv_sources_def_u_name', 'name', unique=True),
         {
             'mysql_engine':  'InnoDB',
             'mysql_charset': 'utf8',
@@ -89,36 +89,72 @@ class TVSourceType(Base):
                 'cap_edit':      'TV_SOURCES_EDIT',
                 'cap_delete':    'TV_SOURCES_DELETE',
 
-                'menu_name':     _('Source Types'),
+                'menu_name':     _('Sources'),
                 'show_in_menu':  'admin',
                 'default_sort':  ({'property': 'name', 'direction': 'ASC'},),
-                'grid_view':     ('tvstid', 'name', 'handler',
-                                  'realtime', 'polled'),
-                'grid_hidden':   ('tvstid', 'handler'),
-                'form_view':     ('name', 'handler', 'realtime', 'polled',
-                                  'descr'),
+                'grid_view':     ('tvsourceid', 'name',
+                                  'gateway_host', 'port'),
+                'grid_hidden':   ('tvsourceid',
+                                  'gateway_host', 'port'),
+                'form_view':     ('name',
+                                  'gateway_host', 'port',
+                                  'enc', 'descr'),
                 'easy_search':   ('name',),
                 'detail_pane':   ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard': SimpleWizard(title=_('Add new source type'))
+                'create_wizard': SimpleWizard(title=_('Add new source'))
             }
         })
     id = Column(
-        'tvstid',
+        'tvsourceid',
         UInt32(),
-        Sequence('tv_sources_types_tvstid_seq'),
-        Comment('TV source type ID'),
+        Sequence('tv_sources_def_tvsourceid_seq'),
+        Comment('TV source ID'),
         primary_key=True,
         nullable=False,
         info={
             'header_string': _('ID')
         })
+    gateway_host_id = Column(
+        'hostid',
+        UInt32(),
+        ForeignKey('hosts_def.hostid', name='tv_sources_def_fk_hostid',
+                   onupdate='CASCADE', ondelete='SET NULL'),
+        Comment('Gateway host ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Gateway'),
+            'filter_type': 'none',
+            'column_flex': 2
+        })
+    gateway_port = Column(
+        'port',
+        UInt16(),
+        Comment('Gateway port number'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Port')
+        })
     name = Column(
         Unicode(255),
-        Comment('TV source type name'),
+        Comment('TV source name'),
         nullable=False,
         info={
             'header_string': _('Name'),
-            'column_flex': 1
+            'column_flex': 3
+        })
+    text_encoding = Column(
+        'enc',
+        ASCIIString(32),
+        Comment('Used text encoding'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Encoding')
         })
     handler = Column(
         ASCIIString(255),
@@ -163,115 +199,6 @@ class TVSourceType(Base):
             'header_string': _('Description')
         })
 
-    sources = relationship(
-        'TVSource',
-        backref=backref('type', innerjoin=True),
-        passive_deletes=True)
-
-    def __str__(self):
-        return str(self.name)
-
-
-class TVSource(Base):
-    """
-    TV broadcasting sources.
-    """
-    __tablename__ = 'tv_sources_def'
-    __table_args__ = (
-        Comment('Defined TV broadcast sources'),
-        Index('tv_sources_def_i_tvstid', 'tvstid'),
-        Index('tv_sources_def_i_hostid', 'hostid'),
-        Index('tv_sources_def_u_name', 'name', unique=True),
-        {
-            'mysql_engine':  'InnoDB',
-            'mysql_charset': 'utf8',
-            'info':          {
-                'cap_menu':      'BASE_TV_SOURCES',
-                'cap_read':      'TV_SOURCES_LIST',
-                'cap_create':    'TV_SOURCES_CREATE',
-                'cap_edit':      'TV_SOURCES_EDIT',
-                'cap_delete':    'TV_SOURCES_DELETE',
-
-                'menu_name':     _('Sources'),
-                'show_in_menu':  'admin',
-                'default_sort':  ({'property': 'name', 'direction': 'ASC'},),
-                'grid_view':     ('tvsourceid', 'type', 'name',
-                                  'gateway_host', 'port'),
-                'grid_hidden':   ('tvsourceid',
-                                  'gateway_host', 'port'),
-                'form_view':     ('type', 'name',
-                                  'gateway_host', 'port',
-                                  'descr'),
-                'easy_search':   ('name',),
-                'detail_pane':   ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard': SimpleWizard(title=_('Add new source'))
-            }
-        })
-    id = Column(
-        'tvsourceid',
-        UInt32(),
-        Sequence('tv_sources_def_tvsourceid_seq'),
-        Comment('TV source ID'),
-        primary_key=True,
-        nullable=False,
-        info={
-            'header_string': _('ID')
-        })
-    type_id = Column(
-        'tvstid',
-        UInt32(),
-        ForeignKey('tv_sources_types.tvstid', name='tv_sources_def_fk_tvstid',
-                   onupdate='CASCADE'),  # ondelete='RESTRICT'
-        Comment('Type ID'),
-        nullable=False,
-        info={
-            'header_string': _('Type'),
-            'filter_type': 'nplist',
-            'column_flex': 2
-        })
-    gateway_host_id = Column(
-        'hostid',
-        UInt32(),
-        ForeignKey('hosts_def.hostid', name='tv_sources_def_fk_hostid',
-                   onupdate='CASCADE', ondelete='SET NULL'),
-        Comment('Gateway host ID'),
-        nullable=True,
-        default=None,
-        server_default=text('NULL'),
-        info={
-            'header_string': _('Gateway'),
-            'filter_type': 'none',
-            'column_flex': 2
-        })
-    gateway_port = Column(
-        'port',
-        UInt16(),
-        Comment('Gateway port number'),
-        nullable=True,
-        default=None,
-        server_default=text('NULL'),
-        info={
-            'header_string': _('Port')
-        })
-    name = Column(
-        Unicode(255),
-        Comment('TV source name'),
-        nullable=False,
-        info={
-            'header_string': _('Name'),
-            'column_flex': 3
-        })
-    description = Column(
-        'descr',
-        UnicodeText(),
-        Comment('Description'),
-        nullable=True,
-        default=None,
-        server_default=text('NULL'),
-        info={
-            'header_string': _('Description')
-        })
-
     gateway_host = relationship(
         'Host',
         backref=backref('tv_sources', passive_deletes=True))
@@ -289,10 +216,7 @@ class TVSource(Base):
         return str(self.name)
 
     def get_handler(self):
-        srctype = self.type
-        if srctype is None:
-            return None
-        hdlname = srctype.handler
+        hdlname = self.handler
         if not hdlname:
             return None
         itp = list(pkg_resources.iter_entry_points(
@@ -300,7 +224,7 @@ class TVSource(Base):
         if len(itp) == 0:
             return None
         cls = itp[0].load()
-        return cls(srctype, self)
+        return cls(self)
 
 
 class TVChannel(Base):

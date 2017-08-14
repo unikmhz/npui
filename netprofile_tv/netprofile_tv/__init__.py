@@ -47,8 +47,7 @@ class Module(ModuleBase):
     @classmethod
     def get_models(cls):
         from netprofile_tv import models
-        return (models.TVSourceType,
-                models.TVSource,
+        return (models.TVSource,
                 models.TVChannel,
                 models.TVSubscriptionType,
                 models.TVSubscriptionChannel,
@@ -60,16 +59,11 @@ class Module(ModuleBase):
         from netprofile_core.models import (
             Group,
             GroupCapability,
-            # LogType,
             Privilege
         )
 
         if not vpair.is_install:
             return
-
-        # sess.add(LogType(id=FIXME,
-        #                  name='Channel packages'))
-        # sess.flush()
 
         privs = (Privilege(code='BASE_TV_SOURCES',
                            name=_('Menu: TV sources')),

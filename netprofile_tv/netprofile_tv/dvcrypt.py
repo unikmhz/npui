@@ -485,8 +485,7 @@ class DVCryptConnection(object):
 
 
 class DVCryptHandler(object):
-    def __init__(self, srctype, source):
-        self.src_type = srctype
+    def __init__(self, source):
         self.source = source
 
     def update_access_entity(aent):

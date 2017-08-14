@@ -79,20 +79,6 @@ def _dpane_access_tv(tabs, model, req):
         })
 
 
-@register_hook('core.dpanetabs.tv.TVSourceType')
-def _dpane_sourcetype_sources(tabs, model, req):
-    tabs.append({
-        'title':             req.localizer.translate(_('Sources')),
-        'iconCls':           'ico-mod-tvsource',
-        'xtype':             'grid_tv_TVSource',
-        'stateId':           None,
-        'stateful':          False,
-        'hideColumns':       ('type',),
-        'extraParamProp':    'tvstid',
-        'createControllers': 'NetProfile.core.controller.RelatedWizard'
-    })
-
-
 @register_hook('core.dpanetabs.tv.TVSource')
 def _dpane_source_tabs(tabs, model, req):
     loc = req.localizer
