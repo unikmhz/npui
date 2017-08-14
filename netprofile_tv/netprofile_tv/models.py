@@ -44,12 +44,16 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import (
     backref,
-    relationship
+    relationship,
+    validates
 )
 from sqlalchemy.ext.associationproxy import association_proxy
 from pyramid.i18n import TranslationStringFactory
 
-from netprofile.db.connection import Base
+from netprofile.db.connection import (
+    Base,
+    DBSession
+)
 from netprofile.db.fields import (
     ASCIIString,
     NPBoolean,
@@ -59,6 +63,8 @@ from netprofile.db.fields import (
 )
 from netprofile.db.ddl import Comment
 from netprofile.ext.wizards import SimpleWizard
+from netprofile_entities.models import Entity
+from netprofile_access.models import AccessEntity
 
 _ = TranslationStringFactory('netprofile_tv')
 
@@ -526,9 +532,9 @@ class TVAccessCard(Base):
             'info':          {
                 'cap_menu':      'BASE_TV_CARDS',
                 'cap_read':      'TV_CARDS_LIST',
-                'cap_create':    'TV_CARDS_ASSIGN',
-                'cap_edit':      'TV_CARDS_ASSIGN',
-                'cap_delete':    'TV_CARDS_ASSIGN',
+                'cap_create':    'TV_CARDS_CREATE',
+                'cap_edit':      'TV_CARDS_EDIT',
+                'cap_delete':    'TV_CARDS_DELETE',
 
                 'menu_name':     _('TV Cards'),
                 'show_in_menu':  'modules',
@@ -707,6 +713,7 @@ class TVSubscription(Base):
         info={
             'header_string': _('Paid Service'),
             'filter_type': 'none',
+            'read_only': True,
             'column_flex': 2
         })
 
@@ -731,4 +738,21 @@ class TVSubscription(Base):
                         cascade='all, delete-orphan',
                         passive_deletes=True))
 
-    # TODO: autoset entity based on access_entity in validator
+    @validates('access_entity', 'access_entity_id')
+    def _autoset_entity(self, k, v):
+        if k == 'access_entity':
+            ent = v
+        else:
+            sess = DBSession()
+            ent = sess.query(AccessEntity).get(int(v))
+            self.access_entity = ent
+
+        while isinstance(ent, AccessEntity):
+            ent = ent.parent
+        if isinstance(ent, Entity):
+            self.entity = ent
+        return v
+
+    def __str__(self):
+        return '%s: %s' % (str(self.type),
+                           str(self.access_entity))
