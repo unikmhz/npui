@@ -107,7 +107,9 @@ class TVSource(Base):
                                   'gateway_host', 'port'),
                 'form_view':     ('name',
                                   'gateway_host', 'port',
-                                  'enc', 'descr'),
+                                  'handler', 'enc',
+                                  'realtime', 'polled',
+                                  'descr'),
                 'easy_search':   ('name',),
                 'detail_pane':   ('netprofile_core.views', 'dpane_simple'),
                 'create_wizard': SimpleWizard(title=_('Add new source'))
