@@ -273,7 +273,7 @@ class PaidServiceType(Base):
         })
 
     def __str__(self):
-        str(self.name)
+        return str(self.name)
 
     def formatted_initial_sum(self, req):
         return money_format(req, self.initial_sum)
