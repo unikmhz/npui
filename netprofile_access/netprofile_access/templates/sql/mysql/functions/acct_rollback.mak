@@ -25,7 +25,7 @@
 	DECLARE xqsum DECIMAL(20,8) DEFAULT 0.0;
 	DECLARE startts DATETIME;
 	DECLARE qpa SMALLINT UNSIGNED;
-	DECLARE qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'c_hour', 'c_day', 'c_month', 'f_hour', 'f_day', 'f_week', 'f_month') CHARACTER SET ascii;
+	DECLARE qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'a_year', 'c_hour', 'c_day', 'c_month', 'c_year', 'f_hour', 'f_day', 'f_week', 'f_month', 'f_year') CHARACTER SET ascii;
 	DECLARE CONTINUE HANDLER FOR NOT FOUND
 		SET done := 1;
 

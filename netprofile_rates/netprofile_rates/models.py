@@ -111,13 +111,16 @@ class QuotaPeriodUnit(DeclEnum):
     absolute_day = 'a_day', _('Day (abs.)'), 20
     absolute_week = 'a_week', _('Week (abs.)'), 30
     absolute_month = 'a_month', _('Month (abs.)'), 40
-    calendar_hour = 'c_hour', _('Hour (cal.)'), 50
-    calendar_day = 'c_day', _('Day (cal.)'), 60
-    calendar_month = 'c_month', _('Month (cal.)'), 70
-    fixed_hour = 'f_hour', _('Hour (fix.)'), 80
-    fixed_day = 'f_day', _('Day (fix.)'), 90
-    fixed_week = 'f_week', _('Week (fix.)'), 100
-    fixed_month = 'f_month', _('Month (fix.)'), 110
+    absolute_year = 'a_year', _('Year (abs.)'), 50
+    calendar_hour = 'c_hour', _('Hour (cal.)'), 60
+    calendar_day = 'c_day', _('Day (cal.)'), 70
+    calendar_month = 'c_month', _('Month (cal.)'), 80
+    calendar_year = 'c_year', _('Year (cal.)'), 90
+    fixed_hour = 'f_hour', _('Hour (fix.)'), 100
+    fixed_day = 'f_day', _('Day (fix.)'), 110
+    fixed_week = 'f_week', _('Week (fix.)'), 120
+    fixed_month = 'f_month', _('Month (fix.)'), 130
+    fixed_year = 'f_year', _('Year (fix.)'), 140
 
 
 class DestinationType(DeclEnum):
