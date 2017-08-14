@@ -166,8 +166,8 @@ class DVCryptConnection(object):
         self._sock = None
         self._auth_as = None
         self._host = settings.get('host', 'localhost')
-        self._port = settings.get('port', 8100)
-        self._enc = settings.get('encoding', 'utf8')
+        self._port = settings.get('port', 8100) or 8100
+        self._enc = settings.get('encoding', 'utf8') or 'utf8'
 
     def _send_request(self, code, address=ADDR_NONE, data=None):
         if not isinstance(code, DVCryptCommand):
@@ -487,6 +487,21 @@ class DVCryptConnection(object):
 class DVCryptHandler(object):
     def __init__(self, source):
         self.source = source
+
+    @reify
+    def connection(self):
+        host = self.source.gateway_host
+        if not host:
+            raise RuntimeError('Can\'t find host to connect to')
+        if len(host.ipv4_addresses):
+            addr = str(host.ipv4_addresses[0])
+        elif len(host.ipv6_addresses):
+            addr = str(host.ipv6_addresses[0])
+        else:
+            addr = str(host)
+        return DVCryptConnection(host=addr,
+                                 port=self.source.gateway_port,
+                                 encoding=self.source.text_encoding)
 
     def update_access_entity(aent):
         pass
