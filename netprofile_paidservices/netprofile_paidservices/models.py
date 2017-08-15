@@ -35,6 +35,7 @@ __all__ = [
     'PSPollEvent'
 ]
 
+import datetime
 from sqlalchemy import (
     Column,
     DateTime,
@@ -451,6 +452,12 @@ class PaidService(Base):
         backref=backref('paid_services',
                         cascade='all, delete-orphan',
                         passive_deletes=True))
+
+    @property
+    def is_paid(self):
+        return (self.active
+                and self.quota_period_end
+                and self.quota_period_end > datetime.datetime.now())
 
     def __str__(self):
         return '%s: %s' % (str(self.stash),

@@ -503,5 +503,80 @@ class DVCryptHandler(object):
                                  port=self.source.gateway_port,
                                  encoding=self.source.text_encoding)
 
-    def update_access_entity(aent):
-        pass
+    def update_access_entity(self, aent):
+        has_active_subs = False
+        has_free_subs = False
+        sub_mask = bitarray(128, endian='little')
+        sub_mask.setall(False)
+        furthest_qpend = None
+
+        for tvsub in aent.tv_subscriptions_access:
+            if not tvsub.active:
+                continue
+            try:
+                extid = int(tvsub.type.external_id)
+            except (TypeError, ValueError):
+                continue
+            if extid >= 128 or extid < 0:
+                continue
+            sub_mask[extid] = True
+            has_active_subs = True
+            if tvsub.paid_service:
+                qpend = tvsub.paid_service.quota_period_end
+                if furthest_qpend is None or furthest_qpend < qpend:
+                    furthest_qpend = qpend
+            else:
+                has_free_subs = True
+
+        if has_free_subs:
+            admin_status = 1  # Always active
+        elif has_active_subs:
+            admin_status = 0  # Determined by end date
+        else:
+            admin_status = 2  # Always inactive
+
+        parent = aent.parent
+        user_name = str(parent)
+        if parent.addresses:
+            for addr in parent.addresses:
+                if addr.primary:
+                    user_address = str(addr)
+                    break
+            else:
+                user_address = str(parent.addresses[0])
+        if parent.phones:
+            for phone in parent.phones:
+                if phone.primary:
+                    user_phone = str(phone.number)
+                    break
+            else:
+                user_phone = str(parent.phones[0].number)
+
+        enc = self.source.text_encoding or 'utf8'
+
+        data_tuple = (1,  # "In use" flag
+                      0 if has_active_subs else 1,  # "Expired" flag
+                      admin_status,
+                      user_name.encode(enc),
+                      user_address.encode(enc),
+                      user_phone.encode(enc),
+                      aent.description.encode(enc),
+                      # FIXME: date fields,
+                      furthest_qpend.year if furthest_qpend else 0,
+                      furthest_qpend.month if furthest_qpend else 0,
+                      furthest_qpend.day if furthest_qpend else 0,
+                      sub_mask.tobytes())
+
+        for tvcard in aent.tv_cards:
+            try:
+                extid = int(tvcard.external_id)
+            except (TypeError, ValueError):
+                continue
+            if tvcard.source == self.source:
+                self.connection.set_user(extid, data_tuple)
+
+    def __enter__(self):
+        return self.connection.__enter__()
+
+    def __exit__(self, *args):
+        return self.connection.__exit__(*args)

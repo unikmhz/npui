@@ -763,6 +763,14 @@ class TVSubscription(Base):
             self.entity = ent
         return v
 
+    @property
+    def active(self):
+        if not self.type.enabled:
+            return False
+        if self.paid_service is None:
+            return True
+        return self.paid_service.is_paid
+
     def __str__(self):
         return '%s: %s' % (str(self.type),
                            str(self.access_entity))
