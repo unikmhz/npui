@@ -33,10 +33,12 @@ from future.utils import (
 )
 from pyramid.decorator import reify
 import socket
+from sqlalchemy.orm import joinedload
 import struct
 from Cryptodome.Hash import MD2
 
 from netprofile.common.crypto import get_salt_bytes
+from netprofile_access.models import AccessEntity
 
 MAGIC_SYNC = 0xe25aa5e4
 REQUEST_DATA_OFFSET = 12
@@ -561,7 +563,6 @@ class DVCryptHandler(object):
                       user_address.encode(enc),
                       user_phone.encode(enc),
                       aent.description.encode(enc),
-                      # FIXME: date fields,
                       furthest_qpend.year if furthest_qpend else 0,
                       furthest_qpend.month if furthest_qpend else 0,
                       furthest_qpend.day if furthest_qpend else 0,
@@ -574,6 +575,11 @@ class DVCryptHandler(object):
                 continue
             if tvcard.source == self.source:
                 self.connection.set_user(extid, data_tuple)
+
+    def update_all(self, sess):
+        for aent in sess.query(AccessEntity).options(
+                joinedload(AccessEntity.tv_cards)):
+            self.update_access_entity(aent)
 
     def __enter__(self):
         return self.connection.__enter__()

@@ -34,7 +34,10 @@ from netprofile.celery import (
 from netprofile.db.connection import DBSession
 from netprofile_access.models import AccessEntity
 
-from .models import TVSubscription
+from .models import (
+    TVSource,
+    TVSubscription
+)
 
 logger = logging.getLogger(__name__)
 
@@ -91,4 +94,14 @@ def update_aent(aeid):
 @task_meta(cap='TV_PKG_ASSIGN', title=_('Update TV subscriptions in bulk'))
 @app.task
 def update_all():
-    transaction.abort()
+    sess = DBSession()
+
+    try:
+        for source in sess.query(TVSource).filter(TVSource.polled.is_(True)):
+            handler = source.get_handler()
+            if not handler:
+                continue
+            with handler as conn:
+                conn.update_all(sess)
+    finally:
+        transaction.abort()
