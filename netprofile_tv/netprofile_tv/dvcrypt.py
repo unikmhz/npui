@@ -40,6 +40,8 @@ from Cryptodome.Hash import MD2
 from netprofile.common.crypto import get_salt_bytes
 from netprofile_access.models import AccessEntity
 
+from .models import TVAccessCard
+
 MAGIC_SYNC = 0xe25aa5e4
 REQUEST_DATA_OFFSET = 12
 REPLY_DATA_OFFSET = 12
@@ -578,7 +580,8 @@ class DVCryptHandler(object):
 
     def update_all(self, sess):
         for aent in sess.query(AccessEntity).options(
-                joinedload(AccessEntity.tv_cards)):
+                joinedload(AccessEntity.tv_cards)).filter(
+                        TVAccessCard.source_id == self.source.id):
             self.update_access_entity(aent)
 
     def __enter__(self):
