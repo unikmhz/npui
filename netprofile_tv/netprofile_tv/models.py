@@ -40,6 +40,7 @@ from sqlalchemy import (
     Sequence,
     Unicode,
     UnicodeText,
+    event,
     text
 )
 from sqlalchemy.orm import (
@@ -774,3 +775,16 @@ class TVSubscription(Base):
     def __str__(self):
         return '%s: %s' % (str(self.type),
                            str(self.access_entity))
+
+
+@event.listens_for(TVSubscription, 'after_insert')
+@event.listens_for(TVSubscription, 'after_update')
+@event.listens_for(TVSubscription, 'after_delete')
+def _tvsub_modified(mapper, conn, tgt):
+    from .tasks import update_aent
+    if not tgt.access_entity_id:
+        return
+    # Wait a reasonable amount of time to allow transaction to complete.
+    # TODO: make countdown configurable
+    update_aent.apply_async(args=(tgt.access_entity_id,),
+                            countdown=8)
