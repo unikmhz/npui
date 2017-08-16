@@ -316,8 +316,9 @@ class PaidService(Base):
                 'grid_view':     ('epid', 'entity', 'stash', 'type',
                                   'active', 'qpend'),
                 'grid_hidden':   ('epid',),
-                'form_view':     (
-                ),
+                'form_view':     ('entity', 'stash', 'type',
+                                  'access_entity', 'host',
+                                  'active', 'qpend', 'descr'),
                 'detail_pane':   ('netprofile_core.views', 'dpane_simple')
             }
         })
