@@ -1549,7 +1549,6 @@ class NetworkDevice(Device):
 
     host = relationship(
         'Host',
-        innerjoin=True,
         backref=backref('network_devices',
                         passive_deletes=True))
 
