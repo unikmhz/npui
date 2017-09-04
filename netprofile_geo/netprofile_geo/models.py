@@ -231,7 +231,7 @@ class District(Base):
                 'default_sort':  ({'property': 'name', 'direction': 'ASC'},),
                 'grid_view':     ('districtid', 'city', 'name', 'prefix'),
                 'grid_hidden':   ('districtid',),
-                'form_view':     ('name', 'prefix', 'descr'),
+                'form_view':     ('name', 'prefix', 'city', 'descr'),
                 'easy_search':   ('name',),
                 'detail_pane':   ('netprofile_core.views', 'dpane_simple'),
 
