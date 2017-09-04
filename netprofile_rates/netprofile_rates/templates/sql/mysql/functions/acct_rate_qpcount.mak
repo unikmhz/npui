@@ -28,7 +28,7 @@
 		WHEN 'a_day' THEN SET n := FLOOR((UNIX_TIMESTAMP(dto) - UNIX_TIMESTAMP(dfrom)) / (86400 * qpa));
 		WHEN 'a_week' THEN SET n := FLOOR((UNIX_TIMESTAMP(dto) - UNIX_TIMESTAMP(dfrom)) / (604800 * qpa));
 		WHEN 'a_month' THEN SET n := FLOOR((UNIX_TIMESTAMP(dto) - UNIX_TIMESTAMP(dfrom)) / (2592000 * qpa));
-		WHEN 'a_year' THEN SET n: = FLOOR((UNIX_TIMESTAMP(dto) - UNIX_TIMESTAMP(dfrom)) / (31536000 * qpa));
+		WHEN 'a_year' THEN SET n := FLOOR((UNIX_TIMESTAMP(dto) - UNIX_TIMESTAMP(dfrom)) / (31536000 * qpa));
 		WHEN 'c_hour' THEN SET n := FLOOR(TIMESTAMPDIFF(HOUR, dfrom, dto) / qpa);
 		WHEN 'c_day' THEN SET n := FLOOR(DATEDIFF(dto, dfrom) / qpa);
 		WHEN 'c_month' THEN SET n := FLOOR(TIMESTAMPDIFF(MONTH, dfrom, dto) / qpa);
