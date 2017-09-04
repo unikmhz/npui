@@ -147,6 +147,14 @@ _STRING_SET = (
     String
 )
 
+_ASCII_STRING_SET = (
+    ASCIIString,
+    ASCIIFixedString,
+    ASCIIText,
+    ASCIITinyText,
+    DeclEnumType
+)
+
 _BOOLEAN_SET = (
     Boolean,
     NPBoolean
@@ -1828,11 +1836,19 @@ class ExtModel(object):
             return query
         sstr = params['__sstr']
         cond = []
+        is_ascii = True
+        try:
+            sstr.encode('ascii')
+        except UnicodeEncodeError:
+            is_ascii = False
         for f in fields:
             prop = trans[f]
             coldef = self.model.__mapper__.c[prop.key]
             col = getattr(self.model, prop.key)
-            if issubclass(coldef.type.__class__, _STRING_SET):
+            colcls = coldef.type.__class__
+            if issubclass(colcls, _STRING_SET):
+                if not is_ascii and issubclass(colcls, _ASCII_STRING_SET):
+                    continue
                 cond.append(col.contains(sstr))
         if len(cond) > 0:
             query = query.filter(or_(*cond))
