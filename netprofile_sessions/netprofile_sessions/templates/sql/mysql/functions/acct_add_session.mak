@@ -34,7 +34,7 @@
 	DECLARE curr_xrate DECIMAL(20,8) DEFAULT 1.0;
 	DECLARE rate_type ENUM('prepaid', 'prepaid_cont', 'postpaid', 'free');
 	DECLARE rate_qpa SMALLINT UNSIGNED DEFAULT 1;
-	DECLARE rate_qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'c_hour', 'c_day', 'c_month', 'f_hour', 'f_day', 'f_week', 'f_month') CHARACTER SET ascii DEFAULT 'c_month';
+	DECLARE rate_qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'a_year', 'c_hour', 'c_day', 'c_month', 'c_year', 'f_hour', 'f_day', 'f_week', 'f_month', 'f_year') CHARACTER SET ascii DEFAULT 'c_month';
 	DECLARE stashop_type ENUM('sub_qin_qeg', 'sub_min_qeg', 'sub_oqin_qeg', 'sub_qin_meg', 'sub_qin_oqeg', 'sub_min_meg', 'sub_oqin_meg', 'sub_min_oqeg', 'sub_oqin_oqeg', 'add_cash', 'add_auto', 'oper');
 	DECLARE dtype ENUM('normal','noquota','onlyquota','reject') CHARACTER SET ascii DEFAULT 'normal';
 	DECLARE st_in VARCHAR(5) DEFAULT 'qin';

@@ -35,6 +35,7 @@ __all__ = [
     'PSPollEvent'
 ]
 
+import datetime
 from sqlalchemy import (
     Column,
     DateTime,
@@ -273,7 +274,7 @@ class PaidServiceType(Base):
         })
 
     def __str__(self):
-        str(self.name)
+        return str(self.name)
 
     def formatted_initial_sum(self, req):
         return money_format(req, self.initial_sum)
@@ -315,8 +316,9 @@ class PaidService(Base):
                 'grid_view':     ('epid', 'entity', 'stash', 'type',
                                   'active', 'qpend'),
                 'grid_hidden':   ('epid',),
-                'form_view':     (
-                ),
+                'form_view':     ('entity', 'stash', 'type',
+                                  'access_entity', 'host',
+                                  'active', 'qpend', 'descr'),
                 'detail_pane':   ('netprofile_core.views', 'dpane_simple')
             }
         })
@@ -451,6 +453,12 @@ class PaidService(Base):
         backref=backref('paid_services',
                         cascade='all, delete-orphan',
                         passive_deletes=True))
+
+    @property
+    def is_paid(self):
+        return (self.active
+                and self.quota_period_end
+                and self.quota_period_end > datetime.datetime.now())
 
     def __str__(self):
         return '%s: %s' % (str(self.stash),

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# NetProfile: Setup script for netprofile package
-# Copyright © 2013-2017 Alex Unigovsky
+# NetProfile: Setup script for netprofile_tv package
+# Copyright © 2017 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -31,68 +31,21 @@ README_GLOBAL = open(os.path.join(here, 'README-NP.rst')).read()
 
 requires = [
     'setuptools >= 36.0',
-    'future >= 0.16',
-    'six >= 1.10',
-    'packaging >= 16.8',
-    'python-dateutil >= 2.6',
-    'dogpile.cache >= 0.6',
-    'repoze.tm2 >= 2.1',
-    'pyparsing >= 2.2',
+    'pycryptodomex >= 3.4.6',
+    'bitarray >= 0.8.1',
 
-    'SQLAlchemy >= 1.1.11',
-    'zope.sqlalchemy >= 0.7.7',
-    'transaction >= 2.1',
-    'alembic >= 0.9',
-
-    'waitress >= 1.0.2',
-    'pyramid >= 1.9',
-    'pyramid_mako >= 1.0.2',
-    'pyramid_rpc >= 0.8',
-    'pyramid_debugtoolbar >= 4.2.1',
-    'pyramid_redis_sessions >= 1.0',
-    'pyramid_mailer >= 0.15',
-    'Babel >= 2.3.4',
-    'lingua >= 4.13',
-    'lxml >= 3.8',
-
-    'cliff >= 2.8',
-
-    'tornado >= 4.5.1',
-    'sockjs-tornado >= 1.0.3',
-    'tornado-redis >= 2.4.18',
-
-    'celery >= 4.0',
-    'msgpack-python >= 0.4',
-
-    'scrypt >= 0.8',
-
-    'reportlab >= 3.4',
-    'svglib >= 0.8.1'
+    'netprofile_paidservices >= 0',
+    'netprofile_hosts >= 0'
 ]
 extras_require = {
-    ':python_version<"3.2"': [
-        'backports.ssl_match_hostname',
-        'functools32'
-    ],
-    ':python_version<"3.3"': [
-        'ipaddress'
-    ]
+    ':python_version<"3.4"': ['enum34']
 }
 
-setup_requires = [
-    'pytest-runner'
-]
-
-tests_require = [
-    'pytest',
-    'netprofile_core'
-]
-
 setup(
-    name='netprofile',
+    name='netprofile_tv',
     version=versioneer.get_version(),
     cmdclass=commands,
-    description='NetProfile Administrative UI',
+    description='NetProfile Administrative UI - TV Subscription Module',
     license='GNU Affero General Public License v3 or later (AGPLv3+)',
     long_description=README_LOCAL + '\n\n' + README_GLOBAL,
     classifiers=[
@@ -122,44 +75,23 @@ setup(
     url='https://github.com/unikmhz/npui',
     keywords='web wsgi pyramid np netprofile'
              ' crm billing accounting network isp',
-    packages=find_packages(exclude=['tests', 'htmlcov']),
+    packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    test_suite='tests',
-    tests_require=tests_require,
-    setup_requires=setup_requires,
+    test_suite='netprofile_tv',
     install_requires=requires,
     extras_require=extras_require,
     entry_points={
-        'paste.app_factory': [
-            'main = netprofile:main'
+        'netprofile.modules': [
+            'tv = netprofile_tv:Module'
         ],
-        'console_scripts': [
-            'npctl = netprofile.scripts.ctl:main'
-        ],
-        'netprofile.cli.commands': [
-            'module list = netprofile.cli:ListModules',
-            'module ls = netprofile.cli:ListModules',
-
-            'module show = netprofile.cli:ShowModule',
-            'module info = netprofile.cli:ShowModule',
-
-            'module install = netprofile.cli:InstallModule',
-            'module upgrade = netprofile.cli:UpgradeModule',
-            'module uninstall = netprofile.cli:UninstallModule',
-            'module enable = netprofile.cli:EnableModule',
-            'module disable = netprofile.cli:DisableModule',
-
-            'alembic = netprofile.cli:Alembic',
-            'db revision = netprofile.cli:DBRevision',
-
-            'deploy = netprofile.cli:Deploy',
-
-            'rt = netprofile.cli:RTServer'
-        ],
-        'netprofile.export.formats': [
-            'csv = netprofile.export.csv:CSVExportFormat',
-            'pdf = netprofile.export.pdf:PDFExportFormat'
+        'netprofile.tv.handlers': [
+            'dvcrypt = netprofile_tv.dvcrypt:DVCryptHandler'
         ]
-    }
+    },
+    message_extractors={'.': [
+        ('**.py', 'python', None),
+        ('**.pt', 'xml', None),
+        ('**.mak', 'mako', None)
+    ]}
 )

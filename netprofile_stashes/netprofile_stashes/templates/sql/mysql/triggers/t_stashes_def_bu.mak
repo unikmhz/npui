@@ -33,7 +33,7 @@
 	DECLARE rate_auxsum DECIMAL(20,8) DEFAULT NULL;
 	DECLARE rate_type ENUM('prepaid', 'prepaid_cont', 'postpaid', 'free');
 	DECLARE rate_qpa SMALLINT UNSIGNED DEFAULT 1;
-	DECLARE rate_qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'c_hour', 'c_day', 'c_month', 'f_hour', 'f_day', 'f_week', 'f_month') CHARACTER SET ascii DEFAULT 'c_month';
+	DECLARE rate_qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'a_year', 'c_hour', 'c_day', 'c_month', 'c_year', 'f_hour', 'f_day', 'f_week', 'f_month', 'f_year') CHARACTER SET ascii DEFAULT 'c_month';
 	DECLARE st_in VARCHAR(5) DEFAULT 'qin';
 	DECLARE st_eg VARCHAR(5) DEFAULT 'qeg';
 	DECLARE newpol_in, newpol_eg VARCHAR(255) CHARACTER SET ascii DEFAULT NULL;

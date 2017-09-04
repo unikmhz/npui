@@ -29,7 +29,7 @@
 	DECLARE stash_amount, stash_credit, pay, pt_isum, pt_qsum DECIMAL(20,8) DEFAULT 0.0;
 	DECLARE curr_xrate DECIMAL(20,8) DEFAULT 1.0;
 	DECLARE pt_spa, pt_qpa SMALLINT UNSIGNED DEFAULT 1;
-	DECLARE pt_qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'c_hour', 'c_day', 'c_month', 'f_hour', 'f_day', 'f_week', 'f_month') CHARACTER SET ascii DEFAULT 'c_month';
+	DECLARE pt_qpu ENUM('a_hour', 'a_day', 'a_week', 'a_month', 'a_year', 'c_hour', 'c_day', 'c_month', 'c_year', 'f_hour', 'f_day', 'f_week', 'f_month', 'f_year') CHARACTER SET ascii DEFAULT 'c_month';
 	DECLARE pt_qpt ENUM('I', 'L', 'O') DEFAULT 'I';
 	DECLARE pt_name, pt_cb_before, pt_cb_success, pt_cb_failure VARCHAR(255) DEFAULT NULL;
 	DECLARE EXIT HANDLER FOR NOT FOUND
