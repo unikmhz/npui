@@ -62,7 +62,8 @@ def on_response(event):
     if vhost is None and not req.path_info.startswith('/_debug_toolbar'):
         if _CACHED_CSP_HEADER is None:
             rt_ssl = asbool(settings.get('netprofile.rt.ssl', False))
-            rt_host = settings.get('netprofile.rt.host')
+            rt_url = settings.get('netprofile.rt.url', None)
+            rt_host = settings.get('netprofile.rt.host', 'localhost')
             rt_port = int(settings.get('netprofile.rt.port',
                                        443 if rt_ssl else 80))
 
@@ -73,7 +74,13 @@ def on_response(event):
             img_src = ["'self'"]
             frame_src = ["'self'"]
 
-            if rt_host:
+            if rt_url:
+                rt_url = '%s://%s' % ('https' if rt_ssl else 'http',
+                                            rt_url)
+                rt_ws_url = '%s://%s' % ('wss' if rt_ssl else 'ws',
+                                            rt_url)
+                connect_src.extend((rt_url, rt_ws_url))
+            elif rt_host:
                 rt_url = '%s://%s:%d' % ('https' if rt_ssl else 'http',
                                          rt_host,
                                          rt_port)
