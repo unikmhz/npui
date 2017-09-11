@@ -86,7 +86,7 @@ Ext.require([
 % elif rt_host:
 	NetProfile.rtURL = '//${rt_host}:${rt_port}';
 % else:
-	NetProfile.rtURL = Null;
+	NetProfile.rtURL = null;
 % endif
 	NetProfile.rtSocket = null;
 	NetProfile.rtSocketReady = false;
