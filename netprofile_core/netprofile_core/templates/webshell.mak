@@ -82,9 +82,11 @@ Ext.require([
 	NetProfile.staticURL = ${req.host_url | jsone};
 	NetProfile.state = null;
 % if rt_url:
-	NetProfile.rtURL = '//${rt_url}';
-% else:
+	NetProfile.rtURL = '${rt_url}';
+% elif rt_host:
 	NetProfile.rtURL = '//${rt_host}:${rt_port}';
+% else:
+	NetProfile.rtURL = Null;
 % endif
 	NetProfile.rtSocket = null;
 	NetProfile.rtSocketReady = false;
