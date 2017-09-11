@@ -217,9 +217,9 @@ def js_webshell(request):
         'cur_loc': get_locale_name(request),
         'res_ajs': mmgr.get_autoload_js(request),
         'res_ctl': mmgr.get_controllers(request),
-        'rt_host': rtcfg.get('host', 'localhost'),
+        'rt_host': rtcfg.get('host'),
         'rt_port': rtcfg.get('port', 8808),
-        'rt_url':  rtcfg.get('url', None),
+        'rt_url':  rtcfg.get('url'),
         'pw_age':  request.session.get('sess.pwage', 'ok'),
         'pw_days': request.session.get('sess.pwdays', 0),
         'modules': mmgr.get_module_browser()
