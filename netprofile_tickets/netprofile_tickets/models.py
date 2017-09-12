@@ -40,8 +40,15 @@ __all__ = [
     'TicketScheduler',
     'TicketSchedulerUserAssignment',
     'TicketSchedulerGroupAssignment',
+    'TicketSubscriptionType',
     'TicketSubscription',
-    'TicketSubscriptionType'
+    'UserTicketSubscription',
+    'GroupTicketSubscription',
+    'AddressTicketSubscription',
+    'TicketStateSubscription',
+    'UserTicketStateSubscription',
+    'GroupTicketStateSubscription',
+    'AddressTicketStateSubscription'
 ]
 
 import importlib
@@ -327,6 +334,12 @@ class TicketState(Base):
         info={
             'header_string': _('Description')
         })
+
+    subscriptions = relationship(
+        'TicketStateSubscription',
+        backref=backref('state', innerjoin=True),
+        cascade='all, delete-orphan',
+        passive_deletes=True)
 
     transition_to = association_proxy(
         'transitionmap_to',
@@ -2400,7 +2413,7 @@ class TicketSubscription(Base):
     """
     __tablename__ = 'tickets_subscriptions'
     __table_args__ = (
-        Comment('Ticket resolution dependencies'),
+        Comment('Ticket subscriptions'),
         Index('tickets_subscriptions_i_ticketid', 'ticketid'),
         Index('tickets_subscriptions_i_uid', 'uid'),
         Index('tickets_subscriptions_i_gid', 'gid'),
@@ -2412,10 +2425,7 @@ class TicketSubscription(Base):
             'mysql_charset': 'utf8',
             'info':          {
                 'cap_menu':      'BASE_TICKETS',
-                'cap_read':      'TICKETS_SUBSCRIPTIONS_LIST',
-                'cap_create':    'TICKETS_SUBSCRIPTIONS_CREATE',
-                'cap_edit':      'TICKETS_SUBSCRIPTIONS_EDIT',
-                'cap_delete':    'TICKETS_SUBSCRIPTIONS_DELETE',
+                'cap_read':      'TICKETS_LIST',
 
                 'menu_name':     _('Subscriptions')
             }
@@ -2481,6 +2491,7 @@ class TicketSubscription(Base):
     address = Column(
         'addr',
         Unicode(255),
+        Comment('E-mail address'),
         nullable=True,
         default=None,
         server_default=text('NULL'),
@@ -2532,6 +2543,32 @@ class TicketSubscription(Base):
                         cascade='all, delete-orphan',
                         passive_deletes=True))
 
+    @classmethod
+    def __augment_query__(cls, sess, query, params, req):
+        if not req.has_permission('TICKETS_SUBSCRIPTIONS_LIST'):
+            query = query.filter(or_(
+                TicketSubscription.user_id == req.user.id,
+                TicketSubscription.group_id == req.user.group_id))
+        return query
+
+    @classmethod
+    def __augment_create__(cls, sess, obj, values, req):
+        if req.has_permission('TICKETS_SUBSCRIPTIONS_CREATE'):
+            return True
+        return obj.user_id == req.user.id
+
+    @classmethod
+    def __augment_update__(cls, sess, obj, values, req):
+        if req.has_permission('TICKETS_SUBSCRIPTIONS_EDIT'):
+            return True
+        return obj.user_id == req.user.id
+
+    @classmethod
+    def __augment_delete__(cls, sess, obj, values, req):
+        if req.has_permission('TICKETS_SUBSCRIPTIONS_DELETE'):
+            return True
+        return obj.user_id == req.user.id
+
 
 class UserTicketSubscription(TicketSubscription):
     """
@@ -2554,6 +2591,147 @@ class GroupTicketSubscription(TicketSubscription):
 class AddressTicketSubscription(TicketSubscription):
     """
     Describes one link between a ticket and an external address.
+    """
+    __mapper_args__ = {
+        'polymorphic_identity': TicketSubscriptionType.address
+    }
+
+
+class TicketStateSubscription(Base):
+    """
+    Automatic ticket subscriptions based on initial state.
+    """
+    __tablename__ = 'tickets_states_subscriptions'
+    __table_args__ = (
+        Comment('Ticket state subscriptions'),
+        Index('tickets_states_subscriptions_i_tstid', 'tstid'),
+        Index('tickets_states_subscriptions_i_uid', 'uid'),
+        Index('tickets_states_subscriptions_i_gid', 'gid'),
+        Index('tickets_states_subscriptions_u_sub',
+              'tstid', 'uid', 'gid', 'addr',
+              unique=True),
+        {
+            'mysql_engine':  'InnoDB',
+            'mysql_charset': 'utf8',
+            'info':          {
+                'cap_menu':      'BASE_TICKETS',
+                'cap_read':      'TICKETS_SUBSCRIPTIONS_LIST',
+                'cap_create':    'TICKETS_SUBSCRIPTIONS_CREATE',
+                'cap_edit':      'TICKETS_SUBSCRIPTIONS_EDIT',
+                'cap_delete':    'TICKETS_SUBSCRIPTIONS_DELETE',
+
+                'menu_name':     _('State Subscriptions')
+            }
+        })
+    id = Column(
+        'tstsubid',
+        UInt32(),
+        Sequence('tickets_states_subscriptions_tstsubid_seq'),
+        Comment('Ticket state subscription ID'),
+        primary_key=True,
+        nullable=False,
+        info={
+            'header_string': _('ID')
+        })
+    type = Column(
+        TicketSubscriptionType.db_type(),
+        Comment('Ticket state subscription type'),
+        nullable=False,
+        default=TicketSubscriptionType.user,
+        server_default=TicketSubscriptionType.user,
+        info={
+            'header_string': _('Type'),
+            'column_flex': 2
+        })
+    state_id = Column(
+        'tstid',
+        UInt32(),
+        ForeignKey('tickets_states_types.tstid',
+                   name='tickets_states_subscriptions_fk_tstid',
+                   ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('Ticket state ID'),
+        nullable=False,
+        info={
+            'header_string': _('State'),
+            'filter_type': 'nplist',
+            'column_flex': 1
+        })
+    user_id = Column(
+        'uid',
+        UInt32(),
+        ForeignKey('users.uid', name='tickets_states_subscriptions_fk_uid',
+                   ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('User ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('User'),
+            'column_flex': 1
+        })
+    group_id = Column(
+        'gid',
+        UInt32(),
+        ForeignKey('groups.gid', name='tickets_states_subscriptions_fk_gid',
+                   ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('Group ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Group'),
+            'column_flex': 1
+        })
+    address = Column(
+        'addr',
+        Unicode(255),
+        Comment('E-mail address'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Address'),
+            'column_flex': 3
+        })
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'X',
+        'with_polymorphic': '*'
+    }
+
+    user = relationship(
+        'User',
+        backref=backref('ticket_state_subscriptions',
+                        cascade='all, delete-orphan',
+                        passive_deletes=True))
+    group = relationship(
+        'Group',
+        backref=backref('ticket_state_subscriptions',
+                        cascade='all, delete-orphan',
+                        passive_deletes=True))
+
+
+class UserTicketStateSubscription(TicketStateSubscription):
+    """
+    Describes one link between a ticket state and a user.
+    """
+    __mapper_args__ = {
+        'polymorphic_identity': TicketSubscriptionType.user
+    }
+
+
+class GroupTicketStateSubscription(TicketStateSubscription):
+    """
+    Describes one link between a ticket state and a group.
+    """
+    __mapper_args__ = {
+        'polymorphic_identity': TicketSubscriptionType.group
+    }
+
+
+class AddressTicketStateSubscription(TicketStateSubscription):
+    """
+    Describes one link between a ticket state and an external address.
     """
     __mapper_args__ = {
         'polymorphic_identity': TicketSubscriptionType.address

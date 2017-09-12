@@ -27,6 +27,10 @@ from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 from netprofile.common.modules import ModuleBase
+from netprofile.common.settings import (
+    Setting,
+    SettingSection
+)
 
 from ._version import get_versions
 __version__ = get_versions()['version']
@@ -91,6 +95,8 @@ class Module(ModuleBase):
 
         privs = (Privilege(code='BASE_TICKETS',
                            name=_('Menu: Tickets')),
+                 Privilege(code='ADMIN_TICKETS',
+                           name=_('Administrative: Tickets')),
                  Privilege(code='TICKETS_LIST',
                            name=_('Tickets: List')),
                  Privilege(code='TICKETS_LIST_ARCHIVED',
@@ -229,6 +235,32 @@ class Module(ModuleBase):
 
     def get_controllers(self, request):
         return ('NetProfile.tickets.controller.TicketGrid',)
+
+    def get_settings(self, vhost='MAIN', scope='global'):
+        if vhost == 'MAIN' and scope == 'global':
+            return (
+                SettingSection(
+                    'sub',
+                    Setting('default_uid',
+                            title=_('Subscribe to user by default'),
+                            help_text=_('Subscribe this user to '
+                                        'all new tickets'),
+                            type='int',
+                            nullable=True,
+                            write_cap='ADMIN_TICKETS'),
+                    Setting('default_gid',
+                            title=_('Subscribe to group by default'),
+                            help_text=_('Subscribe this group to '
+                                        'all new tickets'),
+                            type='int',
+                            nullable=True,
+                            write_cap='ADMIN_TICKETS'),
+                    title=_('Subscriptions'),
+                    help_text=_('Default subscriptions for tickets'),
+                    read_cap='ADMIN_TICKETS'),)
+        if vhost == 'MAIN' and scope == 'user':
+            return ()
+        return ()
 
     @property
     def name(self):
