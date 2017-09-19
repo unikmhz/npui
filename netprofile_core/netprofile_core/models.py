@@ -3916,6 +3916,7 @@ class UserEmail(Base):
         nullable=False,
         info={
             'header_string': _('Address'),
+            'vtype': 'email',
             'column_flex': 3
         })
     description = Column(
