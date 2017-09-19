@@ -125,7 +125,7 @@ ${next.body()}
 </div>
 
 <div id="footer" role="contentinfo">
-	<span class="single-line">Copyright © 2010-2016 <a href="http://netprofile.ru">${_('NetProfile.ru Team', domain='netprofile_access')}</a>.</span>
+	<span class="single-line">Copyright © 2010-2017 <a href="http://netprofile.ru">${_('NetProfile.ru Team', domain='netprofile_access')}</a>.</span>
 	<span class="single-line">${_('License:', domain='netprofile_access')} <a href="http://www.gnu.org/licenses/agpl-3.0.html">AGPLv3</a>+</span>
 </div>
 

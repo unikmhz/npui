@@ -391,7 +391,7 @@ class PaidService(Base):
         Comment('Type ID'),
         nullable=False,
         info={
-            'header_string': _('Stash'),
+            'header_string': _('Type'),
             'column_flex': 3
         })
     active = Column(

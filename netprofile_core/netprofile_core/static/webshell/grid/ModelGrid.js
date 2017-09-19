@@ -220,7 +220,8 @@ Ext.define('NetProfile.grid.ModelGrid', {
 						tooltip: this.deleteTipText,
 						handler: function(grid, rowidx, colidx, item, e, record)
 						{
-							if(this.store)
+							var store = this.store || record.store;
+							if(store)
 								Ext.MessageBox.show({
 									title: this.deleteTipText,
 									icon: Ext.MessageBox.QUESTION,
@@ -240,8 +241,8 @@ Ext.define('NetProfile.grid.ModelGrid', {
 												var st = record.store;
 												st.remove(record);
 											}
-											else if(this.store.getById(record.getId()))
-												this.store.remove(record);
+											else if(store.getById(record.getId()))
+												store.remove(record);
 											else
 												record.erase();
 										}

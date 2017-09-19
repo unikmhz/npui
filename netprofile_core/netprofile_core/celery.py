@@ -26,12 +26,19 @@ from __future__ import (unicode_literals, print_function,
 import transaction
 from celery import beat
 from celery.utils.time import is_naive
+from dateutil.tz import (
+    tzlocal,
+    tzutc
+)
 
 from netprofile.db.connection import DBSession
 from .models import (
     Task,
     TaskLog
 )
+
+_tz_utc = tzutc()
+_tz_local = tzlocal()
 
 _DEFAULT_MAX_INTERVAL = 5  # seconds
 _DEFAULT_SYNC_EVERY = 15  # seconds
@@ -41,7 +48,7 @@ class ScheduleEntry(beat.ScheduleEntry):
     """
     Custom schedule entry that uses ORM objects for persistence.
     """
-    def __init__(self, app, task):
+    def __init__(self, app, task, last_run_at=None):
         self.model = task
         self.app = app
 
@@ -58,9 +65,20 @@ class ScheduleEntry(beat.ScheduleEntry):
         self.options = task.options
         self.total_run_count = task.run_count
 
-        if not task.last_run_time:
-            task.last_run_time = self._default_now()
-        self.last_run_at = task.last_run_time
+        if task.last_run_time:
+            stamp = task.last_run_time
+            if is_naive(stamp):
+                stamp = stamp.replace(tzinfo=_tz_local)
+            self.last_run_at = stamp.astimezone(_tz_utc
+                                                if self.app.conf.enable_utc
+                                                else _tz_local)
+        else:
+            self.last_run_at = last_run_at or self._default_now()
+            task.last_run_time = self.last_run_at.replace(
+                    tzinfo=(_tz_utc
+                            if self.app.conf.enable_utc
+                            else _tz_local)).astimezone(_tz_local)
+
         if not is_naive(self.last_run_at):
             self.last_run_at = self.last_run_at.replace(tzinfo=None)
         self.total_run_count = task.run_count
@@ -70,7 +88,10 @@ class ScheduleEntry(beat.ScheduleEntry):
 
     def __next__(self):
         model = self.model
-        model.last_run_time = self._default_now()
+        model.last_run_time = self._default_now().replace(
+            tzinfo=(_tz_utc
+                    if self.app.conf.enable_utc
+                    else _tz_local)).astimezone(_tz_local)
         model.run_count += 1
         new = self.__class__(self.app, model)
         return new
@@ -100,7 +121,10 @@ class Scheduler(beat.Scheduler):
         for task in sess.query(Task).filter(Task.enabled.is_(True)):
             sess.expunge(task.schedule)
             sess.expunge(task)
-            ret[task.name] = self.Entry(self.app, task)
+            lastrun = None
+            if self._schedule and task.name in self._schedule:
+                lastrun = self._schedule[task.name].last_run_at
+            ret[task.name] = self.Entry(self.app, task, last_run_at=lastrun)
         transaction.commit()
         return ret
 
