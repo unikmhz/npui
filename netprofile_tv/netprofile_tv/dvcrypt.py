@@ -541,6 +541,8 @@ class DVCryptHandler(object):
 
         parent = aent.parent
         user_name = str(parent)
+        user_address = ''
+        user_phone = ''
         if parent.addresses:
             for addr in parent.addresses:
                 if addr.primary:
