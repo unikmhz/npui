@@ -503,13 +503,9 @@ class DVCryptHandler(object):
             addr = str(host.ipv6_addresses[0])
         else:
             addr = str(host)
-        conn = DVCryptConnection(host=addr,
+        return DVCryptConnection(host=addr,
                                  port=self.source.gateway_port,
                                  encoding=self.source.text_encoding)
-        if self.source.auth_username:
-            conn.authenticate(self.source.auth_username,
-                              self.source.auth_passphrase or '')
-        return conn
 
     def update_access_entity(self, aent):
         has_active_subs = False
@@ -589,7 +585,11 @@ class DVCryptHandler(object):
             self.update_access_entity(aent)
 
     def __enter__(self):
-        return self.connection.__enter__()
+        conn = self.connection.__enter__()
+        if self.source.auth_username:
+            conn.authenticate(self.source.auth_username,
+                              self.source.auth_passphrase or '')
+        return conn
 
     def __exit__(self, *args):
         return self.connection.__exit__(*args)
