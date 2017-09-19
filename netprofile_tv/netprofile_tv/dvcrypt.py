@@ -356,7 +356,7 @@ class DVCryptConnection(object):
         # Get hashed password.
         ctx = MD2.new()
         ctx.update(password)
-        ctx.update(salt)
+        ctx.update(bytes(salt))
         hashed_password = ctx.digest()
         del ctx
 
