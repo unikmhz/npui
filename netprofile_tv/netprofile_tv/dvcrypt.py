@@ -568,7 +568,7 @@ class DVCryptHandler(object):
                       user_phone.encode(enc),
                       (aent.description.encode(enc)
                        if aent.description
-                       else None),
+                       else b''),
                       furthest_qpend.year if furthest_qpend else 0,
                       furthest_qpend.month if furthest_qpend else 0,
                       furthest_qpend.day if furthest_qpend else 0,
