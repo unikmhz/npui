@@ -22,4 +22,6 @@ div.np-xradiolabel div.title
 .ico-mod-ticketstate { background-image: url(../img/ticket_state.png) !important; }
 .ico-mod-ticketstatetransition { background-image: url(../img/ticket_transition.png) !important; }
 .ico-mod-tickettemplate { background-image: url(../img/ticket_template.png) !important; }
+.ico-mod-ticketsubscription { background-image: url(../img/ticket_subscription.png) !important; }
+.ico-mod-ticketstatesubscription { background-image: url(../img/ticket_subscription.png) !important; }
 

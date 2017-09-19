@@ -26,15 +26,22 @@ from __future__ import (unicode_literals, print_function,
 from six import PY3
 import collections
 import datetime as dt
+from itertools import chain
 from dateutil.parser import parse as dparse
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from pyramid.view import view_config
 from pyramid.settings import asbool
+from pyramid.renderers import render
 from pyramid.i18n import TranslationStringFactory
 from pyramid.httpexceptions import (
     HTTPForbidden,
     HTTPSeeOther
+)
+from pyramid_mailer import get_mailer
+from pyramid_mailer.message import (
+    Attachment,
+    Message
 )
 
 from netprofile.common.factory import RootFactory
@@ -42,7 +49,8 @@ from netprofile.common.hooks import register_hook
 from netprofile.db.fields import npbool
 from netprofile.db.clauses import (
     IntervalSeconds,
-    SetVariable
+    SetVariable,
+    SQLVariable
 )
 from netprofile.db.connection import DBSession
 from netprofile.ext.data import ExtModel
@@ -119,6 +127,15 @@ def dpane_tickets(model, request):
         },
         'createControllers': 'NetProfile.core.controller.RelatedWizard'
     }, {
+        'title':             loc.translate(_('Subscriptions')),
+        'iconCls':           'ico-mod-ticketsubscription',
+        'xtype':             'grid_tickets_TicketSubscription',
+        'stateId':           None,
+        'stateful':          False,
+        'hideColumns':       ('ticket',),
+        'extraParamProp':    'ticketid',
+        'createControllers': 'NetProfile.core.controller.RelatedWizard'
+    }, {
         'title':             loc.translate(_('Dependent')),
         'iconCls':           'ico-ticket-related',
         'xtype':             'grid_tickets_Ticket',
@@ -152,10 +169,9 @@ def dpane_tickets(model, request):
             'items':   tabs
         }]
     }
-    request.run_hook(
-        'core.dpane.%s.%s' % (model.__parent__.moddef, model.name),
-        cont, model, request
-    )
+    request.run_hook('core.dpane.%s.%s' % (model.__parent__.moddef,
+                                           model.name),
+                     cont, model, request)
     return cont
 
 
@@ -208,6 +224,22 @@ def _dpane_group_sched(tabs, model, req):
         'stateful':          False,
         'hideColumns':       ('group',),
         'extraParamProp':    'gid',
+        'createControllers': 'NetProfile.core.controller.RelatedWizard'
+    })
+
+
+@register_hook('core.dpanetabs.tickets.TicketState')
+def _dpane_state_subscriptions(tabs, model, req):
+    if not req.has_permission('TICKETS_SUBSCRIPTIONS_LIST'):
+        return
+    tabs.append({
+        'title':             req.localizer.translate(_('Subscriptions')),
+        'iconCls':           'ico-mod-ticketstatesubscription',
+        'xtype':             'grid_tickets_TicketStateSubscription',
+        'stateId':           None,
+        'stateful':          False,
+        'hideColumns':       ('state',),
+        'extraParamProp':    'tstid',
         'createControllers': 'NetProfile.core.controller.RelatedWizard'
     })
 
@@ -418,7 +450,12 @@ def dyn_ticket_uwiz_update(params, request):
         model.set_values(ticket, params, request)
 
     sess.flush()
-    sess.execute(SetVariable('tcid', None))
+    change_id = sess.query(SQLVariable('tcid')).scalar()
+    if change_id:
+        sess.execute(SetVariable('tcid', None))
+        change = sess.query(TicketChange).get(int(change_id))
+        if change:
+            request.run_hook('tickets.ticket.change', change, request)
     return {
         'success': True,
         'action': {
@@ -679,6 +716,79 @@ def _tickets_download_file(mode, objid, req, sess):
     return link.file
 
 
+def _send_ticket_mail(req, ticket=None, change=None):
+    mailer = get_mailer(req)
+    cfg = req.registry.settings
+    tpldef = {
+        'ticket': ticket,
+        'change': change,
+        'event_text': (_('Ticket updated')
+                       if change
+                       else _('New ticket created')),
+        'cur_loc': req.current_locale
+    }
+    req.run_hook('tickets.ticket.notify.mail', tpldef, req)
+
+    queue_mail = asbool(cfg.get('netprofile.tickets.notifications.mail_queue',
+                                False))
+    sender = cfg.get('netprofile.tickets.notifications.mail_sender',
+                     'noreply@example.com')
+
+    if change and change.transition:
+        state = change.transition.to_state
+    else:
+        state = ticket.state
+
+    subject = '[T#%d] %s' % (ticket.id, ticket.name)
+    recipient_map = {}
+
+    for sub in chain(state.subscriptions,
+                     ticket.subscriptions):
+        tplvars = tpldef.copy()
+        tplvars.update(sub.template_vars)
+
+        for addr in sub.get_addresses():
+            if addr in recipient_map:
+                continue
+            recipient_map[addr] = tplvars
+
+    for addr, tplvars in recipient_map.items():
+        msg_text = Attachment(
+            data=render('netprofile_tickets:templates'
+                        '/email_notification_plain.mak',
+                        tplvars, req),
+            content_type='text/plain; charset=\'utf-8\'',
+            disposition='inline',
+            transfer_encoding='quoted-printable')
+        msg_html = Attachment(
+            data=render('netprofile_tickets:templates'
+                        '/email_notification_html.mak',
+                        tplvars, req),
+            content_type='text/html; charset=\'utf-8\'',
+            disposition='inline',
+            transfer_encoding='quoted-printable')
+        msg = Message(
+            subject=subject,
+            sender=sender,
+            recipients=(addr,),
+            body=msg_text,
+            html=msg_html)
+        if queue_mail:
+            mailer.send_to_queue(msg)
+        else:
+            mailer.send(msg)
+
+
+@register_hook('tickets.ticket.create')
+def _on_new_ticket(ticket, req):
+    return _send_ticket_mail(req, ticket)
+
+
+@register_hook('tickets.ticket.change')
+def _on_ticket_change(change, req):
+    return _send_ticket_mail(req, change.ticket, change)
+
+
 @view_config(route_name='tickets.cl.issues', name='',
              context=ClientRootFactory, permission='USAGE',
              renderer='netprofile_tickets:templates/client_list.mak')
@@ -747,6 +857,7 @@ def client_issue_new(ctx, req):
                 tkt.assigned_group_id = group_id
             sess.add(tkt)
             sess.flush()
+            req.run_hook('tickets.ticket.create', tkt, req)
 
             req.session.flash({
                 'text': loc.translate(_('New issue successfully created'))
@@ -801,6 +912,8 @@ def client_issue_append(ctx, req):
             ch.show_client = True
             ch.comments = comments
             sess.add(ch)
+            sess.flush()
+            req.run_hook('tickets.ticket.change', ch, req)
 
             req.session.flash({
                 'text': loc.translate(_('Your comment was successfully '

@@ -72,7 +72,8 @@ class Module(ModuleBase):
                 models.TicketScheduler,
                 models.TicketSchedulerUserAssignment,
                 models.TicketSchedulerGroupAssignment,
-                models.TicketSubscription)
+                models.TicketSubscription,
+                models.TicketStateSubscription)
 
     @classmethod
     def get_sql_data(cls, modobj, vpair, sess):

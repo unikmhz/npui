@@ -758,6 +758,8 @@ def _wizcb_ticket_submit(wiz, em, step, act, val, req):
         td = TicketDependency(parent_id=int(val['parentid']),
                               child=obj)
         sess.add(td)
+    sess.flush()
+    req.run_hook('tickets.ticket.create', obj, req)
     return {'do': 'close', 'reload': True}
 
 
@@ -775,6 +777,8 @@ def _wizcb_ticket_tpl_submit(wiz, em, step, act, val, req):
         td = TicketDependency(parent_id=int(val['parentid']),
                               child=obj)
         sess.add(td)
+    sess.flush()
+    req.run_hook('tickets.ticket.create', obj, req)
     return {'do': 'close', 'reload': True}
 
 
@@ -2427,7 +2431,19 @@ class TicketSubscription(Base):
                 'cap_menu':      'BASE_TICKETS',
                 'cap_read':      'TICKETS_LIST',
 
-                'menu_name':     _('Subscriptions')
+                'menu_name':     _('Subscriptions'),
+                'grid_view':     ('tsubid', 'type', 'ticket',
+                                  'user', 'group', 'address'),
+                'grid_hidden':   ('tsubid',),
+                'form_view':     ('type', 'ticket',
+                                  'user', 'group', 'address',
+                                  'notify_change',
+                                  'notify_transition',
+                                  'notify_close'),
+                'detail_pane':   ('netprofile_core.views', 'dpane_simple'),
+
+                'create_wizard': SimpleWizard(
+                                    title=_('Add new ticket subscription'))
             }
         })
     id = Column(
@@ -2497,6 +2513,7 @@ class TicketSubscription(Base):
         server_default=text('NULL'),
         info={
             'header_string': _('Address'),
+            'vtype': 'email',
             'column_flex': 3
         })
     notify_change = Column(
@@ -2543,6 +2560,13 @@ class TicketSubscription(Base):
                         cascade='all, delete-orphan',
                         passive_deletes=True))
 
+    def get_addresses(self):
+        raise StopIteration
+
+    @property
+    def template_vars(self):
+        return {}
+
     @classmethod
     def __augment_query__(cls, sess, query, params, req):
         if not req.has_permission('TICKETS_SUBSCRIPTIONS_LIST'):
@@ -2578,6 +2602,19 @@ class UserTicketSubscription(TicketSubscription):
         'polymorphic_identity': TicketSubscriptionType.user
     }
 
+    def get_addresses(self):
+        if not self.user:
+            raise StopIteration
+        for addr in self.user.email_addresses:
+            yield addr.address
+
+    @property
+    def template_vars(self):
+        if self.user:
+            return {'recipient_type': 'user',
+                    'user': self.user}
+        return {}
+
 
 class GroupTicketSubscription(TicketSubscription):
     """
@@ -2587,6 +2624,20 @@ class GroupTicketSubscription(TicketSubscription):
         'polymorphic_identity': TicketSubscriptionType.group
     }
 
+    def get_addresses(self):
+        if not self.group:
+            raise StopIteration
+        for user in self.group.users:
+            for addr in user.email_addresses:
+                yield addr.address
+
+    @property
+    def template_vars(self):
+        if self.group:
+            return {'recipient_type': 'group',
+                    'group': self.group}
+        return {}
+
 
 class AddressTicketSubscription(TicketSubscription):
     """
@@ -2595,6 +2646,17 @@ class AddressTicketSubscription(TicketSubscription):
     __mapper_args__ = {
         'polymorphic_identity': TicketSubscriptionType.address
     }
+
+    def get_addressses(self):
+        if self.address:
+            yield self.address
+
+    @property
+    def template_vars(self):
+        if self.address:
+            return {'recipient_type': 'address',
+                    'address': self.address}
+        return {}
 
 
 class TicketStateSubscription(Base):
@@ -2620,7 +2682,16 @@ class TicketStateSubscription(Base):
                 'cap_edit':      'TICKETS_SUBSCRIPTIONS_EDIT',
                 'cap_delete':    'TICKETS_SUBSCRIPTIONS_DELETE',
 
-                'menu_name':     _('State Subscriptions')
+                'menu_name':     _('State Subscriptions'),
+                'grid_view':     ('tstsubid', 'type', 'state',
+                                  'user', 'group', 'address'),
+                'grid_hidden':   ('tstsubid',),
+                'form_view':     ('type', 'state',
+                                  'user', 'group', 'address'),
+                'detail_pane':   ('netprofile_core.views', 'dpane_simple'),
+
+                'create_wizard': SimpleWizard(
+                                    title=_('Add new state subscription'))
             }
         })
     id = Column(
@@ -2691,6 +2762,7 @@ class TicketStateSubscription(Base):
         server_default=text('NULL'),
         info={
             'header_string': _('Address'),
+            'vtype': 'email',
             'column_flex': 3
         })
     __mapper_args__ = {
@@ -2710,6 +2782,13 @@ class TicketStateSubscription(Base):
                         cascade='all, delete-orphan',
                         passive_deletes=True))
 
+    def get_addresses(self):
+        raise StopIteration
+
+    @property
+    def template_vars(self):
+        return {}
+
 
 class UserTicketStateSubscription(TicketStateSubscription):
     """
@@ -2718,6 +2797,19 @@ class UserTicketStateSubscription(TicketStateSubscription):
     __mapper_args__ = {
         'polymorphic_identity': TicketSubscriptionType.user
     }
+
+    def get_addresses(self):
+        if not self.user:
+            raise StopIteration
+        for addr in self.user.email_addresses:
+            yield addr.address
+
+    @property
+    def template_vars(self):
+        if self.user:
+            return {'recipient_type': 'user',
+                    'user': self.user}
+        return {}
 
 
 class GroupTicketStateSubscription(TicketStateSubscription):
@@ -2728,6 +2820,20 @@ class GroupTicketStateSubscription(TicketStateSubscription):
         'polymorphic_identity': TicketSubscriptionType.group
     }
 
+    def get_addresses(self):
+        if not self.group:
+            raise StopIteration
+        for user in self.group.users:
+            for addr in user.email_addresses:
+                yield addr.address
+
+    @property
+    def template_vars(self):
+        if self.group:
+            return {'recipient_type': 'group',
+                    'group': self.group}
+        return {}
+
 
 class AddressTicketStateSubscription(TicketStateSubscription):
     """
@@ -2736,3 +2842,14 @@ class AddressTicketStateSubscription(TicketStateSubscription):
     __mapper_args__ = {
         'polymorphic_identity': TicketSubscriptionType.address
     }
+
+    def get_addressses(self):
+        if self.address:
+            yield self.address
+
+    @property
+    def template_vars(self):
+        if self.address:
+            return {'recipient_type': 'address',
+                    'address': self.address}
+        return {}

@@ -29,11 +29,32 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql.expression import (
     ClauseElement,
+    ColumnElement,
     Executable,
     FunctionElement
 )
 from sqlalchemy.sql.elements import literal
 from sqlalchemy.ext.compiler import compiles
+
+
+class SQLVariable(ColumnElement):
+    def __init__(self, name):
+        self.name = name
+
+
+@compiles(SQLVariable, 'mysql')
+def visit_sql_variable_mysql(element, compiler, **kw):
+    return '@' + element.name
+
+
+@compiles(SQLVariable, 'postgresql')
+def visit_sql_variable_pgsql(element, compiler, **kw):
+    return 'current_setting(\'npvar.%s\')' % (element.name,)
+
+
+@compiles(SQLVariable)
+def visit_sql_variable(element, compiler, **kw):
+    return element.name
 
 
 class SetVariable(Executable, ClauseElement):
