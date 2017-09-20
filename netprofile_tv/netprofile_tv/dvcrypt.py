@@ -356,7 +356,7 @@ class DVCryptConnection(object):
         # Get hashed password.
         ctx = MD2.new()
         ctx.update(password)
-        ctx.update(salt)
+        ctx.update(bytes(salt))
         hashed_password = ctx.digest()
         del ctx
 
@@ -541,6 +541,8 @@ class DVCryptHandler(object):
 
         parent = aent.parent
         user_name = str(parent)
+        user_address = ''
+        user_phone = ''
         if parent.addresses:
             for addr in parent.addresses:
                 if addr.primary:
@@ -564,7 +566,9 @@ class DVCryptHandler(object):
                       user_name.encode(enc),
                       user_address.encode(enc),
                       user_phone.encode(enc),
-                      aent.description.encode(enc),
+                      (aent.description.encode(enc)
+                       if aent.description
+                       else b''),
                       furthest_qpend.year if furthest_qpend else 0,
                       furthest_qpend.month if furthest_qpend else 0,
                       furthest_qpend.day if furthest_qpend else 0,
@@ -585,7 +589,11 @@ class DVCryptHandler(object):
             self.update_access_entity(aent)
 
     def __enter__(self):
-        return self.connection.__enter__()
+        conn = self.connection.__enter__()
+        if self.source.auth_username:
+            conn.authenticate(self.source.auth_username,
+                              self.source.auth_passphrase or '')
+        return conn
 
     def __exit__(self, *args):
         return self.connection.__exit__(*args)

@@ -110,6 +110,7 @@ class TVSource(Base):
                                   'gateway_host', 'port',
                                   'handler', 'enc',
                                   'realtime', 'polled',
+                                  'authuser', 'authpass',
                                   'descr'),
                 'easy_search':   ('name',),
                 'detail_pane':   ('netprofile_core.views', 'dpane_simple'),
@@ -199,6 +200,28 @@ class TVSource(Base):
         server_default=npbool(True),
         info={
             'header_string': _('Polled')
+        })
+    auth_username = Column(
+        'authuser',
+        ASCIIString(255),
+        Comment('Gateway username'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Username')
+        })
+    auth_passphrase = Column(
+        'authpass',
+        ASCIIString(255),
+        Comment('Gateway passphrase'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Passphrase'),
+            'secret_value': True,
+            'editor_xtype': 'passwordfield'
         })
     description = Column(
         'descr',
