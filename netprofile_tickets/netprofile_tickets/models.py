@@ -2443,6 +2443,7 @@ class TicketSubscription(Base):
                 'grid_hidden':   ('tsubid',),
                 'form_view':     ('type', 'ticket',
                                   'user', 'group', 'entity', 'address',
+                                  'issuer',
                                   'notify_change',
                                   'notify_transition',
                                   'notify_close'),
@@ -2565,6 +2566,16 @@ class TicketSubscription(Base):
         server_default=npbool(False),
         info={
             'header_string': _('On Close')
+        })
+    is_issuer = Column(
+        'issuer',
+        NPBoolean(),
+        Comment('Is ticket issued by this subscriber'),
+        nullable=False,
+        default=False,
+        server_default=npbool(False),
+        info={
+            'header_string': _('Issuer')
         })
     __mapper_args__ = {
         'polymorphic_on': type,
