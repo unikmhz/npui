@@ -44,10 +44,12 @@ __all__ = [
     'TicketSubscription',
     'UserTicketSubscription',
     'GroupTicketSubscription',
+    'EntityTicketSubscription',
     'AddressTicketSubscription',
     'TicketStateSubscription',
     'UserTicketStateSubscription',
     'GroupTicketStateSubscription',
+    'EntityTicketStateSubscription',
     'AddressTicketStateSubscription'
 ]
 
@@ -112,7 +114,9 @@ from netprofile.tpl import TemplateObject
 from netprofile_entities.models import (
     Entity,
     EntityHistory,
-    EntityHistoryPart
+    EntityHistoryPart,
+    LegalEntity,
+    PhysicalEntity
 )
 
 _ = TranslationStringFactory('netprofile_tickets')
@@ -2407,7 +2411,8 @@ class TicketSubscriptionType(DeclEnum):
     """
     user = 'U', _('User'), 10
     group = 'G', _('Group'), 20
-    address = 'A', _('Address'), 30
+    entity = 'E', _('Entity'), 30
+    address = 'A', _('Address'), 40
 
 
 class TicketSubscription(Base):
@@ -2421,8 +2426,9 @@ class TicketSubscription(Base):
         Index('tickets_subscriptions_i_ticketid', 'ticketid'),
         Index('tickets_subscriptions_i_uid', 'uid'),
         Index('tickets_subscriptions_i_gid', 'gid'),
+        Index('tickets_subscriptions_i_entityid', 'entityid'),
         Index('tickets_subscriptions_u_sub',
-              'ticketid', 'uid', 'gid', 'addr',
+              'ticketid', 'uid', 'gid', 'entityid', 'addr',
               unique=True),
         {
             'mysql_engine':  'InnoDB',
@@ -2433,10 +2439,10 @@ class TicketSubscription(Base):
 
                 'menu_name':     _('Subscriptions'),
                 'grid_view':     ('tsubid', 'type', 'ticket',
-                                  'user', 'group', 'address'),
+                                  'user', 'group', 'entity', 'address'),
                 'grid_hidden':   ('tsubid',),
                 'form_view':     ('type', 'ticket',
-                                  'user', 'group', 'address',
+                                  'user', 'group', 'entity', 'address',
                                   'notify_change',
                                   'notify_transition',
                                   'notify_close'),
@@ -2489,6 +2495,7 @@ class TicketSubscription(Base):
         server_default=text('NULL'),
         info={
             'header_string': _('User'),
+            'filter_type': 'nplist',
             'column_flex': 1
         })
     group_id = Column(
@@ -2502,6 +2509,22 @@ class TicketSubscription(Base):
         server_default=text('NULL'),
         info={
             'header_string': _('Group'),
+            'filter_type': 'nplist',
+            'column_flex': 1
+        })
+    entity_id = Column(
+        'entityid',
+        UInt32(),
+        ForeignKey('entities_def.entityid',
+                   name='tickets_subscriptions_fk_entityid',
+                   ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('Entity ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Entity'),
+            'filter_type': 'none',
             'column_flex': 1
         })
     address = Column(
@@ -2559,9 +2582,14 @@ class TicketSubscription(Base):
         backref=backref('ticket_subscriptions',
                         cascade='all, delete-orphan',
                         passive_deletes=True))
+    entity = relationship(
+        'Entity',
+        backref=backref('ticket_subscriptions',
+                        cascade='all, delete-orphan',
+                        passive_deletes=True))
 
     def get_addresses(self):
-        raise StopIteration
+        raise NotImplementedError
 
     @property
     def template_vars(self):
@@ -2639,6 +2667,33 @@ class GroupTicketSubscription(TicketSubscription):
         return {}
 
 
+class EntityTicketSubscription(TicketSubscription):
+    """
+    Describes one link between a ticket and an entity.
+    """
+    __mapper_args__ = {
+        'polymorphic_identity': TicketSubscriptionType.entity
+    }
+
+    def get_addresses(self):
+        if not self.entity:
+            raise StopIteration
+        if isinstance(self.entity, PhysicalEntity):
+            if self.entity.email:
+                yield self.entity.email
+        elif isinstance(self.entity, LegalEntity):
+            if self.entity.contact_email:
+                yield self.entity.contact_email
+        raise StopIteration
+
+    @property
+    def template_vars(self):
+        if self.entity:
+            return {'recipient_type': 'entity',
+                    'entity': self.entity}
+        return {}
+
+
 class AddressTicketSubscription(TicketSubscription):
     """
     Describes one link between a ticket and an external address.
@@ -2647,7 +2702,7 @@ class AddressTicketSubscription(TicketSubscription):
         'polymorphic_identity': TicketSubscriptionType.address
     }
 
-    def get_addressses(self):
+    def get_addresses(self):
         if self.address:
             yield self.address
 
@@ -2669,8 +2724,9 @@ class TicketStateSubscription(Base):
         Index('tickets_states_subscriptions_i_tstid', 'tstid'),
         Index('tickets_states_subscriptions_i_uid', 'uid'),
         Index('tickets_states_subscriptions_i_gid', 'gid'),
+        Index('tickets_states_subscriptions_i_entityid', 'entityid'),
         Index('tickets_states_subscriptions_u_sub',
-              'tstid', 'uid', 'gid', 'addr',
+              'tstid', 'uid', 'gid', 'entityid', 'addr',
               unique=True),
         {
             'mysql_engine':  'InnoDB',
@@ -2684,10 +2740,10 @@ class TicketStateSubscription(Base):
 
                 'menu_name':     _('State Subscriptions'),
                 'grid_view':     ('tstsubid', 'type', 'state',
-                                  'user', 'group', 'address'),
+                                  'user', 'group', 'entity', 'address'),
                 'grid_hidden':   ('tstsubid',),
                 'form_view':     ('type', 'state',
-                                  'user', 'group', 'address'),
+                                  'user', 'group', 'entity', 'address'),
                 'detail_pane':   ('netprofile_core.views', 'dpane_simple'),
 
                 'create_wizard': SimpleWizard(
@@ -2738,6 +2794,7 @@ class TicketStateSubscription(Base):
         server_default=text('NULL'),
         info={
             'header_string': _('User'),
+            'filter_type': 'nplist',
             'column_flex': 1
         })
     group_id = Column(
@@ -2751,6 +2808,22 @@ class TicketStateSubscription(Base):
         server_default=text('NULL'),
         info={
             'header_string': _('Group'),
+            'filter_type': 'nplist',
+            'column_flex': 1
+        })
+    entity_id = Column(
+        'entityid',
+        UInt32(),
+        ForeignKey('entities_def.entityid',
+                   name='tickets_states_subscriptions_fk_entityid',
+                   ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('Entity ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Entity'),
+            'filter_type': 'none',
             'column_flex': 1
         })
     address = Column(
@@ -2781,9 +2854,14 @@ class TicketStateSubscription(Base):
         backref=backref('ticket_state_subscriptions',
                         cascade='all, delete-orphan',
                         passive_deletes=True))
+    entity = relationship(
+        'Entity',
+        backref=backref('ticket_state_subscriptions',
+                        cascade='all, delete-orphan',
+                        passive_deletes=True))
 
     def get_addresses(self):
-        raise StopIteration
+        raise NotImplementedError
 
     @property
     def template_vars(self):
@@ -2835,6 +2913,33 @@ class GroupTicketStateSubscription(TicketStateSubscription):
         return {}
 
 
+class EntityTicketStateSubscription(TicketStateSubscription):
+    """
+    Describes one link between a ticket state and an entity.
+    """
+    __mapper_args__ = {
+        'polymorphic_identity': TicketSubscriptionType.entity
+    }
+
+    def get_addresses(self):
+        if not self.entity:
+            raise StopIteration
+        if isinstance(self.entity, PhysicalEntity):
+            if self.entity.email:
+                yield self.entity.email
+        elif isinstance(self.entity, LegalEntity):
+            if self.entity.contact_email:
+                yield self.entity.contact_email
+        raise StopIteration
+
+    @property
+    def template_vars(self):
+        if self.entity:
+            return {'recipient_type': 'entity',
+                    'entity': self.entity}
+        return {}
+
+
 class AddressTicketStateSubscription(TicketStateSubscription):
     """
     Describes one link between a ticket state and an external address.
@@ -2843,7 +2948,7 @@ class AddressTicketStateSubscription(TicketStateSubscription):
         'polymorphic_identity': TicketSubscriptionType.address
     }
 
-    def get_addressses(self):
+    def get_addresses(self):
         if self.address:
             yield self.address
 
