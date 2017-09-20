@@ -85,8 +85,8 @@ def update_aent(aeid):
             handler = source.get_handler()
             if not handler:
                 continue
-            with handler as conn:
-                conn.update_access_entity(ae)
+            with handler:
+                handler.update_access_entity(ae)
     finally:
         transaction.abort()
 
