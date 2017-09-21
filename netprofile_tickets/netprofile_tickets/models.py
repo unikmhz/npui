@@ -763,8 +763,17 @@ def _wizcb_ticket_submit(wiz, em, step, act, val, req):
                               child=obj)
         sess.add(td)
     sess.flush()
+    if val.get('subscribe'):
+        tsub = UserTicketSubscription()
+        tsub.user = req.user
+        # TODO: allow custom flags
+        tsub.notify_change = True
+        tsub.ticket = obj
+        tsub.is_issuer = True
+        sess.add(tsub)
     req.run_hook('tickets.ticket.create', obj, req)
-    return {'do': 'close', 'reload': True}
+    return {'do': 'close',
+            'affects': (('tickets', 'Ticket'),)}
 
 
 def _wizcb_ticket_tpl_submit(wiz, em, step, act, val, req):
@@ -782,8 +791,17 @@ def _wizcb_ticket_tpl_submit(wiz, em, step, act, val, req):
                               child=obj)
         sess.add(td)
     sess.flush()
+    if val.get('subscribe'):
+        tsub = UserTicketSubscription()
+        tsub.user = req.user
+        # TODO: allow custom flags
+        tsub.notify_change = True
+        tsub.ticket = obj
+        tsub.is_issuer = True
+        sess.add(tsub)
     req.run_hook('tickets.ticket.create', obj, req)
-    return {'do': 'close', 'reload': True}
+    return {'do': 'close',
+            'affects': (('tickets', 'Ticket'),)}
 
 
 class Ticket(Base):
@@ -841,6 +859,13 @@ class Ticket(Base):
                 'create_wizard': Wizard(
                                    Step('entity', 'name',
                                         ExtJSWizardField(_wizfld_ticket_state),
+                                        ExtJSWizardField({
+                                            'xtype': 'checkbox',
+                                            'name': 'subscribe',
+                                            'fieldLabel':
+                                                _('Track this ticket'),
+                                            'checked': True
+                                        }),
                                         'show_client', 'flags', 'descr',
                                         id='generic'),
                                    Step('assigned_user', 'assigned_group',
@@ -860,6 +885,13 @@ class Ticket(Base):
                     'tpl':       Wizard(
                                    Step('entity',
                                         ExtJSWizardField(_wizfld_ticket_tpl),
+                                        ExtJSWizardField({
+                                            'xtype': 'checkbox',
+                                            'name': 'subscribe',
+                                            'fieldLabel':
+                                                _('Track this ticket'),
+                                            'checked': True
+                                        }),
                                         CompositeWizardField(
                                             'assigned_time',
                                             ExtJSWizardField({

@@ -76,7 +76,8 @@ from .models import (
     TicketState,
     TicketStateTransition,
     TicketSubscription,
-    TicketTemplate
+    TicketTemplate,
+    UserTicketSubscription
 )
 
 if PY3:
@@ -300,7 +301,12 @@ def dyn_ticket_uwiz(params, request):
         raise KeyError('Invalid ticket ID')
     model = ExtModel(Ticket)
     ch_model = ExtModel(TicketChange)
-    fields = []
+    fields = [ExtJSWizardField({
+        'xtype': 'checkbox',
+        'name': 'subscribe',
+        'fieldLabel': _('Track this ticket'),
+        'checked': True
+    })]
     if request.has_permission('ENTITIES_LIST'):
         fields.append(ExternalWizardField(
             model, 'entity',
@@ -417,6 +423,23 @@ def dyn_ticket_uwiz_update(params, request):
     # TODO: USERS_LIST
     # TODO: GROUPS_LIST
 
+    if 'subscribe' in params:
+        if params.get('subscribe'):
+            for oldsub in ticket.subscriptions:
+                if (isinstance(oldsub, UserTicketSubscription)
+                        and oldsub.user == request.user):
+                    # TODO: allow custom flags
+                    oldsub.notify_change = True
+                    break
+            else:
+                tsub = UserTicketSubscription()
+                tsub.user = request.user
+                # TODO: allow custom flags
+                tsub.notify_change = True
+                tsub.ticket = ticket
+                sess.add(tsub)
+        del params['subscribe']
+
     sess.execute(SetVariable('ticketid', ticket.id))
     if 'ttrid' in params:
         ttr_id = params['ttrid']
@@ -461,7 +484,8 @@ def dyn_ticket_uwiz_update(params, request):
         'success': True,
         'action': {
             'do': 'close',
-            'redraw': []
+            'affects': (('tickets', 'TicketChange'),
+                        ('tickets', 'Ticket', tid))
         }
     }
 
