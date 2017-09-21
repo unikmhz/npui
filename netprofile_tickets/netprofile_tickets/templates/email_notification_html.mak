@@ -19,6 +19,13 @@
 ## Public License along with NetProfile. If not, see
 ## <http://www.gnu.org/licenses/>.
 ##
+<%!
+	bg_color = '#303f9f'  # MD 700
+	footer_color = '#c5cae9'  # MD 100
+	block_color = '#e8eaf6'  # MD 50
+	text_color = '#000000'  # black
+	heading_color = '#3f51b5'  # MD 500
+%>\
 <%inherit file="netprofile_core:templates/email_htmlbase.mak"/>\
 <%namespace module="netprofile.tpl.filters" import="date_fmt_short" />\
 <%block name="title">${event_text}</%block>\
