@@ -715,7 +715,7 @@ msgstr "Команда NetProfile.ru"
 
 #: netprofile_access/templates/client_layout.mak:109
 msgid "License:"
-msgstr "Лиценизия:"
+msgstr "Лицензия:"
 
 #: netprofile_access/templates/client_login.mak:18
 #: netprofile_access/templates/client_register.mak:53
