@@ -364,7 +364,7 @@ def client_register(request):
                 l = len(login)
                 if l == 0 or l > 254:
                     errors['user'] = _('Invalid field length')
-                elif _re_login.match(login):
+                elif not _re_login.match(login):
                     errors['user'] = _('Invalid character used in username')
             l = len(passwd)
             if l < min_pwd_len:
