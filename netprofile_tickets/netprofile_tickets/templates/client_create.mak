@@ -102,12 +102,27 @@
 			</ul></div>
 		</div>
 	</div>
+	<div class="row form-group">
+		<label class="col-sm-4 control-label" for="subscribe">${_('Send me updates')}</label>
+		<div class="controls col-sm-8">
+			<div class="checkbox">
+				<input
+					type="checkbox"
+					id="subscribe"
+					name="subscribe"
+					title="${_('Notify me when this issue has updates')}"
+					value="true"
+					checked="checked"
+					tabindex="${str(num_st + 3)}"
+				/></div>
+		</div>
+	</div>
 </fieldset>
 <div class="form-actions row">
 	<p class="col-sm-4 legend"><span class="req">*</span> ${_('Fields marked with this symbol are required.', domain='netprofile_access')}</p>
 	<div class="controls col-sm-8">
 		<input type="hidden" id="csrf" name="csrf" value="${req.get_csrf()}" />
-		<button type="submit" class="btn btn-primary btn-large" id="submit" name="submit" title="${_('Add New Issue')}" tabindex="${str(num_st + 3)}">
+		<button type="submit" class="btn btn-primary btn-large" id="submit" name="submit" title="${_('Add New Issue')}" tabindex="${str(num_st + 4)}">
 			<span class="glyphicon glyphicon-plus"></span>
 			${_('Add New Issue')}
 		</button>

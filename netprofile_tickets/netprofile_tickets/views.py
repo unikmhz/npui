@@ -77,6 +77,7 @@ from .models import (
     TicketStateTransition,
     TicketSubscription,
     TicketTemplate,
+    EntityTicketSubscription,
     UserTicketSubscription
 )
 
@@ -859,6 +860,7 @@ def client_issue_new(ctx, req):
         name = req.POST.get('name', '')
         descr = req.POST.get('descr', '')
         state = int(req.POST.get('state', 0))
+        subscribe = req.POST.get('subscribe') == 'true'
         if csrf != req.get_csrf():
             errors['csrf'] = _a('Error submitting form')
         else:
@@ -886,6 +888,15 @@ def client_issue_new(ctx, req):
             if group_id:
                 tkt.assigned_group_id = group_id
             sess.add(tkt)
+
+            if subscribe:
+                tsub = EntityTicketSubscription()
+                tsub.ticket = tkt
+                tsub.entity = ent
+                # TODO: allow custom flags
+                tsub.notify_change = True
+                sess.add(tsub)
+
             sess.flush()
             req.run_hook('tickets.ticket.create', tkt, req)
 
