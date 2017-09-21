@@ -745,12 +745,13 @@ def _tickets_download_file(mode, objid, req, sess):
 def _send_ticket_mail(req, ticket=None, change=None):
     mailer = get_mailer(req)
     cfg = req.registry.settings
+    loc = req.localizer
     tpldef = {
         'ticket': ticket,
         'change': change,
-        'event_text': (_('Ticket updated')
-                       if change
-                       else _('New ticket created')),
+        'event_text': loc.translate(_('Ticket updated')
+                                    if change
+                                    else _('New ticket created')),
         'cur_loc': req.current_locale
     }
     req.run_hook('tickets.ticket.notify.mail', tpldef, req)
@@ -788,16 +789,16 @@ def _send_ticket_mail(req, ticket=None, change=None):
             data=render('netprofile_tickets:templates'
                         '/email_notification_plain.mak',
                         tplvars, req),
-            content_type='text/plain; charset=\'utf-8\'',
+            content_type='text/plain; charset="utf-8"',
             disposition='inline',
-            transfer_encoding='quoted-printable')
+            transfer_encoding='base64')
         msg_html = Attachment(
             data=render('netprofile_tickets:templates'
                         '/email_notification_html.mak',
                         tplvars, req),
-            content_type='text/html; charset=\'utf-8\'',
+            content_type='text/html; charset="utf-8"',
             disposition='inline',
-            transfer_encoding='quoted-printable')
+            transfer_encoding='base64')
         msg = Message(
             subject=subject,
             sender=sender,

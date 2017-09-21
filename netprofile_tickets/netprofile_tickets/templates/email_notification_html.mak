@@ -29,26 +29,26 @@
 <%inherit file="netprofile_core:templates/email_htmlbase.mak"/>\
 <%namespace module="netprofile.tpl.filters" import="date_fmt_short" />\
 <%block name="title">${event_text}</%block>\
-<%block name="footer">${_('Please keep ticket ID in the subject when replying.')}</%block>\
+<%block name="footer">${_('Please keep ticket ID in the subject when replying.', domain='netprofile_tickets')}</%block>\
 <%self:mail_block>
 	<%self:mail_heading>${event_text}</%self:mail_heading>
 	<%self:mail_onecol>
 		<dl>
-			<dt>${_('Name')}</dt>
+			<dt>${_('Name', domain='netprofile_tickets')}</dt>
 			<dd>${ticket.name}</dd>
 %if change and change.transition:
-			<dt>${_('Transition')}</dt>
+			<dt>${_('Transition', domain='netprofile_tickets')}</dt>
 			<dd>${change.transition}</dd>
-			<dt>${_('State')}</dt>
+			<dt>${_('State', domain='netprofile_tickets')}</dt>
 			<dd>${change.transition.to_state}</dd>
 %else:
-			<dt>${_('State')}</dt>
+			<dt>${_('State', domain='netprofile_tickets')}</dt>
 			<dd>${ticket.state}</dd>
 %endif
-			<dt>${_('Entity')}</dt>
+			<dt>${_('Entity', domain='netprofile_tickets')}</dt>
 			<dd>${ticket.entity}</dd>
 %if ticket.assigned_time:
-			<dt>${_('Due')}</dt>
+			<dt>${_('Due', domain='netprofile_tickets')}</dt>
 			<dd>${ticket.assigned_time | n,date_fmt_short}</dd>
 %endif
 		</dl>

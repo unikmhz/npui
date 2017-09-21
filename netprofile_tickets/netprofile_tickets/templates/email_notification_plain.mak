@@ -24,16 +24,16 @@ ${event_text}
 =======================================================================
 
 
-${_('Name')}: ${ticket.name}
+${_('Name', domain='netprofile_tickets')}: ${ticket.name}
 %if change and change.transition:
-${_('Transition')}: ${change.transition}
-${_('State')}: ${change.transition.to_state}
+${_('Transition', domain='netprofile_tickets')}: ${change.transition}
+${_('State', domain='netprofile_tickets')}: ${change.transition.to_state}
 %else:
-${_('State')}: ${ticket.state}
+${_('State', domain='netprofile_tickets')}: ${ticket.state}
 %endif
-${_('Entity')}: ${ticket.entity}
+${_('Entity', domain='netprofile_tickets')}: ${ticket.entity}
 %if ticket.assigned_time:
-${_('Due')}: ${ticket.assigned_time | n,date_fmt_short}
+${_('Due', domain='netprofile_tickets')}: ${ticket.assigned_time | n,date_fmt_short}
 %endif
 
 
@@ -44,4 +44,4 @@ ${ticket.description}
 %endif
 
 =======================================================================
-${_('Please keep ticket ID in the subject when replying.')}
+${_('Please keep ticket ID in the subject when replying.', domain='netprofile_tickets')}
