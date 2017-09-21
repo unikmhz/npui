@@ -51,7 +51,7 @@ requires = [
     'pyramid_debugtoolbar >= 4.2.1',
     'pyramid_redis_sessions >= 1.0',
     'pyramid_mailer >= 0.15',
-    'Babel >= 2.3.4',
+    'Babel >= 2.5.1',
     'lingua >= 4.13',
     'lxml >= 3.8',
 
