@@ -364,7 +364,7 @@ def client_register(request):
                 l = len(login)
                 if l == 0 or l > 254:
                     errors['user'] = _('Invalid field length')
-                elif _re_login.match(login):
+                elif not _re_login.match(login):
                     errors['user'] = _('Invalid character used in username')
             l = len(passwd)
             if l < min_pwd_len:
@@ -448,16 +448,16 @@ def client_register(request):
                     data=render('netprofile_access:templates'
                                 '/email_register_plain.mak',
                                 tpldef, request),
-                    content_type='text/plain; charset=\'utf-8\'',
+                    content_type='text/plain; charset="utf-8"',
                     disposition='inline',
-                    transfer_encoding='quoted-printable')
+                    transfer_encoding='base64')
                 msg_html = Attachment(
                     data=render('netprofile_access:templates'
                                 '/email_register_html.mak',
                                 tpldef, request),
-                    content_type='text/html; charset=\'utf-8\'',
+                    content_type='text/html; charset="utf-8"',
                     disposition='inline',
-                    transfer_encoding='quoted-printable')
+                    transfer_encoding='base64')
                 msg = Message(
                     subject=(loc.translate(
                             _('Activation required for user %s')) %
@@ -668,16 +668,16 @@ def client_restorepass(request):
                         data=render('netprofile_access:templates'
                                     '/email_recover_plain.mak',
                                     tpldef, request),
-                        content_type='text/plain; charset=\'utf-8\'',
+                        content_type='text/plain; charset="utf-8"',
                         disposition='inline',
-                        transfer_encoding='quoted-printable')
+                        transfer_encoding='base64')
                     msg_html = Attachment(
                         data=render('netprofile_access:templates'
                                     '/email_recover_html.mak',
                                     tpldef, request),
-                        content_type='text/html; charset=\'utf-8\'',
+                        content_type='text/html; charset="utf-8"',
                         disposition='inline',
-                        transfer_encoding='quoted-printable')
+                        transfer_encoding='base64')
                     msg = Message(
                         subject=(loc.translate(
                             _('Password recovery for user %s')) %
