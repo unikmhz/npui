@@ -2599,6 +2599,20 @@ class TicketSubscription(Base):
                         cascade='all, delete-orphan',
                         passive_deletes=True))
 
+    def check(self, ticket, change=None):
+        if change:
+            if self.notify_change:
+                return True
+            if change.transition:
+                if self.notify_transition:
+                    return True
+                tr = change.transition
+                if self.notify_close and tr.to_state.is_end:
+                    return True
+        if self.notify_close and ticket.archived:
+            return True
+        return False
+
     def get_addresses(self):
         raise NotImplementedError
 

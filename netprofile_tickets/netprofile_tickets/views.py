@@ -75,6 +75,7 @@ from .models import (
     TicketScheduler,
     TicketState,
     TicketStateTransition,
+    TicketSubscription,
     TicketTemplate
 )
 
@@ -744,6 +745,11 @@ def _send_ticket_mail(req, ticket=None, change=None):
 
     for sub in chain(state.subscriptions,
                      ticket.subscriptions):
+
+        if isinstance(sub, TicketSubscription):
+            if not sub.check(ticket, change):
+                continue
+
         tplvars = tpldef.copy()
         tplvars.update(sub.template_vars)
 
