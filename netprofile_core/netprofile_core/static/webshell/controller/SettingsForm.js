@@ -71,6 +71,8 @@ Ext.define('NetProfile.controller.SettingsForm', {
 		for(i = 0; i < data.fields.length; i++)
 		{
 			fld.push(data.fields[i]);
+			if(data.fields[i].xtype === 'hidden')
+				continue;
 			if(data.fields[i].description)
 				fld.push(Ext.apply(
 					{ html: Ext.String.htmlEncode(data.fields[i].description) },

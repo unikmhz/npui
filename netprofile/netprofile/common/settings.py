@@ -89,6 +89,17 @@ class SettingSection(MutableMapping):
             )
             if fld:
                 fields.append(fld)
+
+            if setting.additional_fields:
+                add = setting.additional_fields
+                if callable(add):
+                    add = add(req, self, moddef, fields, values)
+                for addfld in add:
+                    if 'name' in addfld and '.' not in addfld['name']:
+                        addfld['name'] = '.'.join((moddef,
+                                                   self.name,
+                                                   addfld['name']))
+                    fields.append(addfld)
         loc = req.localizer
         return {
             'success': True,
@@ -105,7 +116,8 @@ class SettingSection(MutableMapping):
 class Setting(object):
     def __init__(self, name, title=None, type='string', pass_to_client=True,
                  read_cap=None, write_cap=None, default=None, help_text=None,
-                 field_cfg=None, field_extra=None, nullable=False):
+                 field_cfg=None, field_extra=None, nullable=False,
+                 additional_fields=None):
         self.name = name
         self.title = title
         self.type = type
@@ -115,6 +127,7 @@ class Setting(object):
         self.default = default
         self.help_text = help_text
         self.nullable = nullable
+        self.additional_fields = additional_fields
 
         if field_cfg is None:
             if self.type == 'bool':
@@ -170,12 +183,14 @@ class Setting(object):
     def get_form_cfg(self, req, moddef, section, value=None):
         if self.read_cap and not req.has_permission(self.read_cap):
             return None
-        field_name = '.'.join((moddef, section.name, self.name))
         loc = req.localizer
         if callable(self.field_cfg):
             cfg = self.field_cfg(req, moddef, section, value)
         else:
             cfg = self.field_cfg.copy()
+        field_name = '.'.join((moddef,
+                               section.name,
+                               cfg.get('name', self.name)))
         cfg.update({
             'name': field_name,
             'fieldLabel': loc.translate(
