@@ -157,6 +157,8 @@ class Setting(object):
         return param
 
     def format_param(self, param):
+        if self.nullable and param in {'', None}:
+            return None
         if self.type == 'bool':
             return 'true' if param else 'false'
         return str(param)
