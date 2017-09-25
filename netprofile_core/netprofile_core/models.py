@@ -7013,7 +7013,9 @@ class GlobalSetting(Base):
     value = Column(
         ASCIIString(255),
         Comment('Current value of the setting'),
-        nullable=False,
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
         info={
             'header_string': _('Value'),
             'column_flex': 3
@@ -7129,7 +7131,9 @@ class UserSetting(Base):
     value = Column(
         ASCIIString(255),
         Comment('Current value of the setting'),
-        nullable=False,
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
         info={
             'header_string': _('Value'),
             'column_flex': 2

@@ -339,7 +339,7 @@ class NPBoolean(types.TypeDecorator, types.SchemaType):
         if _is_mysql(dialect):
             if not isinstance(conn_type, mysql.ENUM):
                 return False
-            if conn_type.enums == ('Y', 'N'):
+            if tuple(conn_type.enums) == ('Y', 'N'):
                 return True
             return False
         return isinstance(conn_type, types.Boolean)
@@ -537,6 +537,8 @@ class JSONData(types.TypeDecorator):
         return self.impl
 
     def compare_against_backend(self, dialect, conn_type):
+        if _is_mysql(dialect):
+            return isinstance(conn_type, (types.UnicodeText, mysql.TEXT))
         if _is_pgsql(dialect):
             return isinstance(conn_type, postgresql.JSONB)
         return isinstance(conn_type, types.UnicodeText)

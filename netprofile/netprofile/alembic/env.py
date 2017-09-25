@@ -33,6 +33,7 @@ from alembic.autogenerate.render import (
 )
 from sqlalchemy import (
     DefaultClause,
+    Sequence,
     engine_from_config,
     pool,
     types
@@ -166,6 +167,15 @@ def render_item(type_, obj, autogen_context):
             opts.append(('autoincrement', obj.autoincrement))
         if obj.nullable is not None:
             opts.append(('nullable', obj.nullable))
+        if isinstance(obj.default, Sequence):
+            seq = obj.default
+            seq_rendered = 'sa.Sequence(' + repr(seq.name)
+            if seq.start is not None:
+                seq_rendered += ', start=' + repr(seq.start)
+            if seq.increment is not None:
+                seq_rendered += ', increment=' + repr(seq.increment)
+            seq_rendered += ')'
+            opts.append(('default', seq_rendered))
 
         return 'sa.Column' \
             '(%(name)r, %(type)s, npd.Comment(%(comment)r), %(kw)s)' % {
