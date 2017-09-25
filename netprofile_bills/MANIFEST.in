@@ -1,4 +1,5 @@
 include *.txt *.ini *.cfg *.rst
 recursive-include netprofile_bills *.ico *.png *.css *.gif *.jpg *.pt *.txt *.mak *.mako *.js *.html *.xml
+recursive-include migrations *.py
 include versioneer.py
 include netprofile_bills/_version.py
