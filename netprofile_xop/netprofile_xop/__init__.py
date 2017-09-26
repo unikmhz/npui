@@ -92,6 +92,10 @@ class Module(ModuleBase):
 
 
 def includeme(config):
+    from netprofile import VHostPredicate
+    config.add_route_predicate('vhost', VHostPredicate)
+    config.add_view_predicate('vhost', VHostPredicate)
+
     mmgr = config.registry.getUtility(IModuleManager)
     mmgr.load('core')
     for mod in ('stashes', 'entities', 'access', 'rates', 'networks',
