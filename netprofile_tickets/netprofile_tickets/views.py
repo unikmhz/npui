@@ -64,7 +64,8 @@ from netprofile.ext.wizards import (
 )
 from netprofile_core.models import (
     Group,
-    User
+    User,
+    global_setting
 )
 from netprofile_core.views import generate_calendar
 
@@ -78,7 +79,9 @@ from .models import (
     TicketSubscription,
     TicketTemplate,
     EntityTicketSubscription,
-    UserTicketSubscription
+    UserTicketSubscription,
+    UserTicketStateSubscription,
+    GroupTicketStateSubscription
 )
 
 if PY3:
@@ -742,6 +745,35 @@ def _tickets_download_file(mode, objid, req, sess):
     return link.file
 
 
+def _default_subscriptions(ticket, change):
+    ret = []
+    def_uid = global_setting('tickets.sub.default_uid')
+    def_gid = global_setting('tickets.sub.default_gid')
+    if def_uid or def_gid:
+        sess = DBSession()
+        # Need to disable autoflush to avoid possible races between setting
+        # relationship properties (ticket, state, user, group) and expunging
+        # an object.
+        with sess.no_autoflush:
+            if def_uid:
+                def_user = sess.query(User).get(def_uid)
+                if def_user:
+                    uid_sub = UserTicketStateSubscription()
+                    uid_sub.state = ticket.state
+                    uid_sub.user = def_user
+                    sess.expunge(uid_sub)
+                    ret.append(uid_sub)
+            if def_gid:
+                def_group = sess.query(Group).get(def_gid)
+                if def_group:
+                    gid_sub = GroupTicketStateSubscription()
+                    gid_sub.state = ticket.state
+                    gid_sub.group = def_group
+                    sess.expunge(gid_sub)
+                    ret.append(gid_sub)
+    return ret
+
+
 def _send_ticket_mail(req, ticket=None, change=None):
     mailer = get_mailer(req)
     cfg = req.registry.settings
@@ -770,7 +802,8 @@ def _send_ticket_mail(req, ticket=None, change=None):
     recipient_map = {}
 
     for sub in chain(state.subscriptions,
-                     ticket.subscriptions):
+                     ticket.subscriptions,
+                     _default_subscriptions(ticket, change)):
 
         if isinstance(sub, TicketSubscription):
             if not sub.check(ticket, change):
@@ -896,6 +929,7 @@ def client_issue_new(ctx, req):
                 tsub.entity = ent
                 # TODO: allow custom flags
                 tsub.notify_change = True
+                tsub.is_issuer = True
                 sess.add(tsub)
 
             sess.flush()

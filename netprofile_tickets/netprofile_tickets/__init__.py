@@ -259,17 +259,27 @@ class Module(ModuleBase):
                                        'editable': False,
                                        'allowBlank': True,
                                        'submitValue': False},
-                            additional_fields=({'name': 'default_uid',
-                                                'xtype': 'hidden',
-                                                'editable': False,
-                                                'allowBlank': True},)),
+                            field_extra=_setting_uid_text,
+                            additional_fields=_setting_uid_hidden),
                     Setting('default_gid',
                             title=_('Subscribe to group by default'),
                             help_text=_('Subscribe this group to '
                                         'all new tickets'),
                             type='int',
                             nullable=True,
-                            write_cap='ADMIN_TICKETS'),
+                            write_cap='ADMIN_TICKETS',
+                            field_cfg={'name': 'default_gid_name',
+                                       'hiddenField':
+                                           'tickets.sub.default_gid',
+                                       'xtype': 'modelselect',
+                                       'apiModule': 'core',
+                                       'apiClass': 'Group',
+                                       'disabled': False,
+                                       'editable': False,
+                                       'allowBlank': True,
+                                       'submitValue': False},
+                            field_extra=_setting_gid_text,
+                            additional_fields=_setting_gid_hidden),
                     title=_('Subscriptions'),
                     help_text=_('Default subscriptions for tickets'),
                     read_cap='ADMIN_TICKETS'),)
@@ -280,3 +290,39 @@ class Module(ModuleBase):
     @property
     def name(self):
         return _('Tickets')
+
+
+def _setting_uid_text(req, moddef, section, value):
+    if isinstance(value, int):
+        from netprofile.db.connection import DBSession
+        from netprofile_core.models import User
+        user = DBSession().query(User).get(value)
+        if user is not None:
+            return {'value': str(user)}
+    return {}
+
+
+def _setting_gid_text(req, moddef, section, value):
+    if isinstance(value, int):
+        from netprofile.db.connection import DBSession
+        from netprofile_core.models import Group
+        user = DBSession().query(Group).get(value)
+        if user is not None:
+            return {'value': str(user)}
+    return {}
+
+
+def _setting_uid_hidden(req, self, moddef, fields, values):
+    return ({'name': 'default_uid',
+             'xtype': 'hidden',
+             'editable': False,
+             'allowBlank': True,
+             'value': values.get('tickets.sub.default_uid')},)
+
+
+def _setting_gid_hidden(req, self, moddef, fields, values):
+    return ({'name': 'default_gid',
+             'xtype': 'hidden',
+             'editable': False,
+             'allowBlank': True,
+             'value': values.get('tickets.sub.default_gid')},)
