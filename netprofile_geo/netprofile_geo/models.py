@@ -822,7 +822,7 @@ class Place(Base):
         default=None,
         server_default=text('NULL'),
         info={
-            'header_string': _('Entr. #')
+            'header_string': _('Entr.')
         })
     floor = Column(
         UInt8(),
@@ -831,7 +831,7 @@ class Place(Base):
         default=None,
         server_default=text('NULL'),
         info={
-            'header_string': _('Floor #')
+            'header_string': _('Floor')
         })
     description = Column(
         'descr',
