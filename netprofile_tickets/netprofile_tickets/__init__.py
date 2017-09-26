@@ -245,7 +245,7 @@ class Module(ModuleBase):
                     Setting('default_uid',
                             title=_('Subscribe to user by default'),
                             help_text=_('Subscribe this user to '
-                                        'all new tickets'),
+                                        'all new tickets.'),
                             type='int',
                             nullable=True,
                             write_cap='ADMIN_TICKETS',
@@ -264,7 +264,7 @@ class Module(ModuleBase):
                     Setting('default_gid',
                             title=_('Subscribe to group by default'),
                             help_text=_('Subscribe this group to '
-                                        'all new tickets'),
+                                        'all new tickets.'),
                             type='int',
                             nullable=True,
                             write_cap='ADMIN_TICKETS',
@@ -281,7 +281,7 @@ class Module(ModuleBase):
                             field_extra=_setting_gid_text,
                             additional_fields=_setting_gid_hidden),
                     title=_('Subscriptions'),
-                    help_text=_('Default subscriptions for tickets'),
+                    help_text=_('Default subscriptions for tickets.'),
                     read_cap='ADMIN_TICKETS'),)
         if vhost == 'MAIN' and scope == 'user':
             return (
@@ -290,18 +290,18 @@ class Module(ModuleBase):
                     Setting('default_on_new',
                             title=_('Subscribe to created'),
                             help_text=_('Subscribe to created tickets '
-                                        'by default'),
+                                        'by default.'),
                             type='bool',
                             default=True),
                     Setting('default_on_change',
                             title=_('Subscribe to updated'),
                             help_text=_('Subscribe to tickets by default when '
-                                        'updating them'),
+                                        'updating them.'),
                             type='bool',
                             default=True),
                     scope='user',
                     title=_('Subscriptions'),
-                    help_text=_('Ticket subscription settings')),)
+                    help_text=_('Ticket subscription settings.')),)
         return ()
 
     @property
