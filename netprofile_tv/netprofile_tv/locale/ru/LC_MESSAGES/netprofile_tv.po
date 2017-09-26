@@ -1,0 +1,221 @@
+# Russian translations for netprofile_tv.
+# Copyright (C) 2017 NetProfile project contributors
+# This file is distributed under the same license as the netprofile_tv
+# project.
+# Alex Unigovsky <unik@itws.ru>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netprofile_tv 0+unknown\n"
+"Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
+"POT-Creation-Date: 2017-09-26 16:18+0300\n"
+"PO-Revision-Date: 2017-09-26 16:18+0300\n"
+"Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
+"Language: ru\n"
+"Language-Team: ru <netprofile-users@googlegroups.com>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+"X-Generator: Poedit 1.8.7\n"
+
+#: netprofile_tv/__init__.py:74
+msgid "Menu: TV sources"
+msgstr "Меню: Источники ТВ"
+
+#: netprofile_tv/__init__.py:76
+msgid "TV sources: List"
+msgstr "Источники ТВ: Просмотр"
+
+#: netprofile_tv/__init__.py:78
+msgid "TV sources: Create"
+msgstr "Источники ТВ: Создание"
+
+#: netprofile_tv/__init__.py:80
+msgid "TV sources: Edit"
+msgstr "Источники ТВ: Правка"
+
+#: netprofile_tv/__init__.py:82
+msgid "TV sources: Delete"
+msgstr "Источники ТВ: Удаление"
+
+#: netprofile_tv/__init__.py:84
+msgid "Menu: TV subscriptions"
+msgstr "Меню: Подписки ТВ"
+
+#: netprofile_tv/__init__.py:86
+msgid "TV subscriptions: List"
+msgstr "Подписки ТВ: Просмотр"
+
+#: netprofile_tv/__init__.py:88
+msgid "TV subscriptions: Create"
+msgstr "Подписки ТВ: Создание"
+
+#: netprofile_tv/__init__.py:90
+msgid "TV subscriptions: Edit"
+msgstr "Подписки ТВ: Правка"
+
+#: netprofile_tv/__init__.py:92
+msgid "TV subscriptions: Delete"
+msgstr "Подписки ТВ: Удаление"
+
+#: netprofile_tv/__init__.py:94
+msgid "TV subscriptions: Assign"
+msgstr "Подписки ТВ: Назначение"
+
+#: netprofile_tv/__init__.py:96
+msgid "Menu: TV cards"
+msgstr "Меню: Карты ТВ"
+
+#: netprofile_tv/__init__.py:98
+msgid "TV cards: List"
+msgstr "Карты ТВ: Просмотр"
+
+#: netprofile_tv/__init__.py:100
+msgid "TV cards: Create"
+msgstr "Карты ТВ: Создание"
+
+#: netprofile_tv/__init__.py:102
+msgid "TV cards: Edit"
+msgstr "Карты ТВ: Правка"
+
+#: netprofile_tv/__init__.py:104
+msgid "TV cards: Delete"
+msgstr "Карты ТВ: Удаление"
+
+#: netprofile_tv/__init__.py:123
+msgid "TV Service"
+msgstr "Услуги ТВ"
+
+#: netprofile_tv/models.py:102
+msgid "Sources"
+msgstr "Источники"
+
+#: netprofile_tv/models.py:117
+msgid "Add new source"
+msgstr "Добавить новый источник"
+
+#: netprofile_tv/models.py:128 netprofile_tv/models.py:302
+#: netprofile_tv/models.py:403 netprofile_tv/models.py:518
+#: netprofile_tv/models.py:589 netprofile_tv/models.py:697
+msgid "ID"
+msgstr "ID"
+
+#: netprofile_tv/models.py:140
+msgid "Gateway"
+msgstr "Шлюз"
+
+#: netprofile_tv/models.py:152
+msgid "Port"
+msgstr "Порт"
+
+#: netprofile_tv/models.py:159 netprofile_tv/models.py:332
+#: netprofile_tv/models.py:435
+msgid "Name"
+msgstr "Название"
+
+#: netprofile_tv/models.py:170
+msgid "Encoding"
+msgstr "Кодировка"
+
+#: netprofile_tv/models.py:179
+msgid "Handler"
+msgstr "Обработчик"
+
+#: netprofile_tv/models.py:193
+msgid "Real time"
+msgstr "В режиме реального времени"
+
+#: netprofile_tv/models.py:202
+msgid "Polled"
+msgstr "Периодически опрашиваемый"
+
+#: netprofile_tv/models.py:212
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: netprofile_tv/models.py:222
+msgid "Passphrase"
+msgstr "Пароль"
+
+#: netprofile_tv/models.py:234 netprofile_tv/models.py:343
+#: netprofile_tv/models.py:455
+msgid "Description"
+msgstr "Описание"
+
+#: netprofile_tv/models.py:283 netprofile_tv/views.py:86
+msgid "Channels"
+msgstr "Каналы"
+
+#: netprofile_tv/models.py:291 netprofile_tv/models.py:507
+msgid "Add new channel"
+msgstr "Добавить новый канал"
+
+#: netprofile_tv/models.py:313 netprofile_tv/models.py:612
+msgid "Source"
+msgstr "Источник"
+
+#: netprofile_tv/models.py:325 netprofile_tv/models.py:428
+#: netprofile_tv/models.py:624
+msgid "External ID"
+msgstr "Внешний ID"
+
+#: netprofile_tv/models.py:380
+msgid "Subscription Types"
+msgstr "Типы подписок"
+
+#: netprofile_tv/models.py:392
+msgid "Add new subscription type"
+msgstr "Добавить новый тип подписок"
+
+#: netprofile_tv/models.py:416 netprofile_tv/models.py:748
+msgid "Paid Service"
+msgstr "Платная услуга"
+
+#: netprofile_tv/models.py:445 netprofile_tv/models.py:634
+msgid "Enabled"
+msgstr "Включен"
+
+#: netprofile_tv/models.py:529 netprofile_tv/models.py:708
+msgid "Type"
+msgstr "Тип"
+
+#: netprofile_tv/models.py:542
+msgid "Channel"
+msgstr "Канал"
+
+#: netprofile_tv/models.py:568 netprofile_tv/views.py:70
+#: netprofile_tv/views.py:97
+msgid "TV Cards"
+msgstr "Карты ТВ"
+
+#: netprofile_tv/models.py:578
+msgid "Add new card"
+msgstr "Добавить новую карту"
+
+#: netprofile_tv/models.py:599 netprofile_tv/models.py:734
+msgid "Access Entity"
+msgstr "Учётная запись"
+
+#: netprofile_tv/models.py:674 netprofile_tv/views.py:42
+#: netprofile_tv/views.py:58
+msgid "TV Subscriptions"
+msgstr "Подписки ТВ"
+
+#: netprofile_tv/models.py:686
+msgid "Add new subscription"
+msgstr "Добавить новую подписку"
+
+#: netprofile_tv/models.py:721
+msgid "Entity"
+msgstr "Объект"
+
+#: netprofile_tv/tasks.py:47
+msgid "Update TV subscriptions for an access entity"
+msgstr "Обновить ТВ подписки для учётной записи"
+
+#: netprofile_tv/tasks.py:94
+msgid "Update TV subscriptions in bulk"
+msgstr "Массово обновить ТВ подписки"

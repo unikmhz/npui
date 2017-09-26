@@ -683,7 +683,7 @@ class TVSubscription(Base):
                 'form_view':     ('type', 'access_entity', 'type',
                                   'paid_service'),
                 'detail_pane':   ('netprofile_core.views', 'dpane_simple'),
-                'create_wizard': SimpleWizard(title=_('Add new subscriptions'))
+                'create_wizard': SimpleWizard(title=_('Add new subscription'))
             }
         })
     id = Column(
