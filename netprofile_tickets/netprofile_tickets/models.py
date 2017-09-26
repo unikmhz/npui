@@ -728,6 +728,13 @@ def _wizfld_ticket_state(fld, model, req, **kwargs):
     }
 
 
+def _wizfld_ticket_subscribe(fld, model, req, **kwargs):
+    return {'xtype': 'checkbox',
+            'name': 'subscribe',
+            'fieldLabel': req.localizer.translate(_('Track this ticket')),
+            'checked': req.settings.get('tickets.sub.default_on_new')}
+
+
 def _wizfld_ticket_tpl(fld, model, req, **kwargs):
     sess = DBSession()
     data = []
@@ -859,13 +866,8 @@ class Ticket(Base):
                 'create_wizard': Wizard(
                                    Step('entity', 'name',
                                         ExtJSWizardField(_wizfld_ticket_state),
-                                        ExtJSWizardField({
-                                            'xtype': 'checkbox',
-                                            'name': 'subscribe',
-                                            'fieldLabel':
-                                                _('Track this ticket'),
-                                            'checked': True
-                                        }),
+                                        ExtJSWizardField(
+                                            _wizfld_ticket_subscribe),
                                         'show_client', 'flags', 'descr',
                                         id='generic'),
                                    Step('assigned_user', 'assigned_group',
@@ -885,13 +887,8 @@ class Ticket(Base):
                     'tpl':       Wizard(
                                    Step('entity',
                                         ExtJSWizardField(_wizfld_ticket_tpl),
-                                        ExtJSWizardField({
-                                            'xtype': 'checkbox',
-                                            'name': 'subscribe',
-                                            'fieldLabel':
-                                                _('Track this ticket'),
-                                            'checked': True
-                                        }),
+                                        ExtJSWizardField(
+                                            _wizfld_ticket_subscribe),
                                         CompositeWizardField(
                                             'assigned_time',
                                             ExtJSWizardField({

@@ -309,7 +309,7 @@ def dyn_ticket_uwiz(params, request):
         'xtype': 'checkbox',
         'name': 'subscribe',
         'fieldLabel': _('Track this ticket'),
-        'checked': True
+        'checked': request.settings.get('tickets.sub.default_on_change')
     })]
     if request.has_permission('ENTITIES_LIST'):
         fields.append(ExternalWizardField(

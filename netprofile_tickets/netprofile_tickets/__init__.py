@@ -284,7 +284,24 @@ class Module(ModuleBase):
                     help_text=_('Default subscriptions for tickets'),
                     read_cap='ADMIN_TICKETS'),)
         if vhost == 'MAIN' and scope == 'user':
-            return ()
+            return (
+                SettingSection(
+                    'sub',
+                    Setting('default_on_new',
+                            title=_('Subscribe to created'),
+                            help_text=_('Subscribe to created tickets '
+                                        'by default'),
+                            type='bool',
+                            default=True),
+                    Setting('default_on_change',
+                            title=_('Subscribe to updated'),
+                            help_text=_('Subscribe to tickets by default when '
+                                        'updating them'),
+                            type='bool',
+                            default=True),
+                    scope='user',
+                    title=_('Subscriptions'),
+                    help_text=_('Ticket subscription settings')),)
         return ()
 
     @property
