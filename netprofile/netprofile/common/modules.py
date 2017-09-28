@@ -693,7 +693,7 @@ class ModuleManager(object):
             self.load(moddef)
         return True
 
-    def uninstall(self, req, sess):
+    def uninstall(self, req, sess):  # pragma: no cover
         """
         Unregister the module from DB and run module's uninstallation hooks.
         """

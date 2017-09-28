@@ -85,6 +85,8 @@ setup_requires = [
 
 tests_require = [
     'pytest',
+    'mock >= 2.0.0',
+
     'netprofile_core'
 ]
 
