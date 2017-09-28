@@ -157,6 +157,15 @@ def client_promise(ctx, request):
             return HTTPSeeOther(location=request.route_url(
                     'stashes.cl.accounts',
                     traverse=()))
+        if ctx.credit > 0:
+            request.session.flash({
+                'text': loc.translate(
+                    _('This account already has active promised payment')),
+                'class': 'warning'
+            })
+            return HTTPSeeOther(location=request.route_url(
+                    'stashes.cl.accounts',
+                    traverse=()))
         fp = FuturePayment()
         fp.stash = ctx
         fp.entity = request.user.parent

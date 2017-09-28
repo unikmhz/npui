@@ -42,7 +42,7 @@
 			</span>
 % if stash.credit != 0:
 			<small class="single-line">
-				${'Credit:'}
+				${_('Credit:')}
 				<span class="balance${' negative' if (stash.credit < 0) else ''}" title="${_('Current credit limit for this account')}">
 					${stash.formatted_credit(req)}
 				</span>
@@ -124,6 +124,7 @@ ${gen_block('stashes.cl.block.users', stash=stash) | n}
 % endif
 	<ul class="list-group tab-pane fade" id="tab-replenish-${stash.id}">
 ${gen_block('stashes.cl.block.payment', stash=stash) | n}
+% if stash.credit == 0:
 		<li class="list-group-item">
 			<form class="row" role="form" method="post" action="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'promise'))}">
 				<label for="" class="col-sm-4">${_('Promise Payment')}</label>
@@ -135,6 +136,11 @@ ${gen_block('stashes.cl.block.payment', stash=stash) | n}
 				</div>
 			</form>
 		</li>
+% else:
+		<li class="list-group-item">
+			<p class="list-group-item-text">${_('This account already has active promised payment')}</p>
+		</li>
+% endif
 	</ul>
 </div>
 % endfor

@@ -102,7 +102,7 @@ from netprofile_stashes.models import IOOperationType
 >
 			<td>${io.timestamp | n,date_fmt_short}</td>
 			<td>${io.formatted_difference(req)}</td>
-			<td>${io.type}</td>
+			<td>${_(io.type)}</td>
 		</tr>
 		% endfor
 	</tbody>

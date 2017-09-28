@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_stashes 0.3\n"
 "Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
-"POT-Creation-Date: 2017-07-13 12:04+0300\n"
-"PO-Revision-Date: 2017-07-13 12:06+0300\n"
+"POT-Creation-Date: 2017-09-28 03:26+0300\n"
+"PO-Revision-Date: 2017-09-28 03:26+0300\n"
 "Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <netprofile-users@googlegroups.com>\n"
@@ -18,583 +18,592 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.3.4\n"
+"Generated-By: Babel 2.5.1\n"
 "X-Generator: Poedit 1.8.7\n"
 
-#: netprofile_stashes/__init__.py:112
+#: netprofile_stashes/__init__.py:96
 msgid "Menu: Stashes"
 msgstr "Меню: Счета"
 
-#: netprofile_stashes/__init__.py:116
+#: netprofile_stashes/__init__.py:98
 msgid "Stashes: List"
 msgstr "Счета: Просмотр"
 
-#: netprofile_stashes/__init__.py:120
+#: netprofile_stashes/__init__.py:100
 msgid "Stashes: Create"
 msgstr "Счета: Создание"
 
-#: netprofile_stashes/__init__.py:124
+#: netprofile_stashes/__init__.py:102
 msgid "Stashes: Edit"
 msgstr "Счета: Правка"
 
-#: netprofile_stashes/__init__.py:128
+#: netprofile_stashes/__init__.py:104
 msgid "Stashes: Delete"
 msgstr "Счета: Удаление"
 
-#: netprofile_stashes/__init__.py:132
+#: netprofile_stashes/__init__.py:106
 msgid "Stashes: Operations"
 msgstr "Счета: Проведение операций"
 
-#: netprofile_stashes/__init__.py:136
+#: netprofile_stashes/__init__.py:108
 msgid "Stashes: Create op. types"
 msgstr "Счета: Создание типов операций"
 
-#: netprofile_stashes/__init__.py:140
+#: netprofile_stashes/__init__.py:110
 msgid "Stashes: Edit op. types"
 msgstr "Счета: Правка"
 
-#: netprofile_stashes/__init__.py:144
+#: netprofile_stashes/__init__.py:112
 msgid "Stashes: Delete op. types"
 msgstr "Счета: Удаление типов операций"
 
-#: netprofile_stashes/__init__.py:148
+#: netprofile_stashes/__init__.py:114
 msgid "Stashes: Create currencies"
 msgstr "Счета: Создание валют"
 
-#: netprofile_stashes/__init__.py:152
+#: netprofile_stashes/__init__.py:116
 msgid "Stashes: Edit currencies"
 msgstr "Счета: Правка валют"
 
-#: netprofile_stashes/__init__.py:156
+#: netprofile_stashes/__init__.py:118
 msgid "Stashes: Delete currencies"
 msgstr "Счета: Удаление валют"
 
-#: netprofile_stashes/__init__.py:160
+#: netprofile_stashes/__init__.py:120
 msgid "Menu: Promised payments"
 msgstr "Меню: Обещанные платежи"
 
-#: netprofile_stashes/__init__.py:164
+#: netprofile_stashes/__init__.py:122
 msgid "Promised payments: List"
 msgstr "Обещанные платежи: Просмотр"
 
-#: netprofile_stashes/__init__.py:168
+#: netprofile_stashes/__init__.py:124
 msgid "Promised payments: Create"
 msgstr "Обещанные платежи: Создание"
 
-#: netprofile_stashes/__init__.py:172
+#: netprofile_stashes/__init__.py:126
 msgid "Promised payments: Edit"
 msgstr "Обещанные платежи: Правка"
 
-#: netprofile_stashes/__init__.py:176
+#: netprofile_stashes/__init__.py:128
 msgid "Promised payments: Approve"
 msgstr "Обещанные платежи: Подтверждение"
 
-#: netprofile_stashes/__init__.py:180
+#: netprofile_stashes/__init__.py:130
 msgid "Promised payments: Cancel"
 msgstr "Обещанные платежи: Отмена"
 
-#: netprofile_stashes/__init__.py:198 netprofile_stashes/models.py:116
+#: netprofile_stashes/__init__.py:147 netprofile_stashes/models.py:114
 msgid "Prepaid subscription fee"
 msgstr "Списание абонентской платы"
 
-#: netprofile_stashes/__init__.py:204
+#: netprofile_stashes/__init__.py:153
 msgid "Periodic withdrawal of funds for an active service."
 msgstr "Периодическое списание средств за предоставление услуги."
 
-#: netprofile_stashes/__init__.py:208 netprofile_stashes/models.py:117
+#: netprofile_stashes/__init__.py:157 netprofile_stashes/models.py:117
 msgid "Postpaid service fee"
 msgstr "Оплата по факту предоставления услуг"
 
-#: netprofile_stashes/__init__.py:214
+#: netprofile_stashes/__init__.py:163
 msgid "Withdrawal of funds for used service."
 msgstr "Списание средств за предоставленную услугу."
 
-#: netprofile_stashes/__init__.py:218 netprofile_stashes/models.py:118
+#: netprofile_stashes/__init__.py:166 netprofile_stashes/models.py:120
 msgid "Reimbursement on rate conversion"
 msgstr "Компенсация неиспользованной абон. платы"
 
-#: netprofile_stashes/__init__.py:224
+#: netprofile_stashes/__init__.py:172
 msgid ""
 "Addition of funds that is a result of tariff recalculation or operator "
 "action."
 msgstr ""
 "Пополнение средств как результат перерасчёта тарифа или действия оператора."
 
-#: netprofile_stashes/__init__.py:229 netprofile_stashes/models.py:119
+#: netprofile_stashes/__init__.py:177 netprofile_stashes/models.py:123
 msgid "Confirmation of promised payment"
 msgstr "Подтверждение обещанного платежа"
 
-#: netprofile_stashes/__init__.py:236
+#: netprofile_stashes/__init__.py:184
 msgid "This operation is a result of a payment promise being fulfilled."
 msgstr "Операция, проведённая в результате подтверждения обещанного платежа."
 
-#: netprofile_stashes/__init__.py:240 netprofile_stashes/models.py:120
+#: netprofile_stashes/__init__.py:188 netprofile_stashes/models.py:126
 msgid "Transfer from another account"
 msgstr "Перевод с другого счёта"
 
-#: netprofile_stashes/__init__.py:246
+#: netprofile_stashes/__init__.py:194
 msgid "Addition of funds that were transferred from another account."
 msgstr ""
 "Добавление средств на счёте, связанное с их переводом с другого счёта в "
 "системе."
 
-#: netprofile_stashes/__init__.py:250 netprofile_stashes/models.py:121
+#: netprofile_stashes/__init__.py:198 netprofile_stashes/models.py:129
 msgid "Transfer to another account"
 msgstr "Перевод на другой счёт"
 
-#: netprofile_stashes/__init__.py:256
+#: netprofile_stashes/__init__.py:204
 msgid "Withdrawal of funds that were transferred to another account."
 msgstr ""
 "Снятие средств со счёта, связанное с их переводом на другой счёт в системе."
 
-#: netprofile_stashes/__init__.py:260 netprofile_stashes/models.py:122
+#: netprofile_stashes/__init__.py:208 netprofile_stashes/models.py:132
 msgid "Service activation fee"
 msgstr "Оплата включения услуги"
 
-#: netprofile_stashes/__init__.py:266
+#: netprofile_stashes/__init__.py:214
 msgid "Initial payment for activation of an auxiliary service."
 msgstr "Начальный платёж за оказание дополнительной услуги."
 
-#: netprofile_stashes/__init__.py:270 netprofile_stashes/models.py:123
+#: netprofile_stashes/__init__.py:218 netprofile_stashes/models.py:135
 msgid "Service subscription fee"
 msgstr "Оплата поддержания услуги"
 
-#: netprofile_stashes/__init__.py:276
+#: netprofile_stashes/__init__.py:224
 msgid "Periodic payment for maintaining an auxiliary service."
 msgstr "Периодический платёж за поддержание работы дополнительной услуги."
 
-#: netprofile_stashes/__init__.py:290 netprofile_stashes/models.py:405
-#: netprofile_stashes/views.py:64
+#: netprofile_stashes/__init__.py:235 netprofile_stashes/models.py:434
+#: netprofile_stashes/views.py:59
 msgid "Stashes"
 msgstr "Счета"
 
-#: netprofile_stashes/models.py:101
+#: netprofile_stashes/models.py:96
 msgid "System"
 msgstr "Системный"
 
-#: netprofile_stashes/models.py:102 netprofile_stashes/models.py:156
+#: netprofile_stashes/models.py:97 netprofile_stashes/models.py:198
 msgid "User"
 msgstr "Пользовательский"
 
-#: netprofile_stashes/models.py:108
+#: netprofile_stashes/models.py:104
 msgid "Bidirectional"
 msgstr "Двухсторонний"
 
-#: netprofile_stashes/models.py:109
+#: netprofile_stashes/models.py:105
 msgid "Incoming"
 msgstr "Пополнение"
 
-#: netprofile_stashes/models.py:110
+#: netprofile_stashes/models.py:106
 msgid "Outgoing"
 msgstr "Списание"
 
-#: netprofile_stashes/models.py:129
+#: netprofile_stashes/models.py:144
 msgid "Subtract (under quota ingress / under quota egress)"
 msgstr "Списание (вход. ниже квоты/исход. ниже квоты)"
 
-#: netprofile_stashes/models.py:130
+#: netprofile_stashes/models.py:147
 msgid "Subtract (mixed ingress / under quota egress)"
 msgstr "Списание (вход. смешанный/исход. ниже квоты)"
 
-#: netprofile_stashes/models.py:131
+#: netprofile_stashes/models.py:150
 msgid "Subtract (over quota ingress / under quota egress)"
 msgstr "Списание (вход. выше квоты/исход. ниже квоты)"
 
-#: netprofile_stashes/models.py:132
+#: netprofile_stashes/models.py:153
 msgid "Subtract (under quota ingress / mixed egress)"
 msgstr "Списание (вход. ниже квоты/исход. смешанный)"
 
-#: netprofile_stashes/models.py:133
+#: netprofile_stashes/models.py:156
 msgid "Subtract (under quota ingress / over quota egress)"
 msgstr "Списание (вход. ниже квоты/исход. выше квоты)"
 
-#: netprofile_stashes/models.py:134
+#: netprofile_stashes/models.py:159
 msgid "Subtract (mixed ingress / mixed egress)"
 msgstr "Списание (вход. смешанный/исход. смешанный)"
 
-#: netprofile_stashes/models.py:135
+#: netprofile_stashes/models.py:162
 msgid "Subtract (over quota ingress / mixed egress)"
 msgstr "Списание (вход. выше квоты/исход. смешанный)"
 
-#: netprofile_stashes/models.py:136
+#: netprofile_stashes/models.py:165
 msgid "Subtract (mixed ingress / over quota egress)"
 msgstr "Списание (вход. смешанный/исход. выше квоты)"
 
-#: netprofile_stashes/models.py:137
+#: netprofile_stashes/models.py:168
 msgid "Subtract (over quota ingress / over quota egress)"
 msgstr "Списание (вход. выше квоты/исход. выше квоты)"
 
-#: netprofile_stashes/models.py:138
+#: netprofile_stashes/models.py:171
 msgid "Add cash"
 msgstr "Пополнение наличными"
 
-#: netprofile_stashes/models.py:139
+#: netprofile_stashes/models.py:174
 msgid "Automatic add"
 msgstr "Автоматическое пополнение"
 
-#: netprofile_stashes/models.py:140 netprofile_stashes/models.py:155
-#: netprofile_stashes/models.py:856 netprofile_stashes/models.py:1049
+#: netprofile_stashes/models.py:177 netprofile_stashes/models.py:197
+#: netprofile_stashes/models.py:860 netprofile_stashes/models.py:1032
 msgid "Operator"
 msgstr "Оператор"
 
-#: netprofile_stashes/models.py:141
+#: netprofile_stashes/models.py:180
 msgid "Rollback"
 msgstr "Компенсация"
 
-#: netprofile_stashes/models.py:147
+#: netprofile_stashes/models.py:188
 msgid "Active"
 msgstr "Активен"
 
-#: netprofile_stashes/models.py:148
+#: netprofile_stashes/models.py:189
 msgid "Paid"
 msgstr "Оплачен"
 
-#: netprofile_stashes/models.py:149
+#: netprofile_stashes/models.py:190
 msgid "Cancelled"
 msgstr "Отменён"
 
-#: netprofile_stashes/models.py:176
+#: netprofile_stashes/models.py:220
 msgid "Currencies"
 msgstr "Валюты"
 
-#: netprofile_stashes/models.py:193
+#: netprofile_stashes/models.py:236
 msgid "Add new currency"
 msgstr "Добавить новую валюту"
 
-#: netprofile_stashes/models.py:205 netprofile_stashes/models.py:427
-#: netprofile_stashes/models.py:591 netprofile_stashes/models.py:791
-#: netprofile_stashes/models.py:1006 netprofile_stashes/models.py:1199
+#: netprofile_stashes/models.py:247 netprofile_stashes/models.py:458
+#: netprofile_stashes/models.py:612 netprofile_stashes/models.py:794
+#: netprofile_stashes/models.py:991 netprofile_stashes/models.py:1163
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_stashes/models.py:213 netprofile_stashes/models.py:468
-#: netprofile_stashes/models.py:599
+#: netprofile_stashes/models.py:254 netprofile_stashes/models.py:498
+#: netprofile_stashes/models.py:619
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_stashes/models.py:224
+#: netprofile_stashes/models.py:264
 msgid "Code"
 msgstr "Код"
 
-#: netprofile_stashes/models.py:234
+#: netprofile_stashes/models.py:273
 msgid "Prefix"
 msgstr "Префикс"
 
-#: netprofile_stashes/models.py:244
+#: netprofile_stashes/models.py:282
 msgid "Suffix"
 msgstr "Суффикс"
 
-#: netprofile_stashes/models.py:255
+#: netprofile_stashes/models.py:292
 msgid "Exchange Rate"
 msgstr "Обменный курс"
 
-#: netprofile_stashes/models.py:266
+#: netprofile_stashes/models.py:302
 msgid "Exchange From"
 msgstr "Обмен с валюты"
 
-#: netprofile_stashes/models.py:277
+#: netprofile_stashes/models.py:312
 msgid "Exchange To"
 msgstr "Обмен на валюту"
 
-#: netprofile_stashes/models.py:288
+#: netprofile_stashes/models.py:322
 msgid "Convert From"
 msgstr "Преобразование из валюты"
 
-#: netprofile_stashes/models.py:299
+#: netprofile_stashes/models.py:332
 msgid "Convert To"
 msgstr "Преобразование в валюту"
 
-#: netprofile_stashes/models.py:309
+#: netprofile_stashes/models.py:341
 msgid "Crediting"
 msgstr "Кредитование"
 
-#: netprofile_stashes/models.py:319
+#: netprofile_stashes/models.py:350
 msgid "Allow Accounts"
 msgstr "Разрешить учётные записи"
 
-#: netprofile_stashes/models.py:329
+#: netprofile_stashes/models.py:359
 msgid "Allow Paid Services"
 msgstr "Разрешить доп. услуги"
 
-#: netprofile_stashes/models.py:339
+#: netprofile_stashes/models.py:368
 msgid "Allow Promised Payments"
 msgstr "Разрешить обещанные платёжи"
 
-#: netprofile_stashes/models.py:350 netprofile_stashes/models.py:643
+#: netprofile_stashes/models.py:378 netprofile_stashes/models.py:659
 msgid "Visible to Operator"
 msgstr "Видимый оператору"
 
-#: netprofile_stashes/models.py:361 netprofile_stashes/models.py:654
+#: netprofile_stashes/models.py:388 netprofile_stashes/models.py:669
 msgid "Visible to User"
 msgstr "Видимый клиенту"
 
-#: netprofile_stashes/models.py:372 netprofile_stashes/models.py:688
-#: netprofile_stashes/models.py:915 netprofile_stashes/models.py:1341
+#: netprofile_stashes/models.py:398 netprofile_stashes/models.py:701
+#: netprofile_stashes/models.py:915 netprofile_stashes/models.py:1298
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_stashes/models.py:415
+#: netprofile_stashes/models.py:447
 msgid "Add new stash"
 msgstr "Добавить новый счёт"
 
-#: netprofile_stashes/models.py:437 netprofile_stashes/models.py:869
-#: netprofile_stashes/models.py:1062 netprofile_stashes/models.py:1211
+#: netprofile_stashes/models.py:468 netprofile_stashes/models.py:873
+#: netprofile_stashes/models.py:1045 netprofile_stashes/models.py:1175
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_stashes/models.py:451 netprofile_stashes/models.py:835
+#: netprofile_stashes/models.py:482 netprofile_stashes/models.py:839
 msgid "Currency"
 msgstr "Валюта"
 
-#: netprofile_stashes/models.py:479
+#: netprofile_stashes/models.py:508
 msgid "Balance"
 msgstr "Баланс"
 
-#: netprofile_stashes/models.py:492
+#: netprofile_stashes/models.py:520
 msgid "Credit"
 msgstr "Кредит"
 
-#: netprofile_stashes/models.py:505
+#: netprofile_stashes/models.py:532
 msgid "Max. Balance"
 msgstr "Макс. баланс"
 
-#: netprofile_stashes/models.py:516
+#: netprofile_stashes/models.py:542
 msgid "Min. Balance"
 msgstr "Мин. баланс"
 
-#: netprofile_stashes/models.py:572
+#: netprofile_stashes/models.py:591
 msgid "Operation Types"
 msgstr "Типы операций"
 
-#: netprofile_stashes/models.py:579
+#: netprofile_stashes/models.py:601
 msgid "Add new operation type"
 msgstr "Добавить новый тип операций"
 
-#: netprofile_stashes/models.py:611
+#: netprofile_stashes/models.py:630
 msgid "Class"
 msgstr "Класс"
 
-#: netprofile_stashes/models.py:621 netprofile_stashes/models.py:801
-#: netprofile_stashes/models.py:1027
-#: netprofile_stashes/templates/client_stats.mak:71
+#: netprofile_stashes/models.py:639 netprofile_stashes/models.py:805
+#: netprofile_stashes/models.py:1011
+#: netprofile_stashes/templates/client_stats.mak:91
 msgid "Type"
 msgstr "Тип"
 
-#: netprofile_stashes/models.py:632
+#: netprofile_stashes/models.py:649
 msgid "Function"
 msgstr "Функция"
 
-#: netprofile_stashes/models.py:665
+#: netprofile_stashes/models.py:679
 msgid "Counts for promised payments"
 msgstr "Учитывается как обещанный платёж"
 
-#: netprofile_stashes/models.py:677
+#: netprofile_stashes/models.py:691
 msgid "Required Operator Capability"
 msgstr "Требуемая привилегия оператора"
 
-#: netprofile_stashes/models.py:763 netprofile_stashes/models.py:991
-#: netprofile_stashes/views.py:79
+#: netprofile_stashes/models.py:768 netprofile_stashes/models.py:975
+#: netprofile_stashes/views.py:75
 msgid "Operations"
 msgstr "Операции"
 
-#: netprofile_stashes/models.py:778
+#: netprofile_stashes/models.py:783
 msgid "Add new operation"
 msgstr "Добавить новую операцию"
 
-#: netprofile_stashes/models.py:821 netprofile_stashes/models.py:1016
-#: netprofile_stashes/models.py:1223
+#: netprofile_stashes/models.py:825 netprofile_stashes/models.py:1001
+#: netprofile_stashes/models.py:1187
 msgid "Stash"
 msgstr "Счёт"
 
-#: netprofile_stashes/models.py:881 netprofile_stashes/models.py:1037
-#: netprofile_stashes/templates/client_stats.mak:69
+#: netprofile_stashes/models.py:884 netprofile_stashes/models.py:1020
+#: netprofile_stashes/templates/client_stats.mak:89
 msgid "Date"
 msgstr "Дата"
 
-#: netprofile_stashes/models.py:891 netprofile_stashes/models.py:1074
-#: netprofile_stashes/models.py:1236
+#: netprofile_stashes/models.py:893 netprofile_stashes/models.py:1056
+#: netprofile_stashes/models.py:1199
 msgid "Change"
 msgstr "Изменение"
 
-#: netprofile_stashes/models.py:903
+#: netprofile_stashes/models.py:904
 msgid "Extra Data"
 msgstr "Доп. данные"
 
-#: netprofile_stashes/models.py:1085
+#: netprofile_stashes/models.py:1066
 msgid "Ingress Traffic"
 msgstr "Входящий трафик"
 
-#: netprofile_stashes/models.py:1096
+#: netprofile_stashes/models.py:1076
 msgid "Egress Traffic"
 msgstr "Исходящий трафик"
 
-#: netprofile_stashes/models.py:1106
+#: netprofile_stashes/models.py:1085
 msgid "Comments"
 msgstr "Комментарии"
 
-#: netprofile_stashes/models.py:1168 netprofile_stashes/views.py:90
+#: netprofile_stashes/models.py:1137 netprofile_stashes/views.py:86
 msgid "Promised Payments"
 msgstr "Обещанные платежи"
 
-#: netprofile_stashes/models.py:1186
+#: netprofile_stashes/models.py:1152
 msgid "Add new promised payment"
 msgstr "Добавить новый обещанный платёж"
 
-#: netprofile_stashes/models.py:1246
+#: netprofile_stashes/models.py:1208
 msgid "State"
 msgstr "Состояние"
 
-#: netprofile_stashes/models.py:1256
+#: netprofile_stashes/models.py:1217
 msgid "Origin"
 msgstr "Источник"
 
-#: netprofile_stashes/models.py:1267 netprofile_stashes/models.py:1303
+#: netprofile_stashes/models.py:1227 netprofile_stashes/models.py:1261
 msgid "Created"
 msgstr "Создан"
 
-#: netprofile_stashes/models.py:1278 netprofile_stashes/models.py:1316
+#: netprofile_stashes/models.py:1237 netprofile_stashes/models.py:1274
 msgid "Modified"
 msgstr "Изменён"
 
-#: netprofile_stashes/models.py:1290 netprofile_stashes/models.py:1329
+#: netprofile_stashes/models.py:1248 netprofile_stashes/models.py:1287
 msgid "Confirmed"
 msgstr "Подтверждён"
 
-#: netprofile_stashes/templates/client_stashes.mak:5
-#: netprofile_stashes/templates/client_stashes.mak:10
-#: netprofile_stashes/views.py:145 netprofile_stashes/views.py:276
+#: netprofile_stashes/templates/client_stashes.mak:25
+#: netprofile_stashes/templates/client_stashes.mak:30
+#: netprofile_stashes/views.py:131 netprofile_stashes/views.py:260
 msgid "My Accounts"
 msgstr "Мои счета"
 
-#: netprofile_stashes/views.py:172 netprofile_stashes/views.py:188
+#: netprofile_stashes/views.py:154 netprofile_stashes/views.py:182
 msgid "Error submitting form"
 msgstr "Ошибка при отправке формы"
 
-#: netprofile_stashes/views.py:183
+#: netprofile_stashes/templates/client_stashes.mak:141
+#: netprofile_stashes/views.py:163
+msgid "This account already has active promised payment"
+msgstr "Для этого счёта уже зарегистрирован обещанный платёж"
+
+#: netprofile_stashes/views.py:176
 msgid "Successfully added new promised payment"
 msgstr "Обещанный платёж успешно зарегистрирован"
 
-#: netprofile_stashes/templates/client_stats.mak:9
-#: netprofile_stashes/templates/client_stats.mak:12
-#: netprofile_stashes/views.py:284
+#: netprofile_stashes/templates/client_stats.mak:29
+#: netprofile_stashes/templates/client_stats.mak:32
+#: netprofile_stashes/views.py:269
 msgid "Account Operations"
 msgstr "Операции"
 
-#: netprofile_stashes/views.py:304
+#: netprofile_stashes/views.py:290
 msgid "Accounts"
 msgstr "Счета"
 
-#: netprofile_stashes/templates/client_stashes.mak:15
-#: netprofile_stashes/templates/client_stats.mak:14
+#: netprofile_stashes/templates/client_stashes.mak:35
+#: netprofile_stashes/templates/client_stats.mak:34
 msgid "Account Name"
 msgstr "Название счёта"
 
-#: netprofile_stashes/templates/client_stashes.mak:20
+#: netprofile_stashes/templates/client_stashes.mak:40
 msgid "Current account balance"
 msgstr "Текущий баланс на счёте"
 
-#: netprofile_stashes/templates/client_stashes.mak:26
+#: netprofile_stashes/templates/client_stashes.mak:45
+msgid "Credit:"
+msgstr "Кредит:"
+
+#: netprofile_stashes/templates/client_stashes.mak:46
 msgid "Current credit limit for this account"
 msgstr "Текущиий лимит на счёте"
 
-#: netprofile_stashes/templates/client_stashes.mak:36
-#: netprofile_stashes/templates/client_stashes.mak:37
-#: netprofile_stashes/templates/client_stashes.mak:55
-#: netprofile_stashes/templates/client_stashes.mak:79
+#: netprofile_stashes/templates/client_stashes.mak:56
+#: netprofile_stashes/templates/client_stashes.mak:57
+#: netprofile_stashes/templates/client_stashes.mak:75
+#: netprofile_stashes/templates/client_stashes.mak:99
 msgid "Actions"
 msgstr "Действия"
 
-#: netprofile_stashes/templates/client_stashes.mak:41
-#: netprofile_stashes/templates/client_stashes.mak:59
+#: netprofile_stashes/templates/client_stashes.mak:61
+#: netprofile_stashes/templates/client_stashes.mak:79
 msgid "Create User"
 msgstr "Создать учётную запись"
 
-#: netprofile_stashes/templates/client_stashes.mak:42
-#: netprofile_stashes/templates/client_stashes.mak:60
+#: netprofile_stashes/templates/client_stashes.mak:62
+#: netprofile_stashes/templates/client_stashes.mak:80
 msgid "Transfer Funds"
 msgstr "Перевести средства"
 
-#: netprofile_stashes/templates/client_stashes.mak:44
-#: netprofile_stashes/templates/client_stashes.mak:62
+#: netprofile_stashes/templates/client_stashes.mak:64
+#: netprofile_stashes/templates/client_stashes.mak:82
 msgid "Operations Report"
 msgstr "Отчёт об операциях"
 
-#: netprofile_stashes/templates/client_stashes.mak:45
-#: netprofile_stashes/templates/client_stashes.mak:63
+#: netprofile_stashes/templates/client_stashes.mak:65
+#: netprofile_stashes/templates/client_stashes.mak:83
 msgid "Promised Payments Report"
 msgstr "Отчёт по обещанным платежам"
 
-#: netprofile_stashes/templates/client_stashes.mak:51
+#: netprofile_stashes/templates/client_stashes.mak:71
 msgid "Users"
 msgstr "Учётные записи"
 
-#: netprofile_stashes/templates/client_stashes.mak:52
+#: netprofile_stashes/templates/client_stashes.mak:72
 msgid "Replenish"
 msgstr "Пополнить"
 
-#: netprofile_stashes/templates/client_stashes.mak:92
+#: netprofile_stashes/templates/client_stashes.mak:112
 msgid "Paid Till"
 msgstr "Оплачено до"
 
-#: netprofile_stashes/templates/client_stashes.mak:103
+#: netprofile_stashes/templates/client_stashes.mak:123
 msgid "This account has no users."
 msgstr "У этого счёта нет учётных записей."
 
-#: netprofile_stashes/templates/client_stashes.mak:109
+#: netprofile_stashes/templates/client_stashes.mak:130
 msgid "Promise Payment"
 msgstr "Обещанный платёж"
 
-#: netprofile_stashes/templates/client_stashes.mak:113
+#: netprofile_stashes/templates/client_stashes.mak:134
 msgid "Enter sum"
 msgstr "Введите сумму"
 
-#: netprofile_stashes/templates/client_stashes.mak:113
+#: netprofile_stashes/templates/client_stashes.mak:134
 msgid "Enter the sum you promise to pay at a later date."
 msgstr "Введите сумму платежа, который вы обещаете внести в будущем."
 
-#: netprofile_stashes/templates/client_stashes.mak:114
+#: netprofile_stashes/templates/client_stashes.mak:135
 msgid "Press to promise payment"
 msgstr "Пообещать платёж"
 
-#: netprofile_stashes/templates/client_stashes.mak:114
+#: netprofile_stashes/templates/client_stashes.mak:135
 msgid "Promise"
 msgstr "Пообещать"
 
-#: netprofile_stashes/templates/client_stats.mak:22
-#: netprofile_stashes/templates/client_stats.mak:29
+#: netprofile_stashes/templates/client_stats.mak:42
+#: netprofile_stashes/templates/client_stats.mak:49
 msgid "From"
 msgstr "С"
 
-#: netprofile_stashes/templates/client_stats.mak:28
+#: netprofile_stashes/templates/client_stats.mak:48
 msgid "Enter starting date of the range"
 msgstr "Укажите начальную дату"
 
-#: netprofile_stashes/templates/client_stats.mak:39
-#: netprofile_stashes/templates/client_stats.mak:46
+#: netprofile_stashes/templates/client_stats.mak:59
+#: netprofile_stashes/templates/client_stats.mak:66
 msgid "Till"
 msgstr "По"
 
-#: netprofile_stashes/templates/client_stats.mak:45
+#: netprofile_stashes/templates/client_stats.mak:65
 msgid "Enter ending date of the range"
 msgstr "Укажите конечную дату"
 
-#: netprofile_stashes/templates/client_stats.mak:56
+#: netprofile_stashes/templates/client_stats.mak:76
 msgid "Change filter"
 msgstr "Изменить фильтр"
 
-#: netprofile_stashes/templates/client_stats.mak:58
+#: netprofile_stashes/templates/client_stats.mak:78
 msgid "Filter"
 msgstr "Показать"
 
-#: netprofile_stashes/templates/client_stats.mak:70
+#: netprofile_stashes/templates/client_stats.mak:90
 msgid "Sum"
 msgstr "Сумма"
 
-#: netprofile_stashes/templates/client_stats.mak:92
+#: netprofile_stashes/templates/client_stats.mak:112
 msgid "No operations were found."
 msgstr "Операции не найдены."
 
-#: netprofile_stashes/templates/client_stats.mak:104
+#: netprofile_stashes/templates/client_stats.mak:124
 msgid "(current)"
 msgstr "(текущая)"
 
