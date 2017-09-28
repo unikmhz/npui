@@ -127,7 +127,7 @@ ${gen_block('stashes.cl.block.users', stash=stash) | n}
 % endif
 	<ul class="list-group tab-pane fade" id="tab-replenish-${stash.id}">
 ${gen_block('stashes.cl.block.payment', stash=stash) | n}
-% if stash.credit == 0:
+% if stash.credit <= 0:
 		<li class="list-group-item">
 			<form class="row" role="form" method="post" action="${req.route_url('stashes.cl.accounts', traverse=(stash.id, 'promise'))}">
 				<label for="" class="col-sm-4">${_('Promise Payment')}</label>
