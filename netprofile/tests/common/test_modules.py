@@ -1040,6 +1040,45 @@ class TestModulesAPI(unittest.TestCase):
             mm.get_export_format('EP2')
         iep.assert_called_once_with('netprofile.export.formats', 'EP2')
 
+    def test_get_settings(self):
+        cfg = mock.MagicMock()
+        cfg.get_settings.return_value = {'netprofile.vhost': None}
+        mm = ModuleManager(cfg)
+        mod1 = mock.MagicMock()
+        mod2 = mock.MagicMock()
+        mod3 = mock.MagicMock()
+
+        sect1 = mock.MagicMock()
+        type(sect1).name = 'sect1'
+        sect1.vhost = 'MAIN'
+        sect1.scope = 'global'
+        mod1.get_settings.return_value = (sect1,)
+
+        sect2 = mock.MagicMock()
+        type(sect2).name = 'sect2'
+        sect2.vhost = 'MAIN'
+        sect2.scope = 'user'
+        mod2.get_settings.return_value = (sect2,)
+
+        sect3 = mock.MagicMock()
+        type(sect3).name = 'sect3'
+        sect3.vhost = 'client'
+        sect3.scope = 'global'
+        mod3.get_settings.return_value = (sect3,)
+
+        mm.loaded = {'mod1': mod1, 'mod2': mod2, 'mod3': mod3}
+
+        settings = mm.get_settings()
+        self.assertEqual(settings, {'mod1': {'sect1': sect1}})
+
+        settings = mm.get_settings('user')
+        self.assertEqual(settings, {'mod2': {'sect2': sect2}})
+
+        mm.vhost = 'client'
+        mm.get_settings.cache_clear()
+        settings = mm.get_settings()
+        self.assertEqual(settings, {'mod3': {'sect3': sect3}})
+
 
 class TestModuleGettersAPI(unittest.TestCase):
     def setUp(self):
