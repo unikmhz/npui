@@ -64,3 +64,9 @@ def _dpane_stash_futures(tabs, model, req):
         'extraParamProp':    'stashid',
         'createControllers': 'NetProfile.core.controller.RelatedWizard'
     })
+
+
+@register_hook('access.cl.tpldef.accounts.list')
+def _cl_tpldef_accounts(tpldef, req):
+    loc = req.localizer
+    tpldef['extra_tabs']['paidservices'] = loc.translate(_('Services'))

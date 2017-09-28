@@ -32,6 +32,7 @@ from pyramid.httpexceptions import HTTPSeeOther
 from pyramid.i18n import TranslationStringFactory
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
+from collections import OrderedDict
 
 from netprofile.common.factory import RootFactory
 from netprofile.common.hooks import register_hook
@@ -123,7 +124,7 @@ class ClientRootFactory(RootFactory):
              context=Stash, permission='USAGE',
              renderer='netprofile_stashes:templates/client_stashes.mak')
 def client_list(ctx, request):
-    tpldef = {'stashes': None, 'sname': None}
+    tpldef = {'stashes': None, 'sname': None, 'extra_tabs': OrderedDict()}
     if isinstance(ctx, Stash):
         tpldef['sname'] = ctx.name
         tpldef['stashes'] = (ctx,)

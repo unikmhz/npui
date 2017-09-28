@@ -27,6 +27,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 from netprofile.common.modules import ModuleBase
+from netprofile.tpl import TemplateObject
 
 from ._version import get_versions
 __version__ = get_versions()['version']
@@ -39,6 +40,10 @@ class Module(ModuleBase):
     def __init__(self, mmgr):
         self.mmgr = mmgr
         mmgr.cfg.add_translation_dirs('netprofile_paidservices:locale/')
+        mmgr.cfg.register_block(
+                'stashes.cl.block.tabs',
+                TemplateObject('netprofile_paidservices:templates'
+                               '/client_block_paidservices.mak'))
 
     @classmethod
     def get_deps(cls):

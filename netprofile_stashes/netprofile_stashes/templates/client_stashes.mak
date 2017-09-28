@@ -69,7 +69,10 @@ ${gen_block('stashes.cl.block.menu', stash=stash) | n}
 	</noscript>
 	<ul class="nav nav-tabs">
 		<li class="active"><a href="#tab-users-${stash.id}" data-toggle="tab">${_('Users')}</a></li>
-  	    <li><a href="#tab-replenish-${stash.id}" data-toggle="tab">${_('Replenish')}</a></li>
+% for tabname, tabtitle in extra_tabs.items():
+		<li><a href="#tab-${tabname}-${stash.id}" data-toggle="tab">${tabtitle}</a></li>
+% endfor
+		<li><a href="#tab-replenish-${stash.id}" data-toggle="tab">${_('Replenish')}</a></li>
 		<li class="dropdown pull-right">
 			<a class="dropdown-toggle" data-toggle="dropdown" id="menu-reports-${stash.id}" href="#">
 				${_('Actions')}
@@ -95,14 +98,14 @@ ${gen_block('stashes.cl.block.menu', stash=stash) | n}
 		<li class="list-group-item">
 			<h4 class="list-group-item-heading">
 				${a.nick}
-			<div class="btn-group no-js">
-				<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" title="${_('Actions')}" id="menubtn-user-${a.id}">
-					<span class="glyphicon glyphicon-cog"></span>
-				</button>
-				<ul class="dropdown-menu" role="menu" aria-labelledby="menubtn-user-${a.id}">
+				<div class="btn-group no-js">
+					<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown" title="${_('Actions')}" id="menubtn-user-${a.id}">
+						<span class="glyphicon glyphicon-cog"></span>
+					</button>
+					<ul class="dropdown-menu" role="menu" aria-labelledby="menubtn-user-${a.id}">
 ${gen_block('stashes.cl.block.entity_menu', stash=stash, a=a) | n}
-				</ul>
-			</div>
+					</ul>
+				</div>
 % if a.access_state:
 				<span class="label label-danger pull-right">${a.access_state_string(req)}</span>
 % endif
@@ -142,6 +145,7 @@ ${gen_block('stashes.cl.block.payment', stash=stash) | n}
 		</li>
 % endif
 	</ul>
+${gen_block('stashes.cl.block.tabs', stash=stash) | n}
 </div>
 % endfor
 
