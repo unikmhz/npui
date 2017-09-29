@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# NetProfile: XOP module - Models
+# NetProfile: XOP module - Exceptions
 # Copyright © 2014-2017 Nikita Andriyanov
 #
 # This file is part of NetProfile.
@@ -20,7 +20,8 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from exceptions import RuntimeError
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 class ExternalOperationError(RuntimeError):
     def __init__(self, error, xop=None):
