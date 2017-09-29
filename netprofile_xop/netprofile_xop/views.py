@@ -24,7 +24,7 @@ from __future__ import (unicode_literals, print_function,
                         absolute_import, division)
 
 from pyramid.i18n import TranslationStringFactory
-from pyramid.view import view_config
+from pyramid.view import view_config, exception_view_config
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPForbidden
 from sqlalchemy.orm.exc import NoResultFound
@@ -34,6 +34,7 @@ from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 
 from .models import ExternalOperationProvider
+from .exceptions import ExternalOperationError
 
 _ = TranslationStringFactory('netprofile_xop')
 
@@ -100,5 +101,13 @@ def xop_request(ctx, request):
     if hasattr(gw, 'generate_response') and callable(gw.generate_response):
         return gw.generate_response(request, xoplist)
 
-    resp = Response(body='OK', content_type='text/plain', charset='UTF-8')
-    return resp
+    raise HTTPForbidden('Not Implemented')
+
+@exception_view_config(ExternalOperationError, vhost='xop')
+def xop_error(exception, request):
+    if exception.xop:
+        gw = exception.xop.provider.get_gateway()
+        if hasattr(gw, 'generate_error') and callable(gw.generate_error):
+            return gw.generate_error(request, exception)
+        raise HTTPForbidden('Not Implemented')
+    raise HTTPForbidden('Unknown Error')
