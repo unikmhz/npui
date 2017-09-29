@@ -25,7 +25,6 @@ from __future__ import (unicode_literals, print_function,
 
 from pyramid.i18n import TranslationStringFactory
 from pyramid.view import view_config, exception_view_config
-from pyramid.response import Response
 from pyramid.httpexceptions import HTTPForbidden
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -102,6 +101,7 @@ def xop_request(ctx, request):
         return gw.generate_response(request, xoplist)
 
     raise HTTPForbidden('Not Implemented')
+
 
 @exception_view_config(ExternalOperationError, vhost='xop')
 def xop_error(exception, request):

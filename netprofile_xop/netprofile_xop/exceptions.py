@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: XOP module - Exceptions
-# Copyright © 2014-2017 Nikita Andriyanov
+# Copyright © 2017 Nikita Andriyanov
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -23,7 +23,8 @@
 from __future__ import (unicode_literals, print_function,
                         absolute_import, division)
 
+
 class ExternalOperationError(RuntimeError):
     def __init__(self, error, xop=None):
-        self.error = error 
+        self.error = error
         self.xop = xop
