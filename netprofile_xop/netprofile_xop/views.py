@@ -33,7 +33,7 @@ from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 
 from .models import ExternalOperationProvider
-from .exceptions import ExternalOperationError
+from .exceptions import ExternalOperationError, ExternalOperationProviderError
 
 _ = TranslationStringFactory('netprofile_xop')
 
@@ -107,6 +107,16 @@ def xop_request(ctx, request):
 def xop_error(exception, request):
     if exception.xop:
         gw = exception.xop.provider.get_gateway()
+        if hasattr(gw, 'generate_error') and callable(gw.generate_error):
+            return gw.generate_error(request, exception)
+        raise HTTPForbidden('Not Implemented')
+    raise HTTPForbidden('Unknown Error')
+
+
+@exception_view_config(ExternalOperationProviderError, vhost='xop')
+def provider_error(exception, request):
+    if exception.provider:
+        gw = exception.provider.get_gateway()
         if hasattr(gw, 'generate_error') and callable(gw.generate_error):
             return gw.generate_error(request, exception)
         raise HTTPForbidden('Not Implemented')

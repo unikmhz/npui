@@ -28,3 +28,9 @@ class ExternalOperationError(RuntimeError):
     def __init__(self, error, xop=None):
         self.error = error
         self.xop = xop
+
+
+class ExternalOperationProviderError(RuntimeError):
+    def __init__(self, error, provider=None):
+        self.error = error
+        self.provider = provider
