@@ -37,10 +37,12 @@ from sqlalchemy.exc import (
 from sqlalchemy.orm.exc import NoResultFound
 from netprofile import main
 from netprofile.common.modules import (
+    IModuleManager,
     ModuleBase,
     ModuleError,
     ModuleManager,
-    VersionPair
+    VersionPair,
+    includeme
 )
 
 
@@ -1078,6 +1080,22 @@ class TestModulesAPI(unittest.TestCase):
         mm.get_settings.cache_clear()
         settings = mm.get_settings()
         self.assertEqual(settings, {'mod3': {'sect3': sect3}})
+
+    @mock.patch('netprofile.common.modules.ModuleManager')
+    def test_pyramid_include(self, mm):
+        import netprofile
+        cfg = mock.MagicMock()
+
+        self.assertIsNone(netprofile.inst_mm)
+        includeme(cfg)
+        cfg.add_translation_dirs.assert_called_once_with('netprofile:locale/')
+        mm.assert_called_once_with(cfg)
+        mm().scan.assert_called_once_with()
+        cfg.registry.registerUtility.assert_called_once_with(mm(),
+                                                             IModuleManager)
+        self.assertEqual(netprofile.inst_mm, mm())
+        includeme(cfg)
+        self.assertEqual(netprofile.inst_mm, mm())
 
 
 class TestModuleGettersAPI(unittest.TestCase):
