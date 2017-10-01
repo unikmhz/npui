@@ -25,6 +25,7 @@ from __future__ import (unicode_literals, print_function,
 
 import datetime as dt
 import decimal
+import ipaddress
 import translationstring
 from dateutil.tz import tzlocal
 
@@ -39,7 +40,6 @@ from pyramid.httpexceptions import HTTPForbidden
 
 from netprofile import PY3
 from netprofile.common.hooks import register_hook
-from netprofile.common import ipaddr
 
 if PY3:
     from netprofile.db.enum3 import EnumSymbol
@@ -208,7 +208,7 @@ def includeme(config):
         renderer.add_adapter(dt.datetime, _json_datetime)
         renderer.add_adapter(dt.date, lambda obj, req: obj.isoformat())
         renderer.add_adapter(dt.time, lambda obj, req: obj.isoformat())
-        renderer.add_adapter(ipaddr.IPv4Address, lambda obj, req: int(obj))
+        renderer.add_adapter(ipaddress.IPv4Address, lambda obj, req: int(obj))
         renderer.add_adapter(decimal.Decimal, lambda obj, req: str(obj))
         config.add_renderer('jsonrpc', renderer)
         config.add_jsonrpc_endpoint('api.jsonrpc', '/api/jsonrpc',

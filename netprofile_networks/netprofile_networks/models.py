@@ -32,6 +32,7 @@ __all__ = [
     'RoutingTableEntry'
 ]
 
+import ipaddress
 import itertools
 import math
 from sqlalchemy import (
@@ -49,7 +50,6 @@ from sqlalchemy.orm import (
 )
 from pyramid.i18n import TranslationStringFactory
 
-from netprofile.common import ipaddr
 from netprofile.db.connection import Base
 from netprofile.db.fields import (
     NPBoolean,
@@ -343,14 +343,14 @@ class Network(Base):
     @property
     def ipv4_network(self):
         if self.ipv4_address:
-            return ipaddr.IPv4Network('%s/%s' % (str(self.ipv4_address),
-                                                 str(self.ipv4_cidr)))
+            return ipaddress.IPv4Network('%s/%s' % (str(self.ipv4_address),
+                                                    str(self.ipv4_cidr)))
 
     @property
     def ipv6_network(self):
         if self.ipv6_address:
-            return ipaddr.IPv6Network('%s/%s' % (str(self.ipv6_address),
-                                                 str(self.ipv6_cidr)))
+            return ipaddress.IPv6Network('%s/%s' % (str(self.ipv6_address),
+                                                    str(self.ipv6_cidr)))
 
     def __str__(self):
         return str(self.name)
@@ -718,8 +718,8 @@ class RoutingTableEntry(Base):
 
     @property
     def ipv4_network(self):
-        return ipaddr.IPv4Network('%s/%s' % (str(self.network),
-                                             str(self.cidr)))
+        return ipaddress.IPv4Network('%s/%s' % (str(self.network),
+                                                str(self.cidr)))
 
     def dhcp_strings(self, net):
         if self.next_hop:

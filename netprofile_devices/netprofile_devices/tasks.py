@@ -23,6 +23,7 @@
 from __future__ import (unicode_literals, print_function,
                         absolute_import, division)
 
+import ipaddress
 import logging
 import pkg_resources
 import transaction
@@ -32,7 +33,6 @@ from netprofile.celery import (
     app,
     task_meta
 )
-from netprofile.common import ipaddr
 from netprofile.common.hooks import IHookManager
 
 logger = logging.getLogger(__name__)
@@ -74,9 +74,9 @@ def task_probe_hosts(probe_type='hosts', probe_ids=()):
             for host, addrs in prober.probe(q).items():
                 for addr, result in addrs.items():
                     ipa = addr.address
-                    if isinstance(ipa, ipaddr.IPv4Address):
+                    if isinstance(ipa, ipaddress.IPv4Address):
                         addrtype = 'v4'
-                    elif isinstance(ipa, ipaddr.IPv6Address):
+                    elif isinstance(ipa, ipaddress.IPv6Address):
                         addrtype = 'v6'
                     else:
                         continue

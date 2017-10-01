@@ -36,6 +36,7 @@ __all__ = [
     'IP6AddrGetOffsetHGFunction'
 ]
 
+import ipaddress
 from sqlalchemy import (
     Column,
     Date,
@@ -52,7 +53,6 @@ from sqlalchemy.orm import (
 )
 from pyramid.i18n import TranslationStringFactory
 
-from netprofile.common import ipaddr
 from netprofile.db.connection import Base
 from netprofile.db import fields
 from netprofile.db.fields import (
@@ -498,7 +498,7 @@ class IPv4ReverseZoneSerial(Base):
 
     @property
     def ipv4_network(self):
-        return ipaddr.IPv4Network(str(self.ipv4_address) + '/24')
+        return ipaddress.IPv4Network(str(self.ipv4_address) + '/24')
 
     @property
     def zone_name(self):
@@ -580,7 +580,7 @@ class IPv6ReverseZoneSerial(Base):
 
     @property
     def ipv6_network(self):
-        return ipaddr.IPv6Network(str(self.ipv6_address) + '/64')
+        return ipaddress.IPv6Network(str(self.ipv6_address) + '/64')
 
     @property
     def zone_name(self):

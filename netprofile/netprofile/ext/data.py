@@ -26,6 +26,7 @@ from __future__ import (unicode_literals, print_function,
 import binascii
 import importlib
 import inspect
+import ipaddress
 import logging
 import decimal
 
@@ -110,7 +111,6 @@ from netprofile.ext.columns import (
     HybridColumn,
     PseudoColumn
 )
-from netprofile.common import ipaddr
 from netprofile.tpl import TemplateObject
 
 _ = TranslationStringFactory('netprofile')
@@ -704,9 +704,9 @@ class ExtColumn(object):
                 if isinstance(param, (list, tuple)):
                     param = bytes(param)
             if issubclass(typecls, IPv4Address):
-                return ipaddr.IPv4Address(param)
+                return ipaddress.IPv4Address(param)
             if issubclass(typecls, IPv6Address):
-                return ipaddr.IPv6Address(param)
+                return ipaddress.IPv6Address(param)
             return None
         if issubclass(typecls, _INTEGER_SET):
             if param == '':

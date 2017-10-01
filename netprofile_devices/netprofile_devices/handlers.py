@@ -23,14 +23,13 @@
 from __future__ import (unicode_literals, print_function,
                         absolute_import, division)
 
+import ipaddress
 import snimpy.manager as mgr
 from snimpy.snmp import (
     SNMPNoCreation,
     SNMPNoSuchObject
 )
 from pyramid.decorator import reify
-
-from netprofile.common import ipaddr
 
 
 class TableProxy(object):
@@ -89,9 +88,9 @@ class NetworkDeviceHandler(object):
     def ifindex_by_address(self, addr):
         self.load_mib('IP-MIB')
 
-        if isinstance(addr, ipaddr.IPv4Address):
+        if isinstance(addr, ipaddress.IPv4Address):
             addrtype = 1
-        elif isinstance(addr, ipaddr.IPv6Address):
+        elif isinstance(addr, ipaddress.IPv6Address):
             addrtype = 2
         else:
             return None
@@ -110,9 +109,9 @@ class NetworkDeviceHandler(object):
     def get_arp_entry(self, ifindex, addr):
         self.load_mib('IP-MIB')
 
-        if isinstance(addr, ipaddr.IPv4Address):
+        if isinstance(addr, ipaddress.IPv4Address):
             addrtype = 1
-        elif isinstance(addr, ipaddr.IPv6Address):
+        elif isinstance(addr, ipaddress.IPv6Address):
             addrtype = 2
         else:
             return None
@@ -132,9 +131,9 @@ class NetworkDeviceHandler(object):
     def clear_arp_entry(self, ifindex, addr):
         self.load_mib('IP-MIB')
 
-        if isinstance(addr, ipaddr.IPv4Address):
+        if isinstance(addr, ipaddress.IPv4Address):
             addrtype = 1
-        elif isinstance(addr, ipaddr.IPv6Address):
+        elif isinstance(addr, ipaddress.IPv6Address):
             addrtype = 2
         else:
             return False
@@ -167,9 +166,9 @@ class NetworkDeviceHandler(object):
             for idx, phys in self.snmp_ro.ipNetToPhysicalPhysAddress.iteritems(
                     *tfilter):
                 if idx[1] == 1:
-                    addr = ipaddr.IPv4Address(str(idx[2]))
+                    addr = ipaddress.IPv4Address(str(idx[2]))
                 elif idx[1] == 2:
-                    addr = ipaddr.IPv6Address(str(idx[2]))
+                    addr = ipaddress.IPv6Address(str(idx[2]))
                 else:
                     continue
                 tbl.append((int(idx[0]), addr, phys._toBytes()))
@@ -177,7 +176,7 @@ class NetworkDeviceHandler(object):
             for idx, phys in self.snmp_ro.ipNetToMediaPhysAddress.iteritems(
                     *tfilter):
                 tbl.append((int(idx[0]),
-                            ipaddr.IPv4Address(idx[1]),
+                            ipaddress.IPv4Address(idx[1]),
                             phys._toBytes()))
 
         return tbl

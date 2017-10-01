@@ -25,6 +25,7 @@ from __future__ import (unicode_literals, print_function,
 
 import binascii
 import collections
+import ipaddress
 import json
 import re
 import uuid
@@ -49,7 +50,6 @@ from sqlalchemy.sql import (
 from sqlalchemy.ext.compiler import compiles
 
 from netprofile.db import processors
-from netprofile.common import ipaddr
 
 if PY3:
     from netprofile.db.enum3 import (  # noqa: F401
@@ -148,7 +148,7 @@ class IPv4Address(types.TypeDecorator):
 
     @property
     def python_type(self):
-        return ipaddr.IPv4Address
+        return ipaddress.IPv4Address
 
     def process_bind_param(self, value, dialect):
         if value is None:
@@ -160,7 +160,7 @@ class IPv4Address(types.TypeDecorator):
     def process_result_value(self, value, dialect):
         if value is None:
             return None
-        return ipaddr.IPv4Address(value)
+        return ipaddress.IPv4Address(value)
 
 
 class IPv6Address(types.TypeDecorator):
@@ -176,7 +176,7 @@ class IPv6Address(types.TypeDecorator):
 
     @property
     def python_type(self):
-        return ipaddr.IPv6Address
+        return ipaddress.IPv6Address
 
     def process_bind_param(self, value, dialect):
         if value is None:
@@ -188,7 +188,7 @@ class IPv6Address(types.TypeDecorator):
     def process_result_value(self, value, dialect):
         if value is None:
             return None
-        return ipaddr.IPv6Address(value)
+        return ipaddress.IPv6Address(value)
 
 
 class IPv6Offset(types.TypeDecorator):

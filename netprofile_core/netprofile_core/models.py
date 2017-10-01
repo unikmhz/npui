@@ -90,6 +90,7 @@ import datetime as dt
 import errno
 import hashlib
 import io
+import ipaddress
 import itertools
 import re
 import urllib
@@ -147,7 +148,6 @@ from netprofile import (
     inst_mm,
     vobject
 )
-from netprofile.common import ipaddr
 from netprofile.common.modules import IModuleManager
 from netprofile.common.threadlocal import magic
 from netprofile.common.cache import cache
@@ -1958,10 +1958,10 @@ class User(Base):
                            last_time=now)
         if req.remote_addr is not None:
             try:
-                ip = ipaddr.IPAddress(req.remote_addr)
-                if isinstance(ip, ipaddr.IPv4Address):
+                ip = ipaddress.ip_address(req.remote_addr)
+                if isinstance(ip, ipaddress.IPv4Address):
                     npsess.ip_address = ip
-                elif isinstance(ip, ipaddr.IPv6Address):
+                elif isinstance(ip, ipaddress.IPv6Address):
                     npsess.ipv6_address = ip
             except ValueError:
                 pass
@@ -3367,7 +3367,7 @@ class SecurityPolicy(Base):
         nets = []
         for ace in self.net_whitelist.split(';'):
             try:
-                nets.append(ipaddr.IPNetwork(ace.strip()))
+                nets.append(ipaddress.ip_network(ace.strip()))
             except ValueError:
                 pass
         return nets
@@ -3481,27 +3481,27 @@ class SecurityPolicy(Base):
         addr = npsess.ip_address or npsess.ipv6_address
         if req.remote_addr is not None:
             try:
-                remote_addr = ipaddr.IPAddress(req.remote_addr)
+                remote_addr = ipaddress.ip_address(req.remote_addr)
             except ValueError:
                 return False
-            if (isinstance(remote_addr, ipaddr.IPv4Address)
+            if (isinstance(remote_addr, ipaddress.IPv4Address)
                     and self.sess_window_ipv4):
-                if not isinstance(addr, ipaddr.IPv4Address):
+                if not isinstance(addr, ipaddress.IPv4Address):
                     return False
                 try:
-                    window = ipaddr.IPv4Network('%s/%d' % (
+                    window = ipaddress.IPv4Network('%s/%d' % (
                             str(addr),
                             self.sess_window_ipv4))
                 except ValueError:
                     return False
                 if remote_addr not in window:
                     return False
-            elif (isinstance(remote_addr, ipaddr.IPv6Address)
+            elif (isinstance(remote_addr, ipaddress.IPv6Address)
                     and self.sess_window_ipv6):
-                if not isinstance(addr, ipaddr.IPv6Address):
+                if not isinstance(addr, ipaddress.IPv6Address):
                     return False
                 try:
-                    window = ipaddr.IPv6Network('%s/%d' % (
+                    window = ipaddress.IPv6Network('%s/%d' % (
                             str(addr),
                             self.sess_window_ipv6))
                 except ValueError:

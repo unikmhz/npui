@@ -28,6 +28,7 @@ from __future__ import (unicode_literals, print_function,
 
 from collections import defaultdict
 import binascii
+import ipaddress
 import json
 import traceback
 import datetime as dt
@@ -44,7 +45,6 @@ from zope.interface.interfaces import ComponentLookupError
 import venusian
 
 from netprofile.common.hooks import register_hook
-from netprofile.common import ipaddr
 
 # form parameters sent by ExtDirect when using a form-submit
 # see http://www.sencha.com/products/js/direct.php
@@ -93,9 +93,9 @@ class JsonReprEncoder(json.JSONEncoder):
             return obj.isoformat()
         if isinstance(obj, dt.time):
             return obj.isoformat()
-        if isinstance(obj, ipaddr.IPv4Address):
+        if isinstance(obj, ipaddress.IPv4Address):
             return int(obj)
-        if isinstance(obj, ipaddr.IPv6Address):
+        if isinstance(obj, ipaddress.IPv6Address):
             return tuple(obj.packed)
         if isinstance(obj, decimal.Decimal):
             return str(obj)
