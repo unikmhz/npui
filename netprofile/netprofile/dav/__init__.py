@@ -20,12 +20,8 @@
 # Public License along with NetProfile. If not, see
 # <http://www.gnu.org/licenses/>.
 
-from __future__ import (
-    unicode_literals,
-    print_function,
-    absolute_import,
-    division
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 from six import PY3
 import string

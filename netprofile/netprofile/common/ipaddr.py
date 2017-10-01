@@ -22,12 +22,8 @@ and networks.
 
 """
 
-from __future__ import (
-	unicode_literals,
-	print_function,
-	absolute_import,
-	division
-)
+from __future__ import (unicode_literals, print_function,
+                        absolute_import, division)
 
 __version__ = 'trunk'
 
@@ -37,9 +33,10 @@ IPV4LENGTH = 32
 IPV6LENGTH = 128
 
 try:
-	_int_types = (int, long)
+    _int_types = (int, long)
 except NameError:
-	_int_types = int
+    _int_types = int
+
 
 class AddressValueError(ValueError):
     """A Value Error related to the address."""
@@ -178,6 +175,7 @@ def _find_address_range(addresses):
             break
     return (first, last)
 
+
 def _get_prefix_length(number1, number2, bits):
     """Get the number of leading bits that are same for two numbers.
 
@@ -195,6 +193,7 @@ def _get_prefix_length(number1, number2, bits):
             return bits - i
     return 0
 
+
 def _count_righthand_zero_bits(number, bits):
     """Count the number of zero bits on the right hand side.
 
@@ -211,6 +210,7 @@ def _count_righthand_zero_bits(number, bits):
     for i in range(bits):
         if (number >> i) % 2:
             return i
+
 
 def summarize_address_range(first, last):
     """Summarize a network range given the first and last IP addresses.
@@ -275,6 +275,7 @@ def summarize_address_range(first, last):
         first_int = current + 1
         first = IPAddress(first_int, version=first._version)
     return networks
+
 
 def _collapse_address_list_recursive(addresses):
     """Loops through the addresses, collapsing concurrent netblocks.
@@ -376,6 +377,7 @@ def collapse_address_list(addresses):
     return _collapse_address_list_recursive(sorted(
         addrs + nets, key=_BaseNet._get_networks_key))
 
+
 # backwards compatibility
 CollapseAddrList = collapse_address_list
 
@@ -401,6 +403,7 @@ except (NameError, TypeError):
         def __repr__(self):
             return 'Bytes(%s)' % str.__repr__(self)
 
+
 def get_mixed_type_key(obj):
     """Return a key suitable for sorting between networks and addresses.
 
@@ -424,6 +427,7 @@ def get_mixed_type_key(obj):
     elif isinstance(obj, _BaseIP):
         return obj._get_address_key()
     return NotImplemented
+
 
 class _IPAddrBase(object):
 
@@ -521,7 +525,7 @@ class _BaseIP(_IPAddrBase):
         return '%s(%r)' % (self.__class__.__name__, str(self))
 
     def __str__(self):
-        return  '%s' % self._string_from_ip_int(self._ip)
+        return '%s' % self._string_from_ip_int(self._ip)
 
     def __hash__(self):
         return hash(hex(int(self._ip)))
@@ -637,8 +641,8 @@ class _BaseNet(_IPAddrBase):
         return not eq
 
     def __str__(self):
-        return  '%s/%s' % (str(self.ip),
-                           str(self._prefixlen))
+        return '%s/%s' % (str(self.ip),
+                          str(self._prefixlen))
 
     def __hash__(self):
         return hash(int(self.network) ^ int(self.netmask))
@@ -646,7 +650,7 @@ class _BaseNet(_IPAddrBase):
     def __contains__(self, other):
         # always false if one is v4 and the other is v6.
         if self._version != other._version:
-          return False
+            return False
         # dealing with another network.
         if isinstance(other, _BaseNet):
             return (self.network <= other.network and
@@ -762,7 +766,7 @@ class _BaseNet(_IPAddrBase):
 
         # Make sure we're comparing the network of other.
         other = IPNetwork('%s/%s' % (str(other.network), str(other.prefixlen)),
-                   version=other._version)
+                          version=other._version)
 
         s1, s2 = self.subnet()
         while s1 != other and s2 != other:
@@ -774,7 +778,7 @@ class _BaseNet(_IPAddrBase):
                 s1, s2 = s2.subnet()
             else:
                 # If we got here, there's a bug somewhere.
-                assert True == False, ('Error performing exclusion: '
+                assert True is False, ('Error performing exclusion: '
                                        's1: %s s2: %s other: %s' %
                                        (str(s1), str(s2), str(other)))
         if s1 == other:
@@ -783,7 +787,7 @@ class _BaseNet(_IPAddrBase):
             ret_addrs.append(s1)
         else:
             # If we got here, there's a bug somewhere.
-            assert True == False, ('Error performing exclusion: '
+            assert True is False, ('Error performing exclusion: '
                                    's1: %s s2: %s other: %s' %
                                    (str(s1), str(s2), str(other)))
 
@@ -945,7 +949,7 @@ class _BaseNet(_IPAddrBase):
 
         first = IPNetwork('%s/%s' % (str(self.network),
                                      str(self._prefixlen + prefixlen_diff)),
-                         version=self._version)
+                          version=self._version)
 
         yield first
         current = first
@@ -981,8 +985,8 @@ class _BaseNet(_IPAddrBase):
             An IPv4 network object.
 
         Raises:
-            ValueError: If self.prefixlen - prefixlen_diff < 0. I.e., you have a
-              negative prefix length.
+            ValueError: If self.prefixlen - prefixlen_diff < 0. I.e., you have
+              a negative prefix length.
                 OR
             If prefixlen_diff and new_prefix are both set or new_prefix is a
               larger number than the current prefix (larger number means a
@@ -998,7 +1002,6 @@ class _BaseNet(_IPAddrBase):
             if prefixlen_diff != 1:
                 raise ValueError('cannot set prefixlen_diff and new_prefix')
             prefixlen_diff = self._prefixlen - new_prefix
-
 
         if self.prefixlen - prefixlen_diff < 0:
             raise ValueError(
@@ -1115,14 +1118,14 @@ class _BaseV4(object):
 
     @property
     def is_reserved(self):
-       """Test if the address is otherwise IETF reserved.
+        """Test if the address is otherwise IETF reserved.
 
         Returns:
             A boolean, True if the address is within the
             reserved IPv4 Network range.
 
-       """
-       return self in IPv4Network('240.0.0.0/4')
+        """
+        return self in IPv4Network('240.0.0.0/4')
 
     @property
     def is_private(self):
@@ -1314,7 +1317,7 @@ class IPv4Network(_BaseV4, _BaseNet):
                         self._ip_int_from_string(addr[1]) ^ self._ALL_ONES)
                 else:
                     raise NetmaskValueError('%s is not a valid netmask'
-                                                     % addr[1])
+                                            % addr[1])
 
                 self._prefixlen = self._prefix_from_ip_int(int(self.netmask))
             else:
@@ -1372,8 +1375,8 @@ class IPv4Network(_BaseV4, _BaseNet):
         if len(mask) == 4:
             if [x for x in mask if int(x) not in self._valid_mask_octets]:
                 return False
-            if [y for idx, y in enumerate(mask) if idx > 0 and
-                y > mask[idx - 1]]:
+            if [y for idx, y in enumerate(mask) if (idx > 0 and
+                                                    y > mask[idx - 1])]:
                 return False
             return True
         try:
@@ -1383,10 +1386,17 @@ class IPv4Network(_BaseV4, _BaseNet):
         return 0 <= netmask <= self._max_prefixlen
 
     # backwards compatibility
-    IsRFC1918 = lambda self: self.is_private
-    IsMulticast = lambda self: self.is_multicast
-    IsLoopback = lambda self: self.is_loopback
-    IsLinkLocal = lambda self: self.is_link_local
+    def IsRFC1918(self):
+        return self.is_private
+
+    def IsMulticast(self):
+        return self.is_multicast
+
+    def IsLoopback(self):
+        return self.is_loopback
+
+    def IsLinkLocal(self):
+        return self.is_link_local
 
 
 class _BaseV6(object):
@@ -1463,8 +1473,9 @@ class _BaseV6(object):
             if parts_skipped < 1:
                 raise AddressValueError(ip_str)
         else:
-            # Otherwise, allocate the entire address to parts_hi.  The endpoints
-            # could still be empty, but _parse_hextet() will check for that.
+            # Otherwise, allocate the entire address to parts_hi.
+            # The endpoints could still be empty, but _parse_hextet() will
+            # check for that.
             if len(parts) != self._HEXTET_COUNT:
                 raise AddressValueError(ip_str)
             parts_hi = len(parts)
@@ -1495,14 +1506,15 @@ class _BaseV6(object):
             The hextet as an integer.
 
         Raises:
-            ValueError: if the input isn't strictly a hex number from [0..FFFF].
+            ValueError: if the input isn't strictly a hex number
+              from [0..FFFF].
 
         """
         # Whitelist the characters, since int() allows a lot of bizarre stuff.
         if not self._HEX_DIGITS.issuperset(hextet_str):
             raise ValueError
         if len(hextet_str) > 4:
-          raise ValueError
+            raise ValueError
         hextet_int = int(hextet_str, 16)
         if hextet_int > 0xFFFF:
             raise ValueError
@@ -1817,13 +1829,12 @@ class IPv6Network(_BaseV6, _BaseNet):
 
     """
 
-
     def __init__(self, address, strict=False):
         """Instantiate a new IPv6 Network object.
 
         Args:
-            address: A string or integer representing the IPv6 network or the IP
-              and prefix/netmask.
+            address: A string or integer representing the IPv6 network or
+              the IP and prefix/netmask.
               '2001:4860::/128'
               '2001:4860:0000:0000:0000:0000:0000:0000/128'
               '2001:4860::'
