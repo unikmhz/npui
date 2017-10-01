@@ -28,6 +28,7 @@ __all__ = [
     'ExternalOperationProvider'
 ]
 
+import ipaddress
 import pkg_resources
 from sqlalchemy import (
     Column,
@@ -47,10 +48,6 @@ from sqlalchemy.orm import (
 from pyramid.i18n import TranslationStringFactory
 
 from netprofile.common.locale import money_format
-from netprofile.common.ipaddr import (
-    IPAddress,
-    IPNetwork
-)
 from netprofile.db.connection import Base
 from netprofile.db.fields import (
     ASCIIString,
@@ -525,7 +522,7 @@ class ExternalOperationProvider(Base):
         nets = []
         for ace in self.access_list.split(';'):
             try:
-                nets.append(IPNetwork(ace.strip()))
+                nets.append(ipaddress.ip_network(ace.strip()))
             except ValueError:
                 pass
         return nets
@@ -537,7 +534,7 @@ class ExternalOperationProvider(Base):
         if not req.remote_addr:
             return False
         try:
-            addr = IPAddress(req.remote_addr)
+            addr = ipaddress.ip_address(req.remote_addr)
         except ValueError:
             return False
         nets = self.access_nets

@@ -3491,7 +3491,7 @@ class SecurityPolicy(Base):
                 try:
                     window = ipaddress.IPv4Network('%s/%d' % (
                             str(addr),
-                            self.sess_window_ipv4))
+                            self.sess_window_ipv4), strict=False)
                 except ValueError:
                     return False
                 if remote_addr not in window:
@@ -3503,7 +3503,7 @@ class SecurityPolicy(Base):
                 try:
                     window = ipaddress.IPv6Network('%s/%d' % (
                             str(addr),
-                            self.sess_window_ipv6))
+                            self.sess_window_ipv6), strict=False)
                 except ValueError:
                     return False
                 if remote_addr not in window:
