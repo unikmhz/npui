@@ -364,6 +364,22 @@ class TestModulesAPI(unittest.TestCase):
             self.assertTrue(mm.load(_req('mod7 > 0.9')))
             ep7.load.assert_called_once_with()
 
+            def _cfg_include(func, route_prefix=None):
+                func(cfg)
+
+            mm.cfg.include.side_effect = _cfg_include
+            with mock.patch(
+                    'netprofile.common.modules.ModuleBase.add_routes'
+                        ) as add_routes:
+                ep8 = mock.MagicMock()
+                ep8.version.return_value = _ver('1.0')
+                mm.installed['mod8'] = _ver('1.0')
+                mm.modules['mod8'] = ep8
+                ep8.load.return_value = ModuleBase
+                self.assertTrue(mm.load(_req('mod8 > 0.9')))
+                ep8.load.assert_called_once_with()
+                add_routes.assert_called_once_with(mm.cfg)
+
     @mock.patch('netprofile.common.modules.ModuleBase.get_sql_events')
     @mock.patch('netprofile.common.modules.ModuleBase.get_sql_views')
     @mock.patch('netprofile.common.modules.ModuleBase.get_sql_functions')
@@ -386,15 +402,42 @@ class TestModulesAPI(unittest.TestCase):
 
         ep1 = mock.MagicMock()
         ep1.version.return_value = mm.installed['mod1'] = _ver('1.0')
+        ep1.module_name = 'netprofile_mod1'
         ep1.load.return_value = ModuleBase
         mm.modules['mod1'] = ep1
 
         self.assertTrue(mm.load('mod1'))
+        cfg.add_static_view.assert_called_once_with('static/mod1',
+                                                    'netprofile_mod1:static',
+                                                    cache_max_age=3600)
+        cfg.commit.assert_called_once_with()
+        cfg.scan.assert_called_once_with('netprofile_mod1')
         get_models.assert_called_once_with()
         import_model.assert_called_once()
         get_sqlfunc.assert_called_once_with()
         get_sqlview.assert_called_once_with()
         get_sqlevt.assert_called_once_with()
+
+    @mock.patch('netprofile.common.modules.ModuleBase.version')
+    def test_module_load_no_scan(self, mock_version):
+        mock_version.return_value = _ver('1.0')
+
+        class ModuleBaseNoScan(ModuleBase):
+            enable_scan = False
+
+        cfg = mock.MagicMock()
+        mm = ModuleManager(cfg)
+        mm.installed = {}
+        mm.loaded['core'] = True
+
+        ep1 = mock.MagicMock()
+        ep1.version.return_value = mm.installed['mod1'] = _ver('1.0')
+        ep1.module_name = 'netprofile_mod1'
+        ep1.load.return_value = ModuleBaseNoScan
+        mm.modules['mod1'] = ep1
+
+        self.assertTrue(mm.load('mod1'))
+        cfg.scan.assert_not_called()
 
     @mock.patch('netprofile.common.modules.ModuleBase.get_sql_events',
                 new_callable=mock.NonCallableMagicMock)
