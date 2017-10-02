@@ -27,7 +27,7 @@ import sys
 
 try:
     import cdecimal
-    sys.modules['decimal'] = cdecimal
+    sys.modules['decimal'] = cdecimal  # pragma: no cover
 except ImportError:
     pass
 
