@@ -25,7 +25,7 @@ from __future__ import (unicode_literals, print_function,
 
 from pyramid.i18n import TranslationStringFactory
 from pyramid.view import view_config, exception_view_config
-from pyramid.httpexceptions import HTTPForbidden, HTTPNotFound
+from pyramid.httpexceptions import HTTPForbidden
 from sqlalchemy.orm.exc import NoResultFound
 
 from netprofile.common.factory import RootFactory
@@ -83,9 +83,9 @@ def xop_request(ctx, request):
         raise HTTPForbidden('Access Denied')
     gw = ctx.get_gateway()
     if not gw or not hasattr(gw, 'process_request'):
-        raise HTTPNotFound('Provider not found')
+        raise HTTPForbidden('Access Denied')
     if not callable(gw.process_request):
-        raise HTTPNotFound('Not Implemented')
+        raise HTTPForbidden('Access Denied')
 
     sess = DBSession()
     xoplist = gw.process_request(request, sess)
@@ -97,7 +97,7 @@ def xop_request(ctx, request):
     if hasattr(gw, 'generate_response') and callable(gw.generate_response):
         return gw.generate_response(request, xoplist)
 
-    raise HTTPNotFound('Not Implemented')
+    raise HTTPForbidden('Not Implemented')
 
 
 @exception_view_config(ExternalOperationError, vhost='xop')
