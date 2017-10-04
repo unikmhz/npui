@@ -299,6 +299,12 @@ class Module(ModuleBase):
                                         'updating them.'),
                             type='bool',
                             default=True),
+                    Setting('notify_on_assign',
+                            title=_('Notify on ticket assignment'),
+                            help_text=_('Send notification when a ticket '
+                                        'has been assigned to me or my group.'),
+                            type='bool',
+                            default=True),
                     scope='user',
                     title=_('Subscriptions'),
                     help_text=_('Ticket subscription settings.')),)

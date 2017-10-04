@@ -74,6 +74,7 @@ target/
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
 Session.vim
+.vscode
 .netrwhist
 *~
 \#*\#

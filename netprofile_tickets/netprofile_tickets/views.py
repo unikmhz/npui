@@ -65,7 +65,8 @@ from netprofile.ext.wizards import (
 from netprofile_core.models import (
     Group,
     User,
-    global_setting
+    global_setting,
+    user_setting
 )
 from netprofile_core.views import generate_calendar
 
@@ -795,14 +796,44 @@ def _send_ticket_mail(req, ticket=None, change=None):
 
     if change and change.transition:
         state = change.transition.to_state
+        old_state = change.transition.from_state
     else:
         state = ticket.state
+        old_state = None
 
     subject = '[T#%d] %s' % (ticket.id, ticket.name)
     recipient_map = {}
+    assigned_subscriptions = []
+
+    sess = DBSession()
+    with sess.no_autoflush:
+        if ticket.assigned_user and user_setting(
+                ticket.assigned_user,
+                'tickets.sub.notify_on_assign'):
+
+            tsub = UserTicketSubscription()
+            tsub.user = ticket.assigned_user
+            tsub.notify_change = True
+            tsub.ticket = ticket
+            sess.expunge(tsub)
+            assigned_subscriptions.append(tsub)
+
+        if ticket.assigned_group:
+            for user in ticket.assigned_group:
+                if not user_setting(user,
+                                    'tickets.sub.notify_on_assign'):
+                    continue
+                tsub = UserTicketSubscription()
+                tsub.user = user
+                tsub.notify_change = True
+                tsub.ticket = ticket
+                sess.expunge(tsub)
+                assigned_subscriptions.append(tsub)
 
     for sub in chain(state.subscriptions,
                      ticket.subscriptions,
+                     old_state.subscriptions if old_state else [],
+                     assigned_subscriptions,
                      _default_subscriptions(ticket, change)):
 
         if isinstance(sub, TicketSubscription):
