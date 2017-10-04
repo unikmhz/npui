@@ -803,10 +803,37 @@ def _send_ticket_mail(req, ticket=None, change=None):
 
     subject = '[T#%d] %s' % (ticket.id, ticket.name)
     recipient_map = {}
+    assigned_subscriptions = []
+
+    sess = DBSession()
+
+    if ticket.assigned_user and user_setting(
+            ticket.assigned_user,
+            'tickets.sub.notify_on_assign'):
+
+        tsub = UserTicketSubscription()
+        tsub.user = ticket.assigned_user 
+        tsub.notify_change = True
+        tsub.ticket = ticket
+        sess.expunge(tsub)
+        assigned_subscriptions.append(tsub)
+
+    if ticket.assigned_group:
+        for user in ticket.assigned_group:
+            if not user_setting(user,
+                                'tickets.sub.notify_on_assign'):
+                continue
+            tsub = UserTicketSubscription()
+            tsub.user = user
+            tsub.notify_change = True
+            tsub.ticket = ticket
+            sess.expunge(tsub)
+            assigned_subscriptions.append(tsub)
 
     for sub in chain(state.subscriptions,
                      ticket.subscriptions,
                      old_state.subscriptions if old_state else [],
+                     assigned_subscriptions,
                      _default_subscriptions(ticket, change)):
 
         if isinstance(sub, TicketSubscription):
@@ -820,36 +847,6 @@ def _send_ticket_mail(req, ticket=None, change=None):
             if addr in recipient_map:
                 continue
             recipient_map[addr] = tplvars
-
-    if ticket.assigned_user and user_setting(
-            ticket.assigned_user,
-            'tickets.sub.notify_on_assign'):
-        tplvars = tpldef.copy()
-        tplvars.update({
-            'recipient_type': 'user',
-            'user': ticket.assigned_user
-        })
-
-        for addr in ticket.assigned_user.email_addresses:
-            if addr in recipient_map:
-                continue
-            recipient_map[addr] = tplvars
-
-    if ticket.assigned_group:
-        tplvars = tpldef.copy()
-        tplvars.update({
-            'recipient_type': 'group',
-            'user': ticket.assigned_group
-        })
-
-        for user in ticket.assigned_group:
-            if not user_setting(user,
-                                'tickets.sub.notify_on_assign'):
-                continue
-            for addr in user.email_addresses:
-                if addr in recipient_map:
-                    continue
-                recipient_map[addr] = tplvars
 
     for addr, tplvars in recipient_map.items():
         msg_text = Attachment(
