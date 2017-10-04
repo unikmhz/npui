@@ -80,7 +80,8 @@ __all__ = [
     'HWAddrHexWindowsFunction',
     'HWAddrUnhexFunction',
 
-    'global_setting'
+    'global_setting',
+    'user_setting'
 ]
 
 import base64
@@ -7142,6 +7143,25 @@ class UserSetting(Base):
     def __str__(self):
         return '%s.%s' % (str(self.user),
                           str(self.type))
+
+
+def user_setting(user, name):
+
+    if user is None:
+        return None
+
+    path = name.split('.')
+    if len(path) != 3:
+        raise ValueError('Invalid setting name: %r' % (name,))
+
+    if inst_mm is None:
+        raise RuntimeError('Module manager has not registered yet')
+
+    setting = inst_mm.get_settings('user')[path[0]][path[1]][path[2]]
+
+    if name in user.settings and user.settings[name].value is not None:
+        return setting.parse_param(user.settings[name])
+    return setting.default
 
 
 class DataCache(Base):
