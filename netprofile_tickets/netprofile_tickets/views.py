@@ -65,7 +65,8 @@ from netprofile.ext.wizards import (
 from netprofile_core.models import (
     Group,
     User,
-    global_setting
+    global_setting,
+    user_setting
 )
 from netprofile_core.views import generate_calendar
 
@@ -793,8 +794,10 @@ def _send_ticket_mail(req, ticket=None, change=None):
     sender = cfg.get('netprofile.tickets.notifications.mail_sender',
                      'noreply@example.com')
 
+    old_state = None
     if change and change.transition:
         state = change.transition.to_state
+        old_state = change.transition.from_state
     else:
         state = ticket.state
 
@@ -803,7 +806,8 @@ def _send_ticket_mail(req, ticket=None, change=None):
 
     for sub in chain(state.subscriptions,
                      ticket.subscriptions,
-                     _default_subscriptions(ticket, change)):
+                     _default_subscriptions(ticket, change),
+                     old_state.subscriptions if old_state else []):
 
         if isinstance(sub, TicketSubscription):
             if not sub.check(ticket, change):
@@ -816,6 +820,38 @@ def _send_ticket_mail(req, ticket=None, change=None):
             if addr in recipient_map:
                 continue
             recipient_map[addr] = tplvars
+
+    if ticket.assigned_user and user_setting(
+            ticket.assigned_user,
+            'tickets.sub.notify_on_assign'):
+
+        tplvars = tpldef.copy()
+        tplvars.update({
+            'recipient_type': 'user',
+            'user': ticket.assigned_user
+        })
+
+        for addr in ticket.assigned_user.email_addresses:
+            if addr in recipient_map:
+                continue
+            recipient_map[addr] = tplvars
+
+    if ticket.assigned_group:
+        print(123)
+        tplvars = tpldef.copy()
+        tplvars.update({
+            'recipient_type': 'group',
+            'user': ticket.assigned_group
+        })
+
+        for user in ticket.assigned_group:
+            if not user_setting(user,
+                                'tickets.sub.notify_on_assign'):
+                continue
+            for addr in user.email_addresses:
+                if addr in recipient_map:
+                    continue
+                recipient_map[addr] = tplvars
 
     for addr, tplvars in recipient_map.items():
         msg_text = Attachment(
