@@ -301,8 +301,8 @@ class Module(ModuleBase):
                             default=True),
                     Setting('notify_on_assign',
                             title=_('Notify on ticket assignment'),
-                            help_text=_('Notify on ticket assignment on '
-                                        'you or your group.'),
+                            help_text=_('Send notification when a ticket '
+                                        'has been assigned to me or my group.'),
                             type='bool',
                             default=True),
                     scope='user',
