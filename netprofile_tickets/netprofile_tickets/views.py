@@ -794,12 +794,12 @@ def _send_ticket_mail(req, ticket=None, change=None):
     sender = cfg.get('netprofile.tickets.notifications.mail_sender',
                      'noreply@example.com')
 
-    old_state = None
     if change and change.transition:
         state = change.transition.to_state
         old_state = change.transition.from_state
     else:
         state = ticket.state
+        old_state = None
 
     subject = '[T#%d] %s' % (ticket.id, ticket.name)
     recipient_map = {}
