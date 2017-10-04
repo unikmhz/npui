@@ -824,7 +824,6 @@ def _send_ticket_mail(req, ticket=None, change=None):
     if ticket.assigned_user and user_setting(
             ticket.assigned_user,
             'tickets.sub.notify_on_assign'):
-
         tplvars = tpldef.copy()
         tplvars.update({
             'recipient_type': 'user',
@@ -837,7 +836,6 @@ def _send_ticket_mail(req, ticket=None, change=None):
             recipient_map[addr] = tplvars
 
     if ticket.assigned_group:
-        print(123)
         tplvars = tpldef.copy()
         tplvars.update({
             'recipient_type': 'group',
