@@ -7146,22 +7146,17 @@ class UserSetting(Base):
 
 
 def user_setting(user, name):
-
     if user is None:
-        return None
-
+        raise ValueError('User is not provided')
+    if inst_mm is None:
+        raise RuntimeError('Module manager has not registered yet')
     path = name.split('.')
     if len(path) != 3:
         raise ValueError('Invalid setting name: %r' % (name,))
 
-    if inst_mm is None:
-        raise RuntimeError('Module manager has not registered yet')
-
     setting = inst_mm.get_settings('user')[path[0]][path[1]][path[2]]
-
-    if name in user.settings and user.settings[name].value is not None:
-        return setting.parse_param(user.settings[name])
-    return setting.default
+    if name in user.settings:
+        return setting.parse_param(user.settings[name].value)
 
 
 class DataCache(Base):
