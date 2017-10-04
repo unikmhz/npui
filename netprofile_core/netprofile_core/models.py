@@ -7147,7 +7147,7 @@ class UserSetting(Base):
 
 def user_setting(user, name):
     if user is None:
-        raise ValueError('User is not provided')
+        raise AttributeError('User is not provided')
     if inst_mm is None:
         raise RuntimeError('Module manager has not registered yet')
     path = name.split('.')
