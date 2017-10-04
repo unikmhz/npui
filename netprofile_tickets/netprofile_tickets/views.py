@@ -806,8 +806,8 @@ def _send_ticket_mail(req, ticket=None, change=None):
 
     for sub in chain(state.subscriptions,
                      ticket.subscriptions,
-                     _default_subscriptions(ticket, change),
-                     old_state.subscriptions if old_state else []):
+                     old_state.subscriptions if old_state else [],
+                     _default_subscriptions(ticket, change)):
 
         if isinstance(sub, TicketSubscription):
             if not sub.check(ticket, change):
