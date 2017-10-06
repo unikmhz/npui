@@ -37,6 +37,7 @@ from collections import OrderedDict
 from netprofile.common.factory import RootFactory
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
+from netprofile_core.models import global_setting
 
 from .models import (
     FuturePayment,
@@ -171,6 +172,8 @@ def client_promise(ctx, request):
         fp.stash = ctx
         fp.entity = request.user.parent
         fp.origin = FuturePaymentOrigin.user
+        gp = global_setting('stashes.futurepayments.duration')
+        fp.payment_time = dt.datetime.now() + relativedelta(days=gp)
         fp.difference = diff
         sess.add(fp)
         request.session.flash({

@@ -27,6 +27,10 @@ from sqlalchemy.orm.exc import NoResultFound
 from pyramid.i18n import TranslationStringFactory
 
 from netprofile.common.modules import ModuleBase
+from netprofile.common.settings import (
+    Setting,
+    SettingSection
+)
 
 from ._version import get_versions
 __version__ = get_versions()['version']
@@ -229,6 +233,24 @@ class Module(ModuleBase):
 
     def get_css(self, request):
         return ('netprofile_stashes:static/css/main.css',)
+
+    def get_settings(self, vhost='MAIN', scope='global'):
+        if vhost == 'MAIN' and scope == 'global':
+            return (
+                SettingSection(
+                    'futurepayment',
+                    Setting(
+                        'duration',
+                        title=_('Duration of promised payments'),
+                        help_text=_('Default maximum duration of promised '
+                                    'payment that are created by customer'),
+                        type='int',
+                        write_cap='FUTURES_EDIT',
+                        default=5),
+                    title=_('Administrative'),
+                    help_text=_('Future payments settings.'),
+                    read_cap='BASE_FUTURES')
+            )
 
     @property
     def name(self):
