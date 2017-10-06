@@ -238,12 +238,12 @@ class Module(ModuleBase):
         if vhost == 'MAIN' and scope == 'global':
             return (
                 SettingSection(
-                    'futurepayment',
+                    'future_payments',
                     Setting(
                         'duration',
                         title=_('Duration of promised payments'),
                         help_text=_('Default maximum duration of promised '
-                                    'payment that are created by customer'),
+                                    'payments that are created by customer.'),
                         type='int',
                         write_cap='FUTURES_EDIT',
                         default=5),

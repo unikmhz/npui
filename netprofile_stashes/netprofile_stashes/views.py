@@ -172,7 +172,7 @@ def client_promise(ctx, request):
         fp.stash = ctx
         fp.entity = request.user.parent
         fp.origin = FuturePaymentOrigin.user
-        gp = global_setting('stashes.futurepayments.duration')
+        gp = global_setting('stashes.future_payments.duration')
         fp.payment_time = dt.datetime.now() + relativedelta(days=gp)
         fp.difference = diff
         sess.add(fp)
