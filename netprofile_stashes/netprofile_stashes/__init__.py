@@ -242,8 +242,9 @@ class Module(ModuleBase):
                     Setting(
                         'duration',
                         title=_('Duration of promised payments'),
-                        help_text=_('Default maximum duration of promised '
-                                    'payments that are created by customer.'),
+                        help_text=_('Default maximum duration of '
+                                    'promised payments that are '
+                                    'created by a customer.'),
                         type='int',
                         write_cap='FUTURES_EDIT',
                         default=5),
