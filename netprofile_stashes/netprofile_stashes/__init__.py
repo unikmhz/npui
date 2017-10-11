@@ -250,8 +250,8 @@ class Module(ModuleBase):
                         default=5),
                     title=_('Administrative'),
                     help_text=_('Future payments settings.'),
-                    read_cap='BASE_FUTURES')
-            )
+                    read_cap='BASE_FUTURES'),)
+        return ()
 
     @property
     def name(self):
