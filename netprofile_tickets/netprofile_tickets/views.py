@@ -819,7 +819,7 @@ def _send_ticket_mail(req, ticket=None, change=None):
             assigned_subscriptions.append(tsub)
 
         if ticket.assigned_group:
-            for user in ticket.assigned_group:
+            for user in ticket.assigned_group.users:
                 if not user_setting(user,
                                     'tickets.sub.notify_on_assign'):
                     continue
