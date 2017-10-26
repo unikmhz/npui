@@ -486,14 +486,14 @@ class ExtColumn(object):
                 return 10
             if issubclass(typecls, SmallInteger):
                 if getattr(self.column.type, 'unsigned', False):
-                    return 6
-                return 5
-            if issubclass(typecls, Integer):
-                if getattr(self.column.type, 'unsigned', False):
-                    return 11
-                return 10
+                    return 5
+                return 6
             if issubclass(typecls, BigInteger):
                 return 20
+            if issubclass(typecls, Integer):
+                if getattr(self.column.type, 'unsigned', False):
+                    return 10
+                return 11
             return None
 
     @property
@@ -514,7 +514,7 @@ class ExtColumn(object):
             return 8
         if issubclass(typecls, (Int16, UInt16, SmallInteger)):
             return 16
-        if issubclass(typecls, (Int64, UInt64)):
+        if issubclass(typecls, (Int64, UInt64, BigInteger)):
             return 64
         if issubclass(typecls, (Int32, UInt32, Integer)):
             return 32
