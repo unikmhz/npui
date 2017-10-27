@@ -1,9 +1,9 @@
 NetProfile
 ==========
 
-Copyright © 2010-2016 Alex Unigovsky
+Copyright © 2010-2017 Alex Unigovsky
 
-Copyright © 2010-2016 NetProfile project contributors
+Copyright © 2010-2017 NetProfile project contributors
 
 What is this?
 -------------
@@ -112,7 +112,6 @@ Bundled third-party libraries
 * `Sencha ExtJS`_ JavaScript framework, licensed under `GPL version 3`_.
 * `Extensible Calendar Pro`_ calendar component for ExtJS (ported to
   ExtJS 5), licensed under `GPL version 3`_.
-* `Google ipaddr-py`_ module, licensed under `Apache 2.0`_ license.
 * vobject_ module, licensed under `Apache 2.0`_ license. We use forked
   and updated version by Ivan Diao and Tim Baxter, found
   `here <https://github.com/tBaxter/vobject>`_.
