@@ -7029,7 +7029,7 @@ class GlobalSetting(Base):
 @cache.cache_on_arguments()
 def global_setting(name):
     if inst_mm is None:
-        raise RuntimeError('Module manager has not registered yet')
+        raise RuntimeError('Module manager hasn\'t been registered yet')
     path = name.split('.')
     if len(path) != 3:
         raise ValueError('Invalid setting name: %r' % (name,))
@@ -7038,8 +7038,6 @@ def global_setting(name):
     try:
         gs = sess.query(GlobalSetting).filter(GlobalSetting.name == name).one()
     except NoResultFound:
-        return setting.default
-    if gs.value is None:
         return setting.default
     return setting.parse_param(gs.value)
 
@@ -7147,7 +7145,7 @@ class UserSetting(Base):
 
 def user_setting(user, name):
     if inst_mm is None:
-        raise RuntimeError('Module manager has not registered yet')
+        raise RuntimeError('Module manager hasn\'t been registered yet')
     path = name.split('.')
     if len(path) != 3:
         raise ValueError('Invalid setting name: %r' % (name,))
