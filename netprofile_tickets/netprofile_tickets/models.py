@@ -1274,6 +1274,24 @@ def _on_set_ticket_state_id(tgt, value, oldvalue, initiator):
     return value
 
 
+@event.listens_for(Ticket.assigned_user_id, 'set', active_history=True)
+def _on_set_ticket_assigned_user_id(tgt, value, oldvalue, initiator):
+    if value is None:
+        tgt.assigned_user = None
+    elif value != oldvalue:
+        tgt.assigned_user = DBSession().query(User).get(value)
+    return value
+
+
+@event.listens_for(Ticket.assigned_group_id, 'set', active_history=True)
+def _on_set_ticket_assigned_group_id(tgt, value, oldvalue, initiator):
+    if value is None:
+        tgt.assigned_group = None
+    elif value != oldvalue:
+        tgt.assigned_group = DBSession().query(Group).get(value)
+    return value
+
+
 class TicketTemplate(Base):
     """
     Template for a new ticket.
