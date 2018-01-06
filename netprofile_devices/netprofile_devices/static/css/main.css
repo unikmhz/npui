@@ -8,7 +8,6 @@
 .ico-mod-simpledevice, .ico-mod-simpledevicetype   { background-image: url(../img/device_simple.png) !important; }
 .ico-mod-networkdevice, .ico-mod-networkdevicetype { background-image: url(../img/device_network.png) !important; }
 
-.ico-mod-networkdevicebinding   { background-image: url(../img/iface_binding.png) !important; }
 .ico-mod-networkdeviceinterface { background-image: url(../img/iface.png) !important; }
 .ico-mod-networkdevicemediatype { background-image: url(../img/iface_media.png) !important; }
 

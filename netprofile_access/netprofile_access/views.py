@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: Access module - Views
-# Copyright © 2013-2017 Alex Unigovsky
+# Copyright © 2013-2018 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -822,7 +822,7 @@ def _tpldef_list_accounts(tpldef, req):
 
 
 @register_hook('core.dpanetabs.access.AccessEntity')
-def _dpane_aent_mods(tabs, model, req):
+def _dpane_aent(tabs, model, req):
     loc = req.localizer
     tabs.extend(({
         'title':             loc.translate(_('Rate Modifiers')),
@@ -855,6 +855,16 @@ def _dpane_aent_mods(tabs, model, req):
         'title':             loc.translate(_('History')),
         'iconCls':           'ico-entity-history',
         'xtype':             'historygrid'
+    }, {
+        'title':             loc.translate(_('Bindings')),
+        'iconCls':           'ico-mod-networkdevicebinding',
+        'xtype':             'grid_devices_NetworkDeviceBinding',
+        'stateId':           None,
+        'stateful':          False,
+        'hideColumns':       ('access_entity',),
+        'extraParamProp':    'aeid',
+        'extraParamRelProp': 'entityid',
+        'createControllers': 'NetProfile.core.controller.RelatedWizard'
     }))
 
 
@@ -871,6 +881,51 @@ def _dpane_stash_aents(tabs, model, req):
             'extraParamProp':    'stashid',
             'createControllers': 'NetProfile.core.controller.RelatedWizard'
         })
+
+
+@register_hook('core.dpanetabs.devices.NetworkDevice')
+def _dpane_device_bindings(tabs, model, req):
+    if req.has_permission('DEVICES_LIST'):
+        tabs.append({
+            'title':             req.localizer.translate(_('Bindings')),
+            'iconCls':           'ico-mod-networkdevicebinding',
+            'xtype':             'grid_devices_NetworkDeviceBinding',
+            'stateId':           None,
+            'stateful':          False,
+            'hideColumns':       ('device',),
+            'extraParamProp':    'did',
+            'createControllers': 'NetProfile.core.controller.RelatedWizard'
+        })
+
+
+@register_hook('core.dpanetabs.devices.NetworkDeviceInterface')
+def _dpane_iface_bindings(tabs, model, req):
+    tabs.append({
+        'title':             req.localizer.translate(_('Bindings')),
+        'iconCls':           'ico-mod-networkdevicebinding',
+        'xtype':             'grid_devices_NetworkDeviceBinding',
+        'stateId':           None,
+        'stateful':          False,
+        'hideColumns':       ('device', 'interface'),
+        'extraParamProp':    'ifid',
+        'createControllers': 'NetProfile.core.controller.RelatedWizard'
+    })
+
+
+@register_hook('core.dpanetabs.hosts.Host')
+def _dpane_host_bindings(tabs, model, req):
+    if not req.has_permission('DEVICES_LIST'):
+        return
+    tabs.append({
+        'title':             req.localizer.translate(_('Bindings')),
+        'iconCls':           'ico-mod-networkdevicebinding',
+        'xtype':             'grid_devices_NetworkDeviceBinding',
+        'stateId':           None,
+        'stateful':          False,
+        'hideColumns':       ('host',),
+        'extraParamProp':    'hostid',
+        'createControllers': 'NetProfile.core.controller.RelatedWizard'
+    })
 
 
 @register_hook('entities.history.get.all')

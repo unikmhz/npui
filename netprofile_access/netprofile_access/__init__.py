@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: Access module
-# Copyright © 2013-2017 Alex Unigovsky
+# Copyright © 2013-2018 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -81,7 +81,8 @@ class Module(ModuleBase):
                 models.AccessEntityChange,
                 models.AccessEntityLink,
                 models.AccessEntityLinkType,
-                models.PerUserRateModifier)
+                models.PerUserRateModifier,
+                models.NetworkDeviceBinding)
 
     @classmethod
     def get_sql_functions(cls):

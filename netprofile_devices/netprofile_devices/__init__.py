@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: Devices module
-# Copyright © 2013-2017 Alex Unigovsky
+# Copyright © 2013-2018 Alex Unigovsky
 # Copyright © 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -47,7 +47,7 @@ class Module(ModuleBase):
 
     @classmethod
     def get_deps(cls):
-        return ('entities', 'hosts', 'rates')
+        return ('entities', 'hosts')
 
     @classmethod
     def get_models(cls):
@@ -74,8 +74,7 @@ class Module(ModuleBase):
                 models.NetworkDevice,
 
                 models.NetworkDeviceMediaType,
-                models.NetworkDeviceInterface,
-                models.NetworkDeviceBinding)
+                models.NetworkDeviceInterface)
 
     @classmethod
     def get_sql_data(cls, modobj, vpair, sess):
