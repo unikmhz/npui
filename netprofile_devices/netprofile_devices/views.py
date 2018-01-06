@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: Devices module - Views
-# Copyright © 2013-2017 Alex Unigovsky
+# Copyright © 2013-2018 Alex Unigovsky
 # Copyright © 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -97,6 +97,24 @@ def _dpane_host_bindings(tabs, model, req):
         'stateful':          False,
         'hideColumns':       ('host',),
         'extraParamProp':    'hostid',
+        'createControllers': 'NetProfile.core.controller.RelatedWizard'
+    })
+
+
+@register_hook('core.dpanetabs.access.AccessEntity')
+def _dpane_aent_bindings(tabs, model, req):
+    if not req.has_permission('ENTITIES_LIST'):
+        return
+    loc = req.localizer
+    tabs.append({
+        'title':             loc.translate(_('Bindings')),
+        'iconCls':           'ico-mod-networkdevicebinding',
+        'xtype':             'grid_devices_NetworkDeviceBinding',
+        'stateId':           None,
+        'stateful':          False,
+        'hideColumns':       ('access_entity',),
+        'extraParamProp':    'aeid',
+        'extraParamRelProp': 'entityid',
         'createControllers': 'NetProfile.core.controller.RelatedWizard'
     })
 

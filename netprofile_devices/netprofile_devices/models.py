@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: Devices module - Models
-# Copyright © 2013-2017 Alex Unigovsky
+# Copyright © 2013-2018 Alex Unigovsky
 # Copyright © 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -1934,6 +1934,7 @@ class NetworkDeviceBinding(Base):
     __tablename__ = 'netdev_bindings'
     __table_args__ = (
         Comment('Network device interface bindings'),
+        Index('netdev_bindings_i_aeid', 'aeid'),
         Index('netdev_bindings_i_hostid', 'hostid'),
         Index('netdev_bindings_i_did', 'did'),
         Index('netdev_bindings_i_ifid', 'ifid'),
@@ -1952,9 +1953,10 @@ class NetworkDeviceBinding(Base):
                 'cap_delete':    'DEVICES_EDIT',
 
                 'menu_name':     _('Bindings'),
-                'grid_view':     ('ndbid', 'device', 'interface', 'host'),
+                'grid_view':     ('ndbid', 'device', 'interface',
+                                  'access_entity', 'host'),
                 'grid_hidden':   ('ndbid',),
-                'form_view':     ('host', 'device',
+                'form_view':     ('access_entity', 'host', 'device',
                                   'interface', 'index', 'circuitid',
                                   'rate',
                                   'att_cable', 'attached_device',
@@ -1973,13 +1975,29 @@ class NetworkDeviceBinding(Base):
         info={
             'header_string': _('ID')
         })
+    access_entity_id = Column(
+        'aeid',
+        UInt32(),
+        ForeignKey('entities_access.entityid', name='netdev_bindings_fk_aeid',
+                   ondelete='CASCADE', onupdate='CASCADE'),
+        Comment('Access entity ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Access Entity'),
+            'filter_type': 'none',
+            'column_flex': 3
+        })
     host_id = Column(
         'hostid',
         UInt32(),
         ForeignKey('hosts_def.hostid', name='netdev_bindings_fk_hostid',
                    ondelete='CASCADE', onupdate='CASCADE'),
         Comment('Host ID'),
-        nullable=False,
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
         info={
             'header_string': _('Host'),
             'filter_type': 'none',
@@ -2028,7 +2046,7 @@ class NetworkDeviceBinding(Base):
         default=None,
         server_default=text('NULL'),
         info={
-            'header_string': _('Remote ID')
+            'header_string': _('Circuit ID')
         })
     rate_id = Column(
         'rateid',
@@ -2077,9 +2095,13 @@ class NetworkDeviceBinding(Base):
             'header_string': _('Description')
         })
 
+    access_entity = relationship(
+        'AccessEntity',
+        backref=backref('interface_bindings',
+                        cascade='all, delete-orphan',
+                        passive_deletes=True))
     host = relationship(
         'Host',
-        innerjoin=True,
         backref=backref('interface_bindings',
                         cascade='all, delete-orphan',
                         passive_deletes=True))
