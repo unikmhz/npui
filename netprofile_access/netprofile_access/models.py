@@ -1186,6 +1186,7 @@ class NetworkDeviceBinding(Base):
         Index('netdev_bindings_i_ifid', 'ifid'),
         Index('netdev_bindings_i_index', 'index'),
         Index('netdev_bindings_i_circuitid', 'circuitid'),
+        Index('netdev_bindings_i_qinq', 'svlanid', 'cvlanid'),
         Index('netdev_bindings_i_att_did', 'att_did'),
         Index('netdev_bindings_i_rateid', 'rateid'),
         {
@@ -1204,6 +1205,7 @@ class NetworkDeviceBinding(Base):
                 'grid_hidden':   ('ndbid',),
                 'form_view':     ('access_entity', 'host', 'device',
                                   'interface', 'index', 'circuitid',
+                                  'cvlanid', 'svlanid',
                                   'rate',
                                   'att_cable', 'attached_device',
                                   'descr'),
@@ -1293,6 +1295,26 @@ class NetworkDeviceBinding(Base):
         server_default=text('NULL'),
         info={
             'header_string': _('Circuit ID')
+        })
+    cvlan_id = Column(
+        'cvlanid',
+        UInt16(),
+        Comment('Customer (inner) VLAN ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Inner VLAN')
+        })
+    svlan_id = Column(
+        'svlanid',
+        UInt16(),
+        Comment('Service provider (outer) VLAN ID'),
+        nullable=True,
+        default=None,
+        server_default=text('NULL'),
+        info={
+            'header_string': _('Outer VLAN')
         })
     rate_id = Column(
         'rateid',
