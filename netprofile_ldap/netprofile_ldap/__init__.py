@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: LDAP module
-# Copyright © 2013-2017 Alex Unigovsky
+# Copyright © 2013-2018 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -31,6 +31,8 @@ del get_versions
 
 
 class Module(ModuleBase):
+    has_schema = False
+
     def __init__(self, mmgr):
         self.mmgr = mmgr
 

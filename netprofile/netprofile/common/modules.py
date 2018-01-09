@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: Module detection and loading
-# Copyright © 2013-2017 Alex Unigovsky
+# Copyright © 2013-2018 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -61,6 +61,7 @@ class ModuleBase(object):
     """
 
     enable_scan = True
+    has_schema = True
 
     @classmethod
     def version(cls):
@@ -570,20 +571,21 @@ class ModuleManager(object):
         if moddef != 'core':
             self.preload(moddef)
 
-        get_models = getattr(modcls, 'get_models', None)
-        if callable(get_models):
-            tables = [model.__table__ for model in get_models()]
-            Base.metadata.create_all(sess.bind, tables)
+        if modcls.has_schema:
+            get_models = getattr(modcls, 'get_models', None)
+            if callable(get_models):
+                tables = [model.__table__ for model in get_models()]
+                Base.metadata.create_all(sess.bind, tables)
 
-        get_sql_functions = getattr(modcls, 'get_sql_functions', None)
-        if callable(get_sql_functions):
-            for func in get_sql_functions():
-                sess.execute(func.create(moddef))
+            get_sql_functions = getattr(modcls, 'get_sql_functions', None)
+            if callable(get_sql_functions):
+                for func in get_sql_functions():
+                    sess.execute(func.create(moddef))
 
-        get_sql_views = getattr(modcls, 'get_sql_views', None)
-        if callable(get_sql_views):
-            for view in get_sql_views():
-                sess.execute(view.create())
+            get_sql_views = getattr(modcls, 'get_sql_views', None)
+            if callable(get_sql_views):
+                for view in get_sql_views():
+                    sess.execute(view.create())
 
         modobj = NPModule(id=None)
         modobj.name = moddef
@@ -606,15 +608,16 @@ class ModuleManager(object):
         self.installed[moddef] = modversion
         transaction.commit()
 
-        get_sql_events = getattr(modcls, 'get_sql_events', None)
-        if callable(get_sql_events):
-            for evt in get_sql_events():
-                sess.execute(evt.create(moddef))
-            transaction.commit()
+        if modcls.has_schema:
+            get_sql_events = getattr(modcls, 'get_sql_events', None)
+            if callable(get_sql_events):
+                for evt in get_sql_events():
+                    sess.execute(evt.create(moddef))
+                transaction.commit()
 
-        alembic_cfg = get_alembic_config(self, stdout=self.stdout)
-        command.stamp(alembic_cfg, moddef + '@head')
-        transaction.commit()
+            alembic_cfg = get_alembic_config(self, stdout=self.stdout)
+            command.stamp(alembic_cfg, moddef + '@head')
+            transaction.commit()
 
         if moddef == 'core':
             self.load(moddef)
@@ -675,8 +678,9 @@ class ModuleManager(object):
         if moddef != 'core':
             self.preload(moddef)
 
-        alembic_cfg = get_alembic_config(self, stdout=self.stdout)
-        command.upgrade(alembic_cfg, moddef + '@head')
+        if modcls.has_schema:
+            alembic_cfg = get_alembic_config(self, stdout=self.stdout)
+            command.upgrade(alembic_cfg, moddef + '@head')
 
         modobj.current_version = str(new_modversion)
         sess.flush()
