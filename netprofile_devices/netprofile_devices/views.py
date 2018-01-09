@@ -48,7 +48,7 @@ _ = TranslationStringFactory('netprofile_devices')
 @register_hook('core.dpanetabs.devices.NetworkDevice')
 def _dpane_netdev(tabs, model, req):
     loc = req.localizer
-    tabs.extend(({
+    tabs.append({
         'title':             loc.translate(_('Interfaces')),
         'iconCls':           'ico-mod-networkdeviceinterface',
         'xtype':             'grid_devices_NetworkDeviceInterface',
@@ -57,7 +57,7 @@ def _dpane_netdev(tabs, model, req):
         'hideColumns':       ('device',),
         'extraParamProp':    'did',
         'createControllers': 'NetProfile.core.controller.RelatedWizard'
-    }))
+    })
 
 
 @register_hook('np.model.actions.hosts.Host')
