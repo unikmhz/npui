@@ -858,7 +858,7 @@ def _dpane_aent(tabs, model, req):
     }, {
         'title':             loc.translate(_('Bindings')),
         'iconCls':           'ico-mod-networkdevicebinding',
-        'xtype':             'grid_devices_NetworkDeviceBinding',
+        'xtype':             'grid_access_NetworkDeviceBinding',
         'stateId':           None,
         'stateful':          False,
         'hideColumns':       ('access_entity',),
@@ -889,7 +889,7 @@ def _dpane_device_bindings(tabs, model, req):
         tabs.append({
             'title':             req.localizer.translate(_('Bindings')),
             'iconCls':           'ico-mod-networkdevicebinding',
-            'xtype':             'grid_devices_NetworkDeviceBinding',
+            'xtype':             'grid_access_NetworkDeviceBinding',
             'stateId':           None,
             'stateful':          False,
             'hideColumns':       ('device',),
@@ -903,7 +903,7 @@ def _dpane_iface_bindings(tabs, model, req):
     tabs.append({
         'title':             req.localizer.translate(_('Bindings')),
         'iconCls':           'ico-mod-networkdevicebinding',
-        'xtype':             'grid_devices_NetworkDeviceBinding',
+        'xtype':             'grid_access_NetworkDeviceBinding',
         'stateId':           None,
         'stateful':          False,
         'hideColumns':       ('device', 'interface'),
@@ -919,7 +919,7 @@ def _dpane_host_bindings(tabs, model, req):
     tabs.append({
         'title':             req.localizer.translate(_('Bindings')),
         'iconCls':           'ico-mod-networkdevicebinding',
-        'xtype':             'grid_devices_NetworkDeviceBinding',
+        'xtype':             'grid_access_NetworkDeviceBinding',
         'stateId':           None,
         'stateful':          False,
         'hideColumns':       ('host',),

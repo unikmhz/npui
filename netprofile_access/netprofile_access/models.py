@@ -1362,6 +1362,11 @@ class NetworkDeviceBinding(Base):
         foreign_keys=attached_device_id,
         backref=backref('upstream_bindings',
                         passive_deletes=True))
+    interface = relationship(
+        'NetworkDeviceInterface',
+        lazy='joined',
+        backref=backref('bindings',
+                        passive_deletes=True))
 
     def __str__(self):
         return '%s → %s' % (str(self.interface),

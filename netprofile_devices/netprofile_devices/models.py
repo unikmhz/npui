@@ -1914,10 +1914,6 @@ class NetworkDeviceInterface(Base):
         innerjoin=True,
         backref=backref('interfaces',
                         passive_deletes='all'))
-    bindings = relationship(
-        'NetworkDeviceBinding',
-        backref=backref('interface', lazy='joined'),
-        passive_deletes=True)
 
     def __str__(self):
         if self.device:
