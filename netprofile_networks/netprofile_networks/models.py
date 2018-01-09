@@ -145,7 +145,7 @@ class Network(Base):
         nullable=False,
         info={
             'header_string': _('Name'),
-            'column_flex': 1
+            'column_flex': 4
         })
     domain_id = Column(
         'domainid',
@@ -157,7 +157,7 @@ class Network(Base):
         info={
             'header_string': _('Domain'),
             'filter_type': 'nplist',
-            'column_flex': 1
+            'column_flex': 3
         })
     group_id = Column(
         'netgid',
@@ -212,7 +212,8 @@ class Network(Base):
         default=None,
         server_default=text('NULL'),
         info={
-            'header_string': _('IPv4 Address')
+            'header_string': _('IPv4 Address'),
+            'column_flex': 1
         })
     ipv6_address = Column(
         'ip6addr',
@@ -222,7 +223,8 @@ class Network(Base):
         default=None,
         server_default=text('NULL'),
         info={
-            'header_string': _('IPv6 Address')
+            'header_string': _('IPv6 Address'),
+            'column_flex': 1
         })
     ipv4_cidr = Column(
         'cidr',
