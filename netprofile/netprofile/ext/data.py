@@ -459,6 +459,8 @@ class ExtColumn(object):
         typecls = self.column.type.__class__
         if typecls is MACAddress:
             return 17
+        if typecls is IPv6Address:
+            return 39
         if typecls is JSONData:
             return self.MAX_PIXELS
         try:
@@ -703,6 +705,8 @@ class ExtColumn(object):
                     return None
                 if isinstance(param, (list, tuple)):
                     param = bytes(param)
+            elif isinstance(param, list):
+                param = bytes(param)
             if issubclass(typecls, IPv4Address):
                 return ipaddress.IPv4Address(param)
             if issubclass(typecls, IPv6Address):
