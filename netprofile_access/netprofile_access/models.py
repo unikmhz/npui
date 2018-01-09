@@ -1372,7 +1372,7 @@ class NetworkDeviceBinding(Base):
 
     def __str__(self):
         return '%s → %s' % (str(self.interface),
-                            str(self.host))
+                            str(self.access_entity))
 
 
 CheckAuthFunction = SQLFunction(
