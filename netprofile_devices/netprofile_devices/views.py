@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: Devices module - Views
-# Copyright © 2013-2017 Alex Unigovsky
+# Copyright © 2013-2018 Alex Unigovsky
 # Copyright © 2014 Sergey Dikunov
 #
 # This file is part of NetProfile.
@@ -46,7 +46,7 @@ _ = TranslationStringFactory('netprofile_devices')
 
 
 @register_hook('core.dpanetabs.devices.NetworkDevice')
-def _dpane_netdev_ifaces(tabs, model, req):
+def _dpane_netdev(tabs, model, req):
     loc = req.localizer
     tabs.extend(({
         'title':             loc.translate(_('Interfaces')),
@@ -57,48 +57,7 @@ def _dpane_netdev_ifaces(tabs, model, req):
         'hideColumns':       ('device',),
         'extraParamProp':    'did',
         'createControllers': 'NetProfile.core.controller.RelatedWizard'
-    }, {
-        'title':             loc.translate(_('Bindings')),
-        'iconCls':           'ico-mod-networkdevicebinding',
-        'xtype':             'grid_devices_NetworkDeviceBinding',
-        'stateId':           None,
-        'stateful':          False,
-        'hideColumns':       ('device',),
-        'extraParamProp':    'did',
-        'createControllers': 'NetProfile.core.controller.RelatedWizard'
     }))
-
-
-@register_hook('core.dpanetabs.devices.NetworkDeviceInterface')
-def _dpane_iface_bindings(tabs, model, req):
-    loc = req.localizer
-    tabs.append({
-        'title':             loc.translate(_('Bindings')),
-        'iconCls':           'ico-mod-networkdevicebinding',
-        'xtype':             'grid_devices_NetworkDeviceBinding',
-        'stateId':           None,
-        'stateful':          False,
-        'hideColumns':       ('device', 'interface'),
-        'extraParamProp':    'ifid',
-        'createControllers': 'NetProfile.core.controller.RelatedWizard'
-    })
-
-
-@register_hook('core.dpanetabs.hosts.Host')
-def _dpane_host_bindings(tabs, model, req):
-    if not req.has_permission('DEVICES_LIST'):
-        return
-    loc = req.localizer
-    tabs.append({
-        'title':             loc.translate(_('Bindings')),
-        'iconCls':           'ico-mod-networkdevicebinding',
-        'xtype':             'grid_devices_NetworkDeviceBinding',
-        'stateId':           None,
-        'stateful':          False,
-        'hideColumns':       ('host',),
-        'extraParamProp':    'hostid',
-        'createControllers': 'NetProfile.core.controller.RelatedWizard'
-    })
 
 
 @register_hook('np.model.actions.hosts.Host')

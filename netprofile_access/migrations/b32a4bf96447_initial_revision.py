@@ -164,6 +164,34 @@ def upgrade():
     op.create_function('access', npd.SQLFunction('acct_add', args=[npd.SQLFunctionArgument('aeid', npf.UInt32(), 'IN'), npd.SQLFunctionArgument('username', sa.Unicode(length=255), 'IN'), npd.SQLFunctionArgument('tin', npf.Traffic(precision=16, scale=0), 'IN'), npd.SQLFunctionArgument('teg', npf.Traffic(precision=16, scale=0), 'IN'), npd.SQLFunctionArgument('ts', sa.DateTime(), 'IN')], returns=None, comment='Add accounting information', reads_sql=True, writes_sql=True, is_procedure=True, label='aafunc'), 'b32a4bf96447')
     op.create_event('access', npd.SQLEvent('ev_acct_poll', sched_unit='day', sched_interval=1, starts=datetime.datetime(2017, 9, 25, 0, 0, 1), preserve=True, enabled=True, comment='Perform passive accounting'), 'b32a4bf96447')
     op.create_event('access', npd.SQLEvent('ev_accessblock_expire', sched_unit='day', sched_interval=1, starts=None, preserve=True, enabled=True, comment='Find and mark expired access blocks'), 'b32a4bf96447')
+    op.create_table('netdev_bindings',
+    sa.Column('ndbid', npf.UInt32(), npd.Comment('Network device binding ID'), nullable=False, default=sa.Sequence('netdev_bindings_ndbid_seq')),
+    sa.Column('hostid', npf.UInt32(), npd.Comment('Host ID'), nullable=False),
+    sa.Column('did', npf.UInt32(), npd.Comment('Device ID'), nullable=False),
+    sa.Column('ifid', npf.UInt32(), npd.Comment('Network device interface ID'), server_default=sa.text('NULL'), nullable=True),
+    sa.Column('index', npf.UInt32(), npd.Comment('Interface SNMP ifIndex'), server_default=sa.text('NULL'), nullable=True),
+    sa.Column('circuitid', sa.VARBINARY(length=32), npd.Comment('Binary agent circuit ID'), server_default=sa.text('NULL'), nullable=True),
+    sa.Column('rateid', npf.UInt32(), npd.Comment('Optional rate ID'), server_default=sa.text('NULL'), nullable=True),
+    sa.Column('att_cable', npf.UInt32(), npd.Comment('Cable length (in meters)'), server_default=sa.text('NULL'), nullable=True),
+    sa.Column('att_did', npf.UInt32(), npd.Comment('Attached device ID'), server_default=sa.text('NULL'), nullable=True),
+    sa.Column('descr', sa.UnicodeText(), npd.Comment('Network device binding description'), server_default=sa.text('NULL'), nullable=True),
+    sa.ForeignKeyConstraint(['att_did'], ['devices_network.did'], name='netdev_bindings_fk_att_did', onupdate='CASCADE', ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['did'], ['devices_network.did'], name='netdev_bindings_fk_did', onupdate='CASCADE', ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['hostid'], ['hosts_def.hostid'], name='netdev_bindings_fk_hostid', onupdate='CASCADE', ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['ifid'], ['netdev_ifaces.ifid'], name='netdev_bindings_fk_ifid', onupdate='CASCADE', ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['rateid'], ['rates_def.rateid'], name='netdev_bindings_fk_rateid', onupdate='CASCADE'),
+    sa.PrimaryKeyConstraint('ndbid', name=op.f('netdev_bindings_pk')),
+    mysql_charset='utf8',
+    mysql_engine='InnoDB'
+    )
+    op.set_table_comment('netdev_bindings', 'Network device interface bindings')
+    op.create_index('netdev_bindings_i_att_did', 'netdev_bindings', ['att_did'], unique=False)
+    op.create_index('netdev_bindings_i_circuitid', 'netdev_bindings', ['circuitid'], unique=False)
+    op.create_index('netdev_bindings_i_did', 'netdev_bindings', ['did'], unique=False)
+    op.create_index('netdev_bindings_i_hostid', 'netdev_bindings', ['hostid'], unique=False)
+    op.create_index('netdev_bindings_i_ifid', 'netdev_bindings', ['ifid'], unique=False)
+    op.create_index('netdev_bindings_i_index', 'netdev_bindings', ['index'], unique=False)
+    op.create_index('netdev_bindings_i_rateid', 'netdev_bindings', ['rateid'], unique=False)
     # ### end Alembic commands ###
 
 
@@ -177,6 +205,14 @@ def downgrade():
     op.drop_function('access', npd.SQLFunction('check_auth', args=[npd.SQLFunctionArgument('name', sa.Unicode(length=255), None), npd.SQLFunctionArgument('pass', sa.Unicode(length=255), None)], returns=sa.Boolean(), comment='Check auth information', reads_sql=True, writes_sql=False, is_procedure=False, label=None), 'b32a4bf96447')
     op.drop_function('access', npd.SQLFunction('acct_poll', args=[npd.SQLFunctionArgument('ts', sa.DateTime(), 'IN')], returns=None, comment='Poll accounts for time-based changes', reads_sql=True, writes_sql=True, is_procedure=True, label=None), 'b32a4bf96447')
     op.drop_function('access', npd.SQLFunction('acct_rate_mods', args=[npd.SQLFunctionArgument('ts', sa.DateTime(), 'IN'), npd.SQLFunctionArgument('rateid', npf.UInt32(), 'IN'), npd.SQLFunctionArgument('entityid', npf.UInt32(), 'IN'), npd.SQLFunctionArgument('oqsum_in', npf.Money(precision=20, scale=8), 'INOUT'), npd.SQLFunctionArgument('oqsum_eg', npf.Money(precision=20, scale=8), 'INOUT'), npd.SQLFunctionArgument('oqsum_sec', npf.Money(precision=20, scale=8), 'INOUT'), npd.SQLFunctionArgument('pol_in', npf.ASCIIString(length=255), 'INOUT'), npd.SQLFunctionArgument('pol_eg', npf.ASCIIString(length=255), 'INOUT')], returns=None, comment='Apply rate modifiers', reads_sql=True, writes_sql=False, is_procedure=True, label='armfunc'), 'b32a4bf96447')
+    op.drop_index('netdev_bindings_i_rateid', table_name='netdev_bindings')
+    op.drop_index('netdev_bindings_i_index', table_name='netdev_bindings')
+    op.drop_index('netdev_bindings_i_ifid', table_name='netdev_bindings')
+    op.drop_index('netdev_bindings_i_hostid', table_name='netdev_bindings')
+    op.drop_index('netdev_bindings_i_did', table_name='netdev_bindings')
+    op.drop_index('netdev_bindings_i_circuitid', table_name='netdev_bindings')
+    op.drop_index('netdev_bindings_i_att_did', table_name='netdev_bindings')
+    op.drop_table('netdev_bindings')
     op.drop_index('rates_mods_peruser_u_mapping', table_name='rates_mods_peruser')
     op.drop_index('rates_mods_peruser_i_rateid', table_name='rates_mods_peruser')
     op.drop_index('rates_mods_peruser_i_l_ord', table_name='rates_mods_peruser')

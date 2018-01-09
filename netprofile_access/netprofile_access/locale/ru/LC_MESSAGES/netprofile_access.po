@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
-"POT-Creation-Date: 2017-07-13 11:25+0300\n"
-"PO-Revision-Date: 2017-07-13 11:29+0300\n"
+"POT-Creation-Date: 2018-01-09 17:31+0300\n"
+"PO-Revision-Date: 2018-01-09 17:31+0300\n"
 "Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <netprofile-users@googlegroups.com>\n"
@@ -18,342 +18,382 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.3.4\n"
+"Generated-By: Babel 2.5.1\n"
 "X-Generator: Poedit 1.8.7\n"
 
-#: netprofile_access/__init__.py:119
+#: netprofile_access/__init__.py:117
 msgid "Entities: Edit account state"
 msgstr "Учётные записи: Изменение состояния"
 
-#: netprofile_access/__init__.py:136 netprofile_access/__init__.py:139
-#: netprofile_access/models.py:648 netprofile_access/models.py:780
+#: netprofile_access/__init__.py:132 netprofile_access/__init__.py:135
+#: netprofile_access/models.py:637 netprofile_access/models.py:762
 msgid "Account"
 msgstr "Учётная запись"
 
-#: netprofile_access/__init__.py:140
+#: netprofile_access/__init__.py:136
 msgid "Accounts"
 msgstr "Учётные записи"
 
-#: netprofile_access/__init__.py:143
+#: netprofile_access/__init__.py:139
 msgid "Account details for network admission and client UI access."
 msgstr "Параметры учётной записи для сетевого входа и пользовательского портала."
 
-#: netprofile_access/__init__.py:148
+#: netprofile_access/__init__.py:144
 msgid "Verification Code"
 msgstr "Проверочный код"
 
-#: netprofile_access/__init__.py:149
+#: netprofile_access/__init__.py:145
 msgid "Randomly generated sequence used to verify customer email address."
 msgstr ""
 "Случайно сгенерированная последовательность для подтверждения адреса email "
 "клиента."
 
-#: netprofile_access/__init__.py:159
+#: netprofile_access/__init__.py:153
 msgid "Access"
 msgstr "Учётные записи"
 
-#: netprofile_access/models.py:140 netprofile_access/models.py:230
+#: netprofile_access/models.py:137 netprofile_access/models.py:229
 msgid "Access entity properties"
 msgstr "Свойства учётной записи"
 
-#: netprofile_access/models.py:149
+#: netprofile_access/models.py:146
 msgid "OK"
 msgstr "ОК"
 
-#: netprofile_access/models.py:150
+#: netprofile_access/models.py:147
 msgid "Blocked automatically"
 msgstr "Заблокировано автоматически"
 
-#: netprofile_access/models.py:151
+#: netprofile_access/models.py:148
 msgid "Blocked manually"
 msgstr "Заблокировано вручную"
 
-#: netprofile_access/models.py:152
+#: netprofile_access/models.py:149
 msgid "Blocked after reaching max sessions"
 msgstr "Заблокировано из-за лимита сессий"
 
-#: netprofile_access/models.py:153
+#: netprofile_access/models.py:150
 msgid "Rejected"
 msgstr "Отклонено"
 
-#: netprofile_access/models.py:154
+#: netprofile_access/models.py:151
 msgid "Inactive"
 msgstr "Неактивно"
 
-#: netprofile_access/models.py:155
+#: netprofile_access/models.py:152
 msgid "Error"
 msgstr "Ошибка"
 
-#: netprofile_access/models.py:158
+#: netprofile_access/models.py:156
 msgid "Planned"
 msgstr "Запланирована"
 
-#: netprofile_access/models.py:159
+#: netprofile_access/models.py:157
 msgid "Active"
 msgstr "Активна"
 
-#: netprofile_access/models.py:160
+#: netprofile_access/models.py:158
 msgid "Expired"
 msgstr "Истекла"
 
-#: netprofile_access/models.py:191 netprofile_access/views.py:812
+#: netprofile_access/models.py:190 netprofile_access/views.py:875
 msgid "Access Entities"
 msgstr "Учётные записи"
 
-#: netprofile_access/models.py:198
+#: netprofile_access/models.py:196
 msgid "Entity icon"
 msgstr "Иконка объекта"
 
-#: netprofile_access/models.py:200
+#: netprofile_access/models.py:198
 msgid "Icon"
 msgstr "Иконка"
 
-#: netprofile_access/models.py:226
+#: netprofile_access/models.py:225
 msgid "Generic entity properties"
 msgstr "Общие свойства объекта"
 
-#: netprofile_access/models.py:232
+#: netprofile_access/models.py:230
 msgid "Add new access entity"
 msgstr "Добавить новую учётную запись"
 
-#: netprofile_access/models.py:248 netprofile_access/models.py:626
-#: netprofile_access/models.py:770 netprofile_access/models.py:871
-#: netprofile_access/models.py:935 netprofile_access/models.py:1046
+#: netprofile_access/models.py:244 netprofile_access/models.py:613
+#: netprofile_access/models.py:751 netprofile_access/models.py:848
+#: netprofile_access/models.py:909 netprofile_access/models.py:1011
+#: netprofile_access/models.py:1223
 msgid "ID"
 msgstr "ID"
 
-#: netprofile_access/models.py:259
-#: netprofile_access/templates/client_login.mak:19
-#: netprofile_access/templates/client_register.mak:80
+#: netprofile_access/models.py:254
+#: netprofile_access/templates/client_login.mak:39
+#: netprofile_access/templates/client_register.mak:100
 msgid "Password"
 msgstr "Пароль"
 
-#: netprofile_access/models.py:274
+#: netprofile_access/models.py:268
 msgid "A1 Hash"
 msgstr "Хеш A1"
 
-#: netprofile_access/models.py:288
+#: netprofile_access/models.py:281
 msgid "NTLM Hash"
 msgstr "Хеш NTLM"
 
-#: netprofile_access/models.py:301
+#: netprofile_access/models.py:293
 msgid "crypt(3) Hash"
 msgstr "Хеш crypt(3)"
 
-#: netprofile_access/models.py:316
+#: netprofile_access/models.py:307
 msgid "Plaintext Password"
 msgstr "Пароль открытым текстом"
 
-#: netprofile_access/models.py:328
+#: netprofile_access/models.py:319
 msgid "Stash"
 msgstr "Счёт"
 
-#: netprofile_access/models.py:339 netprofile_access/models.py:662
-#: netprofile_access/templates/entity_data.mak:6
+#: netprofile_access/models.py:330 netprofile_access/models.py:651
+#: netprofile_access/models.py:1314
+#: netprofile_access/templates/entity_data.mak:26
 msgid "Rate"
 msgstr "Тариф"
 
-#: netprofile_access/models.py:353
+#: netprofile_access/models.py:345
 msgid "Alias Of"
 msgstr "Псевдоним"
 
-#: netprofile_access/models.py:366
-#: netprofile_access/templates/client_block_chrate.mak:13
-#: netprofile_access/templates/client_block_chrate.mak:26
-#: netprofile_access/templates/entity_data.mak:12
+#: netprofile_access/models.py:358
+#: netprofile_access/templates/client_block_chrate.mak:33
+#: netprofile_access/templates/client_block_chrate.mak:46
+#: netprofile_access/templates/entity_data.mak:32
 msgid "Next Rate"
 msgstr "Следующий тариф"
 
-#: netprofile_access/models.py:379
+#: netprofile_access/models.py:371
 msgid "IPv4 Address"
 msgstr "Адрес IPv4"
 
-#: netprofile_access/models.py:391
+#: netprofile_access/models.py:384
 msgid "IPv6 Address"
 msgstr "Адрес IPv6"
 
-#: netprofile_access/models.py:402
+#: netprofile_access/models.py:394
 msgid "Used Ingress"
 msgstr "Использовано входящего"
 
-#: netprofile_access/models.py:414
+#: netprofile_access/models.py:405
 msgid "Used Egress"
 msgstr "Использовано исходящего"
 
-#: netprofile_access/models.py:426
+#: netprofile_access/models.py:416
 msgid "Used Seconds"
 msgstr "Использовано секунд"
 
-#: netprofile_access/models.py:438 netprofile_access/templates/entity_data.mak:27
+#: netprofile_access/models.py:427 netprofile_access/templates/entity_data.mak:47
 msgid "Ends"
 msgstr "Заканчивается"
 
-#: netprofile_access/models.py:450
+#: netprofile_access/models.py:438
 msgid "Access Code"
 msgstr "Код доступа"
 
-#: netprofile_access/models.py:463
+#: netprofile_access/models.py:450
 msgid "Ingress Policy"
 msgstr "Входящая политика"
 
-#: netprofile_access/models.py:474
+#: netprofile_access/models.py:460
 msgid "Egress Policy"
 msgstr "Исходящая политика"
 
-#: netprofile_access/models.py:485
+#: netprofile_access/models.py:470
 msgid "Check Blocks"
 msgstr "Проверять блокировки"
 
-#: netprofile_access/models.py:496
+#: netprofile_access/models.py:480
 msgid "Check Services"
 msgstr "Проверять услуги"
 
-#: netprofile_access/models.py:610 netprofile_access/views.py:776
+#: netprofile_access/models.py:597 netprofile_access/views.py:828
 msgid "Rate Modifiers"
 msgstr "Модификаторы тарифов"
 
-#: netprofile_access/models.py:614
+#: netprofile_access/models.py:602
 msgid "Add new rate modifier"
 msgstr "Добавить новый модификатор тарифов"
 
-#: netprofile_access/models.py:636 netprofile_access/models.py:956
+#: netprofile_access/models.py:624 netprofile_access/models.py:932
 msgid "Type"
 msgstr "Тип"
 
-#: netprofile_access/models.py:675
+#: netprofile_access/models.py:663
 msgid "Created"
 msgstr "Создан"
 
-#: netprofile_access/models.py:686
+#: netprofile_access/models.py:673
 msgid "Enabled"
 msgstr "Включен"
 
-#: netprofile_access/models.py:697
+#: netprofile_access/models.py:683
 msgid "Lookup Order"
 msgstr "Порядок поиска"
 
-#: netprofile_access/models.py:752 netprofile_access/views.py:785
+#: netprofile_access/models.py:729 netprofile_access/views.py:837
 msgid "Access Blocks"
 msgstr "Блокировки"
 
-#: netprofile_access/models.py:758
+#: netprofile_access/models.py:740
 msgid "Add new access block"
 msgstr "Добавить новую блокировку"
 
-#: netprofile_access/models.py:792
+#: netprofile_access/models.py:773
 msgid "Start"
 msgstr "Начало"
 
-#: netprofile_access/models.py:802
+#: netprofile_access/models.py:782
 msgid "End"
 msgstr "Конец"
 
-#: netprofile_access/models.py:814
+#: netprofile_access/models.py:793
 msgid "State"
 msgstr "Состояние"
 
-#: netprofile_access/models.py:825
+#: netprofile_access/models.py:803
 msgid "Access State"
 msgstr "Статус уч. записи"
 
-#: netprofile_access/models.py:852
+#: netprofile_access/models.py:830
 msgid "Link Types"
 msgstr "Типы связей"
 
-#: netprofile_access/models.py:859
+#: netprofile_access/models.py:837
 msgid "Add new link type"
 msgstr "Добавить новый тип связей"
 
-#: netprofile_access/models.py:879
+#: netprofile_access/models.py:855
 msgid "Name"
 msgstr "Название"
 
-#: netprofile_access/models.py:891 netprofile_access/models.py:1152
+#: netprofile_access/models.py:866 netprofile_access/models.py:1115
+#: netprofile_access/models.py:1348
 msgid "Description"
 msgstr "Описание"
 
-#: netprofile_access/models.py:918 netprofile_access/views.py:794
+#: netprofile_access/models.py:893 netprofile_access/views.py:846
 msgid "Links"
 msgstr "Связи"
 
-#: netprofile_access/models.py:923
+#: netprofile_access/models.py:898
 msgid "Add new link"
 msgstr "Добавить новую связь"
 
-#: netprofile_access/models.py:945 netprofile_access/models.py:1056
+#: netprofile_access/models.py:920 netprofile_access/models.py:1022
 msgid "Entity"
 msgstr "Объект"
 
-#: netprofile_access/models.py:968
+#: netprofile_access/models.py:943
 msgid "Timestamp"
 msgstr "Время"
 
-#: netprofile_access/models.py:977
+#: netprofile_access/models.py:951
 msgid "Value"
 msgstr "Значение"
 
-#: netprofile_access/models.py:1023
+#: netprofile_access/models.py:991
 msgid "Access Entity Changes"
 msgstr "История учётной записи"
 
-#: netprofile_access/models.py:1069
+#: netprofile_access/models.py:1035
 msgid "User"
 msgstr "Пользователь"
 
-#: netprofile_access/models.py:1080
+#: netprofile_access/models.py:1045
 msgid "Time"
 msgstr "Время"
 
-#: netprofile_access/models.py:1091
+#: netprofile_access/models.py:1055
 msgid "Changed Password"
 msgstr "Пароль изменён"
 
-#: netprofile_access/models.py:1102
+#: netprofile_access/models.py:1065
 msgid "Old Access Code"
 msgstr "Старый код доступа"
 
-#: netprofile_access/models.py:1113
+#: netprofile_access/models.py:1075
 msgid "New Access Code"
 msgstr "Новый код доступа"
 
-#: netprofile_access/models.py:1125
+#: netprofile_access/models.py:1088
 msgid "Old Rate"
 msgstr "Старый тариф"
 
-#: netprofile_access/models.py:1139
+#: netprofile_access/models.py:1103
 msgid "New Rate"
 msgstr "Новый тариф"
 
-#: netprofile_access/models.py:1189
+#: netprofile_access/models.py:1140
 #, python-format
 msgid "Access entity \"%s\" changed"
 msgstr "Учётная запись \"%s\" изменена"
 
-#: netprofile_access/models.py:1194
+#: netprofile_access/models.py:1147
 msgid "Password was changed"
 msgstr "Пароль был изменён"
 
-#: netprofile_access/recaptcha.py:44 netprofile_access/recaptcha.py:67
+#: netprofile_access/models.py:1201 netprofile_access/views.py:859
+#: netprofile_access/views.py:890 netprofile_access/views.py:904
+msgid "Bindings"
+msgstr "Привязки"
+
+#: netprofile_access/models.py:1212
+msgid "Add new binding"
+msgstr "Добавить новую привязку"
+
+#: netprofile_access/models.py:1235
+msgid "Access Entity"
+msgstr "Учётная запись"
+
+#: netprofile_access/models.py:1247 netprofile_access/models.py:1337
+msgid "Device"
+msgstr "Устройство"
+
+#: netprofile_access/models.py:1261
+msgid "Interface"
+msgstr "Интерфейс"
+
+#: netprofile_access/models.py:1282
+msgid "Circuit ID"
+msgstr "ID линии"
+
+#: netprofile_access/models.py:1292
+msgid "Inner VLAN"
+msgstr "Внутренний VLAN"
+
+#: netprofile_access/models.py:1302
+msgid "Outer VLAN"
+msgstr "Внешний VLAN"
+
+#: netprofile_access/models.py:1325
+msgid "Cable Length"
+msgstr "Длина кабеля"
+
+#: netprofile_access/recaptcha.py:39 netprofile_access/recaptcha.py:63
 msgid "Unknown error"
 msgstr "Неизвестная ошибка"
 
-#: netprofile_access/recaptcha.py:45
+#: netprofile_access/recaptcha.py:40
 msgid "Internal site error"
 msgstr "Внутренняя ошибка сайта"
 
-#: netprofile_access/recaptcha.py:46
+#: netprofile_access/recaptcha.py:41
 msgid "reCAPTCHA request error"
 msgstr "Ошибка запроса reCAPTCHA"
 
-#: netprofile_access/recaptcha.py:47
+#: netprofile_access/recaptcha.py:42
 msgid "Entered text was incorrect"
 msgstr "Введённый текст содержал ошибки"
 
-#: netprofile_access/recaptcha.py:48
+#: netprofile_access/recaptcha.py:43
 msgid "Current CAPTCHA timed out"
 msgstr "Текущий запрос был просрочен"
 
-#: netprofile_access/recaptcha.py:49
+#: netprofile_access/recaptcha.py:44
 msgid "reCAPTCHA service is not reachable"
 msgstr "Сервис reCAPTCHA недоступен"
 
@@ -361,434 +401,434 @@ msgstr "Сервис reCAPTCHA недоступен"
 msgid "Page Not Found"
 msgstr "Страница не найдена"
 
-#: netprofile_access/views.py:120
+#: netprofile_access/views.py:122
 msgid "You need to log in to access this page"
 msgstr "Вы должны войти в систему чтобы получить доступ к этой странице"
 
-#: netprofile_access/views.py:125
+#: netprofile_access/views.py:126
 msgid "Access Denied"
 msgstr "Доступ запрещён"
 
-#: netprofile_access/views.py:144 netprofile_access/views.py:314
-#: netprofile_access/views.py:562
+#: netprofile_access/views.py:148 netprofile_access/views.py:339
+#: netprofile_access/views.py:605
 msgid "Error submitting form"
 msgstr "Ошибка при отправке формы"
 
-#: netprofile_access/views.py:148 netprofile_access/views.py:346
+#: netprofile_access/views.py:152 netprofile_access/views.py:371
 msgid "Password is too short"
 msgstr "Пароль слишком короткий"
 
-#: netprofile_access/views.py:150 netprofile_access/views.py:348
+#: netprofile_access/views.py:154 netprofile_access/views.py:373
 msgid "Password is too long"
 msgstr "Пароль слишком длинный"
 
-#: netprofile_access/views.py:152 netprofile_access/views.py:350
+#: netprofile_access/views.py:156 netprofile_access/views.py:375
 msgid "Passwords do not match"
 msgstr "Пароли не совпадают"
 
-#: netprofile_access/views.py:154
+#: netprofile_access/views.py:159
 msgid "Wrong password"
 msgstr "Некорректный пароль"
 
-#: netprofile_access/views.py:158
+#: netprofile_access/views.py:163
 msgid "Password successfully changed"
 msgstr "Ваш пароль был успешно изменён"
 
-#: netprofile_access/views.py:206
+#: netprofile_access/views.py:216
 msgid "Error uploading file"
 msgstr "Ошибка при заливке файла"
 
-#: netprofile_access/views.py:333 netprofile_access/views.py:341
-#: netprofile_access/views.py:353 netprofile_access/views.py:356
-#: netprofile_access/views.py:359 netprofile_access/views.py:576
-#: netprofile_access/views.py:584
+#: netprofile_access/views.py:358 netprofile_access/views.py:366
+#: netprofile_access/views.py:378 netprofile_access/views.py:381
+#: netprofile_access/views.py:384 netprofile_access/views.py:619
+#: netprofile_access/views.py:627
 msgid "Invalid field length"
 msgstr "Некорректная длина поля"
 
-#: netprofile_access/templates/client_register.mak:69
-#: netprofile_access/templates/client_restorepass.mak:71
-#: netprofile_access/views.py:335 netprofile_access/views.py:578
+#: netprofile_access/templates/client_register.mak:89
+#: netprofile_access/templates/client_restorepass.mak:91
+#: netprofile_access/views.py:360 netprofile_access/views.py:621
 msgid "Invalid e-mail format"
 msgstr "Некорректный формат e-mail"
 
-#: netprofile_access/views.py:343 netprofile_access/views.py:586
+#: netprofile_access/views.py:368 netprofile_access/views.py:629
 msgid "Invalid character used in username"
 msgstr "В имени пользователя находится запрещённый символ"
 
-#: netprofile_access/templates/client_register.mak:41
-#: netprofile_access/views.py:367
+#: netprofile_access/templates/client_register.mak:61
+#: netprofile_access/views.py:390
 msgid "This username is already taken"
 msgstr "Это имя пользователя уже используется"
 
-#: netprofile_access/views.py:380
+#: netprofile_access/views.py:403
 msgid "Primary Account"
 msgstr "Основная учётная запись"
 
-#: netprofile_access/views.py:433
+#: netprofile_access/views.py:463
 #, python-format
 msgid "Activation required for user %s"
 msgstr "Требуется подтверждение для пользователя %s"
 
-#: netprofile_access/views.py:636
+#: netprofile_access/views.py:683
 #, python-format
 msgid "Password recovery for user %s"
 msgstr "Восстановление пароля для пользователя %s"
 
-#: netprofile_access/views.py:648
+#: netprofile_access/views.py:696
 msgid "Username and/or e-mail are unknown to us"
 msgstr "Имя пользователя и/или адрес e-mail нам не известны"
 
-#: netprofile_access/views.py:712
+#: netprofile_access/views.py:765
 msgid "Portal"
 msgstr "Портал"
 
-#: netprofile_access/views.py:753
+#: netprofile_access/views.py:802
 msgid "Error scheduling rate change"
 msgstr "Ошибка при выборе следующего тарифа"
 
-#: netprofile_access/views.py:758
+#: netprofile_access/views.py:807
 msgid "Rate change successfully scheduled"
 msgstr "Запланировано изменение тарифа"
 
-#: netprofile_access/views.py:762
+#: netprofile_access/views.py:811
 msgid "Rate change successfully cancelled"
 msgstr "Запланированное изменение тарифа отменено"
 
-#: netprofile_access/views.py:803
+#: netprofile_access/views.py:855
 msgid "History"
 msgstr "История"
 
-#: netprofile_access/templates/client_activate.mak:3
+#: netprofile_access/templates/client_activate.mak:23
 msgid "Account Activation"
 msgstr "Подтверждение учётной записи"
 
-#: netprofile_access/templates/client_activate.mak:6
+#: netprofile_access/templates/client_activate.mak:26
 msgid "Account Activation Failed"
 msgstr "Ошибка подтверждения"
 
-#: netprofile_access/templates/client_activate.mak:7
+#: netprofile_access/templates/client_activate.mak:27
 msgid "Either your activation link was incomplete or it has timed out."
 msgstr "Либо вы некорректно ввели ссылку для активации, либо она уже просрочена."
 
-#: netprofile_access/templates/client_activate.mak:9
+#: netprofile_access/templates/client_activate.mak:29
 msgid "Account Activation Successful"
 msgstr "Учётная запись успешно подтверждена"
 
-#: netprofile_access/templates/client_activate.mak:10
+#: netprofile_access/templates/client_activate.mak:30
 msgid "You can now log in to your newly created account."
 msgstr ""
 "Теперь вы можете войти в систему с помощью вашей новоиспечённой учётной записи."
 
-#: netprofile_access/templates/client_activate.mak:12
-#: netprofile_access/templates/client_regsent.mak:12
-#: netprofile_access/templates/client_restoresent.mak:13
+#: netprofile_access/templates/client_activate.mak:32
+#: netprofile_access/templates/client_regsent.mak:32
+#: netprofile_access/templates/client_restoresent.mak:33
 msgid "Return to log in page"
 msgstr "Вернуться на страницу входа"
 
-#: netprofile_access/templates/client_base.mak:20
+#: netprofile_access/templates/client_base.mak:40
 msgid "User Portal"
 msgstr "Пользовательский портал"
 
-#: netprofile_access/templates/client_block_chrate.mak:3
+#: netprofile_access/templates/client_block_chrate.mak:23
 msgid "Current Rate"
 msgstr "Текущий тариф"
 
-#: netprofile_access/templates/client_block_chrate.mak:7
-#: netprofile_access/templates/client_block_chrate.mak:16
-#: netprofile_access/templates/client_login.mak:35
+#: netprofile_access/templates/client_block_chrate.mak:27
+#: netprofile_access/templates/client_block_chrate.mak:36
+#: netprofile_access/templates/client_login.mak:55
 msgid "Change"
 msgstr "Изменить"
 
-#: netprofile_access/templates/client_block_chrate.mak:22
+#: netprofile_access/templates/client_block_chrate.mak:42
 msgid "New Next Rate"
 msgstr "Изменить на"
 
-#: netprofile_access/templates/client_block_chrate.mak:36
+#: netprofile_access/templates/client_block_chrate.mak:56
 msgid "Select different next rate"
 msgstr "Установить выбранный тариф"
 
-#: netprofile_access/templates/client_block_chrate.mak:36
+#: netprofile_access/templates/client_block_chrate.mak:56
 msgid "Set"
 msgstr "Установить"
 
-#: netprofile_access/templates/client_block_chrate.mak:38
+#: netprofile_access/templates/client_block_chrate.mak:58
 msgid "Cancel scheduled rate change"
 msgstr "Отменить запланированную смену тарифа"
 
-#: netprofile_access/templates/client_block_chrate.mak:38
+#: netprofile_access/templates/client_block_chrate.mak:58
 msgid "Clear"
 msgstr "Отменить"
 
-#: netprofile_access/templates/client_chpass.mak:3
-#: netprofile_access/templates/client_chpass.mak:108
-#: netprofile_access/templates/client_layout.mak:66
+#: netprofile_access/templates/client_chpass.mak:23
+#: netprofile_access/templates/client_chpass.mak:128
+#: netprofile_access/templates/client_layout.mak:86
 msgid "Change Password"
 msgstr "Изменить пароль"
 
-#: netprofile_access/templates/client_chpass.mak:5
+#: netprofile_access/templates/client_chpass.mak:25
 msgid "Password Change Form"
 msgstr "Форма изменения пароля"
 
-#: netprofile_access/templates/client_chpass.mak:15
-#: netprofile_access/templates/client_register.mak:19
-#: netprofile_access/templates/client_restorepass.mak:23
+#: netprofile_access/templates/client_chpass.mak:35
+#: netprofile_access/templates/client_register.mak:39
+#: netprofile_access/templates/client_restorepass.mak:43
 msgid "Account Settings"
 msgstr "Настройки учётной записи"
 
-#: netprofile_access/templates/client_chpass.mak:17
+#: netprofile_access/templates/client_chpass.mak:37
 msgid "Old Password"
 msgstr "Старый пароль"
 
-#: netprofile_access/templates/client_chpass.mak:25
-#: netprofile_access/templates/client_chpass.mak:26
+#: netprofile_access/templates/client_chpass.mak:45
+#: netprofile_access/templates/client_chpass.mak:46
 msgid "Enter your old password"
 msgstr "Введите ваш старый пароль"
 
-#: netprofile_access/templates/client_chpass.mak:31
-#: netprofile_access/templates/client_chpass.mak:61
-#: netprofile_access/templates/client_chpass.mak:90
-#: netprofile_access/templates/client_register.mak:38
-#: netprofile_access/templates/client_register.mak:67
-#: netprofile_access/templates/client_register.mak:95
-#: netprofile_access/templates/client_register.mak:124
-#: netprofile_access/templates/client_register.mak:155
-#: netprofile_access/templates/client_register.mak:181
-#: netprofile_access/templates/client_restorepass.mak:41
-#: netprofile_access/templates/client_restorepass.mak:69
+#: netprofile_access/templates/client_chpass.mak:51
+#: netprofile_access/templates/client_chpass.mak:81
+#: netprofile_access/templates/client_chpass.mak:110
+#: netprofile_access/templates/client_register.mak:58
+#: netprofile_access/templates/client_register.mak:87
+#: netprofile_access/templates/client_register.mak:115
+#: netprofile_access/templates/client_register.mak:144
+#: netprofile_access/templates/client_register.mak:175
+#: netprofile_access/templates/client_register.mak:201
+#: netprofile_access/templates/client_restorepass.mak:61
+#: netprofile_access/templates/client_restorepass.mak:89
 msgid "This field is required"
 msgstr "Это поле обязательно нужно заполнить"
 
-#: netprofile_access/templates/client_chpass.mak:32
-#: netprofile_access/templates/client_chpass.mak:63
-#: netprofile_access/templates/client_chpass.mak:92
-#: netprofile_access/templates/client_register.mak:39
-#: netprofile_access/templates/client_register.mak:68
-#: netprofile_access/templates/client_register.mak:97
-#: netprofile_access/templates/client_register.mak:126
-#: netprofile_access/templates/client_register.mak:156
-#: netprofile_access/templates/client_register.mak:182
-#: netprofile_access/templates/client_register.mak:206
-#: netprofile_access/templates/client_restorepass.mak:42
-#: netprofile_access/templates/client_restorepass.mak:70
+#: netprofile_access/templates/client_chpass.mak:52
+#: netprofile_access/templates/client_chpass.mak:83
+#: netprofile_access/templates/client_chpass.mak:112
+#: netprofile_access/templates/client_register.mak:59
+#: netprofile_access/templates/client_register.mak:88
+#: netprofile_access/templates/client_register.mak:117
+#: netprofile_access/templates/client_register.mak:146
+#: netprofile_access/templates/client_register.mak:176
+#: netprofile_access/templates/client_register.mak:202
+#: netprofile_access/templates/client_register.mak:226
+#: netprofile_access/templates/client_restorepass.mak:62
+#: netprofile_access/templates/client_restorepass.mak:90
 msgid "This field is too long"
 msgstr "Текст в этом поле слишком длинный"
 
-#: netprofile_access/templates/client_chpass.mak:44
-#: netprofile_access/templates/client_chpass.mak:46
+#: netprofile_access/templates/client_chpass.mak:64
+#: netprofile_access/templates/client_chpass.mak:66
 msgid "New Password"
 msgstr "Новый пароль"
 
-#: netprofile_access/templates/client_chpass.mak:54
-#: netprofile_access/templates/client_chpass.mak:55
+#: netprofile_access/templates/client_chpass.mak:74
+#: netprofile_access/templates/client_chpass.mak:75
 msgid "Enter your new desired password"
 msgstr "Введите желаемый вами новый пароль"
 
-#: netprofile_access/templates/client_chpass.mak:62
-#: netprofile_access/templates/client_chpass.mak:91
-#: netprofile_access/templates/client_register.mak:96
-#: netprofile_access/templates/client_register.mak:125
+#: netprofile_access/templates/client_chpass.mak:82
+#: netprofile_access/templates/client_chpass.mak:111
+#: netprofile_access/templates/client_register.mak:116
+#: netprofile_access/templates/client_register.mak:145
 msgid "This field is too short"
 msgstr "Текст в этом поле слишком короткий"
 
-#: netprofile_access/templates/client_chpass.mak:74
-#: netprofile_access/templates/client_register.mak:108
+#: netprofile_access/templates/client_chpass.mak:94
+#: netprofile_access/templates/client_register.mak:128
 msgid "Repeat Password"
 msgstr "Повторите пароль"
 
-#: netprofile_access/templates/client_chpass.mak:82
-#: netprofile_access/templates/client_chpass.mak:83
-#: netprofile_access/templates/client_register.mak:116
-#: netprofile_access/templates/client_register.mak:117
+#: netprofile_access/templates/client_chpass.mak:102
+#: netprofile_access/templates/client_chpass.mak:103
+#: netprofile_access/templates/client_register.mak:136
+#: netprofile_access/templates/client_register.mak:137
 msgid "Repeat previously entered password"
 msgstr "Введите пароль ещё раз"
 
-#: netprofile_access/templates/client_chpass.mak:93
-#: netprofile_access/templates/client_register.mak:127
+#: netprofile_access/templates/client_chpass.mak:113
+#: netprofile_access/templates/client_register.mak:147
 msgid "Passwords must match"
 msgstr "Введённые пароли должны совпадать"
 
-#: netprofile_access/templates/client_chpass.mak:105
-#: netprofile_access/templates/client_register.mak:236
-#: netprofile_access/templates/client_restorepass.mak:102
+#: netprofile_access/templates/client_chpass.mak:125
+#: netprofile_access/templates/client_register.mak:256
+#: netprofile_access/templates/client_restorepass.mak:122
 msgid "Fields marked with this symbol are required."
 msgstr "Поля, отмеченные этим символом, необходимо заполнить."
 
-#: netprofile_access/templates/client_chpass.mak:108
+#: netprofile_access/templates/client_chpass.mak:128
 msgid "Change your password"
 msgstr "Изменить ваш пароль"
 
-#: netprofile_access/templates/client_error.mak:5
+#: netprofile_access/templates/client_error.mak:25
 #, python-format
 msgid "Error %d"
 msgstr "Ошибка %d"
 
-#: netprofile_access/templates/client_error.mak:8
+#: netprofile_access/templates/client_error.mak:28
 msgid "There is no page with the address you provided."
 msgstr "Мы не сумели найти страницу с указанным вами адресом."
 
-#: netprofile_access/templates/client_error.mak:9
-#: netprofile_access/templates/client_error.mak:17
+#: netprofile_access/templates/client_error.mak:29
+#: netprofile_access/templates/client_error.mak:37
 msgid "We're really sorry about that."
 msgstr "Мы очень сожалеем об этом."
 
-#: netprofile_access/templates/client_error.mak:13
+#: netprofile_access/templates/client_error.mak:33
 msgid "You don't have the credentials that are required to access this page."
 msgstr "У вас отсутствуют права, необходимые для доступа к этой странице."
 
-#: netprofile_access/templates/client_error.mak:15
+#: netprofile_access/templates/client_error.mak:35
 msgid "Maybe you forgot to log in?"
 msgstr "Может быть вы забыли войти?"
 
-#: netprofile_access/templates/client_error.mak:21
+#: netprofile_access/templates/client_error.mak:41
 msgid "You can contact support or try again."
 msgstr "Вы можете связаться с поддержкой или попробовать ещё раз."
 
-#: netprofile_access/templates/client_error.mak:24
+#: netprofile_access/templates/client_error.mak:44
 msgid "Go back from where you came"
 msgstr "Вернуться туда, откуда вы пришли"
 
-#: netprofile_access/templates/client_error.mak:26
+#: netprofile_access/templates/client_error.mak:46
 msgid "Go Back"
 msgstr "Назад"
 
-#: netprofile_access/templates/client_error.mak:30
+#: netprofile_access/templates/client_error.mak:50
 msgid "Return to home page"
 msgstr "Вернуться на начальную страницу"
 
-#: netprofile_access/templates/client_error.mak:32
+#: netprofile_access/templates/client_error.mak:52
 msgid "Go Home"
 msgstr "На главную"
 
-#: netprofile_access/templates/client_error.mak:35
+#: netprofile_access/templates/client_error.mak:55
 msgid "Return to sign in page"
 msgstr "Вернуться на страницу входа"
 
-#: netprofile_access/templates/client_error.mak:37
-#: netprofile_access/templates/client_login.mak:3
-#: netprofile_access/templates/client_login.mak:10
-#: netprofile_access/templates/client_login.mak:20
+#: netprofile_access/templates/client_error.mak:57
+#: netprofile_access/templates/client_login.mak:23
+#: netprofile_access/templates/client_login.mak:30
+#: netprofile_access/templates/client_login.mak:40
 msgid "Log In"
 msgstr "Войти"
 
-#: netprofile_access/templates/client_guest.mak:3
-#: netprofile_access/templates/client_login.mak:40
-#: netprofile_access/templates/client_register.mak:3
-#: netprofile_access/templates/client_register.mak:239
+#: netprofile_access/templates/client_guest.mak:23
+#: netprofile_access/templates/client_login.mak:60
+#: netprofile_access/templates/client_register.mak:23
+#: netprofile_access/templates/client_register.mak:259
 msgid "Register"
 msgstr "Регистрация"
 
-#: netprofile_access/templates/client_guest.mak:5
+#: netprofile_access/templates/client_guest.mak:25
 msgid "Go back to login page"
 msgstr "Назад на страницу входа"
 
-#: netprofile_access/templates/client_guest.mak:5
+#: netprofile_access/templates/client_guest.mak:25
 msgid "Already Registered"
 msgstr "Уже зарегистрирован"
 
-#: netprofile_access/templates/client_layout.mak:9
+#: netprofile_access/templates/client_layout.mak:29
 msgid "Toggle navigation"
 msgstr "Переключение навигации"
 
-#: netprofile_access/templates/client_layout.mak:41
+#: netprofile_access/templates/client_layout.mak:61
 msgid "Change Language"
 msgstr "Изменить текущий язык"
 
-#: netprofile_access/templates/client_layout.mak:42
+#: netprofile_access/templates/client_layout.mak:62
 msgid "Currently Selected Language"
 msgstr "Текущий выбранный язык"
 
-#: netprofile_access/templates/client_layout.mak:60
+#: netprofile_access/templates/client_layout.mak:80
 msgid "User Menu"
 msgstr "Пользовательское меню"
 
-#: netprofile_access/templates/client_layout.mak:68
+#: netprofile_access/templates/client_layout.mak:88
 msgid "Log Out"
 msgstr "Выйти"
 
-#: netprofile_access/templates/client_layout.mak:79
+#: netprofile_access/templates/client_layout.mak:99
 msgid "You are here:"
 msgstr "Вы находитесь здесь:"
 
-#: netprofile_access/templates/client_layout.mak:108
+#: netprofile_access/templates/client_layout.mak:128
 msgid "NetProfile.ru Team"
 msgstr "Команда NetProfile.ru"
 
-#: netprofile_access/templates/client_layout.mak:109
+#: netprofile_access/templates/client_layout.mak:129
 msgid "License:"
 msgstr "Лицензия:"
 
-#: netprofile_access/templates/client_login.mak:18
-#: netprofile_access/templates/client_register.mak:53
-#: netprofile_access/templates/client_restorepass.mak:55
+#: netprofile_access/templates/client_login.mak:38
+#: netprofile_access/templates/client_register.mak:73
+#: netprofile_access/templates/client_restorepass.mak:75
 msgid "E-mail"
 msgstr "E-mail"
 
-#: netprofile_access/templates/client_login.mak:18
-#: netprofile_access/templates/client_register.mak:22
-#: netprofile_access/templates/client_restorepass.mak:26
+#: netprofile_access/templates/client_login.mak:38
+#: netprofile_access/templates/client_register.mak:42
+#: netprofile_access/templates/client_restorepass.mak:46
 msgid "User Name"
 msgstr "Имя пользователя"
 
-#: netprofile_access/templates/client_login.mak:18
-#: netprofile_access/templates/client_register.mak:61
-#: netprofile_access/templates/client_register.mak:62
-#: netprofile_access/templates/client_restorepass.mak:63
-#: netprofile_access/templates/client_restorepass.mak:64
+#: netprofile_access/templates/client_login.mak:38
+#: netprofile_access/templates/client_register.mak:81
+#: netprofile_access/templates/client_register.mak:82
+#: netprofile_access/templates/client_restorepass.mak:83
+#: netprofile_access/templates/client_restorepass.mak:84
 msgid "Enter your e-mail address"
 msgstr "Введите ваш адрес e-mail"
 
-#: netprofile_access/templates/client_login.mak:18
-#: netprofile_access/templates/client_register.mak:30
-#: netprofile_access/templates/client_register.mak:31
-#: netprofile_access/templates/client_restorepass.mak:34
-#: netprofile_access/templates/client_restorepass.mak:35
+#: netprofile_access/templates/client_login.mak:38
+#: netprofile_access/templates/client_register.mak:50
+#: netprofile_access/templates/client_register.mak:51
+#: netprofile_access/templates/client_restorepass.mak:54
+#: netprofile_access/templates/client_restorepass.mak:55
 msgid "Enter your user name here"
 msgstr "Введите ваше имя пользователя"
 
-#: netprofile_access/templates/client_login.mak:19
+#: netprofile_access/templates/client_login.mak:39
 msgid "Enter your password here"
 msgstr "Введите пароль"
 
-#: netprofile_access/templates/client_login.mak:20
+#: netprofile_access/templates/client_login.mak:40
 msgid "Log in to your account"
 msgstr "Войти в систему"
 
-#: netprofile_access/templates/client_login.mak:24
+#: netprofile_access/templates/client_login.mak:44
 msgid "Language"
 msgstr "Язык"
 
-#: netprofile_access/templates/client_login.mak:35
+#: netprofile_access/templates/client_login.mak:55
 msgid "Change your current language"
 msgstr "Изменить текущий язык"
 
-#: netprofile_access/templates/client_login.mak:40
-#: netprofile_access/templates/client_register.mak:239
+#: netprofile_access/templates/client_login.mak:60
+#: netprofile_access/templates/client_register.mak:259
 msgid "Register new account"
 msgstr "Зарегистрировать новую учётную запись"
 
-#: netprofile_access/templates/client_login.mak:43
+#: netprofile_access/templates/client_login.mak:63
 msgid "Recover lost password via e-mail"
 msgstr "Восстановить пароль к учётной записи посредством e-mail"
 
-#: netprofile_access/templates/client_login.mak:43
+#: netprofile_access/templates/client_login.mak:63
 msgid "Lost Password?"
 msgstr "Забыли пароль?"
 
-#: netprofile_access/templates/client_register.mak:5
+#: netprofile_access/templates/client_register.mak:25
 msgid "Registration Form"
 msgstr "Регистрационная форма"
 
-#: netprofile_access/templates/client_register.mak:6
+#: netprofile_access/templates/client_register.mak:26
 msgid "Please fill in this form so we can properly set up your account."
 msgstr ""
 "Пожалуйста заполните эту форму чтобы мы могли корректно настроить вашу учётную "
 "запись."
 
-#: netprofile_access/templates/client_register.mak:8
+#: netprofile_access/templates/client_register.mak:28
 msgid "Note:"
 msgstr "Внимание:"
 
-#: netprofile_access/templates/client_register.mak:8
+#: netprofile_access/templates/client_register.mak:28
 msgid ""
 "You will receive a confirmation e-mail with an activation link. Your account "
 "will be inactive until you click this link."
@@ -796,64 +836,64 @@ msgstr ""
 "Вы получите e-mail с подтверждающей ссылкой. Ваша учётная запись будет "
 "оставаться неактивной до момента, когда вы перейдёте по этой ссылке."
 
-#: netprofile_access/templates/client_register.mak:40
-#: netprofile_access/templates/client_restorepass.mak:43
+#: netprofile_access/templates/client_register.mak:60
+#: netprofile_access/templates/client_restorepass.mak:63
 msgid "Invalid character was used"
 msgstr "В этом поле встречаются некорректные символы"
 
-#: netprofile_access/templates/client_register.mak:88
-#: netprofile_access/templates/client_register.mak:89
+#: netprofile_access/templates/client_register.mak:108
+#: netprofile_access/templates/client_register.mak:109
 msgid "Enter your desired password"
 msgstr "Введите желаемый вами пароль"
 
-#: netprofile_access/templates/client_register.mak:139
+#: netprofile_access/templates/client_register.mak:159
 msgid "Personal Information"
 msgstr "Персональные данные"
 
-#: netprofile_access/templates/client_register.mak:141
+#: netprofile_access/templates/client_register.mak:161
 msgid "Family Name"
 msgstr "Фамилия"
 
-#: netprofile_access/templates/client_register.mak:149
-#: netprofile_access/templates/client_register.mak:150
+#: netprofile_access/templates/client_register.mak:169
+#: netprofile_access/templates/client_register.mak:170
 msgid "Enter your family name"
 msgstr "Введите вашу фамилию"
 
-#: netprofile_access/templates/client_register.mak:167
+#: netprofile_access/templates/client_register.mak:187
 msgid "Given Name"
 msgstr "Имя"
 
-#: netprofile_access/templates/client_register.mak:175
-#: netprofile_access/templates/client_register.mak:176
+#: netprofile_access/templates/client_register.mak:195
+#: netprofile_access/templates/client_register.mak:196
 msgid "Enter your given name"
 msgstr "Введите ваше имя"
 
-#: netprofile_access/templates/client_register.mak:193
+#: netprofile_access/templates/client_register.mak:213
 msgid "Middle Name"
 msgstr "Отчество"
 
-#: netprofile_access/templates/client_register.mak:200
-#: netprofile_access/templates/client_register.mak:201
+#: netprofile_access/templates/client_register.mak:220
+#: netprofile_access/templates/client_register.mak:221
 msgid "Enter your middle name"
 msgstr "Введите ваше отчество"
 
-#: netprofile_access/templates/client_register.mak:218
-#: netprofile_access/templates/client_restorepass.mak:84
+#: netprofile_access/templates/client_register.mak:238
+#: netprofile_access/templates/client_restorepass.mak:104
 msgid "User Validation"
 msgstr "Подтверждение пользователя"
 
-#: netprofile_access/templates/client_regsent.mak:3
-#: netprofile_access/templates/client_regsent.mak:5
+#: netprofile_access/templates/client_regsent.mak:23
+#: netprofile_access/templates/client_regsent.mak:25
 msgid "Registration Complete"
 msgstr "Регистрация завершена"
 
-#: netprofile_access/templates/client_regsent.mak:7
-#: netprofile_access/templates/email_register_html.mak:15
-#: netprofile_access/templates/email_register_plain.mak:4
+#: netprofile_access/templates/client_regsent.mak:27
+#: netprofile_access/templates/email_register_html.mak:35
+#: netprofile_access/templates/email_register_plain.mak:24
 msgid "Thank you for registering an account in our system."
 msgstr "Спасибо что зарегистрировали учётную запись в нашей системе."
 
-#: netprofile_access/templates/client_regsent.mak:9
+#: netprofile_access/templates/client_regsent.mak:29
 msgid ""
 "A message containing an activation link was sent to the e-mail address you "
 "provided. You won't be able to log in until you follow this link."
@@ -862,7 +902,7 @@ msgstr ""
 "вами адрес e-mail. Вы не сможете использовать вашу новую учётную запись до тех "
 "пор, пока не перейдёте по этой ссылке."
 
-#: netprofile_access/templates/client_regsent.mak:11
+#: netprofile_access/templates/client_regsent.mak:31
 msgid ""
 "You can now log in with the user name and password that you provided during "
 "registration."
@@ -870,103 +910,106 @@ msgstr ""
 "Теперь вы можете войти в систему при помощи имени пользователя и пароля, "
 "которые вы указали при регистрации."
 
-#: netprofile_access/templates/client_restorepass.mak:3
+#: netprofile_access/templates/client_restorepass.mak:23
 msgid "Restore Password"
 msgstr "Восстановление пароля"
 
-#: netprofile_access/templates/client_restorepass.mak:5
+#: netprofile_access/templates/client_restorepass.mak:25
 msgid "Password Recovery Form"
 msgstr "Форма восстановления пароля"
 
-#: netprofile_access/templates/client_restorepass.mak:7
+#: netprofile_access/templates/client_restorepass.mak:27
 msgid "Please enter your username and e-mail."
 msgstr ""
 "Пожалуйста введите ваше имя пользователя и адрес e-mail, который вы "
 "использовали при регистрации."
 
-#: netprofile_access/templates/client_restorepass.mak:9
+#: netprofile_access/templates/client_restorepass.mak:29
 msgid "A new autogenerated password will be emailed to you after that."
 msgstr ""
 "После этого вам будет отправлен новый автоматически сгенерированный пароль."
 
-#: netprofile_access/templates/client_restorepass.mak:11
+#: netprofile_access/templates/client_restorepass.mak:31
 msgid "Your password will be emailed to you after that."
 msgstr "После этого вам будет отправлен ваш пароль."
 
-#: netprofile_access/templates/client_restorepass.mak:105
+#: netprofile_access/templates/client_restorepass.mak:125
 msgid "Recover your password"
 msgstr "Восстановить ваш пароль"
 
-#: netprofile_access/templates/client_restorepass.mak:105
+#: netprofile_access/templates/client_restorepass.mak:125
 msgid "Recover Password"
 msgstr "Восстановить пароль"
 
-#: netprofile_access/templates/client_restoresent.mak:3
-#: netprofile_access/templates/client_restoresent.mak:5
+#: netprofile_access/templates/client_restoresent.mak:23
+#: netprofile_access/templates/client_restoresent.mak:25
 msgid "Password Recovery Complete"
 msgstr "Восстановление пароля завершено"
 
-#: netprofile_access/templates/client_restoresent.mak:8
+#: netprofile_access/templates/client_restoresent.mak:28
 msgid "New automatically generated password was sent to your e-mail."
 msgstr "Вам только что был отправлен новый автоматически сгенерированный пароль."
 
-#: netprofile_access/templates/client_restoresent.mak:10
+#: netprofile_access/templates/client_restoresent.mak:30
 msgid "Your current password was sent to your e-mail."
 msgstr "Вам только что был отправлен ваш пароль."
 
-#: netprofile_access/templates/email_recover_html.mak:9
+#: netprofile_access/templates/email_recover_html.mak:29
 msgid "Password Recovery"
 msgstr "Восстановление пароля"
 
-#: netprofile_access/templates/email_recover_html.mak:13
-#: netprofile_access/templates/email_recover_plain.mak:2
-#: netprofile_access/templates/email_register_html.mak:13
-#: netprofile_access/templates/email_register_plain.mak:2
+#: netprofile_access/templates/email_recover_html.mak:33
+#: netprofile_access/templates/email_recover_plain.mak:22
+#: netprofile_access/templates/email_register_html.mak:33
+#: netprofile_access/templates/email_register_plain.mak:22
 #, python-format
 msgid "Hello %s!"
 msgstr "Здравствуйте %s!"
 
-#: netprofile_access/templates/email_recover_html.mak:15
-#: netprofile_access/templates/email_recover_plain.mak:4
+#: netprofile_access/templates/email_recover_html.mak:35
+#: netprofile_access/templates/email_recover_plain.mak:24
 msgid "You have recently requested a password recovery."
 msgstr "Вы недавно проходили процедуру восстановления пароля."
 
-#: netprofile_access/templates/email_recover_html.mak:17
-#: netprofile_access/templates/email_recover_plain.mak:6
+#: netprofile_access/templates/email_recover_html.mak:37
+#: netprofile_access/templates/email_recover_plain.mak:26
 msgid "Your password was automatically changed."
 msgstr "В результате ваш пароль был автоматически изменён."
 
-#: netprofile_access/templates/email_recover_html.mak:18
-#: netprofile_access/templates/email_recover_plain.mak:7
+#: netprofile_access/templates/email_recover_html.mak:38
+#: netprofile_access/templates/email_recover_plain.mak:27
 msgid "Here is your new password:"
 msgstr "Вот ваш новый пароль:"
 
-#: netprofile_access/templates/email_recover_html.mak:20
-#: netprofile_access/templates/email_recover_plain.mak:9
+#: netprofile_access/templates/email_recover_html.mak:40
+#: netprofile_access/templates/email_recover_plain.mak:29
 msgid "Here is your password:"
 msgstr "Вот ваш пароль:"
 
-#: netprofile_access/templates/email_recover_html.mak:23
-#: netprofile_access/templates/email_recover_plain.mak:12
+#: netprofile_access/templates/email_recover_html.mak:43
+#: netprofile_access/templates/email_recover_plain.mak:32
 msgid ""
 "If you didn't request a password recovery please contact support immediately."
 msgstr ""
 "Если вы не запрашивали восстановление пароля, то немедленно обращайтесь в "
 "службу поддержки."
 
-#: netprofile_access/templates/email_register_html.mak:9
+#: netprofile_access/templates/email_register_html.mak:29
 msgid "User Activation"
 msgstr "Подтверждение учётной записи"
 
-#: netprofile_access/templates/email_register_html.mak:16
-#: netprofile_access/templates/email_register_plain.mak:5
+#: netprofile_access/templates/email_register_html.mak:36
+#: netprofile_access/templates/email_register_plain.mak:25
 msgid "Here is your activation link:"
 msgstr "Вот ваша подтверждающая ссылка:"
 
-#: netprofile_access/templates/email_register_html.mak:22
-#: netprofile_access/templates/email_register_plain.mak:9
+#: netprofile_access/templates/email_register_html.mak:42
+#: netprofile_access/templates/email_register_plain.mak:29
 msgid "Be sure to follow it before trying to log in."
 msgstr "Не забудьте перейти по ней прежде чем пытаться войти в систему."
 
 #~ msgid "Logged in as"
 #~ msgstr "Вы вошли как"
+
+#~ msgid "Host"
+#~ msgstr "Узел"

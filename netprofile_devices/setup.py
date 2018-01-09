@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # NetProfile: Setup script for netprofile_devices package
-# Copyright © 2013-2017 Alex Unigovsky
+# Copyright © 2013-2018 Alex Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -34,8 +34,7 @@ requires = [
     'snimpy >= 0.8.11',
 
     'netprofile_entities >= 0',
-    'netprofile_hosts >= 0',
-    'netprofile_rates >= 0'
+    'netprofile_hosts >= 0'
 ]
 
 setup(
