@@ -912,22 +912,6 @@ def _dpane_iface_bindings(tabs, model, req):
     })
 
 
-@register_hook('core.dpanetabs.hosts.Host')
-def _dpane_host_bindings(tabs, model, req):
-    if not req.has_permission('DEVICES_LIST'):
-        return
-    tabs.append({
-        'title':             req.localizer.translate(_('Bindings')),
-        'iconCls':           'ico-mod-networkdevicebinding',
-        'xtype':             'grid_access_NetworkDeviceBinding',
-        'stateId':           None,
-        'stateful':          False,
-        'hideColumns':       ('host',),
-        'extraParamProp':    'hostid',
-        'createControllers': 'NetProfile.core.controller.RelatedWizard'
-    })
-
-
 @register_hook('entities.history.get.all')
 @register_hook('entities.history.get.access_changes')
 def _aent_hist_changes(hist, ent, req, begin, end, max_num):

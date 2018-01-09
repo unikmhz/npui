@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netprofile_access 0.3\n"
 "Report-Msgid-Bugs-To: netprofile-users@googlegroups.com\n"
-"POT-Creation-Date: 2018-01-09 17:07+0300\n"
-"PO-Revision-Date: 2018-01-09 17:09+0300\n"
+"POT-Creation-Date: 2018-01-09 17:31+0300\n"
+"PO-Revision-Date: 2018-01-09 17:31+0300\n"
 "Last-Translator: Alex Unigovsky <unik@itws.ru>\n"
 "Language: ru\n"
 "Language-Team: ru <netprofile-users@googlegroups.com>\n"
@@ -119,7 +119,7 @@ msgstr "Добавить новую учётную запись"
 #: netprofile_access/models.py:244 netprofile_access/models.py:613
 #: netprofile_access/models.py:751 netprofile_access/models.py:848
 #: netprofile_access/models.py:909 netprofile_access/models.py:1011
-#: netprofile_access/models.py:1224
+#: netprofile_access/models.py:1223
 msgid "ID"
 msgstr "ID"
 
@@ -150,7 +150,7 @@ msgid "Stash"
 msgstr "Счёт"
 
 #: netprofile_access/models.py:330 netprofile_access/models.py:651
-#: netprofile_access/models.py:1329
+#: netprofile_access/models.py:1314
 #: netprofile_access/templates/entity_data.mak:26
 msgid "Rate"
 msgstr "Тариф"
@@ -271,7 +271,7 @@ msgid "Name"
 msgstr "Название"
 
 #: netprofile_access/models.py:866 netprofile_access/models.py:1115
-#: netprofile_access/models.py:1363
+#: netprofile_access/models.py:1348
 msgid "Description"
 msgstr "Описание"
 
@@ -336,45 +336,40 @@ msgstr "Учётная запись \"%s\" изменена"
 msgid "Password was changed"
 msgstr "Пароль был изменён"
 
-#: netprofile_access/models.py:1202 netprofile_access/views.py:859
+#: netprofile_access/models.py:1201 netprofile_access/views.py:859
 #: netprofile_access/views.py:890 netprofile_access/views.py:904
-#: netprofile_access/views.py:920
 msgid "Bindings"
 msgstr "Привязки"
 
-#: netprofile_access/models.py:1213
+#: netprofile_access/models.py:1212
 msgid "Add new binding"
 msgstr "Добавить новую привязку"
 
-#: netprofile_access/models.py:1236
+#: netprofile_access/models.py:1235
 msgid "Access Entity"
 msgstr "Учётная запись"
 
-#: netprofile_access/models.py:1250
-msgid "Host"
-msgstr "Узел"
-
-#: netprofile_access/models.py:1262 netprofile_access/models.py:1352
+#: netprofile_access/models.py:1247 netprofile_access/models.py:1337
 msgid "Device"
 msgstr "Устройство"
 
-#: netprofile_access/models.py:1276
+#: netprofile_access/models.py:1261
 msgid "Interface"
 msgstr "Интерфейс"
 
-#: netprofile_access/models.py:1297
+#: netprofile_access/models.py:1282
 msgid "Circuit ID"
 msgstr "ID линии"
 
-#: netprofile_access/models.py:1307
+#: netprofile_access/models.py:1292
 msgid "Inner VLAN"
 msgstr "Внутренний VLAN"
 
-#: netprofile_access/models.py:1317
+#: netprofile_access/models.py:1302
 msgid "Outer VLAN"
 msgstr "Внешний VLAN"
 
-#: netprofile_access/models.py:1340
+#: netprofile_access/models.py:1325
 msgid "Cable Length"
 msgstr "Длина кабеля"
 
@@ -1015,3 +1010,6 @@ msgstr "Не забудьте перейти по ней прежде чем п�
 
 #~ msgid "Logged in as"
 #~ msgstr "Вы вошли как"
+
+#~ msgid "Host"
+#~ msgstr "Узел"

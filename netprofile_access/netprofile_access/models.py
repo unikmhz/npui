@@ -1181,7 +1181,6 @@ class NetworkDeviceBinding(Base):
     __table_args__ = (
         Comment('Network device interface bindings'),
         Index('netdev_bindings_i_aeid', 'aeid'),
-        Index('netdev_bindings_i_hostid', 'hostid'),
         Index('netdev_bindings_i_did', 'did'),
         Index('netdev_bindings_i_ifid', 'ifid'),
         Index('netdev_bindings_i_index', 'index'),
@@ -1201,9 +1200,9 @@ class NetworkDeviceBinding(Base):
 
                 'menu_name':     _('Bindings'),
                 'grid_view':     ('ndbid', 'device', 'interface',
-                                  'access_entity', 'host'),
+                                  'access_entity'),
                 'grid_hidden':   ('ndbid',),
-                'form_view':     ('access_entity', 'host', 'device',
+                'form_view':     ('access_entity', 'device',
                                   'interface', 'index', 'circuitid',
                                   'cvlanid', 'svlanid',
                                   'rate',
@@ -1234,20 +1233,6 @@ class NetworkDeviceBinding(Base):
         server_default=text('NULL'),
         info={
             'header_string': _('Access Entity'),
-            'filter_type': 'none',
-            'column_flex': 3
-        })
-    host_id = Column(
-        'hostid',
-        UInt32(),
-        ForeignKey('hosts_def.hostid', name='netdev_bindings_fk_hostid',
-                   ondelete='CASCADE', onupdate='CASCADE'),
-        Comment('Host ID'),
-        nullable=True,
-        default=None,
-        server_default=text('NULL'),
-        info={
-            'header_string': _('Host'),
             'filter_type': 'none',
             'column_flex': 3
         })
@@ -1363,11 +1348,6 @@ class NetworkDeviceBinding(Base):
             'header_string': _('Description')
         })
 
-    host = relationship(
-        'Host',
-        backref=backref('interface_bindings',
-                        cascade='all, delete-orphan',
-                        passive_deletes=True))
     device = relationship(
         'NetworkDevice',
         foreign_keys=device_id,
